@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JARVIS — Portfolio AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan:   #00e5ff;
+  --blue:   #1565c0;
+  --teal:   #00bcd4;
+  --amber:  #ffab00;
+  --red:    #ff1744;
+  --bg:     #020c18;
+  --bg2:    #040f1e;
+  --panel:  rgba(0,180,230,0.05);
+  --border: rgba(0,229,255,0.18);
+  --glow:   0 0 18px rgba(0,229,255,0.55);
+  --font-hud:  'Orbitron', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Rajdhani', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--cyan);
+  font-family: var(--font-body); font-size: 16px;
+  overflow-x: hidden; cursor: crosshair;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 3px; }
+::selection { background: var(--cyan); color: var(--bg); }
+#hud-canvas {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; opacity: 0.35;
+}
+#boot-screen {
+  position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 24px; padding: 20px;
+  transition: opacity 0.8s ease;
+}
+.hud-ring { position: relative; width: 220px; height: 220px; flex-shrink: 0; }
+.hud-ring svg { width: 100%; height: 100%; animation: ring-spin 4s linear infinite; }
+.hud-ring svg circle { fill: none; stroke: var(--cyan); stroke-width: 1.5; stroke-dasharray: 4 8; opacity: 0.6; }
+.hud-ring .inner-ring { stroke-dasharray: 8 4; opacity: 0.3; animation: ring-spin 2s linear infinite reverse; transform-origin: 50% 50%; }
+.hud-ring .dot-ring { stroke-dasharray: 1 12; opacity: 0.9; stroke-width: 3; }
+.hud-logo {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-hud); font-size: 28px; font-weight: 900;
+  color: var(--cyan); text-shadow: var(--glow); letter-spacing: 4px;
+}
+@keyframes ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+#boot-text {
+  font-family: var(--font-mono); font-size: 13px; color: var(--cyan);
+  text-align: center; min-height: 60px; line-height: 1.8;
+}
+#boot-text .line { opacity: 0; }
+#boot-text .line.visible { opacity: 1; }
+#boot-text .cursor {
+  display: inline-block; width: 8px; height: 14px; background: var(--cyan);
+  vertical-align: middle; animation: blink 0.7s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+#visitor-form { display: none; flex-direction: column; gap: 14px; width: 100%; max-width: 360px; }
+#visitor-form.active { display: flex; }
+.form-row { display: flex; flex-direction: column; gap: 5px; }
+.form-row label {
+  font-family: var(--font-mono); font-size: 11px;
+  color: rgba(0,229,255,0.6); letter-spacing: 2px; text-transform: uppercase;
+}
+.form-row input, .form-row select {
+  background: rgba(0,229,255,0.04); border: 1px solid var(--border);
+  border-radius: 3px; color: var(--cyan); font-family: var(--font-mono);
+  font-size: 14px; padding: 10px 14px; outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.form-row input:focus, .form-row select:focus { border-color: var(--cyan); box-shadow: var(--glow); }
+.form-row input::placeholder { color: rgba(0,229,255,0.25); }
+.form-row select option { background: #020c18; color: var(--cyan); }
+#boot-submit {
+  background: transparent; border: 1px solid var(--cyan); color: var(--cyan);
+  font-family: var(--font-hud); font-size: 13px; letter-spacing: 3px;
+  padding: 12px; cursor: pointer; text-transform: uppercase;
+  transition: background 0.3s, box-shadow 0.3s, color 0.3s; border-radius: 3px;
+}
+#boot-submit:hover { background: var(--cyan); color: var(--bg); box-shadow: var(--glow); }
+.scan-bar {
+  display: none; width: 100%; max-width: 360px; height: 3px;
+  background: rgba(0,229,255,0.1); border-radius: 2px; overflow: hidden; position: relative;
+}
+.scan-bar.active { display: block; }
+.scan-bar::after {
+  content: ''; position: absolute; left: -40%; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: scan 1.2s linear infinite;
+}
+@keyframes scan { from { left: -40%; } to { left: 140%; } }
+.grid-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+}
+.pulse-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--cyan); box-shadow: var(--glow); animation: pulse-dot 1.5s ease infinite;
+}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.6); } }
+</style>
+</head>
+<body>
+
+<div class="grid-overlay"></div>
+<canvas id="hud-canvas"></canvas>
+
+<div id="boot-screen">
+  <div class="hud-ring">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle class="dot-ring" cx="100" cy="100" r="90"/>
+      <circle cx="100" cy="100" r="78" stroke-dasharray="6 6"/>
+      <circle class="inner-ring" cx="100" cy="100" r="65" stroke-dasharray="10 5"/>
+      <circle cx="100" cy="100" r="52" stroke-dasharray="2 10"/>
+    </svg>
+    <div class="hud-logo">J.A.R.V.I.S</div>
+  </div>
+
+  <div id="boot-text"></div>
+  <div class="scan-bar" id="scan-bar"></div>
+
+  <form id="visitor-form" onsubmit="return false;">
+    <div class="form-row">
+      <label>YOUR NAME</label>
+      <input type="text" id="v-name" placeholder="Enter identification..." autocomplete="off" required/>
+    </div>
+    <div class="form-row">
+      <label>YOUR AGE</label>
+      <input type="number" id="v-age" placeholder="Years of operation..." min="1" max="120" required/>
+    </div>
+    <div class="form-row">
+      <label>ADDRESS ME AS</label>
+      <select id="v-title">
+        <option value="Sir">Sir</option>
+        <option value="Ma'am">Ma'am</option>
+      </select>
+    </div>
+    <button id="boot-submit" type="button" onclick="startExperience()">INITIATE ACCESS →</button>
+  </form>
+</div>
+
+<script>
+/* ── YOUR AGE — change this number to your real age ── */
+const MY_AGE = 21;
+
+/* ── stored so launchDashboard() can pass them to dashboard.html ── */
+let _visitorName     = '';
+let _visitorGreeting = '';
+
+/* ────────────────────────────────
+   BOOT SEQUENCE
+──────────────────────────────── */
+const bootLines = [
+  "Initializing Portfolio AI...",
+  "Loading Neural Interface...",
+  "Calibrating HUD Systems...",
+  "Please identify yourself.",
+];
+
+function typeLine(text, el, cb) {
+  let i = 0;
+  el.innerHTML = '';
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  el.appendChild(cursor);
+  const iv = setInterval(() => {
+    el.insertBefore(document.createTextNode(text[i]), cursor);
+    i++;
+    if (i >= text.length) {
+      clearInterval(iv);
+      setTimeout(() => { cursor.remove(); if (cb) cb(); }, 200);
+    }
+  }, 38);
+}
+
+function runBootLines(container, idx, cb) {
+  if (idx >= bootLines.length) { if (cb) cb(); return; }
+  const line = document.createElement('div');
+  line.className = 'line visible';
+  container.appendChild(line);
+  typeLine(bootLines[idx], line, () => {
+    setTimeout(() => runBootLines(container, idx + 1, cb), 300);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const bt = document.getElementById('boot-text');
+  setTimeout(() => {
+    runBootLines(bt, 0, () => {
+      setTimeout(() => {
+        document.getElementById('visitor-form').classList.add('active');
+      }, 300);
+    });
+  }, 600);
+  drawHUDCanvas();
+});
+
+/* ────────────────────────────────
+   FORM SUBMIT → scan animation
+──────────────────────────────── */
+function startExperience() {
+  const name  = document.getElementById('v-name').value.trim();
+  const age   = parseInt(document.getElementById('v-age').value) || 0;
+  const title = document.getElementById('v-title').value;
+  if (!name) { document.getElementById('v-name').focus(); return; }
+
+  const diff = Math.abs(age - MY_AGE);
+  let greeting;
+  if (diff <= 3)          greeting = `Welcome, Fellow Engineer — ${name}`;
+  else if (age > MY_AGE)  greeting = `Welcome, ${title} ${name}`;
+  else                    greeting = `Welcome, Future Innovator ${name}`;
+
+  /* save for launchDashboard */
+  _visitorName     = name;
+  _visitorGreeting = greeting;
+
+  document.getElementById('visitor-form').classList.remove('active');
+  document.getElementById('scan-bar').classList.add('active');
+
+  const bt = document.getElementById('boot-text');
+  bt.innerHTML = '';
+
+  const scanLines = [
+    "Scanning credentials...",
+    `Biometric match: ${name}`,
+    "Access granted.",
+    greeting,
+    "Loading Portfolio Dashboard...",
+  ];
+
+  function runScan(idx) {
+    if (idx >= scanLines.length) { setTimeout(launchDashboard, 400); return; }
+    const l = document.createElement('div');
+    l.className = 'line visible';
+    bt.appendChild(l);
+    typeLine(scanLines[idx], l, () => setTimeout(() => runScan(idx + 1), 350));
+  }
+  runScan(0);
+}
+
+/* ────────────────────────────────
+   LAUNCH → redirect to dashboard.html
+   (all the portfolio content lives there)
+──────────────────────────────── */
+function launchDashboard() {
+  const boot = document.getElementById('boot-screen');
+  boot.style.opacity = '0';
+  setTimeout(() => {
+    window.location.href =
+      'dashboard.html' +
+      '?visitor='  + encodeURIComponent(_visitorName) +
+      '&greeting=' + encodeURIComponent(_visitorGreeting);
+  }, 800);
+}
+
+/* ────────────────────────────────
+   HUD CANVAS BACKGROUND
+──────────────────────────────── */
+function drawHUDCanvas() {
+  const canvas = document.getElementById('hud-canvas');
+  const ctx    = canvas.getContext('2d');
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const particles = Array.from({ length: 55 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r:  Math.random() * 1.2 + 0.3,
+    vx: (Math.random() - 0.5) * 0.18,
+    vy: (Math.random() - 0.5) * 0.18,
+    alpha: Math.random() * 0.5 + 0.1,
+  }));
+
+  const arcs = Array.from({ length: 4 }, (_, i) => ({
+    x: canvas.width  * (0.1 + i * 0.26),
+    y: canvas.height * (0.2 + (i % 2) * 0.5),
+    r: 60 + i * 30,
+    startAngle: Math.random() * Math.PI * 2,
+    speed:   (0.002 + i * 0.001) * (i % 2 ? 1 : -1),
+    dashLen: 12 + i * 4,
+    gapLen:   6 + i * 2,
+  }));
+
+  (function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    arcs.forEach(a => {
+      a.startAngle += a.speed;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.r, a.startAngle, a.startAngle + Math.PI * 1.2);
+      ctx.setLineDash([a.dashLen, a.gapLen]);
+      ctx.strokeStyle = 'rgba(0,229,255,0.14)'; ctx.lineWidth = 1;
+      ctx.stroke(); ctx.setLineDash([]);
+    });
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;  if (p.x > canvas.width)  p.x = 0;
+      if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,229,255,${p.alpha})`; ctx.fill();
+    });
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d  = Math.sqrt(dx*dx + dy*dy);
+        if (d < 130) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(0,229,255,${0.06 * (1 - d/130)})`;
+          ctx.lineWidth = 0.5; ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  })();
+}
+</script>
+</body>
+</html>
