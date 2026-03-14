@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JARVIS — Notes Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --cyan:#00e5ff;--amber:#ffab00;--green:#00e676;--red:#ff1744;--purple:#7c4dff;
+  --bg:#020c18;--bg2:#040f1e;--panel:rgba(0,180,230,0.05);--border:rgba(0,229,255,0.18);
+  --glow:0 0 18px rgba(0,229,255,0.5);
+  --font-hud:'Orbitron',monospace;--font-mono:'Share Tech Mono',monospace;--font-body:'Rajdhani',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--cyan);font-family:var(--font-body);overflow-x:hidden;cursor:crosshair}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:3px}
+::selection{background:var(--cyan);color:var(--bg)}
+
+#bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0}
+.grid-overlay{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,229,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.02) 1px,transparent 1px);
+  background-size:55px 55px;mask-image:radial-gradient(ellipse 90% 80% at 50% 30%,black,transparent)}
+.scanlines-global{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.012) 2px,rgba(0,0,0,0.012) 4px)}
+
+/* ── JARVIS STATUS BAR ── */
+#jarvis-statusbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:rgba(2,12,24,0.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,229,255,0.1);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 20px;height:32px;
+}
+.sb-left,.sb-right{display:flex;align-items:center;gap:16px}
+.sb-item{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:rgba(0,229,255,0.35);display:flex;align-items:center;gap:5px}
+.sb-item .dot{width:4px;height:4px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.5s ease infinite}
+.sb-item .dot.amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.sb-center{font-family:var(--font-hud);font-size:9px;letter-spacing:4px;color:rgba(0,229,255,0.5);text-align:center}
+#sb-stream{animation:stream-scroll 3s linear infinite}
+@keyframes stream-scroll{0%{opacity:0.3}50%{opacity:0.7}100%{opacity:0.3}}
+
+/* ── TOPBAR ── */
+#topbar{
+  position:sticky;top:32px;z-index:900;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 36px;background:rgba(2,12,24,0.9);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.back-btn{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,229,255,0.5);
+  text-decoration:none;border:1px solid var(--border);padding:6px 12px;border-radius:3px;transition:all 0.3s}
+.back-btn:hover{color:var(--cyan);border-color:var(--cyan);box-shadow:var(--glow)}
+.topbar-title{font-family:var(--font-hud);font-size:15px;font-weight:900;letter-spacing:4px;color:var(--cyan);text-shadow:var(--glow)}
+.topbar-right{display:flex;align-items:center;gap:20px}
+#live-clock{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,229,255,0.4)}
+
+/* Galaxy mode button */
+#galaxy-btn{
+  font-family:var(--font-hud);font-size:9px;letter-spacing:2px;
+  padding:6px 14px;border:1px solid rgba(124,77,255,0.5);border-radius:3px;
+  color:rgba(124,77,255,0.7);background:rgba(124,77,255,0.06);cursor:pointer;
+  transition:all 0.3s;text-transform:uppercase;
+}
+#galaxy-btn:hover{border-color:#7c4dff;color:#fff;box-shadow:0 0 16px rgba(124,77,255,0.4)}
+
+/* ── PAGE WRAPPER ── */
+#page-wrapper{opacity:0;transform:translateY(12px);transition:opacity 0.7s ease,transform 0.7s ease;
+  position:relative;z-index:1;min-height:100vh;margin-top:32px}
+#page-wrapper.loaded{opacity:1;transform:translateY(0)}
+
+/* ── LAYOUT ── */
+.hub-layout{display:flex;min-height:calc(100vh - 92px)}
+
+/* ── LEFT HUD NAV ── */
+#hud-nav{
+  width:220px;flex-shrink:0;background:rgba(0,229,255,0.02);
+  border-right:1px solid var(--border);padding:24px 0;
+  position:sticky;top:92px;height:calc(100vh - 92px);overflow-y:auto;
+}
+.nav-section-label{font-family:var(--font-mono);font-size:8px;letter-spacing:4px;
+  color:rgba(0,229,255,0.25);text-transform:uppercase;padding:0 20px;margin-bottom:8px;margin-top:16px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:2px;color:rgba(0,229,255,0.45);
+  text-transform:uppercase;border-left:2px solid transparent;transition:all 0.25s}
+.nav-item:hover,.nav-item.active{color:var(--cyan);border-left-color:var(--cyan);
+  background:rgba(0,229,255,0.06);text-shadow:var(--glow)}
+.nav-item .nav-icon{font-size:13px;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:8px;padding:2px 5px;
+  border:1px solid rgba(0,229,255,0.2);border-radius:2px;color:rgba(0,229,255,0.4)}
+.nav-item .soon-badge{margin-left:auto;font-size:8px;padding:2px 5px;
+  border:1px solid rgba(255,171,0,0.3);border-radius:2px;color:rgba(255,171,0,0.5)}
+
+/* ── MAIN CONTENT ── */
+#main-content{flex:1;padding:32px 40px 80px;overflow-y:auto}
+.cat-header{margin-bottom:28px}
+.cat-label{font-family:var(--font-mono);font-size:10px;letter-spacing:4px;
+  color:rgba(0,229,255,0.4);text-transform:uppercase;margin-bottom:6px}
+.cat-title{font-family:var(--font-hud);font-size:clamp(18px,3vw,28px);font-weight:700;
+  color:var(--cyan);text-shadow:var(--glow);margin-bottom:8px}
+.cat-title::after{content:'';display:block;width:48px;height:2px;
+  background:var(--cyan);margin-top:8px;box-shadow:var(--glow)}
+.cat-desc{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;max-width:600px}
+
+/* ════════════════════════════════
+   HOLOGRAPHIC NOTE CARDS
+════════════════════════════════ */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;margin-bottom:50px;perspective:1000px}
+
+.note-card{
+  background:rgba(0,12,28,0.85);
+  border:1px solid rgba(0,229,255,0.15);
+  border-radius:8px;padding:0;
+  position:relative;overflow:hidden;cursor:pointer;
+  transform-style:preserve-3d;
+  transition:border-color 0.3s,box-shadow 0.3s;
+  will-change:transform;
+}
+
+/* Holographic grid bg inside card */
+.note-card .holo-grid{
+  position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,229,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.04) 1px,transparent 1px);
+  background-size:20px 20px;
+  animation:grid-scroll 8s linear infinite;
+  opacity:0.5;
+}
+@keyframes grid-scroll{0%{background-position:0 0}100%{background-position:0 20px}}
+
+/* Energy border pulse */
+.note-card .energy-border{
+  position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:8px;
+  box-shadow:inset 0 0 0 1px rgba(0,229,255,0);
+  animation:energy-pulse 4s ease infinite;
+}
+@keyframes energy-pulse{
+  0%,100%{box-shadow:inset 0 0 0 1px rgba(0,229,255,0),inset 0 0 12px rgba(0,229,255,0)}
+  50%{box-shadow:inset 0 0 0 1px rgba(0,229,255,0.3),inset 0 0 16px rgba(0,229,255,0.08)}
+}
+
+/* Top glow line */
+.note-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;z-index:2;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0.6;
+}
+/* Scanlines inside card */
+.note-card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.018) 3px,rgba(0,229,255,0.018) 4px);
+}
+
+.note-card:hover{border-color:rgba(0,229,255,0.5);box-shadow:0 0 30px rgba(0,229,255,0.15),0 12px 40px rgba(0,0,0,0.5)}
+.note-card.locked::before{background:linear-gradient(90deg,transparent,rgba(255,171,0,0.5),transparent)}
+.note-card.locked{border-color:rgba(255,171,0,0.15)}
+.note-card.locked:hover{border-color:rgba(255,171,0,0.5);box-shadow:0 0 30px rgba(255,171,0,0.12)}
+.note-card.coming-soon{opacity:0.45;cursor:default}
+.note-card.coming-soon:hover{transform:none!important;box-shadow:none}
+
+.card-inner{position:relative;z-index:3;padding:22px}
+
+.card-tag{display:inline-block;font-family:var(--font-mono);font-size:8px;letter-spacing:2px;
+  padding:3px 8px;border:1px solid rgba(0,229,255,0.2);border-radius:2px;
+  color:rgba(0,229,255,0.5);text-transform:uppercase;margin-bottom:12px}
+.card-tag.amber{border-color:rgba(255,171,0,0.3);color:rgba(255,171,0,0.6)}
+.card-tag.green{border-color:rgba(0,230,118,0.3);color:rgba(0,230,118,0.6)}
+.card-tag.soon{border-color:rgba(255,255,255,0.08);color:rgba(255,255,255,0.2)}
+
+/* Floating icon layer */
+.card-icon-wrap{position:relative;margin-bottom:10px}
+.card-icon{font-size:28px;display:block;filter:drop-shadow(0 0 8px rgba(0,229,255,0.4));
+  animation:icon-float 4s ease infinite}
+@keyframes icon-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+.card-title{font-family:var(--font-hud);font-size:14px;color:var(--cyan);letter-spacing:1px;margin-bottom:6px;
+  text-shadow:0 0 10px rgba(0,229,255,0.3)}
+.note-card.locked .card-title{color:var(--amber);text-shadow:0 0 10px rgba(255,171,0,0.3)}
+.card-preview{font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-bottom:14px}
+
+/* Mini formula preview inside card */
+.card-formula{
+  font-family:var(--font-mono);font-size:10px;color:rgba(0,229,255,0.5);
+  background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.1);
+  border-radius:3px;padding:6px 10px;margin-bottom:14px;
+  letter-spacing:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+
+/* Mini sparkline canvas in card */
+.card-sparkline{width:100%;height:36px;margin-bottom:12px;opacity:0.6}
+
+.card-footer{display:flex;align-items:center;justify-content:space-between}
+.card-open-btn{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;
+  padding:5px 12px;border:1px solid var(--border);border-radius:3px;
+  color:rgba(0,229,255,0.6);background:transparent;cursor:pointer;transition:all 0.3s;text-transform:uppercase}
+.card-open-btn:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:var(--glow)}
+.note-card.locked .card-open-btn{border-color:rgba(255,171,0,0.3);color:rgba(255,171,0,0.6)}
+.note-card.locked .card-open-btn:hover{border-color:var(--amber);color:var(--amber)}
+.coming-label{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.18);padding:5px 0}
+
+/* Cursor proximity glow overlay */
+.card-glow-overlay{position:absolute;inset:0;pointer-events:none;z-index:0;border-radius:8px;
+  background:radial-gradient(circle at 50% 50%,rgba(0,229,255,0.06) 0%,transparent 70%);
+  opacity:0;transition:opacity 0.3s}
+
+/* ════════════════════════════════
+   CONNECTION LINES CANVAS
+════════════════════════════════ */
+#connection-canvas{position:absolute;inset:0;pointer-events:none;z-index:2}
+
+/* ════════════════════════════════
+   KNOWLEDGE ORB
+════════════════════════════════ */
+#orb-section{
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 0 40px;position:relative;
+}
+#orb-canvas{border-radius:50%;cursor:crosshair}
+.orb-label{font-family:var(--font-mono);font-size:9px;letter-spacing:3px;
+  color:rgba(0,229,255,0.35);text-align:center;margin-top:12px}
+
+/* ════════════════════════════════
+   SCAN MODAL
+════════════════════════════════ */
+#modal-overlay{display:none;position:fixed;inset:0;z-index:9000;
+  background:rgba(2,12,24,0.96);backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;padding:20px}
+#modal-overlay.open{display:flex}
+#note-modal{
+  background:rgba(0,12,28,0.98);border:1px solid var(--border);
+  border-radius:8px;max-width:860px;width:100%;max-height:86vh;
+  overflow:hidden;position:relative;display:flex;flex-direction:column;
+}
+#note-modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);z-index:10}
+
+/* Scan line animation on modal open */
+#scan-sweep{
+  position:absolute;left:0;right:0;height:2px;z-index:20;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,0.8),transparent);
+  box-shadow:0 0 20px rgba(0,229,255,0.5);
+  top:0;opacity:0;
+}
+#scan-sweep.scanning{animation:sweep-down 0.8s ease forwards}
+@keyframes sweep-down{0%{top:0;opacity:1}100%{top:100%;opacity:0}}
+
+/* Boot terminal in modal header */
+.modal-terminal{
+  padding:14px 24px;border-bottom:1px solid var(--border);
+  font-family:var(--font-mono);font-size:10px;letter-spacing:2px;
+  color:rgba(0,229,255,0.4);background:rgba(0,229,255,0.02);
+  display:flex;flex-direction:column;gap:3px;
+}
+.terminal-line{opacity:0;transform:translateX(-8px);transition:opacity 0.3s,transform 0.3s}
+.terminal-line.visible{opacity:1;transform:translateX(0)}
+
+.modal-header{
+  padding:16px 24px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+}
+.modal-title{font-family:var(--font-hud);font-size:17px;color:var(--cyan);text-shadow:var(--glow)}
+.modal-close{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;
+  color:rgba(0,229,255,0.5);cursor:pointer;padding:5px 10px;
+  border:1px solid var(--border);border-radius:3px;background:transparent;transition:all 0.3s;flex-shrink:0}
+.modal-close:hover{color:var(--cyan);border-color:var(--cyan)}
+.modal-body{padding:24px;overflow-y:auto;flex:1}
+.modal-body h3{font-family:var(--font-hud);font-size:13px;color:var(--cyan);letter-spacing:2px;margin:20px 0 10px}
+.modal-body h3:first-child{margin-top:0}
+.modal-body p{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.8;margin-bottom:10px}
+.modal-body ul{padding-left:18px;margin-bottom:10px}
+.modal-body li{font-size:13px;color:rgba(255,255,255,0.6);line-height:2}
+.formula-box{background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2);
+  border-radius:4px;padding:14px 18px;margin:10px 0;
+  font-family:var(--font-mono);font-size:12px;color:var(--cyan);letter-spacing:1px;line-height:2}
+.formula-box .eq{display:block;font-size:14px;text-shadow:var(--glow);margin:3px 0}
+.key-point{background:rgba(0,230,118,0.06);border-left:3px solid var(--green);
+  padding:10px 14px;margin:10px 0;border-radius:0 4px 4px 0;
+  font-size:13px;color:rgba(0,230,118,0.8);line-height:1.8}
+.warn-point{background:rgba(255,171,0,0.06);border-left:3px solid var(--amber);
+  padding:10px 14px;margin:10px 0;border-radius:0 4px 4px 0;
+  font-size:13px;color:rgba(255,171,0,0.8);line-height:1.8}
+.data-table{width:100%;border-collapse:collapse;margin:14px 0;font-family:var(--font-mono);font-size:11px}
+.data-table th{background:rgba(0,229,255,0.08);border:1px solid var(--border);
+  padding:7px 10px;color:var(--cyan);letter-spacing:1px;text-align:left}
+.data-table td{border:1px solid rgba(0,229,255,0.08);padding:7px 10px;color:rgba(255,255,255,0.6)}
+.data-table tr:hover td{background:rgba(0,229,255,0.04)}
+code{font-family:var(--font-mono);font-size:11px;background:rgba(0,229,255,0.08);
+  padding:2px 6px;border-radius:2px;color:var(--cyan)}
+
+/* Type-in effect */
+.type-in{opacity:0}
+.type-in.done{opacity:1}
+
+/* ════════════════════════════════
+   LOCK OVERLAY
+════════════════════════════════ */
+#lock-overlay{display:none;position:fixed;inset:0;z-index:9500;
+  background:rgba(2,12,24,0.97);backdrop-filter:blur(16px);
+  align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#lock-overlay.open{display:flex}
+.lock-panel{background:rgba(0,12,28,0.98);border:1px solid rgba(255,171,0,0.3);
+  border-radius:8px;padding:36px 44px;text-align:center;
+  max-width:360px;width:100%;position:relative;animation:modal-in 0.3s ease}
+.lock-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.lock-icon-big{font-size:44px;margin-bottom:14px;display:block}
+.lock-title{font-family:var(--font-hud);font-size:15px;color:var(--amber);
+  letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 20px rgba(255,171,0,0.5)}
+.lock-subtitle{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;
+  color:rgba(255,171,0,0.4);margin-bottom:22px}
+#lock-input{width:100%;background:rgba(255,171,0,0.04);border:1px solid rgba(255,171,0,0.3);
+  border-radius:3px;color:var(--amber);font-family:var(--font-mono);font-size:16px;
+  padding:11px 14px;outline:none;text-align:center;letter-spacing:6px;margin-bottom:14px}
+#lock-input:focus{border-color:var(--amber);box-shadow:0 0 14px rgba(255,171,0,0.3)}
+#lock-submit{width:100%;background:transparent;border:1px solid var(--amber);color:var(--amber);
+  font-family:var(--font-hud);font-size:11px;letter-spacing:3px;padding:11px;
+  cursor:pointer;border-radius:3px;text-transform:uppercase;transition:all 0.3s;margin-bottom:10px}
+#lock-submit:hover{background:var(--amber);color:var(--bg)}
+#lock-cancel{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;
+  color:rgba(255,255,255,0.2);cursor:pointer;background:none;border:none;transition:color 0.2s}
+#lock-cancel:hover{color:rgba(255,255,255,0.4)}
+#lock-error{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;
+  color:var(--red);margin-top:6px;opacity:0;transition:opacity 0.3s;min-height:18px}
+#lock-error.show{opacity:1}
+.lock-denied{animation:shake 0.4s ease;border-color:var(--red)!important}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ════════════════════════════════
+   JARVIS ASSISTANT BUBBLE
+════════════════════════════════ */
+#jarvis-bubble{
+  position:fixed;bottom:24px;right:24px;z-index:800;
+  width:200px;cursor:pointer;
+}
+.bubble-inner{
+  background:rgba(0,12,28,0.95);border:1px solid rgba(0,229,255,0.2);
+  border-radius:8px;padding:12px 14px;position:relative;
+  transition:border-color 0.3s,box-shadow 0.3s;
+}
+.bubble-inner::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.bubble-inner:hover{border-color:rgba(0,229,255,0.5);box-shadow:var(--glow)}
+.bubble-header{font-family:var(--font-hud);font-size:10px;letter-spacing:2px;
+  color:var(--cyan);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.bubble-header .bdot{width:5px;height:5px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px var(--green);animation:pulse 1.5s ease infinite;flex-shrink:0}
+#bubble-text{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;
+  color:rgba(0,229,255,0.5);line-height:1.7;min-height:32px}
+
+/* ════════════════════════════════
+   GALAXY MODE
+════════════════════════════════ */
+#galaxy-overlay{
+  display:none;position:fixed;inset:0;z-index:8000;
+  background:rgba(2,8,20,0.97);
+  align-items:center;justify-content:center;flex-direction:column;
+}
+#galaxy-overlay.open{display:flex}
+#galaxy-canvas{cursor:crosshair}
+.galaxy-exit{position:absolute;top:52px;right:24px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:2px;
+  color:rgba(0,229,255,0.5);cursor:pointer;padding:8px 16px;
+  border:1px solid var(--border);border-radius:3px;background:transparent;transition:all 0.3s}
+.galaxy-exit:hover{color:var(--cyan);border-color:var(--cyan)}
+.galaxy-label{position:absolute;bottom:24px;font-family:var(--font-mono);
+  font-size:9px;letter-spacing:3px;color:rgba(0,229,255,0.25);text-align:center}
+
+/* ════════════════════════════════
+   AI GENERATOR
+════════════════════════════════ */
+.ai-generator{background:rgba(124,77,255,0.05);border:1px solid rgba(124,77,255,0.2);
+  border-radius:8px;padding:28px;margin-bottom:50px;position:relative}
+.ai-generator::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,#7c4dff,transparent)}
+.ai-gen-title{font-family:var(--font-hud);font-size:16px;color:#7c4dff;
+  text-shadow:0 0 20px rgba(124,77,255,0.5);margin-bottom:5px}
+.ai-gen-sub{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;
+  color:rgba(124,77,255,0.4);margin-bottom:18px}
+#note-input-area{width:100%;min-height:120px;background:rgba(124,77,255,0.04);
+  border:1px solid rgba(124,77,255,0.2);border-radius:4px;
+  color:rgba(255,255,255,0.75);font-family:var(--font-mono);font-size:12px;
+  padding:12px 14px;outline:none;resize:vertical;margin-bottom:14px;line-height:1.7}
+#note-input-area:focus{border-color:#7c4dff}
+#gen-btn{background:transparent;border:1px solid #7c4dff;color:#7c4dff;
+  font-family:var(--font-hud);font-size:11px;letter-spacing:3px;
+  padding:10px 24px;cursor:pointer;border-radius:3px;text-transform:uppercase;transition:all 0.3s}
+#gen-btn:hover{background:#7c4dff;color:#fff;box-shadow:0 0 20px rgba(124,77,255,0.4)}
+#gen-output{display:none;margin-top:18px;background:rgba(124,77,255,0.08);
+  border:1px solid rgba(124,77,255,0.2);border-radius:4px;padding:14px 18px}
+#gen-output .gen-label{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;
+  color:rgba(124,77,255,0.5);margin-bottom:8px;text-transform:uppercase}
+#gen-output .gen-text{font-size:13px;color:rgba(255,255,255,0.7);line-height:1.8;white-space:pre-wrap}
+
+.pulse-dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--cyan);box-shadow:var(--glow);animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+@keyframes modal-in{from{opacity:0;transform:scale(0.94) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+footer{text-align:center;padding:28px 20px;font-family:var(--font-mono);font-size:10px;
+  letter-spacing:2px;color:rgba(0,229,255,0.2);border-top:1px solid var(--border);position:relative;z-index:1}
+
+@media(max-width:768px){
+  .hub-layout{flex-direction:column}
+  #hud-nav{width:100%;height:auto;position:relative;top:auto;display:flex;flex-wrap:wrap;
+    padding:6px;border-right:none;border-bottom:1px solid var(--border)}
+  .nav-item{flex:1;min-width:110px;padding:8px 10px;font-size:9px}
+  .nav-section-label{display:none}
+  #main-content{padding:20px 14px 50px}
+  #jarvis-bubble{display:none}
+}
+@media(max-width:600px){.notes-grid{grid-template-columns:1fr}#topbar{padding:10px 14px}}
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="scanlines-global"></div>
+<canvas id="bg-canvas"></canvas>
+
+<!-- JARVIS STATUS BAR -->
+<div id="jarvis-statusbar">
+  <div class="sb-left">
+    <div class="sb-item"><span class="dot"></span>NEURAL CORE ONLINE</div>
+    <div class="sb-item"><span class="dot"></span>KNOWLEDGE BASE LOADED</div>
+    <div class="sb-item"><span class="dot amber"></span>ACTIVE MODULES: <span id="sb-modules">4</span></div>
+  </div>
+  <div class="sb-center"><span id="sb-stream">// DATA STREAM ACTIVE // ECE-NOTES-v2.0 // DJ-ENGINEER //</span></div>
+  <div class="sb-right">
+    <div class="sb-item">USER: DJ</div>
+    <div class="sb-item" id="sb-time"></div>
+  </div>
+</div>
+
+<!-- LOCK OVERLAY -->
+<div id="lock-overlay">
+  <div class="lock-panel" id="lock-panel">
+    <span class="lock-icon-big">🔐</span>
+    <div class="lock-title">CLASSIFIED ACCESS</div>
+    <div class="lock-subtitle">ENTER ACCESS CODE TO DECRYPT</div>
+    <input type="password" id="lock-input" placeholder="· · · · · ·" maxlength="20"/>
+    <button id="lock-submit" onclick="submitLock()">AUTHENTICATE →</button>
+    <button id="lock-cancel" onclick="closeLock()">CANCEL // RETURN</button>
+    <div id="lock-error">⚠ ACCESS DENIED — INVALID CODE</div>
+  </div>
+</div>
+
+<!-- NOTE MODAL (with scan effect) -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="note-modal">
+    <div id="scan-sweep"></div>
+    <div class="modal-terminal" id="modal-terminal">
+      <div class="terminal-line" id="tl1">> ACCESSING KNOWLEDGE DATABASE...</div>
+      <div class="terminal-line" id="tl2">> LOADING FORMULA STRUCTURE...</div>
+      <div class="terminal-line" id="tl3">> RENDERING DATA PANEL...</div>
+    </div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">NOTE TITLE</div>
+      <button class="modal-close" onclick="closeModal()">✕ CLOSE</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- GALAXY MODE -->
+<div id="galaxy-overlay">
+  <button class="galaxy-exit" onclick="closeGalaxy()">✕ EXIT GALAXY MODE</button>
+  <canvas id="galaxy-canvas"></canvas>
+  <div class="galaxy-label">MOVE MOUSE TO NAVIGATE · CLICK A PLANET TO OPEN NOTE</div>
+</div>
+
+<!-- JARVIS ASSISTANT BUBBLE -->
+<div id="jarvis-bubble" onclick="bubbleClick()">
+  <div class="bubble-inner">
+    <div class="bubble-header"><span class="bdot"></span>J.A.R.V.I.S</div>
+    <div id="bubble-text">> Ready.<br>> Select a module to explore.</div>
+  </div>
+</div>
+
+<div id="page-wrapper">
+  <nav id="topbar">
+    <div class="topbar-left">
+      <a href="dashboard.html" class="back-btn">← DASHBOARD</a>
+      <div class="topbar-title">NOTES HUB</div>
+    </div>
+    <div class="topbar-right">
+      <button id="galaxy-btn" onclick="openGalaxy()">⬡ KNOWLEDGE GALAXY</button>
+      <div id="live-clock"></div>
+    </div>
+  </nav>
+
+  <div class="hub-layout">
+    <nav id="hud-nav">
+      <div class="nav-section-label">// MODULES</div>
+      <div class="nav-item active" onclick="showCategory('transforms')" data-cat="transforms"><span class="nav-icon">📡</span>Transforms<span class="nav-badge">3</span></div>
+      <div class="nav-item" onclick="showCategory('ece')" data-cat="ece"><span class="nav-icon">⚡</span>ECE Circuits<span class="nav-badge">4</span></div>
+      <div class="nav-item" onclick="showCategory('olfaction')" data-cat="olfaction"><span class="nav-icon">👃</span>Edge-Olfaction<span class="nav-badge">5</span></div>
+      <div class="nav-item" onclick="showCategory('polity')" data-cat="polity"><span class="nav-icon">🇮🇳</span>Polity Notes<span class="nav-badge">2</span></div>
+      <div class="nav-section-label">// COMING SOON</div>
+      <div class="nav-item" style="opacity:0.4;cursor:default"><span class="nav-icon">📐</span>Signals &amp; Systems<span class="soon-badge">SOON</span></div>
+      <div class="nav-item" style="opacity:0.4;cursor:default"><span class="nav-icon">🔬</span>Analog Electronics<span class="soon-badge">SOON</span></div>
+      <div class="nav-item" style="opacity:0.4;cursor:default"><span class="nav-icon">💻</span>Digital Logic<span class="soon-badge">SOON</span></div>
+      <div class="nav-section-label">// TOOLS</div>
+      <div class="nav-item" onclick="showCategory('ai-gen')" data-cat="ai-gen"><span class="nav-icon">🤖</span>AI Generator<span class="nav-badge">β</span></div>
+    </nav>
+
+    <div id="main-content">
+      <!-- ORB CENTERPIECE -->
+      <div id="orb-section">
+        <canvas id="orb-canvas" width="280" height="280"></canvas>
+        <div class="orb-label">// KNOWLEDGE CORE — HOVER CARDS TO CONNECT //</div>
+      </div>
+
+      <!-- TRANSFORMS -->
+      <div id="cat-transforms" class="category-section" style="position:relative">
+        <canvas id="connection-canvas" style="position:absolute;inset:0;pointer-events:none;z-index:2;width:100%;height:100%"></canvas>
+        <div class="cat-header">
+          <div class="cat-label">// MODULE_TRANSFORMS</div>
+          <div class="cat-title">MATHEMATICAL TRANSFORMS</div>
+          <p class="cat-desc">Core transform theory for signal processing and control systems.</p>
+        </div>
+        <div class="notes-grid" id="grid-transforms">
+          <div class="note-card" data-id="laplace" data-connects="ztransform,transform-pairs">
+            <div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon">📈</span></div>
+              <span class="card-tag">CONTINUOUS-TIME</span>
+              <div class="card-title">LAPLACE TRANSFORM</div>
+              <div class="card-formula">𝓛{x(t)} = ∫₀^∞ x(t)·e^(-st) dt</div>
+              <canvas class="card-sparkline" data-type="laplace"></canvas>
+              <div class="card-preview">Converts differential equations → algebraic. Core tool for control systems and circuit analysis in the s-domain.</div>
+              <div class="card-footer"><button class="card-open-btn" onclick="openNote('laplace')">OPEN NOTE</button></div>
+            </div>
+          </div>
+          <div class="note-card" data-id="ztransform" data-connects="laplace,transform-pairs">
+            <div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon">📊</span></div>
+              <span class="card-tag">DISCRETE-TIME</span>
+              <div class="card-title">Z-TRANSFORM</div>
+              <div class="card-formula">𝒵{x[n]} = Σ x[n]·z^(-n)</div>
+              <canvas class="card-sparkline" data-type="ztransform"></canvas>
+              <div class="card-preview">Discrete-time equivalent of Laplace. Digital filter design, DSP, discrete-time control systems.</div>
+              <div class="card-footer"><button class="card-open-btn" onclick="openNote('ztransform')">OPEN NOTE</button></div>
+            </div>
+          </div>
+          <div class="note-card" data-id="transform-pairs">
+            <div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon">🔗</span></div>
+              <span class="card-tag">REFERENCE TABLE</span>
+              <div class="card-title">TRANSFORM PAIRS &amp; PROPERTIES</div>
+              <div class="card-formula">δ(t)→1 | u(t)→1/s | e^(-at)→1/(s+a)</div>
+              <canvas class="card-sparkline" data-type="pairs"></canvas>
+              <div class="card-preview">Complete signal-transform pair table. Linearity, time-shift, convolution, differentiation, final value theorem.</div>
+              <div class="card-footer"><button class="card-open-btn" onclick="openNote('transform-pairs')">OPEN NOTE</button></div>
+            </div>
+          </div>
+          <div class="note-card coming-soon">
+            <div class="holo-grid"></div><div class="energy-border"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon" style="opacity:0.3">🌊</span></div>
+              <span class="card-tag soon">COMING SOON</span>
+              <div class="card-title" style="color:rgba(255,255,255,0.18)">FOURIER TRANSFORM</div>
+              <div class="card-preview" style="opacity:0.25">DTFT, DFT, FFT. Spectrum analysis and frequency domain filtering.</div>
+              <div class="card-footer"><div class="coming-label">NOTES IN PROGRESS...</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ECE CIRCUITS -->
+      <div id="cat-ece" class="category-section" style="display:none;position:relative">
+        <canvas id="connection-canvas-ece" style="position:absolute;inset:0;pointer-events:none;z-index:2;width:100%;height:100%"></canvas>
+        <div class="cat-header">
+          <div class="cat-label">// MODULE_ECE_CIRCUITS</div>
+          <div class="cat-title">ECE CIRCUIT NOTES</div>
+          <p class="cat-desc">Transistor biasing, wave-shaping circuits, and core analog electronics.</p>
+        </div>
+        <div class="notes-grid" id="grid-ece">
+          <div class="note-card" data-id="transistor-biasing">
+            <div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon">🔌</span></div>
+              <span class="card-tag green">LECTURE 1</span>
+              <div class="card-title">TRANSISTOR BIASING</div>
+              <div class="card-formula">S = ∂IC/∂ICO | S' = ∂IC/∂VBE</div>
+              <canvas class="card-sparkline" data-type="bias"></canvas>
+              <div class="card-preview">Q-point, stability factors S S' S'', fixed bias, VD bias. Thermal runaway. Bias compensation.</div>
+              <div class="card-footer"><button class="card-open-btn" onclick="openNote('transistor-biasing')">OPEN NOTE</button></div>
+            </div>
+          </div>
+          <div class="note-card locked" data-id="clippers-clampers">
+            <div class="holo-grid"></div><div class="energy-border" style="animation-name:energy-pulse-amber"></div><div class="card-glow-overlay"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon">✂️</span></div>
+              <span class="card-tag amber">LECTURE 2 // LOCKED</span>
+              <div class="card-title">CLIPPERS &amp; CLAMPERS</div>
+              <div class="card-formula" style="color:rgba(255,171,0,0.5)">Series/Biased/Combination Clippers</div>
+              <div class="card-preview">Positive/negative/biased/combination clippers. Positive/negative/biased clampers. Applications.</div>
+              <div class="card-footer"><button class="card-open-btn" onclick="openLock('clippers-clampers')">🔐 UNLOCK</button><span style="font-size:14px;opacity:0.4">🔒</span></div>
+            </div>
+          </div>
+          <div class="note-card coming-soon">
+            <div class="holo-grid"></div><div class="energy-border"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon" style="opacity:0.3">📐</span></div>
+              <span class="card-tag soon">COMING SOON</span>
+              <div class="card-title" style="color:rgba(255,255,255,0.18)">FILTERS</div>
+              <div class="card-preview" style="opacity:0.25">Low-pass, high-pass, band-pass RC filters. Frequency response analysis.</div>
+              <div class="card-footer"><div class="coming-label">NOTES IN PROGRESS...</div></div>
+            </div>
+          </div>
+          <div class="note-card coming-soon">
+            <div class="holo-grid"></div><div class="energy-border"></div>
+            <div class="card-inner">
+              <div class="card-icon-wrap"><span class="card-icon" style="opacity:0.3">⚙️</span></div>
+              <span class="card-tag soon">COMING SOON</span>
+              <div class="card-title" style="color:rgba(255,255,255,0.18)">AMPLIFIER CIRCUITS</div>
+              <div class="card-preview" style="opacity:0.25">CE, CB, CC configs. Small signal models. Gain equations.</div>
+              <div class="card-footer"><div class="coming-label">NOTES IN PROGRESS...</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDGE OLFACTION -->
+      <div id="cat-olfaction" class="category-section" style="display:none">
+        <div class="cat-header">
+          <div class="cat-label">// MODULE_EDGE_OLFACTION_LOG</div>
+          <div class="cat-title">EDGE-OLFACTION TECHNICAL LOG</div>
+          <p class="cat-desc">Live project documentation. Sensor calibration, ECE concepts, viva prep, demo protocols.</p>
+        </div>
+        <div class="notes-grid">
+          <div class="note-card"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon">🧠</span></div><span class="card-tag green">CORE CONCEPT</span><div class="card-title">SYSTEM ARCHITECTURE</div><div class="card-formula">Arduino + RPi4B Dual-Tier</div><canvas class="card-sparkline" data-type="sensor"></canvas><div class="card-preview">Dual-tier hybrid. Arduino ADC + Pi edge analytics. IoT-Sentry. 5 differentiators.</div><div class="card-footer"><button class="card-open-btn" onclick="openNote('olfaction-overview')">OPEN NOTE</button></div></div></div>
+          <div class="note-card"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon">🌬️</span></div><span class="card-tag">PHYSICS</span><div class="card-title">DHT11 BREATH SIMULATION</div><div class="card-formula">Thermal Inertia + Arrhenius</div><canvas class="card-sparkline" data-type="breath"></canvas><div class="card-preview">Step input of heat+moisture. Thermal inertia, vapor adsorption, Arrhenius correction.</div><div class="card-footer"><button class="card-open-btn" onclick="openNote('dht11-physics')">OPEN NOTE</button></div></div></div>
+          <div class="note-card"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon">🎓</span></div><span class="card-tag amber">VIVA PREP</span><div class="card-title">VIVA: WHAT MAKES IT SPECIAL?</div><div class="card-formula">5 Key Differentiators</div><div class="card-preview">Arrhenius analytics, biochemical array, IoT-sentry, empirical logging. Opening &amp; closing.</div><div class="card-footer"><button class="card-open-btn" onclick="openNote('viva-answers')">OPEN NOTE</button></div></div></div>
+          <div class="note-card locked"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon">🧪</span></div><span class="card-tag amber">DEMO // LOCKED</span><div class="card-title">LIVE DEMO FLOW — 5 PHASES</div><div class="card-formula" style="color:rgba(255,171,0,0.5)">Stabilize→Breathe→VOC→PIR→CSV</div><div class="card-preview">Complete 5-phase demo protocol. Breath simulation, VOC surge, security, black box evidence.</div><div class="card-footer"><button class="card-open-btn" onclick="openLock('demo-flow')">🔐 UNLOCK</button><span style="font-size:14px;opacity:0.4">🔒</span></div></div></div>
+          <div class="note-card"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon">📊</span></div><span class="card-tag">REFERENCE</span><div class="card-title">SENSOR REFERENCE TABLE</div><div class="card-formula">MQ·DHT11·PIR·Ultrasonic</div><canvas class="card-sparkline" data-type="sensor2"></canvas><div class="card-preview">Working principles, ECE concepts, ADC formula, plotter color codes, MQ physics.</div><div class="card-footer"><button class="card-open-btn" onclick="openNote('sensor-table')">OPEN NOTE</button></div></div></div>
+          <div class="note-card coming-soon"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon" style="opacity:0.3">📁</span></div><span class="card-tag soon">COMING SOON</span><div class="card-title" style="color:rgba(255,255,255,0.18)">CSV LOG ANALYSIS</div><div class="card-preview" style="opacity:0.25">analyze_log.py output. Khardaha field data. Humidity offset calibration.</div><div class="card-footer"><div class="coming-label">NOTES IN PROGRESS...</div></div></div></div>
+        </div>
+      </div>
+
+      <!-- POLITY -->
+      <div id="cat-polity" class="category-section" style="display:none">
+        <div class="cat-header">
+          <div class="cat-label">// MODULE_POLITY</div>
+          <div class="cat-title">INDIAN POLITY NOTES</div>
+          <p class="cat-desc">Constitutional law, DPSP, Fundamental Duties — exam-ready structured notes.</p>
+        </div>
+        <div class="notes-grid">
+          <div class="note-card"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon">🇮🇳</span></div><span class="card-tag">THE UNION</span><div class="card-title">THE EXECUTIVE — PRESIDENT, VP, PM</div><div class="card-formula">Art. 52-78 | Impeachment: 2/3 majority</div><div class="card-preview">President election, impeachment 5 steps, pardoning powers. VP as RS Chairman. CoM collective responsibility.</div><div class="card-footer"><button class="card-open-btn" onclick="openNote('polity-executive')">OPEN NOTE</button></div></div></div>
+          <div class="note-card"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-glow-overlay"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon">⚖️</span></div><span class="card-tag">PART IV</span><div class="card-title">DPSP &amp; FUNDAMENTAL DUTIES</div><div class="card-formula">Art. 36-51A | 11 Fundamental Duties</div><div class="card-preview">All Directive Principles Art. 36-51. 11 Fundamental Duties Art. 51A. Quick memory cues.</div><div class="card-footer"><button class="card-open-btn" onclick="openNote('polity-dpsp')">OPEN NOTE</button></div></div></div>
+          <div class="note-card coming-soon"><div class="holo-grid"></div><div class="energy-border"></div><div class="card-inner"><div class="card-icon-wrap"><span class="card-icon" style="opacity:0.3">🏛️</span></div><span class="card-tag soon">COMING SOON</span><div class="card-title" style="color:rgba(255,255,255,0.18)">PARLIAMENT STRUCTURE</div><div class="card-preview" style="opacity:0.25">LS vs RS. Money Bills, Joint Sitting, Sessions, Quorum rules.</div><div class="card-footer"><div class="coming-label">NOTES IN PROGRESS...</div></div></div></div>
+        </div>
+      </div>
+
+      <!-- AI GENERATOR -->
+      <div id="cat-ai-gen" class="category-section" style="display:none">
+        <div class="cat-header">
+          <div class="cat-label">// MODULE_AI_KNOWLEDGE_VISUALIZER</div>
+          <div class="cat-title">AI NOTE-TO-VIDEO GENERATOR</div>
+          <p class="cat-desc">Paste your notes and generate a structured video-creation prompt.</p>
+        </div>
+        <div class="ai-generator">
+          <div class="ai-gen-title">⬡ KNOWLEDGE VISUALIZER</div>
+          <div class="ai-gen-sub">PASTE NOTES → GENERATE VIDEO PROMPT → CREATE EDUCATIONAL CONTENT</div>
+          <textarea id="note-input-area" placeholder="Paste your raw notes here..."></textarea>
+          <button id="gen-btn" onclick="generatePrompt()">⬡ GENERATE VIDEO PROMPT</button>
+          <div id="gen-output"><div class="gen-label">// GENERATED PROMPT</div><div class="gen-text" id="gen-text"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><span class="pulse-dot"></span> &nbsp; NOTES HUB v2.0 &nbsp;|&nbsp; DJ © 2026 &nbsp;|&nbsp; KNOWLEDGE IS POWER</footer>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   DATA
+═══════════════════════════════════════ */
+const LOCK_PASSWORD='dj2026';
+let pendingLockedNote=null;
+
+const NOTES={
+laplace:{title:'LAPLACE TRANSFORM',body:`<h3>DEFINITION</h3><p>The Laplace Transform converts a continuous-time signal x(t) into a complex frequency-domain representation X(s). Most powerful tool for analyzing LTI systems.</p><div class="formula-box"><span class="eq">𝓛{x(t)} = X(s) = ∫₀^∞ x(t) · e^(-st) dt</span><span>where s = σ + jω (complex frequency)</span></div><h3>REGION OF CONVERGENCE (ROC)</h3><p>The set of s-values for which X(s) converges. For causal stable system: ROC is right-half plane. Anti-causal: left-half plane.</p><div class="key-point">💡 For stability: ALL poles must lie in the LEFT half of the s-plane (σ &lt; 0).</div><h3>WHEN TO USE</h3><ul><li>Solving differential equations with initial conditions</li><li>Control system stability — Bode plots, root locus</li><li>Finding transfer function H(s) = Y(s)/X(s)</li><li>Circuit analysis with inductors and capacitors</li></ul><div class="warn-point">⚠ Laplace is for CONTINUOUS time only. For discrete-time → use Z-Transform.</div><h3>CIRCUIT ELEMENT TRANSFORMS</h3><div class="formula-box"><span class="eq">Resistor R → R</span><span class="eq">Inductor L → sL (s-domain impedance)</span><span class="eq">Capacitor C → 1/sC (s-domain impedance)</span></div><div class="key-point">💡 Engineering intuition: Poles = natural frequencies. Zeros = signal shaping. Poles in LHP = stable system.</div>`},
+ztransform:{title:'Z-TRANSFORM',body:`<h3>DEFINITION</h3><p>The Z-Transform is the discrete-time equivalent of the Laplace Transform. Converts a sequence x[n] into a complex function X(z).</p><div class="formula-box"><span class="eq">𝒵{x[n]} = X(z) = Σ x[n] · z^(-n)  (n: -∞ to +∞)</span><span>where z = re^(jω)</span></div><h3>STABILITY CONDITION</h3><div class="key-point">💡 Discrete-time system is stable if and only if the ROC includes the unit circle |z| = 1.</div><h3>WHEN TO USE</h3><ul><li>Digital signal processing (DSP) design</li><li>Difference equation analysis</li><li>Digital filter design (IIR, FIR)</li><li>Discrete-time control systems</li></ul><h3>RELATIONSHIP TO LAPLACE</h3><div class="formula-box"><span class="eq">z = e^(sT)  where T = sampling period</span><span>s-plane left half → inside unit circle in z-plane (stable)</span><span>jω axis → unit circle |z|=1</span></div><div class="warn-point">⚠ z^(-1) = one sample delay. Each pole/zero in z-plane affects frequency response on the unit circle.</div>`},
+'transform-pairs':{title:'TRANSFORM PAIRS & PROPERTIES',body:`<h3>COMMON SIGNAL PAIRS</h3><table class="data-table"><tr><th>Signal</th><th>Laplace X(s)</th><th>Z-Transform X(z)</th></tr><tr><td>δ(t)/δ[n] — impulse</td><td>1</td><td>1</td></tr><tr><td>u(t)/u[n] — step</td><td>1/s</td><td>z/(z-1)</td></tr><tr><td>e^(-at)·u(t) / a^n·u[n]</td><td>1/(s+a)</td><td>z/(z-a)</td></tr><tr><td>t·u(t) / n·u[n] — ramp</td><td>1/s²</td><td>z/(z-1)²</td></tr><tr><td>sin(ω₀t)·u(t)</td><td>ω₀/(s²+ω₀²)</td><td>—</td></tr><tr><td>cos(ω₀t)·u(t)</td><td>s/(s²+ω₀²)</td><td>—</td></tr></table><h3>KEY PROPERTIES</h3><div class="formula-box"><span class="eq">Linearity:      a·x₁+b·x₂ ↔ a·X₁+b·X₂</span><span class="eq">Time Shift:     x(t-t₀) ↔ e^(-st₀)·X(s) | x[n-n₀] ↔ z^(-n₀)·X(z)</span><span class="eq">Convolution:    x₁*x₂ ↔ X₁·X₂ (multiplication in freq domain)</span><span class="eq">Differentiation: dx/dt ↔ s·X(s)-x(0⁻)</span><span class="eq">Integration:    ∫x dt ↔ X(s)/s</span></div><div class="key-point">💡 Convolution in time = Multiplication in frequency domain. This is WHY we use transforms.</div><h3>FINAL VALUE THEOREM</h3><div class="formula-box"><span class="eq">lim(t→∞) x(t) = lim(s→0) s·X(s) [Laplace]</span><span class="eq">lim(n→∞) x[n] = lim(z→1) (z-1)·X(z) [Z-Transform]</span></div><div class="warn-point">⚠ FVT only valid if the limit actually EXISTS (system must be stable).</div>`},
+'transistor-biasing':{title:'TRANSISTOR BIASING — LECTURE 1',body:`<h3>DEFINITION</h3><p>Biasing = Establishing the Q-point by connecting the transistor to external sources through resistor networks.</p><div class="key-point">💡 Q-point must be stable against: (a) temperature changes and (b) unit-to-unit β variation.</div><h3>CAUSES OF IC INSTABILITY</h3><ul><li>ICO doubles every 10°C</li><li>VBE decreases ~2.5 mV/°C</li><li>β increases with temperature and varies unit-to-unit</li></ul><h3>THERMAL RUNAWAY</h3><p>Temp ↑ → ICO ↑ → IC ↑ → more heat → ICO rises further → cumulative destruction.</p><div class="warn-point">⚠ Especially dangerous for Germanium transistors where ICO is large at room temperature.</div><h3>THREE STABILITY FACTORS</h3><div class="formula-box"><span class="eq">S  = ∂IC/∂ICO  (minimum = 1, lower = better)</span><span class="eq">S' = ∂IC/∂VBE  (keep ICO &amp; β const)</span><span class="eq">S'' = ∂IC/∂β   (keep ICO &amp; VBE const)</span></div><h3>1. FIXED BIAS</h3><div class="formula-box"><span class="eq">IB = (VCC-VBE)/RB ≈ VCC/RB</span><span class="eq">S = β+1 ← POOR stability</span></div><h3>2. COLLECTOR-TO-BASE BIAS</h3><div class="formula-box"><span class="eq">S = (β+1)/[1+(β·RC)/(RB+RC)] ← Better</span></div><h3>3. VOLTAGE DIVIDER BIAS — BEST</h3><div class="formula-box"><span class="eq">VT = (R2/(R1+R2))×VCC</span><span class="eq">RT = (R1×R2)/(R1+R2)</span><span class="eq">S = (1+β)/(1+β·RE/(RT+RE)) ← Lowest S</span><span class="eq">S' ≈ 1/RE for β>>1</span></div><div class="key-point">💡 CE bypass capacitor: AC short across RE (maintains gain) while RE provides DC Q-point stability.</div><h3>BIAS COMPENSATION</h3><p>Diode (Fig 8.7A): reverse-biased diode across B-E reduces IB when ICO rises. Thermistor (Fig 8.7B): NTC in parallel with RB reduces VBE forward bias as temp rises.</p>`},
+'clippers-clampers':{locked:true,title:'CLIPPERS & CLAMPERS — LECTURE 2',body:`<h3>CLIPPERS</h3><p>Clippers remove a portion of AC signal without distorting the remaining part. Use diodes ± DC bias resistors.</p><table class="data-table"><tr><th>Type</th><th>Clipped</th><th>Diode State</th></tr><tr><td>Positive Clipper</td><td>Positive half → 0</td><td>Forward biased</td></tr><tr><td>Negative Clipper</td><td>Negative half → 0</td><td>Reversed diode</td></tr><tr><td>Biased Clipper</td><td>Above/below Vb</td><td>Conducts past Vb</td></tr><tr><td>Combination</td><td>Both halves</td><td>Two diodes</td></tr></table><div class="key-point">💡 Biased Clipper: Output = input until exceeds Vb, then flat at Vb.</div><h3>CLAMPERS (DC RESTORERS)</h3><p>SHIFT entire waveform up or down, adding DC component. Circuit: Diode + Capacitor + Resistor.</p><ul><li>Positive Clamper: cap charges on -ve half → waveform shifts UP → lowest point = 0V</li><li>Negative Clamper: cap charges on +ve half → waveform shifts DOWN → highest point = 0V</li></ul><table class="data-table"><tr><th>Feature</th><th>Clipper</th><th>Clamper</th></tr><tr><td>Function</td><td>Removes part</td><td>Shifts whole waveform</td></tr><tr><td>Key Component</td><td>Diode+Resistor</td><td>Diode+Cap+Resistor</td></tr></table><div class="warn-point">⚠ Clampers need RC >> T (period) so capacitor holds charge between cycles.</div>`},
+'olfaction-overview':{title:'EDGE-OLFACTION SYSTEM ARCHITECTURE',body:`<h3>OVERVIEW</h3><p>Low-cost edge AI electronic nose for agricultural perishable monitoring. Entirely local — zero cloud costs, no internet dependency.</p><div class="key-point">💡 Final viva line: "This project models, predicts, logs, and responds to biochemical stress in real-time using ECE fundamentals."</div><h3>DUAL-TIER ARCHITECTURE</h3><div class="formula-box"><span class="eq">Tier 1 — Arduino Uno (ATmega328P):</span><span>  10-bit SAR ADC: D = (Vin/Vref) × 1023, Res ≈ 4.88 mV/step</span><span>  UART TX → Pi RX (needs common ground)</span><span class="eq">Tier 2 — Raspberry Pi 4B:</span><span>  Arrhenius-based predictive modeling</span><span>  Flask web server + Telegram Bot + CSV logging</span></div><h3>LOGIC LEVEL SHIFTING</h3><div class="formula-box"><span class="eq">Arduino: 5V | Pi: 3.3V</span><span>1kΩ/2kΩ divider on UART line protects Pi RX</span><span>Without common ground → "No Content Found" UART error</span></div><h3>5 KEY DIFFERENTIATORS</h3><ul><li>1. Dual-tier hybrid architecture</li><li>2. Arrhenius-based predictive analytics (dynamic spoilage risk, Remaining Useful Life)</li><li>3. Biochemical olfaction array (MQ-135/3/4/2 tracking VOC progression)</li><li>4. IoT-Sentry Telegram integration</li><li>5. Empirical CSV data logging (audit-ready black box)</li></ul>`},
+'dht11-physics':{title:'DHT11 BREATH SIMULATION — PHYSICS',body:`<h3>WHAT HAPPENS</h3><p>Breathing on DHT11 = Step Input of heat + moisture simultaneously, simulating a logistics heatwave event.</p><div class="formula-box"><span class="eq">Human breath: ~37°C, ~100% humidity</span><span class="eq">Khardaha room: ~22.6°C, ~61.3% humidity</span><span>Humidity: 61.3% → 80-90% instantly (moisture shock)</span><span>Temperature: climbs steadily, plateaus ~35°C</span></div><h3>WHY READINGS STAY HIGH</h3><ul><li>Thermal Inertia: Thermistor mass — heat dissipates slowly back to ambient</li><li>Vapor Adsorption: Water molecules adsorb to sensor polymer; desorb slowly</li><li>Arrhenius Correction: Temp ↑ → metabolic rate ↑ → Spoilage Risk % increases even if gas stays constant</li></ul><div class="key-point">💡 Viva: "Higher temperature accelerates metabolic decay via Arrhenius kinetics — spoilage risk rises even without gas increase."</div><h3>SIGNAL PROCESSING VIEW</h3><table class="data-table"><tr><th>Physical Event</th><th>ECE Concept</th></tr><tr><td>Breathing on sensor</td><td>Step Input signal</td></tr><tr><td>Sensor response delay</td><td>System Impulse Response</td></tr><tr><td>MQ reading noise</td><td>High-frequency noise</td></tr><tr><td>Python 400ms sampling</td><td>Low-Pass Filter effect</td></tr></table>`},
+'viva-answers':{title:'VIVA ANSWERS — WHAT MAKES IT SPECIAL',body:`<h3>OPENING LINE</h3><div class="key-point">💡 "This is a multi-disciplinary ECE system — senses, models, predicts, logs, and responds to biochemical stress in real-time on a ₹3000 edge platform with zero cloud dependency."</div><h3>DIFFERENTIATOR 1 — DUAL-TIER</h3><p>Arduino: deterministic ADC (guaranteed timing, 10-bit). Pi: analytics + IoT. Division = reliability + intelligence.</p><h3>DIFFERENTIATOR 2 — ARRHENIUS</h3><div class="formula-box"><span class="eq">risk_percent = ((m135 - r0_baseline) / 10.24)</span><span>Temperature correction via Arrhenius equation</span><span>Predicts: Remaining Useful Life in hours</span></div><h3>DIFFERENTIATOR 3 — BIOCHEMICAL ARRAY</h3><p>MQ-135 (CO₂/organics), MQ-3 (alcohol/esters), MQ-4 (methane), MQ-2 (combustibles). Full decay: ripening → fermentation → anaerobic shift.</p><h3>DIFFERENTIATOR 4 — IOT-SENTRY</h3><p>Telegram Bot: spoilage breach alerts, PIR motion alerts, heartbeat. Closed-loop feedback control.</p><h3>DIFFERENTIATOR 5 — DATA LOGGING</h3><p>High-resolution CSV black box. Run analyze_log.py post-demo for full report.</p><div class="warn-point">⚠ PIR looping fix: Turn LEFT orange pot (TIME) fully counter-clockwise → hold time drops to ~3s.</div>`},
+'demo-flow':{locked:true,title:'LIVE DEMO FLOW — 5 PHASES',body:`<h3>PRE-DEMO (CRITICAL)</h3><p>Power ON 5 minutes early. MQ sensors need SnO₂ warm-up. Without it: false elevated readings.</p><h3>PHASE 1 — STABILIZATION</h3><ul><li>Run: <code>python3 final_presentation.py</code></li><li>Calibration Mode → 10s clean air baseline</li><li>Screen: STATUS: OPTIMAL / LOW</li><li>Proves: sensor normalization + Khardaha humidity compensation</li></ul><h3>PHASE 2 — BREATH METABOLIC SIM</h3><ul><li>Exhale on DHT11 and MQ-135</li><li>Temp + Humidity spike on graph</li><li>WOW: Gas stays stable BUT Spoilage Risk % jumps</li><li>Explain: Arrhenius → temperature alone predicts faster decay</li></ul><h3>PHASE 3 — VOC SURGE</h3><ul><li>Place mango/banana under box to trap VOCs</li><li>MQ-135 Blue line climbs over 2-3 min</li><li>Status flips: MODERATE → CRITICAL</li></ul><h3>PHASE 4 — SECURITY</h3><ul><li>Wave hand in front of PIR</li><li>Shows: 🚨 SECURITY ALERT: MOTION DETECTED</li><li>Explains cargo tampering detection</li></ul><h3>PHASE 5 — BLACK BOX</h3><ul><li>Ctrl+C → show CSV file</li><li>Run: <code>python3 ~/edge_olfaction/analyze_log.py</code></li><li>Proves: full Data Acquisition System with audit-ready evidence</li></ul><div class="key-point">💡 Closing: "Physiological profiling, biochemical monitoring, security sentry, audit-ready data — ₹3000 platform, zero cloud."</div>`},
+'sensor-table':{title:'SENSOR REFERENCE TABLE',body:`<h3>WORKING PRINCIPLES</h3><table class="data-table"><tr><th>Sensor</th><th>Working Principle</th><th>ECE Concept</th><th>Output</th></tr><tr><td>MQ-Series</td><td>SnO₂ resistance changes with gas adsorption</td><td>Chemisorption</td><td>Analog voltage</td></tr><tr><td>DHT11</td><td>Polymer capacitor + NTC thermistor</td><td>Capacitance change</td><td>Digital serial</td></tr><tr><td>PIR HC-SR501</td><td>IR differential from moving warm body</td><td>Pyroelectricity</td><td>Digital HIGH/LOW</td></tr><tr><td>HC-SR04</td><td>40kHz pulse echo timing</td><td>Time-of-Flight</td><td>Pulse width</td></tr></table><h3>ARDUINO PLOTTER COLORS</h3><table class="data-table"><tr><th>Value</th><th>Color</th><th>Sensor</th><th>Meaning</th></tr><tr><td>1</td><td>🔵 Blue</td><td>MQ-135</td><td>Gas/CO₂/VOC</td></tr><tr><td>2</td><td>🟠 Orange</td><td>DHT Temp</td><td>Temperature °C</td></tr><tr><td>3</td><td>🟢 Green</td><td>DHT Humidity</td><td>Humidity %</td></tr><tr><td>4</td><td>🟡 Yellow</td><td>PIR</td><td>Motion 0/1</td></tr></table><h3>MQ PHYSICS</h3><div class="formula-box"><span class="eq">SnO₂ + gas → resistance ↓ → Vout ↑</span><span class="eq">D = (Vin/Vref) × 1023 | Resolution ≈ 4.88 mV/step</span><span class="eq">risk% = ((m135 - r0) / 10.24)</span></div><div class="key-point">💡 Thermal offset +5.6°C: MQ heater coil heat dissipates to DHT11. Fix: physical separation or software -5.6°C correction.</div>`},
+'polity-executive':{title:'THE EXECUTIVE — PRESIDENT, VP, PM',body:`<h3>PRESIDENT (Art. 52-62, 72)</h3><p>Executive Head — all government actions in their name. Supreme Commander of Defence Forces.</p><h3>ELECTION (Art. 54-55)</h3><p>Electoral College: Elected MPs (both Houses) + Elected MLAs (all States + Delhi + Puducherry). Method: Proportional representation, single transferable vote, secret ballot.</p><h3>QUALIFICATIONS (Art. 58)</h3><ul><li>✅ Indian Citizen | ✅ 35+ years | ✅ Qualified for LS | ❌ No office of profit</li></ul><h3>IMPEACHMENT — 5 STEPS (Art. 61)</h3><div class="formula-box"><span class="eq">Step 1: Either House initiates</span><span class="eq">Step 2: Notice signed by ≥ 1/4 of TOTAL members of that House</span><span class="eq">Step 3: That House passes with 2/3 SUPER MAJORITY (of TOTAL membership)</span><span class="eq">Step 4: Other House investigates — President can defend</span><span class="eq">Step 5: Other House passes 2/3 → President removed IMMEDIATELY</span></div><div class="warn-point">⚠ 2/3 of TOTAL membership — not just present and voting. Extremely high threshold.</div><h3>VICE-PRESIDENT (Art. 63-69)</h3><ul><li>Ex-officio Chairman of Rajya Sabha (Art. 64)</li><li>Acts as President if vacant (Art. 65)</li><li>Elected by ALL members (elected + nominated) of both Houses</li></ul><h3>COuNCIL OF MINISTERS &amp; PM (Art. 74-75, 78)</h3><ul><li>CoM advice BINDING on President (Art. 74)</li><li>CoM ≤ 15% of total LS seats</li><li>Collectively responsible to LOK SABHA</li><li>PM duty: keep President informed of all government decisions (Art. 78)</li></ul><div class="key-point">💡 AG (Art. 76): Highest law officer, speaks in both Houses but NO voting rights.</div>`},
+'polity-dpsp':{title:'DPSP & FUNDAMENTAL DUTIES (Art. 36-51A)',body:`<h3>NATURE (Art. 37)</h3><p>Non-justiciable — courts cannot enforce them. But fundamental in governance.</p><div class="warn-point">⚠ EXAM: Fundamental Rights = justiciable. DPSPs = non-justiciable.</div><h3>KEY ARTICLES</h3><table class="data-table"><tr><th>Article</th><th>Subject</th><th>Key Point</th></tr><tr><td>38</td><td>Social welfare</td><td>Minimize income inequality</td></tr><tr><td>39</td><td>Policy principles</td><td>Equal pay; protect children; prevent wealth concentration</td></tr><tr><td>39A</td><td>Free legal aid</td><td>Justice not denied due to poverty</td></tr><tr><td>40</td><td>Village Panchayats</td><td>Grassroot democracy</td></tr><tr><td>44</td><td>UCC</td><td>Uniform Civil Code for all citizens</td></tr><tr><td>45</td><td>Early education</td><td>Children below 6 years</td></tr><tr><td>48A</td><td>Environment</td><td>42nd Amendment 1976</td></tr><tr><td>50</td><td>Judiciary</td><td>Independent from executive</td></tr></table><h3>FUNDAMENTAL DUTIES — 11 (Art. 51A)</h3><ul><li>(a) Constitution, Flag, Anthem</li><li>(b) Freedom struggle ideals</li><li>(c) Sovereignty, unity, integrity</li><li>(d) National defence</li><li>(e) Harmony; renounce practices derogatory to women</li><li>(f) Cultural heritage</li><li>(g) Environment — forests, lakes, rivers, wildlife</li><li>(h) Scientific temper, humanism, inquiry</li><li>(i) Public property; abjure violence</li><li>(j) Excellence in all spheres</li><li>(k) Education for children 6-14 [86th Amendment 2002]</li></ul><div class="key-point">💡 "Justice &amp; Welfare, Equality &amp; Opportunity, Panchayats &amp; Workers' Right — heartbeat of a Welfare State."</div>`}
+};
+
+/* ═══════════════════════════════════════
+   THREE.JS 3D BACKGROUND
+═══════════════════════════════════════ */
+function init3DBg(){
+  const canvas=document.getElementById('bg-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setClearColor(0x000000,0);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,500);
+  camera.position.set(0,0,22);
+  const C=0x00e5ff;
+  const grid=new THREE.GridHelper(100,35,0x002233,0x001118);
+  grid.position.y=-10;grid.rotation.x=0.1;scene.add(grid);
+  function makeRing(r,tube,tx,ty,op,spd){
+    const m=new THREE.Mesh(new THREE.TorusGeometry(r,tube,6,80),new THREE.MeshBasicMaterial({color:C,transparent:true,opacity:op}));
+    m.rotation.x=tx;m.rotation.y=ty;m.userData.spd=spd;return m;
+  }
+  const rg=new THREE.Group();
+  [makeRing(4,0.02,0,0,0.4,0.003),makeRing(4,0.01,Math.PI/2,0,0.2,-0.005),makeRing(5.5,0.015,Math.PI/6,0,0.25,-0.002),makeRing(7,0.01,Math.PI/2,0,0.12,-0.0015)].forEach(r=>rg.add(r));
+  rg.add(new THREE.Mesh(new THREE.IcosahedronGeometry(1.6,1),new THREE.MeshBasicMaterial({color:C,wireframe:true,transparent:true,opacity:0.08})));
+  rg.position.set(9,2,-8);scene.add(rg);
+  const shards=[];
+  for(let i=0;i<45;i++){
+    const m=new THREE.Mesh(i%2===0?new THREE.TetrahedronGeometry(0.3,0):new THREE.OctahedronGeometry(0.25,0),new THREE.MeshBasicMaterial({color:C,wireframe:true,transparent:true,opacity:0.04+Math.random()*0.12}));
+    m.position.set((Math.random()-.5)*80,(Math.random()-.5)*40,(Math.random()-.5)*45);
+    m.rotation.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,0);
+    m.userData={rvx:(Math.random()-.5)*0.009,rvy:(Math.random()-.5)*0.009,vy:(Math.random()-.5)*0.012};
+    scene.add(m);shards.push(m);
+  }
+  const pN=350,pPos=new Float32Array(pN*3),pVel=[];
+  for(let i=0;i<pN;i++){pPos[i*3]=(Math.random()-.5)*95;pPos[i*3+1]=(Math.random()-.5)*58;pPos[i*3+2]=(Math.random()-.5)*58;pVel.push({vx:(Math.random()-.5)*0.016,vy:(Math.random()-.5)*0.016,vz:(Math.random()-.5)*0.01});}
+  const pGeo=new THREE.BufferGeometry();
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+  scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({color:C,size:0.09,transparent:true,opacity:0.3})));
+  let mx=0,my=0,tmx=0,tmy=0;
+  document.addEventListener('mousemove',e=>{tmx=(e.clientX/window.innerWidth-.5)*1.3;tmy=(e.clientY/window.innerHeight-.5)*0.7;});
+  window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+  let t=0;
+  (function animate(){
+    requestAnimationFrame(animate);t+=0.007;
+    mx+=(tmx-mx)*0.022;my+=(tmy-my)*0.022;
+    camera.position.x=mx*2.2;camera.position.y=-my*1.3;camera.lookAt(0,0,0);
+    rg.children.forEach(r=>{if(r.userData.spd){r.rotation.z+=r.userData.spd;r.rotation.y+=r.userData.spd*0.2;}});
+    rg.rotation.y+=0.0008;
+    shards.forEach(s=>{s.rotation.x+=s.userData.rvx;s.rotation.y+=s.userData.rvy;s.position.y+=s.userData.vy;if(Math.abs(s.position.y)>22)s.userData.vy*=-1;});
+    const pos=pGeo.attributes.position.array;
+    for(let i=0;i<pN;i++){pos[i*3]+=pVel[i].vx;pos[i*3+1]+=pVel[i].vy;pos[i*3+2]+=pVel[i].vz;if(Math.abs(pos[i*3])>47)pVel[i].vx*=-1;if(Math.abs(pos[i*3+1])>29)pVel[i].vy*=-1;if(Math.abs(pos[i*3+2])>29)pVel[i].vz*=-1;}
+    pGeo.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera);
+  })();
+}
+
+/* ═══════════════════════════════════════
+   KNOWLEDGE ORB (Canvas 2D)
+═══════════════════════════════════════ */
+function initOrb(){
+  const canvas=document.getElementById('orb-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2;
+  const labels=['Laplace','Z-Transform','Fourier','Signals','Control','ECE','DSP','Olfaction'];
+  const particles=[];
+  for(let i=0;i<labels.length;i++){
+    const a=(i/labels.length)*Math.PI*2;
+    const r=90+Math.random()*20;
+    particles.push({label:labels[i],angle:a,r,speed:0.003+Math.random()*0.003*(Math.random()<0.5?1:-1),
+      x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,gy:0});
+  }
+  const ringRot=[0,0,0];
+  (function draw(){
+    requestAnimationFrame(draw);
+    ctx.clearRect(0,0,W,H);
+    // core glow
+    const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,55);
+    grad.addColorStop(0,'rgba(0,229,255,0.15)');
+    grad.addColorStop(0.5,'rgba(0,229,255,0.06)');
+    grad.addColorStop(1,'transparent');
+    ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,55,0,Math.PI*2);ctx.fill();
+    // rings
+    [38,52,65].forEach((r,i)=>{
+      ringRot[i]+=(i%2===0?0.008:-0.006);
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(ringRot[i]);
+      ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(0,229,255,${0.25-i*0.05})`;ctx.lineWidth=1;
+      ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+    });
+    // icosahedron hint
+    for(let i=0;i<6;i++){
+      const a=(i/6)*Math.PI*2+ringRot[0];
+      const r=28;
+      ctx.beginPath();ctx.moveTo(cx,cy);
+      ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+      ctx.strokeStyle='rgba(0,229,255,0.15)';ctx.lineWidth=0.5;ctx.stroke();
+    }
+    // JARVIS text center
+    ctx.font='bold 11px Orbitron,monospace';ctx.fillStyle='rgba(0,229,255,0.8)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,229,255,0.6)';ctx.shadowBlur=10;
+    ctx.fillText('J.A.R.V.I.S',cx,cy-6);
+    ctx.font='7px Share Tech Mono,monospace';ctx.fillStyle='rgba(0,229,255,0.4)';ctx.shadowBlur=0;
+    ctx.fillText('CORE',cx,cy+8);
+    // orbit particles
+    particles.forEach(p=>{
+      p.angle+=p.speed;
+      p.x=cx+Math.cos(p.angle)*p.r;p.y=cy+Math.sin(p.angle)*p.r;
+      // line to center
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(p.x,p.y);
+      ctx.strokeStyle='rgba(0,229,255,0.06)';ctx.lineWidth=0.5;ctx.stroke();
+      // dot
+      ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,229,255,0.6)';ctx.shadowColor='rgba(0,229,255,0.8)';ctx.shadowBlur=6;
+      ctx.fill();ctx.shadowBlur=0;
+      // label
+      const off=p.angle%(Math.PI*2);
+      const lx=p.x+(Math.cos(p.angle)>0?14:-14);
+      ctx.font='7px Share Tech Mono,monospace';ctx.fillStyle='rgba(0,229,255,0.45)';
+      ctx.textAlign=Math.cos(p.angle)>0?'left':'right';
+      ctx.textBaseline='middle';ctx.fillText(p.label,lx,p.y);
+    });
+  })();
+}
+
+/* ═══════════════════════════════════════
+   SPARKLINES INSIDE CARDS
+═══════════════════════════════════════ */
+function drawSparklines(){
+  document.querySelectorAll('.card-sparkline').forEach(canvas=>{
+    const type=canvas.dataset.type;
+    const ctx=canvas.getContext('2d');
+    const w=canvas.width=canvas.offsetWidth||280;
+    const h=canvas.height=canvas.offsetHeight||36;
+    ctx.clearRect(0,0,w,h);
+    let pts=[];
+    if(type==='laplace'){for(let i=0;i<=w;i++)pts.push({x:i,y:h/2+Math.exp(-i/80)*22*Math.cos(i/8)});}
+    else if(type==='ztransform'){for(let i=0;i<18;i++)pts.push({x:(i/(17))*w,y:h/2-Math.pow(0.82,i)*18});}
+    else if(type==='pairs'){for(let i=0;i<=w;i++)pts.push({x:i,y:h/2+18*Math.sin(i/16)});}
+    else if(type==='bias'){for(let i=0;i<=w;i++){const v=Math.min(1,i/(w*0.7));pts.push({x:i,y:h-v*h*0.7});}}
+    else if(type==='sensor'){for(let i=0;i<=w;i++)pts.push({x:i,y:h/2+10*Math.sin(i/20)+5*Math.random()});}
+    else if(type==='sensor2'){for(let i=0;i<=w;i++)pts.push({x:i,y:h/2+(Math.random()-0.5)*8+12*Math.sin(i/30)});}
+    else if(type==='breath'){for(let i=0;i<=w;i++){const surge=i>w*0.3?Math.exp(-(i-w*0.3)/(w*0.25))*22:0;pts.push({x:i,y:h/2-surge+5*Math.sin(i/20)});}}
+    else{for(let i=0;i<=w;i++)pts.push({x:i,y:h/2+10*Math.sin(i/15)});}
+    if(pts.length){
+      const grad=ctx.createLinearGradient(0,0,w,0);
+      grad.addColorStop(0,'rgba(0,229,255,0.7)');grad.addColorStop(1,'rgba(0,229,255,0.2)');
+      ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+      pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
+      ctx.strokeStyle=grad;ctx.lineWidth=1.2;ctx.stroke();
+    }
+  });
+}
+
+/* ═══════════════════════════════════════
+   3D CARD MOUSE TILT
+═══════════════════════════════════════ */
+function initCardTilt(){
+  document.querySelectorAll('.note-card:not(.coming-soon)').forEach(card=>{
+    card.addEventListener('mousemove',e=>{
+      const rect=card.getBoundingClientRect();
+      const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+      const dx=(e.clientX-cx)/(rect.width/2),dy=(e.clientY-cy)/(rect.height/2);
+      card.style.transform=`perspective(800px) rotateY(${dx*8}deg) rotateX(${-dy*6}deg) translateZ(6px)`;
+      const glow=card.querySelector('.card-glow-overlay');
+      if(glow){glow.style.background=`radial-gradient(circle at ${((e.clientX-rect.left)/rect.width*100)}% ${((e.clientY-rect.top)/rect.height*100)}%,rgba(0,229,255,0.1) 0%,transparent 65%)`;glow.style.opacity='1';}
+    });
+    card.addEventListener('mouseleave',()=>{
+      card.style.transform='perspective(800px) rotateY(0deg) rotateX(0deg) translateZ(0)';
+      const glow=card.querySelector('.card-glow-overlay');
+      if(glow){glow.style.opacity='0';}
+    });
+  });
+}
+
+/* ═══════════════════════════════════════
+   DATA LINES (connection canvas)
+═══════════════════════════════════════ */
+function drawConnections(gridEl,canvasEl){
+  if(!gridEl||!canvasEl)return;
+  const cards=gridEl.querySelectorAll('.note-card:not(.coming-soon)');
+  const ctx=canvasEl.getContext('2d');
+  canvasEl.width=gridEl.offsetWidth;canvasEl.height=gridEl.offsetHeight;
+  ctx.clearRect(0,0,canvasEl.width,canvasEl.height);
+  const rects=[];
+  cards.forEach(card=>{
+    const r=card.getBoundingClientRect();
+    const gr=gridEl.getBoundingClientRect();
+    rects.push({x:r.left-gr.left+r.width/2,y:r.top-gr.top+r.height/2,card});
+  });
+  for(let i=0;i<rects.length;i++){
+    for(let j=i+1;j<rects.length;j++){
+      const dx=rects[i].x-rects[j].x,dy=rects[i].y-rects[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<350){
+        const alpha=0.08*(1-dist/350);
+        ctx.beginPath();ctx.moveTo(rects[i].x,rects[i].y);ctx.lineTo(rects[j].x,rects[j].y);
+        ctx.strokeStyle=`rgba(0,229,255,${alpha})`;ctx.lineWidth=0.5;ctx.stroke();
+        // midpoint dot
+        const mx=(rects[i].x+rects[j].x)/2,my=(rects[i].y+rects[j].y)/2;
+        ctx.beginPath();ctx.arc(mx,my,1.5,0,Math.PI*2);
+        ctx.fillStyle=`rgba(0,229,255,${alpha*3})`;ctx.fill();
+      }
+    }
+  }
+  // hover: highlight connected cards
+  cards.forEach((card,idx)=>{
+    card.addEventListener('mouseenter',()=>{
+      ctx.clearRect(0,0,canvasEl.width,canvasEl.height);
+      rects.forEach((r,i)=>{
+        if(i===idx)return;
+        const dx=rects[idx].x-r.x,dy=rects[idx].y-r.y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<400){
+          ctx.beginPath();ctx.moveTo(rects[idx].x,rects[idx].y);ctx.lineTo(r.x,r.y);
+          ctx.strokeStyle=`rgba(0,229,255,0.35)`;ctx.lineWidth=1;
+          ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+        }
+      });
+    });
+    card.addEventListener('mouseleave',()=>{
+      ctx.clearRect(0,0,canvasEl.width,canvasEl.height);
+      for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++){
+        const dx=rects[i].x-rects[j].x,dy=rects[i].y-rects[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<350){const alpha=0.08*(1-dist/350);ctx.beginPath();ctx.moveTo(rects[i].x,rects[i].y);ctx.lineTo(rects[j].x,rects[j].y);ctx.strokeStyle=`rgba(0,229,255,${alpha})`;ctx.lineWidth=0.5;ctx.stroke();}
+      }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════
+   GALAXY MODE
+═══════════════════════════════════════ */
+const galaxyNodes=[
+  {label:'LAPLACE',id:'laplace',color:'#00e5ff',r:110,angle:0,speed:0.004,icon:'📈'},
+  {label:'Z-TRANSFORM',id:'ztransform',color:'#00e5ff',r:110,angle:Math.PI*2/3,speed:0.004,icon:'📊'},
+  {label:'TRANSFORMS',id:'transform-pairs',color:'#00bcd4',r:110,angle:Math.PI*4/3,speed:0.004,icon:'🔗'},
+  {label:'BJT BIASING',id:'transistor-biasing',color:'#00e676',r:170,angle:0.5,speed:0.0025,icon:'🔌'},
+  {label:'CLIPPERS',id:'clippers-clampers',color:'#ffab00',r:170,angle:0.5+Math.PI*2/3,speed:0.0025,icon:'✂️'},
+  {label:'OLFACTION',id:'olfaction-overview',color:'#7c4dff',r:230,angle:1,speed:0.0018,icon:'👃'},
+  {label:'VIVA PREP',id:'viva-answers',color:'#ffab00',r:230,angle:1+Math.PI,speed:0.0018,icon:'🎓'},
+  {label:'POLITY',id:'polity-executive',color:'#ff9800',r:290,angle:0.2,speed:0.0014,icon:'🇮🇳'},
+];
+let galaxyOpen=false;
+function openGalaxy(){
+  galaxyOpen=true;
+  document.getElementById('galaxy-overlay').classList.add('open');
+  const canvas=document.getElementById('galaxy-canvas');
+  const W=window.innerWidth,H=window.innerHeight;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const cx=W/2,cy=H/2;
+  let hoveredNode=null;
+  let t=0;
+
+  function draw(){
+    if(!galaxyOpen)return;
+    requestAnimationFrame(draw);
+    t+=0.008;
+    ctx.clearRect(0,0,W,H);
+    // bg stars
+    ctx.fillStyle='rgba(0,229,255,0.03)';
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(Math.sin(t*0.3+i)*W*0.4+cx,Math.cos(t*0.2+i)*H*0.3+cy,1,0,Math.PI*2);ctx.fill();}
+    // orbit rings
+    [110,170,230,290].forEach(r=>{
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle='rgba(0,229,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([3,8]);ctx.stroke();ctx.setLineDash([]);
+    });
+    // center
+    const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,40);
+    cg.addColorStop(0,'rgba(0,229,255,0.2)');cg.addColorStop(1,'transparent');
+    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,40,0,Math.PI*2);ctx.fill();
+    ctx.font='bold 13px Orbitron,monospace';ctx.fillStyle='rgba(0,229,255,0.9)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,229,255,0.7)';ctx.shadowBlur=15;
+    ctx.fillText('CORE',cx,cy);ctx.shadowBlur=0;
+
+    // nodes
+    galaxyNodes.forEach(node=>{
+      node.angle+=node.speed;
+      const nx=cx+Math.cos(node.angle)*node.r;
+      const ny=cy+Math.sin(node.angle)*node.r;
+      node.nx=nx;node.ny=ny;
+      const isHov=hoveredNode===node;
+      // line to center
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(nx,ny);
+      ctx.strokeStyle=isHov?`${node.color}44`:'rgba(0,229,255,0.04)';ctx.lineWidth=isHov?1:0.5;ctx.stroke();
+      // planet glow
+      const pg=ctx.createRadialGradient(nx,ny,0,nx,ny,isHov?36:26);
+      pg.addColorStop(0,node.color+'33');pg.addColorStop(1,'transparent');
+      ctx.fillStyle=pg;ctx.beginPath();ctx.arc(nx,ny,isHov?36:26,0,Math.PI*2);ctx.fill();
+      // planet circle
+      ctx.beginPath();ctx.arc(nx,ny,isHov?18:14,0,Math.PI*2);
+      ctx.fillStyle=`rgba(2,12,24,0.9)`;ctx.fill();
+      ctx.strokeStyle=isHov?node.color:node.color+'88';ctx.lineWidth=isHov?2:1;ctx.stroke();
+      // icon
+      ctx.font=`${isHov?16:13}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(node.icon,nx,ny);
+      // label
+      ctx.font=`${isHov?10:8}px Share Tech Mono,monospace`;ctx.fillStyle=isHov?node.color:node.color+'88';
+      ctx.fillText(node.label,nx,ny+26);
+    });
+  }
+  draw();
+
+  canvas.onmousemove=e=>{
+    hoveredNode=null;
+    galaxyNodes.forEach(node=>{
+      if(node.nx&&node.ny){
+        const d=Math.hypot(e.clientX-node.nx,e.clientY-node.ny);
+        if(d<28){hoveredNode=node;canvas.style.cursor='pointer';}
+      }
+    });
+    if(!hoveredNode)canvas.style.cursor='crosshair';
+  };
+  canvas.onclick=e=>{
+    galaxyNodes.forEach(node=>{
+      if(node.nx&&node.ny){
+        const d=Math.hypot(e.clientX-node.nx,e.clientY-node.ny);
+        if(d<28){closeGalaxy();setTimeout(()=>openNote(node.id),300);}
+      }
+    });
+  };
+}
+function closeGalaxy(){
+  galaxyOpen=false;
+  document.getElementById('galaxy-overlay').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════
+   CINEMATIC MODAL OPEN
+═══════════════════════════════════════ */
+function openNote(id){
+  const note=NOTES[id];if(!note)return;
+  if(note.locked){openLock(id);return;}
+  setBubble(`> ${note.title} loaded.\n> ${getQuickDesc(id)}`);
+  document.getElementById('modal-overlay').classList.add('open');
+  // scan sweep
+  const sweep=document.getElementById('scan-sweep');
+  sweep.style.animation='none';sweep.offsetHeight;
+  sweep.classList.add('scanning');
+  // terminal lines
+  const titles=[`> ACCESSING: ${id.toUpperCase()}`,`> FORMULA STRUCTURE LOADED`,`> RENDERING PANEL — ${note.title}`];
+  ['tl1','tl2','tl3'].forEach((id2,i)=>{
+    const el=document.getElementById(id2);
+    el.textContent=titles[i];el.classList.remove('visible');
+    setTimeout(()=>el.classList.add('visible'),i*180+100);
+  });
+  // populate content after short delay
+  setTimeout(()=>{
+    document.getElementById('modal-title').textContent=note.title;
+    document.getElementById('modal-body').innerHTML=note.body;
+  },400);
+  speakText('Opening '+note.title.toLowerCase()+' panel.');
+}
+function getQuickDesc(id){
+  const map={laplace:'Used in control systems.',ztransform:'Used in digital signal processing.','transform-pairs':'Reference for common signal pairs.','transistor-biasing':'Q-point stability analysis.','clippers-clampers':'Wave shaping circuits.','olfaction-overview':'Dual-tier edge system.','dht11-physics':'Step input analysis.','viva-answers':'5 key differentiators.','demo-flow':'5-phase demo protocol.','sensor-table':'Sensor ECE principles.','polity-executive':'Art. 52-78.','polity-dpsp':'Art. 36-51A.'};
+  return map[id]||'Knowledge panel ready.';
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+
+/* ═══════════════════════════════════════
+   LOCK
+═══════════════════════════════════════ */
+function openLock(noteId){
+  pendingLockedNote=noteId;
+  document.getElementById('lock-input').value='';
+  document.getElementById('lock-error').classList.remove('show');
+  document.getElementById('lock-panel').classList.remove('lock-denied');
+  document.getElementById('lock-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('lock-input').focus(),100);
+}
+function closeLock(){document.getElementById('lock-overlay').classList.remove('open');pendingLockedNote=null;}
+function submitLock(){
+  const val=document.getElementById('lock-input').value.trim();
+  if(val===LOCK_PASSWORD){
+    closeLock();
+    if(pendingLockedNote){const n=NOTES[pendingLockedNote];openNote(pendingLockedNote);}
+  }else{
+    const panel=document.getElementById('lock-panel');
+    document.getElementById('lock-error').classList.add('show');
+    document.getElementById('lock-input').value='';
+    panel.classList.add('lock-denied');
+    speakText('Access denied. Invalid authentication code.');
+    setTimeout(()=>panel.classList.remove('lock-denied'),500);
+  }
+}
+
+/* ═══════════════════════════════════════
+   JARVIS ASSISTANT BUBBLE
+═══════════════════════════════════════ */
+function setBubble(text){document.getElementById('bubble-text').innerHTML=text.replace(/\n/g,'<br>')}
+function bubbleClick(){speakText(document.getElementById('bubble-text').innerText)}
+
+/* ═══════════════════════════════════════
+   CATEGORY SWITCHING
+═══════════════════════════════════════ */
+function showCategory(cat){
+  document.querySelectorAll('.category-section').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('cat-'+cat);if(el)el.style.display='block';
+  const nav=document.querySelector('[data-cat="'+cat+'"]');if(nav)nav.classList.add('active');
+  setTimeout(()=>{
+    initCardTilt();
+    drawSparklines();
+    if(cat==='transforms'){drawConnections(document.getElementById('grid-transforms'),document.getElementById('connection-canvas'));}
+    if(cat==='ece'){drawConnections(document.getElementById('grid-ece'),document.getElementById('connection-canvas-ece'));}
+  },50);
+  const names={transforms:'Transforms Module',ece:'ECE Circuits Module',olfaction:'Edge Olfaction Log',polity:'Polity Notes','ai-gen':'AI Generator'};
+  setBubble(`> ${names[cat]||cat} loaded.\n> Click any card to expand.`);
+  speakText('Opening '+(names[cat]||cat).toLowerCase());
+}
+
+/* ═══════════════════════════════════════
+   AI GENERATOR
+═══════════════════════════════════════ */
+function generatePrompt(){
+  const input=document.getElementById('note-input-area').value.trim();
+  if(!input){alert('Paste your notes first.');return;}
+  const firstLine=input.split('\n')[0].substring(0,80);
+  const wc=input.split(' ').length;
+  const hasFormulas=input.includes('=')||input.includes('∫')||input.includes('→');
+  const hasSensors=input.toLowerCase().includes('sensor')||input.toLowerCase().includes('mq');
+  let p=`Create a professional educational engineering video explaining: "${firstLine}".\n\nThe video should include:\n`;
+  p+='• Clear on-screen title card with topic name\n';
+  if(hasFormulas)p+='• Animated step-by-step mathematical derivations with highlighted equations\n';
+  if(hasSensors)p+='• Hardware block diagram showing sensor connections and signal flow\n';
+  p+='• Concept explanation with real-world engineering applications\n';
+  p+='• Visual comparison tables where applicable\n';
+  p+='• Key points summary at the end with memory aids\n\n';
+  p+='Content depth: '+(wc>300?'Advanced (10-15 min)':'Introductory (5-8 min)')+'\n';
+  p+='Target audience: Second-year ECE students\nStyle: Dark-themed technical animation, 3Blue1Brown style.';
+  document.getElementById('gen-text').textContent=p;
+  document.getElementById('gen-output').style.display='block';
+}
+
+/* ═══════════════════════════════════════
+   JARVIS VOICE
+═══════════════════════════════════════ */
+function speakText(text){
+  if(!window.speechSynthesis)return;
+  const voices=window.speechSynthesis.getVoices();
+  const deep=voices.find(v=>v.name.includes('David')||v.name.includes('Daniel')||v.name.includes('Google UK English Male'))||voices[0];
+  const msg=new SpeechSynthesisUtterance(text);
+  msg.pitch=0.55;msg.rate=0.9;msg.volume=0.7;if(deep)msg.voice=deep;
+  window.speechSynthesis.cancel();window.speechSynthesis.speak(msg);
+}
+
+/* ═══════════════════════════════════════
+   CLOCK + STATUS BAR
+═══════════════════════════════════════ */
+setInterval(()=>{
+  const now=new Date();
+  const t=now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Asia/Kolkata'})+' IST';
+  document.getElementById('live-clock').textContent=t;
+  document.getElementById('sb-time').textContent=t;
+},1000);
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeLock();closeGalaxy();}});
+document.getElementById('lock-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitLock();});
+
+window.addEventListener('DOMContentLoaded',()=>{
+  init3DBg();
+  initOrb();
+  setTimeout(()=>{
+    document.getElementById('page-wrapper').classList.add('loaded');
+    initCardTilt();
+    drawSparklines();
+    drawConnections(document.getElementById('grid-transforms'),document.getElementById('connection-canvas'));
+  },100);
+});
+window.addEventListener('resize',()=>{
+  setTimeout(()=>{initCardTilt();drawSparklines();},200);
+});
+</script>
+</body>
+</html>
