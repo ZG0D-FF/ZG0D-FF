@@ -6,6 +6,7 @@
 <title>JARVIS — Portfolio AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 :root {
   --cyan:   #00e5ff;
@@ -27,36 +28,116 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--bg); color: var(--cyan);
   font-family: var(--font-body); font-size: 16px;
-  overflow-x: hidden; cursor: crosshair;
+  overflow: hidden; cursor: crosshair;
 }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
 ::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 3px; }
 ::selection { background: var(--cyan); color: var(--bg); }
-#hud-canvas {
+
+/* THREE.JS CANVAS */
+#three-canvas {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 0; opacity: 0.35;
+  pointer-events: none; z-index: 0;
 }
+
+/* GRID OVERLAY */
+.grid-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+}
+
+/* SCAN LINES */
+.scanlines {
+  position: fixed; inset: 0; pointer-events: none; z-index: 2;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+  );
+}
+
+/* VIGNETTE */
+.vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 2;
+  background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(2,12,24,0.7) 100%);
+}
+
+/* BOOT SCREEN */
 #boot-screen {
-  position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+  position: fixed; inset: 0; z-index: 100;
   display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 24px; padding: 20px;
+  justify-content: center; gap: 20px; padding: 20px;
   transition: opacity 0.8s ease;
 }
-.hud-ring { position: relative; width: 220px; height: 220px; flex-shrink: 0; }
-.hud-ring svg { width: 100%; height: 100%; animation: ring-spin 4s linear infinite; }
-.hud-ring svg circle { fill: none; stroke: var(--cyan); stroke-width: 1.5; stroke-dasharray: 4 8; opacity: 0.6; }
-.hud-ring .inner-ring { stroke-dasharray: 8 4; opacity: 0.3; animation: ring-spin 2s linear infinite reverse; transform-origin: 50% 50%; }
-.hud-ring .dot-ring { stroke-dasharray: 1 12; opacity: 0.9; stroke-width: 3; }
-.hud-logo {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-hud); font-size: 28px; font-weight: 900;
-  color: var(--cyan); text-shadow: var(--glow); letter-spacing: 4px;
+
+/* HUD LOGO — center label only, 3D rings are in Three.js */
+.hud-logo-label {
+  position: relative; z-index: 10;
+  font-family: var(--font-hud); font-size: 22px; font-weight: 900;
+  color: var(--cyan); text-shadow: 0 0 30px rgba(0,229,255,0.9), 0 0 60px rgba(0,229,255,0.4);
+  letter-spacing: 6px; text-align: center;
+  animation: logo-pulse 3s ease infinite;
 }
-@keyframes ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.hud-logo-label .sub {
+  display: block; font-size: 9px; letter-spacing: 5px;
+  color: rgba(0,229,255,0.5); margin-top: 4px; font-weight: 400;
+}
+@keyframes logo-pulse {
+  0%,100% { text-shadow: 0 0 30px rgba(0,229,255,0.9), 0 0 60px rgba(0,229,255,0.4); }
+  50%      { text-shadow: 0 0 50px rgba(0,229,255,1),   0 0 100px rgba(0,229,255,0.6), 0 0 140px rgba(0,229,255,0.2); }
+}
+
+/* HUD corner decorations */
+.hud-corner {
+  position: fixed; width: 60px; height: 60px;
+  border-color: rgba(0,229,255,0.3); border-style: solid;
+  z-index: 10;
+}
+.hud-corner.tl { top: 20px; left: 20px; border-width: 1px 0 0 1px; }
+.hud-corner.tr { top: 20px; right: 20px; border-width: 1px 1px 0 0; }
+.hud-corner.bl { bottom: 20px; left: 20px; border-width: 0 0 1px 1px; }
+.hud-corner.br { bottom: 20px; right: 20px; border-width: 0 1px 1px 0; }
+.hud-corner::after {
+  content: attr(data-label);
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: 2px;
+  color: rgba(0,229,255,0.3); position: absolute;
+}
+.hud-corner.tl::after { top: 6px; left: 6px; }
+.hud-corner.tr::after { top: 6px; right: 6px; }
+.hud-corner.bl::after { bottom: 6px; left: 6px; }
+.hud-corner.br::after { bottom: 6px; right: 6px; }
+
+/* Status bars (top) */
+.hud-statusbar {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 24px; z-index: 10;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px;
+  color: rgba(0,229,255,0.35);
+}
+.hud-statusbar span { display: flex; align-items: center; gap: 5px; }
+.hud-statusbar .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan); animation: pulse-dot 1.5s ease infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.5)} }
+
+/* bottom status */
+.hud-bottombar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px;
+  color: rgba(0,229,255,0.25); z-index: 10; white-space: nowrap;
+}
+
+/* BOOT TEXT */
 #boot-text {
   font-family: var(--font-mono); font-size: 13px; color: var(--cyan);
-  text-align: center; min-height: 60px; line-height: 1.8;
+  text-align: center; min-height: 80px; line-height: 2;
+  position: relative; z-index: 10;
+  text-shadow: 0 0 10px rgba(0,229,255,0.5);
 }
 #boot-text .line { opacity: 0; }
 #boot-text .line.visible { opacity: 1; }
@@ -65,7 +146,12 @@ body {
   vertical-align: middle; animation: blink 0.7s step-end infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-#visitor-form { display: none; flex-direction: column; gap: 14px; width: 100%; max-width: 360px; }
+
+/* VISITOR FORM */
+#visitor-form {
+  display: none; flex-direction: column; gap: 14px;
+  width: 100%; max-width: 360px; position: relative; z-index: 10;
+}
 #visitor-form.active { display: flex; }
 .form-row { display: flex; flex-direction: column; gap: 5px; }
 .form-row label {
@@ -78,19 +164,32 @@ body {
   font-size: 14px; padding: 10px 14px; outline: none;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
-.form-row input:focus, .form-row select:focus { border-color: var(--cyan); box-shadow: var(--glow); }
+.form-row input:focus, .form-row select:focus {
+  border-color: var(--cyan); box-shadow: var(--glow);
+}
 .form-row input::placeholder { color: rgba(0,229,255,0.25); }
 .form-row select option { background: #020c18; color: var(--cyan); }
+
 #boot-submit {
   background: transparent; border: 1px solid var(--cyan); color: var(--cyan);
   font-family: var(--font-hud); font-size: 13px; letter-spacing: 3px;
   padding: 12px; cursor: pointer; text-transform: uppercase;
   transition: background 0.3s, box-shadow 0.3s, color 0.3s; border-radius: 3px;
+  position: relative; overflow: hidden;
 }
+#boot-submit::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,0.1), transparent);
+  transition: left 0.5s;
+}
+#boot-submit:hover::before { left: 100%; }
 #boot-submit:hover { background: var(--cyan); color: var(--bg); box-shadow: var(--glow); }
+
+/* SCAN BAR */
 .scan-bar {
   display: none; width: 100%; max-width: 360px; height: 3px;
-  background: rgba(0,229,255,0.1); border-radius: 2px; overflow: hidden; position: relative;
+  background: rgba(0,229,255,0.1); border-radius: 2px;
+  overflow: hidden; position: relative; z-index: 10;
 }
 .scan-bar.active { display: block; }
 .scan-bar::after {
@@ -99,35 +198,57 @@ body {
   animation: scan 1.2s linear infinite;
 }
 @keyframes scan { from { left: -40%; } to { left: 140%; } }
-.grid-overlay {
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+
+/* HOLOGRAPHIC FLICKER on form panel */
+#visitor-form.active {
+  animation: flicker-in 0.4s ease forwards;
 }
+@keyframes flicker-in {
+  0%   { opacity: 0; transform: scaleY(0.95); }
+  40%  { opacity: 0.6; }
+  60%  { opacity: 0.3; }
+  80%  { opacity: 0.9; }
+  100% { opacity: 1; transform: scaleY(1); }
+}
+
+/* PULSE DOT */
 .pulse-dot {
   display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--cyan); box-shadow: var(--glow); animation: pulse-dot 1.5s ease infinite;
+  background: var(--cyan); box-shadow: var(--glow);
+  animation: pulse-dot 1.5s ease infinite;
 }
-@keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.6); } }
 </style>
 </head>
 <body>
 
-<div class="grid-overlay"></div>
-<canvas id="hud-canvas"></canvas>
+<!-- 3D CANVAS -->
+<canvas id="three-canvas"></canvas>
 
+<div class="grid-overlay"></div>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<!-- HUD CORNERS -->
+<div class="hud-corner tl" data-label="SYS.BOOT"></div>
+<div class="hud-corner tr" data-label="SEC.LVL5"></div>
+<div class="hud-corner bl" data-label="ECE.2026"></div>
+<div class="hud-corner br" data-label="AI.CORE"></div>
+
+<!-- STATUS BAR TOP -->
+<div class="hud-statusbar">
+  <span><div class="dot"></div>NEURAL LINK</span>
+  <span><div class="dot" style="animation-delay:.3s"></div>HUD ACTIVE</span>
+  <span><div class="dot" style="animation-delay:.6s"></div>SECURE CONN</span>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="hud-bottombar">J.A.R.V.I.S // PORTFOLIO AI v2.0 // D.J ENGINEER</div>
+
+<!-- BOOT SCREEN -->
 <div id="boot-screen">
-  <div class="hud-ring">
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <circle class="dot-ring" cx="100" cy="100" r="90"/>
-      <circle cx="100" cy="100" r="78" stroke-dasharray="6 6"/>
-      <circle class="inner-ring" cx="100" cy="100" r="65" stroke-dasharray="10 5"/>
-      <circle cx="100" cy="100" r="52" stroke-dasharray="2 10"/>
-    </svg>
-    <div class="hud-logo">J.A.R.V.I.S</div>
+  <div class="hud-logo-label">
+    J.A.R.V.I.S
+    <span class="sub">JUST A RATHER VERY INTELLIGENT SYSTEM</span>
   </div>
 
   <div id="boot-text"></div>
@@ -154,16 +275,236 @@ body {
 </div>
 
 <script>
-/* ── YOUR AGE — change this number to your real age ── */
+/* ── YOUR AGE ── */
 const MY_AGE = 21;
 
-/* ── stored so launchDashboard() can pass them to dashboard.html ── */
 let _visitorName     = '';
 let _visitorGreeting = '';
 
-/* ────────────────────────────────
-   BOOT SEQUENCE
-──────────────────────────────── */
+/* ════════════════════════════════════════
+   THREE.JS — 3D JARVIS HOLOGRAM
+════════════════════════════════════════ */
+function init3D() {
+  const canvas = document.getElementById('three-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 5);
+
+  const C = 0x00e5ff;
+
+  /* ── WIREFRAME SPHERE (core) ── */
+  const sphereGeo = new THREE.SphereGeometry(1.1, 16, 12);
+  const sphereMat = new THREE.MeshBasicMaterial({
+    color: C, wireframe: true, transparent: true, opacity: 0.08
+  });
+  const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+  scene.add(sphere);
+
+  /* ── ICOSAHEDRON (inner core pulse) ── */
+  const icoGeo = new THREE.IcosahedronGeometry(0.55, 1);
+  const icoMat = new THREE.MeshBasicMaterial({
+    color: C, wireframe: true, transparent: true, opacity: 0.25
+  });
+  const ico = new THREE.Mesh(icoGeo, icoMat);
+  scene.add(ico);
+
+  /* ── TORUS RINGS ── */
+  function makeTorus(r, tube, tilt, speed, opacity) {
+    const geo = new THREE.TorusGeometry(r, tube, 6, 80);
+    const mat = new THREE.MeshBasicMaterial({
+      color: C, transparent: true, opacity
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = tilt;
+    mesh.userData.speed = speed;
+    return mesh;
+  }
+
+  const rings = [
+    makeTorus(1.55, 0.008, 0,            0.004,  0.7),
+    makeTorus(1.55, 0.004, Math.PI/2,   -0.006,  0.4),
+    makeTorus(1.55, 0.004, Math.PI/4,    0.005,  0.3),
+    makeTorus(1.8,  0.006, Math.PI/6,   -0.003,  0.5),
+    makeTorus(1.8,  0.004, -Math.PI/3,   0.007,  0.25),
+    makeTorus(2.1,  0.005, Math.PI/2,   -0.002,  0.35),
+    makeTorus(2.1,  0.003, Math.PI/5,    0.004,  0.2),
+    makeTorus(2.5,  0.006, 0,           -0.0015, 0.15),
+    makeTorus(2.5,  0.003, Math.PI/3,    0.003,  0.1),
+  ];
+  rings.forEach(r => scene.add(r));
+
+  /* ── DASHED ORBIT RINGS (line loops) ── */
+  function makeDashedRing(radius, tilt, opacity) {
+    const pts = [];
+    for (let i = 0; i <= 128; i++) {
+      const a = (i / 128) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a) * radius, Math.sin(a) * radius, 0));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({
+      color: C, transparent: true, opacity
+    });
+    const line = new THREE.Line(geo, mat);
+    line.rotation.x = tilt;
+    return line;
+  }
+
+  const dashRings = [
+    makeDashedRing(1.65, 0.3,  0.15),
+    makeDashedRing(2.0,  -0.5, 0.1),
+    makeDashedRing(2.35, 1.1,  0.08),
+  ];
+  dashRings.forEach(r => scene.add(r));
+
+  /* ── TICK MARKS on main ring ── */
+  const tickGroup = new THREE.Group();
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * Math.PI * 2;
+    const len = i % 9 === 0 ? 0.12 : i % 3 === 0 ? 0.07 : 0.04;
+    const r1 = 1.52, r2 = r1 - len;
+    const pts = [
+      new THREE.Vector3(Math.cos(a)*r1, Math.sin(a)*r1, 0),
+      new THREE.Vector3(Math.cos(a)*r2, Math.sin(a)*r2, 0),
+    ];
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({
+      color: C, transparent: true, opacity: i % 9 === 0 ? 0.8 : 0.3
+    });
+    tickGroup.add(new THREE.Line(geo, mat));
+  }
+  scene.add(tickGroup);
+
+  /* ── PARTICLES ── */
+  const pCount = 300;
+  const pPositions = new Float32Array(pCount * 3);
+  const pVel = [];
+  for (let i = 0; i < pCount; i++) {
+    const r = 2.8 + Math.random() * 2.5;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    pPositions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pPositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pPositions[i*3+2] = r * Math.cos(phi);
+    pVel.push({
+      vx: (Math.random()-.5)*0.003,
+      vy: (Math.random()-.5)*0.003,
+      vz: (Math.random()-.5)*0.003
+    });
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: C, size: 0.025, transparent: true, opacity: 0.6
+  });
+  const points = new THREE.Points(pGeo, pMat);
+  scene.add(points);
+
+  /* ── DATA ARCS (sweeping lines) ── */
+  const arcGroup = new THREE.Group();
+  for (let i = 0; i < 6; i++) {
+    const pts = [];
+    const baseR = 1.55 + i * 0.15;
+    const start = Math.random() * Math.PI * 2;
+    const span  = 0.3 + Math.random() * 0.8;
+    for (let j = 0; j <= 32; j++) {
+      const a = start + (j/32)*span;
+      pts.push(new THREE.Vector3(Math.cos(a)*baseR, Math.sin(a)*baseR, 0));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({
+      color: C, transparent: true, opacity: 0.3 + Math.random()*0.4
+    });
+    const arc = new THREE.Line(geo, mat);
+    arc.rotation.x = (Math.random()-0.5)*Math.PI;
+    arc.rotation.y = Math.random()*Math.PI;
+    arc.userData.rotSpeed = {
+      x: (Math.random()-.5)*0.008,
+      y: (Math.random()-.5)*0.008
+    };
+    arcGroup.add(arc);
+  }
+  scene.add(arcGroup);
+
+  /* ── MOUSE PARALLAX ── */
+  let mouseX = 0, mouseY = 0;
+  document.addEventListener('mousemove', e => {
+    mouseX = (e.clientX / window.innerWidth  - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  /* ── RESIZE ── */
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  /* ── ANIMATE ── */
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.01;
+
+    /* main group slow mouse follow */
+    scene.rotation.y += (mouseX * 0.3 - scene.rotation.y) * 0.02;
+    scene.rotation.x += (-mouseY * 0.2 - scene.rotation.x) * 0.02;
+
+    /* rings spin */
+    rings.forEach((r, i) => {
+      r.rotation.z += r.userData.speed;
+      r.rotation.y += r.userData.speed * 0.3;
+    });
+
+    /* dashed rings */
+    dashRings.forEach((r, i) => {
+      r.rotation.z -= 0.001 * (i+1);
+    });
+
+    /* tick ring */
+    tickGroup.rotation.z += 0.002;
+
+    /* sphere + ico */
+    sphere.rotation.y += 0.001;
+    sphere.rotation.x += 0.0005;
+    ico.rotation.y -= 0.008;
+    ico.rotation.x += 0.005;
+
+    /* ico scale pulse */
+    const pulse = 1 + Math.sin(t * 1.5) * 0.06;
+    ico.scale.setScalar(pulse);
+
+    /* arc group */
+    arcGroup.children.forEach(arc => {
+      arc.rotation.x += arc.userData.rotSpeed.x;
+      arc.rotation.y += arc.userData.rotSpeed.y;
+    });
+
+    /* particles drift */
+    const pos = pGeo.attributes.position.array;
+    for (let i = 0; i < pCount; i++) {
+      pos[i*3]   += pVel[i].vx;
+      pos[i*3+1] += pVel[i].vy;
+      pos[i*3+2] += pVel[i].vz;
+      const dist = Math.sqrt(pos[i*3]**2 + pos[i*3+1]**2 + pos[i*3+2]**2);
+      if (dist > 6 || dist < 2.5) {
+        pVel[i].vx *= -1; pVel[i].vy *= -1; pVel[i].vz *= -1;
+      }
+    }
+    pGeo.attributes.position.needsUpdate = true;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+
+/* ════════════════════════════════════════
+   BOOT SEQUENCE — identical logic to original
+════════════════════════════════════════ */
 const bootLines = [
   "Initializing Portfolio AI...",
   "Loading Neural Interface...",
@@ -198,6 +539,7 @@ function runBootLines(container, idx, cb) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  init3D();
   const bt = document.getElementById('boot-text');
   setTimeout(() => {
     runBootLines(bt, 0, () => {
@@ -206,12 +548,11 @@ window.addEventListener('DOMContentLoaded', () => {
       }, 300);
     });
   }, 600);
-  drawHUDCanvas();
 });
 
-/* ────────────────────────────────
-   FORM SUBMIT → scan animation
-──────────────────────────────── */
+/* ════════════════════════════════════════
+   FORM SUBMIT → scan animation — identical logic
+════════════════════════════════════════ */
 function startExperience() {
   const name  = document.getElementById('v-name').value.trim();
   const age   = parseInt(document.getElementById('v-age').value) || 0;
@@ -224,7 +565,6 @@ function startExperience() {
   else if (age > MY_AGE)  greeting = `Welcome, ${title} ${name}`;
   else                    greeting = `Welcome, Future Innovator ${name}`;
 
-  /* save for launchDashboard */
   _visitorName     = name;
   _visitorGreeting = greeting;
 
@@ -252,10 +592,9 @@ function startExperience() {
   runScan(0);
 }
 
-/* ────────────────────────────────
-   LAUNCH → redirect to dashboard.html
-   (all the portfolio content lives there)
-──────────────────────────────── */
+/* ════════════════════════════════════════
+   LAUNCH — identical to original
+════════════════════════════════════════ */
 function launchDashboard() {
   const boot = document.getElementById('boot-screen');
   boot.style.opacity = '0';
@@ -265,70 +604,6 @@ function launchDashboard() {
       '?visitor='  + encodeURIComponent(_visitorName) +
       '&greeting=' + encodeURIComponent(_visitorGreeting);
   }, 800);
-}
-
-/* ────────────────────────────────
-   HUD CANVAS BACKGROUND
-──────────────────────────────── */
-function drawHUDCanvas() {
-  const canvas = document.getElementById('hud-canvas');
-  const ctx    = canvas.getContext('2d');
-  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const particles = Array.from({ length: 55 }, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    r:  Math.random() * 1.2 + 0.3,
-    vx: (Math.random() - 0.5) * 0.18,
-    vy: (Math.random() - 0.5) * 0.18,
-    alpha: Math.random() * 0.5 + 0.1,
-  }));
-
-  const arcs = Array.from({ length: 4 }, (_, i) => ({
-    x: canvas.width  * (0.1 + i * 0.26),
-    y: canvas.height * (0.2 + (i % 2) * 0.5),
-    r: 60 + i * 30,
-    startAngle: Math.random() * Math.PI * 2,
-    speed:   (0.002 + i * 0.001) * (i % 2 ? 1 : -1),
-    dashLen: 12 + i * 4,
-    gapLen:   6 + i * 2,
-  }));
-
-  (function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    arcs.forEach(a => {
-      a.startAngle += a.speed;
-      ctx.beginPath();
-      ctx.arc(a.x, a.y, a.r, a.startAngle, a.startAngle + Math.PI * 1.2);
-      ctx.setLineDash([a.dashLen, a.gapLen]);
-      ctx.strokeStyle = 'rgba(0,229,255,0.14)'; ctx.lineWidth = 1;
-      ctx.stroke(); ctx.setLineDash([]);
-    });
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = canvas.width;  if (p.x > canvas.width)  p.x = 0;
-      if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(0,229,255,${p.alpha})`; ctx.fill();
-    });
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const d  = Math.sqrt(dx*dx + dy*dy);
-        if (d < 130) {
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(0,229,255,${0.06 * (1 - d/130)})`;
-          ctx.lineWidth = 0.5; ctx.stroke();
-        }
-      }
-    }
-    requestAnimationFrame(draw);
-  })();
 }
 </script>
 </body>
