@@ -6,11 +6,9 @@
 <title>JARVIS — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-/* ============================================================
-   JARVIS DASHBOARD — dashboard.html
-   ============================================================ */
 :root {
   --cyan:   #00e5ff;
   --blue:   #1565c0;
@@ -26,7 +24,6 @@
   --font-mono: 'Share Tech Mono', monospace;
   --font-body: 'Rajdhani', sans-serif;
 }
-
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body {
@@ -41,11 +38,13 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 3px; }
 ::selection { background: var(--cyan); color: var(--bg); }
 
-/* ── CANVAS BG ── */
+/* ── 3D CANVAS BG ── */
 #bg-canvas {
   position: fixed; inset: 0;
-  pointer-events: none; z-index: 0; opacity: 0.3;
+  pointer-events: none; z-index: 0;
 }
+
+/* ── GRID + SCANLINES ── */
 .grid-overlay {
   position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image:
@@ -54,32 +53,32 @@ body {
   background-size: 55px 55px;
   mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, black, transparent);
 }
+.scanlines {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px
+  );
+}
 
-/* ============================================================
-   PAGE-IN ANIMATION
-   ============================================================ */
+/* ── PAGE WRAPPER ── */
 #page-wrapper {
-  opacity: 0;
-  transform: translateY(16px);
+  opacity: 0; transform: translateY(16px);
   transition: opacity 0.7s ease, transform 0.7s ease;
   position: relative; z-index: 1;
 }
 #page-wrapper.loaded { opacity: 1; transform: translateY(0); }
 
-/* ============================================================
-   TOP NAV BAR
-   ============================================================ */
+/* ── TOPBAR ── */
 #topbar {
   position: sticky; top: 0; z-index: 900;
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 36px;
-  background: rgba(2,12,24,0.9);
-  backdrop-filter: blur(14px);
+  background: rgba(2,12,24,0.88);
+  backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border);
 }
-.topbar-left {
-  display: flex; align-items: center; gap: 14px;
-}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
 .back-btn {
   font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
   color: rgba(0,229,255,0.5); text-decoration: none;
@@ -103,19 +102,14 @@ body {
 }
 .topbar-nav a:hover { color: var(--cyan); text-shadow: var(--glow); }
 
-/* ============================================================
-   LAYOUT
-   ============================================================ */
+/* ── LAYOUT ── */
 .page-content { max-width: 1280px; margin: 0 auto; padding: 0 36px 80px; }
-
-/* section base */
 .dash-section {
   padding: 64px 0 0;
   opacity: 0; transform: translateY(24px);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .dash-section.in-view { opacity: 1; transform: translateY(0); }
-
 .sec-label {
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 4px;
   color: rgba(0,229,255,0.4); text-transform: uppercase; margin-bottom: 6px;
@@ -128,8 +122,6 @@ body {
   content: ''; display: block; width: 48px; height: 2px;
   background: var(--cyan); margin-top: 8px; box-shadow: var(--glow);
 }
-
-/* HUD panel */
 .hud-panel {
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 5px; padding: 26px 30px; position: relative; overflow: hidden;
@@ -144,17 +136,12 @@ body {
   color: rgba(0,229,255,0.18); letter-spacing: 2px;
 }
 
-/* ============================================================
-   PROFILE HERO
-   ============================================================ */
+/* ── PROFILE ── */
 #profile-hero {
-  padding-top: 40px;
-  display: grid;
+  padding-top: 40px; display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 40px; align-items: start;
 }
-
-/* Photo frame */
 .photo-frame {
   width: 180px; height: 180px; flex-shrink: 0;
   border: 2px solid var(--border); border-radius: 6px;
@@ -165,8 +152,7 @@ body {
 .photo-frame:hover { border-color: var(--cyan); box-shadow: var(--glow); }
 .photo-frame img {
   width: 100%; height: 100%; object-fit: cover; display: block;
-  filter: brightness(0.9) saturate(0.85) hue-rotate(5deg);
-  transition: filter 0.4s;
+  filter: brightness(0.9) saturate(0.85) hue-rotate(5deg); transition: filter 0.4s;
 }
 .photo-frame:hover img { filter: brightness(1) saturate(1); }
 .photo-frame .no-photo {
@@ -176,24 +162,18 @@ body {
   color: rgba(0,229,255,0.3);
 }
 .photo-frame .no-photo .icon { font-size: 36px; opacity: 0.4; }
-/* scan line on photo */
 .photo-frame::after {
   content: ''; position: absolute; inset: 0;
-  background: repeating-linear-gradient(
-    0deg, transparent, transparent 3px,
-    rgba(0,229,255,0.04) 3px, rgba(0,229,255,0.04) 4px
-  );
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px,
+    rgba(0,229,255,0.04) 3px, rgba(0,229,255,0.04) 4px);
   pointer-events: none;
 }
-/* corner brackets on photo */
 .photo-frame .bracket-tl, .photo-frame .bracket-br {
   position: absolute; width: 14px; height: 14px;
   border-color: var(--cyan); border-style: solid; opacity: 0.6;
 }
 .photo-frame .bracket-tl { top: 5px; left: 5px; border-width: 1.5px 0 0 1.5px; }
 .photo-frame .bracket-br { bottom: 5px; right: 5px; border-width: 0 1.5px 1.5px 0; }
-
-/* Profile info */
 .profile-info { display: flex; flex-direction: column; gap: 10px; }
 .profile-name {
   font-family: var(--font-hud); font-size: clamp(26px, 4vw, 48px); font-weight: 900;
@@ -219,8 +199,6 @@ body {
   border-radius: 2px; color: rgba(0,229,255,0.6); text-transform: uppercase;
   background: rgba(0,229,255,0.04);
 }
-
-/* Stats column */
 .profile-stats { display: flex; flex-direction: column; gap: 12px; min-width: 180px; }
 .stat-box {
   background: rgba(0,229,255,0.04); border: 1px solid var(--border);
@@ -245,12 +223,9 @@ body {
   width: 0%; transition: width 2s cubic-bezier(0.22,1,0.36,1); border-radius: 2px;
 }
 
-/* ============================================================
-   PROJECTS
-   ============================================================ */
+/* ── PROJECTS ── */
 .proj-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 22px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 22px;
 }
 .proj-card {
   background: var(--panel); border: 1px solid var(--border);
@@ -261,29 +236,22 @@ body {
   border-color: var(--cyan); transform: translateY(-3px);
   box-shadow: 0 8px 40px rgba(0,229,255,0.15);
 }
-/* video embed */
 .proj-video {
   width: 100%; aspect-ratio: 16/9; position: relative;
   background: #020c18; overflow: hidden;
 }
-.proj-video iframe {
-  width: 100%; height: 100%; border: none; display: block;
-}
+.proj-video iframe { width: 100%; height: 100%; border: none; display: block; }
 .proj-video .vid-placeholder {
   width: 100%; height: 100%; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 10px;
-  background: linear-gradient(135deg, #020c18, #071830);
-  cursor: pointer;
+  background: linear-gradient(135deg, #020c18, #071830); cursor: pointer;
 }
 .proj-video .vid-placeholder .play-icon {
   width: 52px; height: 52px; border: 2px solid rgba(0,229,255,0.4);
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: var(--cyan);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  font-size: 18px; color: var(--cyan); transition: border-color 0.3s, box-shadow 0.3s;
 }
-.proj-video .vid-placeholder:hover .play-icon {
-  border-color: var(--cyan); box-shadow: var(--glow);
-}
+.proj-video .vid-placeholder:hover .play-icon { border-color: var(--cyan); box-shadow: var(--glow); }
 .proj-video .vid-placeholder .vid-label {
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px;
   color: rgba(0,229,255,0.4);
@@ -295,17 +263,13 @@ body {
 }
 .proj-body { padding: 18px 20px 22px; }
 .proj-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.proj-title {
-  font-family: var(--font-hud); font-size: 14px; color: var(--cyan); letter-spacing: 1px;
-}
+.proj-title { font-family: var(--font-hud); font-size: 14px; color: var(--cyan); letter-spacing: 1px; }
 .proj-status {
   font-family: var(--font-mono); font-size: 8px; letter-spacing: 2px;
   padding: 3px 8px; border: 1px solid rgba(0,230,118,0.3);
   color: var(--green); border-radius: 2px; white-space: nowrap; flex-shrink: 0;
 }
-.proj-desc {
-  font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-bottom: 14px;
-}
+.proj-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-bottom: 14px; }
 .proj-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
 .tag {
   font-family: var(--font-mono); font-size: 8px; letter-spacing: 2px;
@@ -316,134 +280,81 @@ body {
 .plink {
   flex: 1; padding: 8px; text-align: center; font-family: var(--font-mono);
   font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  text-decoration: none; border-radius: 3px; transition: all 0.3s;
-  display: block;
+  text-decoration: none; border-radius: 3px; transition: all 0.3s; display: block;
 }
-.plink-outline {
-  background: transparent; border: 1px solid var(--border);
-  color: rgba(0,229,255,0.55);
-}
+.plink-outline { background: transparent; border: 1px solid var(--border); color: rgba(0,229,255,0.55); }
 .plink-outline:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: var(--glow); }
-.plink-solid {
-  background: rgba(0,229,255,0.08); border: 1px solid var(--cyan);
-  color: var(--cyan);
-}
+.plink-solid { background: rgba(0,229,255,0.08); border: 1px solid var(--cyan); color: var(--cyan); }
 .plink-solid:hover { background: var(--cyan); color: var(--bg); }
 
-/* ============================================================
-   PHOTO GALLERY
-   ============================================================ */
-.photos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
-}
+/* ── PHOTOS ── */
+.photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .photo-card {
   border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
   position: relative; cursor: zoom-in;
-  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-  background: #040f1e;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s; background: #040f1e;
 }
-.photo-card:hover {
-  border-color: var(--cyan); transform: scale(1.02);
-  box-shadow: 0 4px 24px rgba(0,229,255,0.2);
-}
+.photo-card:hover { border-color: var(--cyan); transform: scale(1.02); box-shadow: 0 4px 24px rgba(0,229,255,0.2); }
 .photo-card img {
   width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
-  filter: brightness(0.88) saturate(0.8) hue-rotate(3deg);
-  transition: filter 0.4s;
+  filter: brightness(0.88) saturate(0.8) hue-rotate(3deg); transition: filter 0.4s;
 }
 .photo-card:hover img { filter: brightness(1) saturate(1); }
 .photo-card .photo-placeholder {
-  width: 100%; aspect-ratio: 4/3; display: flex;
-  flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; background: linear-gradient(135deg, #040f1e, #081525);
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
-  color: rgba(0,229,255,0.28);
+  width: 100%; aspect-ratio: 4/3; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #040f1e, #081525);
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; color: rgba(0,229,255,0.28);
 }
 .photo-card .photo-caption {
   padding: 8px 12px; font-family: var(--font-mono); font-size: 10px;
-  letter-spacing: 1px; color: rgba(0,229,255,0.5);
-  border-top: 1px solid var(--border);
+  letter-spacing: 1px; color: rgba(0,229,255,0.5); border-top: 1px solid var(--border);
 }
-/* hover overlay */
 .photo-card .photo-overlay {
   position: absolute; inset: 0; background: rgba(0,229,255,0.06);
   display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity 0.3s;
-  font-size: 22px;
+  opacity: 0; transition: opacity 0.3s; font-size: 22px;
 }
 .photo-card:hover .photo-overlay { opacity: 1; }
 
-/* LIGHTBOX */
-#lightbox {
-  display: none; position: fixed; inset: 0; z-index: 9000;
-  background: rgba(2,12,24,0.96); align-items: center; justify-content: center;
-}
+/* ── LIGHTBOX ── */
+#lightbox { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(2,12,24,0.96); align-items: center; justify-content: center; }
 #lightbox.open { display: flex; }
-#lightbox img {
-  max-width: 88vw; max-height: 82vh; border: 1px solid var(--border);
-  border-radius: 4px; box-shadow: 0 0 60px rgba(0,229,255,0.2);
-}
+#lightbox img { max-width: 88vw; max-height: 82vh; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 0 60px rgba(0,229,255,0.2); }
 #lightbox-close {
   position: absolute; top: 24px; right: 32px;
   font-family: var(--font-mono); font-size: 13px; letter-spacing: 2px;
   color: rgba(0,229,255,0.6); cursor: pointer; padding: 8px 14px;
-  border: 1px solid var(--border); border-radius: 3px; background: transparent;
-  transition: all 0.3s;
+  border: 1px solid var(--border); border-radius: 3px; background: transparent; transition: all 0.3s;
 }
 #lightbox-close:hover { color: var(--cyan); border-color: var(--cyan); }
 #lightbox-caption {
   position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
-  color: rgba(0,229,255,0.5);
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: rgba(0,229,255,0.5);
 }
 
-/* ============================================================
-   LINKS PANEL
-   ============================================================ */
-.links-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
-}
+/* ── LINKS ── */
+.links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .link-card {
-  display: flex; align-items: center; gap: 16px;
-  padding: 18px 20px; border: 1px solid var(--border);
-  border-radius: 4px; background: var(--panel);
-  text-decoration: none; color: inherit;
-  transition: border-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  display: flex; align-items: center; gap: 16px; padding: 18px 20px;
+  border: 1px solid var(--border); border-radius: 4px; background: var(--panel);
+  text-decoration: none; color: inherit; transition: border-color 0.3s, transform 0.2s, box-shadow 0.3s;
 }
-.link-card:hover {
-  border-color: var(--cyan); transform: translateX(4px); box-shadow: var(--glow);
-}
+.link-card:hover { border-color: var(--cyan); transform: translateX(4px); box-shadow: var(--glow); }
 .link-card .link-icon {
-  width: 38px; height: 38px; border: 1px solid var(--border);
-  border-radius: 4px; display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0; background: rgba(0,229,255,0.04);
-  transition: border-color 0.3s;
+  width: 38px; height: 38px; border: 1px solid var(--border); border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  flex-shrink: 0; background: rgba(0,229,255,0.04); transition: border-color 0.3s;
 }
 .link-card:hover .link-icon { border-color: var(--cyan); }
 .link-card .link-info { display: flex; flex-direction: column; gap: 3px; }
-.link-card .link-name {
-  font-family: var(--font-hud); font-size: 13px; color: var(--cyan); letter-spacing: 1px;
-}
-.link-card .link-url {
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
-  color: rgba(0,229,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.link-card .link-name { font-family: var(--font-hud); font-size: 13px; color: var(--cyan); letter-spacing: 1px; }
+.link-card .link-url { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; color: rgba(0,229,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ============================================================
-   ACHIEVEMENTS / TIMELINE
-   ============================================================ */
+/* ── TIMELINE ── */
 .timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
-.timeline::before {
-  content: ''; position: absolute; left: 17px; top: 0; bottom: 0; width: 1px;
-  background: var(--border);
-}
-.tl-item {
-  display: flex; gap: 24px; padding-bottom: 32px; position: relative;
-  opacity: 0; transform: translateX(-12px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
+.timeline::before { content: ''; position: absolute; left: 17px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.tl-item { display: flex; gap: 24px; padding-bottom: 32px; position: relative; opacity: 0; transform: translateX(-12px); transition: opacity 0.5s ease, transform 0.5s ease; }
 .tl-item.visible { opacity: 1; transform: translateX(0); }
 .tl-dot {
   width: 36px; height: 36px; border: 2px solid var(--cyan); border-radius: 50%;
@@ -452,24 +363,14 @@ body {
   box-shadow: var(--glow); position: relative; z-index: 1;
 }
 .tl-content { padding-top: 4px; }
-.tl-date {
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px;
-  color: rgba(0,229,255,0.4); margin-bottom: 4px; text-transform: uppercase;
-}
-.tl-title {
-  font-family: var(--font-hud); font-size: 15px; color: var(--cyan);
-  margin-bottom: 6px; letter-spacing: 1px;
-}
+.tl-date { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: rgba(0,229,255,0.4); margin-bottom: 4px; text-transform: uppercase; }
+.tl-title { font-family: var(--font-hud); font-size: 15px; color: var(--cyan); margin-bottom: 6px; letter-spacing: 1px; }
 .tl-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.7; }
 
-/* ============================================================
-   RESUME DOWNLOAD
-   ============================================================ */
+/* ── RESUME BAR ── */
 .resume-bar {
-  margin-top: 48px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 16px;
-  padding: 24px 30px;
+  margin-top: 48px; display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px; padding: 24px 30px;
   background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
   position: relative; overflow: hidden;
 }
@@ -478,50 +379,45 @@ body {
   background: linear-gradient(90deg, transparent, var(--amber), transparent);
 }
 .resume-bar-text { display: flex; flex-direction: column; gap: 4px; }
-.resume-bar-text strong {
-  font-family: var(--font-hud); font-size: 15px; color: #fff; letter-spacing: 2px;
-}
-.resume-bar-text span {
-  font-family: var(--font-mono); font-size: 11px; color: rgba(0,229,255,0.45); letter-spacing: 1px;
-}
+.resume-bar-text strong { font-family: var(--font-hud); font-size: 15px; color: #fff; letter-spacing: 2px; }
+.resume-bar-text span { font-family: var(--font-mono); font-size: 11px; color: rgba(0,229,255,0.45); letter-spacing: 1px; }
 .resume-dl {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 28px; background: transparent;
-  border: 2px solid var(--amber); border-radius: 4px;
+  display: flex; align-items: center; gap: 10px; padding: 12px 28px;
+  background: transparent; border: 2px solid var(--amber); border-radius: 4px;
   color: var(--amber); font-family: var(--font-hud); font-size: 12px;
   letter-spacing: 3px; text-transform: uppercase; text-decoration: none;
   transition: all 0.3s; cursor: pointer;
 }
-.resume-dl:hover {
-  background: var(--amber); color: var(--bg);
-  box-shadow: 0 0 28px rgba(255,171,0,0.4);
-}
+.resume-dl:hover { background: var(--amber); color: var(--bg); box-shadow: 0 0 28px rgba(255,171,0,0.4); }
 
-/* ============================================================
-   FOOTER
-   ============================================================ */
+/* ── FOOTER ── */
 footer {
   text-align: center; padding: 36px 20px;
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px;
-  color: rgba(0,229,255,0.25); border-top: 1px solid var(--border);
-  position: relative; z-index: 1;
+  color: rgba(0,229,255,0.25); border-top: 1px solid var(--border); position: relative; z-index: 1;
 }
 .pulse-dot {
   display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--cyan); box-shadow: var(--glow);
-  animation: pulse 1.5s ease infinite;
+  background: var(--cyan); box-shadow: var(--glow); animation: pulse 1.5s ease infinite;
 }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.6)} }
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
+/* ── MOBILE NAV ── */
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+.hamburger span { display: block; width: 22px; height: 2px; background: var(--cyan); border-radius: 2px; transition: all 0.3s; }
+.mobile-nav { display: none; flex-direction: column; gap: 0; background: rgba(2,12,24,0.97); border-bottom: 1px solid var(--border); padding: 0; }
+.mobile-nav.open { display: flex; }
+.mobile-nav a { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: rgba(0,229,255,0.6); text-decoration: none; padding: 14px 24px; border-bottom: 1px solid var(--border); text-transform: uppercase; transition: color 0.2s; }
+.mobile-nav a:hover { color: var(--cyan); }
+
+/* ── RESPONSIVE ── */
 @media(max-width:900px){
   #profile-hero { grid-template-columns: 1fr; }
   .photo-frame { width: 140px; height: 140px; }
   .profile-stats { flex-direction: row; flex-wrap: wrap; min-width: unset; }
   .stat-box { flex: 1; min-width: 130px; }
   .topbar-nav { display: none; }
+  .hamburger { display: flex; }
 }
 @media(max-width:600px){
   .page-content { padding: 0 16px 60px; }
@@ -529,32 +425,11 @@ footer {
   .proj-grid { grid-template-columns: 1fr; }
   .photos-grid { grid-template-columns: repeat(2, 1fr); }
 }
-.hamburger {
-  display: none; flex-direction: column; gap: 5px;
-  cursor: pointer; padding: 4px; background: none; border: none;
-}
-.hamburger span {
-  display: block; width: 22px; height: 2px;
-  background: var(--cyan); border-radius: 2px; transition: all 0.3s;
-}
-.mobile-nav {
-  display: none; flex-direction: column; gap: 0;
-  background: rgba(2,12,24,0.97); border-bottom: 1px solid var(--border);
-  padding: 0;
-}
-.mobile-nav.open { display: flex; }
-.mobile-nav a {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
-  color: rgba(0,229,255,0.6); text-decoration: none; padding: 14px 24px;
-  border-bottom: 1px solid var(--border); text-transform: uppercase;
-  transition: color 0.2s;
-}
-.mobile-nav a:hover { color: var(--cyan); }
-@media(max-width:900px){ .hamburger { display: flex; } }
 </style>
 </head>
 <body>
 <div class="grid-overlay"></div>
+<div class="scanlines"></div>
 <canvas id="bg-canvas"></canvas>
 
 <!-- LIGHTBOX -->
@@ -565,8 +440,6 @@ footer {
 </div>
 
 <div id="page-wrapper">
-
-  <!-- TOP BAR -->
   <nav id="topbar">
     <div class="topbar-left">
       <a href="index.html" class="back-btn">← BACK</a>
@@ -575,8 +448,8 @@ footer {
     <div class="topbar-greeting" id="topbar-greeting">WELCOME // GUEST</div>
     <div id="live-clock" style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,229,255,0.4);min-width:120px;text-align:center;flex-shrink:0;"></div>
     <button class="hamburger" onclick="document.getElementById('mob-nav').classList.toggle('open')" aria-label="menu">
-  <span></span><span></span><span></span>
-</button>
+      <span></span><span></span><span></span>
+    </button>
     <ul class="topbar-nav">
       <li><a href="#profile">PROFILE</a></li>
       <li><a href="#projects">PROJECTS</a></li>
@@ -589,65 +462,45 @@ footer {
     </ul>
   </nav>
   <div class="mobile-nav" id="mob-nav">
-  <a href="#profile"  onclick="this.closest('.mobile-nav').classList.remove('open')">PROFILE</a>
-  <a href="#projects" onclick="this.closest('.mobile-nav').classList.remove('open')">PROJECTS</a>
-  <a href="#photos"   onclick="this.closest('.mobile-nav').classList.remove('open')">PHOTOS</a>
-  <a href="#timeline" onclick="this.closest('.mobile-nav').classList.remove('open')">TIMELINE</a>
-  <a href="#links"    onclick="this.closest('.mobile-nav').classList.remove('open')">LINKS</a>
-  <a href="#contact"  onclick="this.closest('.mobile-nav').classList.remove('open')">CONTACT</a>
-  <a href="#certs"    onclick="this.closest('.mobile-nav').classList.remove('open')">CERTS</a>
-</div>
+    <a href="#profile"  onclick="this.closest('.mobile-nav').classList.remove('open')">PROFILE</a>
+    <a href="#projects" onclick="this.closest('.mobile-nav').classList.remove('open')">PROJECTS</a>
+    <a href="#photos"   onclick="this.closest('.mobile-nav').classList.remove('open')">PHOTOS</a>
+    <a href="#timeline" onclick="this.closest('.mobile-nav').classList.remove('open')">TIMELINE</a>
+    <a href="#links"    onclick="this.closest('.mobile-nav').classList.remove('open')">LINKS</a>
+    <a href="#contact"  onclick="this.closest('.mobile-nav').classList.remove('open')">CONTACT</a>
+    <a href="#certs"    onclick="this.closest('.mobile-nav').classList.remove('open')">CERTS</a>
+    <a href="#skills"   onclick="this.closest('.mobile-nav').classList.remove('open')">SKILLS</a>
+  </div>
 
   <div class="page-content">
-  <div style="background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.3);border-radius:4px;padding:12px 20px;margin-top:20px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:#00e676;text-align:center;">
-  <span style="animation:pulse 1.5s ease infinite;display:inline-block;width:7px;height:7px;border-radius:50%;background:#00e676;margin-right:10px;vertical-align:middle;"></span>
-  OPEN TO INTERNSHIPS &amp; COLLABORATIONS · 2026
-</div>
+    <div style="background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.3);border-radius:4px;padding:12px 20px;margin-top:20px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:#00e676;text-align:center;">
+      <span style="animation:pulse 1.5s ease infinite;display:inline-block;width:7px;height:7px;border-radius:50%;background:#00e676;margin-right:10px;vertical-align:middle;"></span>
+      OPEN TO INTERNSHIPS &amp; COLLABORATIONS · 2026
+    </div>
 
-    <!-- ====================================================
-         PROFILE HERO
-         ==================================================== -->
+    <!-- PROFILE -->
     <div id="profile-hero" class="dash-section">
-
-      <!-- YOUR PHOTO — replace assets/profile.jpg with your image -->
       <div class="photo-frame">
-        <img src="assets/profile.jpeg" alt="DJ"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-        <div class="no-photo" style="display:none;">
-          <div class="icon">👤</div>
-          <div>ADD PHOTO</div>
-          <div style="font-size:8px;opacity:.5">assets/profile.jpeg</div>
-        </div>
-        <div class="bracket-tl"></div>
-        <div class="bracket-br"></div>
+        <img src="assets/profile.jpeg" alt="DJ" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div class="no-photo" style="display:none;"><div class="icon">👤</div><div>ADD PHOTO</div><div style="font-size:8px;opacity:.5">assets/profile.jpeg</div></div>
+        <div class="bracket-tl"></div><div class="bracket-br"></div>
       </div>
-
-      <!-- INFO -->
       <div class="profile-info">
         <div class="sec-label">IDENTITY</div>
         <h1 class="profile-name">DJ<br><span>Engineer.</span></h1>
         <div class="profile-degree">B.Tech — Electronics &amp; Communication Engineering</div>
-        <div class="profile-university">UNIVERSITY OF ENGINERING AND MANAGEMENT· BATCH 2024–2028</div>
-        <p class="profile-tagline">
-          Electronics & Communication Engineering student
-          USING AI  for systems builder bridging the gap between raw circuits and intelligence.
-          Hardware builder and AI-assisted developer.
-          My strength lies in system design and problem-solving.
-          I architect the physical circuits and partner with advanced AI tools to handle the heavy software logic, turning ambitious ideas into fully functioning prototypes.
-          I try to learn and build things that work in the real world.
-        </p>
-        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:2px;color:rgba(0,229,255,0.5);">
-  LANGUAGES &nbsp;·&nbsp; English &nbsp;·&nbsp; Bengali &nbsp;·&nbsp; Hindi
-</div>
-<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" title="Python" style="width:32px;height:32px;filter:brightness(0.9);"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tensorflow/tensorflow-original.svg" title="TensorFlow" style="width:32px;height:32px;"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flask/flask-original.svg" title="Flask" style="width:32px;height:32px;filter:invert(1) brightness(0.7);"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg" title="Arduino" style="width:32px;height:32px;"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/raspberrypi/raspberrypi-original.svg" title="Raspberry Pi" style="width:32px;height:32px;"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/matlab/matlab-original.svg" title="MATLAB" style="width:32px;height:32px;"/>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" title="GitHub" style="width:32px;height:32px;filter:invert(1) brightness(0.6);"/>
-</div>
+        <div class="profile-university">UNIVERSITY OF ENGINERING AND MANAGEMENT · BATCH 2024–2028</div>
+        <p class="profile-tagline">Electronics & Communication Engineering student USING AI for systems builder bridging the gap between raw circuits and intelligence. Hardware builder and AI-assisted developer. My strength lies in system design and problem-solving. I architect the physical circuits and partner with advanced AI tools to handle the heavy software logic, turning ambitious ideas into fully functioning prototypes. I try to learn and build things that work in the real world.</p>
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:2px;color:rgba(0,229,255,0.5);">LANGUAGES &nbsp;·&nbsp; English &nbsp;·&nbsp; Bengali &nbsp;·&nbsp; Hindi</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" title="Python" style="width:32px;height:32px;filter:brightness(0.9);"/>
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tensorflow/tensorflow-original.svg" title="TensorFlow" style="width:32px;height:32px;"/>
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flask/flask-original.svg" title="Flask" style="width:32px;height:32px;filter:invert(1) brightness(0.7);"/>
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg" title="Arduino" style="width:32px;height:32px;"/>
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/raspberrypi/raspberrypi-original.svg" title="Raspberry Pi" style="width:32px;height:32px;"/>
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/matlab/matlab-original.svg" title="MATLAB" style="width:32px;height:32px;"/>
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" title="GitHub" style="width:32px;height:32px;filter:invert(1) brightness(0.6);"/>
+        </div>
         <div class="profile-badges">
           <span class="badge">Hardware Integration</span>
           <span class="badge">Rapid Prototyping</span>
@@ -657,222 +510,136 @@ footer {
           <span class="badge">ARDUINO</span>
         </div>
       </div>
-
-      <!-- STATS -->
       <div class="profile-stats">
-        <div class="stat-box">
-          <div class="stat-box-label">CGPA 1</div>
-          <div class="stat-box-val" id="cgpa-val-1">9.2</div>
-          <div class="cgpa-track"><div class="cgpa-fill-bar" id="cgpa-bar-1"></div></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">CGPA 2</div>
-          <div class="stat-box-val" id="cgpa-val-2">8.6</div>
-          <div class="cgpa-track"><div class="cgpa-fill-bar" id="cgpa-bar-2"></div></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">CGPA 3</div>
-          <div class="stat-box-val" id="cgpa-val-3">8.3</div>
-          <div class="cgpa-track"><div class="cgpa-fill-bar" id="cgpa-bar-3"></div></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">ENROLLMENT</div>
-          <div class="stat-box-val" id="enroll-val" style="font-size:14px;letter-spacing:2px;">—</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">REGISTRATION</div>
-          <div class="stat-box-val" id="reg-val" style="font-size:14px;letter-spacing:2px;">—</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">STATUS</div>
-          <div class="stat-box-val" style="font-size:13px;color:var(--green);">
-            <span class="pulse-dot" style="background:var(--green);box-shadow:0 0 10px rgba(0,230,118,.6)"></span>
-            &nbsp;ACTIVE
-          </div>
-        </div>
+        <div class="stat-box"><div class="stat-box-label">CGPA 1</div><div class="stat-box-val" id="cgpa-val-1">9.2</div><div class="cgpa-track"><div class="cgpa-fill-bar" id="cgpa-bar-1"></div></div></div>
+        <div class="stat-box"><div class="stat-box-label">CGPA 2</div><div class="stat-box-val" id="cgpa-val-2">8.6</div><div class="cgpa-track"><div class="cgpa-fill-bar" id="cgpa-bar-2"></div></div></div>
+        <div class="stat-box"><div class="stat-box-label">CGPA 3</div><div class="stat-box-val" id="cgpa-val-3">8.3</div><div class="cgpa-track"><div class="cgpa-fill-bar" id="cgpa-bar-3"></div></div></div>
+        <div class="stat-box"><div class="stat-box-label">ENROLLMENT</div><div class="stat-box-val" id="enroll-val" style="font-size:14px;letter-spacing:2px;">—</div></div>
+        <div class="stat-box"><div class="stat-box-label">REGISTRATION</div><div class="stat-box-val" id="reg-val" style="font-size:14px;letter-spacing:2px;">—</div></div>
+        <div class="stat-box"><div class="stat-box-label">STATUS</div><div class="stat-box-val" style="font-size:13px;color:var(--green);"><span class="pulse-dot" style="background:var(--green);box-shadow:0 0 10px rgba(0,230,118,.6)"></span>&nbsp;ACTIVE</div></div>
       </div>
-    </div><!-- /profile-hero -->
+    </div>
 
-    <!-- ====================================================
-         PROJECTS WITH VIDEOS
-         ==================================================== -->
+    <!-- PROJECTS -->
     <div class="dash-section" id="projects">
       <div class="sec-label">MODULE_PROJECTS</div>
       <h2 class="sec-title">PROJECT LOG</h2>
-      <div class="proj-grid" id="proj-grid">
-        <!-- injected by JS -->
-      </div>
+      <div class="proj-grid" id="proj-grid"></div>
     </div>
 
-    <!-- ====================================================
-         PHOTO GALLERY
-         ==================================================== -->
+    <!-- PHOTOS -->
     <div class="dash-section" id="photos">
       <div class="sec-label">MODULE_MEDIA</div>
       <h2 class="sec-title">PHOTO ARCHIVE</h2>
-      <div class="photos-grid" id="photos-grid">
-        <!-- injected by JS -->
-      </div>
+      <div class="photos-grid" id="photos-grid"></div>
     </div>
 
-    <!-- ====================================================
-         TIMELINE
-         ==================================================== -->
+    <!-- TIMELINE -->
     <div class="dash-section" id="timeline">
       <div class="sec-label">MODULE_TIMELINE</div>
       <h2 class="sec-title">MISSION LOG</h2>
       <div class="hud-panel">
         <div class="corner-tag">MODULE//TIMELINE</div>
-        <div class="timeline" id="timeline-list">
-          <!-- injected by JS -->
-        </div>
+        <div class="timeline" id="timeline-list"></div>
       </div>
     </div>
 
-    <!-- ====================================================
-         LINKS PANEL
-         ==================================================== -->
+    <!-- LINKS -->
     <div class="dash-section" id="links">
       <div class="sec-label">MODULE_LINKS</div>
       <h2 class="sec-title">LINK DIRECTORY</h2>
-      <div class="links-grid" id="links-grid">
-        <!-- injected by JS -->
+      <div class="links-grid" id="links-grid"></div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="dash-section" id="contact">
+      <div class="sec-label">MODULE_CONTACT</div>
+      <h2 class="sec-title">ESTABLISH CONTACT</h2>
+      <div class="hud-panel" style="max-width:560px;">
+        <form action="https://formspree.io/f/xzdjglqp" method="POST">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.4);">YOUR NAME</label>
+              <input type="text" name="name" placeholder="Identify yourself..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;"/>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.4);">YOUR EMAIL</label>
+              <input type="email" name="email" placeholder="Communication channel..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;"/>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.4);">MESSAGE</label>
+              <textarea name="message" rows="4" placeholder="Transmit your message..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;resize:vertical;"></textarea>
+            </div>
+            <button type="submit" style="background:transparent;border:2px solid var(--cyan);color:var(--cyan);font-family:var(--font-hud);font-size:12px;letter-spacing:3px;padding:12px;cursor:pointer;border-radius:4px;text-transform:uppercase;transition:all 0.3s;">TRANSMIT →</button>
+          </div>
+        </form>
       </div>
     </div>
-    <!-- CONTACT FORM -->
-<div class="dash-section" id="contact">
-  <div class="sec-label">MODULE_CONTACT</div>
-  <h2 class="sec-title">ESTABLISH CONTACT</h2>
-  <div class="hud-panel" style="max-width:560px;">
-    <form action="https://formspree.io/f/xzdjglqp" method="POST">
-      <div style="display:flex;flex-direction:column;gap:14px;">
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.4);">YOUR NAME</label>
-          <input type="text" name="name" placeholder="Identify yourself..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;"/>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.4);">YOUR EMAIL</label>
-          <input type="email" name="email" placeholder="Communication channel..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;"/>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.4);">MESSAGE</label>
-          <textarea name="message" rows="4" placeholder="Transmit your message..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;resize:vertical;"></textarea>
-        </div>
-        <button type="submit" style="background:transparent;border:2px solid var(--cyan);color:var(--cyan);font-family:var(--font-hud);font-size:12px;letter-spacing:3px;padding:12px;cursor:pointer;border-radius:4px;text-transform:uppercase;transition:all 0.3s;">TRANSMIT →</button>
+
+    <!-- CERTS -->
+    <div class="dash-section" id="certs">
+      <div class="sec-label">MODULE_CERTIFICATIONS</div>
+      <h2 class="sec-title">CREDENTIALS & CERTIFICATES</h2>
+      <div class="links-grid">
+        <a href="assets/certs/Coursera 9THZLVLXAQC4.pdf" target="_blank" rel="noopener" class="link-card"><div class="link-icon">🛡️</div><div class="link-info"><div class="link-name">Cyber Security Fundamentals</div><div class="link-url">University of London · Oct 2025</div></div></a>
+        <a href="assets/certs/1722791628515.jfif" target="_blank" rel="noopener" class="link-card"><div class="link-icon">🧠</div><div class="link-info"><div class="link-name">Generative Artificial Intelligence (GenAI)</div><div class="link-url">0x.Day & UEM · Jul 2024</div></div></a>
+        <a href="assets/certs/1722791687847.jfif" target="_blank" rel="noopener" class="link-card"><div class="link-icon">💻</div><div class="link-info"><div class="link-name">Roadmap to Data Structure & Algorithms</div><div class="link-url">GeeksforGeeks UEM · Jul 2024</div></div></a>
+        <a href="assets/certs/Coursera J41T3REY4O8Y.pdf" target="_blank" rel="noopener" class="link-card"><div class="link-icon">☁️</div><div class="link-info"><div class="link-name">Intro to Information Technology & AWS Cloud</div><div class="link-url">Amazon Web Services · Jun 2025</div></div></a>
+        <a href="assets/certs/Coursera TQW5TIOF261V.pdf" target="_blank" rel="noopener" class="link-card"><div class="link-icon">🤖</div><div class="link-info"><div class="link-name">Accelerate Your Learning with ChatGPT</div><div class="link-url">Deep Teaching Solutions · Jun 2025</div></div></a>
+        <a href="assets/certs/Coursera W91JY80I0DTP.pdf" target="_blank" rel="noopener" class="link-card"><div class="link-icon">💻</div><div class="link-info"><div class="link-name">Introduction to Programming with MATLAB</div><div class="link-url">Vanderbilt University · Oct 2025</div></div></a>
+        <a href="assets/certs/Coursera YL0OEACL4RZV.pdf" target="_blank" rel="noopener" class="link-card"><div class="link-icon">⚡</div><div class="link-info"><div class="link-name">Semiconductor Packaging Manufacturing</div><div class="link-url">Arizona State University · Jun 2025</div></div></a>
       </div>
-    </form>
-  </div>
-</div>
-```
-
-
-```
-<li><a href="#links">LINKS</a></li>
-<div class="dash-section" id="certs">
-  <div class="sec-label">MODULE_CERTIFICATIONS</div>
-  <h2 class="sec-title">CREDENTIALS & CERTIFICATES</h2>
-  <div class="links-grid">
-
-    <a href="assets/certs/Coursera 9THZLVLXAQC4.pdf" target="_blank" rel="noopener" class="link-card">
-      <div class="link-icon">🛡️</div>
-      <div class="link-info">
-        <div class="link-name">Cyber Security Fundamentals</div>
-        <div class="link-url">University of London · Oct 2025</div>
-      </div>
-    </a>
-    <a href="assets/certs/1722791628515.jfif" target="_blank" rel="noopener" class="link-card">
-      <div class="link-icon">🧠</div>
-      <div class="link-info">
-        <div class="link-name">Generative Artificial Intelligence (GenAI)</div>
-        <div class="link-url">0x.Day & UEM · Jul 2024</div>
-      </div>
-    </a>
-
-    <a href="assets/certs/1722791687847.jfif" target="_blank" rel="noopener" class="link-card">
-      <div class="link-icon">💻</div>
-      <div class="link-info">
-        <div class="link-name">Roadmap to Data Structure & Algorithms</div>
-        <div class="link-url">GeeksforGeeks UEM · Jul 2024</div>
-      </div>
-    </a>
-
-    <a href="assets/certs/Coursera J41T3REY4O8Y.pdf" target="_blank" rel="noopener" class="link-card">
-      <div class="link-icon">☁️</div>
-      <div class="link-info">
-        <div class="link-name">Intro to Information Technology & AWS Cloud</div>
-        <div class="link-url">Amazon Web Services · Jun 2025</div>
-      </div>
-    </a>
-
-    <a href="assets/certs/Coursera TQW5TIOF261V.pdf" target="_blank" rel="noopener" class="link-card">
-      <div class="link-icon">🤖</div>
-      <div class="link-info">
-        <div class="link-name">Accelerate Your Learning with ChatGPT </div>
-        <div class="link-url">Deep Teaching Solutions · Jun 2025</div>
-      </div>
-    </a>
-
-    <a href="assets/certs/Coursera W91JY80I0DTP.pdf" target="_blank" rel="noopener" class="link-card">
-      <div class="link-icon">💻</div>
-      <div class="link-info">
-        <div class="link-name">Introduction to Programming with MATLAB </div>
-        <div class="link-url">Vanderbilt University · Oct 2025 </div>
-      </div>
-    </a>
-
-    <a href="assets/certs/Coursera YL0OEACL4RZV.pdf" target="_blank" rel="noopener" class="link-card">
-      <div class="link-icon">⚡</div>
-      <div class="link-info">
-        <div class="link-name">Semiconductor Packaging Manufacturing </div>
-        <div class="link-url">Arizona State University · Jun 2025 </div>
-      </div>
-    </a>
-
-  </div>
-</div>
-<div class="dash-section" id="cgpa-chart">
-  <div class="sec-label">MODULE_ACADEMIC</div>
-  <h2 class="sec-title">SEMESTER PERFORMANCE</h2>
-  <div class="hud-panel">
-    <canvas id="semChart" height="100"></canvas>
-  </div>
-</div>
-<div class="dash-section" id="github-graph">
-  <div class="sec-label">MODULE_GITHUB</div>
-  <h2 class="sec-title">CONTRIBUTION GRAPH</h2>
-  <div class="hud-panel" style="overflow:hidden;">
-    <img src="https://github-readme-activity-graph.vercel.app/graph?username=ZG0D-FF&bg_color=020c18&color=00e5ff&line=00e5ff&point=ffffff&area=true&hide_border=true"/>
-  </div>
-</div>
-<div class="dash-section" id="learning">
-  <div class="sec-label">MODULE_ACTIVE</div>
-  <h2 class="sec-title">CURRENTLY LEARNING</h2>
-  <div style="display:flex;flex-wrap:wrap;gap:12px;">
-    
-    <div class="stat-box" style="flex:1;min-width:200px;">🧠 DIGITAL ELECTRONICS</div>
-    
-  </div>
-</div>
-<div class="dash-section" id="funfacts">
-  <div class="sec-label">MODULE_PERSONAL</div>
-  <h2 class="sec-title">BEYOND THE CIRCUITS</h2>
-  <div class="hud-panel">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
-      <div class="stat-box">⚽ &nbsp;Football tactics obsessive — inspired FC Manager AI</div>
-      <div class="stat-box">🌏 &nbsp;Timezone: IST (UTC +5:30) — Kolkata, India</div>
-      <div class="stat-box">🌙 &nbsp;Reads story books</div>
-      <div class="stat-box">🤝 &nbsp;Wanna make IRON MAN someday</div>
     </div>
-  </div>
-</div>
-<div class="dash-section" id="skills">
-  <div class="sec-label">// MODULE_SKILLS</div>
-  <h2 class="sec-title">SKILL MATRIX</h2>
-  <div class="hud-panel" style="max-width:500px;margin:0 auto;">
-    <canvas id="radarChart" height="300"></canvas>
-  </div>
-</div>
-    <!-- RESUME DOWNLOAD BAR -->
+
+    <!-- CGPA CHART -->
+    <div class="dash-section" id="cgpa-chart">
+      <div class="sec-label">MODULE_ACADEMIC</div>
+      <h2 class="sec-title">SEMESTER PERFORMANCE</h2>
+      <div class="hud-panel"><canvas id="semChart" height="100"></canvas></div>
+    </div>
+
+    <!-- GITHUB GRAPH -->
+    <div class="dash-section" id="github-graph">
+      <div class="sec-label">MODULE_GITHUB</div>
+      <h2 class="sec-title">CONTRIBUTION GRAPH</h2>
+      <div class="hud-panel" style="overflow:hidden;">
+        <img src="https://github-readme-activity-graph.vercel.app/graph?username=ZG0D-FF&bg_color=020c18&color=00e5ff&line=00e5ff&point=ffffff&area=true&hide_border=true" style="width:100%;"/>
+      </div>
+    </div>
+
+    <!-- CURRENTLY LEARNING -->
+    <div class="dash-section" id="learning">
+      <div class="sec-label">MODULE_ACTIVE</div>
+      <h2 class="sec-title">CURRENTLY LEARNING</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;">
+        <div class="stat-box" style="flex:1;min-width:200px;">🧠 DIGITAL ELECTRONICS</div>
+      </div>
+    </div>
+
+    <!-- FUN FACTS -->
+    <div class="dash-section" id="funfacts">
+      <div class="sec-label">MODULE_PERSONAL</div>
+      <h2 class="sec-title">BEYOND THE CIRCUITS</h2>
+      <div class="hud-panel">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+          <div class="stat-box">⚽ &nbsp;Football tactics obsessive — inspired FC Manager AI</div>
+          <div class="stat-box">🌏 &nbsp;Timezone: IST (UTC +5:30) — Kolkata, India</div>
+          <div class="stat-box">🌙 &nbsp;Reads story books</div>
+          <div class="stat-box">🤝 &nbsp;Wanna make IRON MAN someday</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SKILLS RADAR -->
+    <div class="dash-section" id="skills">
+      <div class="sec-label">// MODULE_SKILLS</div>
+      <h2 class="sec-title">SKILL MATRIX</h2>
+      <div class="hud-panel" style="max-width:500px;margin:0 auto;">
+        <canvas id="radarChart" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- RESUME -->
     <div class="resume-bar">
       <div class="resume-bar-text">
         <strong>CURRICULUM VITAE</strong>
@@ -880,281 +647,335 @@ footer {
       </div>
       <a href="resume.pdf" download class="resume-dl">↓ &nbsp;DOWNLOAD RESUME</a>
     </div>
+  </div>
 
-  </div><!-- /page-content -->
-<div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:10px;color:rgba(0,229,255,0.3);letter-spacing:2px;">
-  TOTAL VISITORS &nbsp;·&nbsp;
-  <img src="https://hits.sh/zg0d-ff.github.io/portfolio.svg?style=flat&label=&color=00e5ff&labelColor=020c18" style="vertical-align:middle;height:18px;" alt="visitors"/>
-</div>
-<div style="text-align:center;padding:10px;">
-  <button onclick="navigator.clipboard.writeText(window.location.href).then(()=>{this.textContent='✓ LINK COPIED';setTimeout(()=>{this.textContent='⬡ SHARE PORTFOLIO'},2000)})" style="background:transparent;border:1px solid var(--border);color:rgba(0,229,255,0.5);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px 24px;cursor:pointer;border-radius:3px;transition:all 0.3s;">⬡ SHARE PORTFOLIO</button>
-</div>
+  <div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:10px;color:rgba(0,229,255,0.3);letter-spacing:2px;">
+    TOTAL VISITORS &nbsp;·&nbsp;
+    <img src="https://hits.sh/zg0d-ff.github.io/portfolio.svg?style=flat&label=&color=00e5ff&labelColor=020c18" style="vertical-align:middle;height:18px;" alt="visitors"/>
+  </div>
+  <div style="text-align:center;padding:10px;">
+    <button onclick="navigator.clipboard.writeText(window.location.href).then(()=>{this.textContent='✓ LINK COPIED';setTimeout(()=>{this.textContent='⬡ SHARE PORTFOLIO'},2000)})" style="background:transparent;border:1px solid var(--border);color:rgba(0,229,255,0.5);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px 24px;cursor:pointer;border-radius:3px;transition:all 0.3s;">⬡ SHARE PORTFOLIO</button>
+  </div>
   <footer>
     <span class="pulse-dot"></span> &nbsp;
     PORTFOLIO &nbsp;|&nbsp; DJ © 2025 &nbsp;|&nbsp; ALL SYSTEMS OPERATIONAL
     &nbsp;·&nbsp; LAST UPDATED <span id="last-updated"></span>
   </footer>
-  
-</div><!-- /page-wrapper -->
+</div>
 
-<!-- ============================================================
-     JAVASCRIPT — Edit the DATA section below with your real info
-     ============================================================ -->
 <script>
-/* ============================================================
-   ★ YOUR DATA — Edit everything in this block ★
-   ============================================================ */
+/* ════════════════════════════════════════════════
+   YOUR DATA
+════════════════════════════════════════════════ */
 const PROFILE = {
-  cgpa:         8.2,
+  cgpa: 8.2,
   enrollment:   "12024002002097",
   registration: "3202400900510",
 };
 
-/*
-  PROJECTS
-  ─────────────────────────────────────────────
-  youtubeId  → the part after youtube.com/watch?v=
-              e.g. for https://youtu.be/dQw4w9WgXcQ → "dQw4w9WgXcQ"
-              Leave blank ("") if you don't have a video yet.
-
-  github     → full URL to your GitHub repo
-  live       → live demo URL or "#" if none
-*/
 const PROJECTS = [
-  {
-    title:     "FC Manager AI",
-    youtubeId: "",           // ← paste your YouTube video ID here
-    status:    "IN PROGRESS",
-    desc:      "Python-powered tactical prediction engine for football simulations. Utilizes OCR squad detection and Reinforcement Learning modules to analyze meta-mechanics, player traits, and generate optimized tactical instructions.",
-    tags:      ["Python", "OCR", "Reinforcement Learning", "Game Analytics"],
-    github:    "https://github.com/YOURUSERNAME/fc-manager-ai",
-    live:      "#",
-  },
-  {
-    title:     "PoultryHealth-AI // Acoustic Disease Detector",
-    youtubeId: "YOUR_YOUTUBE_ID_HERE", // ← paste your YouTube video ID here once uploaded
-    status:    "IN PROGRESS",
-    desc:      "Lightweight acoustic AI deployed on a Raspberry Pi 3B. Uses a pre-trained YAMNet architecture and a custom MFCC edge model to detect poultry respiratory diseases from environmental audio.",
-    tags:      ["Edge AI", "Audio ML", "TensorFlow Lite", "Python", "YAMNet"],
-    github:    "https://github.com/ZG0D-FF/PoultryHealth-AI",
-    live:      "#",
-  },
-  
-  
-  {
-    title: "J.A.R.V.I.S. // Neural Core",
-    youtubeId: "0QhQeP_q-as", 
-    status: "OPERATIONAL",
-    desc: "Deployment of local Llama 3.2:3b via Ollama. This module handles NLP processing and logic execution without external API dependencies.",
-    tags: ["Python", "Local AI", "LLM", "Ollama"],
-    github: "https://github.com/ZG0D-FF/JARVIS-Neural-Core",
-    live: "#",
-  },
-  {
-    title: "J.A.R.V.I.S. // System Diagnostic",
-    youtubeId: "nXxMjYspTnw", 
-    status: "OPERATIONAL",
-    desc: "Autonomous hardware auditing suite. Monitors real-time CPU thermal thresholds and RAM allocation during high-load AI inference.",
-    tags: ["Hardware", "Diagnostics", "Python", "Sys-Admin"],
-    github: "https://github.com/ZG0D-FF/JARVIS-Diagnostics",
-    live: "#",
-  },
-  {
-    title: "J.A.R.V.I.S. // Security Matrix",
-    youtubeId: "DBPLo-AUDjU", 
-    status: "OPERATIONAL",
-    desc: "Automated port-scanning and intrusion detection protocols designed for edge-device security and data integrity.",
-    tags: ["Cybersecurity", "Network", "Sentry", "Python"],
-    github: "https://github.com/ZG0D-FF/JARVIS-Security",
-    live: "#",
-  },
-  {
-    title: "Edge-Olfaction // System Overview 1",
-    youtubeId: "bvh3YAOhDsY", 
-    status: "IN PROGRESS",
-    desc: "A low-cost edge AI 'electronic nose' for agricultural monitoring. Operates entirely locally on a Raspberry Pi, ensuring zero cloud-hosting costs and ultra-fast response times.",
-    tags: ["Edge AI", "IoT Architecture", "Raspberry Pi", "AgriTech"],
-    github: "https://github.com/ZG0D-FF/Edge-Olfaction",
-    live: "#"
-  },
-  {
-    title: "Edge-Olfaction // Hardware Architecture 2",
-    youtubeId: "dL_wJjh1M5o", 
-    status: "IN PROGRESS",
-    desc: "Dual-processor configuration utilizing an Arduino for dedicated analog signal processing and a Raspberry Pi 4 for primary edge computing, web serving, and data logging.",
-    tags: ["Hardware Design", "Arduino", "Signal Processing", "ECE"],
-    github: "https://github.com/ZG0D-FF/Edge-Olfaction",
-    live: "#"
-  },
-  {
-    title: "Edge-Olfaction // Sensor Array & Acoustics 3",
-    youtubeId: "_tGki7RjPMc", 
-    status: "IN PROGRESS",
-    desc: "Comprehensive integration of MQ gas sensors, environmental monitors, and experimental piezoelectric acoustic sensors designed to detect internal fruit pests without physical intrusion.",
-    tags: ["Sensor Fusion", "Piezoelectric", "Acoustic Analysis", "Hardware"],
-    github: "https://github.com/ZG0D-FF/Edge-Olfaction",
-    live: "#"
-  },
-  {
-    title: "Edge-Olfaction // Predictive Models 4",
-    youtubeId: "KCXEhn_c-vE", 
-    status: "IN PROGRESS",
-    desc: "Implementation of non-linear decay prediction and normalized risk equations to calculate produce degradation and estimate exact remaining shelf life based on raw sensor telemetry.",
-    tags: ["Mathematical Modeling", "Predictive Analytics", "Algorithms", "Data Science"],
-    github: "https://github.com/ZG0D-FF/Edge-Olfaction",
-    live: "#"
-  },
-  {
-    title: "Edge-Olfaction // Core Initialization 5",
-    youtubeId: "3HB6LGiXlrQ", 
-    status: "IN PROGRESS",
-    desc: "Terminal-based execution environment allowing dynamic sensor calibration via specific 'Cargo Profiles' and rendering real-time ASCII telemetry and security intrusion alerts.",
-    tags: ["CLI", "Python", "System Init", "Data Visualization"],
-    github: "https://github.com/ZG0D-FF/Edge-Olfaction",
-    live: "#"
-  },
-  {
-    title: "Edge-Olfaction // Flask UI Dashboard 6",
-    youtubeId: "", 
-    status: "IN PROGRESS",
-    desc: "Real-time Web GUI hosted locally via a Flask server on the edge node. Provides a comprehensive monitoring pipeline for system uptime, continuous sensor polling, and event logging.",
-    tags: ["Flask", "Web Architecture", "UI/UX", "Python"],
-    github: "https://github.com/ZG0D-FF/Edge-Olfaction",
-    live: "#"
-  }
-  
+  { title:"FC Manager AI", youtubeId:"", status:"IN PROGRESS", desc:"Python-powered tactical prediction engine for football simulations. Utilizes OCR squad detection and Reinforcement Learning modules to analyze meta-mechanics, player traits, and generate optimized tactical instructions.", tags:["Python","OCR","Reinforcement Learning","Game Analytics"], github:"https://github.com/YOURUSERNAME/fc-manager-ai", live:"#" },
+  { title:"PoultryHealth-AI // Acoustic Disease Detector", youtubeId:"", status:"IN PROGRESS", desc:"Lightweight acoustic AI deployed on a Raspberry Pi 3B. Uses a pre-trained YAMNet architecture and a custom MFCC edge model to detect poultry respiratory diseases from environmental audio.", tags:["Edge AI","Audio ML","TensorFlow Lite","Python","YAMNet"], github:"https://github.com/ZG0D-FF/PoultryHealth-AI", live:"#" },
+  { title:"J.A.R.V.I.S. // Neural Core", youtubeId:"0QhQeP_q-as", status:"OPERATIONAL", desc:"Deployment of local Llama 3.2:3b via Ollama. This module handles NLP processing and logic execution without external API dependencies.", tags:["Python","Local AI","LLM","Ollama"], github:"https://github.com/ZG0D-FF/JARVIS-Neural-Core", live:"#" },
+  { title:"J.A.R.V.I.S. // System Diagnostic", youtubeId:"nXxMjYspTnw", status:"OPERATIONAL", desc:"Autonomous hardware auditing suite. Monitors real-time CPU thermal thresholds and RAM allocation during high-load AI inference.", tags:["Hardware","Diagnostics","Python","Sys-Admin"], github:"https://github.com/ZG0D-FF/JARVIS-Diagnostics", live:"#" },
+  { title:"J.A.R.V.I.S. // Security Matrix", youtubeId:"DBPLo-AUDjU", status:"OPERATIONAL", desc:"Automated port-scanning and intrusion detection protocols designed for edge-device security and data integrity.", tags:["Cybersecurity","Network","Sentry","Python"], github:"https://github.com/ZG0D-FF/JARVIS-Security", live:"#" },
+  { title:"Edge-Olfaction // System Overview 1", youtubeId:"bvh3YAOhDsY", status:"IN PROGRESS", desc:"A low-cost edge AI 'electronic nose' for agricultural monitoring. Operates entirely locally on a Raspberry Pi, ensuring zero cloud-hosting costs and ultra-fast response times.", tags:["Edge AI","IoT Architecture","Raspberry Pi","AgriTech"], github:"https://github.com/ZG0D-FF/Edge-Olfaction", live:"#" },
+  { title:"Edge-Olfaction // Hardware Architecture 2", youtubeId:"dL_wJjh1M5o", status:"IN PROGRESS", desc:"Dual-processor configuration utilizing an Arduino for dedicated analog signal processing and a Raspberry Pi 4 for primary edge computing, web serving, and data logging.", tags:["Hardware Design","Arduino","Signal Processing","ECE"], github:"https://github.com/ZG0D-FF/Edge-Olfaction", live:"#" },
+  { title:"Edge-Olfaction // Sensor Array & Acoustics 3", youtubeId:"_tGki7RjPMc", status:"IN PROGRESS", desc:"Comprehensive integration of MQ gas sensors, environmental monitors, and experimental piezoelectric acoustic sensors designed to detect internal fruit pests without physical intrusion.", tags:["Sensor Fusion","Piezoelectric","Acoustic Analysis","Hardware"], github:"https://github.com/ZG0D-FF/Edge-Olfaction", live:"#" },
+  { title:"Edge-Olfaction // Predictive Models 4", youtubeId:"KCXEhn_c-vE", status:"IN PROGRESS", desc:"Implementation of non-linear decay prediction and normalized risk equations to calculate produce degradation and estimate exact remaining shelf life based on raw sensor telemetry.", tags:["Mathematical Modeling","Predictive Analytics","Algorithms","Data Science"], github:"https://github.com/ZG0D-FF/Edge-Olfaction", live:"#" },
+  { title:"Edge-Olfaction // Core Initialization 5", youtubeId:"3HB6LGiXlrQ", status:"IN PROGRESS", desc:"Terminal-based execution environment allowing dynamic sensor calibration via specific 'Cargo Profiles' and rendering real-time ASCII telemetry and security intrusion alerts.", tags:["CLI","Python","System Init","Data Visualization"], github:"https://github.com/ZG0D-FF/Edge-Olfaction", live:"#" },
+  { title:"Edge-Olfaction // Flask UI Dashboard 6", youtubeId:"", status:"IN PROGRESS", desc:"Real-time Web GUI hosted locally via a Flask server on the edge node. Provides a comprehensive monitoring pipeline for system uptime, continuous sensor polling, and event logging.", tags:["Flask","Web Architecture","UI/UX","Python"], github:"https://github.com/ZG0D-FF/Edge-Olfaction", live:"#" },
 ];
 
-/*
-  PHOTOS
-  ─────────────────────────────────────────────
-  Upload your images to GitHub under the assets/ folder.
-  Then set src to "assets/yourimage.jpg"
-
-  Examples:
-    { src: "assets/project1.jpg",     caption: "Smart Farm — Field Setup" },
-    { src: "assets/demo_day.jpg",     caption: "Demo Day 2024" },
-    { src: "assets/hardware.jpg",     caption: "Raspberry Pi Cluster" },
-
-  Leave src: "" to show a placeholder instead.
-*/
 const PHOTOS = [
-  { 
-    src: "assets/edge_olfactionINDEX.jpeg",  
-    caption: "System Initialization: Dynamic Cargo Profile selection for calibrated sensor baseline adjustments" 
-  },
-  { 
-    src: "assets/edge_olfactionAPPLE.jpeg",  
-    caption: "Live Telemetry: Apple/Fruit profile monitoring real-time ethylene and alcohol off-gassing" 
-  },
-  { 
-    src: "assets/edge_olfactionBANANA.jpg",  
-    caption: "Decay Modeling: Banana profile calculating 10.3% spoilage risk via non-linear decay equations" 
-  },
-  { 
-    src: "assets/edge_olfactionONIONPOTATO.jpg", 
-    caption: "Diagnostic State: Tuber profile active with ultrasonic cargo fault detection during sulfur/methane tracking" 
-  },
-  { 
-    src: "assets/edge_olfactionCUCUMBER.jpg", 
-    caption: "Execution Environment: CLI boot sequence for fungus and rot-sensitive cargo monitoring" 
-  },
-  { 
-    src: "assets/edge_olfactionONBUILD.jpeg", 
-    caption: "Hardware Assembly: Integrating Raspberry Pi and Arduino Uno for dual-processor edge olfaction" 
-  },
-  { 
-    src: "assets/edge_olfactionCHAMBERCARDBOARD.jpeg", 
-    caption: "Test Chamber: Sensor fusion array featuring MQ-series, HC-SR04, and PIR within an enclosed volume" 
-  },
-  { 
-    src: "assets/edge_olfactionSIDEVIEW.jpeg", 
-    caption: "Modular Architecture: Hardware layer capturing raw analog signals for local edge analysis" 
-  },
-  { 
-    src: "assets/edge_olfactionTOPVIEW.jpeg", 
-    caption: "Signal Routing: High-density wiring mapping gas and acoustic piezo sensors to the ADC processing unit" 
-  }
-  
+  { src:"assets/edge_olfactionINDEX.jpeg",        caption:"System Initialization: Dynamic Cargo Profile selection for calibrated sensor baseline adjustments" },
+  { src:"assets/edge_olfactionAPPLE.jpeg",         caption:"Live Telemetry: Apple/Fruit profile monitoring real-time ethylene and alcohol off-gassing" },
+  { src:"assets/edge_olfactionBANANA.jpg",         caption:"Decay Modeling: Banana profile calculating 10.3% spoilage risk via non-linear decay equations" },
+  { src:"assets/edge_olfactionONIONPOTATO.jpg",    caption:"Diagnostic State: Tuber profile active with ultrasonic cargo fault detection during sulfur/methane tracking" },
+  { src:"assets/edge_olfactionCUCUMBER.jpg",       caption:"Execution Environment: CLI boot sequence for fungus and rot-sensitive cargo monitoring" },
+  { src:"assets/edge_olfactionONBUILD.jpeg",       caption:"Hardware Assembly: Integrating Raspberry Pi and Arduino Uno for dual-processor edge olfaction" },
+  { src:"assets/edge_olfactionCHAMBERCARDBOARD.jpeg", caption:"Test Chamber: Sensor fusion array featuring MQ-series, HC-SR04, and PIR within an enclosed volume" },
+  { src:"assets/edge_olfactionSIDEVIEW.jpeg",      caption:"Modular Architecture: Hardware layer capturing raw analog signals for local edge analysis" },
+  { src:"assets/edge_olfactionTOPVIEW.jpeg",       caption:"Signal Routing: High-density wiring mapping gas and acoustic piezo sensors to the ADC processing unit" },
 ];
 
-/*
-  TIMELINE — Your academic + project milestones
-*/
 const TIMELINE = [
-  { 
-    "year": "2024", 
-    "icon": "🎓", 
-    "title": "Started B.Tech ECE", 
-    "desc": "Joined the Electronics & Communication Engineering program. Started exploring the foundational concepts of hardware and software integration." 
-  }, 
-  { 
-    "year": "2025", 
-    "icon": "💻", 
-    "title": "Programming & Core ECE", 
-    "desc": "Adopted a 'complex to simple' approach to learning Python and MATLAB for engineering applications, alongside deep dives into BJT and FET circuits." 
-  }, 
-  { 
-    "year": "2025", 
-    "icon": "📜", 
-    "title": "Tech Conferences & Certifications", 
-    "desc": "Attended some conferences and earned certificates to expand technical knowledge." 
-  }, 
-  { 
-    "year": "2025", 
-    "icon": "🤖", 
-    "title": "J.A.R.V.I.S. Personal AI", 
-    "desc": "Began developing a Python-based personal AI assistant on a Raspberry Pi, experimenting with voice detection and various hardware sensors." 
-  }, 
-  { 
-    "year": "2026", 
-    "icon": "📦", 
-    "title": "Edge-Olfaction Logistics Project", 
-    "desc": "Working on 'Adaptive Hybrid Edge-Olfaction for Perishable Logistics', integrating advanced sensors and Raspberry Pi for a major academic submission." 
-  }, 
-  { 
-    "year": "2026", 
-    "icon": "⚡", 
-    "title": "2nd Year, 4th Semester", 
-    "desc": "Currently tackling Fourier, Laplace, and Z-transforms while balancing hands-on embedded projects and core ECE coursework." 
-  },
+  { year:"2024", icon:"🎓", title:"Started B.Tech ECE", desc:"Joined the Electronics & Communication Engineering program. Started exploring the foundational concepts of hardware and software integration." },
+  { year:"2025", icon:"💻", title:"Programming & Core ECE", desc:"Adopted a 'complex to simple' approach to learning Python and MATLAB for engineering applications, alongside deep dives into BJT and FET circuits." },
+  { year:"2025", icon:"📜", title:"Tech Conferences & Certifications", desc:"Attended some conferences and earned certificates to expand technical knowledge." },
+  { year:"2025", icon:"🤖", title:"J.A.R.V.I.S. Personal AI", desc:"Began developing a Python-based personal AI assistant on a Raspberry Pi, experimenting with voice detection and various hardware sensors." },
+  { year:"2026", icon:"📦", title:"Edge-Olfaction Logistics Project", desc:"Working on 'Adaptive Hybrid Edge-Olfaction for Perishable Logistics', integrating advanced sensors and Raspberry Pi for a major academic submission." },
+  { year:"2026", icon:"⚡", title:"2nd Year, 4th Semester", desc:"Currently tackling Fourier, Laplace, and Z-transforms while balancing hands-on embedded projects and core ECE coursework." },
 ];
 
-/*
-  LINKS — All your important links
-*/
 const LINKS = [
-  { icon: "⬡",  name: "GitHub",         url: "https://github.com/ZG0D-FF",          label: "github.com/ZG0D-FF" },
-  { icon: "🔗", name: "LinkedIn",       url: "https://www.linkedin.com/in/mr-zgod-06a24631a/",     label: "linkedin.com/in/mr-zgod" },
-  { icon: "📧", name: "Email",          url: "mailto:ZGODMR@gmail.com",        label: "ZGODMR@gmail.com" },
-  { icon: "📄", name: "Resume",         url: "resume.pdf",                               label: "Download PDF · Updated 2025" },
-  { icon: "▶",  name: "YouTube Channel",url: "https://youtube.com/@YOURCHANNEL",         label: "Project demos & walkthroughs" },
-  
+  { icon:"⬡",  name:"GitHub",          url:"https://github.com/ZG0D-FF",                        label:"github.com/ZG0D-FF" },
+  { icon:"🔗", name:"LinkedIn",        url:"https://www.linkedin.com/in/mr-zgod-06a24631a/",    label:"linkedin.com/in/mr-zgod" },
+  { icon:"📧", name:"Email",           url:"mailto:ZGODMR@gmail.com",                           label:"ZGODMR@gmail.com" },
+  { icon:"📄", name:"Resume",          url:"resume.pdf",                                         label:"Download PDF · Updated 2025" },
+  { icon:"▶",  name:"YouTube Channel", url:"https://youtube.com/@YOURCHANNEL",                  label:"Project demos & walkthroughs" },
 ];
 
-/* ============================================================
-   END OF YOUR DATA SECTION
-   ============================================================ */
+/* ════════════════════════════════════════════════
+   THREE.JS — 3D BACKGROUND
+   Iron Man / Transformers HUD feel:
+   - Floating geometric fragments (Transformers shards)
+   - Orbiting torus rings (Iron Man HUD)
+   - Data grid plane
+   - Particle field
+   - Mouse parallax camera
+════════════════════════════════════════════════ */
+function init3DBg() {
+  const canvas = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
 
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 500);
+  camera.position.set(0, 0, 28);
 
-/* ── INIT ── */
+  const C = new THREE.Color(0x00e5ff);
+
+  /* ── DATA GRID PLANE (floor/horizon) ── */
+  const gridHelper = new THREE.GridHelper(120, 40, 0x003344, 0x001a22);
+  gridHelper.position.y = -12;
+  gridHelper.rotation.x = 0.15;
+  scene.add(gridHelper);
+
+  /* ── SECONDARY GRID (vertical) ── */
+  const gridHelper2 = new THREE.GridHelper(80, 25, 0x002233, 0x001118);
+  gridHelper2.position.z = -30;
+  gridHelper2.rotation.x = Math.PI / 2;
+  scene.add(gridHelper2);
+
+  /* ── TRANSFORMERS SHARDS — angular fragments floating in 3D ── */
+  const shards = [];
+  const shardGeos = [
+    new THREE.TetrahedronGeometry(0.4, 0),
+    new THREE.OctahedronGeometry(0.35, 0),
+    new THREE.TetrahedronGeometry(0.25, 0),
+    new THREE.OctahedronGeometry(0.2, 0),
+  ];
+  for (let i = 0; i < 55; i++) {
+    const geo = shardGeos[Math.floor(Math.random() * shardGeos.length)];
+    const mat = new THREE.MeshBasicMaterial({
+      color: C, wireframe: true, transparent: true,
+      opacity: 0.08 + Math.random() * 0.18
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 40,
+      (Math.random() - 0.5) * 50
+    );
+    mesh.rotation.set(Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*Math.PI*2);
+    mesh.userData = {
+      rvx: (Math.random()-.5)*0.012,
+      rvy: (Math.random()-.5)*0.012,
+      rvz: (Math.random()-.5)*0.008,
+      vy:  (Math.random()-.5)*0.018,
+      vz:  (Math.random()-.5)*0.01,
+    };
+    scene.add(mesh);
+    shards.push(mesh);
+  }
+
+  /* ── IRON MAN CONCENTRIC RINGS ── */
+  function makeRing(r, tube, tiltX, tiltY, opacity, speed) {
+    const geo = new THREE.TorusGeometry(r, tube, 6, 90);
+    const mat = new THREE.MeshBasicMaterial({ color: C, transparent: true, opacity });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = tiltX;
+    mesh.rotation.y = tiltY;
+    mesh.userData.speed = speed;
+    return mesh;
+  }
+  const rings = [
+    makeRing(5,   0.025, 0,           0,          0.55, 0.003),
+    makeRing(5,   0.012, Math.PI/2,   0,          0.3,  -0.005),
+    makeRing(5,   0.012, Math.PI/4,   Math.PI/6,  0.2,  0.004),
+    makeRing(7,   0.018, Math.PI/6,   0,          0.4,  -0.002),
+    makeRing(7,   0.010, -Math.PI/3,  Math.PI/4,  0.18, 0.006),
+    makeRing(9,   0.015, Math.PI/2,   0,          0.25, -0.0018),
+    makeRing(9,   0.008, Math.PI/5,   Math.PI/3,  0.12, 0.004),
+    makeRing(11,  0.012, 0,           0,          0.15, -0.0012),
+    makeRing(11,  0.007, Math.PI/3,   Math.PI/2,  0.08, 0.003),
+  ];
+  const ringGroup = new THREE.Group();
+  rings.forEach(r => ringGroup.add(r));
+  ringGroup.position.set(0, 2, -5);
+  scene.add(ringGroup);
+
+  /* ── TICK MARKS on outermost ring ── */
+  const tickGroup = new THREE.Group();
+  for (let i = 0; i < 48; i++) {
+    const a = (i/48)*Math.PI*2;
+    const len = i%12===0 ? 0.5 : i%4===0 ? 0.3 : 0.15;
+    const r1=5.1, r2=r1-len;
+    const pts = [
+      new THREE.Vector3(Math.cos(a)*r1, Math.sin(a)*r1, 0),
+      new THREE.Vector3(Math.cos(a)*r2, Math.sin(a)*r2, 0),
+    ];
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: C, transparent:true, opacity: i%12===0?0.7:0.25 });
+    tickGroup.add(new THREE.Line(geo, mat));
+  }
+  ringGroup.add(tickGroup);
+
+  /* ── ICOSAHEDRON CORE ── */
+  const icoGeo = new THREE.IcosahedronGeometry(2.2, 1);
+  const icoMat = new THREE.MeshBasicMaterial({ color: C, wireframe:true, transparent:true, opacity:0.12 });
+  const ico = new THREE.Mesh(icoGeo, icoMat);
+  ringGroup.add(ico);
+
+  /* ── SCANNING ARC LINE (sweeping) ── */
+  const arcPts = [];
+  for (let i=0; i<=64; i++) {
+    const a = (i/64)*Math.PI*0.7;
+    arcPts.push(new THREE.Vector3(Math.cos(a)*5.05, Math.sin(a)*5.05, 0));
+  }
+  const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts);
+  const arcMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent:true, opacity:0.9 });
+  const arcLine = new THREE.Line(arcGeo, arcMat);
+  ringGroup.add(arcLine);
+
+  /* ── PARTICLES ── */
+  const pCount = 400;
+  const pPos = new Float32Array(pCount*3);
+  const pVel = [];
+  for (let i=0; i<pCount; i++) {
+    pPos[i*3]   = (Math.random()-.5)*100;
+    pPos[i*3+1] = (Math.random()-.5)*60;
+    pPos[i*3+2] = (Math.random()-.5)*60;
+    pVel.push({ vx:(Math.random()-.5)*0.02, vy:(Math.random()-.5)*0.02, vz:(Math.random()-.5)*0.015 });
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+  const pMat = new THREE.PointsMaterial({ color: C, size:0.12, transparent:true, opacity:0.45 });
+  scene.add(new THREE.Points(pGeo, pMat));
+
+  /* ── DATA STREAM LINES (vertical falling) ── */
+  const streams = [];
+  for (let i=0; i<18; i++) {
+    const pts = [];
+    const x = (Math.random()-.5)*70;
+    const z = -15 - Math.random()*30;
+    for (let j=0; j<12; j++) pts.push(new THREE.Vector3(x, 20-j*3, z));
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: C, transparent:true, opacity:0.06+Math.random()*0.1 });
+    const line = new THREE.Line(geo, mat);
+    line.userData.speed = 0.05 + Math.random()*0.1;
+    scene.add(line);
+    streams.push(line);
+  }
+
+  /* ── MOUSE PARALLAX ── */
+  let mx = 0, my = 0, tmx = 0, tmy = 0;
+  document.addEventListener('mousemove', e => {
+    tmx = (e.clientX/window.innerWidth  - 0.5) * 1.8;
+    tmy = (e.clientY/window.innerHeight - 0.5) * 1.0;
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  /* ── SCROLL parallax depth ── */
+  let scrollZ = 0;
+  window.addEventListener('scroll', () => {
+    scrollZ = window.scrollY * 0.008;
+  });
+
+  let t = 0;
+  (function animate() {
+    requestAnimationFrame(animate);
+    t += 0.008;
+
+    /* smooth mouse follow */
+    mx += (tmx - mx) * 0.025;
+    my += (tmy - my) * 0.025;
+    camera.position.x = mx * 3;
+    camera.position.y = -my * 2;
+    camera.position.z = 28 + scrollZ;
+    camera.lookAt(0, 0, 0);
+
+    /* rings */
+    rings.forEach(r => {
+      r.rotation.z += r.userData.speed;
+      r.rotation.y += r.userData.speed * 0.2;
+    });
+    ringGroup.rotation.y += 0.0015;
+    ringGroup.rotation.x = Math.sin(t*0.4)*0.08;
+    tickGroup.rotation.z += 0.003;
+
+    /* scanning arc sweeps */
+    arcLine.rotation.z += 0.025;
+
+    /* ico pulse */
+    ico.rotation.y += 0.006;
+    ico.rotation.x += 0.003;
+    const pulse = 1 + Math.sin(t*2)*0.04;
+    ico.scale.setScalar(pulse);
+
+    /* shards drift */
+    shards.forEach(s => {
+      s.rotation.x += s.userData.rvx;
+      s.rotation.y += s.userData.rvy;
+      s.rotation.z += s.userData.rvz;
+      s.position.y  += s.userData.vy;
+      s.position.z  += s.userData.vz;
+      if (s.position.y > 22)  s.position.y = -22;
+      if (s.position.y < -22) s.position.y = 22;
+      if (s.position.z > 30)  s.position.z = -30;
+      if (s.position.z < -30) s.position.z = 30;
+    });
+
+    /* particles */
+    const pos = pGeo.attributes.position.array;
+    for (let i=0; i<pCount; i++) {
+      pos[i*3]   += pVel[i].vx;
+      pos[i*3+1] += pVel[i].vy;
+      pos[i*3+2] += pVel[i].vz;
+      if (Math.abs(pos[i*3])   > 50) pVel[i].vx *= -1;
+      if (Math.abs(pos[i*3+1]) > 30) pVel[i].vy *= -1;
+      if (Math.abs(pos[i*3+2]) > 30) pVel[i].vz *= -1;
+    }
+    pGeo.attributes.position.needsUpdate = true;
+
+    /* data streams fall */
+    streams.forEach(s => {
+      s.position.y -= s.userData.speed;
+      if (s.position.y < -25) s.position.y = 25;
+    });
+
+    /* grid subtle pulse */
+    gridHelper.material.opacity = 0.3 + Math.sin(t*1.2)*0.05;
+
+    renderer.render(scene, camera);
+  })();
+}
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-  // Greeting from URL param (set by index.html)
   const params = new URLSearchParams(window.location.search);
   const visitor = params.get('visitor') || 'GUEST';
   const greeting = params.get('greeting') || `WELCOME // ${visitor.toUpperCase()}`;
   document.getElementById('topbar-greeting').textContent = greeting;
 
+  init3DBg();
   buildProjects();
   buildPhotos();
   buildTimeline();
   buildLinks();
-  initBgCanvas();
   initScrollObserver();
 
-  // Page load animation
   setTimeout(() => document.getElementById('page-wrapper').classList.add('loaded'), 80);
-  // Animate profile stats
   setTimeout(animateStats, 400);
 });
 
@@ -1171,24 +992,19 @@ function animateStats() {
   typeReveal(document.getElementById('enroll-val'), PROFILE.enrollment, 75);
   typeReveal(document.getElementById('reg-val'), PROFILE.registration, 75);
 }
-
 function animateNum(el, target, dec, dur) {
   let start = null;
   requestAnimationFrame(function step(ts) {
     if (!start) start = ts;
-    const p = Math.min((ts - start) / dur, 1);
-    const ease = 1 - Math.pow(1 - p, 4);
-    el.textContent = (ease * target).toFixed(dec);
+    const p = Math.min((ts-start)/dur, 1);
+    const ease = 1 - Math.pow(1-p, 4);
+    el.textContent = (ease*target).toFixed(dec);
     if (p < 1) requestAnimationFrame(step);
   });
 }
-
 function typeReveal(el, text, delay) {
   let i = 0; el.textContent = '';
-  const iv = setInterval(() => {
-    el.textContent += text[i++];
-    if (i >= text.length) clearInterval(iv);
-  }, delay);
+  const iv = setInterval(() => { el.textContent += text[i++]; if (i >= text.length) clearInterval(iv); }, delay);
 }
 
 /* ── BUILD PROJECTS ── */
@@ -1196,65 +1012,20 @@ function buildProjects() {
   const grid = document.getElementById('proj-grid');
   PROJECTS.forEach(p => {
     const videoHTML = p.youtubeId
-      ? `<div class="proj-video">
-           <iframe src="https://www.youtube.com/embed/${p.youtubeId}"
-             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-             allowfullscreen loading="lazy"></iframe>
-           <div class="scanlines"></div>
-         </div>`
-      : `<div class="proj-video">
-           <div class="vid-placeholder">
-             <div class="play-icon">▶</div>
-             <div class="vid-label">VIDEO COMING SOON</div>
-           </div>
-           <div class="scanlines"></div>
-         </div>`;
-
-    grid.innerHTML += `
-      <div class="proj-card">
-        ${videoHTML}
-        <div class="proj-body">
-          <div class="proj-header">
-            <div class="proj-title">${p.title}</div>
-            <div class="proj-status">${p.status}</div>
-          </div>
-          <p class="proj-desc">${p.desc}</p>
-          <div class="proj-tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-          <div class="proj-links">
-            <a href="${p.github}" target="_blank" rel="noopener" class="plink plink-outline">⬡ CODE</a>
-            <a href="${p.live}"   target="_blank" rel="noopener" class="plink plink-solid">▶ LIVE</a>
-          </div>
-        </div>
-      </div>`;
+      ? `<div class="proj-video"><iframe src="https://www.youtube.com/embed/${p.youtubeId}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe><div class="scanlines"></div></div>`
+      : `<div class="proj-video"><div class="vid-placeholder"><div class="play-icon">▶</div><div class="vid-label">VIDEO COMING SOON</div></div><div class="scanlines"></div></div>`;
+    grid.innerHTML += `<div class="proj-card">${videoHTML}<div class="proj-body"><div class="proj-header"><div class="proj-title">${p.title}</div><div class="proj-status">${p.status}</div></div><p class="proj-desc">${p.desc}</p><div class="proj-tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div><div class="proj-links"><a href="${p.github}" target="_blank" rel="noopener" class="plink plink-outline">⬡ CODE</a><a href="${p.live}" target="_blank" rel="noopener" class="plink plink-solid">▶ LIVE</a></div></div></div>`;
   });
 }
 
 /* ── BUILD PHOTOS ── */
 function buildPhotos() {
   const grid = document.getElementById('photos-grid');
-  PHOTOS.forEach((p, i) => {
+  PHOTOS.forEach(p => {
     if (p.src) {
-      grid.innerHTML += `
-        <div class="photo-card" onclick="openLightbox('${p.src}','${p.caption}')">
-          <img src="${p.src}" alt="${p.caption}"
-            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-          <div class="photo-placeholder" style="display:none;">
-            <span style="font-size:28px;opacity:.3">🖼️</span>
-            <span>ADD IMAGE</span>
-            <span style="font-size:8px;opacity:.4">${p.src}</span>
-          </div>
-          <div class="photo-overlay">🔍</div>
-          <div class="photo-caption">${p.caption}</div>
-        </div>`;
+      grid.innerHTML += `<div class="photo-card" onclick="openLightbox('${p.src}','${p.caption}')"><img src="${p.src}" alt="${p.caption}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="photo-placeholder" style="display:none;"><span style="font-size:28px;opacity:.3">🖼️</span><span>ADD IMAGE</span></div><div class="photo-overlay">🔍</div><div class="photo-caption">${p.caption}</div></div>`;
     } else {
-      grid.innerHTML += `
-        <div class="photo-card">
-          <div class="photo-placeholder">
-            <span style="font-size:28px;opacity:.3">🖼️</span>
-            <span>${p.caption}</span>
-          </div>
-          <div class="photo-caption">${p.caption}</div>
-        </div>`;
+      grid.innerHTML += `<div class="photo-card"><div class="photo-placeholder"><span style="font-size:28px;opacity:.3">🖼️</span><span>${p.caption}</span></div><div class="photo-caption">${p.caption}</div></div>`;
     }
   });
 }
@@ -1265,9 +1036,7 @@ function openLightbox(src, caption) {
   document.getElementById('lightbox-caption').textContent = caption;
   document.getElementById('lightbox').classList.add('open');
 }
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('open');
-}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
 /* ── BUILD TIMELINE ── */
@@ -1276,14 +1045,8 @@ function buildTimeline() {
   TIMELINE.forEach((t, i) => {
     const el = document.createElement('div');
     el.className = 'tl-item';
-    el.style.transitionDelay = (i * 0.1) + 's';
-    el.innerHTML = `
-      <div class="tl-dot">${t.icon}</div>
-      <div class="tl-content">
-        <div class="tl-date">${t.year}</div>
-        <div class="tl-title">${t.title}</div>
-        <div class="tl-desc">${t.desc}</div>
-      </div>`;
+    el.style.transitionDelay = (i*0.1)+'s';
+    el.innerHTML = `<div class="tl-dot">${t.icon}</div><div class="tl-content"><div class="tl-date">${t.year}</div><div class="tl-title">${t.title}</div><div class="tl-desc">${t.desc}</div></div>`;
     list.appendChild(el);
   });
 }
@@ -1292,14 +1055,7 @@ function buildTimeline() {
 function buildLinks() {
   const grid = document.getElementById('links-grid');
   LINKS.forEach(l => {
-    grid.innerHTML += `
-      <a href="${l.url}" target="_blank" rel="noopener" class="link-card">
-        <div class="link-icon">${l.icon}</div>
-        <div class="link-info">
-          <div class="link-name">${l.name}</div>
-          <div class="link-url">${l.label}</div>
-        </div>
-      </a>`;
+    grid.innerHTML += `<a href="${l.url}" target="_blank" rel="noopener" class="link-card"><div class="link-icon">${l.icon}</div><div class="link-info"><div class="link-name">${l.name}</div><div class="link-url">${l.label}</div></div></a>`;
   });
 }
 
@@ -1309,10 +1065,7 @@ function initScrollObserver() {
     entries.forEach(e => {
       if (e.isIntersecting) {
         e.target.classList.add('in-view');
-        // Animate timeline items when visible
-        if (e.target.id === 'timeline') {
-          document.querySelectorAll('.tl-item').forEach(el => el.classList.add('visible'));
-        }
+        if (e.target.id === 'timeline') document.querySelectorAll('.tl-item').forEach(el => el.classList.add('visible'));
         obs.unobserve(e.target);
       }
     });
@@ -1320,175 +1073,76 @@ function initScrollObserver() {
   document.querySelectorAll('.dash-section').forEach(s => obs.observe(s));
 }
 
-/* ── BACKGROUND CANVAS ── */
-function initBgCanvas() {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  resize(); window.addEventListener('resize', resize);
-
-  const pts = Array.from({length: 45}, () => ({
-    x: Math.random() * window.innerWidth,
-    y: Math.random() * window.innerHeight,
-    r: Math.random() * 1.2 + 0.3,
-    vx: (Math.random() - 0.5) * 0.15,
-    vy: (Math.random() - 0.5) * 0.15,
-    a: Math.random() * 0.4 + 0.1,
-  }));
-
-  const arcs = Array.from({length: 3}, (_, i) => ({
-    x: window.innerWidth * (0.15 + i * 0.35),
-    y: window.innerHeight * (0.25 + (i%2)*0.45),
-    r: 70 + i * 35, angle: Math.random()*Math.PI*2,
-    speed: 0.003 * (i%2?1:-1),
-  }));
-
-  (function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    arcs.forEach(a => {
-      a.angle += a.speed;
-      ctx.beginPath();
-      ctx.arc(a.x, a.y, a.r, a.angle, a.angle + Math.PI * 1.3);
-      ctx.setLineDash([10, 6]); ctx.strokeStyle = 'rgba(0,229,255,.12)';
-      ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-    });
-    pts.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(0,229,255,${p.a})`; ctx.fill();
-    });
-    for (let i = 0; i < pts.length; i++)
-      for (let j = i+1; j < pts.length; j++) {
-        const d = Math.hypot(pts[i].x-pts[j].x, pts[i].y-pts[j].y);
-        if (d < 120) {
-          ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y);
-          ctx.strokeStyle = `rgba(0,229,255,${0.05*(1-d/120)})`; ctx.lineWidth=.5; ctx.stroke();
-        }
-      }
-    requestAnimationFrame(draw);
-  })();
-}
+/* ── CHARTS ── */
 const ctx2 = document.getElementById('semChart').getContext('2d');
 new Chart(ctx2, {
-  type: 'bar',
-  data: {
-    labels: ['Sem 1','Sem 2','Sem 3'],
-    datasets:[{ label:'CGPA', data:[9.2,8.6,8.3],
-      backgroundColor:'rgba(0,229,255,0.15)',
-      borderColor:'rgba(0,229,255,0.8)',
-      borderWidth:1 }]
-  },
+  type:'bar',
+  data:{ labels:['Sem 1','Sem 2','Sem 3'], datasets:[{ label:'CGPA', data:[9.2,8.6,8.3], backgroundColor:'rgba(0,229,255,0.15)', borderColor:'rgba(0,229,255,0.8)', borderWidth:1 }] },
   options:{ scales:{ y:{ min:0, max:10, ticks:{ color:'rgba(0,229,255,0.5)', font:{family:'Share Tech Mono'} }, grid:{ color:'rgba(0,229,255,0.08)' } }, x:{ ticks:{ color:'rgba(0,229,255,0.5)', font:{family:'Share Tech Mono'} }, grid:{ color:'rgba(0,229,255,0.08)' } } }, plugins:{ legend:{ labels:{ color:'rgba(0,229,255,0.6)', font:{family:'Orbitron'} } } } }
 });
+
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+  type:'radar',
+  data:{ labels:['Python','Hardware','Edge AI','Networking','Signal Processing','System Design'], datasets:[{ label:'Skill Level', data:[80,85,70,65,60,75], backgroundColor:'rgba(0,229,255,0.08)', borderColor:'rgba(0,229,255,0.7)', pointBackgroundColor:'#00e5ff', pointRadius:4, borderWidth:1.5 }] },
+  options:{ scales:{ r:{ min:0, max:100, ticks:{ display:false }, grid:{ color:'rgba(0,229,255,0.1)' }, angleLines:{ color:'rgba(0,229,255,0.1)' }, pointLabels:{ color:'rgba(0,229,255,0.6)', font:{family:'Share Tech Mono', size:11} } } }, plugins:{ legend:{ display:false } } }
+});
+
+/* ── JARVIS VOICE EASTER EGG ── */
 document.addEventListener('keydown', (function(){
   const secret = 'jarvis'; let typed = '';
   return function(e){
     typed += e.key.toLowerCase();
-    if(typed.length > secret.length) typed = typed.slice(-secret.length);
-    if(typed === secret){
+    if (typed.length > secret.length) typed = typed.slice(-secret.length);
+    if (typed === secret) {
       const voices = window.speechSynthesis.getVoices();
-const deep = voices.find(v => v.name.includes('David') || v.name.includes('Daniel') || v.name.includes('Google UK English Male')) || voices[0];
-const name = document.querySelector('.profile-name') ? document.querySelector('.profile-name').innerText.replace('\n',' ') : 'the engineer';
-const msg = new SpeechSynthesisUtterance(
-  'Good day. I am JARVIS, Just A Rather Very Intelligent System. ' +
-  'You are currently viewing the portfolio of ' + name + '. ' +
-  'He is a second year Electronics and Communication Engineering student at the University of Engineering and Management. ' +
-  'He has ' + document.querySelectorAll('.proj-card').length + ' active projects on display, ' +
-  'ranging from acoustic disease detection on edge hardware, to an adaptive olfaction logistics system. ' +
-  'His GitHub is Z-G-zero-D dash F-F. ' +
-  'THANK YOU'
-);
-msg.pitch = 0.55;
-msg.rate = 0.85;
-msg.volume = 1;
-msg.voice = deep;
-window.speechSynthesis.cancel();
-window.speechSynthesis.speak(msg);
+      const deep = voices.find(v => v.name.includes('David') || v.name.includes('Daniel') || v.name.includes('Google UK English Male')) || voices[0];
+      const name = document.querySelector('.profile-name') ? document.querySelector('.profile-name').innerText.replace('\n',' ') : 'the engineer';
+      const msg = new SpeechSynthesisUtterance('Good day. I am JARVIS, Just A Rather Very Intelligent System. You are currently viewing the portfolio of ' + name + '. He is a second year Electronics and Communication Engineering student at the University of Engineering and Management. He has ' + document.querySelectorAll('.proj-card').length + ' active projects on display, ranging from acoustic disease detection on edge hardware, to an adaptive olfaction logistics system. His GitHub is Z-G-zero-D dash F-F. THANK YOU');
+      msg.pitch = 0.55; msg.rate = 0.85; msg.volume = 1; msg.voice = deep;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(msg);
       typed = '';
     }
   };
 })());
-setInterval(()=>{
+
+/* ── CLOCK ── */
+setInterval(() => {
   const now = new Date();
-  document.getElementById('live-clock').textContent =
-    now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Asia/Kolkata'}) + ' IST';
-},1000);
-fetch('https://github.com/ZG0D-FF/ZG0D-FF')
+  document.getElementById('live-clock').textContent = now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Asia/Kolkata'}) + ' IST';
+}, 1000);
+
+/* ── LAST UPDATED ── */
+fetch('https://api.github.com/repos/ZG0D-FF/ZG0D-FF/commits?per_page=1')
   .then(r=>r.json())
-  .then(d=>{
-    const date = new Date(d[0].commit.author.date);
-    document.getElementById('last-updated').textContent =
-      date.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}).toUpperCase();
-  }).catch(()=>{
-    document.getElementById('last-updated').textContent = 'MARCH 2026';
-  });
-  document.addEventListener('visibilitychange',()=>{
-  document.title = document.hidden ? 'DJ  IDLE' : 'JARVIS — Dashboard';
-});
-const radarCtx = document.getElementById('radarChart').getContext('2d');
-new Chart(radarCtx, {
-  type: 'radar',
-  data: {
-    labels: ['Python','Hardware','Edge AI','Networking','Signal Processing','System Design'],
-    datasets:[{
-      label:'Skill Level',
-      data:[80,85,70,65,60,75],
-      backgroundColor:'rgba(0,229,255,0.08)',
-      borderColor:'rgba(0,229,255,0.7)',
-      pointBackgroundColor:'var(--cyan)',
-      pointRadius:4,
-      borderWidth:1.5
-    }]
-  },
-  options:{
-    scales:{
-      r:{
-        min:0, max:100,
-        ticks:{ display:false },
-        grid:{ color:'rgba(0,229,255,0.1)' },
-        angleLines:{ color:'rgba(0,229,255,0.1)' },
-        pointLabels:{ color:'rgba(0,229,255,0.6)', font:{family:'Share Tech Mono', size:11} }
-      }
-    },
-    plugins:{ legend:{ display:false } }
-  }
-});
+  .then(d=>{ const date = new Date(d[0].commit.author.date); document.getElementById('last-updated').textContent = date.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}).toUpperCase(); })
+  .catch(()=>{ document.getElementById('last-updated').textContent = 'MARCH 2026'; });
+
+/* ── TAB TITLE ── */
+document.addEventListener('visibilitychange',()=>{ document.title = document.hidden ? 'DJ // IDLE' : 'JARVIS — Dashboard'; });
+
+/* ── KONAMI CODE ── */
 (function(){
   const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
   let pos = 0;
   document.addEventListener('keydown', e => {
-    if(e.key === code[pos]) { pos++; } else { pos = 0; }
-    if(pos === code.length){
-      pos = 0;
-      triggerKonami();
-    }
+    if (e.key === code[pos]) { pos++; } else { pos = 0; }
+    if (pos === code.length) { pos = 0; triggerKonami(); }
   });
 })();
 
 function triggerKonami(){
   const ov = document.createElement('div');
   ov.style.cssText = `position:fixed;inset:0;background:#020c18;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;color:#00e5ff;`;
-  const lines = [
-    '> INITIALIZING J.A.R.V.I.S...',
-    '> LOADING NEURAL CORE........OK',
-    '> SENSOR ARRAY...............OK',
-    '> SECURITY MATRIX............OK',
-    '> EDGE OLFACTION.............OK',
-    '> ALL SYSTEMS OPERATIONAL',
-    '',
-    'WELCOME BACK, ENGINEER.'
-  ];
+  const lines = ['> INITIALIZING J.A.R.V.I.S...','> LOADING NEURAL CORE........OK','> SENSOR ARRAY...............OK','> SECURITY MATRIX............OK','> EDGE OLFACTION.............OK','> ALL SYSTEMS OPERATIONAL','','WELCOME BACK, ENGINEER.'];
   let html = '';
   lines.forEach(l => html += `<div style="font-size:13px;letter-spacing:2px;margin:4px 0;opacity:0;transition:opacity 0.4s;" class="kline">${l}</div>`);
   ov.innerHTML = html + `<div style="margin-top:32px;font-size:10px;opacity:0.3;letter-spacing:3px;">PRESS ANY KEY TO DISMISS</div>`;
   document.body.appendChild(ov);
-  ov.querySelectorAll('.kline').forEach((el,i)=>{
-    setTimeout(()=>{ el.style.opacity='1'; }, i*300);
-  });
+  ov.querySelectorAll('.kline').forEach((el,i) => { setTimeout(()=>{ el.style.opacity='1'; }, i*300); });
   const dismiss = () => { ov.remove(); document.removeEventListener('keydown', dismiss); };
-  setTimeout(()=> document.addEventListener('keydown', dismiss), 2500);
+  setTimeout(() => document.addEventListener('keydown', dismiss), 2500);
 }
 </script>
 </body>
