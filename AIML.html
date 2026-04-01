@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DJ's AI Exam — OASIS Study Terminal</title>
+
+<!-- MathJax for rendering LaTeX equations -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+    options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+<!-- Google Fonts: Orbitron (display) + Share Tech Mono (code/body) -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+/* ─── CSS VARIABLES ─────────────────────────────────────── */
+:root {
+  --bg:         #070d12;
+  --bg2:        #0c1620;
+  --bg3:        #101e2b;
+  --neon-green: #00ff9f;
+  --neon-cyan:  #00e5ff;
+  --neon-orange:#ff6b1a;
+  --neon-pink:  #ff2d78;
+  --neon-gold:  #ffd700;
+  --text:       #c8dde8;
+  --text-dim:   #5a7a8a;
+  --border:     #1a3348;
+  --glow-g: 0 0 8px #00ff9f88, 0 0 20px #00ff9f44;
+  --glow-c: 0 0 8px #00e5ff88, 0 0 20px #00e5ff44;
+  --glow-o: 0 0 8px #ff6b1a88, 0 0 20px #ff6b1a44;
+  --mono: 'Share Tech Mono', monospace;
+  --display: 'Orbitron', sans-serif;
+  --body-font: 'Exo 2', sans-serif;
+}
+
+/* ─── RESET & BASE ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body-font);
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ─── SCANLINE OVERLAY ──────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.07) 2px,
+    rgba(0,0,0,0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ─── GRID BACKGROUND ───────────────────────────────────── */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── HEADER ────────────────────────────────────────────── */
+header {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 60px 20px 40px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #040a10 0%, transparent 100%);
+}
+
+.header-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  color: var(--neon-orange);
+  text-shadow: var(--glow-o);
+  border: 1px solid var(--neon-orange);
+  padding: 4px 16px;
+  margin-bottom: 20px;
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+.header-title {
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  font-weight: 900;
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-c), 0 0 60px #00e5ff33;
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  animation: flicker 6s infinite;
+}
+
+@keyframes flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
+  20%,22%,24%,55% { opacity:0.85; }
+}
+
+.header-sub {
+  font-family: var(--mono);
+  color: var(--neon-green);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  margin-top: 10px;
+  text-shadow: var(--glow-g);
+}
+
+/* ─── AUTO-RETRACTING VISOR NAV ─────────────────────────── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(4, 10, 16, 0.95);
+  border-bottom: 2px solid var(--neon-cyan);
+  box-shadow: 0 4px 30px rgba(0, 229, 255, 0.15);
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(12px);
+  /* The Auto-Hide Magic */
+  transform: translateY(calc(-100% + 4px)); 
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Drop down when hovered */
+nav:hover, nav:focus-within {
+  transform: translateY(0); 
+}
+
+/* The Glowing Pull-Down Tab */
+nav::after {
+  content: '▼ SYSTEM INDEX';
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(4, 10, 16, 0.95);
+  border: 1px solid var(--neon-cyan);
+  border-top: none;
+  padding: 4px 18px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--neon-cyan);
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 10px rgba(0, 229, 255, 0.2);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+nav a {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.1em;
+  transition: all 0.2s ease;
+  border-radius: 3px;
+}
+
+nav a:hover {
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-c);
+  background: rgba(0, 229, 255, 0.08);
+  transform: translateY(-2px); /* Slight lift effect */
+}
+
+/* Special Styling for the Return Button */
+nav a.nav-return {
+  color: var(--neon-pink);
+  border-color: var(--neon-pink);
+  text-shadow: 0 0 8px rgba(255, 45, 120, 0.5);
+}
+nav a.nav-return:hover {
+  background: rgba(255, 45, 120, 0.08);
+  box-shadow: 0 0 12px rgba(255, 45, 120, 0.4);
+}
+
+/* Vertical Dividers to group sections logically */
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* ─── MAIN CONTAINER ────────────────────────────────────── */
+main {
+  position: relative;
+  z-index: 5;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+/* ─── SECTION HEADERS ───────────────────────────────────── */
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  color: var(--neon-orange);
+  text-shadow: var(--glow-o);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-c);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.05em;
+}
+
+section { margin-bottom: 70px; }
+
+/* ─── QUESTION CARD ─────────────────────────────────────── */
+.q-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--neon-cyan);
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.q-card:hover {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-c), inset 0 0 30px rgba(0,229,255,0.03);
+}
+.q-card.orange { border-left-color: var(--neon-orange); }
+.q-card.orange:hover { border-color: var(--neon-orange); box-shadow: var(--glow-o); }
+.q-card.green  { border-left-color: var(--neon-green); }
+.q-card.green:hover  { border-color: var(--neon-green); box-shadow: var(--glow-g); }
+.q-card.gold   { border-left-color: var(--neon-gold); }
+
+.q-num {
+  font-family: var(--display);
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  color: var(--neon-orange);
+  margin-bottom: 6px;
+}
+.q-title {
+  font-family: var(--display);
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.q-body { font-size: 0.92rem; color: var(--text); }
+.q-body p { margin-bottom: 10px; }
+.q-body ul { padding-left: 20px; }
+.q-body ul li { margin-bottom: 6px; }
+.q-body strong { color: var(--neon-green); font-weight: 600; }
+
+/* ─── PEAS TABLE ────────────────────────────────────────── */
+.peas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  margin-top: 14px;
+}
+.peas-table th {
+  background: #0a1b28;
+  color: var(--neon-orange);
+  padding: 10px 14px;
+  text-align: left;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--border);
+}
+.peas-table td {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+.peas-table tr:nth-child(even) td { background: rgba(0,229,255,0.03); }
+
+/* ─── FORMULA BOX ───────────────────────────────────────── */
+.formula-box {
+  background: #050d14;
+  border: 1px solid var(--neon-green);
+  border-radius: 2px;
+  padding: 16px 22px;
+  margin: 14px 0;
+  text-align: center;
+  box-shadow: var(--glow-g);
+  font-size: 1.05rem;
+}
+
+/* ─── AGENT DIAGRAM ─────────────────────────────────────── */
+.agent-diagram {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  margin: 16px 0;
+  padding: 16px;
+  background: #050d14;
+  border: 1px solid var(--border);
+}
+.diag-box {
+  background: var(--bg3);
+  border: 1px solid var(--neon-cyan);
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--neon-cyan);
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: var(--glow-c);
+  min-width: 90px;
+}
+.diag-box.env  { border-color: var(--neon-orange); color: var(--neon-orange); box-shadow: var(--glow-o); }
+.diag-box.util { border-color: var(--neon-green);  color: var(--neon-green);  box-shadow: var(--glow-g); }
+.diag-arrow {
+  font-size: 1.2rem;
+  color: var(--text-dim);
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+/* ─── BFS/DFS TRACE ─────────────────────────────────────── */
+.trace-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+@media(max-width:600px){ .trace-grid { grid-template-columns: 1fr; } }
+
+.trace-box {
+  background: #050d14;
+  border: 1px solid var(--neon-green);
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+.trace-box.dfs { border-color: var(--neon-orange); }
+.trace-title {
+  font-family: var(--display);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--neon-green);
+  margin-bottom: 10px;
+}
+.trace-box.dfs .trace-title { color: var(--neon-orange); }
+.trace-step { color: var(--text); margin-bottom: 4px; }
+.trace-step span { color: var(--neon-cyan); }
+.trace-result {
+  margin-top: 10px;
+  padding: 8px;
+  background: rgba(0,255,159,0.07);
+  color: var(--neon-green);
+  border-left: 2px solid var(--neon-green);
+}
+.trace-box.dfs .trace-result { background: rgba(255,107,26,0.07); color: var(--neon-orange); border-left-color: var(--neon-orange); }
+
+/* ─── NORMALIZATION TABLE ───────────────────────────────── */
+.norm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  margin: 12px 0;
+}
+.norm-table th {
+  background: #0a1b28;
+  color: var(--neon-cyan);
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  text-align: right;
+}
+.norm-table th:first-child { text-align: left; }
+.norm-table td {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  text-align: right;
+  color: var(--text);
+}
+.norm-table td:first-child { text-align: left; color: var(--neon-orange); }
+.norm-table tr:hover td { background: rgba(0,229,255,0.04); }
+
+/* ─── LOG CHEAT SHEET ───────────────────────────────────── */
+.log-sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.log-pill {
+  background: #050d14;
+  border: 1px solid var(--neon-gold);
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--neon-gold);
+  text-align: center;
+}
+
+/* ─── PRACTICE PROBLEM ──────────────────────────────────── */
+.problem-card {
+  background: linear-gradient(135deg, #0a1620, #0c1e2e);
+  border: 1px solid var(--neon-pink);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.problem-card::before {
+  content: '◈ PRACTICE';
+  position: absolute;
+  top: -1px; right: 20px;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: var(--neon-pink);
+  background: var(--bg);
+  padding: 0 8px;
+}
+.problem-num {
+  font-family: var(--display);
+  font-size: 0.65rem;
+  color: var(--neon-pink);
+  letter-spacing: 0.3em;
+  margin-bottom: 8px;
+}
+.problem-title {
+  font-family: var(--display);
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.given-box {
+  background: #050d14;
+  border-left: 3px solid var(--neon-pink);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+.given-box .label { color: var(--neon-pink); font-size: 0.65rem; letter-spacing: 0.2em; margin-bottom: 6px; }
+
+.solution-toggle {
+  background: none;
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  padding: 8px 18px;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: all 0.2s;
+}
+.solution-toggle:hover { background: rgba(0,255,159,0.1); box-shadow: var(--glow-g); }
+
+.solution-body {
+  display: none;
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(0,255,159,0.04);
+  border: 1px solid rgba(0,255,159,0.2);
+  font-size: 0.88rem;
+}
+.solution-body.open { display: block; }
+.solution-body p { margin-bottom: 8px; }
+.solution-body .step-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--neon-green);
+  letter-spacing: 0.25em;
+  margin: 12px 0 4px;
+}
+.highlight-answer {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  color: var(--neon-gold);
+  text-shadow: 0 0 10px #ffd70077;
+  padding: 10px 16px;
+  background: rgba(255,215,0,0.06);
+  border: 1px solid rgba(255,215,0,0.3);
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* ─── CODE SECTIONS ─────────────────────────────────────── */
+.code-section {
+  margin-bottom: 50px;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
+  background: #0a1b28;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  padding: 12px 18px;
+}
+.code-dot { width:10px; height:10px; border-radius:50%; }
+.code-dot.r { background: #ff5f57; }
+.code-dot.y { background: #ffbd2e; }
+.code-dot.g { background: #28ca41; }
+.code-filename {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-left: 6px;
+}
+.code-tag {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: var(--neon-orange);
+  border: 1px solid var(--neon-orange);
+  padding: 2px 8px;
+}
+
+pre {
+  background: #040c14;
+  border: 1px solid var(--border);
+  padding: 20px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.65;
+  position: relative;
+  margin: 0;
+}
+
+/* Syntax colors */
+.kw  { color: #ff79c6; }  /* keywords */
+.fn  { color: #50fa7b; }  /* functions */
+.str { color: #f1fa8c; }  /* strings */
+.cm  { color: #6272a4; font-style: italic; }  /* comments */
+.num { color: #bd93f9; }  /* numbers */
+.cls { color: #8be9fd; }  /* class names */
+.op  { color: #ff79c6; }  /* operators */
+
+/* ─── LINE EXPLANATION TABLE ────────────────────────────── */
+.explain-toggle {
+  background: none;
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  padding: 7px 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.2s;
+  display: block;
+}
+.explain-toggle:hover { background: rgba(0,229,255,0.08); box-shadow: var(--glow-c); }
+
+.explain-panel {
+  display: none;
+  background: #04090f;
+  border: 1px solid rgba(0,229,255,0.2);
+  border-top: none;
+}
+.explain-panel.open { display: block; }
+
+.explain-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+}
+.explain-row:last-child { border-bottom: none; }
+.explain-code {
+  padding: 9px 14px;
+  font-family: var(--mono);
+  color: var(--neon-green);
+  border-right: 1px solid var(--border);
+  word-break: break-all;
+  background: rgba(0,255,159,0.03);
+}
+.explain-text {
+  padding: 9px 14px;
+  color: var(--text);
+  font-family: var(--body-font);
+  font-size: 0.78rem;
+}
+
+/* ─── OUTPUT IMAGE ──────────────────────────────────────── */
+.output-img-wrap {
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  background: #050d14;
+  padding: 4px;
+  position: relative;
+}
+.output-img-label {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.25em;
+  color: var(--neon-orange);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.output-img-wrap img {
+  width: 100%;
+  display: block;
+  filter: saturate(1.1) brightness(0.95);
+  transition: filter 0.3s;
+}
+.output-img-wrap img:hover { filter: saturate(1.3) brightness(1.05); }
+.img-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  flex-direction: column;
+  gap: 10px;
+}
+.img-missing .icon { font-size: 2rem; opacity: 0.3; }
+
+/* ─── BIAS-VARIANCE VIZ ─────────────────────────────────── */
+.bv-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 14px; }
+@media(max-width:600px){ .bv-grid { grid-template-columns: 1fr; } }
+.bv-card {
+  border: 1px solid var(--border);
+  padding: 16px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+.bv-card.under { border-color: #ff2d78; }
+.bv-card.sweet { border-color: var(--neon-green); background: rgba(0,255,159,0.05); }
+.bv-card.over  { border-color: var(--neon-orange); }
+.bv-icon { font-size: 1.6rem; margin-bottom: 8px; }
+.bv-label {
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+.bv-card.under .bv-label { color: #ff2d78; }
+.bv-card.sweet .bv-label { color: var(--neon-green); }
+.bv-card.over  .bv-label { color: var(--neon-orange); }
+
+/* ─── K-FOLD VIZ ────────────────────────────────────────── */
+.kfold-viz { margin: 14px 0; }
+.kfold-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+}
+.kfold-label { width: 50px; color: var(--text-dim); flex-shrink:0; }
+.kfold-cell {
+  flex: 1;
+  height: 28px;
+  background: rgba(0,229,255,0.15);
+  border: 1px solid rgba(0,229,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: var(--neon-cyan);
+}
+.kfold-cell.test {
+  background: rgba(255,107,26,0.25);
+  border-color: var(--neon-orange);
+  color: var(--neon-orange);
+  font-weight: 700;
+}
+
+/* ─── ENTROPY STEP BOX ──────────────────────────────────── */
+.entropy-steps { counter-reset: step; margin-top: 14px; }
+.e-step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.e-step-num {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--neon-gold);
+  color: var(--neon-gold);
+  font-family: var(--display);
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.e-step-body { font-size: 0.88rem; }
+.e-step-body .desc { color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; }
+
+/* ─── FOOTER ────────────────────────────────────────────── */
+footer {
+  text-align: center;
+  padding: 30px 20px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  position: relative;
+  z-index: 5;
+}
+footer span { color: var(--neon-green); }
+
+/* ─── ANIMATIONS ────────────────────────────────────────── */
+@keyframes slide-in {
+  from { opacity:0; transform: translateY(20px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+section { animation: slide-in 0.5s ease both; }
+section:nth-child(2)  { animation-delay: 0.05s; }
+section:nth-child(3)  { animation-delay: 0.10s; }
+section:nth-child(4)  { animation-delay: 0.15s; }
+section:nth-child(5)  { animation-delay: 0.20s; }
+section:nth-child(6)  { animation-delay: 0.25s; }
+section:nth-child(7)  { animation-delay: 0.30s; }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-badge">OASIS STUDY TERMINAL</div>
+  <h1 class="header-title">DJ's AI Exam — Master Cheat Sheet</h1>
+  <p class="header-sub">ARTIFICIAL INTELLIGENCE · MACHINE LEARNING · SEARCH ALGORITHMS </p>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     NAVIGATION
+══════════════════════════════════════════════════════════ -->
+<nav>
+  <a href="notes.html" class="nav-return">← NOTES HUB</a>
+  
+  <div class="nav-divider"></div>
+  
+  <a href="#part-a">PART A (2M)</a>
+  <a href="#part-b">PART B (5M)</a>
+  <a href="#part-c">PART C (10M)</a>
+  
+  <div class="nav-divider"></div>
+  
+  <a href="#normalize">Norm &amp; Std</a>
+  <a href="#practice">Practice</a>
+  <a href="#entropy">Entropy</a>
+  
+  <div class="nav-divider"></div>
+  
+  <a href="#code1">t-SNE</a>
+  <a href="#code2">Plots</a>
+  <a href="#code3">Log Reg</a>
+  <a href="#code4">Scaling</a>
+  <a href="#code5">Tree</a>
+  <a href="#code6">SVM</a>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════════════
+     PART A
+══════════════════════════════════════════════════════════ -->
+<section id="part-a">
+  <div class="section-label">EXAMINATION SECTION</div>
+  <h2 class="section-title">PART A — 2 Marks Each (Keep It Brief)</h2>
+
+  <!-- Q1 -->
+  <div class="q-card">
+    <div class="q-num">Q1 · APPLICATIONS OF AI</div>
+    <div class="q-title">Real-Life Applications of Artificial Intelligence</div>
+    <div class="q-body">
+      <ul>
+        <li><strong>Virtual Assistants:</strong> Like Siri, Alexa, or a Raspberry Pi AI assistant — they perceive voice input, process it via NLP, and respond with actions.Like a custom Raspberry Pi J.A.R.V.I.S. assistant — perceiving voice input via hardware sensors, processing intent via NLP, and executing local or API-driven actions through actuators.</li>
+        <li><strong>Recommendation Systems:</strong> Algorithms Netflix or Spotify use to suggest content based on your watch/listen history using collaborative filtering.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-card orange">
+    <div class="q-num">Q2 · AGENTS</div>
+    <div class="q-title">What is an Agent? — Utility-Based Agent Structure</div>
+    <div class="q-body">
+      <p>An <strong>agent</strong> is anything that can <strong>perceive</strong> its environment through sensors and <strong>act</strong> upon it through actuators.</p>
+      <div class="agent-diagram">
+        <div class="diag-box env">ENVIRONMENT</div>
+        <div class="diag-arrow">→</div>
+        <div class="diag-box">SENSORS</div>
+        <div class="diag-arrow">→</div>
+        <div class="diag-box">"World State<br>Right Now"</div>
+        <div class="diag-arrow">→</div>
+        <div class="diag-box">"Outcome if<br>I do action X"</div>
+        <div class="diag-arrow">→</div>
+        <div class="diag-box util">UTILITY<br>"How happy?"</div>
+        <div class="diag-arrow">→</div>
+        <div class="diag-box">ACTUATORS</div>
+        <div class="diag-arrow">→</div>
+        <div class="diag-box env">ENVIRONMENT</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-card green">
+    <div class="q-num">Q3 · RATIONAL AGENT</div>
+    <div class="q-title">What is a Rational Agent?</div>
+    <div class="q-body">
+      <p>A <strong>rational agent</strong> always selects the action that <strong>maximizes its expected performance measure</strong>, given the percept sequence it has gathered and its built-in knowledge. It consistently does the <em>"right thing."</em></p>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-card">
+    <div class="q-num">Q4 · FEATURE ENGINEERING</div>
+    <div class="q-title">Feature Selection vs. Feature Extraction</div>
+    <div class="q-body">
+      <ul>
+        <li><strong>Feature Selection:</strong> Picking the most useful <em>original</em> features and discarding the rest. (e.g., keep "Age" and "Income", drop "Eye Color")</li>
+        <li><strong>Feature Extraction:</strong> Mathematically <em>transforming</em> existing features to create a brand new, smaller set that captures the same information. (e.g., PCA — Principal Component Analysis)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="q-card orange">
+    <div class="q-num">Q5 · NORMALIZATION</div>
+    <div class="q-title">Normalization with Mathematical Expression</div>
+    <div class="q-body">
+      <p>Normalization scales numeric data to a standard range (usually 0–1) so no single feature dominates due to larger numeric values.</p>
+      <div class="formula-box">
+        <strong>Min-Max Normalization:</strong><br><br>
+        $$X_{norm} = \frac{X - X_{min}}{X_{max} - X_{min}}$$
+      </div>
+    </div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="q-card green">
+    <div class="q-num">Q6 · DATA QUALITY</div>
+    <div class="q-title">Noise vs. Outliers</div>
+    <div class="q-body">
+      <ul>
+        <li><strong>Noise:</strong> Random errors or meaningless variance in data (e.g., a corrupted sensor reading). It is <em>garbage data</em> — invalid.</li>
+        <li><strong>Outliers:</strong> Valid data points that are exceptionally far from the rest (e.g., a billionaire's salary in an average town). It is <em>real, just extreme</em>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PART B
+══════════════════════════════════════════════════════════ -->
+<section id="part-b">
+  <div class="section-label">EXAMINATION SECTION</div>
+  <h2 class="section-title">PART B — 5 Marks Each (Need a bit more detail)</h2>
+
+  <!-- Q7 Bias-Variance -->
+  <div class="q-card">
+    <div class="q-num">Q7 · MODEL COMPLEXITY</div>
+    <div class="q-title">Bias-Variance Tradeoff (Overfitting vs. Underfitting)</div>
+    <div class="q-body">
+      <div class="bv-grid">
+        <div class="bv-card under">
+          <div class="bv-icon">📉</div>
+          <div class="bv-label">HIGH BIAS<br>Underfitting</div>
+          <p>Model is too <strong style="color:#ff2d78">simple</strong>. Misses patterns. Performs poorly on <em>both</em> training and testing data.</p>
+        </div>
+        <div class="bv-card sweet">
+          <div class="bv-icon">🎯</div>
+          <div class="bv-label">SWEET SPOT<br>Goal</div>
+          <p>Low bias + low variance. Learns real patterns. Generalizes well to unseen data.</p>
+        </div>
+        <div class="bv-card over">
+          <div class="bv-icon">📈</div>
+          <div class="bv-label">HIGH VARIANCE<br>Overfitting</div>
+          <p>Model is too <strong style="color:var(--neon-orange)">complex</strong>. Memorizes noise. Amazing on training data, terrible on testing data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q8 PEAS -->
+  <div class="q-card orange">
+    <div class="q-num">Q8 · AGENT DESIGN</div>
+    <div class="q-title">PEAS Description for a Self-Driving Car</div>
+    <div class="q-body">
+      <table class="peas-table">
+        <tr>
+          <th>Component</th>
+          <th>Description</th>
+          <th>Examples</th>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-green)">P</strong>erformance</td>
+          <td>What defines success?</td>
+          <td>Safety, on-time arrival, obeying traffic laws, passenger comfort</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">E</strong>nvironment</td>
+          <td>Where does it operate?</td>
+          <td>Roads, other vehicles, pedestrians, traffic lights, weather</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-orange)">A</strong>ctuators</td>
+          <td>How does it act?</td>
+          <td>Steering wheel, accelerator, brakes, turn signals, horn</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-pink)">S</strong>ensors</td>
+          <td>How does it perceive?</td>
+          <td>Cameras, LiDAR, radar, GPS, speedometer, engine sensors</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Q9 k-Fold -->
+  <div class="q-card green">
+    <div class="q-num">Q9 · MODEL EVALUATION</div>
+    <div class="q-title">k-Fold Cross-Validation with Example</div>
+    <div class="q-body">
+      <p>A technique to evaluate model performance with limited data. The dataset is divided into $k$ equal-sized chunks (folds). The model trains $k$ separate times — each run uses $k-1$ folds for training and 1 remaining fold for testing. Final score = average of all $k$ runs.</p>
+      <p><strong>Example: 5-Fold Cross-Validation</strong></p>
+      <div class="kfold-viz">
+        <div class="kfold-row">
+          <div class="kfold-label">Run 1:</div>
+          <div class="kfold-cell test">TEST</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+        </div>
+        <div class="kfold-row">
+          <div class="kfold-label">Run 2:</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell test">TEST</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+        </div>
+        <div class="kfold-row">
+          <div class="kfold-label">Run 3:</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell test">TEST</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+        </div>
+        <div class="kfold-row">
+          <div class="kfold-label">Run 4:</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell test">TEST</div>
+          <div class="kfold-cell">Train</div>
+        </div>
+        <div class="kfold-row">
+          <div class="kfold-label">Run 5:</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell">Train</div>
+          <div class="kfold-cell test">TEST</div>
+        </div>
+      </div>
+      <p style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);margin-top:8px;">Final Score = Average accuracy across all 5 runs</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PART C
+══════════════════════════════════════════════════════════ -->
+<section id="part-c">
+  <div class="section-label">EXAMINATION SECTION</div>
+  <h2 class="section-title">PART C — 10 Marks Each (Detailed Analysis)</h2>
+
+  <!-- Q10 BFS vs DFS -->
+  <div class="q-card">
+    <div class="q-num">Q10 · SEARCH ALGORITHMS</div>
+    <div class="q-title">Robot Navigation — BFS vs DFS</div>
+    <div class="q-body">
+      <p><strong>Graph:</strong> S→(P, R) · P→(C, H) · R→(E) · E→(G) · C: dead end · H→(G)</p>
+      <div class="trace-grid">
+      <div class="output-img-wrap" style="margin-bottom: 14px;">
+        <div class="output-img-label">▸ GRAPH REFERENCE</div>
+        <img src="BFS & DFS (Graph Traversal).png" alt="BFS and DFS Graph">
+      </div>
+        <div class="trace-box">
+          <div class="trace-title">◈ BFS — BREADTH-FIRST SEARCH (Queue)</div>
+          <div class="trace-step">Level 0: Visit <span>S</span></div>
+          <div class="trace-step">Level 1: Visit <span>P</span>, Visit <span>R</span></div>
+          <div class="trace-step">Level 2: From P → visit <span>C</span>, <span>H</span>. From R → visit <span>E</span></div>
+          <div class="trace-step">Level 3: From C → dead end. From H → visit <span>G</span> ✓</div>
+          <div class="trace-result">PATH: S → P → H → G</div>
+        </div>
+        <div class="trace-box dfs">
+          <div class="trace-title">◈ DFS — DEPTH-FIRST SEARCH (Stack)</div>
+          <div class="trace-step">Start at <span>S</span>, go deep to <span>P</span></div>
+          <div class="trace-step">From P, deep to <span>C</span> → Dead end</div>
+          <div class="trace-step">Backtrack to P → go to <span>H</span></div>
+          <div class="trace-step">From H → reach <span>G</span> ✓</div>
+          <div class="trace-result">PATH: S → P → C → (back) → H → G</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;font-size:0.82rem;">
+          <div style="color:var(--neon-green);font-family:var(--mono);font-size:0.65rem;letter-spacing:.2em;margin-bottom:6px;">MEMORY EFFICIENT?</div>
+          <strong style="color:var(--neon-orange)">DFS wins.</strong> It only stores the current path on its stack. BFS must store every node at the current depth level — massive RAM usage in large graphs.
+        </div>
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;font-size:0.82rem;">
+          <div style="color:var(--neon-green);font-family:var(--mono);font-size:0.65rem;letter-spacing:.2em;margin-bottom:6px;">SHORTEST PATH?</div>
+          <strong style="color:var(--neon-cyan)">BFS wins.</strong> In an unweighted graph, BFS guarantees the shortest path — it checks all paths of length 1, then 2, etc. DFS may find a long winding path first.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q11 Train/Val/Test -->
+  <div class="q-card orange">
+    <div class="q-num">Q11 · MODEL LIFECYCLE</div>
+    <div class="q-title">Model Training, Testing &amp; Validation — Apple Farm Scenario</div>
+    <div class="q-body">
+      <p>Think of the ML model as a student studying for an exam:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;">
+        <div style="background:#050d14;border:1px solid var(--neon-cyan);padding:14px;font-size:0.82rem;">
+          <div style="color:var(--neon-cyan);font-family:var(--display);font-size:0.65rem;letter-spacing:.2em;margin-bottom:6px;">TRAINING SET</div>
+          <strong>"The Textbook"</strong>
+          <p style="margin-top:6px;font-size:0.78rem;color:var(--text-dim);">Large bulk of labeled data. Model learns weights and patterns. <em>Apple farm: 8,000 labeled apple photos.</em></p>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--neon-green);padding:14px;font-size:0.82rem;">
+          <div style="color:var(--neon-green);font-family:var(--display);font-size:0.65rem;letter-spacing:.2em;margin-bottom:6px;">VALIDATION SET</div>
+          <strong>"Practice Exams"</strong>
+          <p style="margin-top:6px;font-size:0.78rem;color:var(--text-dim);">Used during training to tune hyperparameters and prevent overfitting. <em>1,000 photos to tweak color sensitivity.</em></p>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--neon-orange);padding:14px;font-size:0.82rem;">
+          <div style="color:var(--neon-orange);font-family:var(--display);font-size:0.65rem;letter-spacing:.2em;margin-bottom:6px;">TESTING SET</div>
+          <strong>"Final Exam"</strong>
+          <p style="margin-top:6px;font-size:0.78rem;color:var(--text-dim);">Completely unseen, used once at the end. Provides unbiased real-world performance. <em>1,000 real physical apples on conveyor belt.</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BFS on Tree -->
+  <div class="q-card green">
+    <div class="q-num">Q12 · TREE TRAVERSAL</div>
+    <div class="q-title">BFS &amp; DFS on a Tree Structure</div>
+    <div class="q-body">
+      <p><strong>Tree:</strong> Root R → children A, B · A → C, D · B → E, F · C → G</p>
+      <div class="trace-grid">
+        <div class="trace-box">
+          <div class="trace-title">◈ BFS ORDER (Level by Level)</div>
+          <div class="trace-step">Level 0: <span>R</span></div>
+          <div class="trace-step">Level 1: <span>A</span>, <span>B</span></div>
+          <div class="trace-step">Level 2: <span>C</span>, <span>D</span>, <span>E</span>, <span>F</span></div>
+          <div class="trace-step">Level 3: <span>G</span></div>
+          <div class="trace-result">R → A → B → C → D → E → F → G</div>
+        </div>
+        <div class="trace-box dfs">
+          <div class="trace-title">◈ DFS ORDER (Deep then Backtrack)</div>
+          <div class="trace-step">Start <span>1</span> → left <span>2</span> → left <span>4</span> (leaf)</div>
+          <div class="trace-step">Back to 2 → right <span>5</span> → left <span>7</span> (leaf)</div>
+          <div class="trace-step">Back to 5 → right <span>8</span> (leaf)</div>
+          <div class="trace-step">Back to 1 → right <span>3</span> → right <span>6</span> → right <span>9</span></div>
+          <div class="trace-result">1 → 2 → 4 → 5 → 7 → 8 → 3 → 6 → 9</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     NORMALIZE & STANDARDIZE
+══════════════════════════════════════════════════════════ -->
+<section id="normalize">
+  <div class="section-label">MATHEMATICAL OPERATIONS</div>
+  <h2 class="section-title">Normalization &amp; Standardization — Manual Calculations</h2>
+
+  <!-- Theory -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div class="q-card" style="margin:0;">
+      <div class="q-num">t-SNE vs PCA — THEORY</div>
+      <div class="q-body" style="font-size:0.82rem;">
+        <p><strong>PCA</strong> — <em>Linear</em> technique. Computes the covariance matrix → finds eigenvalues/eigenvectors → maximizes variance. Good for global structure, fails on non-linear clusters.</p>
+        <p style="margin-top:8px;"><strong>t-SNE</strong> — <em>Non-linear</em> technique. Converts Euclidean distances in high-dim space to conditional probabilities, then minimizes divergence in low-dim space. Superior at visually clustering similar items (e.g., MNIST digits).</p>
+      </div>
+    </div>
+    <div class="q-card orange" style="margin:0;">
+      <div class="q-num">STANDARDIZATION — Z-SCORE</div>
+      <div class="q-body">
+        <div class="formula-box" style="margin:0;">
+          $$Z = \frac{X - \mu}{\sigma}$$
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:6px;">μ = mean &nbsp;·&nbsp; σ = standard deviation</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dataset 1 Normalization -->
+  <div class="q-card">
+    <div class="q-num">NORMALIZATION — DATASET 1</div>
+    <div class="q-title">Input: [15, 18, 28, 32, 39] &nbsp;·&nbsp; X<sub>min</sub>=15, X<sub>max</sub>=39, Range=24</div>
+    <div class="q-body">
+      <table class="norm-table">
+        <tr><th>X</th><th>X − X<sub>min</sub></th><th>÷ Range (24)</th><th>X<sub>norm</sub></th></tr>
+        <tr><td>15</td><td>0</td><td>0 ÷ 24</td><td><strong style="color:var(--neon-gold)">0</strong></td></tr>
+        <tr><td>18</td><td>3</td><td>3 ÷ 24</td><td><strong style="color:var(--neon-gold)">0.125</strong></td></tr>
+        <tr><td>28</td><td>13</td><td>13 ÷ 24</td><td><strong style="color:var(--neon-gold)">0.542</strong></td></tr>
+        <tr><td>32</td><td>17</td><td>17 ÷ 24</td><td><strong style="color:var(--neon-gold)">0.708</strong></td></tr>
+        <tr><td>39</td><td>24</td><td>24 ÷ 24</td><td><strong style="color:var(--neon-gold)">1</strong></td></tr>
+      </table>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--neon-green);margin-top:10px;">Output: [0, 0.125, 0.542, 0.708, 1]</div>
+    </div>
+  </div>
+
+  <!-- Dataset 2 Normalization -->
+  <div class="q-card orange">
+    <div class="q-num">NORMALIZATION — DATASET 2</div>
+    <div class="q-title">Input: [150, 450, 700, 900, 1050] &nbsp;·&nbsp; X<sub>min</sub>=150, X<sub>max</sub>=1050, Range=900</div>
+    <div class="q-body">
+      <table class="norm-table">
+        <tr><th>X</th><th>X − 150</th><th>÷ Range (900)</th><th>X<sub>norm</sub></th></tr>
+        <tr><td>150</td><td>0</td><td>0 ÷ 900</td><td><strong style="color:var(--neon-gold)">0</strong></td></tr>
+        <tr><td>450</td><td>300</td><td>300 ÷ 900</td><td><strong style="color:var(--neon-gold)">0.333</strong></td></tr>
+        <tr><td>700</td><td>550</td><td>550 ÷ 900</td><td><strong style="color:var(--neon-gold)">0.611</strong></td></tr>
+        <tr><td>900</td><td>750</td><td>750 ÷ 900</td><td><strong style="color:var(--neon-gold)">0.833</strong></td></tr>
+        <tr><td>1050</td><td>900</td><td>900 ÷ 900</td><td><strong style="color:var(--neon-gold)">1</strong></td></tr>
+      </table>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--neon-green);margin-top:10px;">Output: [0, 0.333, 0.611, 0.833, 1]</div>
+    </div>
+  </div>
+
+  <!-- Standardization DS1 -->
+  <div class="q-card green">
+    <div class="q-num">STANDARDIZATION (Z-SCORE) — DATASET 1</div>
+    <div class="q-title">Input: [10, 18, 29, 39, 69] &nbsp;·&nbsp; μ = 33 &nbsp;·&nbsp; σ ≈ 20.50</div>
+    <div class="q-body">
+      <table class="norm-table">
+        <tr><th>X</th><th>X − μ (33)</th><th>÷ σ (20.50)</th><th>Z-Score</th></tr>
+        <tr><td>10</td><td>−23</td><td>−23 ÷ 20.50</td><td><strong style="color:var(--neon-gold)">−1.12</strong></td></tr>
+        <tr><td>18</td><td>−15</td><td>−15 ÷ 20.50</td><td><strong style="color:var(--neon-gold)">−0.73</strong></td></tr>
+        <tr><td>29</td><td>−4</td><td>−4 ÷ 20.50</td><td><strong style="color:var(--neon-gold)">−0.20</strong></td></tr>
+        <tr><td>39</td><td>6</td><td>6 ÷ 20.50</td><td><strong style="color:var(--neon-gold)">0.29</strong></td></tr>
+        <tr><td>69</td><td>36</td><td>36 ÷ 20.50</td><td><strong style="color:var(--neon-gold)">1.76</strong></td></tr>
+      </table>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--neon-green);margin-top:10px;">Output: [−1.12, −0.73, −0.20, 0.29, 1.76]</div>
+    </div>
+  </div>
+
+  <!-- Standardization DS2 -->
+  <div class="q-card gold">
+    <div class="q-num">STANDARDIZATION (Z-SCORE) — DATASET 2</div>
+    <div class="q-title">Input: [110, 390, 890, 989, 1550] &nbsp;·&nbsp; μ = 785.8 &nbsp;·&nbsp; σ ≈ 499.9</div>
+    <div class="q-body">
+      <table class="norm-table">
+        <tr><th>X</th><th>X − μ (785.8)</th><th>÷ σ (499.9)</th><th>Z-Score</th></tr>
+        <tr><td>110</td><td>−675.8</td><td>÷ 499.9</td><td><strong style="color:var(--neon-gold)">−1.35</strong></td></tr>
+        <tr><td>390</td><td>−395.8</td><td>÷ 499.9</td><td><strong style="color:var(--neon-gold)">−0.79</strong></td></tr>
+        <tr><td>890</td><td>104.2</td><td>÷ 499.9</td><td><strong style="color:var(--neon-gold)">0.21</strong></td></tr>
+        <tr><td>989</td><td>203.2</td><td>÷ 499.9</td><td><strong style="color:var(--neon-gold)">0.41</strong></td></tr>
+        <tr><td>1550</td><td>764.2</td><td>÷ 499.9</td><td><strong style="color:var(--neon-gold)">1.53</strong></td></tr>
+      </table>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--neon-green);margin-top:10px;">Output: [−1.35, −0.79, 0.21, 0.41, 1.53]</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PRACTICE PROBLEMS
+══════════════════════════════════════════════════════════ -->
+<section id="practice">
+  <div class="section-label">EXAM PRACTICE</div>
+  <h2 class="section-title">Three Practice Problems — Pen &amp; Paper Style</h2>
+
+  <!-- Problem 1: Logistic Regression -->
+  <div class="problem-card">
+    <div class="problem-num">PROBLEM 01 · LOGISTIC REGRESSION</div>
+    <div class="problem-title">Calculate Probability Using the Sigmoid Function</div>
+    <div class="given-box">
+      <div class="label">GIVEN</div>
+      Weights: $w = [2, -1]$ &nbsp;·&nbsp; Bias: $b = 0$ &nbsp;·&nbsp; Data point: $x = [1, 2]$
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Task:</strong> Calculate $z = w^T x + b$, then plug into Sigmoid $\sigma(z) = \frac{1}{1+e^{-z}}$</p>
+    <button class="solution-toggle" onclick="toggleSolution(this)">▶ SHOW SOLUTION</button>
+    <div class="solution-body">
+      <div class="step-label">STEP 1 — COMPUTE LINEAR OUTPUT z</div>
+      <p>$$z = w^T x + b = (2 \times 1) + (-1 \times 2) + 0 = 2 - 2 = 0$$</p>
+      <div class="step-label">STEP 2 — APPLY SIGMOID FUNCTION</div>
+      <p>$$\sigma(z) = \frac{1}{1 + e^{-z}} = \frac{1}{1 + e^{0}} = \frac{1}{1 + 1} = \frac{1}{2}$$</p>
+      <div class="highlight-answer">✓ &nbsp; Probability = 0.5 &nbsp; (The model is 50% confident — perfectly uncertain!)</div>
+      <p style="font-size:0.78rem;color:var(--text-dim);margin-top:8px;">💡 Cheat code: whenever $z=0$, $e^0 = 1$, so sigmoid always gives exactly 0.5.</p>
+    </div>
+  </div>
+
+  <!-- Problem 2: SVM -->
+  <div class="problem-card">
+    <div class="problem-num">PROBLEM 02 · SUPPORT VECTOR MACHINE</div>
+    <div class="problem-title">Calculate the SVM Margin Width</div>
+    <div class="given-box">
+      <div class="label">GIVEN</div>
+      Decision boundary: $3x_1 + 4x_2 - 5 = 0$ &nbsp;·&nbsp; Weight vector: $w = [3, 4]$
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Task:</strong> Find the margin width using $\frac{2}{||w||}$ where $||w|| = \sqrt{w_1^2 + w_2^2}$</p>
+    <button class="solution-toggle" onclick="toggleSolution(this)">▶ SHOW SOLUTION</button>
+    <div class="solution-body">
+      <div class="step-label">STEP 1 — COMPUTE MAGNITUDE OF w</div>
+      <p>$$||w|| = \sqrt{w_1^2 + w_2^2} = \sqrt{3^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5$$</p>
+      <div class="step-label">STEP 2 — APPLY MARGIN FORMULA</div>
+      <p>$$\text{Margin Width} = \frac{2}{||w||} = \frac{2}{5} = 0.4$$</p>
+      <div class="highlight-answer">✓ &nbsp; Margin Width = 0.4 units &nbsp; (Clean 3-4-5 Pythagorean triple!)</div>
+    </div>
+  </div>
+
+  <!-- Problem 3: Entropy (50/50) -->
+  <div class="problem-card">
+    <div class="problem-num">PROBLEM 03 · DECISION TREE ENTROPY</div>
+    <div class="problem-title">Calculate Node Entropy — 4 Apples, 4 Oranges</div>
+    <div class="given-box">
+      <div class="label">GIVEN</div>
+      Node contains: 4 Apples + 4 Oranges = 8 items total
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Task:</strong> Calculate $E = -(p_a \log_2(p_a) + p_o \log_2(p_o))$</p>
+    <button class="solution-toggle" onclick="toggleSolution(this)">▶ SHOW SOLUTION</button>
+    <div class="solution-body">
+      <div class="step-label">STEP 1 — PROBABILITIES</div>
+      <p>$$p_a = \frac{4}{8} = 0.5 \qquad p_o = \frac{4}{8} = 0.5$$</p>
+      <div class="step-label">STEP 2 — LOG VALUES</div>
+      <p>$$\log_2(0.5) = -1 \quad \text{(standard cheat-sheet value)}$$</p>
+      <div class="step-label">STEP 3 — ENTROPY CALCULATION</div>
+      <p>$$E = -[(0.5 \times -1) + (0.5 \times -1)] = -[-0.5 + (-0.5)] = -[-1] = 1$$</p>
+      <div class="highlight-answer">✓ &nbsp; E = 1 bit &nbsp; (Maximum entropy — the 50/50 split is perfectly impure!)</div>
+      <p style="font-size:0.78rem;color:var(--text-dim);margin-top:8px;">💡 Cheat code: A perfect 50/50 split ALWAYS gives maximum entropy = 1 bit. No calculation needed — just remember this!</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ENTROPY — PASS/FAIL WORKED EXAMPLE
+══════════════════════════════════════════════════════════ -->
+<section id="entropy">
+  <div class="section-label">WORKED EXAMPLE</div>
+  <h2 class="section-title">Entropy — Predicting Pass / Fail (6 Yes, 2 No)</h2>
+
+  <div class="q-card gold">
+    <div class="q-num">SCENARIO · 8 STUDENTS TOTAL</div>
+    <div class="q-title">6 Passed (Yes) · 2 Failed (No)</div>
+    <div class="q-body">
+      <div class="formula-box">
+        $$E = -\sum p_i \log_2(p_i) = -[(p_{yes} \times \log_2 p_{yes}) + (p_{no} \times \log_2 p_{no})]$$
+      </div>
+
+      <div style="margin:16px 0;">
+        <div style="font-family:var(--mono);font-size:0.65rem;color:var(--neon-gold);letter-spacing:.3em;margin-bottom:10px;">LOG CHEAT-SHEET (OFFLINE SAFE VALUES)</div>
+        <div class="log-sheet">
+          <div class="log-pill">$\log_2(1) = 0$</div>
+          <div class="log-pill">$\log_2(0.5) = -1$</div>
+          <div class="log-pill">$\log_2(0.25) = -2$</div>
+          <div class="log-pill">$\log_2(0.75) \approx -0.415$</div>
+        </div>
+      </div>
+
+      <div class="entropy-steps">
+        <div class="e-step">
+          <div class="e-step-num">1</div>
+          <div class="e-step-body">
+            <strong>Find Probabilities</strong>
+            $$p_{yes} = \frac{6}{8} = 0.75 \qquad p_{no} = \frac{2}{8} = 0.25$$
+          </div>
+        </div>
+        <div class="e-step">
+          <div class="e-step-num">2</div>
+          <div class="e-step-body">
+            <strong>Plug into Formula</strong>
+            $$E = -[(0.75 \times \log_2(0.75)) + (0.25 \times \log_2(0.25))]$$
+          </div>
+        </div>
+        <div class="e-step">
+          <div class="e-step-num">3</div>
+          <div class="e-step-body">
+            <strong>Substitute Log Values</strong>
+            $$E = -[(0.75 \times -0.415) + (0.25 \times -2)]$$
+          </div>
+        </div>
+        <div class="e-step">
+          <div class="e-step-num">4</div>
+          <div class="e-step-body">
+            <strong>Final Arithmetic</strong>
+            $$E = -[(-0.31125) + (-0.5)] = -[-0.81125]$$
+            <div class="highlight-answer" style="margin-top:10px;">✓ &nbsp; E ≈ 0.811 bits &nbsp; (High but not max — dataset leans toward "Yes")</div>
+            <div class="desc">Sanity check: 6/8 leans toward pure "Yes" but still has noise → entropy is high (0.811) but below maximum (1). ✓</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CODE SECTION 1 — t-SNE
+══════════════════════════════════════════════════════════ -->
+<section id="code1">
+  <div class="section-label">NOTEBOOK CODE</div>
+  <h2 class="section-title">Code 1 — t-SNE Visualization of MNIST</h2>
+  <div class="code-section">
+    <div class="code-header">
+      <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+      <span class="code-filename">notebook_tsne.py</span>
+      <span class="code-tag">t-SNE · MNIST</span>
+    </div>
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> sklearn.manifold <span class="kw">import</span> <span class="cls">TSNE</span>
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> fetch_openml
+
+<span class="cm"># Load MNIST — 70,000 handwritten digit images (28×28 pixels = 784 features each)</span>
+mnist = <span class="fn">fetch_openml</span>(<span class="str">'mnist_784'</span>, version=<span class="num">1</span>)
+X, y = mnist.data, mnist.target.<span class="fn">astype</span>(<span class="cls">int</span>)
+
+<span class="cm"># Only take 3000 samples — t-SNE is computationally expensive O(n²)</span>
+sample_size = <span class="num">3000</span>
+X_sample = X[:sample_size]
+y_sample = y[:sample_size]
+
+<span class="cm"># Apply t-SNE: compress 784 dimensions → 2 dimensions for plotting</span>
+<span class="cm"># init='pca' uses PCA to initialize (faster convergence), learning_rate='auto' adapts</span>
+tsne = <span class="cls">TSNE</span>(n_components=<span class="num">2</span>, random_state=<span class="num">42</span>, init=<span class="str">'pca'</span>, learning_rate=<span class="str">'auto'</span>)
+X_tsne = tsne.<span class="fn">fit_transform</span>(X_sample)
+
+<span class="cm"># Scatter plot: each point is one digit image, colored by its actual digit class (0–9)</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">12</span>, <span class="num">8</span>))
+scatter = plt.<span class="fn">scatter</span>(X_tsne[:, <span class="num">0</span>], X_tsne[:, <span class="num">1</span>], c=y_sample, cmap=<span class="str">'tab10'</span>, alpha=<span class="num">0.7</span>)
+plt.<span class="fn">title</span>(<span class="str">"t-SNE Visualization of MNIST"</span>)
+plt.<span class="fn">xlabel</span>(<span class="str">"t-SNE Dimension 1"</span>)
+plt.<span class="fn">ylabel</span>(<span class="str">"t-SNE Dimension 2"</span>)
+plt.<span class="fn">colorbar</span>(scatter, label=<span class="str">'Digit Class'</span>)
+plt.<span class="fn">show</span>()</pre>
+
+    <button class="explain-toggle" onclick="toggleExplain(this)">▶ EXPLAIN CODE LINE BY LINE</button>
+    <div class="explain-panel">
+      <div class="explain-row"><div class="explain-code">fetch_openml('mnist_784')</div><div class="explain-text">Downloads the MNIST dataset from the internet. It contains 70,000 images of handwritten digits (0–9), each flattened into 784 pixel values.</div></div>
+      <div class="explain-row"><div class="explain-code">X_sample = X[:3000]</div><div class="explain-text">Slices only the first 3000 images. t-SNE has O(n²) complexity — running it on 70,000 samples would take hours. 3000 is a practical trade-off.</div></div>
+      <div class="explain-row"><div class="explain-code">TSNE(n_components=2)</div><div class="explain-text">Tells t-SNE to compress from 784 dimensions down to 2 dimensions so we can plot it on a 2D graph. The algorithm preserves local structure (similar digits cluster together).</div></div>
+      <div class="explain-row"><div class="explain-code">random_state=42</div><div class="explain-text">Seeds the random number generator. Using the same seed = reproducible results every run. "42" is a programmer tradition (from Hitchhiker's Guide to the Galaxy).</div></div>
+      <div class="explain-row"><div class="explain-code">fit_transform(X_sample)</div><div class="explain-text">Runs the t-SNE algorithm on the data. "fit" learns the transformation, "transform" applies it. Returns a (3000, 2) array — 3000 points in 2D space.</div></div>
+      <div class="explain-row"><div class="explain-code">c=y_sample, cmap='tab10'</div><div class="explain-text">Colors each dot by its true digit label (0–9). 'tab10' is a color map with 10 distinct colors — perfect for 10 digit classes.</div></div>
+      <div class="explain-row"><div class="explain-code">alpha=0.7</div><div class="explain-text">Sets dot transparency to 70%. This lets you see overlapping points in dense clusters — fully opaque (alpha=1) would hide them.</div></div>
+      <div class="explain-row"><div class="explain-code">colorbar(scatter, label=...)</div><div class="explain-text">Adds a legend bar on the side of the plot showing which color corresponds to which digit (0–9).</div></div>
+    </div>
+
+    <div class="output-img-wrap">
+      <div class="output-img-label">▸ OUTPUT — t-SNE Visualization</div>
+      <img src="t-SNE Dimensionality Reduction.png" alt="t-SNE Visualization">
+    </div>
+      <div id="missing1" class="img-missing"><div class="icon">🖼</div><div></div><div style="font-size:0.6rem;opacity:0.5;">Place your t-SNE output image here — it will appear automatically</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CODE SECTION 2 — Multiple Plots
+══════════════════════════════════════════════════════════ -->
+<section id="code2">
+  <div class="section-label">NOTEBOOK CODE</div>
+  <h2 class="section-title">Code 2 — Data Visualization Plots</h2>
+  <div class="code-section">
+    <div class="code-header">
+      <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+      <span class="code-filename">notebook_plots.py</span>
+      <span class="code-tag">MATPLOTLIB · 5 PLOTS</span>
+    </div>
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="cm"># ── HISTOGRAM ───────────────────────────────────────────────────────</span>
+<span class="cm"># Generate 1000 random values from a normal distribution (mean=50, std=10)</span>
+data = np.random.<span class="fn">normal</span>(loc=<span class="num">50</span>, scale=<span class="num">10</span>, size=<span class="num">1000</span>)
+plt.<span class="fn">figure</span>()
+plt.<span class="fn">hist</span>(data, bins=<span class="num">30</span>)        <span class="cm"># bins=30: divide data range into 30 bars</span>
+plt.<span class="fn">title</span>(<span class="str">"Histogram of Data"</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm"># ── SCATTER PLOT ─────────────────────────────────────────────────────</span>
+<span class="cm"># y = 2x + noise: shows a linear relationship with some randomness</span>
+x = np.random.<span class="fn">rand</span>(<span class="num">100</span>)
+y = <span class="num">2</span> <span class="op">*</span> x <span class="op">+</span> np.random.<span class="fn">rand</span>(<span class="num">100</span>)
+plt.<span class="fn">figure</span>()
+plt.<span class="fn">scatter</span>(x, y)
+plt.<span class="fn">title</span>(<span class="str">"Scatter Plot"</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm"># ── LINE GRAPH ───────────────────────────────────────────────────────</span>
+<span class="cm"># y = x² (a quadratic curve), x from 1 to 10</span>
+x = np.<span class="fn">arange</span>(<span class="num">1</span>, <span class="num">11</span>)
+y = x <span class="op">**</span> <span class="num">2</span>
+plt.<span class="fn">figure</span>()
+plt.<span class="fn">plot</span>(x, y)
+plt.<span class="fn">title</span>(<span class="str">"Line Plot"</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm"># ── BAR CHART ────────────────────────────────────────────────────────</span>
+categories = [<span class="str">'A'</span>, <span class="str">'B'</span>, <span class="str">'C'</span>, <span class="str">'D'</span>]
+values     = [<span class="num">25</span>, <span class="num">40</span>, <span class="num">30</span>, <span class="num">20</span>]
+plt.<span class="fn">figure</span>()
+plt.<span class="fn">bar</span>(categories, values)
+plt.<span class="fn">title</span>(<span class="str">"Bar Plot"</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm"># ── BOX PLOT ─────────────────────────────────────────────────────────</span>
+<span class="cm"># Shows median, quartiles, and outliers — great for spotting spread</span>
+data = np.random.<span class="fn">normal</span>(<span class="num">50</span>, <span class="num">10</span>, <span class="num">200</span>)
+plt.<span class="fn">figure</span>()
+plt.<span class="fn">boxplot</span>(data)
+plt.<span class="fn">title</span>(<span class="str">"Box Plot"</span>)
+plt.<span class="fn">show</span>()</pre>
+
+    <button class="explain-toggle" onclick="toggleExplain(this)">▶ EXPLAIN CODE LINE BY LINE</button>
+    <div class="explain-panel">
+      <div class="explain-row"><div class="explain-code">np.random.normal(loc=50, scale=10, size=1000)</div><div class="explain-text">Generates 1000 random numbers from a bell curve centered at 50, with standard deviation 10. Most values land between 30–70.</div></div>
+      <div class="explain-row"><div class="explain-code">plt.hist(data, bins=30)</div><div class="explain-text">Splits the data range into 30 equal-width buckets and counts how many data points fall in each. Reveals the bell-curve shape.</div></div>
+      <div class="explain-row"><div class="explain-code">y = 2 * x + np.random.rand(100)</div><div class="explain-text">Creates a noisy linear relationship. 2*x is the true signal; np.random.rand(100) adds random noise between 0 and 1, simulating real-world data imperfection.</div></div>
+      <div class="explain-row"><div class="explain-code">np.arange(1, 11)</div><div class="explain-text">Creates an integer array [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]. The second argument (11) is exclusive — it stops before 11.</div></div>
+      <div class="explain-row"><div class="explain-code">y = x ** 2</div><div class="explain-text">NumPy applies ** element-wise: [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]. Creates a quadratic (parabola) curve.</div></div>
+      <div class="explain-row"><div class="explain-code">plt.bar(categories, values)</div><div class="explain-text">Draws vertical bars. First argument = x-axis labels, second = bar heights. Used for comparing discrete categories.</div></div>
+      <div class="explain-row"><div class="explain-code">plt.boxplot(data)</div><div class="explain-text">Draws a box plot. The box covers Q1–Q3 (interquartile range), the line inside = median, the whiskers extend to min/max (within 1.5×IQR), and dots beyond = outliers.</div></div>
+    </div>
+
+    <div class="output-img-wrap">
+      <div class="output-img-label">▸ OUTPUT — Data Visualization Plots</div>
+      <img src="Data visualization using- Histogram Plot.png" alt="Histogram" style="margin-bottom:10px;">
+      <img src="Data visualization using- Scatter Plot.png" alt="Scatter Plot" style="margin-bottom:10px;">
+      <img src="Data visualization using- Line Plot.png" alt="Line Plot" style="margin-bottom:10px;">
+      <img src="Data visualization using-Bar Plot.png" alt="Bar Plot" style="margin-bottom:10px;">
+      <img src="Data visualization using- Box Plot.png" alt="Box Plot">
+    </div>
+      <div id="missing2" class="img-missing"><div class="icon">🖼</div><div> THE PLOTS above </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CODE SECTION 3 — Logistic Regression
+══════════════════════════════════════════════════════════ -->
+<section id="code3">
+  <div class="section-label">NOTEBOOK CODE</div>
+  <h2 class="section-title">Code 3 — Logistic Regression on Breast Cancer Dataset</h2>
+  <div class="code-section">
+    <div class="code-header">
+      <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+      <span class="code-filename">notebook_logistic_reg.py</span>
+      <span class="code-tag">LOGISTIC REGRESSION · CLASSIFICATION</span>
+    </div>
+<pre><span class="kw">from</span> sklearn.datasets <span class="kw">import</span> load_breast_cancer
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> <span class="cls">StandardScaler</span>
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> <span class="cls">LogisticRegression</span>
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+
+<span class="cm"># Load dataset: 569 samples, 30 features, binary target (malignant=0, benign=1)</span>
+data = <span class="fn">load_breast_cancer</span>()
+X = pd.<span class="cls">DataFrame</span>(data.data, columns=data.feature_names)
+y = pd.<span class="cls">Series</span>(data.target)
+
+<span class="cm"># Split: 80% training, 20% testing. random_state=42 ensures reproducibility.</span>
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>)
+
+<span class="cm"># Standardize: fit scaler ONLY on training data to prevent data leakage</span>
+<span class="cm"># Then transform both train and test using SAME scaler parameters</span>
+scaler = <span class="cls">StandardScaler</span>()
+X_train = scaler.<span class="fn">fit_transform</span>(X_train)   <span class="cm"># learns μ and σ from train, then applies</span>
+X_test  = scaler.<span class="fn">transform</span>(X_test)        <span class="cm"># only applies — does NOT relearn</span>
+
+<span class="cm"># Train logistic regression model</span>
+model = <span class="cls">LogisticRegression</span>()
+model.<span class="fn">fit</span>(X_train, y_train)
+
+<span class="cm"># Predict on unseen test data</span>
+y_pred = model.<span class="fn">predict</span>(X_test)
+
+<span class="cm"># Evaluate with 4 metrics</span>
+accuracy  = <span class="fn">accuracy_score</span>(y_test, y_pred)   <span class="cm"># % correct overall</span>
+precision = <span class="fn">precision_score</span>(y_test, y_pred)  <span class="cm"># of predicted positive, how many actually are?</span>
+recall    = <span class="fn">recall_score</span>(y_test, y_pred)     <span class="cm"># of all actual positive, how many did we catch?</span>
+f1        = <span class="fn">f1_score</span>(y_test, y_pred)         <span class="cm"># harmonic mean of precision and recall</span>
+
+<span class="fn">print</span>(<span class="str">f"Accuracy : {accuracy:.2f}"</span>)
+<span class="fn">print</span>(<span class="str">f"Precision: {precision:.2f}"</span>)
+<span class="fn">print</span>(<span class="str">f"Recall   : {recall:.2f}"</span>)
+<span class="fn">print</span>(<span class="str">f"F1 Score : {f1:.2f}"</span>)
+
+conf_matrix = <span class="fn">confusion_matrix</span>(y_test, y_pred)
+<span class="fn">print</span>(<span class="str">"Confusion Matrix:\n"</span>, conf_matrix)</pre>
+
+    <button class="explain-toggle" onclick="toggleExplain(this)">▶ EXPLAIN CODE LINE BY LINE</button>
+    <div class="explain-panel">
+      <div class="explain-row"><div class="explain-code">load_breast_cancer()</div><div class="explain-text">Loads a built-in sklearn dataset of 569 breast cancer biopsies. Each has 30 numeric features (e.g., tumor radius, texture). Target: 0=malignant, 1=benign.</div></div>
+      <div class="explain-row"><div class="explain-code">train_test_split(..., test_size=0.2)</div><div class="explain-text">Shuffles the data and reserves 20% (≈114 samples) for testing. The model never sees these during training — they simulate real-world new patients.</div></div>
+      <div class="explain-row"><div class="explain-code">scaler.fit_transform(X_train)</div><div class="explain-text">fit() computes mean (μ) and std (σ) for each of the 30 features from training data. transform() applies Z = (X−μ)/σ. Combined as one call.</div></div>
+      <div class="explain-row"><div class="explain-code">scaler.transform(X_test)</div><div class="explain-text">Only transforms — uses the μ and σ learned from training data. Never re-fits on test data. This prevents "data leakage" (peeking at test statistics).</div></div>
+      <div class="explain-row"><div class="explain-code">model.fit(X_train, y_train)</div><div class="explain-text">Trains logistic regression. Internally runs gradient descent to find the optimal weight vector w that minimizes binary cross-entropy loss.</div></div>
+      <div class="explain-row"><div class="explain-code">accuracy_score(y_test, y_pred)</div><div class="explain-text">Counts how many predictions match the true labels. Formula: (TP + TN) / Total. For cancer diagnosis, this alone isn't enough — we need recall too.</div></div>
+      <div class="explain-row"><div class="explain-code">recall_score</div><div class="explain-text">Formula: TP / (TP + FN). Critical for cancer: "Of all actual cancer patients, did the model catch them?" A missed cancer (FN) is far worse than a false alarm.</div></div>
+      <div class="explain-row"><div class="explain-code">confusion_matrix(y_test, y_pred)</div><div class="explain-text">Returns a 2×2 matrix: [[TN, FP], [FN, TP]]. True Negatives (correctly benign), False Positives (benign → cancer alarm), False Negatives (missed cancer), True Positives (correctly detected).</div></div>
+    </div>
+
+    <div class="output-img-wrap">
+      <div class="output-img-label">▸ OUTPUT — Logistic Regression</div>
+      <pre style="background: #02060a; border: none; padding: 16px; margin: 0; color: var(--neon-cyan);">Accuracy : 0.98
+
+Confusion MATRIX :
+[[41  2]
+ [ 0 71]]</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CODE SECTION 4 — Normalization + PCA
+══════════════════════════════════════════════════════════ -->
+<section id="code4">
+  <div class="section-label">NOTEBOOK CODE</div>
+  <h2 class="section-title">Code 4 — Normalization, Standardization &amp; PCA</h2>
+  <div class="code-section">
+    <div class="code-header">
+      <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+      <span class="code-filename">notebook_scaling_pca.py</span>
+      <span class="code-tag">SCALING · PCA · MNIST</span>
+    </div>
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> <span class="cls">MinMaxScaler</span>, <span class="cls">StandardScaler</span>
+<span class="kw">from</span> sklearn.decomposition <span class="kw">import</span> <span class="cls">PCA</span>
+
+<span class="cm"># ── PART 1: NORMALIZATION AND STANDARDIZATION DEMO ──────────────────</span>
+data = {
+    <span class="str">'Feature-1'</span>: [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>],
+    <span class="str">'Feature-2'</span>: [<span class="num">100</span>, <span class="num">200</span>, <span class="num">300</span>, <span class="num">400</span>, <span class="num">500</span>],
+    <span class="str">'Feature-3'</span>: [<span class="num">5</span>, <span class="num">25</span>, <span class="num">125</span>, <span class="num">625</span>, <span class="num">3125</span>]   <span class="cm"># exponential — extreme range!</span>
+}
+df = pd.<span class="cls">DataFrame</span>(data)
+
+<span class="cm"># MinMaxScaler: applies X_norm = (X - Xmin)/(Xmax - Xmin) column-by-column</span>
+scaler_norm = <span class="cls">MinMaxScaler</span>()
+df_normalized = pd.<span class="cls">DataFrame</span>(scaler_norm.<span class="fn">fit_transform</span>(df), columns=df.columns)
+
+<span class="cm"># StandardScaler: applies Z = (X - μ)/σ column-by-column</span>
+scaler_std = <span class="cls">StandardScaler</span>()
+df_standardized = pd.<span class="cls">DataFrame</span>(scaler_std.<span class="fn">fit_transform</span>(df), columns=df.columns)
+
+<span class="cm"># Side-by-side boxplots: visualize how scaling changes the distribution shape</span>
+fig, axes = plt.<span class="fn">subplots</span>(<span class="num">1</span>, <span class="num">3</span>, figsize=(<span class="num">18</span>, <span class="num">6</span>))
+axes[<span class="num">0</span>].<span class="fn">boxplot</span>(df.values, tick_labels=df.columns.<span class="fn">to_list</span>())
+axes[<span class="num">1</span>].<span class="fn">boxplot</span>(df_normalized.values, tick_labels=df.columns.<span class="fn">to_list</span>())
+axes[<span class="num">2</span>].<span class="fn">boxplot</span>(df_standardized.values, tick_labels=df.columns.<span class="fn">to_list</span>())
+
+<span class="cm"># ── PART 2: PCA ON MNIST ────────────────────────────────────────────</span>
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> fetch_openml
+mnist = <span class="fn">fetch_openml</span>(<span class="str">'mnist_784'</span>)
+X, y = mnist[<span class="str">"data"</span>], mnist[<span class="str">"target"</span>]
+X = X / <span class="num">255.0</span>        <span class="cm"># Normalize pixels to [0,1] range before PCA</span>
+
+<span class="cm"># PCA: linear compression, 784 dimensions → 2 principal components</span>
+pca = <span class="cls">PCA</span>(n_components=<span class="num">2</span>)
+X_reduced = pca.<span class="fn">fit_transform</span>(X)
+
+<span class="cm"># s=1: tiny dot size since we have 70,000 points</span>
+plt.<span class="fn">scatter</span>(X_reduced[:, <span class="num">0</span>], X_reduced[:, <span class="num">1</span>], c=y.<span class="fn">astype</span>(<span class="cls">int</span>), cmap=<span class="str">'viridis'</span>, alpha=<span class="num">0.5</span>, s=<span class="num">1</span>)
+plt.<span class="fn">title</span>(<span class="str">'PCA of MNIST Dataset (2D Projection)'</span>)</pre>
+
+    <button class="explain-toggle" onclick="toggleExplain(this)">▶ EXPLAIN CODE LINE BY LINE</button>
+    <div class="explain-panel">
+      <div class="explain-row"><div class="explain-code">MinMaxScaler()</div><div class="explain-text">Implements the formula X_norm = (X − Xmin)/(Xmax − Xmin) for every column independently. Output is always in range [0, 1]. Sensitive to outliers.</div></div>
+      <div class="explain-row"><div class="explain-code">StandardScaler()</div><div class="explain-text">Implements Z-score: subtracts the mean and divides by std dev for each column. Output has mean=0 and std=1 but no fixed range. More robust to outliers than MinMax.</div></div>
+      <div class="explain-row"><div class="explain-code">fit_transform(df)</div><div class="explain-text">Combined: fit() computes the statistics (min, max, or mean, std), then transform() applies the scaling formula. Returns a NumPy array.</div></div>
+      <div class="explain-row"><div class="explain-code">plt.subplots(1, 3, figsize=(18,6))</div><div class="explain-text">Creates a figure with 1 row and 3 columns of subplots. figsize=(18,6) makes it 18 inches wide, 6 inches tall — wide enough for three side-by-side charts.</div></div>
+      <div class="explain-row"><div class="explain-code">X / 255.0</div><div class="explain-text">Pixel values in MNIST range from 0–255 (8-bit color). Dividing by 255 maps them to [0,1]. PCA is variance-based, so feature scaling is important before applying it.</div></div>
+      <div class="explain-row"><div class="explain-code">PCA(n_components=2)</div><div class="explain-text">Finds the 2 directions (principal components) in 784-dimensional space that capture the most variance. Projects all 70,000 images onto these 2 axes for visualization.</div></div>
+      <div class="explain-row"><div class="explain-code">cmap='viridis'</div><div class="explain-text">A perceptually uniform color map from dark purple → yellow. Unlike 'tab10' (discrete colors), viridis shows gradients — digits with similar values appear similar in color.</div></div>
+    </div>
+
+    <div class="output-img-wrap">
+      <div class="output-img-label">▸ OUTPUT — Normalization & PCA</div>
+      <img src="Normalization vs. Standardization.png" alt="Standardization Box Plot" style="margin-bottom:10px;">
+      <img src="Principal Component Analysis (PCA).png" alt="PCA Scatter Plot">
+    </div>
+      <div id="missing4" class="img-missing"><div class="icon"></div><div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CODE SECTION 5 — Decision Tree
+══════════════════════════════════════════════════════════ -->
+<section id="code5">
+  <div class="section-label">NOTEBOOK CODE</div>
+  <h2 class="section-title">Code 5 — Decision Tree (Play Football)</h2>
+  <div class="code-section">
+    <div class="code-header">
+      <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+      <span class="code-filename">notebook_decision_tree.py</span>
+      <span class="code-tag">DECISION TREE · ENTROPY</span>
+    </div>
+<pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.tree <span class="kw">import</span> <span class="cls">DecisionTreeClassifier</span>, plot_tree
+
+<span class="cm"># Create tiny dataset: 5 rows, 3 features, 1 target</span>
+data = {
+    <span class="str">'Weather'</span>:      [<span class="str">'Sunny'</span>, <span class="str">'Sunny'</span>, <span class="str">'Rainy'</span>, <span class="str">'Rainy'</span>, <span class="str">'Sunny'</span>],
+    <span class="str">'Temperature'</span>: [<span class="str">'Hot'</span>,   <span class="str">'Cold'</span>,  <span class="str">'Hot'</span>,   <span class="str">'Cold'</span>,  <span class="str">'Hot'</span>  ],
+    <span class="str">'Windy'</span>:       [<span class="str">'No'</span>,    <span class="str">'Yes'</span>,   <span class="str">'No'</span>,    <span class="str">'No'</span>,    <span class="str">'Yes'</span>  ],
+    <span class="str">'PlayFootball'</span>:[<span class="str">'No'</span>,    <span class="str">'No'</span>,    <span class="str">'Yes'</span>,   <span class="str">'Yes'</span>,  <span class="str">'Yes'</span>  ]
+}
+df = pd.<span class="cls">DataFrame</span>(data)
+
+<span class="cm"># Encode: Decision Trees need numbers, not strings</span>
+df_enc = df.copy()
+df_enc[<span class="str">'Weather'</span>]      = df_enc[<span class="str">'Weather'</span>].<span class="fn">map</span>({<span class="str">'Sunny'</span>: <span class="num">0</span>, <span class="str">'Rainy'</span>: <span class="num">1</span>})
+df_enc[<span class="str">'Temperature'</span>] = df_enc[<span class="str">'Temperature'</span>].<span class="fn">map</span>({<span class="str">'Hot'</span>: <span class="num">0</span>, <span class="str">'Cold'</span>: <span class="num">1</span>})
+df_enc[<span class="str">'Windy'</span>]       = df_enc[<span class="str">'Windy'</span>].<span class="fn">map</span>({<span class="str">'No'</span>: <span class="num">0</span>, <span class="str">'Yes'</span>: <span class="num">1</span>})
+df_enc[<span class="str">'PlayFootball'</span>]= df_enc[<span class="str">'PlayFootball'</span>].<span class="fn">map</span>({<span class="str">'No'</span>: <span class="num">0</span>, <span class="str">'Yes'</span>: <span class="num">1</span>})
+
+X = df_enc[[<span class="str">'Weather'</span>, <span class="str">'Temperature'</span>, <span class="str">'Windy'</span>]]
+y = df_enc[<span class="str">'PlayFootball'</span>]
+
+<span class="cm"># criterion='entropy': uses Information Gain (based on entropy) to choose splits</span>
+<span class="cm"># Alternative: criterion='gini' uses Gini Impurity</span>
+dt = <span class="cls">DecisionTreeClassifier</span>(criterion=<span class="str">'entropy'</span>)
+dt.<span class="fn">fit</span>(X, y)
+
+<span class="cm"># Visualize the trained tree structure</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">8</span>, <span class="num">6</span>))
+<span class="fn">plot_tree</span>(dt, feature_names=[<span class="str">'Weather'</span>, <span class="str">'Temperature'</span>, <span class="str">'Windy'</span>], class_names=[<span class="str">'No'</span>, <span class="str">'Yes'</span>])</pre>
+
+    <button class="explain-toggle" onclick="toggleExplain(this)">▶ EXPLAIN CODE LINE BY LINE</button>
+    <div class="explain-panel">
+      <div class="explain-row"><div class="explain-code">df.copy()</div><div class="explain-text">Creates an independent copy of the DataFrame. Without this, modifying df_enc would also modify the original df — a common Python gotcha with DataFrames.</div></div>
+      <div class="explain-row"><div class="explain-code">.map({'Sunny': 0, 'Rainy': 1})</div><div class="explain-text">Replaces string values with numbers. Decision Trees are mathematical — they can only split on numeric comparisons like "Weather ≤ 0.5" (i.e., is it Sunny?).</div></div>
+      <div class="explain-row"><div class="explain-code">DecisionTreeClassifier(criterion='entropy')</div><div class="explain-text">Sets the splitting criterion to Information Gain = how much does entropy decrease after the split? The tree picks whichever feature reduces entropy the most at each node.</div></div>
+      <div class="explain-row"><div class="explain-code">dt.fit(X, y)</div><div class="explain-text">Recursively builds the tree. At each node, computes entropy for every possible split, picks the best one, and repeats on the child nodes until leaves are pure or max depth is reached.</div></div>
+      <div class="explain-row"><div class="explain-code">plot_tree(dt, feature_names=[...], class_names=[...])</div><div class="explain-text">Renders the tree visually. Each node shows: the splitting feature+threshold, entropy at that node, number of samples, and class distribution. Leaf nodes show the final prediction.</div></div>
+    </div>
+
+    <div class="output-img-wrap">
+      <div class="output-img-label">▸ OUTPUT — Decision Tree</div>
+      <img src="Using suitable dataset, build model using Decision Tree algorithm..png" alt="Decision Tree Model">
+    </div>
+      <div id="missing5" class="img-missing"><div class="icon">🖼</div><div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CODE SECTION 6 — SVM
+══════════════════════════════════════════════════════════ -->
+<section id="code6">
+  <div class="section-label">NOTEBOOK CODE</div>
+  <h2 class="section-title">Code 6 — SVM on Breast Cancer Dataset</h2>
+  <div class="code-section">
+    <div class="code-header">
+      <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+      <span class="code-filename">notebook_svm.py</span>
+      <span class="code-tag">SVM · RBF KERNEL</span>
+    </div>
+<pre><span class="kw">from</span> sklearn.svm <span class="kw">import</span> <span class="cls">SVC</span>
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score, confusion_matrix, classification_report
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> load_breast_cancer
+
+data = <span class="fn">load_breast_cancer</span>()
+df   = pd.<span class="cls">DataFrame</span>(data.data, columns=data.feature_names)
+df[<span class="str">'target'</span>] = data.target
+
+X = df.<span class="fn">drop</span>(columns=[<span class="str">'target'</span>])
+y = df[<span class="str">'target'</span>]
+
+<span class="cm"># Same 80/20 split as before</span>
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>)
+
+<span class="cm"># SVM requires standardized data — it's distance-based, large-scale features dominate</span>
+scaler   = <span class="cls">StandardScaler</span>()
+X_train  = scaler.<span class="fn">fit_transform</span>(X_train)
+X_test   = scaler.<span class="fn">transform</span>(X_test)
+
+<span class="cm"># SVC with RBF kernel: maps data to infinite-dimensional space to find non-linear boundaries</span>
+<span class="cm"># C=1.0: regularization — higher C = fits training harder (risk of overfitting)</span>
+<span class="cm"># gamma='scale': kernel coefficient = 1/(n_features * X.var())</span>
+svm_model = <span class="cls">SVC</span>(kernel=<span class="str">'rbf'</span>, C=<span class="num">1.0</span>, gamma=<span class="str">'scale'</span>)
+svm_model.<span class="fn">fit</span>(X_train, y_train)
+
+y_pred = svm_model.<span class="fn">predict</span>(X_test)
+
+accuracy    = <span class="fn">accuracy_score</span>(y_test, y_pred)
+conf_matrix = <span class="fn">confusion_matrix</span>(y_test, y_pred)
+
+<span class="fn">print</span>(<span class="str">f"Accuracy : {accuracy:.2f}"</span>)
+<span class="fn">print</span>(<span class="str">"\nConfusion Matrix:\n"</span>, conf_matrix)</pre>
+
+    <button class="explain-toggle" onclick="toggleExplain(this)">▶ EXPLAIN CODE LINE BY LINE</button>
+    <div class="explain-panel">
+      <div class="explain-row"><div class="explain-code">SVC(kernel='rbf')</div><div class="explain-text">SVC = Support Vector Classifier. 'rbf' = Radial Basis Function kernel. Instead of drawing a straight line boundary, RBF uses a Gaussian function to create curved, complex decision boundaries.</div></div>
+      <div class="explain-row"><div class="explain-code">C=1.0</div><div class="explain-text">The regularization parameter. C=1.0 is balanced. High C: the model tries to correctly classify every training point (may overfit). Low C: allows some misclassifications to get a wider margin (may underfit).</div></div>
+      <div class="explain-row"><div class="explain-code">gamma='scale'</div><div class="explain-text">Controls how far the influence of a single training point reaches. 'scale' automatically sets gamma = 1/(n_features × var(X)), which is a sensible default. High gamma = points only influence nearby region.</div></div>
+      <div class="explain-row"><div class="explain-code">df.drop(columns=['target'])</div><div class="explain-text">Removes the 'target' column from the feature matrix X. We can't include the answer as an input feature — that would be cheating and cause trivial 100% accuracy.</div></div>
+      <div class="explain-row"><div class="explain-code">svm_model.fit(X_train, y_train)</div><div class="explain-text">Finds the optimal hyperplane (in high-dimensional RBF space) that maximizes the margin between malignant and benign tumor classes. Only the support vectors (points closest to the boundary) influence the final boundary.</div></div>
+      <div class="explain-row"><div class="explain-code">confusion_matrix(y_test, y_pred)</div><div class="explain-text">Shows TP (cancer caught), TN (benign confirmed), FP (false alarm), FN (missed cancer). For medical applications, minimizing FN (missed cancers) is the highest priority.</div></div>
+    </div>
+
+    <div class="output-img-wrap">
+      <div class="output-img-label">▸ OUTPUT — Support Vector Machine</div>
+      <pre style="background: #02060a; border: none; padding: 16px; margin: 0; color: var(--neon-cyan);">Model Performance Metrics :
+Accuracy : 0.97
+Precision : 0.97
+Recall : 0.99
+F1 Score : 0.98
+
+Confusion matrix :
+[[41  2]
+ [ 1 70]]</pre>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div>OASIS STUDY TERMINAL &nbsp;·&nbsp; <span>DJ's AI Exam Prep</span> &nbsp;·&nbsp; Build your JARVIS, ace the exam.</div>
+  <div style="margin-top:6px;opacity:0.4;">MODULES: COMPILED. ALL ASSETS INTEGRATED.</div>
+</footer>
+
+<script>
+/* ─── IMAGE LOADER ────────────────────────────────────────
+   Tries .jpg first, then .png, then .jpeg for each image slot.
+   Images must be in the SAME FOLDER as this HTML file.
+─────────────────────────────────────────────────────────── 
+function tryLoadImage(imgId, missingId, index) {
+  const exts = ['jpg', 'png', 'jpeg', 'webp'];
+  const img = document.getElementById(imgId);
+  let attempt = 0;
+
+  function tryNext() {
+    if (attempt >= exts.length) {
+      // All extensions failed → show placeholder
+      document.getElementById(missingId).style.display = 'flex';
+      img.style.display = 'none';
+      return;
+    }
+    img.onerror = tryNext;
+    img.onload  = function() {
+      this.style.display = 'block';
+      document.getElementById(missingId).style.display = 'none';
+    };
+    img.src = `image${index}.${exts[attempt]}`;
+    attempt++;
+  }
+  tryNext();
+}
+
+function showMissing(imgId, missingId) {
+  document.getElementById(missingId).style.display = 'flex';
+}
+
+
+window.addEventListener('DOMContentLoaded', function() {
+  for (let i = 1; i <= 6; i++) {
+    tryLoadImage(`img${i}`, `missing${i}`, i);
+  }
+});*/
+
+/* ─── TOGGLE SOLUTION ─────────────────────────────────── */
+function toggleSolution(btn) {
+  const body = btn.nextElementSibling;
+  const open = body.classList.toggle('open');
+  btn.textContent = open ? '▼ HIDE SOLUTION' : '▶ SHOW SOLUTION';
+}
+
+/* ─── TOGGLE CODE EXPLANATION ─────────────────────────── */
+function toggleExplain(btn) {
+  const panel = btn.nextElementSibling;
+  const open  = panel.classList.toggle('open');
+  btn.textContent = open ? '▼ COLLAPSE EXPLANATION' : '▶ EXPLAIN CODE LINE BY LINE';
+}
+</script>
+</body>
+</html>
