@@ -4,7 +4,7 @@
   <div id="ui" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
 
     <div style="text-align:center;margin-bottom:18px;">
-      <div id="status-text" style="color:#00d4ff;font-size:11px;letter-spacing:6px;margin-bottom:6px;opacity:0.8;">J.A.R.V.I.S. — ONLINE</div>
+      <div id="status-text" style="color:#00d4ff;font-size:11px;letter-spacing:6px;margin-bottom:6px;opacity:0.8;"></div>
       <div id="greeting" style="color:#fff;font-size:1.05rem;letter-spacing:2px;min-height:24px;"></div>
     </div>
 
@@ -44,12 +44,15 @@
       <div id="power" style="color:#00d4ff;font-size:13px;letter-spacing:1px;">--%</div>
     </div>
 
-    <div style="position:absolute;top:14px;right:18px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
-      <div style="color:rgba(0,212,255,0.4);font-size:9px;letter-spacing:2px;">UPTIME</div>
-      <div id="uptime" style="color:#00d4ff;font-size:13px;letter-spacing:1px;">00:00:00</div>
-      <div style="color:rgba(0,212,255,0.4);font-size:9px;letter-spacing:2px;margin-top:4px;">SHIELD</div>
-      <div id="shield" style="color:#00d4ff;font-size:13px;letter-spacing:1px;">NOMINAL</div>
-    </div>
+    <div style="position:absolute; top:14px; right:18px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; text-align:right;">
+  
+  <div style="color:rgba(0,212,255,0.4); font-size:9px; letter-spacing:2px;">UPTIME</div>
+  <div id="uptime" style="color:#00d4ff; font-size:13px; letter-spacing:1px; margin-bottom:8px;">00:00:00</div>
+  
+  <div style="color:rgba(0,212,255,0.4); font-size:9px; letter-spacing:2px;">LATENCY</div>
+  <div id="shield" style="color:#00d4ff; font-size:13px; letter-spacing:1px;">0ms</div>
+
+</div>
 
     <div style="position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:24px;">
       <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
@@ -190,13 +193,18 @@ function drawRing(t){
 }
 let typingInterval;
 
-function typeText(el,text,speed){
-  el.textContent='';
-  let i=0;
-  const iv=setInterval(()=>{
-    if(i<text.length){el.textContent+=text[i];i++;}
-    else clearInterval(iv);
-  },speed||28);
+function typeText(el, text, speed) {
+  clearInterval(typingInterval); // THIS stops the old sentence from overlapping
+  el.textContent = '';
+  let i = 0;
+  typingInterval = setInterval(() => {
+    if (i < text.length) { 
+      el.textContent += text[i]; 
+      i++; 
+    } else {
+      clearInterval(typingInterval);
+    }
+  }, speed || 28);
 }
 
 const greetings=['GOOD DAY, SIR.','ALL SYSTEMS NOMINAL.','HOW MAY I ASSIST?','STANDING BY.','READY FOR ORDERS, SIR.'];
@@ -208,21 +216,46 @@ function cycleGreeting(){
 cycleGreeting();
 setInterval(cycleGreeting,6000);
 
-function updateStats(t){
-  const temp=Math.round(72+Math.sin(t*0.3)*4);
-  const power=Math.round(87+Math.sin(t*0.5)*5);
-  document.getElementById('temp').textContent=temp+'°C';
-  document.getElementById('power').textContent=power+'%';
-  const elapsed=Math.floor((Date.now()-startTime)/1000);
-  const h=String(Math.floor(elapsed/3600)).padStart(2,'0');
-  const m=String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
-  const s=String(elapsed%60).padStart(2,'0');
-  document.getElementById('uptime').textContent=`${h}:${m}:${s}`;
-  [1,2,3,4].forEach(i=>{
-    const d=document.getElementById('dot'+i);
-    if(Math.random()<0.04) d.style.opacity=d.style.opacity==='0.3'?'1':'0.3';
-  });
+// Global variable for latency
+let currentLatency = "0";
+
+async function updateStats(t) {
+  // 1. REAL BATTERY/POWER DATA
+  if (navigator.getBattery) {
+    const battery = await navigator.getBattery();
+    const pwr = Math.round(battery.level * 100);
+    document.getElementById('power').textContent = pwr + '%';
+    document.getElementById('dot1').style.background = battery.charging ? '#00ff88' : '#00d4ff';
+  }
+
+  // 2. REALTIME UPTIME
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+  const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+  const s = String(elapsed % 60).padStart(2, '0');
+  document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
+
+  // 3. CORE TEMP (Simulated but looks cleaner)
+  const temp = Math.round(38 + Math.sin(t * 0.2) * 2); 
+  document.getElementById('temp').textContent = temp + '°C';
+
+  // 4. NETWORK STATUS (Blinking based on connection)
+  const netDot = document.getElementById('dot1');
+  netDot.style.opacity = navigator.onLine ? "1" : "0.3";
 }
+
+// 5. REAL LATENCY (Ping check every 5 seconds)
+async function checkLatency() {
+  const start = Date.now();
+  try {
+    // We ping the worker just to see the round-trip time
+    await fetch("https://soft-thunder-2965.zgodmr.workers.dev", { method: 'HEAD', mode: 'no-cors' });
+    currentLatency = (Date.now() - start);
+  } catch (e) {
+    currentLatency = "ERR";
+  }
+}
+setInterval(checkLatency, 5000);
 
 let raf;
 function loop(){
