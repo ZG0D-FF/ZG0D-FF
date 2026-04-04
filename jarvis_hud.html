@@ -1,0 +1,296 @@
+
+<div id="hud" style="width:100%;height:620px;background:transparent;border-radius:8px;position:relative;overflow:hidden;">
+<canvas id="c" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+<div id="ui" style="position:absolute;inset:0;pointer-events:none;font-family:monospace;"></div>
+</div>
+<script>
+const hud=document.getElementById('hud'),ui=document.getElementById('ui'),canvas=document.getElementById('c');
+let W,H,ctx,t=0,raf;
+const C={a:'#00d4ff',b:'#0099cc',c:'#ff4444',d:'#00ff88',e:'#ffaa00',dim:'rgba(0,180,220,0.15)',ring:'rgba(0,212,255,0.06)'};
+
+function resize(){
+  W=hud.clientWidth;H=hud.clientHeight;
+  canvas.width=W*devicePixelRatio;canvas.height=H*devicePixelRatio;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx=canvas.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
+}
+
+function hex(x,y,r,color,lw=1){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a));}
+  ctx.closePath();ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.stroke();
+}
+
+function ring(x,y,r,color,sw=1,dash=[],alpha=1){
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.strokeStyle=color;ctx.lineWidth=sw;ctx.setLineDash(dash);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
+}
+
+function arc(x,y,r,a1,a2,color,sw=1.5){
+  ctx.beginPath();ctx.arc(x,y,r,a1,a2);
+  ctx.strokeStyle=color;ctx.lineWidth=sw;ctx.stroke();
+}
+
+function line(x1,y1,x2,y2,color,sw=0.5,alpha=1){
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+  ctx.strokeStyle=color;ctx.lineWidth=sw;ctx.stroke();
+  ctx.restore();
+}
+
+function txt(s,x,y,color,size=10,align='left',alpha=1){
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.fillStyle=color;ctx.font=`${size}px monospace`;ctx.textAlign=align;
+  ctx.fillText(s,x,y);ctx.restore();
+}
+
+function dot(x,y,r,color,alpha=1){
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  ctx.restore();
+}
+
+const systems=[
+  {name:'REPULSOR ARRAY',val:()=>Math.round(94+Math.sin(t*0.7)*3),unit:'%',status:'ONLINE',color:C.d},
+  {name:'POWER CORE',val:()=>Math.round(87+Math.sin(t*0.4)*5),unit:'%',status:'NOMINAL',color:C.a},
+  {name:'NEURAL INTERFACE',val:()=>Math.round(99+Math.sin(t*1.1)*1),unit:'%',status:'SYNCED',color:C.d},
+  {name:'WEAPONS ARRAY',val:()=>Math.round(100),unit:'%',status:'ARMED',color:C.c},
+  {name:'LIFE SUPPORT',val:()=>Math.round(100),unit:'%',status:'OPTIMAL',color:C.d},
+  {name:'COMMS',val:()=>Math.round(78+Math.sin(t*0.9)*8),unit:'%',status:'ENCRYPTED',color:C.e},
+];
+
+const gpsPoints=[
+  {name:'STARK TOWER',lat:40.7589,lng:-73.9851,threat:false},
+  {name:'HYDRA SIGNAL',lat:48.8566,lng:2.3522,threat:true},
+  {name:'TARGET ALPHA',lat:35.6762,lng:139.6503,threat:true},
+  {name:'RHODEY',lat:34.0522,lng:-118.2437,threat:false},
+  {name:'FURY',lat:51.5074,lng:-0.1278,threat:false},
+];
+
+const vitals=[
+  {name:'HEART RATE',val:()=>Math.round(72+Math.sin(t*0.3)*4),unit:'BPM'},
+  {name:'BLOOD O2',val:()=>Math.round(98+Math.sin(t*0.2)*1),unit:'%'},
+  {name:'ADRENALINE',val:()=>Math.round(42+Math.sin(t*0.5)*15),unit:'µg/L'},
+  {name:'TEMP',val:()=>(36.8+Math.sin(t*0.1)*0.3).toFixed(1),unit:'°C'},
+];
+
+function drawCenterCore(cx,cy){
+  const r1=55,r2=45,r3=32,r4=18;
+  ctx.save();ctx.globalAlpha=0.08;ctx.beginPath();ctx.arc(cx,cy,r1,0,Math.PI*2);ctx.fillStyle=C.a;ctx.fill();ctx.restore();
+  ring(cx,cy,r1,C.a,1,[4,4],0.5);
+  ring(cx,cy,r2,C.a,0.5,[],0.3);
+  const spin=t*0.8;
+  arc(cx,cy,r2,spin,spin+Math.PI*1.2,C.a,1.5);
+  arc(cx,cy,r2,spin+Math.PI,spin+Math.PI*1.5,C.b,1);
+  const spin2=-t*0.5;
+  arc(cx,cy,r3,spin2,spin2+Math.PI*0.8,C.d,1);
+  arc(cx,cy,r3,spin2+Math.PI,spin2+Math.PI*1.4,C.d,0.5);
+  ring(cx,cy,r4,C.a,1.5,[],0.8);
+  ctx.save();ctx.globalAlpha=0.5+Math.sin(t*2)*0.2;
+  ctx.beginPath();ctx.arc(cx,cy,r4,0,Math.PI*2);ctx.fillStyle=C.a;ctx.fill();
+  ctx.restore();
+  txt('J.A.R.V.I.S',cx,cy-6,C.a,9,'center',0.9);
+  txt('ONLINE',cx,cy+7,C.d,8,'center',0.9);
+  for(let i=0;i<8;i++){
+    const a=Math.PI/4*i+t*0.3;
+    const x1=cx+r1*Math.cos(a),y1=cy+r1*Math.sin(a);
+    const x2=cx+(r1+12)*Math.cos(a),y2=cy+(r1+12)*Math.sin(a);
+    line(x1,y1,x2,y2,C.a,0.5,0.4);
+  }
+}
+
+function drawGPS(cx,cy,radius){
+  ring(cx,cy,radius,C.a,0.5,[2,4],0.3);
+  ring(cx,cy,radius*0.7,C.b,0.5,[],0.2);
+  const gridLines=5;
+  for(let i=0;i<gridLines;i++){
+    const y2=cy-radius+i*(radius*2/gridLines);
+    const dx=Math.sqrt(Math.max(0,radius*radius-(y2-cy)*(y2-cy)));
+    line(cx-dx,y2,cx+dx,y2,C.a,0.3,0.2);
+  }
+  for(let i=0;i<gridLines;i++){
+    const x2=cx-radius+i*(radius*2/gridLines);
+    const dy=Math.sqrt(Math.max(0,radius*radius-(x2-cx)*(x2-cx)));
+    line(x2,cy-dy,x2,cy+dy,C.a,0.3,0.2);
+  }
+  const sweep=t*0.7%( Math.PI*2);
+  ctx.save();ctx.globalAlpha=0.15;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,radius,sweep-Math.PI*0.5,sweep);ctx.closePath();
+  ctx.fillStyle=C.d;ctx.fill();ctx.restore();
+  arc(cx,cy,radius,sweep-Math.PI*0.5,sweep,C.d,1);
+  gpsPoints.forEach(p=>{
+    const nx=(p.lng+180)/360,ny=(90-p.lat)/180;
+    const px=cx-radius+nx*radius*2,py=cy-radius+ny*radius*1.3+radius*0.35;
+    const col=p.threat?C.c:C.d;
+    const pulse=0.5+Math.sin(t*3+p.lat)*0.5;
+    dot(px,py,2,col,1);
+    ring(px,py,4+pulse*3,col,0.5,[],0.4);
+    if(p.threat){
+      ctx.save();ctx.globalAlpha=0.15+pulse*0.1;
+      ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.fillStyle=C.c;ctx.fill();
+      ctx.restore();
+    }
+    const lx=px+(px<cx?-(p.name.length*5+8):8),ly=py-2;
+    txt(p.name,lx,ly,col,8,'left',0.85);
+  });
+  txt('GPS TRACKING',cx,cy-radius-8,C.a,9,'center',0.6);
+  txt('GLOBAL THREAT MONITOR',cx,cy+radius+14,C.b,8,'center',0.5);
+}
+
+function drawSystems(x,y){
+  txt('SYSTEM STATUS',x,y,C.a,10,'left',0.7);
+  line(x,y+4,x+140,y+4,C.a,0.5,0.3);
+  systems.forEach((s,i)=>{
+    const yy=y+22+i*22;
+    const v=s.val();
+    const bw=120,bh=8;
+    ctx.save();ctx.globalAlpha=0.15;
+    ctx.fillStyle=s.color;ctx.fillRect(x,yy,bw*v/100,bh);
+    ctx.restore();
+    ctx.strokeStyle=s.color;ctx.lineWidth=0.5;ctx.globalAlpha=0.4;
+    ctx.strokeRect(x,yy,bw,bh);ctx.globalAlpha=1;
+    txt(s.name,x,yy-2,s.color,7,'left',0.7);
+    txt(v+s.unit,x+bw+4,yy+7,s.color,8,'left',0.9);
+    dot(x+bw+36,yy+4,2,s.color,0.7+Math.sin(t*2+i)*0.3);
+  });
+}
+
+function drawVitals(x,y){
+  txt('BIO METRICS',x,y,C.e,10,'left',0.7);
+  line(x,y+4,x+130,y+4,C.e,0.5,0.3);
+  vitals.forEach((v,i)=>{
+    const yy=y+22+i*24;
+    const val=v.val();
+    txt(v.name,x,yy,C.e,7,'left',0.6);
+    txt(val+' '+v.unit,x,yy+13,C.a,11,'left',0.95);
+    const bw=120;
+    const maxV={BPM:200,'%':100,'µg/L':100,'°C':42}[v.unit]||100;
+    const pct=Math.min(parseFloat(val)/maxV,1);
+    ctx.save();ctx.globalAlpha=0.1;ctx.fillStyle=C.e;ctx.fillRect(x,yy+16,bw*pct,3);ctx.restore();
+    ctx.strokeStyle=C.e;ctx.lineWidth=0.5;ctx.globalAlpha=0.25;ctx.strokeRect(x,yy+16,bw,3);ctx.globalAlpha=1;
+  });
+}
+
+function drawPowerArc(cx,cy){
+  const pct=0.87+Math.sin(t*0.4)*0.05;
+  const startA=-Math.PI*0.8,endA=Math.PI*0.8;
+  const fullA=endA-startA;
+  arc(cx,cy,38,startA,endA,C.dim,6);
+  arc(cx,cy,38,startA,startA+fullA*pct,C.a,6);
+  txt('ARC REACTOR',cx,cy-10,C.a,8,'center',0.7);
+  txt(Math.round(pct*100)+'%',cx,cy+6,C.a,13,'center',0.95);
+  txt('OUTPUT',cx,cy+17,C.b,7,'center',0.5);
+  ring(cx,cy,28,C.a,0.5,[],0.2);
+  const pulse=0.3+Math.sin(t*2)*0.15;
+  ctx.save();ctx.globalAlpha=pulse;ctx.beginPath();ctx.arc(cx,cy,20,0,Math.PI*2);ctx.fillStyle=C.a;ctx.fill();ctx.restore();
+}
+
+function drawThreatLevel(x,y){
+  txt('THREAT ASSESSMENT',x,y,C.c,9,'left',0.6);
+  line(x,y+4,x+140,y+4,C.c,0.5,0.2);
+  const threats=['HYDRA CELL — PARIS','TARGET — TOKYO','UNKNOWN — ORBIT'];
+  const levels=[87,62,34];
+  threats.forEach((th,i)=>{
+    const yy=y+20+i*28;
+    const pulse=Math.sin(t*3+i*1.2)>0;
+    dot(x,yy+4,3,C.c,pulse?1:0.3);
+    txt(th,x+9,yy+2,C.c,8,'left',0.8);
+    txt('THREAT '+levels[i]+'%',x+9,yy+13,C.a,8,'left',0.7);
+    const bw=130;
+    ctx.save();ctx.globalAlpha=0.18+Math.sin(t*2+i)*0.05;
+    ctx.fillStyle=C.c;ctx.fillRect(x+9,yy+16,bw*(levels[i]/100),3);
+    ctx.restore();
+    ctx.strokeStyle=C.c;ctx.lineWidth=0.5;ctx.globalAlpha=0.25;ctx.strokeRect(x+9,yy+16,bw,3);ctx.globalAlpha=1;
+  });
+}
+
+function drawHexGrid(){
+  const hr=22,cols=Math.ceil(W/hr/1.8)+2,rows=Math.ceil(H/hr/1.6)+2;
+  ctx.save();ctx.globalAlpha=0.04;
+  for(let r=0;r<rows;r++){
+    for(let cc=0;cc<cols;cc++){
+      const hx=cc*hr*1.73+(r%2)*hr*0.87-hr;
+      const hy=r*hr*1.5-hr;
+      hex(hx,hy,hr*0.48,C.a,0.5);
+    }
+  }
+  ctx.restore();
+}
+
+function drawCornerBrackets(){
+  const m=12,s=24,sw=1.5,col=C.a,al=0.4;
+  [[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]].forEach(([x,y,dx,dy])=>{
+    line(x,y,x+dx*s,y,col,sw,al);
+    line(x,y,x,y+dy*s,col,sw,al);
+  });
+}
+
+function drawScanLine(){
+  const sy=(t*60)%H;
+  ctx.save();ctx.globalAlpha=0.04;
+  ctx.fillStyle=C.a;ctx.fillRect(0,sy,W,2);
+  ctx.restore();
+}
+
+function drawWaveform(x,y,ww,wh,color){
+  ctx.save();ctx.globalAlpha=0.7;ctx.strokeStyle=color;ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let i=0;i<ww;i++){
+    const yy=y+wh/2+Math.sin(i*0.15+t*3)*wh*0.3+Math.sin(i*0.4+t*1.5)*wh*0.1;
+    i===0?ctx.moveTo(x+i,yy):ctx.lineTo(x+i,yy);
+  }
+  ctx.stroke();ctx.restore();
+}
+
+function frame(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();ctx.globalAlpha=0.97;ctx.fillStyle='#000408';ctx.fillRect(0,0,W,H);ctx.restore();
+  drawHexGrid();
+  drawScanLine();
+  drawCornerBrackets();
+
+  const cx=W/2,cy=H/2;
+  for(let r=1;r<=5;r++){ring(cx,cy,r*70,C.a,0.5,[],0.03+0.01*r);}
+
+  const gpsR=Math.min(W,H)*0.2;
+  const gpsCX=cx,gpsCY=cy;
+  drawGPS(gpsCX,gpsCY,gpsR);
+  drawCenterCore(cx,cy);
+
+  drawSystems(18,40);
+  drawVitals(18,H-140);
+  drawPowerArc(W-60,80);
+  drawThreatLevel(W-165,H-120);
+
+  txt('IRON MAN MK.VII',cx,22,'#ffffff','center'===cx?cx:cx,11,'center',0.5);
+  txt(`T+${(t).toFixed(1)}s`,cx,H-8,C.b,8,'center',0.4);
+
+  const waveY=H-28;
+  drawWaveform(20,waveY,W*0.3,16,C.a);
+  drawWaveform(W*0.7,waveY,W*0.3,16,C.e);
+
+  line(18,H-42,W-18,H-42,C.a,0.3,0.2);
+  line(18,30,W-18,30,C.a,0.3,0.2);
+
+  const altV=Math.round(3200+Math.sin(t*0.2)*80);
+  const spdV=Math.round(1440+Math.sin(t*0.3)*60);
+  txt('ALT',20,H-56,C.b,7,'left',0.5);txt(altV+'m',20,H-46,C.a,9,'left',0.8);
+  txt('SPD',90,H-56,C.b,7,'left',0.5);txt(spdV+'km/h',90,H-46,C.a,9,'left',0.8);
+  txt('HDG',165,H-56,C.b,7,'left',0.5);txt(Math.round(247+Math.sin(t*0.1)*3)+'°',165,H-46,C.a,9,'left',0.8);
+  txt('TEMP',(W-120),H-56,C.b,7,'left',0.5);txt((-42+Math.round(Math.sin(t*0.15)*2))+'°C',(W-120),H-46,C.a,9,'left',0.8);
+  txt('MACH',(W-60),H-56,C.b,7,'left',0.5);txt((1.18+Math.sin(t*0.2)*0.05).toFixed(2),(W-60),H-46,C.a,9,'left',0.8);
+
+  ctx.save();ctx.globalAlpha=0.04+Math.sin(t*0.5)*0.01;
+  for(let i=0;i<4;i++){line(cx-180+i*120,0,cx-220+i*120,H,C.a,0.5);}
+  ctx.restore();
+
+  t+=0.016;
+  raf=requestAnimationFrame(frame);
+}
+
+resize();
+window.addEventListener('resize',()=>{resize();});
+frame();
+</script>

@@ -1,0 +1,3204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TinyML — Lecture series</title>
+<script>
+  window.MathJax = {
+    tex: { 
+      inlineMath: [['$', '$'], ['\\(', '\\)']], 
+      displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+    }
+  };
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --dark: #080808;
+    --dark2: #111111;
+    --dark3: #1a1a1a;
+    --white: #f0f0f0;
+    --red: #c0392b;
+    --accent: #e8c96c;
+    --text-muted: #888;
+    --transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* DEVICE TIERS */
+  body.tier-low { --anim-dur: 0; --blur-val: 0px; --shadow-complexity: none; }
+  body.tier-mid { --anim-dur: 0.6s; --blur-val: 4px; --shadow-complexity: 0 8px 32px rgba(0,0,0,0.5); }
+  body.tier-high { --anim-dur: 1s; --blur-val: 10px; --shadow-complexity: 0 20px 60px rgba(0,0,0,0.7); }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--dark);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ---- DEVICE BANNER ---- */
+  #device-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(8,8,8,0.95);
+    backdrop-filter: blur(var(--blur-val));
+    border-bottom: 1px solid #222;
+    padding: 0 40px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: color var(--transition);
+  }
+  .nav-links a:hover { color: var(--gold); }
+
+  #device-info {
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  #device-info span {
+    background: #1a1a1a;
+    padding: 3px 8px;
+    border-radius: 2px;
+    border: 1px solid #333;
+  }
+  .tier-badge {
+    color: var(--gold) !important;
+    border-color: var(--gold) !important;
+    font-weight: 700;
+  }
+
+  /* ---- HERO ---- */
+  #hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding-top: 64px;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 50%, rgba(201,168,76,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(192,57,43,0.05) 0%, transparent 60%),
+      linear-gradient(135deg, #080808 0%, #0e0e0e 50%, #080808 100%);
+  }
+
+  /* Animated grid lines - high tier only */
+  body.tier-high .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 80px 80px;
+    animation: gridPulse 8s ease-in-out infinite;
+  }
+  body.tier-mid .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.02) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+  body.tier-low .hero-grid { display: none; }
+
+  @keyframes gridPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* Floating particles - high tier */
+  body.tier-high .particle {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: float var(--anim-dur) ease-in-out infinite;
+    opacity: 0;
+  }
+  body:not(.tier-high) .particle { display: none; }
+
+  @keyframes float {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.3; }
+    100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 80px;
+    max-width: 900px;
+  }
+
+  .hero-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp var(--anim-dur) 0.2s forwards;
+  }
+  body.tier-low .hero-label { opacity: 1; animation: none; }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 12vw, 11rem);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: fadeUp var(--anim-dur) 0.4s forwards;
+  }
+  body.tier-low .hero-title { opacity: 1; animation: none; }
+
+  .hero-title .gold { color: var(--gold); }
+
+  .hero-subtitle {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.5rem, 4vw, 3.5rem);
+    letter-spacing: 6px;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(201,168,76,0.5);
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeUp var(--anim-dur) 0.6s forwards;
+  }
+  body.tier-low .hero-subtitle { opacity: 1; animation: none; }
+
+  .hero-meta {
+    display: flex;
+    gap: 40px;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    opacity: 0;
+    animation: fadeUp var(--anim-dur) 0.8s forwards;
+  }
+  body.tier-low .hero-meta { opacity: 1; animation: none; }
+
+  .hero-meta strong { color: var(--gold); display: block; font-size: 1rem; }
+
+  /* Vertical text - CR7 style */
+  .hero-vertical {
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: rgba(201,168,76,0.3);
+    white-space: nowrap;
+  }
+
+  .hero-line {
+    position: absolute;
+    bottom: 0;
+    left: 80px;
+    right: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    opacity: 0.3;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---- SECTIONS ---- */
+  section {
+    padding: 100px 80px;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 60px;
+    position: relative;
+  }
+
+  /* ---- WHAT IS TINYML ---- */
+  #what {
+    background: var(--dark2);
+  }
+
+  .what-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: #222;
+  }
+
+  .what-card {
+    background: var(--dark2);
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+    transition: background var(--transition);
+  }
+  .what-card:hover { background: #161616; }
+
+  body.tier-high .what-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s ease;
+  }
+  body.tier-high .what-card:hover::before { transform: scaleX(1); }
+
+  .what-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: rgba(201,168,76,0.1);
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+
+  .what-card h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+
+  .what-card p {
+    color: #aaa;
+    line-height: 1.7;
+    font-size: 0.9rem;
+  }
+
+  /* ---- APPLICATIONS ---- */
+  #applications {
+    background: var(--dark);
+    overflow: hidden;
+  }
+
+  .app-showcase {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: #1a1a1a;
+    margin-top: 0;
+  }
+
+  .app-item {
+    background: var(--dark);
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: background var(--transition);
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .app-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 3px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+    transform-origin: left;
+  }
+  .app-item:hover::after { transform: scaleX(1); }
+  .app-item:hover { background: #0d0d0d; }
+
+  .app-icon {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    opacity: 0.6;
+    transition: opacity var(--transition), transform var(--transition);
+  }
+  .app-item:hover .app-icon { opacity: 1; transform: scale(1.1); }
+
+  .app-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+
+  .app-desc {
+    font-size: 0.85rem;
+    color: #777;
+    line-height: 1.6;
+  }
+
+  .app-tag {
+    position: absolute;
+    top: 24px; right: 24px;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 4px 10px;
+  }
+
+  /* ---- ELEPHANT EDGE ---- */
+  #elephant {
+    background: var(--dark3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .elephant-accent {
+    position: absolute;
+    right: -100px; top: -100px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    background: #222;
+    margin-bottom: 60px;
+  }
+
+  .pillar {
+    background: var(--dark3);
+    padding: 40px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    transition: background var(--transition);
+  }
+  .pillar:hover { background: #1e1e1e; }
+
+  .pillar-icon {
+    font-size: 1.8rem;
+    min-width: 40px;
+    margin-top: 4px;
+  }
+
+  .pillar h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .pillar p {
+    font-size: 0.85rem;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  .stack-row {
+    display: flex;
+    gap: 2px;
+    background: #111;
+  }
+
+  .stack-item {
+    flex: 1;
+    background: var(--dark3);
+    padding: 32px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: background var(--transition);
+  }
+  .stack-item:hover { background: #1e1e1e; }
+
+  body.tier-high .stack-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(201,168,76,0.05) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+  body.tier-high .stack-item:hover::before { opacity: 1; }
+
+  .stack-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stack-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+  }
+
+  .stack-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+    padding: 0 16px;
+    color: var(--gold);
+    font-size: 1.2rem;
+  }
+
+  /* ---- HARDWARE ---- */
+  #hardware {
+    background: var(--dark);
+  }
+
+  .sensors-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    background: #1a1a1a;
+  }
+
+  .sensor-card {
+    background: var(--dark);
+    padding: 32px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: background var(--transition);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .sensor-card:hover { background: #0d0d0d; }
+
+  body.tier-high .sensor-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; right: 50%;
+    height: 1px;
+    background: var(--gold);
+    transition: all 0.4s ease;
+  }
+  body.tier-high .sensor-card:hover::before {
+    left: 0; right: 0;
+  }
+
+  .sensor-icon {
+    font-size: 2rem;
+    margin-bottom: 16px;
+    display: block;
+    transition: transform var(--transition);
+  }
+  .sensor-card:hover .sensor-icon { transform: scale(1.15); }
+
+  .sensor-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .sensor-desc {
+    font-size: 0.75rem;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  /* ---- PIPELINE ---- */
+  #pipeline {
+    background: var(--dark2);
+  }
+
+  .pipeline-steps {
+    display: flex;
+    gap: 0;
+    background: #111;
+    margin-bottom: 60px;
+    overflow: hidden;
+  }
+
+  .pipeline-step {
+    flex: 1;
+    padding: 40px 24px;
+    background: var(--dark2);
+    position: relative;
+    text-align: center;
+    transition: background var(--transition);
+  }
+
+  .pipeline-step::after {
+    content: '→';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: var(--gold);
+    z-index: 2;
+  }
+  .pipeline-step:last-child::after { display: none; }
+  .pipeline-step:hover { background: #161616; }
+
+  .step-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: rgba(201,168,76,0.15);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .step-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .step-desc {
+    font-size: 0.75rem;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  /* ---- PARTS ---- */
+  .parts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: #111;
+  }
+
+  .part-card {
+    background: var(--dark2);
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+    transition: background var(--transition);
+  }
+  .part-card:hover { background: #161616; }
+
+  .part-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 6rem;
+    color: rgba(201,168,76,0.06);
+    line-height: 1;
+    position: absolute;
+    top: 16px; right: 24px;
+  }
+
+  .part-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .part-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+
+  .part-desc {
+    font-size: 0.85rem;
+    color: #777;
+    line-height: 1.7;
+  }
+
+  .part-sep {
+    width: 40px;
+    height: 2px;
+    background: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  /* ---- LOGISTICS ---- */
+  #logistics {
+    background: var(--dark);
+  }
+
+  .logistics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 2px;
+    background: #1a1a1a;
+  }
+
+  .logistic-item {
+    background: var(--dark);
+    padding: 40px 32px;
+    text-align: center;
+    transition: background var(--transition);
+  }
+  .logistic-item:hover { background: #0d0d0d; }
+
+  .logistic-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--gold);
+    letter-spacing: 3px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .logistic-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ---- FOOTER ---- */
+  footer {
+    background: var(--dark2);
+    padding: 40px 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #1a1a1a;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+
+  .footer-copy {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #444;
+  }
+
+  /* ---- SCROLL REVEAL ---- */
+  body.tier-high .reveal, body.tier-mid .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  body.tier-high .reveal.visible, body.tier-mid .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  body.tier-low .reveal { opacity: 1; transform: none; }
+
+  /* ---- KINETIC NUMBER COUNTER ---- */
+  .counter { display: inline-block; }
+
+  /* ---- CURSOR - high tier ---- */
+  body.tier-high { cursor: none; }
+  #cursor {
+    display: none;
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  #cursor-ring {
+    display: none;
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(201,168,76,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: all 0.15s ease;
+  }
+  body.tier-high #cursor,
+  body.tier-high #cursor-ring { display: block; }
+
+  /* PROGRESS BAR */
+  #progress-bar {
+    position: fixed;
+    top: 64px; left: 0;
+    height: 2px;
+    background: var(--gold);
+    z-index: 999;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* SECTION DIVIDERS */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.15;
+    margin: 0 80px;
+  }
+
+  @media (max-width: 768px) {
+    section { padding: 60px 24px; }
+    .hero-content { padding: 0 24px; }
+    .hero-vertical { display: none; }
+    .what-grid, .pillars-grid, .parts-grid { grid-template-columns: 1fr; }
+    .app-showcase { grid-template-columns: 1fr 1fr; }
+    .sensors-grid { grid-template-columns: 1fr 1fr; }
+    .pipeline-steps { flex-direction: column; }
+    .pipeline-step::after { display: none; }
+    .logistics-row { grid-template-columns: 1fr 1fr; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+    #device-banner { padding: 0 16px; }
+    #device-info { display: none; }
+    .nav-links { gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Progress Bar -->
+<div id="progress-bar"></div>
+
+<!-- NAVBAR -->
+<nav id="device-banner">
+  <div class="nav-logo">TINYML</div>
+  <ul class="nav-links">
+    <a href="#what">Intro</a>
+    <a href="#applications">Applications</a>
+    <a href="#elephant">ElephantEdge</a>
+    <a href="#hardware">Hardware</a>
+    <a href="#pipeline">Pipeline</a>
+  </ul>
+  <div id="device-info" style="font-family: 'Barlow Condensed', monospace;">
+    <span id="sys-status" class="tier-badge" style="display: flex; align-items: center; gap: 6px;">
+      <div id="status-dot" style="width: 6px; height: 6px; background: #00ff00; border-radius: 50%; box-shadow: 0 0 8px #00ff00;"></div>
+      SYS: ONLINE
+    </span>
+    <span id="net-ping" title="Real Network Latency">NET: --ms</span>
+    <span id="ram-load" title="Real Tab Memory Usage">MEM: --MB</span>
+    <span id="cpu-latency" title="Real Render Latency">LAT: --ms</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-label">Apr 1, 2026 · Lecture #1</div>
+    <h1 class="hero-title">TINY<span class="gold">ML</span></h1>
+    <div class="hero-subtitle">Introduction</div>
+    <div class="hero-meta">
+      <div><strong>DIBYAJYOTEE GHOSH</strong>Student</div>
+      <div><strong>TINYML</strong>Subject</div>
+      <div><strong>PART 1</strong>Course Phase</div>
+    </div>
+  </div>
+  <div class="hero-vertical">Tiny Machine Learning · Edge Intelligence · Arduino · TensorFlow Lite Micro</div>
+  <div class="hero-line"></div>
+</section>
+
+<!-- WHAT IS TINYML -->
+<section id="what">
+  <div class="section-label">01 — Definition</div>
+  <h2 class="section-title">What is TinyML?</h2>
+  <div class="what-grid reveal">
+    <div class="what-card">
+      <div class="what-num">01</div>
+      <h3>Tiny Machine Learning</h3>
+      <p>An emerging field at the intersection of Machine Learning and Embedded Systems — bringing AI intelligence directly to small, constrained computing devices.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">02</div>
+      <h3>Embedded Systems</h3>
+      <p>Small computing devices that operate on extremely low power — measured in milliwatts. Some can run for years on a single button-cell battery.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">03</div>
+      <h3>The Core Goal</h3>
+      <p>Bring AI to tiny processors so they can process sensor data — images, speech, motion — right at the source, without needing cloud connectivity.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">04</div>
+      <h3>The Critical Nugget</h3>
+      <p>Bridging the gap between an application's needs and hardware limitations. Example: smart glasses that translate in real-time without a 5-second delay.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- APPLICATIONS -->
+<section id="applications">
+  <div class="section-label">02 — Real World</div>
+  <h2 class="section-title">Applications</h2>
+  <div class="app-showcase reveal">
+    <div class="app-item">
+      <span class="app-tag">Conservation</span>
+      <div class="app-icon">🐘</div>
+      <div class="app-title">Elephant Edge</div>
+      <div class="app-desc">Smart collars monitoring elephant movement and sound to prevent poaching and human-animal conflict in real time.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Healthcare</span>
+      <div class="app-icon">🫀</div>
+      <div class="app-title">Medtronic Micra</div>
+      <div class="app-desc">World's smallest pacemaker running embedded intelligence. Neuralink chips targeting depression and epilepsy treatment.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Environment</span>
+      <div class="app-icon">🌱</div>
+      <div class="app-title">Autonomous Drones</div>
+      <div class="app-desc">Drones for autonomous seed planting in the Amazon. Agricultural field sensors monitoring crop nutrition without cloud dependency.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Voice</span>
+      <div class="app-icon">🎙️</div>
+      <div class="app-title">Keyword Spotting</div>
+      <div class="app-desc">On-device wake-word detection — "Hey Google" style processing running entirely on microcontrollers with milliwatt power.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Vision</span>
+      <div class="app-icon">👁️</div>
+      <div class="app-title">Person Detection</div>
+      <div class="app-desc">Real-time object and person recognition using tiny vision sensors. Processes frames locally with no network round-trip.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Gesture</span>
+      <div class="app-icon">✋</div>
+      <div class="app-title">Gesture Recognition</div>
+      <div class="app-desc">Accelerometer and gyroscope data classified on-device to respond to hand movements and orientation changes instantly.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ELEPHANT EDGE -->
+<section id="elephant">
+  <div class="elephant-accent"></div>
+  <div class="section-label">03 — Case Study</div>
+  <h2 class="section-title">ElephantEdge<br>Project</h2>
+
+  <div class="pillars-grid reveal">
+    <div class="pillar">
+      <div class="pillar-icon">⚠️</div>
+      <div>
+        <h4>Risk Monitoring</h4>
+        <p>Sensors detect when an elephant enters a high-risk poaching zone and send real-time notifications to park rangers for intervention.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🏘️</div>
+      <div>
+        <h4>Conflict Monitoring</h4>
+        <p>Alerts rangers and farmers when elephants head toward human settlements or agricultural fields to prevent dangerous encounters.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🏃</div>
+      <div>
+        <h4>Activity Monitoring</h4>
+        <p>TinyML models classify behavior — drinking, eating, swimming, sleeping — helping researchers understand herd health and needs.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">📡</div>
+      <div>
+        <h4>Communication Monitoring</h4>
+        <p>Onboard microphone analyzes vocal communications between elephants to better understand social interactions and herd dynamics.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-bottom:16px;">Software Stack</div>
+  <div class="stack-row reveal">
+    <div class="stack-item">
+      <div class="stack-label">General ML</div>
+      <div class="stack-name">TensorFlow</div>
+    </div>
+    <div class="stack-arrow">→</div>
+    <div class="stack-item">
+      <div class="stack-label">Mobile / Edge</div>
+      <div class="stack-name">TF Lite</div>
+    </div>
+    <div class="stack-arrow">→</div>
+    <div class="stack-item">
+      <div class="stack-label">Microcontrollers</div>
+      <div class="stack-name">TF Lite Micro</div>
+    </div>
+    <div class="stack-arrow">→</div>
+    <div class="stack-item">
+      <div class="stack-label">Hardware Target</div>
+      <div class="stack-name">Arduino Nano</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HARDWARE -->
+<section id="hardware">
+  <div class="section-label">04 — Hardware</div>
+  <h2 class="section-title">Arduino Nano<br>33 BLE Sense</h2>
+  <div class="sensors-grid reveal">
+    <div class="sensor-card">
+      <span class="sensor-icon">🎤</span>
+      <div class="sensor-name">Microphone</div>
+      <div class="sensor-desc">Digital mic for keyword spotting and real-time speech recognition.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">🔄</span>
+      <div class="sensor-name">IMU</div>
+      <div class="sensor-desc">Accelerometer + Gyroscope for gesture, movement, and orientation.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">📷</span>
+      <div class="sensor-name">Vision</div>
+      <div class="sensor-desc">Camera input for person detection and object recognition.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">🌡️</span>
+      <div class="sensor-name">Environmental</div>
+      <div class="sensor-desc">Temperature, humidity, and pressure measurement on-device.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">💡</span>
+      <div class="sensor-name">Light & Proximity</div>
+      <div class="sensor-desc">Color, brightness, and proximity sensing for physical environment.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PIPELINE & COURSE ROADMAP -->
+<section id="pipeline">
+  <div class="section-label">05 — Workflow</div>
+  <h2 class="section-title">ML Pipeline</h2>
+
+  <div class="pipeline-steps reveal">
+    <div class="pipeline-step">
+      <div class="step-num">1</div>
+      <div class="step-name">Capture</div>
+      <div class="step-desc">Collect sensor data from real-world sources.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">2</div>
+      <div class="step-name">Dataset</div>
+      <div class="step-desc">Build and label structured training datasets.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">3</div>
+      <div class="step-name">Train</div>
+      <div class="step-desc">Train models in TensorFlow via Google Colab.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">4</div>
+      <div class="step-name">Convert</div>
+      <div class="step-desc">Convert to TF Lite Micro format for deployment.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">5</div>
+      <div class="step-name">Deploy</div>
+      <div class="step-desc">Optimize for size, speed, and energy on hardware.</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-bottom:20px;">Course Roadmap</div>
+  <div class="parts-grid reveal">
+    <div class="part-card">
+      <div class="part-num">1</div>
+      <div class="part-label">Part One</div>
+      <div class="part-sep"></div>
+      <div class="part-title">ML Language & Neural Networks</div>
+      <div class="part-desc">Understanding the fundamentals of machine learning and neural network architectures before touching hardware.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">2</div>
+      <div class="part-label">Part Two</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Building Applications</div>
+      <div class="part-desc">Hands-on projects: Keyword spotting, object detection, and other real-world ML applications.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">3</div>
+      <div class="part-label">Part Three</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Hardware Deployment</div>
+      <div class="part-desc">Physically deploying models onto microcontroller hardware and optimizing for constrained environments.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LOGISTICS -->
+<section id="logistics">
+  <div class="section-label">06 — Logistics</div>
+  <h2 class="section-title">Course Info</h2>
+  <div class="logistics-row reveal">
+    <div class="logistic-item">
+      <div class="logistic-val">10</div>
+      <div class="logistic-label">Hours / Week</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">3</div>
+      <div class="logistic-label">Course Parts</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">2</div>
+      <div class="logistic-label">Tools: Colab + Arduino</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">∞</div>
+      <div class="logistic-label">Applied Focus</div>
+    </div>
+  </div>
+</section>
+
+
+<section>
+    <div class="hero-label">Apr 1, 2026 · Lecture #2</div>
+    <h1 class="hero-title">TINY<span class="gold">ML</span></h1>
+    <div class="hero-subtitle">The Language of ML & Apps</div>
+    <div class="hero-meta">
+      <div><strong>DIBYAJYOTEE GHOSH</strong>Student</div>
+      <div><strong>TINYML</strong>Subject</div>
+      <div><strong>PARTS 1 & 2</strong>Course Phase</div>
+    </div>
+    <div class="divider"></div>
+</section>
+
+<section id="language-of-ml">
+  <h2 class="section-title">The Language<br>of ML</h2>
+  <div class="what-grid reveal">
+    <div class="what-card">
+      <div class="what-num">01</div>
+      <h3>The Shift in Logic</h3>
+      <p>Traditional Programming: Rules + Data = Answers.<br><br>Machine Learning: Data + Answers = Rules (the model).</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">02</div>
+      <h3>Neural Networks</h3>
+      <p>Building and training basic neural networks using TensorFlow to find complex patterns in raw data.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">03</div>
+      <h3>Quantization</h3>
+      <p>Optimizing for "Tiny" by reducing the precision of numbers to shrink models, fitting them into constrained RAM/Flash.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">04</div>
+      <h3>Colab to Hardware</h3>
+      <p>Primary workflow happens in Google Colab (Cloud) to train models before converting and deploying them to edge devices.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+<div class="divider"></div>
+<section id="cloud-vs-edge">
+  <div class="section-label">08 — Architecture</div>
+  <h2 class="section-title">Cloud Centers<br>vs Edge Devices</h2>
+  <div class="pillars-grid reveal">
+    <div class="pillar">
+      <div class="pillar-icon">☁️</div>
+      <div>
+        <h4>The Cloud (Data Centers)</h4>
+        <p><strong>High Power:</strong> Gigawatts of energy for massive server racks.<br><strong>High Bandwidth:</strong> Requires uploading massive amounts of data.<br><strong>High Latency:</strong> Noticeable delay sending data far away and waiting for a response.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">⌚</div>
+      <div>
+        <h4>The Edge (TinyML)</h4>
+        <p><strong>Low Power:</strong> Runs on small batteries for days or years (~140 μW).<br><strong>Low Bandwidth:</strong> No need to rely on network connectivity.<br><strong>Low Latency:</strong> Immediate, local processing for instant interactivity.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<div class="divider"></div>
+<section id="vision-nlp">
+  <div class="section-label">09 — Capabilities</div>
+  <h2 class="section-title">Vision, Audio<br>& Language</h2>
+  <div class="app-showcase reveal">
+    <div class="app-item">
+      <span class="app-tag">Vision</span>
+      <div class="app-icon">🖼️</div>
+      <div class="app-title">Image Classification</div>
+      <div class="app-desc">Feeds a "bunch of pixels" into a network to identify what is in a picture (cat vs. dog). It is stochastic (probability-based).</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Vision</span>
+      <div class="app-icon">🎯</div>
+      <div class="app-title">Object Detection</div>
+      <div class="app-desc">Identifies WHAT an object is and WHERE it is (Localization), allowing for instance-level counting in a single frame.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Vision</span>
+      <div class="app-icon">🎨</div>
+      <div class="app-title">Image Segmentation</div>
+      <div class="app-desc">Color-codes every pixel by category (e.g., drivable road vs. sidewalk for autonomous vehicles).</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Audio</span>
+      <div class="app-icon">🗣️</div>
+      <div class="app-title">Keyword Spotting</div>
+      <div class="app-desc">Always-on, near-zero power models listening for wake words ("Alexa") to wake up the main processor.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Motion</span>
+      <div class="app-icon">👋</div>
+      <div class="app-title">Gesture Recognition</div>
+      <div class="app-desc">Uses accelerometers/gyros to detect movements (wave, shake) for touchless control in sterile or industrial settings.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">NLP</span>
+      <div class="app-icon">🌐</div>
+      <div class="app-title">Real-Time Translation</div>
+      <div class="app-desc">Smart glasses processing contextual hearing locally for instant translated interactions without latency.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="mcu-sensors">
+  <div class="section-label">10 — Hardware Deep Dive</div>
+  <h2 class="section-title">Processors<br>& Sensors</h2>
+  
+  <div class="what-grid reveal" style="margin-bottom: 60px;">
+    <div class="what-card">
+      <div class="what-num">MCU</div>
+      <h3>Microcontroller Unit</h3>
+      <p><strong>Size:</strong> ~3.2 mm² (smaller than a golf ball dimple).<br><strong>Power:</strong> ~140 μW (runs on coin cells).<br><strong>Scale:</strong> Over 250 billion worldwide.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">GPU</div>
+      <h3>Data Center GPU</h3>
+      <p><strong>Size:</strong> ~500 mm².<br><strong>Power:</strong> ~300 Watts (requires a wall plug).<br><strong>Role:</strong> Massive horsepower, but lacks edge efficiency.</p>
+    </div>
+  </div>
+
+  <div class="sensors-grid reveal">
+    <div class="sensor-card">
+      <span class="sensor-icon">📡</span>
+      <div class="sensor-name">Motion</div>
+      <div class="sensor-desc">Hitachi H48C Accelerometer, Radar, Magnetometer, PIR, Encoders.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">🔊</span>
+      <div class="sensor-name">Acoustic</div>
+      <div class="sensor-desc">Ultrasonic (PING))), Microphones, Geophones, Vibrometers.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">🩸</span>
+      <div class="sensor-name">Biometrics</div>
+      <div class="sensor-desc">Fingerprint, PPG (blood flow), Non-invasive Glucose monitors.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">🌡️</span>
+      <div class="sensor-name">Environmental</div>
+      <div class="sensor-desc">Sensirion Temp/Humidity, FlexiForce (pressure), QTI IR Modules.</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">👁️</span>
+      <div class="sensor-name">Advanced Vision</div>
+      <div class="sensor-desc">Himax HM01B0 ultra-low-power CMOS for visual wake words.</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<section>
+    <div class="divider"></div>
+</section>
+<section id="hardware-scale">
+  <div class="section-label">11 — Lecture 03</div>
+  <h2 class="section-title">Thinking Big<br>to Thinking Tiny</h2>
+  <div class="what-grid reveal">
+    <div class="what-card">
+      <div class="what-num">BIG</div>
+      <h3>GPUs & CPUs (Cloud)</h3>
+      <p><strong>Size:</strong> >500 mm².<br><strong>Power:</strong> 300W (Needs wall connector).<br>Traditional machine learning requires massive computing horsepower.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">MID</div>
+      <h3>Mobile Edge</h3>
+      <p><strong>Size:</strong> ~83 mm² (e.g., Apple A12 Bionic).<br><strong>Power:</strong> ~3.64W.<br>About 100x more efficient than GPUs, but still requires daily charging.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">SML</div>
+      <h3>Wearables</h3>
+      <p>Processors inside smartwatches act as the vital stepping stone between mobile phones and true TinyML.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">TNY</div>
+      <h3>Microcontrollers (MCU)</h3>
+      <p><strong>Size:</strong> 3.2 mm² (Smaller than a golf ball dimple).<br><strong>Power:</strong> 140 μW (Coin cell battery).<br>Pervasive, cheap, and makes "always-on" AI practical.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="embedded-systems">
+  <div class="section-label">12 — Architecture</div>
+  <h2 class="section-title">Embedded<br>Systems</h2>
+  <div class="pillars-grid reveal">
+    <div class="pillar">
+      <div class="pillar-icon">🧠</div>
+      <div>
+        <h4>Compute (CPU)</h4>
+        <p>The "brain" or processor (including ALU, Registers, and Control Logic) where the actual processing and decision-making occurs.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">⚡</div>
+      <div>
+        <h4>Memory (RAM)</h4>
+        <p>Read-Write Memory. Short-term, volatile storage used for temporary workspace data while the system is actively running.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">💾</div>
+      <div>
+        <h4>Storage (ROM)</h4>
+        <p>Read-Only Memory. Permanent, non-volatile storage that retains boot instructions and code even when the power is turned off.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🔌</div>
+      <div>
+        <h4>I/O & Peripherals</h4>
+        <p>Interfacing with the physical world through Timer synchronizations, serial interfaces, ADCs, and PWMs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="mpu-vs-mcu">
+  <div class="section-label">13 — Hardware Comparison</div>
+  <h2 class="section-title">MPU vs MCU</h2>
+  <div class="what-grid reveal">
+    <div class="what-card">
+      <div class="what-num">MPU</div>
+      <h3>Microprocessor</h3>
+      <p><strong>Primary Use:</strong> General-purpose computing (laptops, servers).<br><strong>Integration:</strong> Needs external memory and storage chips.<br><strong>Specs:</strong> 1–4 GHz, GBs of Memory, TBs of Storage, Watts of Power.<br><strong>Flexibility:</strong> Highly configurable.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">MCU</div>
+      <h3>Microcontroller</h3>
+      <p><strong>Primary Use:</strong> Fixed-function systems (blood pressure monitors).<br><strong>Integration:</strong> Monolithic "System on a Chip" (SoC).<br><strong>Specs:</strong> 1–400 MHz, KBs of Memory, MBs of Storage, μW of Power.<br><strong>Flexibility:</strong> Preset configurations from a family of chips.</p>
+    </div>
+  </div>
+</section>
+
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-label">Lecture #3</div>
+    <h1 class="hero-title">TINY<span class="gold">ML</span></h1>
+    <div class="hero-subtitle">Challenges for TinyML (Part B) - Embedded Systems Software</div>
+    <div class="hero-meta">
+      <div><strong>DIBYAJYOTEE GHOSH</strong>Student</div>
+      <div><strong>TINYML</strong>Subject</div>
+      <div><strong>PART B</strong>Course Phase</div>
+    </div>
+  </div>
+  <div class="hero-vertical">Software Abstraction Layers · High-Level Application · Libraries · Operating System (OS)</div>
+  <div class="hero-line"></div>
+</section>
+
+<section>
+    <div class="divider"></div>
+</section>
+<section id="software-challenges">
+  <div class="section-label">14 — Lecture 03 (Part B)</div>
+  <h2 class="section-title">Software<br>Abstractions</h2>
+  
+  <div class="pillars-grid reveal">
+    <div class="pillar">
+      <div class="pillar-icon">📱</div>
+      <div>
+        <h4>General Computing</h4>
+        <p>Features a robust stack: High-Level Apps, Libraries for portability, and a heavy OS (Windows/Android/Linux) abstracting all hardware complexity.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🪫</div>
+      <div>
+        <h4>Embedded Reality</h4>
+        <p>Lacks a general OS. Adding FreeRTOS eats precious memory. Hardware is highly specialized, resulting in low code portability across different chips.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="what-grid reveal" style="margin-top: 2px;">
+    <div class="what-card">
+      <div class="what-num">FPU</div>
+      <h3>Floating Point Unit</h3>
+      <p>Math with decimals is slow in software (emulation). PCs use physical FPUs on-chip, but a 50-cent MCU often can't afford the cost, power, or transistor space.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">754</div>
+      <h3>IEEE 754 Standard</h3>
+      <p>The technical standard for 32-bit single-precision math. Uses 1 bit for Sign, 8 bits for Exponent (magnitude), and 23 bits for Fraction (precision).</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="compression">
+  <div class="section-label">15 — The Hardware Gap</div>
+  <h2 class="section-title">Model<br>Compression</h2>
+  
+  <div class="logistics-row reveal" style="margin-bottom: 60px;">
+    <div class="logistic-item">
+      <div class="logistic-val">GBs</div>
+      <div class="logistic-label">Cloud TPU RAM</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">17MB</div>
+      <div class="logistic-label">MobileNet Size</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">KBs</div>
+      <div class="logistic-label">Tiny MCU RAM</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">4x</div>
+      <div class="logistic-label">Quantize Savings</div>
+    </div>
+  </div>
+
+  <div class="app-showcase reveal">
+    <div class="app-item">
+      <span class="app-tag">Technique 01</span>
+      <div class="app-icon">✂️</div>
+      <div class="app-title">Pruning</div>
+      <div class="app-desc">Removing unnecessary connections or entire neurons from a network to significantly reduce both the model's size and computational load.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Technique 02</span>
+      <div class="app-icon">📉</div>
+      <div class="app-title">Quantization</div>
+      <div class="app-desc">Discretizing 32-bit floats (4 bytes) into 8-bit integers (1 byte). Yields an instant 4x size reduction and bypasses the need for an FPU.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">Technique 03</span>
+      <div class="app-icon">🧠</div>
+      <div class="app-title">Knowledge Distillation</div>
+      <div class="app-desc">A "teacher-student" approach where a large, highly accurate model distills its critical knowledge into a smaller, specialized "student" network.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="deployment">
+  <div class="section-label">16 — Frameworks</div>
+  <h2 class="section-title">TF vs TF Lite<br>& Deployment</h2>
+
+  <div class="what-grid reveal" style="margin-bottom: 60px;">
+    <div class="what-card">
+      <div class="what-num">TF</div>
+      <h3>TensorFlow</h3>
+      <p><strong>Goal:</strong> Training & Research.<br><strong>Topology & Weights:</strong> Variable.<br><strong>Platform:</strong> Cloud GPUs/TPUs.<br><strong>Focus:</strong> Flexibility, distributed compute, and finding patterns in massive datasets.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">LITE</div>
+      <h3>TensorFlow Lite</h3>
+      <p><strong>Goal:</strong> Deployment & Inference.<br><strong>Topology & Weights:</strong> Fixed.<br><strong>Platform:</strong> Edge & Microcontrollers.<br><strong>Focus:</strong> Lean execution, extreme binary size priority, and running locally on a single device.</p>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-bottom: 16px;">The 5 Steps to TinyML Deployment</div>
+  <div class="pipeline-steps reveal">
+    <div class="pipeline-step">
+      <div class="step-num">1</div>
+      <div class="step-name">Train</div>
+      <div class="step-desc">Develop the initial model patterns in a flexible framework (TensorFlow).</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">2</div>
+      <div class="step-name">Distill</div>
+      <div class="step-desc">Use a teacher model to train a smaller student model.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">3</div>
+      <div class="step-name">Quantize</div>
+      <div class="step-desc">Reduce 32-bit floats to 8-bit integers to save memory.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">4</div>
+      <div class="step-name">Encode</div>
+      <div class="step-desc">Compress the model data further for optimal storage.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">5</div>
+      <div class="step-name">Compile</div>
+      <div class="step-desc">Convert into a hardware-specific format (.tflite) for MCU execution.</div>
+    </div>
+  </div>
+</section>
+
+<section id="hero">
+    <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-label">Slide Notes</div>
+    <h1 class="hero-title">TINY<span class="gold">ML</span></h1>
+    <div class="hero-subtitle">Explicit Coding</div>
+    <div class="hero-meta">
+      <div><strong>DIBYAJYOTEE GHOSH</strong>Student</div>
+      <div><strong>TINYML</strong>Subject</div>
+      <div><strong>SOFTWARE</strong>Course Phase</div>
+    </div>
+  </div>
+  <div class="hero-vertical">Explicit Coding · Software Development · C++ · Java · Python</div>
+  <div class="hero-line"></div>
+</section>
+
+<section>
+    <div class="divider"></div>
+</section>
+<section id="ml-paradigm">
+  <div class="section-label">17 — Lecture 03 (Part C)</div>
+  <h2 class="section-title">The ML<br>Paradigm</h2>
+  <div class="pillars-grid reveal">
+    <div class="pillar">
+      <div class="pillar-icon">💻</div>
+      <div>
+        <h4>Explicit Coding (Traditional)</h4>
+        <p><strong>Rules + Data = Answers.</strong> The programmer manually writes every rule. Hits a complexity limit (diminishing returns) for things like activity detection where rules are too complex to pre-calculate.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🤖</div>
+      <div>
+        <h4>Machine Learning</h4>
+        <p><strong>Answers + Data = Rules.</strong> The computer acts as a "rule-discovery" engine. It finds subtle distinguishing factors in the data to build a Model that can predict future rules.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="learning-loop">
+  <div class="section-label">18 — Optimization</div>
+  <h2 class="section-title">The Learning<br>Loop</h2>
+  
+  <div class="pipeline-steps reveal">
+    <div class="pipeline-step">
+      <div class="step-num">1</div>
+      <div class="step-name">Guess</div>
+      <div class="step-desc">Initialize with a random guess (e.g., random network weights like w=10.0).</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">2</div>
+      <div class="step-name">Measure (Loss)</div>
+      <div class="step-desc">Calculate error. <strong>MSE:</strong> $Loss = \frac{1}{n} \sum (y - \hat{y})^2$</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">3</div>
+      <div class="step-name">Optimize</div>
+      <div class="step-desc">Use Gradient (direction) and Learning Rate (step size) to adjust weights.</div>
+    </div>
+  </div>
+
+  <div class="what-grid reveal" style="margin-top: 60px;">
+    <div class="what-card">
+      <div class="what-num">MSE</div>
+      <h3>Mean Squared Error</h3>
+      <p>Simply summing errors causes the "Cancellation Trap" (-1 + 1 = 0). Squaring them makes all misses positive, revealing the true error magnitude.</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">CURVE</div>
+      <h3>Moving Down the Curve</h3>
+      <p>Loss is a U-shaped parabola. The goal is to reach the bottom (Convergence) where steps become tiny and the optimal rules are found.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="tf-neurons">
+  <div class="section-label">19 — Neural Networks</div>
+  <h2 class="section-title">Neurons &<br>Code Logic</h2>
+
+  <div class="pillars-grid reveal">
+    <div class="pillar">
+      <div class="pillar-icon">🧠</div>
+      <div>
+        <h4>The Computational Neuron</h4>
+        <p>The fundamental building block. Solves the linear equation: Y = wX + b. Uses Gradient Tape to track math operations and compute derivatives.</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🎲</div>
+      <div>
+        <h4>Stochastic Approximations</h4>
+        <p>ML systems operate on probabilities, not exact certainties. Instead of exactly Y = 2X - 1, the model might converge on Y = 1.98X - 0.94.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="parts-grid reveal">
+    <div class="part-card">
+      <div class="part-num">Def</div>
+      <div class="part-label">Sequential Model</div>
+      <div class="part-sep"></div>
+      <div class="part-title">input_shape=[1]</div>
+      <div class="part-desc">Crucial for TinyML memory limits. Tells the first layer exactly how many data points to expect, allocating the minimum amount of RAM.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">Fit</div>
+      <div class="part-label">Training</div>
+      <div class="part-sep"></div>
+      <div class="part-title">model.fit()</div>
+      <div class="part-desc">Executes the Guess → Measure → Optimize loop across a set number of epochs (e.g., 500) to find the underlying mathematical rule.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">Out</div>
+      <div class="part-label">Inference</div>
+      <div class="part-sep"></div>
+      <div class="part-title">model.predict()</div>
+      <div class="part-desc">Passes novel data through the trained, optimized parameters (weights & biases) to generate a stochastic guess for the output.</div>
+    </div>
+  </div>
+</section>
+
+<section id="hero">
+    <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-label">Apr 2, 2026 · Lecture #4</div>
+    <h1 class="hero-title">TINY<span class="gold">ML</span></h1>
+    <div class="hero-subtitle">Introduction to classification</div>
+    <div class="hero-meta">
+      <div><strong>DIBYAJYOTEE GHOSH</strong>Student</div>
+      <div><strong>TINYML</strong>Subject</div>
+      <div><strong>CLASSIFICATION</strong>Course Phase</div>
+    </div>
+  </div>
+  <div class="hero-vertical">Classification · Regression · Output Neurons · Camera Input</div>
+  <div class="hero-line"></div>
+</section>
+
+<section>
+    <div class="divider"></div>
+</section>
+<section id="classification">
+  <div class="section-label">20 — Lecture 04</div>
+  <h2 class="section-title">Introduction to<br>Classification</h2>
+  <div class="pillars-grid reveal">
+    <div class="pillar">
+      <div class="pillar-icon">📈</div>
+      <div>
+        <h4>Regression vs Classification</h4>
+        <p>Regression predicts a specific number (like 19.0). Classification guesses a probability across multiple output neurons to categorize data (e.g., Cat vs Dog).</p>
+      </div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🏷️</div>
+      <div>
+        <h4>Labeling Vectors</h4>
+        <p>To teach a model, categories are turned into arrays (vectors). A Cat might be [1, 0] and a Dog [0, 1]. For digits 0-9, you use an array of 10 numbers.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="what-grid reveal" style="margin-top: 60px;">
+    <div class="what-card">
+      <div class="what-num">SMAX</div>
+      <h3>Softmax Activation</h3>
+      <p>Used in the Output Layer. It scales raw neuron scores so they sum to exactly 1 (100%), turning them into mutually exclusive probabilities (e.g., 99% sure it's a 7).</p>
+    </div>
+    <div class="what-card">
+      <div class="what-num">RELU</div>
+      <h3>ReLU Activation</h3>
+      <p>Used in Hidden Layers. It converts any negative value to 0 to prevent neurons from canceling each other out, allowing the network to learn non-linear patterns.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="keras-arch">
+  <div class="section-label">21 — Architecture</div>
+  <h2 class="section-title">Keras Code<br>Breakdown</h2>
+
+  <div class="parts-grid reveal">
+    <div class="part-card">
+      <div class="part-num">01</div>
+      <div class="part-label">Prep</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Flatten & Scale</div>
+      <div class="part-desc">Images are divided by 255.0 to normalize pixels to a 0-1 range. Flatten() turns a 28x28 2D image into a 1D column of 784 inputs.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">02</div>
+      <div class="part-label">Compile</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Adam & Loss</div>
+      <div class="part-desc">The 'Adam' optimizer automatically varies the learning rate. We use 'sparse_categorical_crossentropy' to measure loss for multiple categories.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">03</div>
+      <div class="part-label">Output</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Inference Array</div>
+      <div class="part-desc">model.predict() outputs an array of 10 scientific-notation numbers. The highest value (e.g., 9.98e-01) indicates the winning probability.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="data-splitting">
+  <div class="section-label">22 — Generalization</div>
+  <h2 class="section-title">The Three-Way<br>Data Split</h2>
+
+  <div class="logistics-row reveal" style="margin-bottom: 60px;">
+    <div class="logistic-item">
+      <div class="logistic-val">80%</div>
+      <div class="logistic-label">Training Data</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">10%</div>
+      <div class="logistic-label">Validation Data</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">10%</div>
+      <div class="logistic-label">Test Data</div>
+    </div>
+    <div class="logistic-item">
+      <div class="logistic-val">100%</div>
+      <div class="logistic-label">Total Consistency</div>
+    </div>
+  </div>
+
+  <div class="app-showcase reveal">
+    <div class="app-item">
+      <span class="app-tag">The Textbook</span>
+      <div class="app-icon">📚</div>
+      <div class="app-title">Training Data</div>
+      <div class="app-desc">The bulk of the data. The model looks at these images and labels repeatedly to figure out the underlying mathematical patterns.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">The Practice Quiz</span>
+      <div class="app-icon">📝</div>
+      <div class="app-title">Validation Data</div>
+      <div class="app-desc">Used during training to prevent Overfitting. If training accuracy is 99% but validation is 50%, the model is just memorizing pixels.</div>
+    </div>
+    <div class="app-item">
+      <span class="app-tag">The Final Exam</span>
+      <div class="app-icon">🎓</div>
+      <div class="app-title">Test Data</div>
+      <div class="app-desc">Kept completely hidden until the very end. The "True Signal" occurs when accuracy on this unseen data matches the training data.</div>
+    </div>
+  </div>
+</section>
+
+
+<div class="divider"></div>
+<div class="divider"></div>
+<div class="divider"></div>
+<div class="divider"></div>
+<div id="wrap-nano" style="width:100%;height:520px;background:#0a0a0a;border:0.5px solid #222;border-radius:8px;position:relative;overflow:hidden;font-family:monospace;">
+  <div id="trigger-nano" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:10;">
+    <div style="color:#00bcd4;font-size:1.4rem;letter-spacing:4px;margin-bottom:8px;">[ INITIATE 3D HARDWARE SCAN ]</div>
+    <div style="color:#555;font-size:0.72rem;letter-spacing:2px;">CLICK TO LOAD — ARDUINO NANO MODEL</div>
+    <div id="scanline-nano" style="position:absolute;top:0;left:0;width:100%;height:2px;background:rgba(0,188,212,0.3);box-shadow:0 0 8px rgba(0,188,212,0.4);animation:scan 3s linear infinite;"></div>
+  </div>
+  <div id="tooltip-nano" style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,0.9);border:0.5px solid #00bcd4;color:#00bcd4;font-size:11px;padding:6px 10px;border-radius:4px;display:none;pointer-events:none;letter-spacing:1px;max-width:240px;line-height:1.6;z-index:20;"></div>
+  <div id="legend-nano" style="position:absolute;bottom:12px;right:12px;display:none;flex-direction:column;gap:4px;z-index:20;"></div>
+  <canvas id="c-nano" style="display:none;"></canvas>
+</div>
+<style>
+@keyframes scan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+</style>
+<div class="divider"></div>
+<div id="wrap" style="width:100%;height:520px;background:#0a0a0a;border:0.5px solid #222;border-radius:8px;position:relative;overflow:hidden;font-family:monospace;">
+  <div id="trigger" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:10;">
+    <div style="color:#c9a84c;font-size:1.4rem;letter-spacing:4px;margin-bottom:8px;">[ INITIATE 3D HARDWARE SCAN ]</div>
+    <div style="color:#555;font-size:0.72rem;letter-spacing:2px;">CLICK TO LOAD — RASPBERRY PI 3B+ MODEL</div>
+    <div id="scanline" style="position:absolute;top:0;left:0;width:100%;height:2px;background:rgba(201,168,76,0.3);box-shadow:0 0 8px rgba(201,168,76,0.4);animation:scan 3s linear infinite;"></div>
+  </div>
+  <div id="tooltip" style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,0.85);border:0.5px solid #c9a84c;color:#c9a84c;font-size:11px;padding:6px 10px;border-radius:4px;display:none;pointer-events:none;letter-spacing:1px;max-width:220px;line-height:1.5;"></div>
+  <div id="legend" style="position:absolute;bottom:12px;right:12px;display:none;flex-direction:column;gap:4px;">
+    <div style="color:#555;font-size:10px;letter-spacing:1px;margin-bottom:2px;">COMPONENT LEGEND</div>
+  </div>
+  <canvas id="c" style="display:none;"></canvas>
+</div>
+<style>
+@keyframes scan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+</style>
+<div class="divider"></div>
+<div id="anim-container-loop" style="width: 100%; height: 300px; background: #111; border: 1px solid #222; margin-top: 40px; position: relative; overflow: hidden; border-radius: 4px;">
+  <canvas id="canvas-loop" style="display: block; width: 100%; height: 100%;"></canvas>
+  <div style="position: absolute; top: 16px; left: 24px; font-family: 'Barlow Condensed', sans-serif; color: var(--gold); letter-spacing: 2px;">MSE LOSS CURVE (GRADIENT DESCENT)</div>
+</div>
+<div class="divider"></div>
+<div id="anim-container-latency" style="width: 100%; height: 200px; background: #111; border: 1px solid #222; margin-top: 40px; display: flex; flex-direction: column; position: relative; overflow: hidden; border-radius: 4px;">
+  <div style="flex: 1; border-bottom: 1px dashed #333; display: flex; align-items: center; padding: 0 24px; position: relative;">
+    <span style="color: #666; font-size: 0.8rem; width: 80px;">CLOUD</span>
+    <div id="packet-cloud" style="width: 12px; height: 12px; background: var(--red); border-radius: 50%; opacity: 0;"></div>
+    <div style="margin-left: auto; color: #444;">SERVER</div>
+  </div>
+  <div style="flex: 1; display: flex; align-items: center; padding: 0 24px; position: relative;">
+    <span style="color: #666; font-size: 0.8rem; width: 80px;">EDGE</span>
+    <div id="packet-edge" style="width: 12px; height: 12px; background: var(--gold); border-radius: 50%; opacity: 0;"></div>
+    <div style="margin-left: 20px; color: var(--gold); font-size: 0.7rem; letter-spacing: 2px;" id="edge-processed"></div>
+  </div>
+</div>
+<div class="divider"></div>
+<div id="anim-container-compression" style="width: 100%; height: 250px; background: #111; border: 1px solid #222; margin-bottom: 40px; position: relative; overflow: hidden; border-radius: 4px;">
+  <canvas id="canvas-compression" style="display: block; width: 100%; height: 100%;"></canvas>
+  <div style="position: absolute; top: 16px; left: 24px; font-family: 'Barlow Condensed', sans-serif; color: var(--gold); letter-spacing: 2px;">NETWORK PRUNING</div>
+</div>
+<div class="divider"></div>
+<div id="anim-container-softmax" style="width: 100%; background: #111; border: 1px solid #222; margin-top: 40px; padding: 32px 24px; border-radius: 4px;">
+  <div style="font-family: 'Barlow Condensed', sans-serif; color: var(--gold); letter-spacing: 2px; margin-bottom: 24px;">SOFTMAX PROBABILITY DISTRIBUTION</div>
+  <div id="softmax-bars" style="display: flex; flex-direction: column; gap: 16px;"></div>
+</div>
+<div class="divider"></div>
+<section id="edge-terminal" style="padding: 40px 80px;">
+  <div class="section-label">TERMINAL</div>
+  <div style="background: #050505; border: 1px solid #222; border-left: 4px solid var(--gold); padding: 24px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.8rem; color: #aaa; min-height: 150px; position: relative;">
+    <div id="cli-output" style="white-space: pre-wrap; line-height: 1.5;"></div>
+    <span id="cli-cursor" style="display: inline-block; width: 8px; height: 14px; background: var(--gold); vertical-align: middle; margin-left: 4px; animation: blink 1s step-end infinite;"></span>
+  </div>
+</section>
+<div class="divider"></div>
+<div id="wrap-esp32" style="width:100%;height:520px;background:#0a0a0a;border:0.5px solid #222;border-radius:8px;position:relative;overflow:hidden;font-family:monospace;">
+  <div id="trigger-esp32" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:10;">
+    <div style="color:#ff6b35;font-size:1.4rem;letter-spacing:4px;margin-bottom:8px;">[ INITIATE 3D HARDWARE SCAN ]</div>
+    <div style="color:#555;font-size:0.72rem;letter-spacing:2px;">CLICK TO LOAD — ESP32 DEVKIT V1 MODEL</div>
+    <div id="scanline-esp32" style="position:absolute;top:0;left:0;width:100%;height:2px;background:rgba(255,107,53,0.3);box-shadow:0 0 8px rgba(255,107,53,0.4);animation:scan 3s linear infinite;"></div>
+  </div>
+  <div id="tooltip-esp32" style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,0.92);border:0.5px solid #ff6b35;color:#ff6b35;font-size:11px;padding:6px 10px;border-radius:4px;display:none;pointer-events:none;letter-spacing:1px;max-width:250px;line-height:1.6;z-index:20;"></div>
+  <div id="legend-esp32" style="position:absolute;bottom:12px;right:12px;display:none;flex-direction:column;gap:4px;z-index:20;"></div>
+  <canvas id="c-esp32" style="display:none;"></canvas>
+</div>
+<style>@keyframes scan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}</style>
+<div class="divider"></div>
+<div class="divider"></div>
+<div class="divider"></div>
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">TINYML · LEC 01-END</div>
+  <div class="footer-copy">Dibyajyotee Ghosh · Apr 2026 · Edge Intelligence</div>
+</footer>
+
+<script>
+// ── DEVICE DETECTION ─────────────────────────────────────────
+(function() {
+  const info = {
+    cores: navigator.hardwareConcurrency || 1,
+    memory: navigator.deviceMemory || null,
+    gpu: null,
+    tier: 'mid'
+  };
+
+  // GPU Detection via WebGL
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (ext) {
+        info.gpu = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+      }
+    }
+  } catch(e) {}
+
+  // Determine tier
+  const mem = info.memory || 4;
+  const cores = info.cores;
+  const gpuStr = (info.gpu || '').toLowerCase();
+
+  const isHighGPU = /nvidia|radeon|geforce|rtx|gtx|rx\s*\d|apple m|m1|m2|m3|m4/i.test(gpuStr);
+  const isLowGPU = /swiftshader|llvmpipe|intel hd|mesa|software/i.test(gpuStr);
+
+  if (mem >= 8 && cores >= 8 && !isLowGPU) {
+    info.tier = 'high';
+  } else if (mem <= 2 || cores <= 2 || isLowGPU) {
+    info.tier = 'low';
+  } else {
+    info.tier = 'mid';
+  }
+
+  // Apply tier class
+  document.body.classList.add('tier-' + info.tier);
+
+  // Update UI
+  document.getElementById('tier-display').textContent = 'TIER: ' + info.tier.toUpperCase();
+  document.getElementById('gpu-display').textContent = info.gpu
+    ? 'GPU: ' + info.gpu.substring(0, 20) + (info.gpu.length > 20 ? '…' : '')
+    : 'GPU: Unknown';
+  document.getElementById('mem-display').textContent = mem ? mem + ' GB RAM' : 'RAM: Unknown';
+  document.getElementById('cores-display').textContent = cores + ' Cores';
+
+  // Particles - high tier only
+  if (info.tier === 'high') {
+    const hero = document.getElementById('hero');
+    for (let i = 0; i < 20; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (8 + Math.random() * 12) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
+      hero.appendChild(p);
+    }
+  }
+})();
+
+// ── SCROLL REVEAL ─────────────────────────────────────────────
+(function() {
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => obs.observe(r));
+})();
+
+// ── PROGRESS BAR ──────────────────────────────────────────────
+window.addEventListener('scroll', function() {
+  const scrollTop = window.scrollY;
+  const docH = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = (scrollTop / docH) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+});
+
+// ── CUSTOM CURSOR (high tier) ─────────────────────────────────
+(function() {
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = (mx - 5) + 'px';
+    cursor.style.top = (my - 5) + 'px';
+  });
+
+  function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = (rx - 18) + 'px';
+    ring.style.top = (ry - 18) + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  document.querySelectorAll('a, button, .what-card, .app-item, .sensor-card').forEach(el => {
+    el.addEventListener('mouseenter', () => { ring.style.transform = 'scale(2)'; ring.style.borderColor = 'var(--gold)'; });
+    el.addEventListener('mouseleave', () => { ring.style.transform = 'scale(1)'; ring.style.borderColor = 'rgba(201,168,76,0.5)'; });
+  });
+})();
+</script>
+<script>
+// =====================================================================
+// ANIMATION 1: THE LEARNING LOOP (CANVAS)
+// =====================================================================
+(function() {
+  const container = document.getElementById('anim-container-loop');
+  const canvas = document.getElementById('canvas-loop');
+  if (!container || !canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  let animating = false;
+  let progress = 0; // 0 to 1 moving down the curve
+
+  function resize() {
+    w = canvas.width = container.clientWidth;
+    h = canvas.height = container.clientHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function drawCurve() {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(201,168,76,0.2)'; // Faded Gold
+    ctx.lineWidth = 2;
+    for (let x = 0; x < w; x++) {
+      // Parabola math mapped to canvas
+      let nx = (x / w) * 4 - 2; // -2 to 2
+      let ny = nx * nx; // 0 to 4
+      let cy = h - 40 - (ny / 4) * (h - 80);
+      if (x === 0) ctx.moveTo(x, cy);
+      else ctx.lineTo(x, cy);
+    }
+    ctx.stroke();
+  }
+
+  function draw() {
+    if (!animating) return;
+    ctx.clearRect(0, 0, w, h);
+    drawCurve();
+
+    // Calculate current point
+    // Simulate gradient descent steps using easing
+    progress += 0.005;
+    if (progress > 1) progress = 0; // Loop
+
+    // Easing out to simulate taking smaller steps as it converges
+    let easeP = 1 - Math.pow(1 - progress, 3); 
+    
+    let startX = -1.8;
+    let endX = 0; // Bottom of curve
+    let currentNX = startX + (endX - startX) * easeP;
+    let currentNY = currentNX * currentNX;
+    
+    let cx = ((currentNX + 2) / 4) * w;
+    let cy = h - 40 - (currentNY / 4) * (h - 80);
+
+    // Draw Point
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#c9a84c'; // var(--gold)
+    ctx.fill();
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#c9a84c';
+    ctx.fill();
+    ctx.shadowBlur = 0; // Reset
+
+    // Draw Text
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Barlow';
+    let lossVal = currentNY.toFixed(3);
+    ctx.fillText(`Loss: ${lossVal}`, cx + 15, cy - 10);
+
+    requestAnimationFrame(draw);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        if (!animating) { animating = true; draw(); }
+      } else {
+        animating = false;
+      }
+    });
+  }, { threshold: 0.2 });
+
+  observer.observe(container);
+})();
+
+// =====================================================================
+// ANIMATION 2: CLOUD VS EDGE (DOM ANIMATION)
+// =====================================================================
+(function() {
+  const container = document.getElementById('anim-container-latency');
+  const cloudPacket = document.getElementById('packet-cloud');
+  const edgePacket = document.getElementById('packet-edge');
+  const edgeText = document.getElementById('edge-processed');
+  if (!container || !cloudPacket || !edgePacket) return;
+
+  let animating = false;
+  let width = 0;
+
+  function runCycle() {
+    if (!animating) return;
+    width = container.clientWidth - 150; // Distance to server text
+
+    // Cloud Animation (Slow, back and forth)
+    cloudPacket.style.transition = 'none';
+    cloudPacket.style.transform = 'translateX(0)';
+    cloudPacket.style.opacity = '1';
+    
+    // Edge Animation (Instant)
+    edgePacket.style.transition = 'none';
+    edgePacket.style.transform = 'translateX(0)';
+    edgePacket.style.opacity = '1';
+    edgeText.innerText = '';
+
+    setTimeout(() => {
+      if (!animating) return;
+      // Edge processes instantly
+      edgePacket.style.transition = 'transform 0.1s ease';
+      edgePacket.style.transform = 'translateX(40px)';
+      setTimeout(() => edgeText.innerText = '[ LOCAL INFERENCE COMPLETE: 2ms ]', 100);
+
+      // Cloud takes a long time
+      cloudPacket.style.transition = 'transform 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+      cloudPacket.style.transform = `translateX(${width}px)`;
+      
+      // Cloud returns
+      setTimeout(() => {
+        if (!animating) return;
+        cloudPacket.style.transition = 'transform 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        cloudPacket.style.transform = 'translateX(0px)';
+        
+        // Loop after cloud finishes
+        setTimeout(runCycle, 2000);
+      }, 1800);
+    }, 100);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        if (!animating) { animating = true; runCycle(); }
+      } else {
+        animating = false;
+      }
+    });
+  }, { threshold: 0.2 });
+
+  observer.observe(container);
+})();
+
+// =====================================================================
+// ANIMATION 3: MODEL COMPRESSION - PRUNING (CANVAS)
+// =====================================================================
+(function() {
+  const container = document.getElementById('anim-container-compression');
+  const canvas = document.getElementById('canvas-compression');
+  if (!container || !canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  let animating = false;
+  let time = 0;
+
+  // Setup a mini neural net graph
+  const layers = [3, 5, 4, 2];
+  let nodes = [];
+  let edges = [];
+
+  function resize() {
+    w = canvas.width = container.clientWidth;
+    h = canvas.height = container.clientHeight;
+    buildGraph();
+  }
+  
+  function buildGraph() {
+    nodes = [];
+    edges = [];
+    const spacingX = w / (layers.length + 1);
+    
+    // Create Nodes
+    layers.forEach((nodeCount, layerIdx) => {
+      const spacingY = h / (nodeCount + 1);
+      for (let i = 0; i < nodeCount; i++) {
+        nodes.push({
+          x: spacingX * (layerIdx + 1),
+          y: spacingY * (i + 1),
+          layer: layerIdx
+        });
+      }
+    });
+
+    // Create Edges
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = 0; j < nodes.length; j++) {
+        if (nodes[j].layer === nodes[i].layer + 1) {
+          // Assign a random "weight" to determine if it gets pruned
+          edges.push({ n1: nodes[i], n2: nodes[j], weight: Math.random() });
+        }
+      }
+    }
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  function draw() {
+    if (!animating) return;
+    ctx.clearRect(0, 0, w, h);
+    time += 0.01;
+    
+    // Sine wave for fading logic (0 to 1)
+    let prunePhase = (Math.sin(time) + 1) / 2; 
+
+    // Draw Edges
+    edges.forEach(edge => {
+      let alpha = 0.3; // Default opacity
+      // If weight is low, fade it out based on phase
+      if (edge.weight < 0.6) {
+         alpha = 0.3 * (1 - prunePhase);
+      }
+      if (alpha > 0.01) {
+        ctx.beginPath();
+        ctx.moveTo(edge.n1.x, edge.n1.y);
+        ctx.lineTo(edge.n2.x, edge.n2.y);
+        ctx.strokeStyle = `rgba(201,168,76,${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    });
+
+    // Draw Nodes
+    nodes.forEach(node => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#f0f0f0';
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        if (!animating) { animating = true; draw(); }
+      } else {
+        animating = false;
+      }
+    });
+  }, { threshold: 0.2 });
+
+  observer.observe(container);
+})();
+
+// =====================================================================
+// ANIMATION 4: CLASSIFICATION & SOFTMAX (DOM ANIMATION)
+// =====================================================================
+(function() {
+  const container = document.getElementById('anim-container-softmax');
+  const barsContainer = document.getElementById('softmax-bars');
+  if (!container || !barsContainer) return;
+
+  const categories = ['CAT', 'DOG', 'BIRD'];
+  // The raw outputs from a linear layer
+  const rawLogits = [1.2, -0.5, 3.8]; 
+  
+  // Calculate Softmax target values
+  const expLogits = rawLogits.map(Math.exp);
+  const sumExp = expLogits.reduce((a, b) => a + b, 0);
+  const targetProbs = expLogits.map(val => val / sumExp); // [0.06, 0.01, 0.93]
+
+  let animating = false;
+  let progress = 0; // 0 to 1
+
+  // Create DOM elements
+  const barElements = [];
+  categories.forEach((cat, i) => {
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.gap = '16px';
+    
+    const label = document.createElement('div');
+    label.innerText = cat;
+    label.style.width = '40px';
+    label.style.fontFamily = 'Barlow Condensed';
+    label.style.color = '#888';
+    
+    const barWrap = document.createElement('div');
+    barWrap.style.flex = '1';
+    barWrap.style.height = '12px';
+    barWrap.style.background = '#222';
+    barWrap.style.borderRadius = '6px';
+    barWrap.style.overflow = 'hidden';
+
+    const barFill = document.createElement('div');
+    barFill.style.height = '100%';
+    barFill.style.width = '0%';
+    barFill.style.background = 'var(--gold)';
+    barFill.style.transition = 'width 0.1s linear, background 0.3s ease';
+    
+    const valText = document.createElement('div');
+    valText.style.width = '60px';
+    valText.style.fontFamily = 'Bebas Neue';
+    valText.style.color = '#fff';
+    valText.style.textAlign = 'right';
+
+    barWrap.appendChild(barFill);
+    row.appendChild(label);
+    row.appendChild(barWrap);
+    row.appendChild(valText);
+    barsContainer.appendChild(row);
+
+    barElements.push({ fill: barFill, text: valText, raw: rawLogits[i], target: targetProbs[i] });
+  });
+
+  function updateFrame() {
+    if (!animating) return;
+    
+    progress += 0.01;
+    if (progress > 2) progress = 0; // Add pause before looping
+
+    // Clamp progress for calculation
+    let p = Math.min(Math.max(progress, 0), 1);
+    // Smoothstep easing
+    let ease = p * p * (3 - 2 * p);
+
+    barElements.forEach(item => {
+      // Interpolate between raw logit (mapped visually) and true Softmax %
+      let rawMapped = Math.max(item.raw * 10, 2); // Just for visual scale of raw
+      let targetPct = item.target * 100;
+      
+      let currentWidth = rawMapped + (targetPct - rawMapped) * ease;
+      item.fill.style.width = `${currentWidth}%`;
+      
+      // Highlight the winner
+      if (ease > 0.9 && item.target > 0.5) {
+        item.fill.style.background = '#f0d080'; // gold-light
+      } else {
+        item.fill.style.background = 'var(--gold)';
+      }
+
+      // Update text
+      if (ease < 0.1) {
+        item.text.innerText = item.raw.toFixed(1);
+        item.text.style.color = '#888';
+      } else {
+        let currentPct = (item.target * ease) * 100;
+        item.text.innerText = `${currentPct.toFixed(1)}%`;
+        item.text.style.color = '#fff';
+      }
+    });
+
+    requestAnimationFrame(updateFrame);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        if (!animating) { animating = true; updateFrame(); }
+      } else {
+        animating = false;
+      }
+    });
+  }, { threshold: 0.2 });
+
+  observer.observe(container);
+})();
+</script>
+<script>
+// =====================================================================
+// FEATURE 1: REAL HARDWARE TELEMETRY TICKER (IIFE)
+// =====================================================================
+(function() {
+  const ramDisplay = document.getElementById('ram-load');
+  const latDisplay = document.getElementById('cpu-latency');
+  const netDisplay = document.getElementById('net-ping');
+  const statusDot = document.getElementById('status-dot');
+  if (!ramDisplay || !latDisplay || !netDisplay) return;
+
+  let lastFrameTime = performance.now();
+  let frameCount = 0;
+
+  function pollRealMetrics() {
+    // 1. Real Network RTT (Ping)
+    if (navigator.connection && navigator.connection.rtt) {
+      netDisplay.innerText = `NET: ${navigator.connection.rtt}ms`;
+    } else {
+      netDisplay.innerText = `NET: N/A`;
+    }
+
+    // 2. Real JS Heap Memory (Chromium only)
+    if (performance.memory && performance.memory.usedJSHeapSize) {
+      const mbUsed = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
+      ramDisplay.innerText = `MEM: ${mbUsed}MB`;
+    } else {
+      ramDisplay.innerText = `MEM: CALC...`;
+    }
+
+    // Status blink
+    statusDot.style.opacity = '0.3';
+    setTimeout(() => { statusDot.style.opacity = '1'; }, 50);
+
+    setTimeout(pollRealMetrics, 1000); // Update text every second
+  }
+
+  // 3. Real CPU Render Latency (Frame Time)
+  function measureLatency() {
+    const now = performance.now();
+    frameCount++;
+    
+    // Update latency reading every 30 frames
+    if (frameCount % 30 === 0) {
+      const delta = now - lastFrameTime;
+      const frameLatency = (delta / 30).toFixed(1);
+      latDisplay.innerText = `LAT: ${frameLatency}ms`;
+      
+      // Color coding: If a device struggles to render, the latency spikes
+      if (frameLatency > 20.0) latDisplay.style.color = 'var(--red)';
+      else latDisplay.style.color = 'var(--text-muted)';
+      
+      lastFrameTime = now;
+    }
+    requestAnimationFrame(measureLatency);
+  }
+
+  pollRealMetrics();
+  measureLatency();
+})();
+
+// =====================================================================
+// FEATURE 2: BIOACOUSTIC SPECTROGRAM ON HOVER (IIFE)
+// =====================================================================
+(function() {
+  // Find the Acoustic sensor card dynamically
+  const cards = document.querySelectorAll('.sensor-card');
+  let acousticCard = null;
+  cards.forEach(card => {
+    if (card.innerText.includes('Acoustic')) acousticCard = card;
+  });
+
+  if (!acousticCard) return;
+
+  // Style the card to hold the canvas
+  acousticCard.style.position = 'relative';
+  
+  // Create Canvas
+  const canvas = document.createElement('canvas');
+  canvas.style.position = 'absolute';
+  canvas.style.bottom = '0';
+  canvas.style.left = '0';
+  canvas.style.width = '100%';
+  canvas.style.height = '60px';
+  canvas.style.opacity = '0';
+  canvas.style.transition = 'opacity 0.3s ease';
+  canvas.style.pointerEvents = 'none'; // Don't block clicks
+  acousticCard.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+  let animating = false;
+  let offset = 0;
+
+  function drawSpectrogram() {
+    if (!animating) return;
+    const w = canvas.width = acousticCard.clientWidth;
+    const h = canvas.height = 60;
+    
+    ctx.clearRect(0, 0, w, h);
+    const barWidth = 4;
+    const spacing = 1;
+    const numBars = Math.floor(w / (barWidth + spacing));
+
+    for (let i = 0; i < numBars; i++) {
+      // Create a complex wave using sine functions to look like audio data
+      let noise = Math.sin((i + offset) * 0.2) * 15 + 
+                  Math.sin((i + offset) * 0.8) * 5 + 
+                  Math.random() * 10;
+      
+      let barHeight = Math.abs(noise) + 5;
+      
+      // Color gradient based on "loudness" (height)
+      let alpha = Math.min(barHeight / 30, 1);
+      ctx.fillStyle = `rgba(201, 168, 76, ${alpha})`; 
+      
+      ctx.fillRect(i * (barWidth + spacing), h - barHeight, barWidth, barHeight);
+    }
+    
+    offset += 0.5; // Scrolling speed
+    requestAnimationFrame(drawSpectrogram);
+  }
+
+  // Hover triggers
+  acousticCard.addEventListener('mouseenter', () => {
+    animating = true;
+    canvas.style.opacity = '1';
+    drawSpectrogram();
+  });
+
+  acousticCard.addEventListener('mouseleave', () => {
+    animating = false;
+    canvas.style.opacity = '0';
+  });
+})();
+
+// =====================================================================
+// FEATURE 3: EDGE TERMINAL CLI READOUT (IIFE)
+// =====================================================================
+(function() {
+  const terminalSection = document.getElementById('edge-terminal');
+  const output = document.getElementById('cli-output');
+  if (!terminalSection || !output) return;
+
+  const cliText = `> init tinyML_core.sh
+[ OK ] Loading weights from persistent storage...
+[ OK ] Allocating tensor arena: 48 KB
+[ OK ] Initializing TF Lite Micro Interpreter
+> status
+Device: Edge Node (Active)
+Model: model_quantized_8bit.tflite
+Input Shape: [1, 28, 28, 1]
+> run inference --mode=continuous
+Awaiting sensor input...`;
+
+  let charIndex = 0;
+  let typing = false;
+
+  function typeWriter() {
+    if (charIndex < cliText.length) {
+      output.innerHTML += cliText.charAt(charIndex);
+      charIndex++;
+      // Randomize typing speed for realism (10ms to 50ms)
+      let typeSpeed = Math.random() * 40 + 10;
+      
+      // Pause on newlines
+      if (cliText.charAt(charIndex - 1) === '\n') {
+        typeSpeed = 300; 
+      }
+      setTimeout(typeWriter, typeSpeed);
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !typing) {
+        typing = true;
+        output.innerHTML = ''; // Clear it out
+        setTimeout(typeWriter, 500); // Start after 0.5s delay
+        observer.unobserve(terminalSection); // Only type it out once
+      }
+    });
+  }, { threshold: 0.5 });
+
+  observer.observe(terminalSection);
+})();
+</script>
+
+<script>
+document.getElementById('trigger').addEventListener('click',function(){
+  this.innerHTML='<div style="color:#c9a84c;font-size:0.9rem;letter-spacing:3px;animation:blink 1s infinite;">LOADING THREE.JS ENGINE...</div>';
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload=initPi;
+  document.body.appendChild(s);
+});
+
+function initPi(){
+  const wrap=document.getElementById('wrap');
+  const trigger=document.getElementById('trigger');
+  const canvas=document.getElementById('c');
+  const tooltip=document.getElementById('tooltip');
+  const legend=document.getElementById('legend');
+  trigger.style.display='none';
+  canvas.style.display='block';
+  legend.style.display='flex';
+
+  const W=wrap.clientWidth,H=wrap.clientHeight;
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,W/H,0.1,100);
+  camera.position.set(0,7,11);camera.lookAt(0,0,0);
+
+  const parts=[];
+  const raycaster=new THREE.Raycaster();
+  const mouse=new THREE.Vector2();
+
+  function box(w,h,d,color,label,info,wx,wy,wz,pw,ph,pd){
+    const geo=new THREE.BoxGeometry(w,h,d);
+    const mat=new THREE.MeshBasicMaterial({color,wireframe:true,transparent:true,opacity:0.85});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(pw||0,ph||0,pd||0);
+    mesh.userData={label,info};
+    if(wx!==undefined){
+      const parent=scene.children.find(c=>c.userData&&c.userData.label===wx);
+      if(parent){parent.add(mesh);return mesh;}
+    }
+    scene.add(mesh);parts.push(mesh);
+    return mesh;
+  }
+  function solidBox(w,h,d,color,label,info,px,py,pz){
+    const geo=new THREE.BoxGeometry(w,h,d);
+    const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.7});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(px||0,py||0,pz||0);
+    mesh.userData={label,info};
+    scene.add(mesh);parts.push(mesh);
+    const edges=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color,transparent:true,opacity:0.9}));
+    mesh.add(edges);
+    return mesh;
+  }
+  function addLegendItem(color,label){
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:6px;font-size:10px;color:#888;letter-spacing:1px;';
+    d.innerHTML=`<div style="width:8px;height:8px;border:1px solid #${color.toString(16).padStart(6,'0')};"></div>${label}`;
+    legend.appendChild(d);
+  }
+
+  // PCB board
+  const pcb=solidBox(8.5,0.12,5.6,0x1a3a1a,'PCB BOARD','Raspberry Pi 3B+ PCB — FR4 substrate, 4-layer copper trace design',0,0,0);
+
+  // SoC
+  solidBox(1.4,0.3,1.4,0xc0392b,'BCM2837B0 SOC','Broadcom BCM2837B0 — ARM Cortex-A53 64-bit quad-core @ 1.4GHz, VideoCore IV GPU. Central heat-spread package.',0,0.21,0.4);
+  addLegendItem(0xc0392b,'SOC / processor');
+
+  // RAM (stacked on SoC)
+  solidBox(1.4,0.2,1.4,0xe74c3c,'LPDDR2 RAM','1GB LPDDR2 SDRAM — Package-on-Package (PoP) stacked on BCM2837B0 SoC',0,0.42,0.4);
+
+  // USB controller
+  solidBox(0.9,0.22,0.7,0x8e44ad,'LAN9514 USB HUB','SMSC LAN9514 — Integrated USB 2.0 Hub + 100Mbit Ethernet controller. Drives 4x USB ports.',2.6,0.17,-0.3);
+  addLegendItem(0x8e44ad,'USB / Ethernet IC');
+
+  // Ethernet port
+  solidBox(1.1,0.55,0.9,0x2980b9,'ETHERNET RJ45','10/100 Ethernet via LAN9514 — RJ45 jack with integrated magnetics. Max ~300Mbps real-world due to USB 2.0 bottleneck.',-3.3,0.4,-2.0);
+  addLegendItem(0x2980b9,'Ports / connectors');
+
+  // 4x USB ports
+  solidBox(0.7,0.45,1.9,0x2980b9,'USB 2.0 PORTS (x4)','4× USB 2.0 Type-A — 480 Mbps, shared bandwidth via LAN9514 hub. Use for keyboard, mouse, storage, dongles.',-3.3,0.32,1.0);
+
+  // HDMI
+  solidBox(0.8,0.38,0.5,0x27ae60,'HDMI PORT','Full-size HDMI 1.3 — Up to 1080p/60fps output. Audio output supported. CEC and HDCP.',0.8,0.3,3.05);
+  addLegendItem(0x27ae60,'Display / video');
+
+  // 3.5mm AV jack
+  solidBox(0.45,0.38,0.45,0x16a085,'3.5MM AV JACK','4-pole 3.5mm TRRS — Composite video + stereo audio output. PWM audio, low quality — use HDMI for audio.',-0.5,0.3,3.05);
+
+  // MicroUSB power
+  solidBox(0.6,0.3,0.45,0xf39c12,'MICRO-USB POWER','Micro-USB 5V power input — Requires 5V 2.5A supply. No power negotiation. Avoid USB hubs as power source.',2.5,0.25,3.05);
+  addLegendItem(0xf39c12,'Power');
+
+  // microSD slot
+  solidBox(1.1,0.15,0.6,0xd35400,'MICROSD SLOT','MicroSD card slot — Boot device and primary storage. Class 10 / UHS-I recommended. Max tested ~80MB/s read.',-0.3,0.06,3.1);
+
+  // WiFi / BT chip
+  solidBox(0.8,0.15,0.6,0xc9a84c,'BCM43438 WIFI+BT','Cypress CYW43455 — 802.11 b/g/n/ac 2.4+5GHz WiFi & Bluetooth 4.2 / BLE. On-board antenna.',-1.5,0.14,1.2);
+  addLegendItem(0xc9a84c,'Wireless');
+
+  // GPIO header — 40-pin
+  const gpioColors=[0x2ecc71,0x2ecc71,0xe74c3c,0x95a5a6,0xe74c3c,0x3498db,0x95a5a6,0x3498db,0x3498db,0x95a5a6,0x3498db,0x3498db,0x95a5a6,0x3498db,0xe74c3c,0x3498db,0x3498db,0x95a5a6,0x3498db,0x95a5a6];
+  const gpioLabels=['3V3 POWER','5V POWER','GPIO 2 (SDA1 I2C)','5V POWER','GPIO 3 (SCL1 I2C)','GND','GPIO 4 (GPCLK0)','GPIO 14 (UART TX)','GND','GPIO 15 (UART RX)','GPIO 17','GPIO 18 (PCM CLK)','GPIO 27','GND','GPIO 22','GPIO 23','3V3 POWER','GPIO 24','GPIO 10 (MOSI SPI)','GND'];
+  const gpioInfo=['3.3V supply — max 50mA total from 3V3 rail','5V supply direct from input — fused at ~1A','GPIO2 — I2C1 SDA. Has 1.8kΩ pull-up to 3V3','5V supply direct from input','GPIO3 — I2C1 SCL. Has 1.8kΩ pull-up to 3V3','Ground reference — connect to circuit GND','GPIO4 — General purpose or GPCLK0 clock output','GPIO14 — UART0 TX (serial console by default)','Ground','GPIO15 — UART0 RX (serial console by default)','GPIO17 — General purpose I/O, 3V3 level','GPIO18 — PWM0 or PCM clock output','GPIO27 — General purpose I/O','Ground','GPIO22 — General purpose I/O','GPIO23 — General purpose I/O','3.3V supply output','GPIO24 — General purpose I/O','GPIO10 — SPI0 MOSI (master out)','Ground'];
+
+  const gpioGroup=new THREE.Group();
+  gpioGroup.position.set(-3.5,0.12,-2.0);
+  scene.add(gpioGroup);
+  const pinW=0.12,pinH=0.22,pinD=0.12,gapX=0.22,gapZ=0.22;
+  for(let i=0;i<20;i++){
+    [0,1].forEach(row=>{
+      const pg=new THREE.BoxGeometry(pinW,pinH,pinD);
+      const pm=new THREE.MeshBasicMaterial({color:gpioColors[i],transparent:true,opacity:0.9});
+      const pin=new THREE.Mesh(pg,pm);
+      pin.position.set(i*gapX,0,row*gapZ);
+      const pinIdx=i*2+row;
+      pin.userData={
+        label:`PIN ${pinIdx+1}: ${gpioLabels[Math.min(i,19)]}`,
+        info:gpioInfo[Math.min(i,19)]+(row===0?' (odd pin)':' (even pin)')
+      };
+      const pe=new THREE.LineSegments(new THREE.EdgesGeometry(pg),new THREE.LineBasicMaterial({color:gpioColors[i]}));
+      pin.add(pe);
+      gpioGroup.add(pin);
+      parts.push(pin);
+    });
+  }
+  addLegendItem(0x2ecc71,'GPIO — 3V3/5V power');
+  addLegendItem(0x3498db,'GPIO — digital I/O / protocol');
+  addLegendItem(0x95a5a6,'GPIO — GND');
+
+  // CSI camera connector
+  solidBox(0.25,0.18,0.9,0xe67e22,'CSI CAMERA PORT','15-pin MIPI CSI-2 — Camera Serial Interface. Supports Pi Camera Module up to 5MP/1080p30. 2 data lanes.',1.8,0.18,3.0);
+
+  // DSI display connector  
+  solidBox(0.25,0.18,0.9,0xe67e22,'DSI DISPLAY PORT','15-pin MIPI DSI — Display Serial Interface. For official Pi touchscreen (800×480). 2 data lanes.',-2.5,0.18,-2.8);
+
+  // Mouse rotate
+  let mx=0,my=0,tRx=-0.3,tRy=0.3,isDrag=false,lastX=0,lastY=0,hovered=null;
+  wrap.addEventListener('mousedown',e=>{isDrag=true;lastX=e.clientX;lastY=e.clientY;});
+  window.addEventListener('mouseup',()=>isDrag=false);
+  wrap.addEventListener('mousemove',e=>{
+    if(isDrag){
+      tRy+=(e.clientX-lastX)*0.008;
+      tRx+=(e.clientY-lastY)*0.008;
+      tRx=Math.max(-1.2,Math.min(1.2,tRx));
+      lastX=e.clientX;lastY=e.clientY;
+    }
+    const rect=wrap.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/W)*2-1;
+    mouse.y=-((e.clientY-rect.top)/H)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const hits=raycaster.intersectObjects(parts,true);
+    if(hits.length){
+      const obj=hits[0].object;
+      const ud=obj.userData&&obj.userData.label?obj.userData:obj.parent&&obj.parent.userData&&obj.parent.userData.label?obj.parent.userData:null;
+      if(ud&&ud.label){
+        tooltip.style.display='block';
+        tooltip.innerHTML=`<b style="color:#fff;font-size:12px;">${ud.label}</b><br><span style="color:#aaa;font-size:10px;">${ud.info}</span>`;
+        tooltip.style.left=Math.min(e.clientX-rect.left+12,W-240)+'px';
+        tooltip.style.top=Math.max(e.clientY-rect.top-60,8)+'px';
+        hovered=obj;
+        wrap.style.cursor='crosshair';
+      }
+    } else {
+      tooltip.style.display='none';
+      hovered=null;
+      wrap.style.cursor=isDrag?'grabbing':'grab';
+    }
+  });
+  wrap.style.cursor='grab';
+
+  const pivot=new THREE.Group();
+  scene.add(pivot);
+  scene.children.filter(c=>c!==pivot).forEach(c=>{pivot.add(c);});
+  pivot.rotation.x=-0.3;pivot.rotation.y=0.3;
+
+  const clock=new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    pivot.rotation.x+=(tRx-pivot.rotation.x)*0.08;
+    pivot.rotation.y+=(tRy-pivot.rotation.y)*0.08;
+    if(!isDrag) tRy+=0.003;
+    pivot.position.y=Math.sin(t*1.2)*0.08;
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    const nW=wrap.clientWidth,nH=wrap.clientHeight;
+    camera.aspect=nW/nH;camera.updateProjectionMatrix();
+    renderer.setSize(nW,nH);
+  });
+}
+</script>
+
+<script>
+document.getElementById('trigger-nano').addEventListener('click',function(){
+  this.innerHTML='<div style="color:#00bcd4;font-size:0.9rem;letter-spacing:3px;animation:blink 1s infinite;">LOADING THREE.JS ENGINE...</div>';
+  
+  // OPTIMIZATION: Check if Three.js is already loaded from the Pi!
+  if (window.THREE) {
+    initNano();
+  } else {
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.onload=initNano;
+    document.body.appendChild(s);
+  }
+});
+
+function initNano(){
+  const wrap=document.getElementById('wrap-nano');
+  const trigger=document.getElementById('trigger-nano');
+  const canvas=document.getElementById('c-nano');
+  const tooltip=document.getElementById('tooltip-nano');
+  const legend=document.getElementById('legend-nano');
+  
+  trigger.style.display='none';
+  canvas.style.display='block';
+  legend.style.display='flex';
+
+  const W=wrap.clientWidth,H=wrap.clientHeight;
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,W/H,0.1,100);
+  camera.position.set(0,8,13);camera.lookAt(0,0,0);
+
+  const parts=[];
+  const raycaster=new THREE.Raycaster();
+  const mouse=new THREE.Vector2();
+
+  function addLegend(hexColor,label){
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:6px;font-size:10px;color:#888;letter-spacing:1px;';
+    const hex=hexColor.toString(16).padStart(6,'0');
+    d.innerHTML=`<div style="width:8px;height:8px;border:1px solid #${hex};"></div>${label}`;
+    legend.appendChild(d);
+  }
+
+  function solidComp(w,h,d,color,label,info,px,py,pz){
+    const geo=new THREE.BoxGeometry(w,h,d);
+    const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.75});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(px,py,pz);
+    mesh.userData={label,info};
+    const edges=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color,transparent:true,opacity:1}));
+    mesh.add(edges);
+    scene.add(mesh);parts.push(mesh);
+    return mesh;
+  }
+
+  // PCB — Arduino Nano
+  solidComp(8.6,0.12,3.6,0x0d3b1e,'ARDUINO NANO PCB','Arduino Nano PCB — 43.2mm × 18.5mm. ATmega328P-based. 5V logic (3.3V also available). Breadboard-friendly form factor.',0,0,0);
+
+  // ATmega328P — center-ish
+  solidComp(1.5,0.35,1.5,0x37474f,'ATMEGA328P MCU','Microchip ATmega328P — 8-bit AVR RISC @ 16MHz. 32KB Flash, 2KB SRAM, 1KB EEPROM. 22 GPIO, 8 ADC channels, 6 PWM outputs.',0,0.24,0);
+  addLegend(0x37474f,'MCU / microcontroller');
+
+  // Crystal oscillator
+  solidComp(0.5,0.28,0.25,0xb8860b,'16MHz CRYSTAL','16MHz quartz crystal oscillator — clocks the ATmega328P. Connected to XTAL1/XTAL2 pins. Accuracy ±30ppm.',1.3,0.2,0.6);
+  addLegend(0xb8860b,'Oscillator / clock');
+
+  // CH340 USB-Serial
+  solidComp(0.9,0.28,0.9,0x4a148c,'CH340G USB-SERIAL','WCH CH340G — USB to UART bridge. Enables USB programming & serial monitor. Appears as COM/ttyUSB port on host.',2.5,0.2,0.5);
+  addLegend(0x4a148c,'USB bridge IC');
+
+  // Mini-USB connector
+  solidComp(0.7,0.5,0.55,0x1565c0,'MINI-USB PORT','Mini-USB Type-B — 5V power input + serial programming via CH340G. Use for uploading sketches and serial debug. Max 500mA from USB.',3.7,0.31,0);
+  addLegend(0x1565c0,'Ports / connectors');
+
+  // Voltage regulator
+  solidComp(0.55,0.4,0.45,0xbf360c,'MIC5205 LDO 3.3V','MIC5205 — Low-dropout 3.3V regulator. Provides 3V3 pin output up to 150mA. Powers low-voltage sensors/modules.',-2.2,0.26,-1.0);
+  solidComp(0.55,0.4,0.45,0xbf360c,'LP2985 LDO 5V','Linear LDO — 5V regulator from VIN (7-12V recommended, 6-20V tolerated). Powers board when using barrel/VIN input.',-2.2,0.26,1.0);
+  addLegend(0xbf360c,'Power regulators');
+
+  // LEDs
+  solidComp(0.18,0.2,0.18,0x00e676,'PWR LED','Green power LED — lights when board is powered. Connected to 5V rail via current-limiting resistor.',2.2,0.2,-1.4);
+  solidComp(0.18,0.2,0.18,0xffee58,'L LED (PIN 13)','Yellow onboard LED — connected to digital pin D13 (PB5). Use digitalWrite(13, HIGH) to light it. Useful for blink test.',1.5,0.2,-1.4);
+  solidComp(0.18,0.2,0.18,0xff7043,'RX LED','RX activity LED — flickers when data received over serial (USB). Connected to RX line.',2.8,0.2,-1.4);
+  solidComp(0.18,0.2,0.18,0xff7043,'TX LED','TX activity LED — flickers when data transmitted over serial (USB). Connected to TX line.',3.2,0.2,-1.4);
+
+  // Reset button
+  solidComp(0.4,0.3,0.4,0xe0e0e0,'RESET BUTTON','Tactile reset button — pulls RST pin LOW momentarily. Restarts the sketch from setup(). Can also be triggered via DTR line from IDE.',2.8,0.26,1.1);
+  addLegend(0xe0e0e0,'Buttons / controls');
+
+  // ICSP header
+  solidComp(0.5,0.3,0.7,0x00838f,'ICSP HEADER','6-pin In-Circuit Serial Programming header — MOSI, MISO, SCK, RESET, VCC, GND. Used to burn bootloader or program directly bypassing USB.',-3.2,0.22,0);
+  addLegend(0x00838f,'ICSP / programming');
+
+  // Decoupling caps
+  [[1.8,0.15,0.15,-0.5,0.14,1.2],[1.8,0.15,0.15,0.5,0.14,1.2],[1.8,0.15,0.15,-0.5,0.14,-1.2],[1.8,0.15,0.15,0.5,0.14,-1.2]].forEach((_,i,a)=>{
+    const [c,w,h,x,y,z]=a[i];
+    solidComp(0.2,0.2,0.2,0x546e7a,'DECOUPLING CAP','100nF bypass capacitor — filters power supply noise for ATmega328P. Multiple placed close to VCC/AVCC pins.',x,y,z);
+  });
+
+  // ---- PIN HEADERS ----
+  const leftPins=[
+    {label:'D1 / TX',info:'Digital pin 1 — UART TX output. Shared with USB serial TX. Avoid using when USB serial is active. OUTPUT only when TX.',color:0xff7043},
+    {label:'D0 / RX',info:'Digital pin 0 — UART RX input. Shared with USB serial RX. Avoid using when USB serial is active.',color:0xff7043},
+    {label:'RESET',info:'Reset pin — pull LOW to reset MCU. Active LOW. Can be used by programmer or external reset circuit.',color:0xef5350},
+    {label:'GND',info:'Ground reference. Connect all circuit grounds here.',color:0x607d8b},
+    {label:'D2',info:'Digital pin 2 — GPIO. Supports external interrupt INT0. INPUT, OUTPUT, INPUT_PULLUP modes.',color:0x42a5f5},
+    {label:'D3 ~PWM',info:'Digital pin 3 — GPIO + PWM output (490Hz). Supports external interrupt INT1. Use analogWrite() for PWM.',color:0x66bb6a},
+    {label:'D4',info:'Digital pin 4 — General purpose GPIO. INPUT, OUTPUT, INPUT_PULLUP.',color:0x42a5f5},
+    {label:'D5 ~PWM',info:'Digital pin 5 — GPIO + PWM output (980Hz). Use analogWrite() for 0-255 duty cycle.',color:0x66bb6a},
+    {label:'D6 ~PWM',info:'Digital pin 6 — GPIO + PWM output (980Hz). Use analogWrite() for variable voltage simulation.',color:0x66bb6a},
+    {label:'D7',info:'Digital pin 7 — General purpose GPIO. INPUT, OUTPUT, INPUT_PULLUP.',color:0x42a5f5},
+    {label:'D8',info:'Digital pin 8 — General purpose GPIO. INPUT, OUTPUT, INPUT_PULLUP.',color:0x42a5f5},
+    {label:'D9 ~PWM',info:'Digital pin 9 — GPIO + PWM output (490Hz). Also used for SPI SS in some configurations.',color:0x66bb6a},
+    {label:'D10 ~PWM SS',info:'Digital pin 10 — GPIO + PWM (490Hz) + SPI Slave Select (SS). Use for SPI device chip select.',color:0x66bb6a},
+    {label:'D11 ~PWM MOSI',info:'Digital pin 11 — GPIO + PWM (490Hz) + SPI MOSI (Master Out Slave In). Data line to SPI devices.',color:0xab47bc},
+    {label:'D12 MISO',info:'Digital pin 12 — GPIO + SPI MISO (Master In Slave Out). Data line from SPI devices.',color:0xab47bc},
+  ];
+  const rightPins=[
+    {label:'D13 SCK LED',info:'Digital pin 13 — GPIO + SPI SCK (clock) + onboard L LED. Built-in LED useful for debugging. SCK for SPI bus clock.',color:0xab47bc},
+    {label:'3V3',info:'3.3V regulated output — from MIC5205 LDO. Max 150mA. Use to power 3V3 sensors, ESP modules (carefully).',color:0xef5350},
+    {label:'AREF',info:'Analog Reference — set external reference voltage for ADC (0.1V to VCC). Use analogReference(EXTERNAL). Do NOT exceed VCC.',color:0xffa726},
+    {label:'A0',info:'Analog pin 0 / Digital D14 — 10-bit ADC input (0-1023). Also usable as GPIO. Input impedance ~100MΩ.',color:0xffa726},
+    {label:'A1',info:'Analog pin 1 / Digital D15 — 10-bit ADC, 0-5V range maps to 0-1023. ~4.9mV resolution.',color:0xffa726},
+    {label:'A2',info:'Analog pin 2 / Digital D16 — 10-bit ADC input. Use analogRead(A2). Can also be digital I/O.',color:0xffa726},
+    {label:'A3',info:'Analog pin 3 / Digital D17 — 10-bit ADC input. Use for sensors: LDR, thermistor, potentiometer, etc.',color:0xffa726},
+    {label:'A4 SDA',info:'Analog pin 4 / Digital D18 / I2C SDA — I2C data line. Has internal pullup option. Use Wire.h library.',color:0x26c6da},
+    {label:'A5 SCL',info:'Analog pin 5 / Digital D19 / I2C SCL — I2C clock line (100kHz standard, 400kHz fast mode). Use Wire.h library.',color:0x26c6da},
+    {label:'A6',info:'Analog pin 6 — ADC ONLY. Cannot be used as digital GPIO. Analog input exclusively.',color:0xffa726},
+    {label:'A7',info:'Analog pin 7 — ADC ONLY. Cannot be used as digital GPIO. Analog input exclusively.',color:0xffa726},
+    {label:'5V',info:'5V regulated output — from onboard regulator or USB input. Max ~400mA when powered via USB.',color:0xef5350},
+    {label:'RST',info:'Reset — same as RESET pin. Pull LOW to restart. Used by auto-reset circuit from CH340G DTR line.',color:0xef5350},
+    {label:'GND',info:'Ground — connect circuit ground here. Multiple GND pins available.',color:0x607d8b},
+    {label:'VIN',info:'Voltage input — unregulated 7-12V DC input (6-20V tolerated, 7-12V recommended). Powers onboard LDO. Not suitable for powering directly from 5V source.',color:0xef5350},
+  ];
+
+  const pinW=0.18,pinH=0.32,pinD=0.18,pinGap=0.52;
+  const leftZ=-1.62,rightZ=1.62;
+
+  leftPins.forEach((p,i)=>{
+    const geo=new THREE.BoxGeometry(pinW,pinH,pinD);
+    const mat=new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:0.9});
+    const mesh=new THREE.Mesh(geo,mat);
+    const x=-3.38+(i*pinGap);
+    mesh.position.set(x,0.22,leftZ);
+    mesh.userData={label:`PIN L${i+1}: ${p.label}`,info:p.info};
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:p.color}));
+    mesh.add(e);
+    scene.add(mesh);parts.push(mesh);
+  });
+
+  rightPins.forEach((p,i)=>{
+    const geo=new THREE.BoxGeometry(pinW,pinH,pinD);
+    const mat=new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:0.9});
+    const mesh=new THREE.Mesh(geo,mat);
+    const x=-3.38+(i*pinGap);
+    mesh.position.set(x,0.22,rightZ);
+    mesh.userData={label:`PIN R${i+1}: ${p.label}`,info:p.info};
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:p.color}));
+    mesh.add(e);
+    scene.add(mesh);parts.push(mesh);
+  });
+
+  addLegend(0x42a5f5,'Digital GPIO');
+  addLegend(0x66bb6a,'Digital GPIO + PWM ~');
+  addLegend(0xffa726,'Analog input ADC');
+  addLegend(0xab47bc,'SPI bus');
+  addLegend(0x26c6da,'I2C bus');
+  addLegend(0xef5350,'Power pins');
+  addLegend(0x607d8b,'GND / RST');
+
+  // Pivot group
+  const pivot=new THREE.Group();
+  const allObjs=[...scene.children];
+  allObjs.forEach(o=>pivot.add(o));
+  scene.add(pivot);
+  pivot.rotation.x=-0.35;pivot.rotation.y=0.5;
+
+  let tRx=-0.35,tRy=0.5,isDrag=false,lastX=0,lastY=0;
+  wrap.style.cursor='grab';
+  wrap.addEventListener('mousedown',e=>{isDrag=true;lastX=e.clientX;lastY=e.clientY;wrap.style.cursor='grabbing';});
+  window.addEventListener('mouseup',()=>{isDrag=false;wrap.style.cursor='grab';});
+  wrap.addEventListener('mousemove',e=>{
+    if(isDrag){
+      tRy+=(e.clientX-lastX)*0.008;
+      tRx+=(e.clientY-lastY)*0.008;
+      tRx=Math.max(-1.2,Math.min(1.2,tRx));
+      lastX=e.clientX;lastY=e.clientY;
+    }
+    const rect=wrap.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/W)*2-1;
+    mouse.y=-((e.clientY-rect.top)/H)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const hits=raycaster.intersectObjects(parts,true);
+    if(hits.length){
+      let obj=hits[0].object;
+      let ud=obj.userData&&obj.userData.label?obj.userData:obj.parent&&obj.parent.userData&&obj.parent.userData.label?obj.parent.userData:null;
+      if(ud&&ud.label){
+        tooltip.style.display='block';
+        tooltip.innerHTML=`<b style="color:#fff;font-size:12px;">${ud.label}</b><br><span style="color:#aaa;font-size:10px;">${ud.info}</span>`;
+        const lx=Math.min(e.clientX-rect.left+14,W-260);
+        const ly=Math.max(e.clientY-rect.top-70,8);
+        tooltip.style.left=lx+'px';tooltip.style.top=ly+'px';
+      }
+    } else {
+      tooltip.style.display='none';
+    }
+  });
+
+  const clock=new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    pivot.rotation.x+=(tRx-pivot.rotation.x)*0.08;
+    pivot.rotation.y+=(tRy-pivot.rotation.y)*0.08;
+    if(!isDrag) tRy+=0.002;
+    pivot.position.y=Math.sin(t*1.3)*0.07;
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    const nW=wrap.clientWidth,nH=wrap.clientHeight;
+    camera.aspect=nW/nH;camera.updateProjectionMatrix();
+    renderer.setSize(nW,nH);
+  });
+}
+</script>
+
+<script>
+document.getElementById('trigger-esp32').addEventListener('click',function(){
+  this.innerHTML='<div style="color:#ff6b35;font-size:0.9rem;letter-spacing:3px;animation:blink 1s infinite;">LOADING THREE.JS ENGINE...</div>';
+  
+  // OPTIMIZATION: Check if Three.js is already loaded!
+  if (window.THREE) {
+    initESP32();
+  } else {
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.onload=initESP32;
+    document.body.appendChild(s);
+  }
+});
+
+function initESP32(){
+  const wrap=document.getElementById('wrap-esp32'),
+        trigger=document.getElementById('trigger-esp32'),
+        canvas=document.getElementById('c-esp32'),
+        tooltip=document.getElementById('tooltip-esp32'),
+        legend=document.getElementById('legend-esp32');
+        
+  trigger.style.display='none';
+  canvas.style.display='block';
+  legend.style.display='flex';
+  
+  const W=wrap.clientWidth,H=wrap.clientHeight;
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,W/H,0.1,100);
+  camera.position.set(0,9,14);camera.lookAt(0,0,0);
+  const parts=[];
+  const raycaster=new THREE.Raycaster();
+  const mouse=new THREE.Vector2();
+
+  function addLeg(hex,label){
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:6px;font-size:10px;color:#888;letter-spacing:1px;';
+    d.innerHTML=`<div style="width:8px;height:8px;border:1px solid #${hex.toString(16).padStart(6,'0')};"></div>${label}`;
+    legend.appendChild(d);
+  }
+
+  function solid(w,h,d,color,label,info,px,py,pz){
+    const geo=new THREE.BoxGeometry(w,h,d);
+    const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.78});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(px,py,pz);
+    mesh.userData={label,info};
+    mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color,transparent:true,opacity:1})));
+    scene.add(mesh);parts.push(mesh);
+    return mesh;
+  }
+
+  function pin(color,label,info,px,py,pz){
+    const geo=new THREE.BoxGeometry(0.19,0.3,0.19);
+    const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.92});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(px,py,pz);
+    mesh.userData={label,info};
+    mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color})));
+    scene.add(mesh);parts.push(mesh);
+  }
+
+  // PCB
+  solid(10.2,0.12,5.6,0x1a2e1a,'ESP32 DEVKIT V1 PCB','ESP32 DevKit V1 PCB — 51mm × 28mm. Dual-core Xtensa LX6 @ 240MHz. WiFi 802.11 b/g/n + Bluetooth 4.2/BLE. 3.3V logic. 38 GPIO pins.',0,0,0);
+
+  // ESP32 module (WROOM-32)
+  solid(3.8,0.45,3.2,0x263238,'ESP32-WROOM-32 MODULE','ESP32-WROOM-32 — System-in-Package module. Contains ESP32-D0WDQ6 dual-core chip, 4MB SPI Flash, PCB antenna, crystal, decoupling. FCC/CE certified.',0,0.29,0);
+  addLeg(0x263238,'ESP32 SiP module');
+
+  // PCB antenna area
+  solid(0.9,0.1,3.2,0x1b3a2e,'PCB WIFI/BT ANTENNA','Integrated PCB trace antenna — 2.4GHz. Covers WiFi 802.11 b/g/n (up to 150Mbps) and Bluetooth 4.2 Classic + BLE. Keep area clear of metal.',4.35,0.1,0);
+  addLeg(0x1b3a2e,'RF antenna');
+
+  // CP2102 USB-Serial
+  solid(0.85,0.3,0.85,0x4a0080,'CP2102 USB-SERIAL','Silicon Labs CP2102 — USB to UART bridge. Enables flashing and serial monitor over Micro-USB. Appears as COM/ttyUSB. Auto-resets ESP32 via DTR/RTS.',-3.2,0.22,1.8);
+  addLeg(0x4a0080,'USB-serial bridge');
+
+  // Micro USB
+  solid(0.72,0.5,0.58,0x1565c0,'MICRO-USB PORT','Micro-USB — 5V power input + UART programming via CP2102. Used to flash firmware and view serial output. Powers board at 500mA from USB.',-4.5,0.32,0);
+  addLeg(0x1565c0,'USB / power port');
+
+  // AMS1117 3.3V LDO
+  solid(0.7,0.42,0.5,0xbf360c,'AMS1117-3.3 LDO','AMS1117 3.3V LDO regulator — converts 5V USB/VIN to 3.3V for ESP32 module. Max 800mA output. Gets warm under load. ESP32 itself draws up to 500mA peak during WiFi TX.',-2.8,0.27,-2.2);
+  addLeg(0xbf360c,'3.3V LDO regulator');
+
+  // EN button
+  solid(0.42,0.35,0.42,0xe0e0e0,'EN (ENABLE) BUTTON','Enable/Reset button — pulls EN pin LOW momentarily, resets ESP32. Use to restart after flashing or recover from crash.',-1.5,0.28,-2.4);
+
+  // BOOT button
+  solid(0.42,0.35,0.42,0xbdbdbd,'BOOT (GPIO0) BUTTON','Boot mode button — holds GPIO0 LOW during reset to enter download mode for manual flashing. Also usable as input in normal operation.',1.2,0.28,-2.4);
+  addLeg(0xbdbdbd,'Onboard buttons');
+
+  // Power LED
+  solid(0.2,0.22,0.2,0x00e676,'PWR LED','Red power LED — indicates 3.3V rail is active. Lit whenever board is powered via USB or VIN.',-3.5,0.22,-2.1);
+
+  // Blue LED (GPIO2)
+  solid(0.2,0.22,0.2,0x2979ff,'GPIO2 LED','Blue onboard LED — connected to GPIO2. digitalWrite(2,HIGH) to light. Also blinks during SPI Flash operations.',-2.0,0.22,-2.1);
+  addLeg(0x00e676,'Onboard LEDs');
+
+  // Flash chip
+  solid(0.9,0.22,0.7,0x37474f,'4MB SPI FLASH','Winbond W25Q32 — 4MB SPI NOR Flash. Stores firmware, OTA images, SPIFFS/LittleFS filesystem. Connected to GPIO6-11 (do NOT use those pins).',0.8,0.22,1.5);
+  addLeg(0x37474f,'Flash / memory');
+
+  // LEFT PINS
+  const LP=[
+    {l:'GND',i:'Ground reference. Always connect circuit GND here.',c:0x607d8b},
+    {l:'13 / ADC2_4 / TOUCH4',i:'GPIO13 — Digital I/O, ADC2 ch4, Touch sensor 4, HSPI MOSI. ADC2 unavailable when WiFi active.',c:0x66bb6a},
+    {l:'12 / ADC2_5 / TOUCH5',i:'GPIO12 — Digital I/O, ADC2 ch5, Touch sensor 5, HSPI MISO. Boot fail if HIGH at startup — use carefully.',c:0x66bb6a},
+    {l:'14 / ADC2_6 / TOUCH6',i:'GPIO14 — Digital I/O, ADC2 ch6, Touch sensor 6, HSPI CLK, SDIO CLK. Can be used as output during boot.',c:0x66bb6a},
+    {l:'27 / ADC2_7 / TOUCH7',i:'GPIO27 — Digital I/O, ADC2 ch7, Touch sensor 7.',c:0x66bb6a},
+    {l:'26 / ADC2_9 / DAC2',i:'GPIO26 — Digital I/O, ADC2 ch9, DAC channel 2. True analog output 0–3.3V via dacWrite().',c:0xffa726},
+    {l:'25 / ADC2_8 / DAC1',i:'GPIO25 — Digital I/O, ADC2 ch8, DAC channel 1. True analog output 0–3.3V. Only 2 DAC pins on ESP32.',c:0xffa726},
+    {l:'33 / ADC1_5 / TOUCH8',i:'GPIO33 — Digital I/O, ADC1 ch5, Touch 8. ADC1 works WITH WiFi active. Input only (no pull-down).',c:0xffa726},
+    {l:'32 / ADC1_4 / TOUCH9',i:'GPIO32 — Digital I/O, ADC1 ch4, Touch 9. ADC1 works with WiFi.',c:0xffa726},
+    {l:'35 / ADC1_7',i:'GPIO35 — INPUT ONLY. ADC1 ch7. No internal pull-up/down. No output capable.',c:0xef5350},
+    {l:'34 / ADC1_6',i:'GPIO34 — INPUT ONLY. ADC1 ch6. No internal pull-up/down. Use for analog sensors.',c:0xef5350},
+    {l:'VN / GPIO39 / ADC1_3',i:'GPIO39 (VP) — INPUT ONLY. ADC1 ch3. No pull-up/down. Sensor VP input.',c:0xef5350},
+    {l:'VP / GPIO36 / ADC1_0',i:'GPIO36 (VP) — INPUT ONLY. ADC1 ch0. No pull-up/down. Sensor VP input.',c:0xef5350},
+    {l:'EN',i:'Enable pin — active HIGH. Pull LOW to reset/disable chip. Connected to EN button onboard.',c:0xef5350},
+    {l:'3V3',i:'3.3V regulated output from AMS1117 LDO. Max ~600mA net (shared with ESP32). Use to power 3V3 sensors.',c:0xef9a9a},
+    {l:'GND',i:'Ground.',c:0x607d8b},
+    {l:'5V / VIN',i:'5V input from USB or external supply. Feeds AMS1117 LDO to generate 3.3V. Input only — do not exceed 12V.',c:0xef9a9a},
+    {l:'GND',i:'Ground.',c:0x607d8b},
+    {l:'GND',i:'Ground.',c:0x607d8b},
+  ];
+
+  // RIGHT PINS
+  const RP=[
+    {l:'23 / VSPI MOSI',i:'GPIO23 — Digital I/O. VSPI MOSI (SPI data out to slave). Use for TFT, SD card, SPI sensors.',c:0xab47bc},
+    {l:'22 / SCL / I2C',i:'GPIO22 — Digital I/O. Default I2C SCL clock line. Use Wire.begin() for I2C devices like OLED, BME280.',c:0x26c6da},
+    {l:'TX / GPIO1',i:'GPIO1 — UART0 TX. Serial debug/console output. Avoid using as GPIO when serial monitor active.',c:0xff7043},
+    {l:'RX / GPIO3',i:'GPIO3 — UART0 RX. Serial input. High at boot required. Avoid as GPIO with serial active.',c:0xff7043},
+    {l:'21 / SDA / I2C',i:'GPIO21 — Digital I/O. Default I2C SDA data line. Wire.begin(21,22) to use.',c:0x26c6da},
+    {l:'GND',i:'Ground.',c:0x607d8b},
+    {l:'19 / VSPI MISO',i:'GPIO19 — Digital I/O. VSPI MISO (SPI data in from slave).',c:0xab47bc},
+    {l:'18 / VSPI CLK',i:'GPIO18 — Digital I/O. VSPI SCK clock. SPI bus clock output.',c:0xab47bc},
+    {l:'5 / VSPI SS',i:'GPIO5 — Digital I/O. VSPI SS (chip select). HIGH at boot. PWM signal at boot.',c:0xab47bc},
+    {l:'17 / UART2 TX',i:'GPIO17 — Digital I/O. UART2 TX. Use Serial2 for second UART (GPS, GSM, etc.).',c:0xff7043},
+    {l:'16 / UART2 RX',i:'GPIO16 — Digital I/O. UART2 RX. Serial2 receive.',c:0xff7043},
+    {l:'4 / ADC2_0 / TOUCH0',i:'GPIO4 — Digital I/O. ADC2 ch0, Touch sensor 0. ADC2 unavailable with WiFi.',c:0x66bb6a},
+    {l:'0 / ADC2_1 / TOUCH1 / BOOT',i:'GPIO0 — Digital I/O. BOOT button. Must be HIGH at boot. ADC2 ch1, Touch 1. Outputs PWM at boot.',c:0xffa726},
+    {l:'2 / ADC2_2 / TOUCH2 / LED',i:'GPIO2 — Digital I/O. Onboard LED. Must be LOW at boot for download mode. ADC2 ch2, Touch 2.',c:0xffa726},
+    {l:'15 / ADC2_3 / TOUCH3',i:'GPIO15 — Digital I/O. ADC2 ch3, Touch 3, HSPI SS. Outputs PWM at boot. Pull LOW to silence boot log.',c:0x66bb6a},
+    {l:'8 / SD_DATA1 (avoid)',i:'GPIO8 — Connected to SPI Flash. DO NOT USE as GPIO — will crash firmware.',c:0xf44336},
+    {l:'7 / SD_DATA0 (avoid)',i:'GPIO7 — Connected to SPI Flash. DO NOT USE.',c:0xf44336},
+    {l:'6 / SD_CLK (avoid)',i:'GPIO6 — Connected to SPI Flash CLK. DO NOT USE.',c:0xf44336},
+    {l:'11 / SD_CMD (avoid)',i:'GPIO11 — Connected to SPI Flash CMD. DO NOT USE as GPIO.',c:0xf44336},
+  ];
+  
+  addLeg(0xf44336,'Flash-reserved — do NOT use');
+  addLeg(0xef5350,'Input-only / power');
+  addLeg(0xffa726,'ADC1 (WiFi-safe) / DAC');
+  addLeg(0x66bb6a,'ADC2 / Touch / GPIO');
+  addLeg(0xab47bc,'SPI (VSPI/HSPI)');
+  addLeg(0x26c6da,'I2C');
+  addLeg(0xff7043,'UART');
+  addLeg(0x607d8b,'GND');
+
+  const pinGap=0.52,leftX=-4.8,rightX=4.8,startZ=-4.5;
+  LP.forEach((p,i)=>{
+    pin(p.c,`L${i+1}: ${p.l}`,p.i,leftX,0.22,startZ+i*pinGap);
+  });
+  RP.forEach((p,i)=>{
+    pin(p.c,`R${i+1}: ${p.l}`,p.i,rightX,0.22,startZ+i*pinGap);
+  });
+
+  // Pivot
+  const pivot=new THREE.Group();
+  [...scene.children].forEach(o=>pivot.add(o));
+  scene.add(pivot);
+  pivot.rotation.x=-0.3;pivot.rotation.y=0.4;
+
+  let tRx=-0.3,tRy=0.4,isDrag=false,lastX=0,lastY=0;
+  wrap.style.cursor='grab';
+  wrap.addEventListener('mousedown',e=>{isDrag=true;lastX=e.clientX;lastY=e.clientY;wrap.style.cursor='grabbing';});
+  window.addEventListener('mouseup',()=>{isDrag=false;wrap.style.cursor='grab';});
+  wrap.addEventListener('mousemove',e=>{
+    if(isDrag){
+      tRy+=(e.clientX-lastX)*0.008;
+      tRx+=(e.clientY-lastY)*0.008;
+      tRx=Math.max(-1.2,Math.min(1.2,tRx));
+      lastX=e.clientX;lastY=e.clientY;
+    }
+    const rect=wrap.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/W)*2-1;
+    mouse.y=-((e.clientY-rect.top)/H)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const hits=raycaster.intersectObjects(parts,true);
+    if(hits.length){
+      let obj=hits[0].object;
+      let ud=obj.userData&&obj.userData.label?obj.userData:obj.parent&&obj.parent.userData&&obj.parent.userData.label?obj.parent.userData:null;
+      if(ud&&ud.label){
+        tooltip.style.display='block';
+        tooltip.innerHTML=`<b style="color:#fff;font-size:12px;">${ud.label}</b><br><span style="color:#aaa;font-size:10px;">${ud.info}</span>`;
+        tooltip.style.left=Math.min(e.clientX-rect.left+14,W-265)+'px';
+        tooltip.style.top=Math.max(e.clientY-rect.top-75,8)+'px';
+      }
+    } else tooltip.style.display='none';
+  });
+
+  const clock=new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    pivot.rotation.x+=(tRx-pivot.rotation.x)*0.08;
+    pivot.rotation.y+=(tRy-pivot.rotation.y)*0.08;
+    if(!isDrag) tRy+=0.002;
+    pivot.position.y=Math.sin(t*1.3)*0.07;
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    const nW=wrap.clientWidth,nH=wrap.clientHeight;
+    camera.aspect=nW/nH;camera.updateProjectionMatrix();renderer.setSize(nW,nH);
+  });
+}
+</script>
+
+</body>
+</html>
