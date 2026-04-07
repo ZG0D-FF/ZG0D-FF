@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java Programs — DJ</title>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath:[['$','$'],['\\(','\\)']], displayMath:[['$$','$$'],['\\[','\\]']] },
+      options: { skipHtmlTags:['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- =========================
+       🔧 CONFIG — EDIT HERE
+  ========================== -->
+  <script>
+    const CONFIG = {
+      student: "DJ",
+      subject: "Java Programs",
+      // 🔴 ADD NEW FORMULA PILLS HERE
+      formulas: [
+        { label: "C→F",  tex: "$F = \\frac{9}{5}C + 32$" },
+        { label: "F→C",  tex: "$C = \\frac{5}{9}(F - 32)$" },
+        { label: "Rect Area", tex: "$A = l \\times w$" },
+        { label: "Rect Peri", tex: "$P = 2(l+w)$" },
+        { label: "Circle Area", tex: "$A = \\pi r^2$" },
+        { label: "Circle Peri", tex: "$P = 2\\pi r$" },
+        { label: "Miles→KM", tex: "$1\\text{ mi} = 1.609\\text{ km}$" },
+        { label: "Leap Year", tex: "$(y\\%4=0 \\land y\\%100\\neq0)\\lor y\\%400=0$" }
+      ]
+    };
+  </script>
+
+  <!-- =========================
+       🎨 STYLES
+  ========================== -->
+  <style>
+    :root {
+      --bg:      #0b0e14;
+      --bg2:     #111520;
+      --bg3:     #161b27;
+      --border:  #1e2535;
+      --accent:  #e8a045;
+      --blue:    #5b9cf6;
+      --green:   #7ed4a0;
+      --red:     #e06c75;
+      --purple:  #c678dd;
+      --text:    #cdd6f4;
+      --muted:   #6b7280;
+      --code:    #0d1117;
+      --nav-w:   230px;
+      --hdr-h:   54px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;flex-direction:column;min-height:100vh;}
+
+    /* HEADER */
+    header{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--hdr-h);background:rgba(11,14,20,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;}
+    .logo{font-family:'Playfair Display',serif;font-size:17px;font-weight:900;color:var(--accent);white-space:nowrap;}
+    .logo span{color:var(--text);}
+    .badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);}
+    #searchInput{margin-left:auto;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;width:200px;outline:none;transition:border-color .2s;}
+    #searchInput:focus{border-color:var(--blue);}
+    #searchInput::placeholder{color:var(--muted);}
+    .view-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);transition:all .15s;user-select:none;}
+    .view-btn:hover{color:var(--text);border-color:var(--blue);}
+
+    /* LAYOUT */
+    .layout{display:flex;padding-top:var(--hdr-h);min-height:100vh;}
+
+    /* NAV */
+    nav{width:var(--nav-w);min-width:var(--nav-w);position:fixed;top:var(--hdr-h);left:0;bottom:0;overflow-y:auto;background:var(--bg2);border-right:1px solid var(--border);padding:16px 0;}
+    nav::-webkit-scrollbar{width:3px;}
+    nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+    .nav-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 16px 3px;}
+    nav a{display:flex;align-items:center;gap:8px;padding:6px 16px;color:var(--muted);text-decoration:none;font-size:12.5px;border-left:2px solid transparent;transition:all .15s;}
+    nav a:hover{color:var(--text);background:var(--bg3);}
+    nav a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(232,160,69,.06);}
+    .dot{width:5px;height:5px;border-radius:50%;background:var(--border);flex-shrink:0;}
+    nav a.active .dot,nav a:hover .dot{background:var(--accent);}
+
+    /* MAIN */
+    main{margin-left:var(--nav-w);flex:1;padding:40px 52px;max-width:940px;}
+
+    /* FORMULA BAR */
+    .formula-bar{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:40px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+    .formula-bar .flabel{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;}
+    .fpill{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--green);cursor:default;transition:border-color .15s;}
+    .fpill:hover{border-color:var(--green);}
+
+    /* SECTION / CARD */
+    .section{margin-bottom:56px;scroll-margin-top:calc(var(--hdr-h) + 20px);}
+    .section-tag{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:4px;display:block;}
+    h2.stitle{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#e8eaf2;margin-bottom:16px;}
+
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0;margin-bottom:20px;overflow:hidden;transition:border-color .2s;}
+    .card:hover{border-color:#2a3350;}
+
+    /* QUESTION */
+    .q-bar{background:var(--bg3);padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+    .q-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);background:rgba(232,160,69,.1);border:1px solid rgba(232,160,69,.25);border-radius:4px;padding:1px 7px;}
+    .q-text{font-size:14px;font-weight:500;color:var(--text);}
+
+    /* FORMULA INLINE */
+    .formula-line{padding:8px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--green);background:rgba(126,212,160,.04);border-bottom:1px solid var(--border);}
+
+    /* CODE */
+    .code-block{background:var(--code);padding:16px 18px;overflow-x:auto;border-bottom:1px solid var(--border);}
+    .code-block pre{margin:0;}
+    .code-block code{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;color:#abb2bf;}
+    .kw{color:#c678dd;} .cls{color:#e5c07b;} .fn{color:#61afef;} .str{color:#98c379;} .cm{color:#5c6370;font-style:italic;} .num{color:#d19a66;} .op{color:#56b6c2;}
+
+    /* OUTPUT */
+    .output-block{padding:10px 18px;display:flex;align-items:center;gap:10px;}
+    .out-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+    .out-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--green);}
+
+    /* LOGIC TAG */
+    .logic-tag{display:inline-block;padding:2px 9px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(91,156,246,.08);border:1px solid rgba(91,156,246,.2);color:var(--blue);margin:0 18px 0;}
+
+    /* TEXTBOOK MODE */
+    body.tb{font-family:'Georgia',serif;font-size:16px;background:#faf8f3;color:#2a2a2a;}
+    body.tb header{background:rgba(250,248,243,.95);border-bottom-color:#ddd;}
+    body.tb nav{background:#f3f0e8;border-right-color:#ddd;}
+    body.tb .card{background:#fff;border-color:#e0dbd0;}
+    body.tb .q-bar{background:#f3f0e8;border-bottom-color:#ddd;}
+    body.tb .code-block{background:#f5f5f5;}
+    body.tb code{color:#333;}
+    body.tb .formula-bar{background:#f0ece0;border-color:#ddd;}
+    body.tb p{color:#444;}
+    body.tb nav a{color:#555;}
+    body.tb h2.stitle{color:#1a1a2e;}
+
+    @media(max-width:768px){nav{display:none;}main{margin-left:0;padding:22px 18px;}}
+    
+    body.tb nav a{color:#555;}
+    body.tb h2.stitle{color:#1a1a2e;}
+
+@media(max-width:768px){nav{display:none;}main{margin-left:0;padding:22px 18px;}}
+
+    /* Typewriter Cursor */
+    .typing-cursor::after {
+      content: '█';
+      animation: blink 0.8s infinite;
+      color: #00ffcc; /* Terminal green/cyan */
+      margin-left: 5px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Java<span>Progs</span></div>
+  <div class="badge" id="headerBadge"></div>
+  <input id="searchInput" type="text" placeholder="Search programs…" oninput="handleSearch(this.value)">
+  <div class="view-btn" onclick="toggleTB()" id="viewBtn">📖 Textbook</div>
+</header>
+
+<div class="layout">
+
+  <!-- AUTO NAV -->
+  <nav id="sidebar"></nav>
+
+  <main id="mainContent">
+
+    <!-- FORMULA REFERENCE BAR — auto-built from CONFIG -->
+    <div class="formula-bar" id="formulaBar">
+      <span class="flabel">📐 Formulas</span>
+    </div>
+
+    <!-- ════════════════════════════
+         🔴 DATA SECTION — ADD MORE CARDS HERE
+         Each .section needs: id="sec-X" data-title="..."
+    ════════════════════════════ -->
+
+<section class="section" id="sec-basics" data-title="Basic Programs">
+      <span class="section-tag">Unit 01</span>
+      <h2 class="stitle">Basic Programs</h2>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q1</span><span class="q-text">Print Your Name</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">PrintName</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">System</span>.out.println(<span class="str">"DJ"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">DJ</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q2</span><span class="q-text">Add Two Numbers</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">AddNumbers</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> a = <span class="num">10</span>, b = <span class="num">20</span>;
+        <span class="cls">System</span>.out.println(<span class="str">"Sum: "</span> + (a + b));
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Sum: 30</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q3</span><span class="q-text">Celsius to Fahrenheit</span></div>
+        <div class="formula-line">$$F = \frac{9}{5}C + 32$$</div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">CelToFah</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">double</span> c = <span class="num">37.0</span>;
+        <span class="kw">double</span> f = (c * <span class="num">9</span>/<span class="num">5</span>) + <span class="num">32</span>;
+        <span class="cls">System</span>.out.println(<span class="str">"Fahrenheit: "</span> + f);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Fahrenheit: 98.6</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q4</span><span class="q-text">Fahrenheit to Celsius</span></div>
+        <div class="formula-line">$$C = \frac{5}{9}(F - 32)$$</div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">FahToCel</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">double</span> f = <span class="num">98.6</span>;
+        <span class="kw">double</span> c = (f - <span class="num">32</span>) * <span class="num">5</span>/<span class="num">9</span>;
+        <span class="cls">System</span>.out.println(<span class="str">"Celsius: "</span> + c);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Celsius: 37.0</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q5</span><span class="q-text">Area & Perimeter of Rectangle</span></div>
+        <div class="formula-line">$A = l \times w$ &nbsp;|&nbsp; $P = 2(l + w)$</div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Rectangle</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> length = <span class="num">10</span>, width = <span class="num">5</span>;
+        <span class="cls">System</span>.out.println(<span class="str">"Area: "</span> + (length * width));
+        <span class="cls">System</span>.out.println(<span class="str">"Perimeter: "</span> + (<span class="num">2</span> * (length + width)));
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Area: 50 | Perimeter: 30</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q6</span><span class="q-text">Area & Perimeter of Circle</span></div>
+        <div class="formula-line">$A = \pi r^2$ &nbsp;|&nbsp; $P = 2\pi r$</div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Circle</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">double</span> r = <span class="num">7.0</span>;
+        <span class="cls">System</span>.out.println(<span class="str">"Area: "</span> + (<span class="num">3.14</span> * r * r));
+        <span class="cls">System</span>.out.println(<span class="str">"Perimeter: "</span> + (<span class="num">2</span> * <span class="num">3.14</span> * r));
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Area: 153.86 | Perimeter: 43.96</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q7</span><span class="q-text">Convert Miles to Kilometers</span></div>
+        <div class="formula-line">$\text{km} = \text{miles} \times 1.609$</div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">MilesToKm</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">double</span> miles = <span class="num">5.0</span>;
+        <span class="cls">System</span>.out.println(<span class="str">"Kilometers: "</span> + (miles * <span class="num">1.609</span>));
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Kilometers: 8.045</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-conditions" data-title="Conditions & Logic">
+      <span class="section-tag">Unit 02</span>
+      <h2 class="stitle">Conditions & Logic</h2>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q8</span><span class="q-text">Odd or Even</span></div>
+        <span class="logic-tag">$n \% 2 == 0 \Rightarrow$ Even</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">OddEven</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">7</span>;
+        <span class="kw">if</span> (n % <span class="num">2</span> == <span class="num">0</span>) <span class="cls">System</span>.out.println(<span class="str">"Even"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Odd"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Odd</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q9</span><span class="q-text">Positive or Negative</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">PosNeg</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">-5</span>;
+        <span class="kw">if</span> (n > <span class="num">0</span>) <span class="cls">System</span>.out.println(<span class="str">"Positive"</span>);
+        <span class="kw">else if</span> (n < <span class="num">0</span>) <span class="cls">System</span>.out.println(<span class="str">"Negative"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Zero"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Negative</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q10</span><span class="q-text">Maximum of Three Numbers</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">MaxThree</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> a = <span class="num">10</span>, b = <span class="num">25</span>, c = <span class="num">15</span>;
+        <span class="kw">if</span> (a > b && a > c) <span class="cls">System</span>.out.println(a + <span class="str">" is max"</span>);
+        <span class="kw">else if</span> (b > a && b > c) <span class="cls">System</span>.out.println(b + <span class="str">" is max"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(c + <span class="str">" is max"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">25 is max</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q11</span><span class="q-text">Swap Two Numbers</span></div>
+        <span class="logic-tag">temp = a → a = b → b = temp</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Swap</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> a = <span class="num">5</span>, b = <span class="num">10</span>, temp;
+        temp = a; 
+        a = b;    
+        b = temp; 
+        <span class="cls">System</span>.out.println(<span class="str">"a = "</span> + a + <span class="str">", b = "</span> + b);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">a = 10, b = 5</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q12</span><span class="q-text">Leap Year</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">LeapYear</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> year = <span class="num">2024</span>;
+        <span class="kw">if</span> ((year % <span class="num">4</span> == <span class="num">0</span> && year % <span class="num">100</span> != <span class="num">0</span>) || (year % <span class="num">400</span> == <span class="num">0</span>)) 
+            <span class="cls">System</span>.out.println(<span class="str">"Leap Year"</span>);
+        <span class="kw">else</span> 
+            <span class="cls">System</span>.out.println(<span class="str">"Not a Leap Year"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Leap Year</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q13</span><span class="q-text">Grading System</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Grade</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> marks = <span class="num">85</span>;
+        <span class="kw">if</span> (marks >= <span class="num">90</span>) <span class="cls">System</span>.out.println(<span class="str">"Grade A"</span>);
+        <span class="kw">else if</span> (marks >= <span class="num">80</span>) <span class="cls">System</span>.out.println(<span class="str">"Grade B"</span>);
+        <span class="kw">else if</span> (marks >= <span class="num">70</span>) <span class="cls">System</span>.out.println(<span class="str">"Grade C"</span>);
+        <span class="kw">else if</span> (marks >= <span class="num">60</span>) <span class="cls">System</span>.out.println(<span class="str">"Grade D"</span>);
+        <span class="kw">else if</span> (marks >= <span class="num">40</span>) <span class="cls">System</span>.out.println(<span class="str">"Grade E"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Grade F"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Grade B</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q14</span><span class="q-text">Divisible by 5</span></div>
+        <span class="logic-tag">$n \% 5 == 0 \Rightarrow$ Divisible</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">DivisibleByFive</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">25</span>;
+        <span class="kw">if</span> (n % <span class="num">5</span> == <span class="num">0</span>) <span class="cls">System</span>.out.println(<span class="str">"Divisible by 5"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Not divisible by 5"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Divisible by 5</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-wk2-loops" data-title="Week 2: Loops & Math">
+      <span class="section-tag">Unit 03</span>
+      <h2 class="stitle">Week 2 Assignments (Loops & Math)</h2>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q15</span><span class="q-text">Buzz Number</span></div>
+        <span class="logic-tag">Ends with 7 OR Divisible by 7</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Buzz</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">47</span>;
+        <span class="kw">if</span> (n % <span class="num">10</span> == <span class="num">7</span> || n % <span class="num">7</span> == <span class="num">0</span>) <span class="cls">System</span>.out.println(<span class="str">"Buzz Number"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Not Buzz"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Buzz Number</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q16</span><span class="q-text">Factorial of 12</span></div>
+        <span class="logic-tag">Requires `long` because 12! is large</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Factorial</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">long</span> f = <span class="num">1</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">12</span>; i++) f = f * i;
+        <span class="cls">System</span>.out.println(<span class="str">"Factorial: "</span> + f);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Factorial: 479001600</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q17</span><span class="q-text">Fibonacci Series</span></div>
+        <span class="logic-tag">$next = a + b$</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Fibonacci</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> a = <span class="num">0</span>, b = <span class="num">1</span>, next;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">10</span>; i++) {
+            <span class="cls">System</span>.out.print(a + <span class="str">" "</span>);
+            next = a + b;
+            a = b;
+            b = next;
+        }
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">0 1 1 2 3 5 8 13 21 34</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q18</span><span class="q-text">Reverse a Number</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Reverse</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">123</span>, rev = <span class="num">0</span>;
+        <span class="kw">while</span> (n > <span class="num">0</span>) {
+            rev = (rev * <span class="num">10</span>) + (n % <span class="num">10</span>);
+            n = n / <span class="num">10</span>;
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Reversed: "</span> + rev);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Reversed: 321</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q19</span><span class="q-text">Sum of Natural Numbers</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SumNumbers</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">10</span>, sum = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= n; i++) sum = sum + i;
+        <span class="cls">System</span>.out.println(<span class="str">"Sum: "</span> + sum);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Sum: 55</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q20</span><span class="q-text">Multiples of 10 in an Interval</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">MultiplesOf10</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">15</span>; i <= <span class="num">65</span>; i++) {
+            <span class="kw">if</span> (i % <span class="num">10</span> == <span class="num">0</span>) <span class="cls">System</span>.out.print(i + <span class="str">" "</span>);
+        }
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">20 30 40 50 60</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q21</span><span class="q-text">Multiplication Table</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Table</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">5</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">10</span>; i++) {
+            <span class="cls">System</span>.out.println(n + <span class="str">" x "</span> + i + <span class="str">" = "</span> + (n * i));
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q22</span><span class="q-text">HCF of Two Numbers</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">HCF</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> a = <span class="num">12</span>, b = <span class="num">18</span>;
+        <span class="kw">while</span> (b != <span class="num">0</span>) {
+            <span class="kw">int</span> temp = b;
+            b = a % b;
+            a = temp;
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"HCF: "</span> + a);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">HCF: 6</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q23</span><span class="q-text">LCM of Two Numbers</span></div>
+        <span class="logic-tag">Formula: LCM = (A * B) / HCF</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">LCM</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> a = <span class="num">12</span>, b = <span class="num">18</span>, x = a, y = b;
+        <span class="kw">while</span> (b != <span class="num">0</span>) { <span class="cm">// Find HCF first</span>
+            <span class="kw">int</span> temp = b;
+            b = a % b;
+            a = temp;
+        }
+        <span class="kw">int</span> lcm = (x * y) / a;
+        <span class="cls">System</span>.out.println(<span class="str">"LCM: "</span> + lcm);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">LCM: 36</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q24</span><span class="q-text">Count Digits</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">CountDigits</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">5432</span>, count = <span class="num">0</span>;
+        <span class="kw">while</span> (n > <span class="num">0</span>) {
+            n = n / <span class="num">10</span>;
+            count++;
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Digits: "</span> + count);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Digits: 4</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-wk2-advanced" data-title="Week 2: Advanced Logic">
+      <span class="section-tag">Unit 04</span>
+      <h2 class="stitle">Week 2 Assignments (Advanced)</h2>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q25</span><span class="q-text">Admission Eligibility (Scanner Input)</span></div>
+        <div class="code-block"><pre><code><span class="kw">import</span> <span class="cls">java.util.Scanner</span>;
+
+<span class="kw">class</span> <span class="cls">Admission</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">Scanner</span> sc = <span class="kw">new</span> <span class="cls">Scanner</span>(<span class="cls">System</span>.in);
+        <span class="cls">System</span>.out.print(<span class="str">"Enter number of students: "</span>);
+        <span class="kw">int</span> n = sc.nextInt();
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= n; i++) {
+            <span class="cls">System</span>.out.println(<span class="str">"Enter Math, Physics, Chem marks:"</span>);
+            <span class="kw">int</span> m = sc.nextInt(), p = sc.nextInt(), c = sc.nextInt();
+            
+            <span class="kw">if</span> ((m >= <span class="num">60</span> && p >= <span class="num">50</span> && c >= <span class="num">40</span> && (m + p + c) >= <span class="num">200</span>) || (m + p >= <span class="num">150</span>)) {
+                <span class="cls">System</span>.out.println(<span class="str">"Eligible"</span>);
+            } <span class="kw">else</span> {
+                <span class="cls">System</span>.out.println(<span class="str">"Not Eligible"</span>);
+            }
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q26</span><span class="q-text">Roots of Quadratic Equation</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Quadratic</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">double</span> a = <span class="num">1</span>, b = <span class="num">-5</span>, c = <span class="num">6</span>; 
+        <span class="kw">double</span> d = (b * b) - (<span class="num">4</span> * a * c); <span class="cm">// Determinant</span>
+        
+        <span class="kw">if</span> (d >= <span class="num">0</span>) {
+            <span class="cls">System</span>.out.println(<span class="str">"Root 1: "</span> + (-b + <span class="cls">Math</span>.sqrt(d)) / (<span class="num">2</span> * a));
+            <span class="cls">System</span>.out.println(<span class="str">"Root 2: "</span> + (-b - <span class="cls">Math</span>.sqrt(d)) / (<span class="num">2</span> * a));
+        } <span class="kw">else</span> {
+            <span class="cls">System</span>.out.println(<span class="str">"Imaginary Roots"</span>);
+        }
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Root 1: 3.0 | Root 2: 2.0</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q27</span><span class="q-text">Exponential (Power)</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Exponential</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> base = <span class="num">2</span>, exp = <span class="num">3</span>, res = <span class="num">1</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= exp; i++) res = res * base;
+        <span class="cls">System</span>.out.println(<span class="str">"Result: "</span> + res);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Result: 8</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q28</span><span class="q-text">Palindrome Checker</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Palindrome</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">121</span>, temp = n, rev = <span class="num">0</span>;
+        <span class="kw">while</span> (temp > <span class="num">0</span>) {
+            rev = (rev * <span class="num">10</span>) + (temp % <span class="num">10</span>);
+            temp = temp / <span class="num">10</span>;
+        }
+        <span class="kw">if</span> (n == rev) <span class="cls">System</span>.out.println(<span class="str">"Palindrome"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Not Palindrome"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Palindrome</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q29</span><span class="q-text">Prime Number</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Prime</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> n = <span class="num">7</span>, count = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= n; i++) {
+            <span class="kw">if</span> (n % i == <span class="num">0</span>) count++;
+        }
+        <span class="kw">if</span> (count == <span class="num">2</span>) <span class="cls">System</span>.out.println(<span class="str">"Prime"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Not Prime"</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Prime</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q30</span><span class="q-text">Binary to Decimal & Decimal to Binary</span></div>
+        <span class="logic-tag">Using Java's built-in tools (easiest to memorize)</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">BinDecConvert</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">System</span>.out.println(<span class="str">"Binary of 10: "</span> + <span class="cls">Integer</span>.toBinaryString(<span class="num">10</span>));
+        <span class="cls">System</span>.out.println(<span class="str">"Decimal of 1010: "</span> + <span class="cls">Integer</span>.parseInt(<span class="str">"1010"</span>, <span class="num">2</span>));
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Binary of 10: 1010 | Decimal of 1010: 10</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q31</span><span class="q-text">Median of Numbers</span></div>
+        <div class="code-block"><pre><code><span class="kw">import</span> <span class="cls">java.util.Arrays</span>;
+
+<span class="kw">class</span> <span class="cls">Median</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">12</span>, <span class="num">3</span>, <span class="num">5</span>, <span class="num">7</span>, <span class="num">19</span>};
+        <span class="cls">Arrays</span>.sort(arr);
+        <span class="kw">int</span> len = arr.length;
+        
+        <span class="kw">if</span> (len % <span class="num">2</span> != <span class="num">0</span>) <span class="cls">System</span>.out.println(<span class="str">"Median: "</span> + arr[len / <span class="num">2</span>]);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Median: "</span> + (arr[len / <span class="num">2</span>] + arr[(len / <span class="num">2</span>) - <span class="num">1</span>]) / <span class="num">2.0</span>);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Median: 7</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q32</span><span class="q-text">Euler’s Number (e)</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Euler</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">double</span> e = <span class="num">1</span>, fact = <span class="num">1</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">10</span>; i++) { 
+            fact = fact * i;
+            e = e + (<span class="num">1.0</span> / fact);
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"e = "</span> + e);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">e = 2.7182818...</span></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q33</span><span class="q-text">Combinations of 1, 2, 3</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Combinations</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">3</span>; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j <= <span class="num">3</span>; j++) {
+                <span class="kw">for</span> (<span class="kw">int</span> k = <span class="num">1</span>; k <= <span class="num">3</span>; k++) {
+                    <span class="cls">System</span>.out.println(i + <span class="str">""</span> + j + <span class="str">""</span> + k);
+                }
+            }
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q34</span><span class="q-text">Check Multiple</span></div>
+        <span class="logic-tag">$m \% n == 0 \Rightarrow$ Multiple</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">MultipleCheck</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> m = <span class="num">20</span>, n = <span class="num">5</span>;
+        <span class="kw">if</span> (m % n == <span class="num">0</span>) <span class="cls">System</span>.out.println(m + <span class="str">" is a multiple of "</span> + n);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(m + <span class="str">" is NOT a multiple of "</span> + n);
+    }
+}</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">20 is a multiple of 5</span></div>
+      </div>
+    </section>
+
+    
+    <section class="section" id="sec-arrays" data-title="Arrays & Matrices">
+        
+        <span class="section-tag">Unit 05</span>
+      <h2 class="stitle">Array & Matrix Assignments</h2>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q1</span><span class="q-text">Sum & Average of an Array</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SumAvgArray</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>};
+        <span class="kw">int</span> sum = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < arr.length; i++) sum += arr[i];
+        
+        <span class="cls">System</span>.out.println(<span class="str">"Sum: "</span> + sum);
+        <span class="cls">System</span>.out.println(<span class="str">"Average: "</span> + (sum / arr.length));
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q2</span><span class="q-text">Range of a 1D Array (Max - Min)</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">ArrayRange</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">5</span>, <span class="num">2</span>, <span class="num">9</span>, <span class="num">1</span>, <span class="num">7</span>};
+        <span class="kw">int</span> min = arr[<span class="num">0</span>], max = arr[<span class="num">0</span>];
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i < arr.length; i++) {
+            <span class="kw">if</span> (arr[i] < min) min = arr[i];
+            <span class="kw">if</span> (arr[i] > max) max = arr[i];
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Range: "</span> + (max - min));
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q3</span><span class="q-text">Search an Element</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SearchArray</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>};
+        <span class="kw">int</span> key = <span class="num">30</span>;
+        <span class="kw">boolean</span> found = <span class="kw">false</span>;
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < arr.length; i++) {
+            <span class="kw">if</span> (arr[i] == key) {
+                <span class="cls">System</span>.out.println(<span class="str">"Found at index: "</span> + i);
+                found = <span class="kw">true</span>;
+                <span class="kw">break</span>;
+            }
+        }
+        <span class="kw">if</span> (!found) <span class="cls">System</span>.out.println(<span class="str">"Not Found"</span>);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q4</span><span class="q-text">Sum of Even Numbers</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SumEvens</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>};
+        <span class="kw">int</span> sum = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < arr.length; i++) {
+            <span class="kw">if</span> (arr[i] % <span class="num">2</span> == <span class="num">0</span>) sum += arr[i];
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Sum of Evens: "</span> + sum);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q5</span><span class="q-text">Reverse Elements without a Second Array</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">ReverseArray</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>};
+        <span class="kw">int</span> n = arr.length;
+        
+        <span class="cm">// Swap first half with second half</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < n / <span class="num">2</span>; i++) {
+            <span class="kw">int</span> temp = arr[i];
+            arr[i] = arr[n - <span class="num">1</span> - i];
+            arr[n - <span class="num">1</span> - i] = temp;
+        }
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < n; i++) <span class="cls">System</span>.out.print(arr[i] + <span class="str">" "</span>);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q6</span><span class="q-text">Smallest Number among N Elements</span></div>
+        <div class="code-block"><pre><code><span class="kw">import</span> <span class="cls">java.util.Scanner</span>;
+
+<span class="kw">class</span> <span class="cls">SmallestElement</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">Scanner</span> sc = <span class="kw">new</span> <span class="cls">Scanner</span>(<span class="cls">System</span>.in);
+        <span class="cls">System</span>.out.print(<span class="str">"Enter n: "</span>);
+        <span class="kw">int</span> n = sc.nextInt();
+        <span class="kw">int</span>[] arr = <span class="kw">new int</span>[n];
+        
+        <span class="cls">System</span>.out.println(<span class="str">"Enter elements:"</span>);
+        arr[<span class="num">0</span>] = sc.nextInt();
+        <span class="kw">int</span> min = arr[<span class="num">0</span>];
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i < n; i++) {
+            arr[i] = sc.nextInt();
+            <span class="kw">if</span> (arr[i] < min) min = arr[i];
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Smallest: "</span> + min);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q7</span><span class="q-text">Count Prime Numbers in Array</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">CountPrimes</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>, <span class="num">7</span>};
+        <span class="kw">int</span> primeCount = <span class="num">0</span>;
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < arr.length; i++) {
+            <span class="kw">int</span> factors = <span class="num">0</span>;
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j <= arr[i]; j++) {
+                <span class="kw">if</span> (arr[i] % j == <span class="num">0</span>) factors++;
+            }
+            <span class="kw">if</span> (factors == <span class="num">2</span>) primeCount++; <span class="cm">// Primes only have 2 factors</span>
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Primes found: "</span> + primeCount);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q8</span><span class="q-text">Second Highest Element</span></div>
+        <span class="logic-tag">Using Arrays.sort() is 10x easier</span>
+        <div class="code-block"><pre><code><span class="kw">import</span> <span class="cls">java.util.Arrays</span>;
+
+<span class="kw">class</span> <span class="cls">SecondHighest</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">10</span>, <span class="num">5</span>, <span class="num">20</span>, <span class="num">8</span>, <span class="num">15</span>};
+        <span class="cls">Arrays</span>.sort(arr);
+        <span class="cls">System</span>.out.println(<span class="str">"Second Highest: "</span> + arr[arr.length - <span class="num">2</span>]);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q11</span><span class="q-text">Print Transpose of a Matrix</span></div>
+        <span class="logic-tag">Trick: Just swap i and j when printing</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Transpose</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[][] a = {{<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>}, {<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>}}; <span class="cm">// 2x3 matrix</span>
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">3</span>; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j < <span class="num">2</span>; j++) {
+                <span class="cls">System</span>.out.print(a[j][i] + <span class="str">" "</span>);
+            }
+            <span class="cls">System</span>.out.println();
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q12</span><span class="q-text">Check if Matrix is Sparse</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SparseMatrix</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[][] a = {{<span class="num">1</span>, <span class="num">0</span>, <span class="num">0</span>}, {<span class="num">0</span>, <span class="num">0</span>, <span class="num">2</span>}, {<span class="num">0</span>, <span class="num">3</span>, <span class="num">0</span>}};
+        <span class="kw">int</span> zeros = <span class="num">0</span>, totalElements = <span class="num">9</span>;
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">3</span>; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j < <span class="num">3</span>; j++) {
+                <span class="kw">if</span> (a[i][j] == <span class="num">0</span>) zeros++;
+            }
+        }
+        <span class="kw">if</span> (zeros > totalElements / <span class="num">2</span>) <span class="cls">System</span>.out.println(<span class="str">"Sparse"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Not Sparse"</span>);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q14</span><span class="q-text">Multiply Two Matrices</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">MultiplyMatrix</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[][] a = {{<span class="num">1</span>, <span class="num">2</span>}, {<span class="num">3</span>, <span class="num">4</span>}}, b = {{<span class="num">1</span>, <span class="num">1</span>}, {<span class="num">1</span>, <span class="num">1</span>}}, c = <span class="kw">new int</span>[<span class="num">2</span>][<span class="num">2</span>];
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">2</span>; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j < <span class="num">2</span>; j++) {
+                c[i][j] = <span class="num">0</span>;
+                <span class="kw">for</span> (<span class="kw">int</span> k = <span class="num">0</span>; k < <span class="num">2</span>; k++) {
+                    c[i][j] += a[i][k] * b[k][j];
+                }
+                <span class="cls">System</span>.out.print(c[i][j] + <span class="str">" "</span>);
+            }
+            <span class="cls">System</span>.out.println();
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q16</span><span class="q-text">Duplicate Elements & Frequency</span></div>
+        <span class="logic-tag">Mark counted elements with -1</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Duplicates</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">1</span>, <span class="num">4</span>};
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < arr.length; i++) {
+            <span class="kw">int</span> count = <span class="num">1</span>;
+            <span class="kw">if</span> (arr[i] != <span class="num">-1</span>) {
+                <span class="kw">for</span> (<span class="kw">int</span> j = i + <span class="num">1</span>; j < arr.length; j++) {
+                    <span class="kw">if</span> (arr[i] == arr[j]) {
+                        count++;
+                        arr[j] = <span class="num">-1</span>; <span class="cm">// Mark as counted</span>
+                    }
+                }
+                <span class="kw">if</span> (count > <span class="num">1</span>) <span class="cls">System</span>.out.println(arr[i] + <span class="str">" occurs "</span> + count + <span class="str">" times"</span>);
+            }
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q18/19</span><span class="q-text">Merge Two Sorted Arrays</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">MergeSorted</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] a = {<span class="num">1</span>, <span class="num">3</span>, <span class="num">5</span>}, b = {<span class="num">2</span>, <span class="num">4</span>, <span class="num">6</span>}, c = <span class="kw">new int</span>[<span class="num">6</span>];
+        <span class="kw">int</span> i = <span class="num">0</span>, j = <span class="num">0</span>, k = <span class="num">0</span>;
+        
+        <span class="cm">// Pick the smaller element and add to C</span>
+        <span class="kw">while</span> (i < a.length && j < b.length) {
+            c[k++] = (a[i] < b[j]) ? a[i++] : b[j++];
+        }
+        
+        <span class="kw">while</span> (i < a.length) c[k++] = a[i++];
+        <span class="kw">while</span> (j < b.length) c[k++] = b[j++];
+        
+        <span class="kw">for</span> (<span class="kw">int</span> num = <span class="num">0</span>; num < c.length; num++) <span class="cls">System</span>.out.print(c[num] + <span class="str">" "</span>);
+    }
+}</code></pre></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-strings" data-title="String Operations">
+      <span class="section-tag">Unit 06</span>
+      <h2 class="stitle">String Operations</h2>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q1</span><span class="q-text">Scanner & BufferedReader Input</span></div>
+        <div class="code-block"><pre><code><span class="kw">import</span> <span class="cls">java.util.Scanner</span>;
+<span class="kw">import</span> <span class="cls">java.io.*</span>;
+
+<span class="kw">class</span> <span class="cls">FactorialInput</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) <span class="kw">throws</span> <span class="cls">Exception</span> {
+        <span class="cls">Scanner</span> sc = <span class="kw">new</span> <span class="cls">Scanner</span>(<span class="cls">System</span>.in);
+        <span class="cls">System</span>.out.print(<span class="str">"Enter number: "</span>);
+        <span class="kw">int</span> n1 = sc.nextInt();
+
+        <span class="cls">BufferedReader</span> br = <span class="kw">new</span> <span class="cls">BufferedReader</span>(<span class="kw">new</span> <span class="cls">InputStreamReader</span>(<span class="cls">System</span>.in));
+        <span class="cls">System</span>.out.print(<span class="str">"Enter number: "</span>);
+        <span class="kw">int</span> n2 = <span class="cls">Integer</span>.parseInt(br.readLine());
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q2</span><span class="q-text">Palindrome String</span></div>
+        <span class="logic-tag">StringBuilder().reverse()</span>
+        <div class="code-block"><pre><code><span class="kw">import</span> <span class="cls">java.util.Scanner</span>;
+
+<span class="kw">class</span> <span class="cls">PalindromeString</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">Scanner</span> sc = <span class="kw">new</span> <span class="cls">Scanner</span>(<span class="cls">System</span>.in);
+        <span class="cls">String</span> s = sc.next();
+        <span class="cls">String</span> rev = <span class="kw">new</span> <span class="cls">StringBuilder</span>(s).reverse().toString();
+        
+        <span class="kw">if</span> (s.equals(rev)) <span class="cls">System</span>.out.println(<span class="str">"Palindrome"</span>);
+        <span class="kw">else</span> <span class="cls">System</span>.out.println(<span class="str">"Not Palindrome"</span>);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q3/5</span><span class="q-text">Merge / Concatenate Strings</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">MergeStrings</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">String</span> s1 = <span class="str">"Hello "</span>, s2 = <span class="str">"World!"</span>;
+        <span class="cls">System</span>.out.println(s1 + s2); <span class="cm">// Easiest way</span>
+        <span class="cls">System</span>.out.println(s1.concat(s2)); <span class="cm">// Built-in method</span>
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q8</span><span class="q-text">Find All Subsets of a String</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Subsets</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">String</span> s = <span class="str">"FUN"</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < s.length(); i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = i + <span class="num">1</span>; j <= s.length(); j++) {
+                <span class="cls">System</span>.out.println(s.substring(i, j));
+            }
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q9</span><span class="q-text">Remove White Spaces</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">RemoveSpaces</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">String</span> s = <span class="str">"J A R V I S"</span>;
+        <span class="cls">System</span>.out.println(s.replaceAll(<span class="str">"\\s"</span>, <span class="str">""</span>));
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q10/13</span><span class="q-text">Compare Strings</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">CompareStrings</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">String</span> s1 = <span class="str">"java"</span>, s2 = <span class="str">"JAVA"</span>;
+        
+        <span class="cls">System</span>.out.println(s1.compareTo(s2)); <span class="cm">// Returns 0 if exact match</span>
+        <span class="cls">System</span>.out.println(s1.equals(s2)); <span class="cm">// Strict case check (False)</span>
+        <span class="cls">System</span>.out.println(s1.equalsIgnoreCase(s2)); <span class="cm">// Ignores case (True)</span>
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q11</span><span class="q-text">String vs StringBuilder Performance</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">StringPerformance</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">long</span> start = <span class="cls">System</span>.nanoTime();
+        <span class="cls">String</span> s = <span class="str">"A"</span>;
+        <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i<<span class="num">1000</span>; i++) s += <span class="str">"B"</span>;
+        <span class="kw">long</span> end = <span class="cls">System</span>.nanoTime();
+        <span class="cls">System</span>.out.println(<span class="str">"String took: "</span> + (end - start) + <span class="str">" ns"</span>);
+        
+        start = <span class="cls">System</span>.nanoTime();
+        <span class="cls">StringBuilder</span> sb = <span class="kw">new</span> <span class="cls">StringBuilder</span>(<span class="str">"A"</span>);
+        <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>; i<<span class="num">1000</span>; i++) sb.append(<span class="str">"B"</span>);
+        end = <span class="cls">System</span>.nanoTime();
+        <span class="cls">System</span>.out.println(<span class="str">"StringBuilder took: "</span> + (end - start) + <span class="str">" ns"</span>);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q18</span><span class="q-text">Title Case (Capitalize First Letters)</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">TitleCase</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">String</span> s = <span class="str">"hello world of code"</span>;
+        <span class="cls">String</span>[] words = s.split(<span class="str">" "</span>);
+        <span class="kw">for</span> (<span class="cls">String</span> w : words) {
+            <span class="cls">System</span>.out.print(<span class="cls">Character</span>.toUpperCase(w.charAt(<span class="num">0</span>)) + w.substring(<span class="num">1</span>) + <span class="str">" "</span>);
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q19</span><span class="q-text">Largest & Smallest Word</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">LargestSmallestWord</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">String</span> s = <span class="str">"Learning Java is very fun"</span>;
+        <span class="cls">String</span>[] words = s.split(<span class="str">" "</span>);
+        <span class="cls">String</span> small = words[<span class="num">0</span>], large = words[<span class="num">0</span>];
+        
+        <span class="kw">for</span> (<span class="cls">String</span> w : words) {
+            <span class="kw">if</span> (w.length() < small.length()) small = w;
+            <span class="kw">if</span> (w.length() > large.length()) large = w;
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Smallest: "</span> + small + <span class="str">", Largest: "</span> + large);
+    }
+}</code></pre></div>
+      </div>
+    </section>
+    
+    <section class="section" id="sec-datastructures" data-title="Data Structs & Patterns">
+      <span class="section-tag">Unit 07</span>
+      <h2 class="stitle">Data Structures, Patterns & Misc</h2>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q1/5/6/7</span><span class="q-text">Array Basics (Sum, Range, Search, Evens)</span></div>
+        <span class="logic-tag">Review of core 1D Array logic</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">ArrayReview</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[] arr = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>};
+        <span class="kw">int</span> sum = <span class="num">0</span>, min = arr[<span class="num">0</span>], max = arr[<span class="num">0</span>];
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; arr.length; i++) {
+            sum += arr[i]; <span class="cm">// Sum</span>
+            <span class="kw">if</span> (arr[i] &lt; min) min = arr[i]; <span class="cm">// Min</span>
+            <span class="kw">if</span> (arr[i] &gt; max) max = arr[i]; <span class="cm">// Max</span>
+            <span class="kw">if</span> (arr[i] == <span class="num">30</span>) <span class="cls">System</span>.out.println(<span class="str">"30 Found at: "</span> + i); <span class="cm">// Search</span>
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q2</span><span class="q-text">Implement Stack Using Array</span></div>
+        <span class="logic-tag">LIFO: Last In, First Out (using `top` pointer)</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SimpleStack</span> {
+    <span class="kw">int</span>[] stack = <span class="kw">new int</span>[<span class="num">5</span>];
+    <span class="kw">int</span> top = <span class="num">-1</span>;
+
+    <span class="kw">void</span> <span class="fn">push</span>(<span class="kw">int</span> data) {
+        <span class="kw">if</span> (top &lt; <span class="num">4</span>) stack[++top] = data; <span class="cm">// Add to top</span>
+    }
+    
+    <span class="kw">void</span> <span class="fn">pop</span>() {
+        <span class="kw">if</span> (top &gt;= <span class="num">0</span>) top--; <span class="cm">// Remove from top</span>
+    }
+    
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">SimpleStack</span> s = <span class="kw">new</span> <span class="cls">SimpleStack</span>();
+        s.push(<span class="num">10</span>); 
+        s.push(<span class="num">20</span>);
+        s.pop(); <span class="cm">// Removes 20</span>
+        <span class="cls">System</span>.out.println(<span class="str">"Top element index: "</span> + s.top);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q3</span><span class="q-text">Implement Queue Using Array</span></div>
+        <span class="logic-tag">FIFO: First In, First Out (using `front` and `rear` pointers)</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SimpleQueue</span> {
+    <span class="kw">int</span>[] q = <span class="kw">new int</span>[<span class="num">5</span>];
+    <span class="kw">int</span> front = <span class="num">0</span>, rear = <span class="num">0</span>;
+
+    <span class="kw">void</span> <span class="fn">enqueue</span>(<span class="kw">int</span> data) {
+        <span class="kw">if</span> (rear &lt; <span class="num">5</span>) q[rear++] = data; <span class="cm">// Add to rear</span>
+    }
+    
+    <span class="kw">void</span> <span class="fn">dequeue</span>() {
+        <span class="kw">if</span> (front &lt; rear) front++; <span class="cm">// Remove from front</span>
+    }
+    
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">SimpleQueue</span> sq = <span class="kw">new</span> <span class="cls">SimpleQueue</span>();
+        sq.enqueue(<span class="num">10</span>); 
+        sq.enqueue(<span class="num">20</span>);
+        sq.dequeue(); <span class="cm">// Removes 10</span>
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q4</span><span class="q-text">Sum of Two 2D Arrays</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Add2DArrays</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[][] a = {{<span class="num">1</span>, <span class="num">2</span>}, {<span class="num">3</span>, <span class="num">4</span>}}, b = {{<span class="num">5</span>, <span class="num">6</span>}, {<span class="num">7</span>, <span class="num">8</span>}};
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">2</span>; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; <span class="num">2</span>; j++) {
+                <span class="cls">System</span>.out.print((a[i][j] + b[i][j]) + <span class="str">" "</span>);
+            }
+            <span class="cls">System</span>.out.println();
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q8</span><span class="q-text">Sum of Diagonal Elements in a 2D Array</span></div>
+        <span class="logic-tag">Diagonal condition: row index == column index (`a[i][i]`)</span>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">DiagonalSum</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span>[][] a = {{<span class="num">1</span>, <span class="num">2</span>}, {<span class="num">3</span>, <span class="num">4</span>}};
+        <span class="kw">int</span> sum = <span class="num">0</span>;
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">2</span>; i++) {
+            sum += a[i][i]; 
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"Diagonal Sum: "</span> + sum);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q10</span><span class="q-text">Generate Electricity Bills (Domestic)</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">ElectricityBill</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">int</span> units = <span class="num">250</span>; <span class="cm">// Current reading - Previous reading</span>
+        <span class="kw">double</span> bill = <span class="num">0</span>;
+        
+        <span class="kw">if</span> (units &lt;= <span class="num">100</span>) bill = units * <span class="num">1.0</span>;
+        <span class="kw">else if</span> (units &lt;= <span class="num">200</span>) bill = (<span class="num">100</span> * <span class="num">1.0</span>) + ((units - <span class="num">100</span>) * <span class="num">2.50</span>);
+        <span class="kw">else if</span> (units &lt;= <span class="num">500</span>) bill = (<span class="num">100</span> * <span class="num">1.0</span>) + (<span class="num">100</span> * <span class="num">2.50</span>) + ((units - <span class="num">200</span>) * <span class="num">4.0</span>);
+        <span class="kw">else</span> bill = (<span class="num">100</span> * <span class="num">1.0</span>) + (<span class="num">100</span> * <span class="num">2.50</span>) + (<span class="num">300</span> * <span class="num">4.0</span>) + ((units - <span class="num">500</span>) * <span class="num">6.0</span>);
+        
+        <span class="cls">System</span>.out.println(<span class="str">"Amount to pay: Rs. "</span> + bill);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q11</span><span class="q-text">Object as Return Type and Parameter</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">NumberObj</span> {
+    <span class="kw">int</span> value;
+    
+    <span class="fn">NumberObj</span>(<span class="kw">int</span> v) { value = v; }
+    
+    <span class="cm">// Parameter is an object, Return type is an object</span>
+    <span class="cls">NumberObj</span> <span class="fn">addObject</span>(<span class="cls">NumberObj</span> obj2) {
+        <span class="kw">return new</span> <span class="cls">NumberObj</span>(<span class="kw">this</span>.value + obj2.value); 
+    }
+    
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">NumberObj</span> n1 = <span class="kw">new</span> <span class="cls">NumberObj</span>(<span class="num">10</span>);
+        <span class="cls">NumberObj</span> n2 = <span class="kw">new</span> <span class="cls">NumberObj</span>(<span class="num">20</span>);
+        
+        <span class="cls">NumberObj</span> result = n1.addObject(n2);
+        <span class="cls">System</span>.out.println(<span class="str">"Result: "</span> + result.value);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q12/13</span><span class="q-text">'n' Copies of First/Last 2 Chars</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">SubstringCopies</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cls">String</span> s = <span class="str">"Coding"</span>;
+        
+        <span class="cls">String</span> firstTwo = s.substring(<span class="num">0</span>, <span class="num">2</span>);
+        <span class="cls">String</span> lastTwo = s.substring(s.length() - <span class="num">2</span>); 
+        
+        <span class="cls">System</span>.out.print(<span class="str">"First Two (n times): "</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; s.length(); i++) <span class="cls">System</span>.out.print(firstTwo);
+        
+        <span class="cls">System</span>.out.print(<span class="str">"\nLast Two (n times): "</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; s.length(); i++) <span class="cls">System</span>.out.print(lastTwo);
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q14</span><span class="q-text">For Loop Patterns</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">Patterns</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="cm">// Pattern (a): Number Triangle</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= <span class="num">5</span>; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= i; j++) <span class="cls">System</span>.out.print(i);
+            <span class="cls">System</span>.out.println();
+        }
+        
+        <span class="cm">// Pattern (b): Inverted 'S' Triangle</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">5</span>; i &gt;= <span class="num">1</span>; i--) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= i; j++) <span class="cls">System</span>.out.print(<span class="str">"S"</span>);
+            <span class="cls">System</span>.out.println();
+        }
+        
+        <span class="cm">// Pattern (c): Right-Aligned Number Triangle</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= <span class="num">5</span>; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> space = <span class="num">5</span>; space &gt; i; space--) <span class="cls">System</span>.out.print(<span class="str">" "</span>);
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= i; j++) <span class="cls">System</span>.out.print(i);
+            <span class="cls">System</span>.out.println();
+        }
+    }
+}</code></pre></div>
+      </div>
+
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q15</span><span class="q-text">Compute Euler's Number (e)</span></div>
+        <div class="code-block"><pre><code><span class="kw">class</span> <span class="cls">EulerFormula</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cls">String</span>[] args) {
+        <span class="kw">double</span> e = <span class="num">1</span>, fact = <span class="num">1</span>;
+        
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= <span class="num">10</span>; i++) { <span class="cm">// Looping to 10 for precision</span>
+            fact *= i;
+            e += (<span class="num">1.0</span> / fact);
+        }
+        <span class="cls">System</span>.out.println(<span class="str">"e = "</span> + e);
+    }
+}</code></pre></div>
+      </div>
+    </section>
+    
+    
+   <!-- ════════════════════════════
+         🔴 ADD NEW SECTIONS BELOW
+         Copy this block and fill in:
+    ════════════════════════════
+    <section class="section" id="sec-NEWID" data-title="New Topic">
+      <span class="section-tag">Unit 03</span>
+      <h2 class="stitle">New Topic</h2>
+      <div class="card">
+        <div class="q-bar"><span class="q-num">Q15</span><span class="q-text">Your Question</span></div>
+        <div class="formula-line">Your formula here</div>
+        <div class="code-block"><pre><code>Your code</code></pre></div>
+        <div class="output-block"><span class="out-label">Output →</span><span class="out-val">Your output</span></div>
+      </div>
+    </section>
+    -->
+
+  </main>
+</div>
+
+<!-- =========================
+     🧠 SCRIPT
+========================== -->
+<script>
+
+  // =========================
+  // 🧭 AUTO BUILD NAV
+  // =========================
+  function buildNav() {
+    const sidebar = document.getElementById('sidebar');
+    const sections = document.querySelectorAll('section.section[data-title]');
+    sidebar.innerHTML = `<div class="nav-label">${CONFIG.subject}</div>`;
+    sections.forEach(sec => {
+      const a = document.createElement('a');
+      a.href = '#' + sec.id;
+      a.innerHTML = `<span class="dot"></span>${sec.getAttribute('data-title')}`;
+      sidebar.appendChild(a);
+    });
+    document.getElementById('headerBadge').textContent = sections.length + ' Programs';
+  }
+
+  // =========================
+  // ➗ AUTO-FETCH FORMULAS
+  // =========================
+  function buildFormulas() {
+    const bar = document.getElementById('formulaBar');
+    if (!bar) return;
+    bar.innerHTML = ''; // Clear old config
+    
+    // Auto-scan the page for formula lines
+    document.querySelectorAll('.formula-line').forEach(f => {
+      const qTitle = f.closest('.card').querySelector('.q-text').innerText;
+      const pill = document.createElement('span');
+      pill.className = 'fpill';
+      pill.innerHTML = `<strong>${qTitle}</strong>: ${f.innerHTML}`;
+      bar.appendChild(pill);
+    });
+    
+    // Refresh MathJax so the new pills render correctly
+    if (window.MathJax) MathJax.typesetPromise([bar]).catch(()=>{});
+  }
+
+  // =========================
+  // ⌨️ TYPEWRITER ANIMATION
+  // =========================
+  function setupTypewriter() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        // Run only once when it enters the screen
+        if (entry.isIntersecting && !entry.target.dataset.typed) {
+          entry.target.dataset.typed = "true"; 
+          
+          const outVal = entry.target.querySelector('.out-val');
+          if (!outVal) return;
+          
+          const text = outVal.textContent;
+          outVal.textContent = ''; // Clear text
+          outVal.classList.add('typing-cursor'); // Add block cursor
+          
+          let i = 0;
+          function typeChar() {
+            if (i < text.length) {
+              outVal.textContent += text.charAt(i);
+              i++;
+              setTimeout(typeChar, 30); // 30ms per character
+            } else {
+              outVal.classList.remove('typing-cursor');
+            }
+          }
+          setTimeout(typeChar, 400); // 400ms delay before typing
+        }
+      });
+    }, { threshold: 0.2 }); 
+
+    document.querySelectorAll('.output-block').forEach(block => observer.observe(block));
+  }
+
+  // =========================
+  // 🔄 SCROLL SPY
+  // =========================
+  function setupScrollSpy() {
+    const links = document.querySelectorAll('nav a');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting)
+          links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    document.querySelectorAll('section.section').forEach(s => obs.observe(s));
+  }
+
+  // =========================
+  // 📖 TEXTBOOK TOGGLE
+  // =========================
+  function toggleTB() {
+    document.body.classList.toggle('tb');
+    document.getElementById('viewBtn').textContent =
+      document.body.classList.contains('tb') ? '🌙 Dark' : '📖 Textbook';
+  }
+
+  // =========================
+  // 🔍 SEARCH
+  // =========================
+  function handleSearch(v) {
+    const q = v.toLowerCase();
+    document.querySelectorAll('.card').forEach(c => {
+      c.style.opacity = (q === '' || c.innerText.toLowerCase().includes(q)) ? '1' : '0.12';
+    });
+  }
+
+  // =========================
+  // ▶ INIT
+  // =========================
+  buildNav();
+  buildFormulas();
+  setupScrollSpy();
+  setupTypewriter();
+  document.title = CONFIG.subject + ' — ' + CONFIG.student;
+
+</script>
+</body>
+</html>

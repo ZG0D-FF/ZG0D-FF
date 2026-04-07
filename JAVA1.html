@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java Reference — DJ</title>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- =========================
+       🔧 CONFIG
+  ========================== -->
+  <script>
+    const CONFIG = {
+      student: "DJ",
+      subject: "Java Programming",
+      version: "2025"
+    };
+  </script>
+
+  <!-- =========================
+       🎨 STYLES
+  ========================== -->
+  <style>
+    /* ===== CSS VARIABLES ===== */
+    :root {
+      --bg:        #0b0e14;
+      --bg2:       #111520;
+      --bg3:       #161b27;
+      --border:    #1e2535;
+      --accent:    #e8a045;
+      --accent2:   #5b9cf6;
+      --accent3:   #7ed4a0;
+      --accent4:   #e06c75;
+      --text:      #cdd6f4;
+      --muted:     #6b7280;
+      --code-bg:   #0d1117;
+      --nav-w:     240px;
+      --header-h:  56px;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      position: fixed; top:0; left:0; right:0; z-index:100;
+      height: var(--header-h);
+      background: rgba(11,14,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    header .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; font-weight:900;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+    }
+    header .logo span { color: var(--text); font-weight:700; }
+    header .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    header .search-bar {
+      margin-left: auto;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      width: 220px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    header .search-bar:focus { border-color: var(--accent2); }
+    header .search-bar::placeholder { color: var(--muted); }
+
+    /* ===== LAYOUT ===== */
+    .layout {
+      display: flex;
+      padding-top: var(--header-h);
+      min-height: 100vh;
+    }
+
+    /* ===== SIDEBAR NAV ===== */
+    nav {
+      width: var(--nav-w);
+      min-width: var(--nav-w);
+      position: fixed;
+      top: var(--header-h);
+      left: 0; bottom: 0;
+      overflow-y: auto;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+    }
+    nav::-webkit-scrollbar { width:4px; }
+    nav::-webkit-scrollbar-thumb { background: var(--border); border-radius:4px; }
+
+    .nav-section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight:700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 12px 18px 4px;
+    }
+    nav a {
+      display: flex; align-items: center; gap:8px;
+      padding: 7px 18px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 2px solid transparent;
+      transition: all .15s;
+    }
+    nav a:hover { color: var(--text); background: var(--bg3); }
+    nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(232,160,69,0.06); }
+    nav a .dot {
+      width:6px; height:6px; border-radius:50%; flex-shrink:0;
+      background: var(--border);
+    }
+    nav a.active .dot, nav a:hover .dot { background: var(--accent); }
+
+    /* ===== MAIN CONTENT ===== */
+    main {
+      margin-left: var(--nav-w);
+      flex:1;
+      padding: 48px 56px;
+      max-width: 960px;
+    }
+
+    /* ===== FORMULA REFERENCE BAR ===== */
+    .formula-bar {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 48px;
+      display: flex; flex-wrap: wrap; gap: 12px;
+      align-items: center;
+    }
+    .formula-bar .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight:700;
+      color: var(--accent); letter-spacing:1px;
+      text-transform: uppercase;
+    }
+    .formula-pill {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent3);
+      cursor: default;
+      transition: border-color .15s;
+    }
+    .formula-pill:hover { border-color: var(--accent3); }
+
+    /* ===== SECTION ===== */
+    .section {
+      margin-bottom: 72px;
+      scroll-margin-top: calc(var(--header-h) + 24px);
+    }
+
+    .section-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight:700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    h2.section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px; font-weight:900;
+      color: #e8eaf2;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    h3.sub-title {
+      font-size: 13px; font-weight:600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 28px 0 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    p { color: #a8b2cc; margin-bottom: 10px; }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: #2a3350; }
+    .card-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight:700;
+      color: var(--accent);
+      text-transform: uppercase; letter-spacing:1px;
+      margin-bottom: 8px;
+    }
+
+    /* ===== GRID ===== */
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+    /* ===== CODE BLOCK ===== */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #abb2bf;
+      line-height: 1.6;
+    }
+    .kw  { color: #c678dd; }
+    .cls { color: #e5c07b; }
+    .fn  { color: #61afef; }
+    .str { color: #98c379; }
+    .cm  { color: #5c6370; font-style:italic; }
+    .num { color: #d19a66; }
+
+    /* ===== TABLE ===== */
+    .table-wrap { overflow-x:auto; margin: 12px 0; }
+    table {
+      width:100%; border-collapse:collapse;
+      font-size: 13.5px;
+    }
+    th {
+      background: var(--bg3);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; text-transform:uppercase; letter-spacing:1px;
+      color: var(--accent2);
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--border);
+      text-align:left;
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      color: #a8b2cc;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg3); }
+    td.yes { color: var(--accent3); }
+    td.no  { color: var(--accent4); }
+
+    /* ===== DEFINITION LIST ===== */
+    .def-list { display:flex; flex-direction:column; gap:8px; }
+    .def-item {
+      display:flex; gap:12px;
+      align-items: flex-start;
+      padding: 10px 14px;
+      border-radius:8px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+    }
+    .def-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight:700;
+      color: var(--accent);
+      min-width: 22px;
+      padding-top:2px;
+    }
+    .def-text strong { color: var(--text); }
+    .def-text { font-size:14px; color:#a8b2cc; }
+
+    /* ===== PILL TAGS ===== */
+    .tag-row { display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0; }
+    .tag {
+      padding: 3px 10px; border-radius:20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      border: 1px solid;
+    }
+    .tag-orange { color: var(--accent);  border-color: rgba(232,160,69,.3);  background:rgba(232,160,69,.06); }
+    .tag-blue   { color: var(--accent2); border-color: rgba(91,156,246,.3);  background:rgba(91,156,246,.06); }
+    .tag-green  { color: var(--accent3); border-color: rgba(126,212,160,.3); background:rgba(126,212,160,.06); }
+    .tag-red    { color: var(--accent4); border-color: rgba(224,108,117,.3); background:rgba(224,108,117,.06); }
+
+    /* ===== PIPELINE ===== */
+    .pipeline {
+      display:flex; align-items:center; gap:0;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius:8px;
+      padding: 14px 20px;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 12px 0;
+    }
+    .pipe-step {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--accent3);
+    }
+    .pipe-arrow { color: var(--accent); font-size:14px; padding:0 4px; }
+
+    /* ===== DIVIDER ===== */
+    hr { border:none; border-top:1px solid var(--border); margin:48px 0; }
+
+    /* ===== TEXTBOOK VIEW TOGGLE ===== */
+    body.textbook-mode {
+      font-family: 'Georgia', serif;
+      font-size: 16px;
+      background: #faf8f3;
+      color: #2a2a2a;
+    }
+    body.textbook-mode header {
+      background: rgba(250,248,243,0.95);
+      border-bottom-color: #ddd;
+    }
+    body.textbook-mode nav {
+      background: #f3f0e8;
+      border-right-color: #ddd;
+    }
+    body.textbook-mode .card,
+    body.textbook-mode .def-item {
+      background: #fff;
+      border-color: #e0dbd0;
+    }
+    body.textbook-mode pre { background:#f5f5f5; border-color:#ddd; }
+    body.textbook-mode code { color:#333; }
+    body.textbook-mode h2.section-title { color: #1a1a2e; }
+    body.textbook-mode p { color: #444; }
+    body.textbook-mode td { color:#444; }
+    body.textbook-mode nav a { color:#555; }
+    body.textbook-mode .muted { color:#888; }
+    body.textbook-mode .formula-bar { background:#f0ece0; border-color:#ddd; }
+    body.textbook-mode .pipeline { background:#f5f5f5; border-color:#ddd; }
+
+    .view-toggle {
+      display:flex; align-items:center; gap:6px;
+      margin-left:12px;
+      padding: 4px 10px;
+      border-radius:6px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      cursor:pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      transition: all .15s;
+      user-select:none;
+    }
+    .view-toggle:hover { color:var(--text); border-color: var(--accent2); }
+
+    /* ===== MOBILE ===== */
+    @media (max-width:768px) {
+      nav { display:none; }
+      main { margin-left:0; padding:24px 20px; }
+      .grid-2, .grid-3 { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================
+       🖥️ HEADER
+  ========================== -->
+  <header>
+    <div class="logo">Java<span>Ref</span></div>
+    <div class="badge">v2025</div>
+    <input class="search-bar" type="text" id="searchInput" placeholder="Search topics…" oninput="handleSearch(this.value)">
+    <div class="view-toggle" onclick="toggleTextbook()" id="viewBtn">📖 Textbook</div>
+  </header>
+
+  <div class="layout">
+
+    <!-- =========================
+         🧭 AUTO-GENERATING NAV
+    ========================== -->
+    <nav id="sidebar">
+      <!-- Populated by JS -->
+    </nav>
+
+    <!-- =========================
+         📄 MAIN CONTENT
+    ========================== -->
+    <main id="mainContent">
+
+      <!-- ══════════════════════════════
+           FORMULA REFERENCE BAR
+      ══════════════════════════════ -->
+      <div class="formula-bar">
+        <span class="label">📐 Quick Ref</span>
+        <span class="formula-pill">$O(n)$ ClassLoader</span>
+        <span class="formula-pill">IS-A Relation</span>
+        <span class="formula-pill">LIFO Stack</span>
+        <span class="formula-pill">new → Heap</span>
+        <span class="formula-pill">$f(n) = f(n-1) + f(n-2)$ Recursion</span>
+        <span class="formula-pill">extends / implements</span>
+      </div>
+
+      <hr>
+
+      <section class="section" id="sec-java-history" data-title="History & Features">
+        <span class="section-tag">Unit 00</span>
+        <h2 class="section-title">The History of Java</h2>
+        <p>Java began in June 1991 with the <strong>Green Team</strong> (James Gosling, Mike Sheridan, and Patrick Naughton). Originally designed for digital devices like set-top boxes, it was first called <em>Greentalk</em> (.gt) and later <em>Oak</em> before becoming the Java we know today.</p>
+
+        <h3 class="sub-title">Java Buzzwords (Core Features)</h3>
+        <div class="tag-row">
+          <span class="tag tag-green">Simple & Object-Oriented</span>
+          <span class="tag tag-blue">Platform Independent 🌍</span>
+          <span class="tag tag-red">Robust & Secured</span>
+          <span class="tag tag-orange">Multithreaded 🧵</span>
+          <span class="tag tag-purple">High Performance</span>
+        </div>
+
+        <h3 class="sub-title">Types of Comments</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">Single Line</div>
+            <p><code>// This is a comment</code></p>
+          </div>
+          <div class="card">
+            <div class="card-title">Multi-Line</div>
+            <p><code>/* Multiple <br> lines */</code></p>
+          </div>
+          <div class="card">
+            <div class="card-title">Documentation</div>
+            <p><code>/** Used for <br> Javadoc API */</code></p>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-unit1-oop" data-title="Unit 1: OOP Concepts">
+        <span class="section-tag">Unit 01</span>
+        <h2 class="section-title">Object Oriented Programming (OOPs)</h2>
+        <p>OOPs is a methodology to design a program using classes and objects. It simplifies maintenance and development by modeling real-world entities.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Objects (State + Behavior)</div>
+            <p>Any entity that has a state and behavior. It can be physical (Pen, Chair) or logical.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Classes (Logical Entity)</div>
+            <p>A collection of objects. It acts as the template for creating instances.</p>
+          </div>
+        </div>
+
+        
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-vars-scope" data-title="Variable Scope">
+        <span class="section-tag">Unit 02</span>
+        <h2 class="section-title">Variable Scope & Lifetime</h2>
+        <p>The <strong>Scope</strong> defines where a variable is visible, while the <strong>Lifetime</strong> defines how long it exists in memory before the Garbage Collector destroys it.</p>
+
+        <div class="table-wrap">
+          <table>
+            <tr><th>Variable Type</th><th>Scope</th><th>Lifetime</th></tr>
+            <tr><td><strong>Instance Variable</strong></td><td>Within the class</td><td>Same as the object’s life.</td></tr>
+            <tr><td><strong>Local Variable</strong></td><td>Inside the method/block</td><td>Only while the method executes.</td></tr>
+            <tr><td><strong>Argument Variable</strong></td><td>Method/Constructor header</td><td>Until method execution finishes.</td></tr>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Constants in Java</h3>
+        <p>A constant is a variable whose value cannot change. We use the <code>final</code> keyword to lock it.</p>
+        <pre><code><span class="kw">modifier static final</span> dataType variableName = value;</code></pre>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-garbage-collection" data-title="Garbage Collection">
+        <span class="section-tag">Unit 03</span>
+        <h2 class="section-title">Memory & Garbage Collection</h2>
+        <p>In Java, <strong>Garbage</strong> means unreferenced objects. Unlike C++ (delete) or C (free), Java performs memory reclamation <strong>automatically</strong>.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">The gc() Method</div>
+            <p>Used to invoke the Garbage Collector for cleanup. It is found in <code>System</code> and <code>Runtime</code> classes.</p>
+            <pre><code><span class="cls">System</span>.<span class="fn">gc</span>();</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Advantage</div>
+            <p>Makes Java memory-efficient and removes the burden of manual memory management from the programmer.</p>
+          </div>
+        </div>
+      </section>
+      
+      <hr>
+      
+      <!-- ══════════════════════════════
+           SECTION: JVM
+      ══════════════════════════════ -->
+      <section class="section" id="sec-jvm" data-title="JVM Architecture">
+        <span class="section-tag">Unit 01</span>
+        <h2 class="section-title">JVM Architecture</h2>
+        <p>The Java Virtual Machine (JVM) is an <strong>abstract machine</strong> — not physical hardware — that provides a runtime environment for executing Java bytecode. It enables Java's platform independence: <em>write once, run anywhere</em>.</p>
+
+        <h3 class="sub-title">Execution Pipeline</h3>
+        <div class="pipeline">
+          <span class="pipe-step">.java source</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">javac compiler</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">.class bytecode</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">JVM</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">Machine Code</span>
+        </div>
+
+        <h3 class="sub-title">What JVM Does</h3>
+        <div class="tag-row">
+          <span class="tag tag-blue">Loads code</span>
+          <span class="tag tag-green">Verifies code</span>
+          <span class="tag tag-orange">Executes code</span>
+          <span class="tag tag-red">Provides runtime env</span>
+        </div>
+
+        <h3 class="sub-title">JVM Memory Areas</h3>
+        <div class="def-list">
+          <div class="def-item">
+            <div class="def-num">01</div>
+            <div class="def-text"><strong>Class (Method) Area</strong> — Stores per-class structures: runtime constant pool, field/method data, method code. Shared across all objects.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">02</div>
+            <div class="def-text"><strong>Heap</strong> — Runtime data area where objects are allocated. <code>new</code> keyword allocates here. Managed by Garbage Collector. Shared memory.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">03</div>
+            <div class="def-text"><strong>Stack</strong> — Stores method frames with local variables and partial results. Each thread has its own stack. Operates on <strong>LIFO</strong> ($\text{Last In, First Out}$).</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">04</div>
+            <div class="def-text"><strong>PC Register</strong> — Stores the address of the JVM instruction currently being executed.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">05</div>
+            <div class="def-text"><strong>Native Method Stack</strong> — Holds all native (non-Java: C/C++) methods used in the application.</div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Heap vs Stack — Golden Comparison</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>Heap</th><th>Stack</th></tr>
+            <tr><td>Stores</td><td>Objects</td><td>Methods / Frames</td></tr>
+            <tr><td>Scope</td><td>Shared (all threads)</td><td>Thread-specific</td></tr>
+            <tr><td>Size</td><td>Dynamic</td><td>Fixed</td></tr>
+            <tr><td>Management</td><td>Garbage Collector</td><td>Automatic (LIFO)</td></tr>
+            <tr><td>Key trigger</td><td><code>new</code> keyword</td><td>Method call</td></tr>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Key Components</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">ClassLoader</div>
+            <p>Subsystem that loads <code>.class</code> files into JVM. Flow: <code>Bootstrap → Extension → Application</code>. First step every time a Java program runs.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Execution Engine</div>
+            <p>Contains a virtual processor, <strong>Interpreter</strong> (reads bytecode stream), and <strong>JIT Compiler</strong> (converts bytecode → machine code at runtime for speed 🔥).</p>
+          </div>
+          <div class="card">
+            <div class="card-title">JNI — Java Native Interface</div>
+            <p>Framework to communicate with applications written in C, C++, Assembly. Used for hardware access and OS-level operations.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">JVM Analogy</div>
+            <p>JVM = Engine · Bytecode = Fuel · JIT = Turbo Boost · JRE = Full vehicle (JVM + libraries)</p>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <!-- ══════════════════════════════
+           SECTION: CONSTRUCTORS
+      ══════════════════════════════ -->
+      <section class="section" id="sec-constructors" data-title="Constructors">
+        <span class="section-tag">Unit 02</span>
+        <h2 class="section-title">Constructors</h2>
+        <p>A constructor is a special block of code, similar to a method, invoked automatically when an object is created using the <code>new</code> keyword. Its purpose is to <strong>initialize the object's state</strong>.</p>
+
+        <h3 class="sub-title">Rules</h3>
+        <div class="tag-row">
+          <span class="tag tag-orange">Same name as class</span>
+          <span class="tag tag-red">No return type</span>
+          <span class="tag tag-blue">Cannot be abstract / static / final / synchronized</span>
+          <span class="tag tag-green">Called automatically on new</span>
+        </div>
+
+        <h3 class="sub-title">Types</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Default Constructor</div>
+            <p>No parameters. Compiler provides one automatically if you define none.</p>
+            <pre><code><span class="kw">class</span> <span class="cls">A</span> {
+  <span class="fn">A</span>() {
+    System.out.println(<span class="str">"Default"</span>);
+  }
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Parameterized Constructor</div>
+            <p>Accepts arguments to assign values at object creation time.</p>
+            <pre><code><span class="kw">class</span> <span class="cls">A</span> {
+  <span class="kw">int</span> x;
+  <span class="fn">A</span>(<span class="kw">int</span> x) {
+    <span class="kw">this</span>.x = x;
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Constructor Overloading</h3>
+        <p>Multiple constructors with <strong>different parameter lists</strong>. Compiler differentiates by number and type of arguments.</p>
+        <pre><code><span class="kw">class</span> <span class="cls">A</span> {
+  <span class="fn">A</span>() {}                          <span class="cm">// default</span>
+  <span class="fn">A</span>(<span class="kw">int</span> x) {}                     <span class="cm">// one param</span>
+  <span class="fn">A</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {}             <span class="cm">// two params</span>
+  <span class="fn">A</span>(<span class="kw">String</span> s, <span class="kw">int</span> n) {}          <span class="cm">// mixed types</span>
+}</code></pre>
+      </section>
+
+      <hr>
+
+      <!-- ══════════════════════════════
+           SECTION: CONSTRUCTOR vs METHOD
+      ══════════════════════════════ -->
+      <section class="section" id="sec-cvmethod" data-title="Constructor vs Method">
+        <span class="section-tag">Unit 03</span>
+        <h2 class="section-title">Constructor vs. Method</h2>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>Constructor</th><th>Method</th></tr>
+            <tr><td>Purpose</td><td>Initialize object state</td><td>Expose object behavior</td></tr>
+            <tr><td>Return Type</td><td class="no">None ✕</td><td class="yes">Required ✓</td></tr>
+            <tr><td>Invocation</td><td>Implicit (auto)</td><td>Explicit (manual call)</td></tr>
+            <tr><td>Default by Compiler</td><td class="yes">Yes ✓</td><td class="no">No ✕</td></tr>
+            <tr><td>Naming</td><td>Must match class name</td><td>Any valid identifier</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <hr>
+      
+      <section class="section" id="sec-data-types" data-title="Data Types & Defaults">
+        <span class="section-tag">Unit 03</span>
+        <h2 class="section-title">Data Types & Default Values</h2>
+        <p>Java requires you to declare the type of every variable. The JVM categorizes these into a strict hierarchy.</p>
+
+        <h3 class="sub-title">The Data Type Tree</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Primitive (Raw Data)</div>
+            <ul style="color:#a8b2cc; margin-left: 20px; font-size: 14px;">
+              <li><strong>Boolean:</strong> <code>boolean</code></li>
+              <li><strong>Numeric:</strong>
+                <ul style="margin-left: 15px;">
+                  <li><em>Character:</em> <code>char</code></li>
+                  <li><em>Integral:</em>
+                    <ul style="margin-left: 15px;">
+                      <li>Integer: <code>byte</code>, <code>short</code>, <code>int</code>, <code>long</code></li>
+                      <li>Floating-point: <code>float</code>, <code>double</code></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Non-Primitive (Object References)</div>
+            <ul style="color:#a8b2cc; margin-left: 20px; font-size: 14px;">
+              <li><code>String</code></li>
+              <li><code>Array</code></li>
+              <li>Classes & Interfaces</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Default Values & Memory Sizes</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Data Type</th><th>Default Value</th><th>Default Size</th></tr>
+            <tr><td><strong>boolean</strong></td><td>false</td><td>1 bit</td></tr>
+            <tr><td><strong>char</strong></td><td>'\u0000' (null character)</td><td>2 byte</td></tr>
+            <tr><td><strong>byte</strong></td><td>0</td><td>1 byte</td></tr>
+            <tr><td><strong>short</strong></td><td>0</td><td>2 byte</td></tr>
+            <tr><td><strong>int</strong></td><td>0</td><td>4 byte</td></tr>
+            <tr><td><strong>long</strong></td><td>0L</td><td>8 byte</td></tr>
+            <tr><td><strong>float</strong></td><td>0.0f</td><td>4 byte</td></tr>
+            <tr><td><strong>double</strong></td><td>0.0d</td><td>8 byte</td></tr>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Code Proof: Outputting Defaults</h3>
+        <p>Local variables don't get default values (they throw an error). But class-level (static) variables do. Here is the code proving the JVM assigns these exact defaults automatically:</p>
+        <div class="grid-2">
+          <pre><code><span class="kw">class</span> <span class="cls">DefaultTest</span> {
+  <span class="cm">// Static variables auto-initialize</span>
+  <span class="kw">static boolean</span> b;
+  <span class="kw">static char</span> c;
+  <span class="kw">static byte</span> by;
+  <span class="kw">static short</span> s;
+  <span class="kw">static int</span> i;
+  <span class="kw">static long</span> l;
+  <span class="kw">static float</span> f;
+  <span class="kw">static double</span> d;
+
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+    System.out.println(<span class="str">"boolean: "</span> + b);
+    System.out.println(<span class="str">"char: ["</span> + c + <span class="str">"]"</span>);
+    System.out.println(<span class="str">"byte: "</span> + by);
+    System.out.println(<span class="str">"short: "</span> + s);
+    System.out.println(<span class="str">"int: "</span> + i);
+    System.out.println(<span class="str">"long: "</span> + l);
+    System.out.println(<span class="str">"float: "</span> + f);
+    System.out.println(<span class="str">"double: "</span> + d);
+  }
+}</code></pre>
+          <pre><code><span class="cm">/* ======= TERMINAL OUTPUT ======= */</span>
+boolean: false
+char: [ ] <span class="cm">// Invisible \u0000 character</span>
+byte: 0
+short: 0
+int: 0
+long: 0
+float: 0.0
+double: 0.0</code></pre>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-operators" data-title="Operator Precedence">
+        <span class="section-tag">Unit 04</span>
+        <h2 class="section-title">Operator Precedence</h2>
+        <p>When multiple operators are used in a single expression, the JVM follows this exact hierarchy to determine which operation is executed first (top to bottom).</p>
+
+        <div class="table-wrap">
+          <table>
+            <tr><th>Operator Category</th><th>Precedence (Symbols)</th></tr>
+            <tr><td><strong>postfix</strong></td><td><code>expr++</code> <code>expr--</code></td></tr>
+            <tr><td><strong>unary</strong></td><td><code>++expr</code> <code>--expr</code> <code>+expr</code> <code>-expr</code> <code>~</code> <code>!</code></td></tr>
+            <tr><td><strong>multiplicative</strong></td><td><code>*</code> <code>/</code> <code>%</code></td></tr>
+            <tr><td><strong>additive</strong></td><td><code>+</code> <code>-</code></td></tr>
+            <tr><td><strong>shift</strong></td><td><code>&lt;&lt;</code> <code>&gt;&gt;</code> <code>&gt;&gt;&gt;</code></td></tr>
+            <tr><td><strong>relational</strong></td><td><code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> <code>instanceof</code></td></tr>
+            <tr><td><strong>equality</strong></td><td><code>==</code> <code>!=</code></td></tr>
+            <tr><td><strong>bitwise AND</strong></td><td><code>&amp;</code></td></tr>
+            <tr><td><strong>bitwise exclusive OR</strong></td><td><code>^</code></td></tr>
+            <tr><td><strong>bitwise inclusive OR</strong></td><td><code>|</code></td></tr>
+            <tr><td><strong>logical AND</strong></td><td><code>&amp;&amp;</code></td></tr>
+            <tr><td><strong>logical OR</strong></td><td><code>||</code></td></tr>
+            <tr><td><strong>ternary</strong></td><td><code>? :</code></td></tr>
+            <tr><td><strong>assignment</strong></td><td><code>=</code> <code>+=</code> <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code> <code>&amp;=</code> <code>^=</code> <code>|=</code> <code>&lt;&lt;=</code> <code>&gt;&gt;=</code> <code>&gt;&gt;&gt;=</code></td></tr>
+          </table>
+        </div>
+      </section>
+      
+      <hr>
+      
+      <section class="section" id="sec-conversion-flow" data-title="Conversion & Flow">
+        <span class="section-tag">Unit 05</span>
+        <h2 class="section-title">Type Conversion & Control Statements</h2>
+        
+        <h3 class="sub-title">Type Conversion (Casting)</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Widening (Automatic)</div>
+            <p>Assigning a smaller data type to a bigger data type. Handled automatically.</p>
+            <div class="pipeline" style="font-size:11px;">
+              <span class="pipe-step">Byte</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Short</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Int</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Long</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Float</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Double</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Narrowing (Explicit)</div>
+            <p>Assigning a larger data type to a smaller one. Requires explicit casting.</p>
+            <div class="pipeline" style="font-size:11px;">
+              <span class="pipe-step">Double</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Float</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Long</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Int</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Short</span><span class="pipe-arrow">→</span>
+              <span class="pipe-step">Byte</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Control Statement Hierarchy</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">Branching</div>
+            <ul style="color:#a8b2cc; margin-left: 15px; font-size: 13px;">
+              <li><strong>Conditional:</strong> <code>if</code>, <code>if-else</code>, <code>elseif</code>, <code>Nested if</code></li>
+              <li><strong>Decision Making:</strong> <code>switch</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Looping</div>
+            <ul style="color:#a8b2cc; margin-left: 15px; font-size: 13px;">
+              <li><code>for</code> loop</li>
+              <li><code>while</code> loop</li>
+              <li><code>do while</code> loop</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Jumping</div>
+            <ul style="color:#a8b2cc; margin-left: 15px; font-size: 13px;">
+              <li><code>break</code></li>
+              <li><code>continue</code></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      
+      <hr>
+      
+      <section class="section" id="sec-enums" data-title="Java Enums">
+        <span class="section-tag">Unit 06</span>
+        <h2 class="section-title">Java Enums</h2>
+        <p>An <code>enum</code> in Java is a data type that contains a fixed set of constants. It can be used for days of the week, directions, seasons, etc. [cite: 278, 279] The Java enum constants are <code>static</code> and <code>final</code> implicitly. [cite: 280]</p>
+
+        <h3 class="sub-title">Enum Code & Output</h3>
+        <div class="grid-2">
+          <pre><code><span class="kw">class</span> <span class="cls">EnumExample1</span> {
+  <span class="kw">public enum</span> <span class="cls">Season</span> { 
+    WINTER, SPRING, SUMMER, FALL 
+  }
+
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+    <span class="kw">for</span> (<span class="cls">Season</span> s : <span class="cls">Season</span>.values())
+      System.out.println(s);
+  }
+}</code></pre>
+          <pre><code><span class="cm">/* ======= TERMINAL OUTPUT ======= */</span>
+WINTER
+SPRING
+SUMMER
+FALL</code></pre>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-super-keyword" data-title="The Super Keyword">
+        <span class="section-tag">Unit 07</span>
+        <h2 class="section-title">The <code>super</code> Keyword</h2>
+        <p>The <code>super</code> keyword is a reference variable used to refer to the <strong>immediate parent class object</strong>. Whenever you create an instance of a subclass, an instance of the parent class is created implicitly, which is referred to by <code>super</code>.</p>
+
+        <h3 class="sub-title">Usage of super</h3>
+        <div class="tag-row">
+          <span class="tag tag-blue">1. Refer to parent instance variable</span>
+          <span class="tag tag-green">2. Invoke parent method</span>
+          <span class="tag tag-orange">3. Invoke parent constructor via <code>super()</code></span>
+        </div>
+
+        <h3 class="sub-title">Super Code & Output</h3>
+        <div class="grid-2">
+          <pre><code><span class="kw">class</span> <span class="cls">Animal</span> {
+  <span class="kw">String</span> color = <span class="str">"white"</span>;
+}
+
+<span class="kw">class</span> <span class="cls">Dog</span> <span class="kw">extends</span> <span class="cls">Animal</span> {
+  <span class="kw">String</span> color = <span class="str">"black"</span>;
+
+  <span class="kw">void</span> <span class="fn">printColor</span>() {
+    System.out.println(color);       <span class="cm">// prints Dog class color</span>
+    System.out.println(<span class="kw">super</span>.color); <span class="cm">// prints Animal class color</span>
+  }
+}
+
+<span class="kw">class</span> <span class="cls">TestSuper1</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span> args[]) {
+    <span class="cls">Dog</span> d = <span class="kw">new</span> <span class="cls">Dog</span>();
+    d.printColor();
+  }
+}</code></pre>
+          <pre><code><span class="cm">/* ======= TERMINAL OUTPUT ======= */</span>
+black
+white</code></pre>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-abstract-interface" data-title="Abstract vs Interface">
+        <span class="section-tag">Unit 08</span>
+        <h2 class="section-title">Abstract Class vs Interface</h2>
+
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>Abstract Class</th><th>Interface</th></tr>
+            <tr><td><strong>Methods</strong></td><td>Can have abstract and non-abstract methods.</td><td>Can have only abstract methods (Prior to Java 8. Now supports default/static).</td></tr>
+            <tr><td><strong>Multiple Inheritance</strong></td><td class="no">Does not support multiple inheritance.</td><td class="yes">Supports multiple inheritance.</td></tr>
+            <tr><td><strong>Variables</strong></td><td>Can have final, non-final, static, and non-static variables.</td><td>Has only static and final variables.</td></tr>
+            <tr><td><strong>Implementation</strong></td><td>Can provide the implementation of an interface.</td><td>Cannot provide the implementation of an abstract class.</td></tr>
+            <tr><td><strong>Keyword</strong></td><td><code>abstract</code> keyword is used.</td><td><code>interface</code> keyword is used.</td></tr>
+            <tr><td><strong>Example</strong></td>
+              <td><code>public abstract class Shape {<br>&nbsp;&nbsp;public abstract void draw();<br>}</code></td>
+              <td><code>public interface Drawable {<br>&nbsp;&nbsp;void draw();<br>}</code></td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-arch-lifecycle" data-title="Architecture & Lifecycles">
+        <span class="section-tag">Unit 09</span>
+        <h2 class="section-title">Core Java Architectures</h2>
+
+        <h3 class="sub-title">1. CharSequence Interface Tree</h3>
+        <p>The <code>CharSequence</code> interface is used to represent a sequence of characters. It is implemented by three main classes:</p>
+        <div class="tag-row">
+          <span class="tag tag-blue">String (Immutable)</span>
+          <span class="tag tag-green">StringBuffer (Mutable, Thread-Safe)</span>
+          <span class="tag tag-orange">StringBuilder (Mutable, Fast)</span>
+        </div>
+
+        <h3 class="sub-title">2. Java Package Structure</h3>
+        <div class="pipeline">
+          <span class="pipe-step">java</span>
+          <span class="pipe-arrow">↳</span>
+          <span class="pipe-step">lang (System, String)</span>
+          <span class="pipe-arrow">|</span>
+          <span class="pipe-step">util (ArrayList, Map)</span>
+          <span class="pipe-arrow">|</span>
+          <span class="pipe-step">awt (Button)</span>
+        </div>
+
+        <h3 class="sub-title">3. Thread Lifecycle</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Active States</div>
+            <ul style="color:#a8b2cc; margin-left: 15px; font-size: 13px;">
+              <li><strong>New:</strong> Thread created, <code>start()</code> not yet called.</li>
+              <li><strong>Runnable:</strong> <code>start()</code> called, waiting for CPU.</li>
+              <li><strong>Running:</strong> CPU allocated, executing <code>run()</code>.</li>
+              <li><strong>Terminated:</strong> <code>run()</code> method exits.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Blocked States</div>
+            <ul style="color:#a8b2cc; margin-left: 15px; font-size: 13px;">
+              <li><strong>Non-Runnable (Blocked):</strong> Triggered by <code>sleep()</code>, waiting for I/O, or waiting for a lock.</li>
+              <li><em>Returns to Runnable when sleep is done, I/O completes, or lock is available.</em></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      
+      <hr>
+      
+      <!-- ══════════════════════════════
+           SECTION: INHERITANCE
+      ══════════════════════════════ -->
+      <section class="section" id="sec-inheritance" data-title="Inheritance">
+        <span class="section-tag">Unit 04</span>
+        <h2 class="section-title">Inheritance</h2>
+        <p>A mechanism where one class acquires all properties and behaviors of a parent class. Represents the <strong>IS-A relationship</strong>. Promotes code reuse and extensibility.</p>
+
+        <h3 class="sub-title">Syntax</h3>
+        <pre><code><span class="kw">class</span> <span class="cls">Child</span> <span class="kw">extends</span> <span class="cls">Parent</span> {
+  <span class="cm">// Inherits all non-private fields and methods</span>
+  <span class="cm">// Can add new fields/methods or override existing ones</span>
+}</code></pre>
+
+        <h3 class="sub-title">Key Terms</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">Superclass</div>
+            <p>Parent / Base class. The one being inherited from. Provides properties and methods.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Subclass</div>
+            <p>Child / Derived class. The one that inherits. Uses <code>extends</code> keyword.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">IS-A Check</div>
+            <p>A Dog <strong>IS-A</strong> Animal. Dog extends Animal → valid inheritance.</p>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Types of Inheritance</h3>
+        <div class="def-list">
+          <div class="def-item">
+            <div class="def-num">01</div>
+            <div class="def-text"><strong>Single Inheritance</strong> — One class inherits one parent. $A \rightarrow B$</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">02</div>
+            <div class="def-text"><strong>Multilevel Inheritance</strong> — Chain of inheritance. $A \rightarrow B \rightarrow C$</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">03</div>
+            <div class="def-text"><strong>Multiple Inheritance</strong> — Supported via <strong>Interface</strong> only in Java. $(A + B) \rightarrow C$. Direct class-based multiple inheritance is prohibited (diamond problem 🚫).</div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Why Use Inheritance?</h3>
+        <div class="tag-row">
+          <span class="tag tag-green">Code reuse</span>
+          <span class="tag tag-blue">Extensibility</span>
+          <span class="tag tag-orange">Clean structure</span>
+          <span class="tag tag-red">Avoid duplication</span>
+        </div>
+      </section>
+
+      <hr>
+
+      <!-- ══════════════════════════════
+           SECTION: METHOD OVERLOADING
+      ══════════════════════════════ -->
+      <section class="section" id="sec-overloading" data-title="Method Overloading">
+        <span class="section-tag">Unit 05</span>
+        <h2 class="section-title">Method Overloading</h2>
+        <p>When a class has <strong>multiple methods with the same name</strong> but different parameters. Improves readability and reduces code duplication.</p>
+
+        <h3 class="sub-title">Two Ways to Overload</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Change Number of Arguments</div>
+            <pre><code><span class="fn">add</span>(<span class="kw">int</span> a)
+<span class="fn">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b)
+<span class="fn">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b, <span class="kw">int</span> c)</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Change Data Type</div>
+            <pre><code><span class="fn">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b)
+<span class="fn">add</span>(<span class="kw">double</span> a, <span class="kw">double</span> b)
+<span class="fn">add</span>(<span class="kw">String</span> a, <span class="kw">String</span> b)</code></pre>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(224,108,117,.3);">
+          <div class="card-title" style="color:var(--accent4);">❌ Not Allowed</div>
+          <p>Changing <strong>only the return type</strong> is NOT valid overloading. The compiler cannot differentiate calls based on return type alone.</p>
+        </div>
+      </section>
+
+      <hr>
+
+      <!-- ══════════════════════════════
+           PLACEHOLDER: ADD MORE UNITS
+      ══════════════════════════════ -->
+      
+      <section class="section" id="sec-exceptions" data-title="Exception Handling">
+          <span class="section-tag">Unit 06</span>
+        <h2 class="section-title">Exception Handling</h2>
+        <p>An abnormal condition that breaks the normal flow of the program during runtime. Handling it prevents crashes and maintains normal execution.</p>
+
+        <h3 class="sub-title">Exception Hierarchy & Types</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">Checked Exceptions</div>
+            <p>Checked at compile time. Must handle using <code>try-catch</code> or <code>throws</code>. Examples: <code>IOException</code>, <code>SQLException</code>.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Unchecked Exceptions</div>
+            <p>Occur during runtime. Not checked at compile time. Examples: <code>ArithmeticException</code>, <code>NullPointerException</code>.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Errors</div>
+            <p>Fatal, system-level issues that cannot be handled normally. Examples: <code>OutOfMemoryError</code>.</p>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Keywords</h3>
+        <div class="def-list">
+          <div class="def-item">
+            <div class="def-num">01</div>
+            <div class="def-text"><strong>try</strong> — Wraps risky code that may throw an exception.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">02</div>
+            <div class="def-text"><strong>catch</strong> — Handles the exception.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">03</div>
+            <div class="def-text"><strong>finally</strong> — Always executes (even if an exception occurs). Used for cleanup (closing files, releasing resources).</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">04</div>
+            <div class="def-text"><strong>throw</strong> — Explicitly throws an exception (used inside a method).</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">05</div>
+            <div class="def-text"><strong>throws</strong> — Declares an exception in the method signature (propagation).</div>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+      
+      <section class="section" id="sec-multithreading" data-title="Multithreading">
+        <span class="section-tag">Unit 07</span>
+        <h2 class="section-title">Multithreading</h2>
+        <p>A thread is a lightweight process and the smallest unit of execution. Multithreading allows multiple threads to run simultaneously for faster execution and better CPU utilization.</p>
+
+        <h3 class="sub-title">Thread Life Cycle</h3>
+        <div class="pipeline">
+          <span class="pipe-step">New</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">Runnable</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">Running</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">Blocked/Waiting</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">Terminated</span>
+        </div>
+
+        <h3 class="sub-title">Creating Threads</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Extending Thread Class</div>
+            <pre><code><span class="kw">class</span> <span class="cls">MyThread</span> <span class="kw">extends</span> <span class="cls">Thread</span> {
+  <span class="kw">public void</span> <span class="fn">run</span>() {
+    System.out.println(<span class="str">"Running"</span>);
+  }
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Implementing Runnable (Best Practice)</div>
+            <pre><code><span class="kw">class</span> <span class="cls">MyThread</span> <span class="kw">implements</span> <span class="cls">Runnable</span> {
+  <span class="kw">public void</span> <span class="fn">run</span>() {
+    System.out.println(<span class="str">"Running"</span>);
+  }
+}</code></pre>
+          </div>
+        </div>
+        
+        <h3 class="sub-title">Important Methods</h3>
+        <div class="tag-row">
+          <span class="tag tag-green">start() - Starts thread & calls run()</span>
+          <span class="tag tag-blue">run() - Execution logic</span>
+          <span class="tag tag-orange">sleep(ms) - Pauses thread</span>
+          <span class="tag tag-red">join() - Waits for thread to finish</span>
+        </div>
+      </section>
+
+      <hr>
+      
+      <section class="section" id="sec-synchronization" data-title="Synchronization">
+        <span class="section-tag">Unit 08</span>
+        <h2 class="section-title">Synchronization</h2>
+        <p>Controls access of multiple threads to a shared resource using locks (monitors) to prevent thread interference.</p>
+
+        <h3 class="sub-title">Types of Synchronization</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">Synchronized Method</div>
+            <p>Locks the entire method for the object.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Synchronized Block</div>
+            <p>Locks a specific block of code. More efficient.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Static Synchronization</div>
+            <p>Locks the class itself instead of an object instance.</p>
+          </div>
+        </div>
+
+        <h3 class="sub-title">wait() vs sleep()</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>wait()</th><th>sleep()</th></tr>
+            <tr><td>Class</td><td>Object</td><td>Thread</td></tr>
+            <tr><td>Lock Status</td><td class="yes">Released 🔓</td><td class="no">Not Released 🔒</td></tr>
+            <tr><td>Purpose</td><td>Communication</td><td>Delay</td></tr>
+          </table>
+        </div>
+      </section>
+      
+      <hr>
+
+      <section class="section" id="sec-paradigms" data-title="Programming Paradigms">
+        <span class="section-tag">Unit 09</span>
+        <h2 class="section-title">Programming Paradigms</h2>
+        <p>Before writing code, you need to know how Java "thinks." Older languages use Procedural Oriented Programming (POP), while modern, scalable applications rely on Object-Oriented Programming (OOP).</p>
+
+        <h3 class="sub-title">POP vs OOP (Exam Gold)</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>POP (Procedural)</th><th>OOP (Object-Oriented)</th></tr>
+            <tr><td>Focus</td><td>Functions</td><td>Objects (Data + Behavior)</td></tr>
+            <tr><td>Security</td><td class="no">Low ✕</td><td class="yes">High ✓</td></tr>
+            <tr><td>Reusability</td><td class="no">Low ✕</td><td class="yes">High ✓</td></tr>
+            <tr><td>Data Control</td><td>Open (Moves freely)</td><td>Controlled (Encapsulated)</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-oop-pillars" data-title="4 Pillars of OOP">
+        <span class="section-tag">Unit 10</span>
+        <h2 class="section-title">The 4 Pillars of OOP</h2>
+        <p>To execute Object-Oriented Programming successfully, Java relies on four fundamental concepts that help model real-world entities.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">1. Encapsulation 🔒</div>
+            <p>Wrapping data and methods together into a single, secure unit. This achieves data hiding and improves security.</p>
+            <pre><code><span class="kw">class</span> <span class="cls">A</span> {
+  <span class="kw">private int</span> x;
+  <span class="kw">public void</span> <span class="fn">setX</span>(<span class="kw">int</span> x) { <span class="kw">this</span>.x = x; }
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">2. Inheritance 🧬</div>
+            <p>One class acquires the properties of a parent class. Promotes code reuse and clean structures.</p>
+            <pre><code><span class="kw">class</span> <span class="cls">B</span> <span class="kw">extends</span> <span class="cls">A</span> {}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">3. Polymorphism 🎭</div>
+            <p>One task taking multiple forms. Can be <strong>Compile Time</strong> (Method Overloading) or <strong>Runtime</strong> (Method Overriding).</p>
+          </div>
+          <div class="card">
+            <div class="card-title">4. Abstraction 🎯</div>
+            <p>Hiding internal logic and showing only essential details (like driving a car without knowing how the engine works). Achieved via Abstract classes or Interfaces.</p>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-variables" data-title="Variables & Data Types">
+        <span class="section-tag">Unit 11</span>
+        <h2 class="section-title">Variables, Types & Casting</h2>
+        <p>Variables are named memory locations used to store data. Because Java is strictly typed, you must declare exactly what kind of data your variable holds.</p>
+
+        <h3 class="sub-title">Types of Variables</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Type</th><th>Scope</th><th>Lifetime</th><th>Real-Life Analogy</th></tr>
+            <tr><td><strong>Local</strong></td><td>Inside Method</td><td>Short (Temporary)</td><td>Temporary worker</td></tr>
+            <tr><td><strong>Instance</strong></td><td>Inside Class, Outside Method</td><td>Until object is destroyed</td><td>Personal property</td></tr>
+            <tr><td><strong>Static</strong></td><td>Shared by all objects</td><td>Entire program</td><td>Shared resource</td></tr>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Data Types</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Primitive Types</div>
+            <p>Stores raw values. Faster execution. Examples: <code>int</code> (10), <code>float</code> (10.5), <code>double</code> (99.99), <code>char</code> ('A'), <code>boolean</code> (true).</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Non-Primitive Types</div>
+            <p>Stores references to objects. Slower execution. Examples: <code>String</code>, Arrays, Classes.</p>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Type Casting</h3>
+        <div class="def-list">
+          <div class="def-item">
+            <div class="def-num">01</div>
+            <div class="def-text"><strong>Widening (Automatic)</strong> — Small → Big (e.g., <code>int</code> to <code>double</code>). No data loss. Like pouring water into a bigger glass 🥤.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">02</div>
+            <div class="def-text"><strong>Narrowing (Explicit)</strong> — Big → Small (e.g., <code>double</code> to <code>int</code>). Requires manual casting to prevent accidental data loss. Like pouring into a smaller glass (spill = data loss) ⚠️.</div>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-control-flow" data-title="Control Flow">
+        <span class="section-tag">Unit 12</span>
+        <h2 class="section-title">Control Flow & Logic</h2>
+        <p>Control flow statements run or skip blocks of code based on specific Boolean (true/false) conditions. The condition must always evaluate to a boolean.</p>
+
+        <h3 class="sub-title">If Statements</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">Simple If</div>
+            <pre><code><span class="kw">if</span>(condition) {
+  <span class="cm">// code</span>
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">If-Else</div>
+            <pre><code><span class="kw">if</span>(condition) {
+} <span class="kw">else</span> {
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Else-If Ladder</div>
+            <pre><code><span class="kw">if</span>(c1) {}
+<span class="kw">else if</span>(c2) {}
+<span class="kw">else</span> {}</code></pre>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Assignment 3: Casting & Logic Check</h3>
+        <pre><code><span class="kw">public class</span> <span class="cls">TemperatureCheck</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+    <span class="cm">// Step 1: Declare double variable</span>
+    <span class="kw">double</span> exactTemperature = <span class="num">99.5</span>;
+
+    <span class="cm">// Step 2: Narrowing (explicit casting)</span>
+    <span class="kw">int</span> roundedTemperature = (<span class="kw">int</span>) exactTemperature;
+
+    <span class="cm">// Step 3: Condition check</span>
+    <span class="kw">if</span> (roundedTemperature > <span class="num">95</span>) {
+      System.out.println(<span class="str">"Warning: High temperature!"</span>);
+    }
+  }
+}</code></pre>
+      </section>
+      
+      <hr>
+
+      <section class="section" id="sec-class-object" data-title="Class & Object">
+        <span class="section-tag">Unit 13</span>
+        <h2 class="section-title">Class & Object (Blueprint System)</h2>
+        <p>When you spawn a character into an arena, you don't just write loose code. You use a Class as a blueprint. The Object is the actual player running around in the memory.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Class (The Blueprint 📄)</div>
+            <p>Defines the variables (data) and methods (behavior). It is just a design, taking up no active memory until instantiated.</p>
+            <pre><code><span class="kw">class</span> <span class="cls">Player</span> {
+  <span class="kw">String</span> name;
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Object (The Instance 🧠)</div>
+            <p>A real-world entity created from the class blueprint. This is where actual memory allocation happens in the Heap.</p>
+            <pre><code><span class="cls">Player</span> p1 = <span class="kw">new</span> <span class="cls">Player</span>();</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-arrays" data-title="Arrays">
+        <span class="section-tag">Unit 14</span>
+        <h2 class="section-title">Arrays (Data Storage System)</h2>
+        <p>Instead of declaring 50 different variables for a character's items, Java uses an Array—a single, fixed-size data structure that stores a collection of the exact same data type. Think of it as your <strong>Inventory Slots 🎒</strong>.</p>
+
+        <h3 class="sub-title">Declaration & Memory Model</h3>
+        <pre><code><span class="kw">String</span>[] moves = {<span class="str">"Jab"</span>, <span class="str">"Hook"</span>, <span class="str">"Uppercut"</span>};</code></pre>
+        <p><strong>Memory Layout:</strong> <code>[0] → Jab</code> | <code>[1] → Hook</code> | <code>[2] → Uppercut</code></p>
+
+        <h3 class="sub-title">Array Pros & Cons</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Advantage</th><th>Disadvantage</th></tr>
+            <tr><td class="yes">Fast access (via index)</td><td class="no">Fixed size (cannot grow)</td></tr>
+            <tr><td class="yes">Easy iteration</td><td class="no">Same data type only</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-static-modifiers" data-title="Static & Modifiers">
+        <span class="section-tag">Unit 15</span>
+        <h2 class="section-title">Static Memory & Security</h2>
+        
+        <h3 class="sub-title">The Static Keyword (Global Scoreboard 🏆)</h3>
+        <p>Normal instance variables belong to individual objects (personal data). A <code>static</code> variable belongs to the Class itself (global system data). It is loaded once in memory and shared by all objects.</p>
+        <pre><code><span class="kw">class</span> <span class="cls">A</span> {
+  <span class="kw">static int</span> count = <span class="num">0</span>; <span class="cm">// Shared by everyone</span>
+}
+<span class="cm">// Access using the class name:</span>
+<span class="cls">A</span>.count++;</code></pre>
+
+        <h3 class="sub-title">Access Modifiers (Security Levels 🔐)</h3>
+        <p>Java lets you protect your data. This controls visibility and prevents system misuse.</p>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Modifier</th><th>Access Level</th><th>Usage</th></tr>
+            <tr><td><strong>private</strong></td><td>Same class only 🔒</td><td>Strict security, internal engine data.</td></tr>
+            <tr><td><strong>default</strong></td><td>Same package</td><td>If no modifier is written.</td></tr>
+            <tr><td><strong>protected</strong></td><td>Package + subclass</td><td>Used heavily in inheritance.</td></tr>
+            <tr><td><strong>public</strong></td><td>Everywhere 🌍</td><td>Open API, easily accessible.</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-strings-overloading" data-title="Strings & Overloading">
+        <span class="section-tag">Unit 16</span>
+        <h2 class="section-title">Strings & Overloading</h2>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Strings (Permanent Ink ✍️)</div>
+            <p>A sequence of characters. In Java, Strings are <strong>Immutable</strong> (cannot change once created). If you change "Noob" to "Pro", the original "Noob" object is destroyed, and a new "Pro" object is created. This ensures memory optimization and thread safety.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Method Overloading (Combo System ⚔️)</div>
+            <p>Same method name, different parameters. Makes code cleaner. Java knows which one to run based on the input.</p>
+            <pre><code><span class="kw">void</span> <span class="fn">attack</span>() {} <span class="cm">// Standard punch</span>
+<span class="kw">void</span> <span class="fn">attack</span>(<span class="kw">String</span> weapon) {} <span class="cm">// Sword strike</span></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-assignment-4" data-title="Blueprint Challenge">
+        <span class="section-tag">Unit 17</span>
+        <h2 class="section-title">Integration Concept & Assignment 4</h2>
+        <p>How the game engine connects: <strong>Class</strong> (Blueprint) → <strong>Object</strong> (Instance) → <strong>Constructor</strong> (Spawn System) → <strong>Array</strong> (Inventory) → <strong>Static</strong> (Shared Data) → <strong>Modifiers</strong> (Security).</p>
+
+        <h3 class="sub-title">Full Solution: The Player Class</h3>
+        <pre><code><span class="kw">class</span> <span class="cls">Player</span> {
+  <span class="cm">// Static variable (shared memory)</span>
+  <span class="kw">static int</span> totalMatches = <span class="num">0</span>;
+
+  <span class="cm">// Instance variable (personal memory)</span>
+  <span class="kw">String</span> playerName;
+
+  <span class="cm">// Array (inventory slots)</span>
+  <span class="kw">String</span>[] loadout = {<span class="str">"Gadget"</span>, <span class="str">"Star Power"</span>};
+
+  <span class="cm">// Constructor (spawn system)</span>
+  <span class="fn">Player</span>(<span class="kw">String</span> name) {
+    playerName = name;
+    totalMatches++;
+  }
+
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+    <span class="cls">Player</span> p1 = <span class="kw">new</span> <span class="cls">Player</span>(<span class="str">"DJ"</span>);
+    <span class="cls">Player</span> p2 = <span class="kw">new</span> <span class="cls">Player</span>(<span class="str">"Pro"</span>);
+
+    System.out.println(<span class="str">"Player 1: "</span> + p1.playerName);
+    System.out.println(<span class="str">"Player 2: "</span> + p2.playerName);
+    System.out.println(<span class="str">"Total Matches: "</span> + <span class="cls">Player</span>.totalMatches);
+  }
+}</code></pre>
+      </section>
+      
+      <hr>
+
+      <section class="section" id="sec-inheritance-overriding" data-title="Inheritance & Overriding">
+        <span class="section-tag">Unit 18</span>
+        <h2 class="section-title">Inheritance & Overriding (The Family Tree)</h2>
+        <p>If you have dozens of characters, you don't rewrite "movement" for each one. You create a master parent class and let child classes inherit from it. Think of it as passing down family traits 👨‍👦.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Inheritance (IS-A Relation 🧬)</div>
+            <p>One class acquires properties of another using the <code>extends</code> keyword. It reuses code and keeps your hierarchy clean.</p>
+            <pre><code><span class="kw">class</span> <span class="cls">Hero</span> {
+  <span class="kw">int</span> health = <span class="num">100</span>;
+}
+<span class="kw">class</span> <span class="cls">Ninja</span> <span class="kw">extends</span> <span class="cls">Hero</span> {
+  <span class="cm">// Automatically gets health</span>
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Method Overriding (Runtime Polymorphism 🎭)</div>
+            <p>A child class redefines a parent's method to customize behavior. It must have the exact same name, parameters, and return type.</p>
+            <pre><code><span class="kw">class</span> <span class="cls">Ninja</span> <span class="kw">extends</span> <span class="cls">Hero</span> {
+  <span class="kw">@Override</span>
+  <span class="kw">void</span> <span class="fn">attack</span>() {
+    System.out.println(<span class="str">"Shuriken!"</span>);
+  }
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-abstraction-interfaces" data-title="Abstraction & Interfaces">
+        <span class="section-tag">Unit 19</span>
+        <h2 class="section-title">Abstraction & Interfaces</h2>
+        <p>Sometimes a parent class is just a concept, not something you should actually spawn into the game. That is where abstraction comes in.</p>
+
+        <h3 class="sub-title">Abstract Class vs Interface</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>Abstract Class (Blueprint 💭)</th><th>Interface (Contract 📜)</th></tr>
+            <tr><td><strong>Implementation</strong></td><td>Partial (Can have normal & abstract methods)</td><td>100% Abstract (Only empty methods)</td></tr>
+            <tr><td><strong>Inheritance</strong></td><td>Single (<code>extends</code>)</td><td>Multiple (<code>implements</code>)</td></tr>
+            <tr><td><strong>Object Creation</strong></td><td class="no">Cannot create instances ✕</td><td class="no">Cannot create instances ✕</td></tr>
+            <tr><td><strong>Usage Example</strong></td><td>A generic <code>Hero</code> template.</td><td>A <code>Healer</code> role added to a Paladin.</td></tr>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Syntax in Action</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Abstract Class</div>
+            <pre><code><span class="kw">abstract class</span> <span class="cls">Hero</span> {
+  <span class="kw">abstract void</span> <span class="fn">attack</span>(); <span class="cm">// No body</span>
+}</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Interface</div>
+            <pre><code><span class="kw">interface</span> <span class="cls">Healer</span> {
+  <span class="kw">void</span> <span class="fn">healTeam</span>(); <span class="cm">// Empty method</span>
+}
+<span class="kw">class</span> <span class="cls">Paladin</span> <span class="kw">implements</span> <span class="cls">Healer</span> { ... }</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-packages" data-title="Packages">
+        <span class="section-tag">Unit 20</span>
+        <h2 class="section-title">Packages (Code Organization 📂)</h2>
+        <p>As your game gets massive, you use Packages (folders) to organize your Java classes logically. This prevents naming conflicts, provides better structure, and makes maintenance easier.</p>
+        <div class="tag-row">
+          <span class="tag tag-blue">Syntax: <code>package mypackage;</code></span>
+          <span class="tag tag-green">Built-in (e.g., <code>java.util</code>)</span>
+          <span class="tag tag-orange">User-defined</span>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-assignment-5" data-title="Lineage Challenge">
+        <span class="section-tag">Unit 21</span>
+        <h2 class="section-title">Integration & Assignment 5</h2>
+        <p><strong>System Flow:</strong> Class → Inheritance → Overriding → Abstraction → Interface → Package</p>
+
+        <h3 class="sub-title">Full Solution: The Brawler Lineage</h3>
+        <pre><code><span class="cm">// Parent Class</span>
+<span class="kw">class</span> <span class="cls">Brawler</span> {
+  <span class="kw">public void</span> <span class="fn">useSuper</span>() {
+    System.out.println(<span class="str">"Using a standard super attack!"</span>);
+  }
+}
+
+<span class="cm">// Child Class</span>
+<span class="kw">class</span> <span class="cls">Shelly</span> <span class="kw">extends</span> <span class="cls">Brawler</span> {
+
+  <span class="kw">@Override</span>
+  <span class="kw">public void</span> <span class="fn">useSuper</span>() {
+    System.out.println(<span class="str">"Super Shell activated!"</span>);
+  }
+
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+    <span class="cm">// Creating object</span>
+    <span class="cls">Shelly</span> s = <span class="kw">new</span> <span class="cls">Shelly</span>();
+    <span class="cm">// JVM checks at runtime and executes overridden child version 🔥</span>
+    s.useSuper(); 
+  }
+}</code></pre>
+      </section>
+      
+      <hr>
+
+      <section class="section" id="sec-system-safety" data-title="System Safety (Exceptions)">
+        <span class="section-tag">Unit 22</span>
+        <h2 class="section-title">Expecting the Unexpected (System Safety Engine)</h2>
+        <p>When a system interacts with the real world—like external sensors or network servers—things go wrong. An <strong>Exception</strong> is an unexpected runtime event that breaks the normal flow of the program.</p>
+
+        <h3 class="sub-title">Why Exception Handling?</h3>
+        <div class="tag-row">
+          <span class="tag tag-red">Prevent crash 🛑</span>
+          <span class="tag tag-green">Maintain 100% uptime 🔄</span>
+          <span class="tag tag-blue">Safe execution</span>
+          <span class="tag tag-orange">Graceful recovery</span>
+        </div>
+
+        <h3 class="sub-title">The Anatomy of a Safety Net</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">try { }</div>
+            <p><strong>The Risk Zone ⚠️:</strong> You put the risky code in here (e.g., reading a sensor array, pinging a server).</p>
+          </div>
+          <div class="card">
+            <div class="card-title">catch { }</div>
+            <p><strong>The Recovery Plan 🛠️:</strong> If the <code>try</code> block blows up, execution jumps here. You tell Java what to do to recover.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">finally { }</div>
+            <p><strong>The Cleanup Crew 🧹:</strong> Always executes, whether it crashed or not. Used to close connections or reset sensors.</p>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-threads-network" data-title="Threads & Networking">
+        <span class="section-tag">Unit 23</span>
+        <h2 class="section-title">Multithreading & Networking Integration</h2>
+        <p>If your program needs to listen for a voice command, ping a weather server, and run a motor all at the same time, it uses Multithreading. If one thread crashes, the rest of the system must survive.</p>
+
+        <h3 class="sub-title">The Golden Rule of Uptime</h3>
+        <div class="def-list">
+          <div class="def-item">
+            <div class="def-num">👉</div>
+            <div class="def-text"><strong>One thread crash ≠ full program crash</strong> (if handled properly with try-catch).</div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Real System Flow</h3>
+        <div class="pipeline">
+          <span class="pipe-step">Thread 1: Voice 🎤</span>
+          <span class="pipe-step">Thread 2: Weather API 🌦️ (Fails!)</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">Catch Exception 🛡️</span>
+          <span class="pipe-arrow">→</span>
+          <span class="pipe-step">Thread 3: Motors ⚙️ (Keeps Running)</span>
+        </div>
+
+        <h3 class="sub-title">Networking (java.net)</h3>
+        <p>Used to fetch API data, connect servers, or manage IoT communication. Because network failures are common, networking code <strong>must</strong> be wrapped in a <code>try-catch</code> block.</p>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-assignment-6" data-title="Crash Test Challenge">
+        <span class="section-tag">Unit 24</span>
+        <h2 class="section-title">Integration & Assignment 6</h2>
+        <p>Let's build a safety net to prevent a mathematical disaster. Dividing by zero normally causes an <code>ArithmeticException</code> and a hard crash.</p>
+
+        <h3 class="sub-title">Full Solution: The Calculator Crash Test</h3>
+        <pre><code><span class="kw">class</span> <span class="cls">Calculator</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+
+    <span class="kw">int</span> numerator = <span class="num">100</span>;
+    <span class="kw">int</span> denominator = <span class="num">0</span>;
+
+    <span class="kw">try</span> {
+      <span class="cm">// Risk Zone: 100 / 0 triggers ArithmeticException</span>
+      <span class="kw">int</span> result = numerator / denominator;
+      System.out.println(<span class="str">"Result: "</span> + result);
+    } 
+    <span class="kw">catch</span> (<span class="cls">ArithmeticException</span> e) {
+      <span class="cm">// Safety Net catches the error</span>
+      System.out.println(<span class="str">"Cannot divide by zero! Overriding value."</span>);
+    } 
+    <span class="kw">finally</span> {
+      <span class="cm">// Cleanup Crew always runs</span>
+      System.out.println(<span class="str">"Calculation attempt finished."</span>);
+    }
+
+    <span class="cm">// System survives!</span>
+    System.out.println(<span class="str">"Program continues safely."</span>);
+  }
+}</code></pre>
+      </section>
+      
+      <hr>
+
+      <section class="section" id="sec-collections" data-title="Collections Framework">
+        <span class="section-tag">Unit 25</span>
+        <h2 class="section-title">Collections Framework (Dynamic Data Engine)</h2>
+        <p>If you used a standard Java Array to store your ultimate team roster, your game would crash the moment you packed a new meta striker because arrays have a strictly fixed size. Collections are dynamic data structures that automatically grow and shrink as you play.</p>
+
+        <h3 class="sub-title">Array vs Collection</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>Array</th><th>Collection</th></tr>
+            <tr><td><strong>Size</strong></td><td class="no">Fixed ❌</td><td class="yes">Dynamic ✅</td></tr>
+            <tr><td><strong>Flexibility</strong></td><td>Low</td><td>High</td></tr>
+            <tr><td><strong>Memory</strong></td><td>Static allocation</td><td>Dynamic allocation</td></tr>
+            <tr><td><strong>Methods</strong></td><td>Limited</td><td>Rich API (add, remove, search)</td></tr>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Generics (Type Safety System)</h3>
+        <p>Generics (using angle brackets <code>&lt; &gt;</code>) ensure that only a specific data type is allowed inside your collection. This prevents the engine from accidentally trying to load a string of text into a list meant for integer stats.</p>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-lists-maps" data-title="Lists & Maps">
+        <span class="section-tag">Unit 26</span>
+        <h2 class="section-title">Dynamic Storage: Lists & Maps</h2>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">ArrayList (The Roster 📋)</div>
+            <p>A dynamic array implementation. Backed by a resizable array under the hood—when it gets full, Java silently creates a bigger one and moves the data over.</p>
+            <pre><code><span class="cls">ArrayList</span>&lt;<span class="kw">String</span>&gt; squad = <span class="kw">new</span> <span class="cls">ArrayList</span>&lt;&gt;();
+squad.add(<span class="str">"Messi"</span>);
+squad.remove(<span class="str">"Ronaldo"</span>);</code></pre>
+          </div>
+          <div class="card">
+            <div class="card-title">Vector (Thread-Safe 🔒)</div>
+            <p>Similar to an ArrayList, but synchronized. It is slower but entirely thread-safe, making it perfect for multithreading environments where background tasks are updating the UI.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Hashtable (Lookup System 🔑)</div>
+            <p>Stores data in Key-Value pairs for ultra-fast retrieval. Think of providing a Player ID (Key) to instantly get the Player Stats (Value). Null keys are not allowed.</p>
+            <pre><code><span class="cls">Hashtable</span>&lt;<span class="kw">Integer</span>, <span class="kw">String</span>&gt; table = <span class="kw">new</span> <span class="cls">Hashtable</span>&lt;&gt;();
+table.put(<span class="num">1</span>, <span class="str">"Messi"</span>);</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-file-io" data-title="File I/O & Streams">
+        <span class="section-tag">Unit 27</span>
+        <h2 class="section-title">File I/O (Data Persistence System)</h2>
+        <p>Your <code>ArrayList</code> only exists in the computer's temporary RAM. When you close the app, the roster disappears! File I/O permanently saves data to the hard drive so it isn't lost.</p>
+
+        <h3 class="sub-title">Streams (Data Flow Pipelines 🚰)</h3>
+        <p>A sequence of data flow. <strong>InputStreams</strong> are for reading data into your program, and <strong>OutputStreams</strong> are for writing data out to a file.</p>
+
+        <div class="card">
+          <div class="card-title">FileOutputStream (Write Operation)</div>
+          <p>Writes raw bytes to a file. Because interacting with a hard drive is inherently risky (permissions, disk space), Java forces you to wrap this in a <code>try-catch</code> block. <strong>Always close your stream</strong> to free up memory!</p>
+          <pre><code><span class="kw">try</span> {
+  <span class="cls">FileOutputStream</span> out = <span class="kw">new</span> <span class="cls">FileOutputStream</span>(<span class="str">"save.txt"</span>);
+  out.write(<span class="num">65</span>); <span class="cm">// Writes ASCII 'A'</span>
+  out.close();   <span class="cm">// LOCK IT DOWN 🔒</span>
+} <span class="kw">catch</span> (<span class="cls">Exception</span> e) {
+  System.out.println(<span class="str">"Disk Error!"</span>);
+}</code></pre>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-assignment-7" data-title="Roster Save Challenge">
+        <span class="section-tag">Unit 28</span>
+        <h2 class="section-title">Integration & Assignment 7</h2>
+        <p>Combining Collections and File I/O to create the skeleton of a game's save system.</p>
+
+        <h3 class="sub-title">Full Solution: The Roster Save Script</h3>
+        <pre><code><span class="kw">import</span> java.util.ArrayList;
+<span class="kw">import</span> java.io.FileOutputStream;
+
+<span class="kw">class</span> <span class="cls">SaveRoster</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+
+    <span class="cm">// Step 1: Create dynamic ArrayList</span>
+    <span class="cls">ArrayList</span>&lt;<span class="kw">String</span>&gt; metaStrikers = <span class="kw">new</span> <span class="cls">ArrayList</span>&lt;<span class="kw">String</span>&gt;();
+
+    <span class="cm">// Step 2: Add players to the roster</span>
+    metaStrikers.add(<span class="str">"Messi"</span>);
+    metaStrikers.add(<span class="str">"Haaland"</span>);
+
+    <span class="cm">// Step 3: File Handling with Safety Net</span>
+    <span class="kw">try</span> {
+      <span class="cls">FileOutputStream</span> saveFile = <span class="kw">new</span> <span class="cls">FileOutputStream</span>(<span class="str">"strikers.txt"</span>);
+      
+      <span class="cm">// (Writing logic goes here in a full app)</span>
+      
+      saveFile.close(); <span class="cm">// Close the pipeline</span>
+    } <span class="kw">catch</span> (<span class="cls">Exception</span> e) {
+      System.out.println(<span class="str">"Error saving roster!"</span>);
+    }
+
+    System.out.println(<span class="str">"Roster processed successfully."</span>);
+  }
+}</code></pre>
+      </section>
+      
+      <hr>
+
+      <section class="section" id="sec-gui-toolkits" data-title="Java GUI Toolkits">
+        <span class="section-tag">Unit 29</span>
+        <h2 class="section-title">Java GUI (Graphical User Interface)</h2>
+        <p>A visual interface for user interaction that replaces the command line. To build this visual dashboard layer, Java gives you three main toolkits.</p>
+
+        <h3 class="sub-title">AWT, Swing & Applets</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">1. AWT (Abstract Window Toolkit)</div>
+            <p>The original GUI library. It is <strong>heavyweight</strong> and platform-dependent because it asks the underlying OS to draw components.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">2. Swing (Most Important 🔥)</div>
+            <p>The modern upgrade built on AWT. It is <strong>lightweight</strong>, fully Java-based, and looks exactly the same on every device.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">3. Applets (Deprecated ❌)</div>
+            <p>Tiny Java applications designed to run inside web browsers. Modern browsers no longer support them, so Swing is the go-to for desktop apps.</p>
+          </div>
+        </div>
+
+        <h3 class="sub-title">AWT vs Swing (Exam Gold)</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Feature</th><th>AWT</th><th>Swing</th></tr>
+            <tr><td><strong>Type</strong></td><td>Heavyweight ⚠️</td><td>Lightweight ✅</td></tr>
+            <tr><td><strong>Platform</strong></td><td>Dependent</td><td>Independent 🌍</td></tr>
+            <tr><td><strong>Look & Feel</strong></td><td>OS-based</td><td>Same everywhere</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-swing-components" data-title="Swing Components">
+        <span class="section-tag">Unit 30</span>
+        <h2 class="section-title">Swing Structure & Event Handling</h2>
+        <p>Building a UI is like building a house. You need a foundation, furniture, and electricity to make it work.</p>
+
+        <h3 class="sub-title">GUI Building Blocks</h3>
+        <div class="def-list">
+          <div class="def-item">
+            <div class="def-num">01</div>
+            <div class="def-text"><strong>JFrame (The House 🏠)</strong> — The main window itself, with minimize, maximize, and close buttons.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">02</div>
+            <div class="def-text"><strong>Components (The Furniture 🪑)</strong> — Things inside the window: <code>JButton</code> (clickable button), <code>JLabel</code> (text display), and <code>JTextField</code> (input field).</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">03</div>
+            <div class="def-text"><strong>Event Listeners (The Electricity ⚡)</strong> — Listens for user actions (like a click) and responds. (User Click → Event Trigger → Listener Executes).</div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Event Handling Example</h3>
+        <pre><code>btn.addActionListener(e -> {
+    System.out.println(<span class="str">"Button Clicked!"</span>);
+});</code></pre>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-assignment-8" data-title="Interface Challenge">
+        <span class="section-tag">Unit 31</span>
+        <h2 class="section-title">Integration & Assignment 8</h2>
+        <p>Building the very first window for your control panel.</p>
+
+        <h3 class="sub-title">Full Solution: The System Dashboard</h3>
+        <pre><code><span class="kw">import</span> javax.swing.*;
+
+<span class="kw">class</span> <span class="cls">Dashboard</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+
+        <span class="cm">// Step 1: Create JFrame (The Window)</span>
+        <span class="cls">JFrame</span> mainScreen = <span class="kw">new</span> <span class="cls">JFrame</span>(<span class="str">"System Control"</span>);
+
+        <span class="cm">// Step 2: Create JLabel (The Text Display)</span>
+        <span class="cls">JLabel</span> statusLabel = <span class="kw">new</span> <span class="cls">JLabel</span>(<span class="str">"Status: Online"</span>);
+
+        <span class="cm">// Set position (x, y, width, height)</span>
+        statusLabel.setBounds(<span class="num">50</span>, <span class="num">50</span>, <span class="num">150</span>, <span class="num">30</span>);
+
+        <span class="cm">// Step 3: Add label to frame</span>
+        mainScreen.add(statusLabel);
+
+        <span class="cm">// Step 4: Frame settings</span>
+        mainScreen.setSize(<span class="num">300</span>, <span class="num">200</span>);
+        mainScreen.setLayout(<span class="kw">null</span>);
+
+        <span class="cm">// Step 5: Make visible (Turn the screen on!)</span>
+        mainScreen.setVisible(<span class="kw">true</span>);
+    }
+}</code></pre>
+      </section>
+      
+      <hr>
+
+      <section class="section" id="sec-jdbc" data-title="JDBC Database">
+        <span class="section-tag">Unit 32</span>
+        <h2 class="section-title">JDBC (Java Database Connectivity)</h2>
+        <p>In Unit 4, we used File I/O for simple storage. But for thousands of records, we need a database. JDBC is the API that acts as a bridge, letting Java talk to systems like MySQL[cite: 3568, 3574].</p>
+
+        <h3 class="sub-title">The 4 Types of JDBC Drivers</h3>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Type 1: JDBC-ODBC Bridge</div>
+            <p>An old-school adapter that is platform-dependent. Mostly obsolete now.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Type 2: Native API</div>
+            <p>Uses native C/C++ libraries. Faster than Type 1 but complex to set up.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Type 3: Network Protocol</div>
+            <p>Uses a middle server (middleware) to reach the database. Very flexible for enterprises.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Type 4: Pure Java Driver 🔥</div>
+            <p><strong>The Gold Standard:</strong> 100% Java, direct connection, and platform independent. This is the fastest and most used driver[cite: 3568].</p>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-jdbc-steps" data-title="JDBC Steps">
+        <span class="section-tag">Unit 33</span>
+        <h2 class="section-title">The 5-Step Connection Process</h2>
+        <p>To get Java to talk to a database, you must follow this strict 5-step sequence[cite: 3572, 3573].</p>
+
+        <div class="def-list">
+          <div class="def-item">
+            <div class="def-num">01</div>
+            <div class="def-text"><strong>Register the Driver</strong> — Load the driver class into memory (e.g., <code>Class.forName()</code>).</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">02</div>
+            <div class="def-text"><strong>Establish Connection</strong> — Login to the DB using a URL, Username, and Password.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">03</div>
+            <div class="def-text"><strong>Create Statement</strong> — Build the object that will carry your SQL commands.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">04</div>
+            <div class="def-text"><strong>Execute Query</strong> — Send the SQL command and receive data in a <code>ResultSet</code>.</div>
+          </div>
+          <div class="def-item">
+            <div class="def-num">05</div>
+            <div class="def-text"><strong>Close Connection</strong> — Always shut down the bridge to save system resources.</div>
+          </div>
+        </div>
+      </section>
+
+      <hr>
+
+      <section class="section" id="sec-assignment-9" data-title="Database Handshake">
+        <span class="section-tag">Unit 34</span>
+        <h2 class="section-title">Integration & Assignment 9</h2>
+        <p>Writing the "handshake" code to connect your Java program to a MySQL database safely using <code>try-catch</code>.</p>
+
+        <h3 class="sub-title">Full Solution: The JDBC Handshake</h3>
+        <pre><code><span class="kw">import</span> java.sql.*;
+
+<span class="kw">class</span> <span class="cls">DatabaseConnect</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="kw">String</span>[] args) {
+    <span class="kw">try</span> {
+      <span class="cm">// Step 1: Register the MySQL Driver</span>
+      <span class="cls">Class</span>.forName(<span class="str">"com.mysql.jdbc.Driver"</span>);
+
+      <span class="cm">// Step 2: Establish the Connection</span>
+      <span class="cls">Connection</span> con = <span class="cls">DriverManager</span>.getConnection(
+        <span class="str">"jdbc:mysql://localhost:3306/jarvis_db"</span>,
+        <span class="str">"dj_admin"</span>,
+        <span class="str">"ironman123"</span>
+      );
+
+      System.out.println(<span class="str">"Connection Successful!"</span>);
+
+      <span class="cm">// Step 5: Close Connection</span>
+      con.close();
+    } 
+    <span class="kw">catch</span> (<span class="cls">Exception</span> e) {
+      <span class="cm">// Safety Net for wrong credentials or DB downtime</span>
+      System.out.println(<span class="str">"Connection Failed!"</span>);
+    }
+  }
+}</code></pre>
+      </section>
+
+      <hr>
+      <section class="section" id="sec-placeholder" data-title="+ Add More Units">
+        <span class="section-tag">Add More</span>
+        <h2 class="section-title">More Topics Coming…</h2>
+        <p style="color:var(--muted);">Paste new data into the <code>DATA_SECTIONS</code> array in the CONFIG block at the top of the script to add more units. The nav bar will auto-update.</p>
+        <div class="card" style="border-style:dashed; border-color:var(--accent2); opacity:.5;">
+          <div class="card-title" style="color:var(--accent2);">📥 NEXT UNIT SLOT</div>
+          <p>e.g., Polymorphism · Abstraction · Interfaces · Collections · Exception Handling</p>
+        </div>
+      </section>
+
+    </main>
+  </div><!-- end layout -->
+
+  <!-- =========================
+       🧠 SCRIPT SECTION
+  ========================== -->
+  <script>
+
+    // =========================
+    // 🔧 CONFIG
+    // =========================
+    const PAGE_CONFIG = {
+      student: "DJ",
+      subject: "Java Programming"
+    };
+
+    // =========================
+    // 🧭 AUTO-GENERATE NAV
+    // =========================
+    function buildNav() {
+      const sidebar = document.getElementById('sidebar');
+      const sections = document.querySelectorAll('section.section[data-title]');
+      sidebar.innerHTML = `<div class="nav-section-label">${PAGE_CONFIG.subject}</div>`;
+      sections.forEach(sec => {
+        const title = sec.getAttribute('data-title');
+        const id = sec.id;
+        const a = document.createElement('a');
+        a.href = '#' + id;
+        a.innerHTML = `<span class="dot"></span>${title}`;
+        a.onclick = () => {
+          document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
+          a.classList.add('active');
+        };
+        sidebar.appendChild(a);
+      });
+    }
+
+    // =========================
+    // 🔄 ACTIVE NAV ON SCROLL
+    // =========================
+    function setupScrollSpy() {
+      const links = document.querySelectorAll('nav a');
+      const sections = document.querySelectorAll('section.section');
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            links.forEach(l => {
+              l.classList.toggle('active', l.getAttribute('href') === '#' + entry.target.id);
+            });
+          }
+        });
+      }, { rootMargin: '-30% 0px -60% 0px' });
+      sections.forEach(s => observer.observe(s));
+    }
+
+    // =========================
+    // 📖 TEXTBOOK TOGGLE
+    // =========================
+    function toggleTextbook() {
+      const body = document.body;
+      const btn = document.getElementById('viewBtn');
+      body.classList.toggle('textbook-mode');
+      btn.textContent = body.classList.contains('textbook-mode') ? '🌙 Dark' : '📖 Textbook';
+    }
+
+    // =========================
+    // 🔍 SEARCH
+    // =========================
+    function handleSearch(val) {
+      const q = val.toLowerCase();
+      const sections = document.querySelectorAll('section.section');
+      sections.forEach(sec => {
+        const match = sec.innerText.toLowerCase().includes(q);
+        sec.style.opacity = (q === '' || match) ? '1' : '0.15';
+      });
+    }
+
+    // =========================
+    // ▶ INIT
+    // =========================
+    buildNav();
+    setupScrollSpy();
+    document.title = `${PAGE_CONFIG.subject} — ${PAGE_CONFIG.student}`;
+
+  </script>
+
+</body>
+</html>
