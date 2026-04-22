@@ -242,11 +242,11 @@ body {
 <div class="hud-statusbar">
   <span><div class="dot"></div>NEURAL LINK</span>
   <span><div class="dot" style="animation-delay:.3s"></div>HUD ACTIVE</span>
-  <span><div class="dot" style="animation-delay:.6s"></div>SECURE CONN</span>
+  <span><div class="dot" style="animation-delay:.6s"></div>SECURE COMM</span>
 </div>
 
 <!-- BOTTOM BAR -->
-<div class="hud-bottombar">J.A.R.V.I.S PORTFOLIO AI D.J ENGINEER</div>
+<div class="hud-bottombar">D.J</div>
 
 <!-- BOOT SCREEN -->
 <div id="boot-screen">
@@ -286,9 +286,6 @@ let _visitorName     = '';
 let _visitorGreeting = '';
 
 /* ════════════════════════════════════════
-   THREE.JS — 3D JARVIS HOLOGRAM
-════════════════════════════════════════ */
-/* ════════════════════════════════════════
    THREE.JS — 3D JARVIS HOLOGRAM (PERFORMANCE SCALED)
 ════════════════════════════════════════ */
 function init3D() {
@@ -309,7 +306,7 @@ function init3D() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 0);
 
-  const scene = new THREE.Scene();
+  window.scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0, 5);
 
@@ -509,6 +506,779 @@ function launchDashboard() {
       '&greeting=' + encodeURIComponent(_visitorGreeting);
   }, 800);
 }
+/* ════════════════════════════════════════════════════════════════
+   IIFE 1 — HUD DATA RAIN  (Easter Egg: press '1' to toggle)
+   DOM Injection: hunts for body, injects its own canvas
+   Ghost Mode: fully isolated inside IIFE
+   Scoped: canvas id = #jv-rain-canvas, no global leakage
+   Vanilla JS/CSS only
+════════════════════════════════════════════════════════════════ */
+(function initHudDataRain() {
+
+  /* ── STATE ── */
+  let active = false;
+  let animId = null;
+
+  /* ── INJECT CANVAS ── */
+  const canvas = document.createElement('canvas');
+  canvas.id = 'jv-rain-canvas';
+  Object.assign(canvas.style, {
+    position:      'fixed',
+    top:           '0',
+    left:          '0',
+    width:         '100%',
+    height:        '100%',
+    pointerEvents: 'none',
+    zIndex:        '1',           /* sits above bg, below your form */
+    opacity:       '0',
+    transition:    'opacity 0.6s ease',
+  });
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+
+  /* ── CHAR POOL ── hex digits + binary bursts for that ECE feel */
+  const CHARS = '0123456789ABCDEF01アイウエオカキクケコ∑∆Ω∇';
+
+  /* ── COLUMN STATE ── */
+  let cols = [];
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    buildColumns();
+  }
+
+  function buildColumns() {
+    const FONT_SIZE  = 13;
+    const COL_WIDTH  = 18;           /* px per column */
+    const numCols    = Math.floor(canvas.width / COL_WIDTH);
+
+    cols = [];
+    for (let i = 0; i < numCols; i++) {
+      /* Only populate columns within two edge bands (~20% each side) */
+      const frac = i / numCols;
+      const inLeftBand  = frac < 0.22;
+      const inRightBand = frac > 0.78;
+      if (!inLeftBand && !inRightBand) continue;
+
+      cols.push({
+        x:      i * COL_WIDTH,
+        y:      Math.random() * -canvas.height,   /* stagger start */
+        speed:  2.5 + Math.random() * 3.5,
+        chars:  [],
+        len:    Math.floor(8 + Math.random() * 18),
+        timer:  0,
+        rate:   2 + Math.floor(Math.random() * 3), /* frames per char swap */
+        bright: Math.random() > 0.85,              /* occasional hot-white leader */
+        FONT_SIZE,
+        COL_WIDTH,
+      });
+    }
+  }
+
+  /* ── DRAW LOOP ── */
+  function draw() {
+    /* Fade trail — semi-transparent dark rect each frame */
+    ctx.fillStyle = 'rgba(2, 12, 24, 0.18)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    cols.forEach(col => {
+      col.timer++;
+
+      /* Swap a random char in the column's string every `rate` frames */
+      if (col.timer % col.rate === 0) {
+        col.chars.unshift(CHARS[Math.floor(Math.random() * CHARS.length)]);
+        if (col.chars.length > col.len) col.chars.pop();
+      }
+
+      /* Draw each char in the column */
+      col.chars.forEach((ch, j) => {
+        const cy = col.y + j * col.FONT_SIZE;
+        if (cy < 0 || cy > canvas.height) return;
+
+        let color;
+        if (j === 0) {
+          /* Leader char — white/cyan flash */
+          color = col.bright ? '#ffffff' : '#00e5ff';
+          ctx.shadowBlur  = 12;
+          ctx.shadowColor = '#00e5ff';
+        } else {
+          /* Tail fades from cyan → deep teal */
+          const fade = 1 - j / col.len;
+          const g    = Math.floor(180 * fade + 80);
+          color = `rgba(0, ${g}, ${Math.floor(g * 1.4)}, ${0.2 + fade * 0.75})`;
+          ctx.shadowBlur = 0;
+        }
+
+        ctx.fillStyle = color;
+        ctx.font      = `${col.FONT_SIZE}px "Share Tech Mono", monospace`;
+        ctx.fillText(ch, col.x, cy);
+        ctx.shadowBlur = 0;
+      });
+
+      /* Advance column */
+      col.y += col.speed;
+
+      /* Reset when fully off screen */
+      if (col.y - col.len * col.FONT_SIZE > canvas.height) {
+        col.y     = Math.random() * -200;
+        col.speed = 2.5 + Math.random() * 3.5;
+        col.chars = [];
+        col.bright = Math.random() > 0.85;
+      }
+    });
+
+    animId = requestAnimationFrame(draw);
+  }
+
+  /* ── TOGGLE ── */
+  function enable() {
+    resize();
+    canvas.style.opacity = '1';
+    draw();
+  }
+
+  function disable() {
+    canvas.style.opacity = '0';
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+    /* Clear canvas after fade */
+    setTimeout(() => ctx.clearRect(0, 0, canvas.width, canvas.height), 650);
+  }
+
+  /* ── KEYPRESS EASTER EGG ── */
+  window.addEventListener('keydown', function(e) {
+    if (e.key === '1' || e.code === 'Digit1') {
+      active = !active;
+      active ? enable() : disable();
+    }
+  });
+
+  /* ── RESIZE GUARD ── */
+  window.addEventListener('resize', () => { if (active) resize(); });
+
+  /* ── CONSOLE HINT ── (shows once, then never again) */
+  console.log('%c[JARVIS] Data Rain armed. Press \'1\' to activate.', 'color:#00e5ff;font-family:monospace;');
+
+})();
+
+/* ════════════════════════════════════════════════════════════════
+    JARVIS ORBITAL BURST EMITTER — v2
+   Replaces sphere-ping with sparse orbital debris + nebula wash.
+
+   Aesthetic: asteroid belt detonation in deep space.
+   - Thin elliptical debris rings (tilted orbital planes)
+   - Sparse particle shards flung outward (not dense, just ~18-24)
+   - One soft nebula wash: a large faint icosphere that blooms
+     and dissolves like gas
+   - Subtle colour shift: deep cyan → pale violet at peak
+
+   Fires once every 60 s. First burst at 2 s after load.
+   Ghost-mode: zero global pollution.
+════════════════════════════════════════════════════════════════ */
+(function initOrbitalBurst() {
+
+  /* ─── wait for Three.js scene ─────────────────────────────── */
+  function waitForScene(cb, n) {
+    n = n || 0;
+    if (typeof THREE !== 'undefined' && typeof scene !== 'undefined') {
+      cb(scene);
+    } else if (n < 80) {
+      setTimeout(() => waitForScene(cb, n + 1), 100);
+    } else {
+      console.warn('[OrbitalBurst] THREE scene not found.');
+    }
+  }
+
+  waitForScene(function (scene) {
+
+    /* ─── palette ─────────────────────────────────────────── */
+    const COL_CORE   = new THREE.Color(0x00e5ff);   /* cyan       */
+    const COL_FRINGE = new THREE.Color(0x9b7fff);   /* pale violet*/
+
+    /* ─── live objects ─────────────────────────────────────── */
+    const pool = [];   /* { mesh|points, mat, tick } */
+
+    /* ─── util: lerp colour ─────────────────────────────────── */
+    function lerpCol(a, b, t) {
+      return new THREE.Color().lerpColors(a, b, t);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       1. ORBITAL RING — thin torus, heavily tilted, low opacity
+    ══════════════════════════════════════════════════════════ */
+    function spawnRing(radius, tiltX, tiltZ, speed, initOpacity) {
+      const geo = new THREE.TorusGeometry(radius, 0.012, 3, 90);
+      const mat = new THREE.MeshBasicMaterial({
+        color:       COL_CORE,
+        transparent: true,
+        opacity:     initOpacity,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = tiltX;
+      mesh.rotation.z = tiltZ;
+      scene.add(mesh);
+
+      let age = 0;
+      pool.push({
+        mesh,
+        mat,
+        tick() {
+          age++;
+          /* expand outward */
+          const s = 1 + age * speed;
+          mesh.scale.setScalar(s);
+          /* slow drift rotation */
+          mesh.rotation.y += 0.003;
+          /* fade: hold briefly then dissolve */
+          mat.opacity = initOpacity * Math.max(0, 1 - Math.pow(age / 120, 1.6));
+          /* colour drift toward violet as it expands */
+          mat.color.copy(lerpCol(COL_CORE, COL_FRINGE, Math.min(1, age / 90)));
+          return mat.opacity < 0.005;
+        },
+      });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       2. DEBRIS SHARDS — sparse Points cloud, flung outward
+    ══════════════════════════════════════════════════════════ */
+    function spawnDebris(count) {
+      const positions = new Float32Array(count * 3);
+      const velocities = [];
+
+      for (let i = 0; i < count; i++) {
+        /* start near origin with tiny random offset */
+        const θ = Math.random() * Math.PI * 2;
+        const φ = Math.acos(2 * Math.random() - 1);
+        const r = 0.3 + Math.random() * 0.5;
+        positions[i * 3]     = r * Math.sin(φ) * Math.cos(θ);
+        positions[i * 3 + 1] = r * Math.sin(φ) * Math.sin(θ);
+        positions[i * 3 + 2] = r * Math.cos(φ);
+
+        /* velocity: outward + slight perpendicular drift */
+        const speed = 0.022 + Math.random() * 0.028;
+        velocities.push({
+          vx: positions[i * 3]     / r * speed,
+          vy: positions[i * 3 + 1] / r * speed * (0.6 + Math.random() * 0.8),
+          vz: positions[i * 3 + 2] / r * speed,
+        });
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+      const mat = new THREE.PointsMaterial({
+        color:       COL_CORE,
+        size:        0.06,
+        transparent: true,
+        opacity:     0.55,
+        sizeAttenuation: true,
+      });
+
+      const pts = new THREE.Points(geo, mat);
+      scene.add(pts);
+
+      let age = 0;
+      pool.push({
+        mesh: pts,
+        mat,
+        tick() {
+          age++;
+          const pos = geo.attributes.position.array;
+          for (let i = 0; i < count; i++) {
+            pos[i * 3]     += velocities[i].vx;
+            pos[i * 3 + 1] += velocities[i].vy;
+            pos[i * 3 + 2] += velocities[i].vz;
+            /* decelerate — asteroid drag in space */
+            velocities[i].vx *= 0.985;
+            velocities[i].vy *= 0.985;
+            velocities[i].vz *= 0.985;
+          }
+          geo.attributes.position.needsUpdate = true;
+
+          /* fade: slow hold, then dissolve */
+          mat.opacity = 0.55 * Math.max(0, 1 - Math.pow(age / 140, 2.2));
+          mat.color.copy(lerpCol(COL_CORE, COL_FRINGE, Math.min(1, age / 100)));
+          return mat.opacity < 0.005;
+        },
+      });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       3. NEBULA WASH — large faint icosphere bloom
+    ══════════════════════════════════════════════════════════ */
+    function spawnNebula() {
+      const geo = new THREE.IcosahedronGeometry(1.0, 1);   /* low-poly = sparse */
+      const mat = new THREE.MeshBasicMaterial({
+        color:       COL_CORE,
+        wireframe:   true,
+        transparent: true,
+        opacity:     0.0,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      /* random orientation so it never looks the same */
+      mesh.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+      );
+      scene.add(mesh);
+
+      let age = 0;
+      pool.push({
+        mesh,
+        mat,
+        tick() {
+          age++;
+          /* scale: blooms fast, continues drifting */
+          const s = 1 + age * 0.018;
+          mesh.scale.setScalar(s);
+          /* slow spin */
+          mesh.rotation.y += 0.001;
+
+          /* opacity envelope: in 0→30, hold 30→70, out 70→160 */
+          let op;
+          if (age < 30)       op = (age / 30) * 0.11;
+          else if (age < 70)  op = 0.11;
+          else                op = 0.11 * Math.max(0, 1 - (age - 70) / 90);
+
+          mat.opacity = op;
+          mat.color.copy(lerpCol(COL_CORE, COL_FRINGE, Math.min(1, age / 80)));
+          return op < 0.003;
+        },
+      });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       FIRE ONE FULL BURST
+    ══════════════════════════════════════════════════════════ */
+    function fireBurst() {
+      /* 2 orbital rings — different tilts, slight timing offset */
+      spawnRing(1.0,  Math.PI / 4,  Math.PI / 6,  0.009, 0.28);
+      setTimeout(() =>
+        spawnRing(1.0, -Math.PI / 5, Math.PI / 3.5, 0.007, 0.18), 220);
+
+      /* sparse debris cloud — 20 shards */
+      spawnDebris(20);
+
+      /* nebula wash, delayed slightly so rings lead it */
+      setTimeout(spawnNebula, 100);
+    }
+
+    /* ─── animation loop ───────────────────────────────────── */
+    function tick() {
+      requestAnimationFrame(tick);
+      for (let i = pool.length - 1; i >= 0; i--) {
+        const done = pool[i].tick();
+        if (done) {
+          const obj = pool[i].mesh;
+          scene.remove(obj);
+          obj.geometry.dispose();
+          pool[i].mat.dispose();
+          pool.splice(i, 1);
+        }
+      }
+    }
+    tick();
+
+    /* ─── schedule ─────────────────────────────────────────── */
+    setTimeout(() => {
+      fireBurst();
+      setInterval(fireBurst, 60_000);
+    }, 2000);
+
+    console.log('%c[JARVIS] Orbital Burst online — 60 s cycle.', 'color:#00e5ff;font-family:monospace;');
+
+  });
+
+})();
+
+/* ════════════════════════════════════════
+   IIFE 9: MOBILE PROTOCOL & JARVIS TOGGLE
+════════════════════════════════════════ */
+(function initMobileAndJarvisToggle() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* --- JARVIS TOGGLE BUTTON --- */
+        #jarvis-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(2, 12, 24, 0.8);
+            border: 2px solid var(--cyan);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+            cursor: pointer;
+            z-index: 999999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        #jarvis-toggle-btn:hover {
+            background: var(--cyan);
+            box-shadow: 0 0 25px var(--cyan);
+        }
+        /* A sleek, cybernetic eye/core SVG icon */
+        #jarvis-toggle-btn svg {
+            width: 26px;
+            height: 26px;
+            fill: var(--cyan);
+            transition: fill 0.3s ease;
+        }
+        #jarvis-toggle-btn:hover svg { fill: var(--bg); }
+
+        /* --- IFRAME SLIDE-IN OVERRIDES --- */
+        iframe[src="jarvis_ui.html"] {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease !important;
+            transform: translateX(120%) scale(0.95); /* Hidden off-screen to the right by default */
+            opacity: 0;
+            pointer-events: none; /* Prevent accidental clicks when hidden */
+            z-index: 999998 !important;
+        }
+        
+        /* The class added when the button is clicked */
+        iframe[src="jarvis_ui.html"].assistant-active {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* --- GLOBAL HIGH-CONTRAST VISIBILITY --- */
+        #boot-text { color: #ffffff !important; text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px var(--cyan) !important; }
+        .form-row label { color: #ffffff !important; text-shadow: 0 0 5px var(--cyan); }
+        .form-row input, .form-row select { color: #ffffff !important; font-weight: bold; }
+        #boot-submit { color: #ffffff !important; font-weight: bold; text-shadow: 0 0 5px var(--cyan); }
+        
+        /* --- MOBILE TACTICAL ADAPTATION (Screens under 768px) --- */
+        @media (max-width: 768px) {
+            .hud-logo-label { font-size: 16px !important; }
+            .hud-logo-label .sub { font-size: 7px !important; letter-spacing: 2px !important; }
+            #boot-screen { padding: 10px !important; gap: 10px !important; }
+            #visitor-form { max-width: 90vw !important; }
+            .hud-corner { width: 40px !important; height: 40px !important; }
+            .hud-statusbar { flex-wrap: wrap; justify-content: center; gap: 10px !important; top: 10px !important; width: 100%; }
+            .hud-bottombar { bottom: 10px !important; }
+
+            /* Adjust iframe to fit perfectly above the button on mobile */
+            iframe[src="jarvis_ui.html"] {
+                width: 90vw !important;
+                height: 70vh !important;
+                bottom: 80px !important; 
+                right: 5vw !important; 
+                border-radius: 8px;
+                background: rgba(2, 12, 24, 0.95) !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const iframe = document.querySelector('iframe[src="jarvis_ui.html"]');
+    if (iframe) {
+        // Force scrolling for older mobile browsers
+        iframe.setAttribute('scrolling', 'yes');
+        
+        // Inject the Toggle Button
+        const btn = document.createElement('div');
+        btn.id = 'jarvis-toggle-btn';
+        // Techy SVG icon for the button
+        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" /></svg>`; 
+        document.body.appendChild(btn);
+
+        // Click Event to slide JARVIS in and out
+        btn.addEventListener('click', () => {
+            iframe.classList.toggle('assistant-active');
+            
+            // Visual feedback on the button when JARVIS is open
+            if(iframe.classList.contains('assistant-active')) {
+                btn.style.boxShadow = '0 0 25px var(--cyan)';
+                btn.style.background = 'rgba(0, 229, 255, 0.2)';
+            } else {
+                btn.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.4)';
+                btn.style.background = 'rgba(2, 12, 24, 0.8)';
+            }
+        });
+    }
+})();
+/* ════════════════════════════════════════
+   IIFE 7: RPO TRUE HOLOGRAM HUD (EASTER EGG)
+════════════════════════════════════════ */
+(function initPlayerDossier() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* The 3D Space Wrapper */
+        #rpo-hologram-wrapper {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 99999;
+            perspective: 1200px; /* Deep 3D perspective */
+            display: none;
+            justify-content: center; align-items: center;
+        }
+        #rpo-hologram-wrapper.active {
+            display: flex;
+        }
+
+        /* The Hologram Projection */
+        .holo-hud {
+            position: relative;
+            width: 800px; height: 450px;
+            /* Angled exactly like the movie projection */
+            transform: rotateY(-15deg) rotateX(5deg) translateZ(100px);
+            transform-style: preserve-3d;
+            animation: project-in 0.8s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+            /* No solid background, just a faint atmospheric tint */
+            background: linear-gradient(135deg, rgba(177, 0, 255, 0.05) 0%, rgba(0, 229, 255, 0.02) 100%);
+            border-left: 2px solid rgba(177, 0, 255, 0.5);
+            border-right: 2px solid rgba(0, 229, 255, 0.5);
+        }
+
+        /* Glitch Animation */
+        @keyframes project-in {
+            0% { opacity: 0; transform: rotateY(-30deg) scale(0.5) translateZ(-500px); filter: brightness(3) hue-rotate(90deg); }
+            50% { opacity: 0.5; transform: rotateY(-10deg) scale(1.1) translateZ(150px) skewX(5deg); }
+            70% { opacity: 0.8; transform: rotateY(-18deg) scale(0.95) translateZ(80px) skewX(-2deg); filter: brightness(1) hue-rotate(-20deg); }
+            100% { opacity: 1; transform: rotateY(-15deg) rotateX(5deg) translateZ(100px); }
+        }
+
+        /* Top Magenta Header (Like the I-R0k text) */
+        .holo-header {
+            position: absolute; top: -40px; left: 20px;
+            font-family: var(--font-hud); font-size: 50px; font-weight: 900;
+            color: transparent; 
+            -webkit-text-stroke: 1px rgba(255, 0, 255, 0.8);
+            text-shadow: 0 0 20px rgba(177, 0, 255, 0.8), 0 0 40px rgba(177, 0, 255, 0.4);
+            letter-spacing: 15px;
+            transform: translateZ(50px); /* Pops out from the glass */
+        }
+
+        /* Cyberpunk Corner Cutouts using Clip-Path */
+        .holo-frame {
+            position: absolute; inset: 0;
+            clip-path: polygon(0 20px, 20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            box-shadow: inset 0 0 50px rgba(177, 0, 255, 0.1);
+            pointer-events: auto;
+        }
+
+        /* Avatar Container */
+        .holo-avatar {
+            position: absolute; left: 40px; top: 60px;
+            width: 240px; height: 320px;
+            border: 1px solid rgba(177, 0, 255, 0.4);
+            box-shadow: 0 0 30px rgba(177, 0, 255, 0.2);
+            background: rgba(0,0,0,0.4);
+            overflow: hidden;
+            transform: translateZ(30px);
+        }
+        .holo-avatar img {
+            width: 100%; height: 100%; object-fit: cover;
+            filter: grayscale(100%) sepia(100%) hue-rotate(220deg) saturate(4) brightness(0.9) contrast(1.2);
+            mix-blend-mode: screen;
+            opacity: 0.8;
+        }
+
+        /* Floating Data Columns (Right side) */
+        .holo-data-panel {
+            position: absolute; right: 40px; top: 60px;
+            width: 400px;
+            display: flex; flex-direction: column; gap: 15px;
+            transform: translateZ(40px);
+        }
+
+        .data-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+            padding-bottom: 5px;
+        }
+        .data-label {
+            font-family: var(--font-mono); font-size: 10px; font-weight: bold;
+            color: rgba(177, 0, 255, 0.9);
+            letter-spacing: 3px;
+            text-shadow: 0 0 8px rgba(177, 0, 255, 0.5);
+        }
+        .data-value {
+            font-family: var(--font-hud); font-size: 14px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.8), 0 0 20px rgba(0, 229, 255, 0.4);
+            text-align: right;
+            letter-spacing: 2px;
+        }
+
+        /* Decorative UI Elements */
+        .holo-crosshair {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px);
+            width: 60%; height: 60%;
+            border: 1px dashed rgba(0, 229, 255, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: slow-spin 20s linear infinite;
+        }
+        @keyframes slow-spin { 100% { transform: translate(-50%, -50%) translateZ(10px) rotate(360deg); } }
+        
+        .holo-close {
+            position: absolute; top: 10px; right: 10px;
+            color: #ff0055; font-family: var(--font-mono); font-size: 14px; cursor: pointer;
+            text-shadow: 0 0 10px #ff0055; z-index: 10; padding: 5px 10px;
+            border: 1px solid transparent; transition: all 0.2s;
+        }
+        .holo-close:hover { border-color: #ff0055; background: rgba(255, 0, 85, 0.1); }
+    `;
+    document.head.appendChild(style);
+
+    // Build the Dossier UI
+    const wrapper = document.createElement('div');
+    wrapper.id = 'rpo-hologram-wrapper';
+    
+    // Remember to replace 'YOUR_IMAGE_LINK_HERE.jpg'
+    wrapper.innerHTML = `
+        <div class="holo-hud">
+            <div class="holo-header">ZGOD</div>
+            <div class="holo-frame">
+                <div class="holo-close" onclick="document.getElementById('rpo-hologram-wrapper').classList.remove('active')">[TERMINATE]</div>
+                <div class="holo-crosshair"></div>
+                
+                <div class="holo-avatar">
+                    <img src="profile.jpeg" alt="[AVATAR_STREAM_FAILED]">
+                </div>
+
+                <div class="holo-data-panel">
+                    <div class="data-row">
+                        <span class="data-label">TRUE.NAME</span>
+                        <span class="data-value">DIBYAJYOTEE GHOSH</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">SECTOR</span>
+                        <span class="data-value">KHARDAH / KOLKATA</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">CLASS.RANK</span>
+                        <span class="data-value">ECE ENG / 8.83 CGPA</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">WEAPONRY</span>
+                        <span class="data-value">EDGE COMP / IOT / AI</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">SYS.PROJECT</span>
+                        <span class="data-value">HYBRID OLFACTION</span>
+                    </div>
+                    <div class="data-row" style="margin-top: 20px; border: none;">
+                        <span class="data-label" style="color: #00ffaa; text-shadow: 0 0 10px #00ffaa;">CONNECTION</span>
+                        <span class="data-value" style="color: #00ffaa; text-shadow: 0 0 10px #00ffaa; font-family: var(--font-mono);">[ STABLE / SECURE ]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(wrapper);
+
+    // Easter Egg Keylogger Trigger (Listens for "zgod")
+    let keyBuffer = '';
+    window.addEventListener('keydown', (e) => {
+        if (e.key.length === 1) {
+            keyBuffer += e.key.toLowerCase();
+            if (keyBuffer.length > 4) keyBuffer = keyBuffer.slice(-4);
+            if (keyBuffer === 'zgod') {
+                wrapper.classList.add('active');
+                keyBuffer = ''; 
+            }
+        }
+    });
+})();
+/* ════════════════════════════════════════
+   IIFE 6: DEEP SPACE ECLIPSE HALO (DYNAMIC ORBIT)
+════════════════════════════════════════ */
+(function initCosmicHalo() {
+    const style = document.createElement('style');
+    style.textContent = `
+        #eclipse-system {
+            position: fixed; 
+            top: -40vh; 
+            left: -20vw; 
+            width: 130vh; 
+            height: 130vh; 
+            border-radius: 50%;
+            z-index: -2; 
+            pointer-events: none;
+            
+            /* The massive glowing crescent rim */
+            box-shadow: 
+                inset -4px -4px 15px rgba(255, 255, 255, 0.5),
+                inset -20px -20px 60px rgba(0, 229, 255, 0.6),
+                inset -60px -60px 150px rgba(0, 100, 255, 0.2),
+                20px 20px 80px rgba(0, 229, 255, 0.2),
+                60px 60px 250px rgba(0, 50, 255, 0.1);
+            
+            animation: cosmic-drift 60s linear infinite;
+        }
+
+        /* The invisible rotating arm that carries the flare */
+        #flare-orbit {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            /* 40s full revolution */
+            animation: orbit-and-fade 40s linear infinite; 
+        }
+
+        #eclipse-flare {
+            position: absolute;
+            /* Locked to the top edge of the rotating wrapper */
+            top: 0; 
+            left: 50%; 
+            width: 500px; 
+            height: 500px;
+            border-radius: 50%;
+            
+            /* Softened the core so it doesn't blind you */
+            background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(0,229,255,0.4) 15%, transparent 65%);
+            transform: translate(-50%, -50%);
+            mix-blend-mode: screen;
+            
+            /* Keeps the subtle breathing effect while it orbits */
+            animation: flare-pulse 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes cosmic-drift {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(15deg); } 
+        }
+
+        /* Maps the intensity (opacity) to the orbit angle */
+        @keyframes orbit-and-fade {
+            0%   { transform: rotate(0deg); opacity: 0; }       /* Top: Hidden in shadow */
+            25%  { transform: rotate(90deg); opacity: 0.3; }    /* Right: Starting to glow */
+            40%  { transform: rotate(144deg); opacity: 1; }     /* Bottom-Right: Peak flare matches crescent */
+            60%  { transform: rotate(216deg); opacity: 0.4; }   /* Bottom-Left: Fading out */
+            75%  { transform: rotate(270deg); opacity: 0; }     /* Left: Dark side of the planet */
+            100% { transform: rotate(360deg); opacity: 0; }     /* Back to top */
+        }
+
+        @keyframes flare-pulse {
+            0% { transform: translate(-50%, -50%) scale(0.9); }
+            100% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Build the system
+    const eclipseSys = document.createElement('div');
+    eclipseSys.id = 'eclipse-system';
+
+    const orbit = document.createElement('div');
+    orbit.id = 'flare-orbit';
+
+    const flare = document.createElement('div');
+    flare.id = 'eclipse-flare';
+
+    // Inject into the DOM
+    orbit.appendChild(flare);
+    eclipseSys.appendChild(orbit);
+    document.body.appendChild(eclipseSys);
+})();
 </script>
 </body>
 </html>
