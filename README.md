@@ -1,3 +1,5 @@
+“I am not a visionary, I'm an engineer,” Torvalds says. “I'm perfectly happy with all the people who are walking around and just staring at the clouds … but I'm looking at the ground, and I want to fix the pothole that's right in front of me before I fall in.”
+
 DJ | Systems Architect & Hardware Integrator
 
 I am an Electronics & Communication Engineering student who builds at the intersection of physical hardware and intelligent logic. I don't just write scripts—I design the architecture, wire the microcontrollers, and deploy sensor networks into the real world.
