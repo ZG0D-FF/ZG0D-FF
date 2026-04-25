@@ -21,7 +21,7 @@
 <!-- SOCIAL BADGES — clean pill style -->
 <a href="mailto:ZGODMR@gmail.com"><img src="https://img.shields.io/badge/Gmail-0D1117?style=for-the-badge&logo=gmail&logoColor=00E5FF"/></a>
 <a href="https://www.linkedin.com/in/mr-zgod-06a24631a/"><img src="https://img.shields.io/badge/LinkedIn-0D1117?style=for-the-badge&logo=linkedin&logoColor=00E5FF"/></a>
-<a href="https://zg0d-ff.github.io/portfolio"><img src="https://img.shields.io/badge/Portfolio-0D1117?style=for-the-badge&logo=googlechrome&logoColor=00E5FF"/></a>
+<a href="[https://zg0d-ff.github.io/portfolio](https://zg0d-ff.github.io/ZG0D-FF/)"><img src="https://img.shields.io/badge/Portfolio-0D1117?style=for-the-badge&logo=googlechrome&logoColor=00E5FF"/></a>
 <img src="https://komarev.com/ghpvc/?username=ZG0D-FF&label=PROFILE+VIEWS&color=00E5FF&style=for-the-badge"/>
 
 </div>
