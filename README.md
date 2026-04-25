@@ -198,7 +198,9 @@ const ZG0D = {
 <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&size=12&duration=2600&pause=1100&color=00E5FF&center=true&vCenter=true&width=580&lines=%5BSYS%5D+All+systems+nominal.+ZG0D-FF+online.+Awaiting+next+deploy..._%3B%5BSYS%5D+Edge+nodes+active.+Sensor+arrays+nominal.+AI+stack+warm._%3B%5BSYS%5D+Hardware+integrated.+Ready+for+next+mission._%3B" alt="Terminal Blink"/>
 
 </div>
-
+<div align="center">
+  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output/github-contribution-grid-snake-dark.svg" alt="Snake contribution graph"/>
+</div>
 <!-- DATA CAPSULE DIVIDER before footer wave -->
 [![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/bars/divider_circuit_pulse_bar.svg)](https://github.com/ZG0D-FF)
 
