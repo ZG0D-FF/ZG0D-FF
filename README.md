@@ -29,6 +29,12 @@
 <!-- ANIMATED CIRCUIT PULSE BAR — HiradEmami kit -->
 [![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/bars/divider_circuit_pulse_bar.svg)](https://github.com/ZG0D-FF)
 
+<!-- ADAM ALSTON STYLE BANNER — ZG0D-FF edition -->
+<div align="center">
+<a href="https://zg0d-ff.github.io/portfolio">
+  <img src="https://capsule-render.vercel.app/api?type=venom&color=0:0D1117,50:003333,100:0D1117&height=200&section=header&text=ZG0D-FF&fontSize=80&fontColor=00E5FF&animation=twinkling&fontAlignY=55&desc=Systems%20Architect%20%7C%20Hardware%20Integrator%20%7C%20Edge%20AI&descSize=18&descAlignY=75&descColor=a9b1d6" width="100%" alt="ZG0D-FF Banner"/>
+</a>
+</div>
 <!-- QUOTE -->
 > *"I am not a visionary, I'm an engineer. I'm perfectly happy with all the people who are walking around and just staring at the clouds … but I'm looking at the ground, and I want to fix the pothole that's right in front of me before I fall in."*
 >
