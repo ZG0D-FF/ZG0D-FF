@@ -201,6 +201,7 @@ const ZG0D = {
 <div align="center">
   <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output/github-contribution-grid-snake-dark.svg" alt="Snake contribution graph"/>
 </div>
+
 <!-- DATA CAPSULE DIVIDER before footer wave -->
 [![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/bars/divider_circuit_pulse_bar.svg)](https://github.com/ZG0D-FF)
 
