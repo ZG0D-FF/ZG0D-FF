@@ -211,6 +211,9 @@ const ZG0D = {
 <div align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&size=16&duration=3000&pause=1000&color=00E5FF&center=true&vCenter=true&width=560&lines=Open+to+internships+%26+collabs;Building+at+the+edge+of+hardware+%2B+AI;Rapid+prototype+--+Wire+--+Deploy"/>
 </div>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/main/assets/jarvis.svg" width="400" alt="JARVIS HUD"/>
+</div>
 
 <!-- DATA CAPSULE DIVIDER before footer wave -->
 [![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/bars/divider_circuit_pulse_bar.svg)](https://github.com/ZG0D-FF)
