@@ -40,7 +40,7 @@
 >
 > — **Linus Torvalds**
 
----
+[![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/unique_effects/divider_data_capsul.svg)](https://github.com/ZG0D-FF)
 
 ### ⬛ SYSTEM.BIO
 
@@ -48,7 +48,7 @@ I am an **Electronics & Communication Engineering** student who builds at the in
 
 My strength is **rapid prototyping and system integration**. I build the physical foundation using Raspberry Pi and Arduino, and I partner with advanced AI tools to rapidly generate, debug, and deploy the software logic needed to make those systems *think*.
 
----
+[![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/unique_effects/divider_data_capsul.svg)](https://github.com/ZG0D-FF)
 
 ### ⬛ ACTIVE.STACK
 
@@ -64,7 +64,7 @@ My strength is **rapid prototyping and system integration**. I build the physica
 
 </div>
 
----
+[![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/unique_effects/divider_data_capsul.svg)](https://github.com/ZG0D-FF)
 
 ### ⬛ CORE.CAPABILITIES
 
@@ -78,7 +78,7 @@ const ZG0D = {
 }
 ```
 
----
+[![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/unique_effects/divider_data_capsul.svg)](https://github.com/ZG0D-FF)
 
 <div align="center">
 <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=20&duration=4000&pause=1000&color=00E5FF&center=true&vCenter=true&width=520&lines=%E2%AC%9B+SYSTEMS+ONLINE+%26+IN+ARCHIVE" alt="Systems" />
@@ -106,8 +106,7 @@ const ZG0D = {
 > Tactical prediction engine using **OCR + data analytics** to parse match data and generate football management strategies with statistical backing.
 > `Python` · `OCR` · `Data Analytics` · `Predictive Modelling`
 
----
-
+[![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/unique_effects/divider_data_capsul.svg)](https://github.com/ZG0D-FF)
 <div align="center">
 <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=20&duration=4000&pause=1000&color=00E5FF&center=true&vCenter=true&width=480&lines=%E2%AC%9B+CURRENT.DIRECTIVES" alt="Directives" />
 </div>
@@ -128,7 +127,6 @@ const ZG0D = {
 </div>
 
 <br/>
-
 <!-- ROW 1: GitHub Stats + Top Languages (both pull live from GitHub API) -->
 <div align="center">
 
