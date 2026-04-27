@@ -1,0 +1,844 @@
+/* ================================================================
+   styles.css — Animal Kingdom & Planet Ecosystems
+   Performance-first: GPU-accelerated transforms/opacity only.
+   Layout uses modern CSS (custom properties, grid, clamp).
+   No heavy box-shadow animations, no layout-thrashing transitions.
+================================================================ */
+
+/* ── Custom Properties ─────────────────────────────────────── */
+:root {
+  /* Timing */
+  --dur-fast: 400ms;
+  --dur-mid:  600ms;
+  --dur-slow: 800ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+
+  /* Typography */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Cormorant Garamond', Georgia, serif;
+  --font-ui:      'Lato', system-ui, sans-serif;
+
+  /* Palette */
+  --clr-bg:      #060a0f;
+  --clr-text:    #f0ece4;
+  --clr-muted:   rgba(240,236,228,0.55);
+  --clr-accent:  #c8a96e;
+  --clr-accent2: #4fc3f7;
+  --clr-nav-bg:  rgba(6,10,15,0.75);
+
+  /* Biome accent colors */
+  --clr-forest:  #2d5a27;
+  --clr-ocean:   #0d3b5e;
+  --clr-desert:  #8b5e3c;
+  --clr-arctic:  #2a4a6b;
+  --clr-savanna: #7a5c2e;
+  --clr-planet:  #0d1a2e;
+
+  /* Layout */
+  --nav-h: 64px;
+  --section-pad: clamp(80px, 10vh, 140px);
+}
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  /* Prevent FOUC */
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+body.ready { opacity: 1; }
+img, video { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+/* ── Loader ─────────────────────────────────────────────────── */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--clr-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* GPU: will-change for the fade-out animation */
+  will-change: opacity;
+}
+#loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s var(--ease-out);
+}
+.loader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.loader__orb {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--clr-accent);
+  border-right-color: rgba(200,169,110,0.3);
+  /* GPU-only: transform rotate */
+  animation: spin 1.2s linear infinite;
+  will-change: transform;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loader__text {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+}
+.loader__bar {
+  width: 200px; height: 2px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--clr-accent), var(--clr-accent2));
+  width: 0%;
+  border-radius: 2px;
+  /* GPU: transform scaleX preferred, but width is fine for a loader */
+  transition: width 0.8s var(--ease-out);
+}
+
+/* ── Navigation ─────────────────────────────────────────────── */
+#site-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(20px, 4vw, 48px);
+  background: var(--clr-nav-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  /* GPU: transform for show/hide in JS */
+  will-change: transform;
+  transform: translateY(-100%);
+  transition: transform var(--dur-mid) var(--ease-out);
+}
+#site-nav.visible { transform: translateY(0); }
+
+.nav__logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--clr-accent);
+}
+.nav__logo-icon { font-size: 1.1rem; }
+
+.nav__links {
+  display: flex; gap: clamp(16px, 2.5vw, 32px);
+}
+.nav__link {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+  transition: color var(--dur-fast);
+  position: relative;
+}
+.nav__link::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0; right: 0;
+  height: 1px;
+  background: var(--clr-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.nav__link:hover,
+.nav__link.active { color: var(--clr-text); }
+.nav__link:hover::after,
+.nav__link.active::after { transform: scaleX(1); }
+
+.nav__controls {
+  display: flex; gap: 8px; align-items: center;
+}
+.ctrl-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  color: var(--clr-muted);
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.ctrl-btn:hover { background: rgba(255,255,255,0.14); color: var(--clr-text); }
+.ctrl-btn.active { background: var(--clr-accent); color: #000; border-color: var(--clr-accent); }
+
+/* ── FPS Counter ────────────────────────────────────────────── */
+#fps-counter {
+  position: fixed;
+  bottom: 16px; right: 16px;
+  z-index: 9000;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 4px 10px;
+  color: #4fc3f7;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast);
+}
+#fps-counter.visible { opacity: 1; }
+
+/* ── Sections — Base ────────────────────────────────────────── */
+.section {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;   /* svh for mobile browser chrome */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  /* Each section is a stacking context for z-index */
+  isolation: isolate;
+}
+
+/* Parallax background */
+.parallax-bg {
+  position: absolute;
+  inset: -20% 0;          /* Extra height for parallax travel */
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  /* GPU: only transform will move this */
+  will-change: transform;
+}
+
+/* Dark cinematic overlay */
+.section__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    rgba(0,0,0,0.75) 0%,
+    rgba(0,0,0,0.3) 60%,
+    rgba(0,0,0,0.5) 100%
+  );
+}
+/* Biome-tinted overlays */
+.section__overlay--forest  { background: linear-gradient(135deg, rgba(0,12,4,0.82) 0%, rgba(10,40,15,0.35) 60%, rgba(0,0,0,0.6) 100%); }
+.section__overlay--ocean   { background: linear-gradient(135deg, rgba(0,8,20,0.88) 0%, rgba(5,30,60,0.4) 60%, rgba(0,0,0,0.6) 100%); }
+.section__overlay--desert  { background: linear-gradient(135deg, rgba(20,8,0,0.85) 0%, rgba(60,30,5,0.35) 60%, rgba(0,0,0,0.6) 100%); }
+.section__overlay--arctic  { background: linear-gradient(135deg, rgba(0,10,25,0.85) 0%, rgba(15,40,80,0.35) 60%, rgba(0,0,0,0.6) 100%); }
+.section__overlay--savanna { background: linear-gradient(135deg, rgba(15,8,0,0.85) 0%, rgba(60,35,5,0.35) 60%, rgba(0,0,0,0.6) 100%); }
+.section__overlay--planet  { background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,5,20,0.9) 100%); }
+
+/* Content container */
+.section__content {
+  position: relative;
+  z-index: 3;
+  padding: var(--section-pad) clamp(24px, 8vw, 120px);
+  max-width: min(640px, 90vw);
+}
+.section__content--right {
+  margin-left: auto;
+}
+.section__content--center {
+  margin: 0 auto;
+  text-align: center;
+  max-width: min(700px, 90vw);
+}
+
+/* ── Hero ───────────────────────────────────────────────────── */
+.section--hero {
+  min-height: 100svh;
+  justify-content: center;
+}
+#hero-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.5;
+}
+.hero__content {
+  max-width: none;
+  width: 100%;
+  padding: 0 clamp(24px, 8vw, 120px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+.hero__eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--clr-accent);
+}
+.hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 12vw, 11rem);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--clr-text);
+}
+.hero__title-line { display: block; }
+.hero__title-line--em {
+  font-style: italic;
+  color: var(--clr-accent);
+}
+.hero__subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-style: italic;
+  color: var(--clr-muted);
+  margin-top: 8px;
+}
+.hero__scroll-cue {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.scroll-cue__line {
+  display: block;
+  width: 1px;
+  height: 60px;
+  background: linear-gradient(to bottom, var(--clr-accent), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+@keyframes scrollPulse {
+  0%,100% { transform: scaleY(1); opacity: 0.7; }
+  50%      { transform: scaleY(0.7); opacity: 0.3; }
+}
+.scroll-cue__label {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+}
+
+/* ── Typography — Sections ──────────────────────────────────── */
+.biome-meta {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px;
+}
+.biome-id {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  color: var(--clr-accent);
+  letter-spacing: 0.2em;
+}
+.biome-tag {
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid rgba(200,169,110,0.4);
+  border-radius: 20px;
+  color: var(--clr-muted);
+}
+
+.section__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 6vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: var(--clr-text);
+  margin-bottom: 12px;
+}
+.section__title em {
+  font-style: italic;
+  color: var(--clr-accent);
+}
+.section__subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  font-style: italic;
+  color: var(--clr-muted);
+  margin-bottom: 20px;
+}
+.section__desc {
+  font-family: var(--font-body);
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+  line-height: 1.8;
+  color: rgba(240,236,228,0.75);
+  margin-bottom: 28px;
+  max-width: 480px;
+}
+
+/* ── Animal chips ───────────────────────────────────────────── */
+.animals-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.animal-chip {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  padding: 5px 12px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  color: var(--clr-text);
+  backdrop-filter: blur(4px);
+}
+
+/* ── Facts list ─────────────────────────────────────────────── */
+.facts-list { display: flex; flex-direction: column; gap: 10px; }
+.fact-item {
+  font-family: var(--font-body);
+  font-size: clamp(0.82rem, 1.4vw, 0.95rem);
+  color: var(--clr-muted);
+  line-height: 1.6;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.fact-dot {
+  flex-shrink: 0;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--clr-accent);
+  display: inline-block;
+  position: relative;
+  top: -1px;
+}
+
+/* ── Biome Layers — Forest Trees ────────────────────────────── */
+.forest-trees {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 2;
+  height: 35%;
+  pointer-events: none;
+}
+.tree {
+  position: absolute;
+  bottom: 0;
+  width: 0; height: 0;
+  border-left: solid transparent;
+  border-right: solid transparent;
+  border-bottom: solid rgba(5,20,8,0.85);
+}
+.tree--1 {
+  left: 5%;
+  border-left-width: 50px; border-right-width: 50px;
+  border-bottom-width: 200px;
+  animation: treeSway 6s ease-in-out infinite;
+  will-change: transform;
+}
+.tree--2 {
+  left: 12%;
+  border-left-width: 70px; border-right-width: 70px;
+  border-bottom-width: 280px;
+  animation: treeSway 8s ease-in-out infinite 1s;
+  will-change: transform;
+}
+.tree--3 {
+  right: 8%;
+  border-left-width: 60px; border-right-width: 60px;
+  border-bottom-width: 240px;
+  animation: treeSway 7s ease-in-out infinite 0.5s;
+  will-change: transform;
+}
+@keyframes treeSway {
+  0%,100% { transform: rotate(-1deg); }
+  50%      { transform: rotate(1deg); }
+}
+
+/* ── Biome Layers — Fog ─────────────────────────────────────── */
+.biome-layer--fog {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(ellipse 120% 40% at 50% 80%,
+    rgba(180,220,180,0.12) 0%,
+    transparent 70%);
+  animation: fogDrift 12s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+@keyframes fogDrift {
+  0%,100% { transform: translateX(0) scaleX(1); opacity: 0.8; }
+  50%      { transform: translateX(2%) scaleX(1.03); opacity: 1; }
+}
+
+/* ── Biome Layers — Ocean Rays ──────────────────────────────── */
+.biome-layer--rays {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.ray {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 80%;
+  background: linear-gradient(to bottom, rgba(79,195,247,0.15), transparent);
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+.ray--1 { left: 25%; transform: rotate(-12deg); animation: rayPulse 5s ease-in-out infinite; }
+.ray--2 { left: 45%; transform: rotate(0deg);   animation: rayPulse 6s ease-in-out infinite 1s; }
+.ray--3 { left: 65%; transform: rotate(10deg);  animation: rayPulse 7s ease-in-out infinite 2s; }
+@keyframes rayPulse {
+  0%,100% { opacity: 0.4; transform-origin: top; }
+  50%      { opacity: 0.9; }
+}
+
+/* ── Biome Layers — Haze ────────────────────────────────────── */
+.biome-layer--haze {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  /* SVG turbulence filter for heat distortion — only in HIGH mode */
+  background: none;
+}
+/* High perf: apply filter */
+.perf-high .biome-layer--haze {
+  animation: hazeShimmer 4s ease-in-out infinite;
+  will-change: opacity;
+}
+@keyframes hazeShimmer {
+  0%,100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+/* ── Biome Layers — Aurora ──────────────────────────────────── */
+.biome-layer--aurora {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 55%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(0,200,100,0.12) 0%,
+    rgba(0,150,255,0.08) 40%,
+    rgba(100,0,200,0.05) 70%,
+    transparent 100%
+  );
+  animation: auroraPulse 8s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+@keyframes auroraPulse {
+  0%,100% { opacity: 0.6; transform: translateY(0) scaleY(1); }
+  50%      { opacity: 1;   transform: translateY(2%) scaleY(1.05); }
+}
+
+/* ── Biome Layers — Grass ───────────────────────────────────── */
+.biome-layer--grass {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 25%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(40,25,0,0.7) 0%, transparent 100%);
+  animation: grassSway 5s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes grassSway {
+  0%,100% { transform: skewX(0deg); }
+  50%      { transform: skewX(0.5deg); }
+}
+
+/* ── Planet Section ─────────────────────────────────────────── */
+.planet-sphere {
+  position: absolute;
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(200px, 30vw, 500px);
+  height: clamp(200px, 30vw, 500px);
+  z-index: 2;
+  pointer-events: none;
+}
+.planet-sphere__inner {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 35% 35%,
+    rgba(100,160,255,0.6) 0%,
+    rgba(30,80,180,0.4) 40%,
+    rgba(10,30,80,0.8) 100%
+  );
+  box-shadow: inset -20px -20px 60px rgba(0,0,0,0.7);
+  animation: planetRotate 30s linear infinite;
+  will-change: transform;
+}
+.planet-sphere__glow {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    rgba(79,195,247,0.15) 0%,
+    transparent 70%
+  );
+  animation: planetGlow 6s ease-in-out infinite;
+  will-change: opacity;
+}
+@keyframes planetRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes planetGlow {
+  0%,100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+.planet-cta {
+  margin-top: 36px;
+  padding: 20px 24px;
+  border: 1px solid rgba(200,169,110,0.25);
+  border-radius: 4px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+}
+.planet-cta__text {
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  font-style: italic;
+  line-height: 1.7;
+  color: var(--clr-muted);
+}
+
+/* ── Reveal Animations ──────────────────────────────────────── */
+/* Elements start hidden; JS/GSAP adds 'is-visible' or GSAP animates directly */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(40px);
+  /* GPU-only properties */
+  will-change: opacity, transform;
+}
+.reveal-fade {
+  opacity: 0;
+  will-change: opacity;
+}
+/* Fallback for JS-disabled / reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up, .reveal-fade {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .loader__orb { animation: none; }
+  .scroll-cue__line { animation: none; }
+  .tree { animation: none; }
+  .biome-layer--fog { animation: none; }
+  .planet-sphere__inner { animation: none; }
+}
+
+/* ── Performance Mode — Low ─────────────────────────────────── */
+/* Disable heavy GPU layers in low mode */
+.perf-low .biome-layer--fog,
+.perf-low .biome-layer--aurora,
+.perf-low .biome-layer--haze,
+.perf-low .biome-layer--rays { display: none; }
+.perf-low .planet-sphere { display: none; }
+.perf-low .bubble-canvas,
+.perf-low .sand-canvas,
+.perf-low .snow-canvas,
+.perf-low .star-canvas,
+.perf-low #hero-particles { display: none; }
+.perf-low .forest-trees .tree { animation: none; }
+.perf-low .parallax-bg { will-change: auto; }
+
+/* ── Canvases ───────────────────────────────────────────────── */
+.bubble-canvas, .sand-canvas, .snow-canvas, .star-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.site-footer {
+  background: var(--clr-bg);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 48px clamp(24px, 8vw, 120px);
+  text-align: center;
+}
+.footer__text {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--clr-accent);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.footer__sub {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--clr-muted);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav__links { display: none; }
+  .section__content--right { margin-left: 0; }
+  .planet-sphere { display: none; }
+  .section__content--center { text-align: left; }
+}
+@media (max-width: 480px) {
+  :root { --section-pad: 60px; }
+  .hero__title { font-size: clamp(3rem, 16vw, 5rem); }
+  .nav__controls { gap: 4px; }
+  .ctrl-btn { padding: 4px 7px; font-size: 0.65rem; }
+}
+
+/* =========================================
+   Hero Z-Index Stacking Matrix & Layout
+========================================= */
+
+/* 1. Absolute bedrock (Deep Space) */
+#hero .parallax-bg {
+  z-index: -1 !important; 
+}
+
+/* 2. Meteors */
+#hero-particles {
+  z-index: 1;
+}
+
+/* 3. Cinematic shadow/lighting */
+#hero .section__overlay {
+  z-index: 3;
+}
+
+/* 4. 3D Moon & Satellite */
+#moon-canvas {
+  position: absolute;
+  top: 50%;
+  right: -15vw;
+  transform: translateY(-50%);
+  width: 85vmin !important;
+  height: 85vmin !important;
+  z-index: 4; /* Sits in front of the overlay, behind the text */
+  pointer-events: none;
+  outline: none;
+}
+
+/* 5. Typography and Navigation */
+#hero .section__content {
+  position: relative;
+  z-index: 10; /* Text sits at the absolute front */
+}
+/* =========================================
+   Three.js Ocean Canvas Layout
+========================================= */
+#ocean-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 2; /* Sits above parallax bg (0), below overlay (3) */
+  pointer-events: none; /* Let clicks pass through to text */
+  outline: none;
+}
+
+/* =========================================
+   Savanna Hybrid Day/Night System
+========================================= */
+#savanna-2d, #savanna-webgl {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+  transition: opacity 1.5s ease-in-out;
+}
+
+/* Layer Stacking */
+#savanna-2d { z-index: 1; opacity: 1; } /* Birds under the gradient */
+.section__overlay--night {
+  background: linear-gradient(135deg, rgba(2, 6, 18, 0.98) 0%, rgba(10, 15, 30, 0.85) 60%, rgba(0, 0, 0, 0.95) 100%);
+  z-index: 2;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 1.5s ease-in-out;
+  pointer-events: none;
+}
+#savanna-webgl { z-index: 3; opacity: 0; } /* Fireflies above the dark overlay */
+.biome-layer--grass { z-index: 4; transition: filter 1.5s ease; }
+
+/* ── Night Mode Active State ── */
+#savanna.is-night #savanna-2d { opacity: 0; }
+#savanna.is-night .section__overlay--night { opacity: 1; }
+#savanna.is-night #savanna-webgl { opacity: 1; }
+#savanna.is-night .biome-layer--grass { filter: brightness(0.15); } /* Silhouette gets darker */
+
+/* =========================================
+   Arctic Hybrid System
+========================================= */
+#arctic-webgl, #arctic-2d {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+
+#arctic-webgl { z-index: 1; } /* 3D Aurora and Ice sit deep */
+#arctic-2d { z-index: 2; }    /* Blizzard Snow & Fog blow over the top */
+
+/* Aggressive Blizzard Button State */
+#btn-blizzard.active {
+  background: rgba(79, 195, 247, 0.2);
+  border-color: #fff;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+}
+/* =========================================
+   Arctic Hybrid System
+========================================= */
+#arctic-webgl, #arctic-2d {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+
+#arctic-webgl { z-index: 2; } /* BUMPED: Sits IN FRONT of the dark overlay */
+#arctic-2d { z-index: 3; }    /* Blizzard blows over everything */
+
+/* Aggressive Blizzard Button State */
+#btn-blizzard.active {
+  background: rgba(79, 195, 247, 0.2);
+  border-color: #fff;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+}

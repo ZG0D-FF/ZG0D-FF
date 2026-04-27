@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WATER: A Calm, Living System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@100;200;300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --deep:#050d1a;--ocean:#0a1628;--water:#0d2040;--surface:#1a3a5c;
+  --foam:#c8dce8;--mist:#8aaec4;--light:#e8f4f8;--pure:#f0f8ff;
+  --ice:#d4eaf7;--ink:rgba(200,220,235,.85);
+  --serif:'Cormorant Garamond',serif;--sans:'Jost',sans-serif
+}
+html{scroll-behavior:auto;overflow-x:hidden}
+body{background:var(--deep);color:var(--foam);font-family:var(--sans);overflow-x:hidden;cursor:none}
+
+/* CURSOR */
+#cursor{position:fixed;width:8px;height:8px;border-radius:50%;background:rgba(200,220,235,.9);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen}
+#cursor-ring{position:fixed;width:32px;height:32px;border-radius:50%;border:.5px solid rgba(180,210,230,.4);pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+.ripple-div{position:fixed;border-radius:50%;border:.5px solid rgba(140,200,230,.6);pointer-events:none;z-index:9990;animation:rippleExpand 1.4s cubic-bezier(.2,.8,.3,1) forwards;transform:translate(-50%,-50%)}
+@keyframes rippleExpand{0%{width:0;height:0;opacity:.8}100%{width:200px;height:200px;opacity:0}}
+
+/* CANVASES */
+#water-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#particle-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;mix-blend-mode:screen}
+.nav-logo{font-family:var(--sans);font-weight:100;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--mist);opacity:.7}
+.nav-dots{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--mist);opacity:.3;transition:all .4s ease;cursor:pointer}
+.nav-dot.active{opacity:1;background:var(--pure);width:20px;border-radius:2px}
+
+/* PROGRESS */
+#progress-line{position:fixed;right:2.5rem;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center}
+.prog-item{display:flex;align-items:center;gap:12px;cursor:pointer;opacity:.3;transition:opacity .4s ease}
+.prog-item.active{opacity:1}.prog-item:hover{opacity:.7}
+.prog-label{font-family:var(--sans);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-align:right}
+.prog-mark{width:3px;height:3px;border-radius:50%;background:var(--foam)}
+
+/* SECTIONS */
+section{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;z-index:10;pointer-events:none;overflow:hidden}
+.section-inner{max-width:680px;padding:0 6rem;position:relative;z-index:20}
+.section-number{font-family:var(--sans);font-size:.6rem;letter-spacing:.3em;color:var(--mist);opacity:.4;margin-bottom:1.5rem}
+.section-title{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-weight:300;line-height:1.1;color:var(--pure);margin-bottom:2rem}
+.section-title em{font-style:italic;color:var(--mist)}
+.section-body{font-family:var(--sans);font-size:.85rem;font-weight:200;line-height:2.2;color:var(--mist);max-width:380px}
+.section-body strong{color:var(--foam);font-weight:300}
+.data-callout{margin-top:3rem;padding:1.5rem 2rem;border-left:.5px solid rgba(140,180,200,.2);background:rgba(10,22,40,.45);backdrop-filter:blur(12px);display:inline-block}
+.data-number{font-family:var(--serif);font-size:3rem;font-weight:300;color:var(--ice);line-height:1}
+.data-label{font-family:var(--sans);font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mist);margin-top:.5rem}
+.impact-line{width:100%;height:.5px;background:linear-gradient(90deg,transparent 0%,rgba(200,220,235,.3) 50%,transparent 100%);margin:2.5rem 0}
+.wave-sep{position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(140,180,200,.15),transparent)}
+
+/* ALIGNMENT */
+.align-right{align-items:flex-end}.align-right .section-inner{text-align:right}.align-right .section-body{margin-left:auto}.align-right .data-callout{border-left:none;border-right:.5px solid rgba(140,180,200,.2)}
+.align-center{align-items:center;text-align:center}.align-center .section-inner{padding:0 4rem;max-width:720px}.align-center .section-body{max-width:480px;margin:0 auto}
+.section-quote{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2.2rem);font-weight:300;font-style:italic;line-height:1.5;color:var(--ice);margin-bottom:2rem}
+
+/* PHOTO LAYER — beautiful open-source water imagery behind text */
+.photo-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.photo-layer img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;transform:scale(1.1);will-change:transform;transition:filter 2s ease}
+/* Dark atmospheric blend so text always reads — adjust brightness per section */
+.photo-layer::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(5,13,26,.6) 0%,rgba(5,13,26,.08) 40%,rgba(5,13,26,.08) 60%,rgba(5,13,26,.8) 100%)}
+
+/* Per-section image treatment (BRIGHTENED UP) */
+#origin  .photo-layer img{filter:saturate(.6) brightness(.65) contrast(1.15) hue-rotate(195deg)}
+#ocean   .photo-layer img{filter:saturate(.8) brightness(.75) contrast(1.18) hue-rotate(185deg)}
+#rivers  .photo-layer img{filter:saturate(.7) brightness(.8) contrast(1.1) hue-rotate(172deg)}
+#ice     .photo-layer img{filter:saturate(.6) brightness(.85) contrast(1.1) hue-rotate(200deg)}
+#cycle   .photo-layer img{filter:saturate(.7) brightness(.75) contrast(1.15)}
+#impact  .photo-layer img{filter:saturate(.8) brightness(.65) contrast(1.25) hue-rotate(15deg)}
+#future  .photo-layer img{filter:saturate(.8) brightness(.8) contrast(1.1) hue-rotate(188deg)}
+
+/* Ken-Burns subtle zoom */
+.photo-layer img{animation:kb 22s ease-in-out infinite alternate}
+@keyframes kb{0%{transform:scale(1.08) translate(0%,0%)}100%{transform:scale(1.18) translate(-1.5%,-.8%)}}
+
+/* SECTION CANVAS OVERLAYS */
+.section-canvas-overlay{position:absolute;inset:0;z-index:3;pointer-events:none}
+.section-canvas-overlay canvas{width:100%;height:100%;display:block;opacity:0;transition:opacity .8s ease}
+.section-canvas-overlay canvas.visible{opacity:1}
+
+/* ORIGIN */
+#origin{padding-top:15vh;justify-content:flex-end;padding-bottom:20vh}
+#origin .section-inner{max-width:100%;padding:0 6rem}
+.origin-eyebrow{font-family:var(--sans);font-size:.65rem;letter-spacing:.4em;text-transform:uppercase;color:var(--mist);opacity:0;margin-bottom:2.5rem}
+.origin-title{font-family:var(--serif);font-size:clamp(3.5rem,8vw,7rem);font-weight:300;line-height:.9;color:var(--pure);opacity:0;letter-spacing:-.02em}
+.origin-title em{font-style:italic;color:var(--mist)}
+.origin-subtitle{margin-top:2.5rem;font-family:var(--sans);font-size:.8rem;font-weight:200;letter-spacing:.15em;line-height:2;color:var(--mist);opacity:0;max-width:420px}
+.scroll-hint{position:absolute;bottom:3rem;left:6rem;font-family:var(--sans);font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--mist);opacity:0;display:flex;align-items:center;gap:16px}
+.scroll-line{width:40px;height:.5px;background:var(--mist);transform-origin:left;animation:scrollPulse 2.5s ease-in-out infinite}
+@keyframes scrollPulse{0%,100%{transform:scaleX(1);opacity:.5}50%{transform:scaleX(.4);opacity:1}}
+
+/* FUTURE */
+#future{overflow:hidden}
+.future-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(13,32,64,.4) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:breathe 6s ease-in-out infinite;pointer-events:none;z-index:4}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.08);opacity:1}}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--deep);z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2rem}
+.loader-text{font-family:var(--sans);font-size:.65rem;letter-spacing:.4em;text-transform:uppercase;color:var(--mist);opacity:.5}
+.loader-bar{width:120px;height:.5px;background:rgba(140,180,200,.2);position:relative;overflow:hidden}
+.loader-fill{position:absolute;height:100%;background:var(--mist);width:0;transition:width .05s linear}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px)}
+.reveal.visible{animation:revealUp 1.2s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes revealUp{to{opacity:1;transform:translateY(0)}}
+.reveal-delay-1{animation-delay:.2s!important}.reveal-delay-2{animation-delay:.4s!important}
+.reveal-delay-3{animation-delay:.6s!important}.reveal-delay-4{animation-delay:.8s!important}
+
+/* FOOTER */
+footer{position:relative;z-index:10;padding:6rem;border-top:.5px solid rgba(140,180,200,.1);display:flex;justify-content:space-between;align-items:flex-end}
+footer .foot-title{font-family:var(--serif);font-size:2rem;font-weight:300;color:var(--pure);opacity:.4}
+footer .foot-note{font-family:var(--sans);font-size:.65rem;font-weight:200;letter-spacing:.2em;color:var(--mist);opacity:.4;text-align:right;line-height:2}
+
+/* MOBILE */
+@media(max-width:768px){
+  .section-inner{padding:0 2rem}nav{padding:1.5rem 2rem}#progress-line{display:none}
+  footer{padding:3rem 2rem;flex-direction:column;gap:2rem}
+  .origin-title{font-size:clamp(2.5rem,10vw,5rem)}#origin .section-inner{padding:0 2rem}.scroll-hint{left:2rem}
+}
+/* THE FOG WINDOW */
+.fog-overlay {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(25px) brightness(1.2);
+  background: rgba(200, 220, 235, 0.05);
+  z-index: 15; /* Sits over the canvas, under the text */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* WATER FILL TEXT CONTAINER */
+.water-fill {
+  background: linear-gradient(to top, transparent 0%, transparent 48%, var(--pure) 52%, var(--pure) 100%);
+  background-size: 100% 220%;
+  background-position: 0% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  opacity: 1 !important;
+}
+
+/* ═══ NEW SECTION ENTRANCE ANIMATIONS ═══ */
+
+/* TIDE WIPE — section content slides in from left behind a water-edge clipPath */
+.tide-enter {
+  clip-path: inset(0 100% 0 0);
+  opacity: 0;
+  transition: clip-path 1.1s cubic-bezier(.16,1,.3,1), opacity 0.3s ease;
+}
+.tide-enter.tide-visible {
+  clip-path: inset(0 0% 0 0);
+  opacity: 1;
+}
+
+/* DEPTH RISE — elements ascend from the deep with a blur clearing */
+.depth-rise {
+  opacity: 0;
+  transform: translateY(36px);
+  filter: blur(6px);
+  transition: opacity 1.2s cubic-bezier(.2,.8,.3,1),
+              transform 1.2s cubic-bezier(.16,1,.3,1),
+              filter 1s ease;
+}
+.depth-rise.depth-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+.depth-rise.dr-d1 { transition-delay: 0.15s !important; }
+.depth-rise.dr-d2 { transition-delay: 0.3s !important; }
+.depth-rise.dr-d3 { transition-delay: 0.5s !important; }
+.depth-rise.dr-d4 { transition-delay: 0.7s !important; }
+
+/* SURFACE SHIMMER — a moving light band sweeps across section titles on enter */
+.shimmer-title {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-title::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -120%;
+  width: 60%; height: 100%;
+  background: linear-gradient(105deg, transparent 20%, rgba(200,230,255,0.18) 50%, transparent 80%);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: none;
+}
+.shimmer-title.shimmer-go::after {
+  animation: shimmerSweep 1.4s cubic-bezier(.4,0,.2,1) forwards;
+  animation-delay: 0.55s;
+}
+@keyframes shimmerSweep {
+  0%   { left: -120%; opacity: 1; }
+  100% { left: 160%;  opacity: 1; }
+}
+
+/* CURRENT LINE — the .impact-line gets a flowing draw-on effect */
+.impact-line {
+  transform-origin: left;
+}
+.impact-line.line-draw {
+  animation: lineDraw 1s cubic-bezier(.16,1,.3,1) forwards;
+  animation-delay: 0.25s;
+  transform: scaleX(0);
+}
+@keyframes lineDraw {
+  to { transform: scaleX(1); }
+}
+
+/* DROPLET COUNTER — data-number counts up with a water-fill effect */
+.data-number {
+  position: relative;
+}
+.data-callout.callout-enter .data-number {
+  animation: dropFill 0.6s cubic-bezier(.2,.8,.3,1) forwards;
+  animation-delay: 0.6s;
+  opacity: 0;
+}
+.data-callout.callout-enter .data-label {
+  animation: dropFill 0.6s ease forwards;
+  animation-delay: 0.85s;
+  opacity: 0;
+}
+@keyframes dropFill {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* SECTION TRANSITION VEIL — thin water-skin line sweeps between sections */
+.section-veil {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(140,200,230,0.5), rgba(200,230,250,0.8), rgba(140,200,230,0.5), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 30;
+  pointer-events: none;
+}
+.section-veil.veil-sweep {
+  animation: veilSweep 1.6s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes veilSweep {
+  0%   { transform: scaleX(0); opacity: 1; }
+  70%  { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+
+/* ALIGN-RIGHT tide enters from right */
+.align-right .tide-enter {
+  clip-path: inset(0 0 0 100%);
+}
+.align-right .tide-enter.tide-visible {
+  clip-path: inset(0 0 0 0%);
+}
+
+/* ALIGN-CENTER tide scales up from center */
+.align-center .tide-enter {
+  clip-path: inset(0 50% 0 50%);
+  transform: scale(0.96);
+}
+.align-center .tide-enter.tide-visible {
+  clip-path: inset(0 0% 0 0%);
+  transform: scale(1);
+  transition: clip-path 1.2s cubic-bezier(.16,1,.3,1),
+              transform 1.2s cubic-bezier(.16,1,.3,1),
+              opacity 0.3s ease;
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-text">Summoning water</div>
+  <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
+</div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<canvas id="water-canvas"></canvas>
+<canvas id="particle-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo">Water · A Living System</div>
+  <div class="nav-dots" id="nav-dots"></div>
+</nav>
+<div id="progress-line"></div>
+
+<!-- ══ 1. ORIGIN ══ cosmic water nebula + drifting mist particles -->
+
+<section id="origin">
+  <div class="photo-layer">
+    <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=75&auto=format&fit=crop" alt="Mesmerizing Earth from space" loading="eager">
+  </div>
+  
+  <div class="fog-overlay" id="fog-window"></div>
+
+  <div class="section-canvas-overlay"><canvas id="origin-canvas"></canvas></div>
+  
+  <div class="section-inner">
+    <div class="origin-eyebrow water-fill">I · The Origin</div>
+    <h1 class="origin-title water-fill">In the <em>beginning</em><br>there was<br>only mist.</h1>
+    <p class="origin-subtitle water-fill">Hydrogen. Oxygen. Two atoms bonded by heat and time — forming the molecule that would birth all life on Earth.</p>
+  </div>
+  <div class="scroll-hint" id="scroll-hint"><div class="scroll-line"></div><span>Explore</span></div>
+  <div class="wave-sep"></div>
+</section>
+
+
+<!-- ══ 2. OCEAN ══ deep bioluminescent underwater + rising particles -->
+<section id="ocean" class="align-right">
+  <div class="photo-layer">
+  <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&q=75&auto=format&fit=crop" alt="Calm glowing jellyfish" loading="lazy">
+</div>
+  <div class="section-inner tide-enter">
+    <div class="section-number depth-rise dr-d1">II</div>
+    <h2 class="section-title depth-rise dr-d2 shimmer-title">The <em>deep</em><br>remembers.</h2>
+    <div class="impact-line line-draw"></div>
+    <p class="section-body depth-rise dr-d3"><strong>3.8 billion years ago,</strong> water pooled in the dark. No light reached the ocean floor. Life stirred in silence — chemistry becoming biology, becoming memory.</p>
+    <div class="data-callout depth-rise dr-d4 callout-enter">
+      <div class="data-number">97<span style="font-size:1.5rem">%</span></div>
+      <div class="data-label">of Earth's water is ocean</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+  <div class="section-veil"></div>
+</section>
+
+<!-- ══ 3. RIVERS ══ aerial meander + horizontal flow lines -->
+<section id="rivers">
+
+  <div class="section-canvas-overlay"><canvas id="rivers-canvas"></canvas></div>
+  <div class="section-inner tide-enter" style="padding-left:max(4rem,8vw)">
+    <div class="section-number depth-rise dr-d1">III</div>
+    <h2 class="section-title depth-rise dr-d2 shimmer-title">Rivers run<br><em>like thought —</em><br>always downward.</h2>
+    <div class="impact-line line-draw"></div>
+    <p class="section-body depth-rise dr-d3"><strong>117 major rivers</strong> carve their paths through stone. Not by force — by patience. A river does not fight the mountain; it finds every yielding crack, wearing the world away drop by drop.</p>
+    <div class="data-callout depth-rise dr-d4 callout-enter">
+      <div class="data-number">0.0001<span style="font-size:1rem">%</span></div>
+      <div class="data-label">of water is in rivers — yet it feeds billions</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+  <div class="section-veil"></div>
+</section>
+
+<!-- ══ 4. ICE ══ glacier blue cave + Voronoi fracture -->
+<section id="ice" class="align-right">
+  <div class="photo-layer">
+  <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=75&auto=format&fit=crop" alt="Smooth mesmerizing ice" loading="lazy">
+</div>
+  <div class="section-canvas-overlay"><canvas id="ice-canvas"></canvas></div>
+  <div class="section-inner tide-enter">
+    <div class="section-number depth-rise dr-d1">IV</div>
+    <h2 class="section-title depth-rise dr-d2 shimmer-title">Ice is water<br><em>holding still,</em><br>remembering cold.</h2>
+    <div class="impact-line line-draw"></div>
+    <p class="section-body depth-rise dr-d3">When water freezes, it expands — unique among molecules. It <strong>cracks rock</strong>, carves valleys, and forms the great glaciers that have shaped every continent on Earth.</p>
+    <div class="data-callout depth-rise dr-d4 callout-enter">
+      <div class="data-number">69<span style="font-size:1.5rem">%</span></div>
+      <div class="data-label">of freshwater locked in glaciers</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+  <div class="section-veil"></div>
+</section>
+
+<!-- ══ 5. CYCLE ══ storm clouds + orbiting drop animation -->
+<section id="cycle" class="align-center">
+  <div class="photo-layer">
+    <!-- Storm clouds / rain -->
+    <img src="https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=1920&q=75&auto=format&fit=crop" alt="Storm clouds rain" loading="lazy">
+  </div>
+  <div class="section-canvas-overlay"><canvas id="cycle-canvas"></canvas></div>
+  <div class="section-inner tide-enter">
+    <div class="section-number depth-rise dr-d1">V</div>
+    <p class="section-quote depth-rise dr-d2">"The water you drink today was once a glacier. Was once a cloud. Was once inside a dinosaur."</p>
+    <div class="impact-line line-draw"></div>
+    <p class="section-body depth-rise dr-d3">The water cycle has no beginning and no end. Evaporation, condensation, precipitation — a loop running without pause for <strong>4 billion years.</strong></p>
+  </div>
+  <div class="wave-sep"></div>
+  <div class="section-veil"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION IX · THE DISPATCH — paste just before </body>
+     NYT / Paige-grade editorial water news section
+     All IDs/classes prefixed wn__ · All JS in IIFE · Zero conflict
+     Animations: caustic light on headlines · ink-drop reveals ·
+                 water-surface ticker · drowning type effect
+     ══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ── SECTION SHELL ── */
+#wn__section {
+  position:relative;min-height:100vh;display:flex;flex-direction:column;
+  justify-content:flex-start;z-index:10;overflow:hidden;
+  padding:12vh 0 8vh;
+}
+
+/* ── BACKGROUND: deep underwater scene ── */
+#wn__bg-photo {
+  position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;
+}
+#wn__bg-photo img {
+  width:100%;height:100%;object-fit:cover;object-position:50% 30%;
+  filter:saturate(.55) brightness(.38) contrast(1.3) hue-rotate(195deg);
+  animation:wn__kb 28s ease-in-out infinite alternate;
+  transform:scale(1.12);will-change:transform;
+}
+@keyframes wn__kb{0%{transform:scale(1.10) translateY(0)}100%{transform:scale(1.18) translateY(-1.5%)}}
+#wn__bg-photo::after {
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(to bottom, rgba(5,13,26,.85) 0%, rgba(5,13,26,.15) 25%, rgba(5,13,26,.1) 60%, rgba(5,13,26,.9) 100%),
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(10,30,60,.3) 0%, transparent 70%);
+}
+
+/* ── CAUSTIC LIGHT CANVAS (full section) ── */
+#wn__caustic {
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  width:100%;height:100%;display:block;opacity:.55;
+  mix-blend-mode:screen;
+}
+
+/* ── MASTHEAD ── */
+#wn__masthead {
+  position:relative;z-index:20;
+  padding:0 6rem 3rem;
+  border-bottom:.5px solid rgba(140,180,200,.12);
+  margin-bottom:0;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  flex-wrap:wrap;gap:1rem;
+}
+#wn__flag {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.45em;
+  text-transform:uppercase;color:#8aaec4;opacity:.5;margin-bottom:.8rem;
+  display:block;
+}
+#wn__masthead-title {
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1rem,2vw,1.4rem);
+  font-weight:300;color:#f0f8ff;letter-spacing:.05em;line-height:1;
+}
+#wn__masthead-title em{font-style:italic;color:#8aaec4;}
+#wn__date-line {
+  font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.25em;
+  color:#8aaec4;opacity:.4;text-align:right;line-height:1.8;
+}
+
+/* ── WATER-SURFACE TICKER ── */
+#wn__ticker-wrap {
+  position:relative;z-index:20;
+  border-bottom:.5px solid rgba(140,180,200,.1);
+  overflow:hidden;height:2.2rem;display:flex;align-items:center;
+  background:rgba(10,22,40,.3);backdrop-filter:blur(8px);
+}
+#wn__ticker-label {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.3em;
+  text-transform:uppercase;color:#8aaec4;padding:0 1.5rem;
+  white-space:nowrap;border-right:.5px solid rgba(140,180,200,.15);
+  height:100%;display:flex;align-items:center;flex-shrink:0;
+}
+#wn__ticker-track {
+  display:flex;align-items:center;overflow:hidden;flex:1;
+  mask-image:linear-gradient(to right,transparent 0%,black 4%,black 96%,transparent 100%);
+}
+#wn__ticker-inner {
+  display:flex;gap:0;white-space:nowrap;
+  animation:wn__scroll 38s linear infinite;
+  will-change:transform;
+}
+@keyframes wn__scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.wn__tick-item {
+  font-family:'Jost',sans-serif;font-size:.6rem;font-weight:200;
+  letter-spacing:.1em;color:#8aaec4;padding:0 2.5rem;
+  border-right:.5px solid rgba(140,180,200,.1);white-space:nowrap;
+}
+.wn__tick-item span { color:#c8dce8; font-weight:300; }
+
+/* ── MAIN GRID ── */
+#wn__grid {
+  position:relative;z-index:20;
+  display:grid;
+  grid-template-columns:1fr .5px 1fr .5px 1fr;
+  grid-template-rows:auto auto;
+  gap:0;
+  border-bottom:.5px solid rgba(140,180,200,.1);
+}
+.wn__col-div {
+  background:rgba(140,180,200,.1);
+  width:.5px;
+  align-self:stretch;
+}
+
+/* ── HERO STORY (spans 3 cols) ── */
+#wn__hero {
+  grid-column:1 / 6;
+  padding:3.5rem 6rem 2.5rem;
+  border-bottom:.5px solid rgba(140,180,200,.1);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4rem;
+  align-items:start;
+}
+#wn__hero-img-wrap {
+  position:relative;overflow:hidden;aspect-ratio:16/9;
+}
+#wn__hero-img-wrap img {
+  width:100%;height:100%;object-fit:cover;
+  filter:saturate(.6) brightness(.65) contrast(1.15) hue-rotate(188deg);
+  transform:scale(1.05);transition:transform 8s ease;
+}
+#wn__hero-img-wrap:hover img { transform:scale(1.0); }
+/* Canvas ink-drop reveal over hero image */
+#wn__hero-canvas {
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  width:100%;height:100%;
+}
+#wn__hero-label {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.35em;
+  text-transform:uppercase;color:#8aaec4;opacity:.5;margin-bottom:1rem;
+  display:block;
+}
+#wn__hero-hed {
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);
+  font-weight:300;line-height:1.08;color:#f0f8ff;margin-bottom:1.2rem;
+  letter-spacing:-.01em;
+}
+#wn__hero-hed em { font-style:italic;color:#8aaec4; }
+#wn__hero-dek {
+  font-family:'Jost',sans-serif;font-size:.8rem;font-weight:200;
+  line-height:2;color:#8aaec4;max-width:340px;margin-bottom:1.5rem;
+}
+#wn__hero-dek strong { color:#c8dce8;font-weight:300; }
+#wn__hero-byline {
+  font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.2em;
+  text-transform:uppercase;color:#8aaec4;opacity:.4;
+}
+
+/* ── STORY CARDS ── */
+.wn__story {
+  padding:2.5rem 2.5rem 2rem;
+  display:flex;flex-direction:column;
+  opacity:0;transform:translateY(22px);
+  transition:opacity 1s ease, transform 1s cubic-bezier(.16,1,.3,1);
+}
+.wn__story.wn__vis { opacity:1;transform:none; }
+.wn__story-img-wrap {
+  position:relative;overflow:hidden;aspect-ratio:3/2;margin-bottom:1.5rem;
+}
+.wn__story-img-wrap img {
+  width:100%;height:100%;object-fit:cover;
+  filter:saturate(.55) brightness(.6) contrast(1.2) hue-rotate(188deg);
+  transform:scale(1.04);transition:transform 6s ease;
+}
+.wn__story-img-wrap:hover img { transform:scale(1.0); }
+.wn__story-canvas {
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  width:100%;height:100%;
+}
+.wn__story-kicker {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.35em;
+  text-transform:uppercase;color:#8aaec4;opacity:.45;margin-bottom:.7rem;
+}
+.wn__story-hed {
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.2rem,2.2vw,1.7rem);
+  font-weight:300;line-height:1.15;color:#f0f8ff;margin-bottom:.9rem;
+  letter-spacing:-.01em;
+}
+.wn__story-hed em { font-style:italic;color:#8aaec4; }
+.wn__story-dek {
+  font-family:'Jost',sans-serif;font-size:.75rem;font-weight:200;
+  line-height:1.9;color:#8aaec4;flex:1;
+}
+.wn__story-dek strong { color:#c8dce8;font-weight:300; }
+.wn__story-meta {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.2em;
+  text-transform:uppercase;color:#8aaec4;opacity:.3;margin-top:1.2rem;
+}
+
+/* ── DATA BAND ── */
+#wn__databand {
+  position:relative;z-index:20;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border-bottom:.5px solid rgba(140,180,200,.1);
+}
+.wn__datum {
+  padding:2rem 2.5rem;
+  border-right:.5px solid rgba(140,180,200,.1);
+  opacity:0;transform:translateY(14px);
+  transition:opacity .9s ease, transform .9s cubic-bezier(.16,1,.3,1);
+}
+.wn__datum:last-child { border-right:none; }
+.wn__datum.wn__vis { opacity:1;transform:none; }
+.wn__datum-fig {
+  font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:300;
+  color:#d4eaf7;line-height:1;display:block;position:relative;
+}
+/* Water-level bar behind the figure */
+.wn__datum-bar {
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(to top,rgba(20,60,100,.5),transparent);
+  height:0%;transition:height 1.4s cubic-bezier(.2,.8,.25,1);
+  pointer-events:none;
+}
+.wn__datum.wn__vis .wn__datum-bar { height:100%; }
+.wn__datum-label {
+  font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.18em;
+  text-transform:uppercase;color:#8aaec4;margin-top:.6rem;
+  line-height:1.6;display:block;
+}
+.wn__datum-source {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.15em;
+  color:#8aaec4;opacity:.3;margin-top:.4rem;display:block;
+}
+
+/* ── PULLQUOTE BAND ── */
+#wn__pullquote {
+  position:relative;z-index:20;
+  padding:4rem 6rem;
+  text-align:center;
+  border-bottom:.5px solid rgba(140,180,200,.1);
+  background:rgba(10,22,40,.2);
+  overflow:hidden;
+}
+#wn__pq-canvas {
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  width:100%;height:100%;
+}
+#wn__pq-rule-top, #wn__pq-rule-bottom {
+  height:.5px;background:linear-gradient(90deg,transparent,rgba(200,220,235,.3),transparent);
+  transform:scaleX(0);transform-origin:center;
+  transition:transform 1.2s cubic-bezier(.16,1,.3,1);
+}
+#wn__pq-rule-top.wn__vis, #wn__pq-rule-bottom.wn__vis { transform:scaleX(1); }
+#wn__pq-text {
+  position:relative;z-index:5;
+  font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.4rem);
+  font-weight:300;font-style:italic;line-height:1.45;color:#f0f8ff;
+  max-width:700px;margin:2rem auto;letter-spacing:-.01em;
+  opacity:0;transform:translateY(12px);
+  transition:opacity 1.2s ease .3s, transform 1.2s cubic-bezier(.16,1,.3,1) .3s;
+}
+#wn__pq-text.wn__vis { opacity:1;transform:none; }
+#wn__pq-attr {
+  position:relative;z-index:5;
+  font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.3em;
+  text-transform:uppercase;color:#8aaec4;opacity:.4;
+  opacity:0;transition:opacity .8s ease .8s;
+}
+#wn__pq-attr.wn__vis { opacity:.4; }
+
+/* ── BOTTOM ROW: wide story + aside ── */
+#wn__bottom {
+  position:relative;z-index:20;
+  display:grid;grid-template-columns:2fr 1px 1fr;
+  border-bottom:.5px solid rgba(140,180,200,.1);
+}
+#wn__bottom-div { background:rgba(140,180,200,.1); }
+#wn__bottom-main {
+  padding:3rem 4rem 3rem 6rem;
+  opacity:0;transform:translateY(18px);
+  transition:opacity 1s ease .1s, transform 1s cubic-bezier(.16,1,.3,1) .1s;
+}
+#wn__bottom-main.wn__vis { opacity:1;transform:none; }
+#wn__bottom-aside {
+  padding:3rem 4rem;
+  opacity:0;transform:translateY(18px);
+  transition:opacity 1s ease .35s, transform 1s cubic-bezier(.16,1,.3,1) .35s;
+}
+#wn__bottom-aside.wn__vis { opacity:1;transform:none; }
+.wn__aside-heading {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.35em;
+  text-transform:uppercase;color:#8aaec4;opacity:.4;
+  border-bottom:.5px solid rgba(140,180,200,.1);padding-bottom:.8rem;margin-bottom:1.2rem;
+}
+.wn__aside-item {
+  padding:.8rem 0;border-bottom:.5px solid rgba(140,180,200,.07);
+  display:flex;flex-direction:column;gap:.3rem;
+}
+.wn__aside-hed {
+  font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;
+  color:#f0f8ff;line-height:1.2;letter-spacing:-.005em;
+}
+.wn__aside-hed em { font-style:italic;color:#8aaec4; }
+.wn__aside-meta {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.15em;
+  text-transform:uppercase;color:#8aaec4;opacity:.3;
+}
+
+/* ── SECTION FOOTER ── */
+#wn__footer {
+  position:relative;z-index:20;
+  padding:1.5rem 6rem;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:1rem;
+}
+#wn__footer-note {
+  font-family:'Jost',sans-serif;font-size:.55rem;letter-spacing:.2em;
+  color:#8aaec4;opacity:.25;line-height:2;
+}
+
+/* ── DROWNING TYPE: headline letters that ripple ── */
+.wn__ripple-letter {
+  display:inline-block;
+  transition:transform .4s cubic-bezier(.2,.8,.3,1), opacity .4s ease;
+}
+
+@media(max-width:900px){
+  #wn__hero{grid-template-columns:1fr;gap:2rem;}
+  #wn__grid{grid-template-columns:1fr;}
+  .wn__col-div{display:none;}
+  #wn__databand{grid-template-columns:1fr 1fr;}
+  #wn__bottom{grid-template-columns:1fr;}
+  #wn__bottom-div{display:none;}
+  #wn__masthead,#wn__hero,#wn__pullquote,
+  #wn__footer,#wn__bottom-main,#wn__bottom-aside{padding-left:2rem;padding-right:2rem;}
+  .wn__story{padding:2rem 2rem 1.5rem;}
+  .wn__datum{padding:1.5rem 2rem;}
+}
+</style>
+
+<!-- ══ SECTION IX: THE DISPATCH ══ -->
+<section id="wn__section">
+
+  <!-- Deep underwater background -->
+  <div id="wn__bg-photo">
+    <img src="https://images.unsplash.com/photo-1559825481-12a05cc00344?w=1920&q=80&auto=format&fit=crop" alt="Deep underwater" loading="lazy">
+  </div>
+
+  <!-- Caustic light animation canvas -->
+  <canvas id="wn__caustic"></canvas>
+
+  <!-- MASTHEAD -->
+  <div id="wn__masthead">
+    <div>
+      <span id="wn__flag">Water · A Living System</span>
+      <div id="wn__masthead-title">The <em>Dispatch</em> — Water & The World</div>
+    </div>
+    <div id="wn__date-line">
+      IX · Dispatches from the surface<br>
+      Compiled from global water data
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div id="wn__ticker-wrap">
+    <div id="wn__ticker-label">Live · Water</div>
+    <div id="wn__ticker-track">
+      <div id="wn__ticker-inner">
+        <div class="wn__tick-item">Cape Town Day Zero <span>avoided 2018</span></div>
+        <div class="wn__tick-item">Lake Mead at <span>37% capacity</span></div>
+        <div class="wn__tick-item">Ganges classified <span>biologically dead</span> in stretches</div>
+        <div class="wn__tick-item">Ogallala Aquifer declining <span>1ft per year</span></div>
+        <div class="wn__tick-item">Global desalination capacity <span>+11% since 2020</span></div>
+        <div class="wn__tick-item">Antarctic ice loss <span>150 billion tons/yr</span></div>
+        <div class="wn__tick-item">Jordan River flow <span>down 98%</span> since 1950</div>
+        <div class="wn__tick-item">Atmospheric water harvesting <span>scaling in 14 nations</span></div>
+        <!-- duplicate for seamless loop -->
+        <div class="wn__tick-item">Cape Town Day Zero <span>avoided 2018</span></div>
+        <div class="wn__tick-item">Lake Mead at <span>37% capacity</span></div>
+        <div class="wn__tick-item">Ganges classified <span>biologically dead</span> in stretches</div>
+        <div class="wn__tick-item">Ogallala Aquifer declining <span>1ft per year</span></div>
+        <div class="wn__tick-item">Global desalination capacity <span>+11% since 2020</span></div>
+        <div class="wn__tick-item">Antarctic ice loss <span>150 billion tons/yr</span></div>
+        <div class="wn__tick-item">Jordan River flow <span>down 98%</span> since 1950</div>
+        <div class="wn__tick-item">Atmospheric water harvesting <span>scaling in 14 nations</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div id="wn__grid">
+    <!-- HERO -->
+    <div id="wn__hero">
+      <div id="wn__hero-img-wrap">
+        <img src="https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=1200&q=80&auto=format&fit=crop" alt="River aerial">
+        <canvas id="wn__hero-canvas"></canvas>
+      </div>
+      <div id="wn__hero-text">
+        <span id="wn__hero-label">Cover Story</span>
+        <h2 id="wn__hero-hed" class="wn__rip-hed">The rivers that <em>fed empires</em><br>are running dry.</h2>
+        <p id="wn__hero-dek">From the Indus to the Colorado, the waterways that built civilisations are retreating. <strong>Scientists now give the Aral Basin 40 years.</strong> The countdown is no longer abstract — it is measured in metres per season.</p>
+        <div id="wn__hero-byline">By the Water Desk · Global Hydrology Report</div>
+      </div>
+    </div>
+
+    <!-- COL 1 -->
+    <div class="wn__story" id="wn__s1">
+      <div class="wn__story-img-wrap">
+        <img src="https://images.unsplash.com/photo-1621246935353-ff54e60ab837?q=80&w=363&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Glacier">
+        <canvas class="wn__story-canvas" id="wn__sc1"></canvas>
+      </div>
+      <div class="wn__story-kicker">Cryosphere</div>
+      <h3 class="wn__story-hed wn__rip-hed">Glaciers are <em>writing letters</em> in retreat lines.</h3>
+      <p class="wn__story-dek">Each summer's melt leaves a scar in the rock — a high-water mark for geologists unborn. <strong>420 glaciers vanished</strong> between 2000 and 2020.</p>
+      <div class="wn__story-meta">Glaciology · 4 min read</div>
+    </div>
+
+    <div class="wn__col-div"></div>
+
+    <!-- COL 2 -->
+    <div class="wn__story" id="wn__s2">
+      <div class="wn__story-img-wrap">
+        <img src="https://images.unsplash.com/photo-1619260584294-8a4e63f5ade5?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Monsoon">
+        <canvas class="wn__story-canvas" id="wn__sc2"></canvas>
+      </div>
+      <div class="wn__story-kicker">Climate</div>
+      <h3 class="wn__story-hed wn__rip-hed">Monsoon patterns are <em>shifting</em> — and no one knows where they will land.</h3>
+      <p class="wn__story-dek">The billion-person agricultural systems of South Asia were calibrated over millennia. <strong>A two-week shift in onset</strong> cascades into famine mathematics.</p>
+      <div class="wn__story-meta">Climatology · 6 min read</div>
+    </div>
+
+    <div class="wn__col-div"></div>
+
+    <!-- COL 3 -->
+    <div class="wn__story" id="wn__s3">
+      <div class="wn__story-img-wrap">
+        <img src="https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800&q=80&auto=format&fit=crop" alt="Drought">
+        <canvas class="wn__story-canvas" id="wn__sc3"></canvas>
+      </div>
+      <div class="wn__story-kicker">Access</div>
+      <h3 class="wn__story-hed wn__rip-hed">The <em>first water wars</em> may already have begun.</h3>
+      <p class="wn__story-dek">Analysts at the UN draw a direct line between the 2007–2010 Syrian drought and the conflict that followed. <strong>Water scarcity as conflict precursor</strong> is no longer a theory.</p>
+      <div class="wn__story-meta">Geopolitics · 8 min read</div>
+    </div>
+  </div>
+
+  <!-- DATA BAND -->
+  <div id="wn__databand">
+    <div class="wn__datum" id="wn__d1">
+      <span class="wn__datum-fig">−19<span style="font-size:1.4rem">m</span>
+        <div class="wn__datum-bar"></div>
+      </span>
+      <span class="wn__datum-label">Dead Sea surface drop since 1960</span>
+      <span class="wn__datum-source">Source · Israeli Hydrological Service</span>
+    </div>
+    <div class="wn__datum" id="wn__d2">
+      <span class="wn__datum-fig">4°C
+        <div class="wn__datum-bar"></div>
+      </span>
+      <span class="wn__datum-label">Ocean surface warming since pre-industrial</span>
+      <span class="wn__datum-source">Source · NOAA 2024</span>
+    </div>
+    <div class="wn__datum" id="wn__d3">
+      <span class="wn__datum-fig">1.1B
+        <div class="wn__datum-bar"></div>
+      </span>
+      <span class="wn__datum-label">People dependent on glacial meltwater</span>
+      <span class="wn__datum-source">Source · Nature Geoscience</span>
+    </div>
+    <div class="wn__datum" id="wn__d4">
+      <span class="wn__datum-fig">2050
+        <div class="wn__datum-bar"></div>
+      </span>
+      <span class="wn__datum-label">Year half the world faces water stress</span>
+      <span class="wn__datum-source">Source · IPCC Sixth Assessment</span>
+    </div>
+  </div>
+
+  <!-- PULLQUOTE -->
+  <div id="wn__pullquote">
+    <canvas id="wn__pq-canvas"></canvas>
+    <div id="wn__pq-rule-top"></div>
+    <p id="wn__pq-text">"We do not inherit water from our ancestors — we borrow it from our children. And we are spending the inheritance."</p>
+    <div id="wn__pq-attr">Antoine de Saint-Exupéry, adapted · Water Commission Report, 2023</div>
+    <div id="wn__pq-rule-bottom" style="margin-top:2rem;"></div>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div id="wn__bottom">
+    <div id="wn__bottom-main">
+      <div class="wn__story-kicker" style="margin-bottom:.8rem;">Long Read</div>
+      <h2 class="wn__story-hed wn__rip-hed" style="font-size:clamp(1.4rem,2.5vw,2rem);margin-bottom:1.2rem;">
+        How <em>atmospheric water harvesting</em> became the technology that could save the next century.
+      </h2>
+      <p class="wn__story-dek" style="max-width:440px;">
+        In the Atacama — the driest non-polar desert on Earth — engineers have built fog nets that wring drinking water from air. The same principle now scales to fog-free environments using cold surfaces and hygroscopic membranes. <strong>Chile, Morocco, and Oman</strong> have operational municipal systems. The question is no longer whether it works. It is whether it will scale fast enough.
+      </p>
+    </div>
+    <div id="wn__bottom-div"></div>
+    <div id="wn__bottom-aside">
+      <div class="wn__aside-heading">Also in this dispatch</div>
+      <div class="wn__aside-item">
+        <div class="wn__aside-hed">The rivers <em>renamed</em> by satellite</div>
+        <div class="wn__aside-meta">Remote Sensing · 3 min</div>
+      </div>
+      <div class="wn__aside-item">
+        <div class="wn__aside-hed">Inside a <em>water court</em> in Almería</div>
+        <div class="wn__aside-meta">Law · 5 min</div>
+      </div>
+      <div class="wn__aside-item">
+        <div class="wn__aside-hed">The fishermen who became <em>water diplomats</em></div>
+        <div class="wn__aside-meta">Dispatches · 4 min</div>
+      </div>
+      <div class="wn__aside-item">
+        <div class="wn__aside-hed">Mapping the <em>invisible aquifers</em> of Sub-Saharan Africa</div>
+        <div class="wn__aside-meta">Data · 7 min</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION FOOTER -->
+  <div id="wn__footer">
+    <div id="wn__footer-note">
+      Data · WHO · UNESCO · NOAA · IPCC · USGS · Nature Geoscience<br>
+      Photography · Unsplash open source · All figures reflect latest available reporting
+    </div>
+  </div>
+
+</section>
+
+<script>
+(function(){
+'use strict';
+
+// ══════════════════════════════════════════
+// 1. CAUSTIC LIGHT — animated underwater light web across entire section
+// ══════════════════════════════════════════
+var cC = document.getElementById('wn__caustic');
+var cX = cC.getContext('2d');
+var cActive = false, cT = 0;
+var cNodes = [], cEdges = [];
+
+function cResize(){
+  var sec = document.getElementById('wn__section');
+  cC.width  = sec.offsetWidth  || window.innerWidth;
+  cC.height = sec.offsetHeight || window.innerHeight;
+}
+cResize();
+
+function cInit(){
+  cNodes = [];
+  var cols = 9, rows = 7;
+  var W = cC.width, H = cC.height;
+  for(var r=0;r<rows;r++){
+    for(var c=0;c<cols;c++){
+      cNodes.push({
+        bx: (c/(cols-1))*W, by: (r/(rows-1))*H,
+        x:0, y:0,
+        ph: Math.random()*Math.PI*2,
+        speed: .0003+Math.random()*.0004,
+        amp: 12+Math.random()*22
+      });
+    }
+  }
+}
+cInit();
+
+function cDraw(){
+  if(!cActive) return;
+  cT += .8;
+  var W = cC.width, H = cC.height;
+  cX.clearRect(0,0,W,H);
+
+  // Update node positions
+  cNodes.forEach(function(n){
+    n.x = n.bx + Math.sin(cT*n.speed + n.ph) * n.amp;
+    n.y = n.by + Math.cos(cT*n.speed*.7 + n.ph+1) * n.amp*.6;
+  });
+
+  var cols = 9;
+  // Draw edges between adjacent nodes
+  for(var i=0;i<cNodes.length;i++){
+    var n = cNodes[i];
+    var r = Math.floor(i/cols), c = i%cols;
+    // right
+    if(c<cols-1){ wn_edge(n, cNodes[i+1]); }
+    // down
+    if(r<6){ wn_edge(n, cNodes[i+cols]); }
+  }
+
+  // Draw caustic bright spots at nodes
+  cNodes.forEach(function(n){
+    var pulse = .5+.5*Math.sin(cT*.004+n.ph);
+    var g = cX.createRadialGradient(n.x,n.y,0,n.x,n.y,18*pulse+4);
+    g.addColorStop(0,'rgba(160,220,255,'+(0.07*pulse)+')');
+    g.addColorStop(1,'rgba(10,40,80,0)');
+    cX.beginPath();cX.arc(n.x,n.y,(18*pulse+4),0,Math.PI*2);
+    cX.fillStyle=g;cX.fill();
+  });
+
+  requestAnimationFrame(cDraw);
+}
+function wn_edge(a,b){
+  var dx=b.x-a.x, dy=b.y-a.y;
+  var dist=Math.sqrt(dx*dx+dy*dy);
+  var maxD=Math.max(cC.width,cC.height)*.2;
+  if(dist>maxD*1.5) return;
+  var op = (1-dist/(maxD*1.5))*.06;
+  var g = cX.createLinearGradient(a.x,a.y,b.x,b.y);
+  g.addColorStop(0,'rgba(140,210,245,'+op+')');
+  g.addColorStop(.5,'rgba(180,230,255,'+(op*1.6)+')');
+  g.addColorStop(1,'rgba(140,210,245,'+op+')');
+  cX.beginPath();cX.moveTo(a.x,a.y);cX.lineTo(b.x,b.y);
+  cX.strokeStyle=g;cX.lineWidth=.6;cX.stroke();
+}
+
+// ══════════════════════════════════════════
+// 2. INK-DROP IMAGE REVEAL
+// ══════════════════════════════════════════
+// Canvas sits over image. Starts filled dark.
+// Circular "ink drops" expand from multiple points,
+// erasing (clearing) the dark cover to reveal image.
+function InkDrop(canvas, duration){
+  var ctx = canvas.getContext('2d');
+  var W, H, drops=[], startTs=null, running=false;
+
+  function resize(){
+    W = canvas.offsetWidth || canvas.parentElement.offsetWidth || 400;
+    H = canvas.offsetHeight || canvas.parentElement.offsetHeight || 300;
+    canvas.width = W; canvas.height = H;
+  }
+  resize();
+
+  function start(){
+    if(running) return;
+    running = true;
+    var dur = duration || 2200;
+    // Seed ink drop points
+    drops = [];
+    var count = 6;
+    for(var i=0;i<count;i++){
+      drops.push({
+        x: W*(.1 + .8*(i/count) + (Math.random()-.5)*.15),
+        y: H*(.2 + Math.random()*.6),
+        delay: i * (dur/(count*1.6)),
+        maxR: Math.sqrt(W*W+H*H) * (.5 + Math.random()*.3),
+        speed: 1
+      });
+    }
+    requestAnimationFrame(function tick(ts){
+      if(!startTs) startTs=ts;
+      var elapsed = ts-startTs;
+
+      // Refill dark cover
+      ctx.fillStyle = 'rgba(5,13,26,0.97)';
+      ctx.fillRect(0,0,W,H);
+
+      // Erase (clear) each drop circle
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      drops.forEach(function(d){
+        var local = elapsed - d.delay;
+        if(local <= 0) return;
+        var prog = Math.min(1, local / (dur * .7));
+        var ease = 1 - Math.pow(1-prog, 2.5);
+        var r = d.maxR * ease;
+
+        // Soft edge gradient erase
+        var g = ctx.createRadialGradient(d.x,d.y,r*.7,d.x,d.y,r);
+        g.addColorStop(0,'rgba(0,0,0,1)');
+        g.addColorStop(.6,'rgba(0,0,0,0.9)');
+        g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.beginPath();ctx.arc(d.x,d.y,r,0,Math.PI*2);
+        ctx.fillStyle=g;ctx.fill();
+      });
+      ctx.restore();
+
+      // Water surface ripple at each active drop edge
+      ctx.save();
+      drops.forEach(function(d){
+        var local = elapsed - d.delay;
+        if(local<=0 || local>dur*.9) return;
+        var prog = Math.min(1, local/(dur*.7));
+        var ease = 1-Math.pow(1-prog,2.5);
+        var r = d.maxR * ease;
+        var edgeOp = (1-prog)*0.4;
+        var g2 = ctx.createRadialGradient(d.x,d.y,r*.92,d.x,d.y,r*1.04);
+        g2.addColorStop(0,'rgba(140,210,245,'+edgeOp+')');
+        g2.addColorStop(1,'rgba(140,210,245,0)');
+        ctx.beginPath();ctx.arc(d.x,d.y,r,0,Math.PI*2);
+        ctx.fillStyle=g2;ctx.fill();
+      });
+      ctx.restore();
+
+      var allDone = drops.every(function(d){
+        var local = elapsed-d.delay;
+        return local > dur*.8;
+      });
+      if(!allDone){
+        requestAnimationFrame(tick);
+      } else {
+        ctx.clearRect(0,0,W,H);
+      }
+    });
+  }
+
+  return { start: start };
+}
+
+// ══════════════════════════════════════════
+// 3. PULLQUOTE RIPPLE RINGS canvas
+// ══════════════════════════════════════════
+var pqC = document.getElementById('wn__pq-canvas');
+var pqX = pqC.getContext('2d');
+var pqActive = false, pqT = 0;
+var pqRings = [];
+
+function pqResize(){
+  pqC.width  = pqC.offsetWidth  || document.getElementById('wn__pullquote').offsetWidth;
+  pqC.height = pqC.offsetHeight || document.getElementById('wn__pullquote').offsetHeight;
+}
+pqResize();
+
+function pqDraw(){
+  if(!pqActive) return;
+  pqT++;
+  pqX.clearRect(0,0,pqC.width,pqC.height);
+  var cx=pqC.width/2, cy=pqC.height/2;
+
+  // Spawn ring periodically
+  if(pqT%60===0){
+    pqRings.push({x:cx+(Math.random()-.5)*pqC.width*.3,y:cy,r:0,op:.35,speed:1+Math.random()*.5});
+  }
+
+  pqRings = pqRings.filter(function(rg){ return rg.op>0.005; });
+  pqRings.forEach(function(rg){
+    rg.r += rg.speed*1.4;
+    rg.op *= .985;
+    pqX.beginPath();pqX.arc(rg.x,rg.y,rg.r,0,Math.PI*2);
+    pqX.strokeStyle='rgba(140,200,230,'+rg.op+')';
+    pqX.lineWidth=.6;pqX.stroke();
+  });
+
+  requestAnimationFrame(pqDraw);
+}
+
+// ══════════════════════════════════════════
+// 4. DROWNING RIPPLE on headings (hover + entry)
+// ══════════════════════════════════════════
+function initRippleHeads(){
+  document.querySelectorAll('.wn__rip-hed').forEach(function(el){
+    el.addEventListener('mouseenter', function(){
+      var letters = el.querySelectorAll('.wn__ripple-letter');
+      letters.forEach(function(l,i){
+        setTimeout(function(){
+          l.style.transform='translateY(-3px)';
+          l.style.opacity='.7';
+          setTimeout(function(){
+            l.style.transform='translateY(2px)';
+            l.style.opacity='1';
+            setTimeout(function(){l.style.transform='none';},200);
+          },160);
+        }, i*22);
+      });
+    });
+  });
+}
+
+function wrapLetters(el){
+  var html = el.innerHTML;
+  // Only wrap text nodes, preserve tags
+  el.innerHTML = html.replace(/([^<>\s])(?=[^<]*(?:<(?!\/?(em|br|strong)[^>]*>)[^<]*)*$)/g,function(m){
+    return '<span class="wn__ripple-letter">'+m+'</span>';
+  });
+}
+
+// ══════════════════════════════════════════
+// 5. INTERSECTION OBSERVER — trigger everything
+// ══════════════════════════════════════════
+var heroTriggered=false, storiesTriggered=false, dataTriggered=false, pqTriggered=false, botTriggered=false;
+
+// Hero
+var heroObs = new IntersectionObserver(function(e){
+  e.forEach(function(en){
+    if(en.isIntersecting && !heroTriggered){
+      heroTriggered=true;
+      // Start caustics
+      cActive=true; cDraw();
+      // Hero ink-drop
+      InkDrop(document.getElementById('wn__hero-canvas'), 2400).start();
+    }
+  });
+},{threshold:0.1});
+heroObs.observe(document.getElementById('wn__hero'));
+
+// Stories
+var storyIds=['wn__s1','wn__s2','wn__s3'];
+var stDelay=[0,150,300];
+storyIds.forEach(function(id,i){
+  var obs2 = new IntersectionObserver(function(e){
+    e.forEach(function(en){
+      if(en.isIntersecting){
+        setTimeout(function(){
+          en.target.classList.add('wn__vis');
+          var sc=en.target.querySelector('.wn__story-canvas');
+          if(sc) InkDrop(sc,2000).start();
+        }, stDelay[i]);
+        obs2.unobserve(en.target);
+      }
+    });
+  },{threshold:0.15});
+  var el=document.getElementById(id);
+  if(el) obs2.observe(el);
+});
+
+// Data datums
+['wn__d1','wn__d2','wn__d3','wn__d4'].forEach(function(id,i){
+  var obs3=new IntersectionObserver(function(e){
+    e.forEach(function(en){
+      if(en.isIntersecting){
+        setTimeout(function(){en.target.classList.add('wn__vis');},i*120);
+        obs3.unobserve(en.target);
+      }
+    });
+  },{threshold:0.2});
+  var el=document.getElementById(id);
+  if(el) obs3.observe(el);
+});
+
+// Pullquote
+var pqObs=new IntersectionObserver(function(e){
+  e.forEach(function(en){
+    if(en.isIntersecting && !pqTriggered){
+      pqTriggered=true;
+      pqActive=true; pqDraw();
+      document.getElementById('wn__pq-rule-top').classList.add('wn__vis');
+      document.getElementById('wn__pq-rule-bottom').classList.add('wn__vis');
+      document.getElementById('wn__pq-text').classList.add('wn__vis');
+      document.getElementById('wn__pq-attr').classList.add('wn__vis');
+    }
+  });
+},{threshold:0.3});
+pqObs.observe(document.getElementById('wn__pullquote'));
+
+// Bottom
+['wn__bottom-main','wn__bottom-aside'].forEach(function(id,i){
+  var obs4=new IntersectionObserver(function(e){
+    e.forEach(function(en){
+      if(en.isIntersecting){
+        setTimeout(function(){en.target.classList.add('wn__vis');},i*200);
+        obs4.unobserve(en.target);
+      }
+    });
+  },{threshold:0.15});
+  var el=document.getElementById(id);
+  if(el) obs4.observe(el);
+});
+
+// ══════════════════════════════════════════
+// 6. INIT
+// ══════════════════════════════════════════
+// Wrap heading letters for ripple hover
+document.querySelectorAll('.wn__rip-hed').forEach(wrapLetters);
+initRippleHeads();
+
+// Resize handlers
+window.addEventListener('resize',function(){
+  cResize();cInit();
+  pqResize();
+},{passive:true});
+
+})();
+</script>
+<!-- ══ END SECTION IX: THE DISPATCH ══ -->
+
+
+<!-- ══ 6. IMPACT ══ polluted water / oil slick + corruption rings -->
+<section id="impact">
+  <div class="photo-layer">
+  <img src="https://images.unsplash.com/photo-1609924325749-085258a04b86?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Dark moody water texture" loading="lazy">
+</div>
+  <div class="section-canvas-overlay"><canvas id="impact-canvas"></canvas></div>
+  <div class="section-inner tide-enter" style="padding-left:max(4rem,8vw)">
+    <div class="section-number depth-rise dr-d1">VI</div>
+    <h2 class="section-title depth-rise dr-d2 shimmer-title">We turned<br>water into<br><em>a question.</em></h2>
+    <div class="impact-line line-draw"></div>
+    <p class="section-body depth-rise dr-d3"><strong style="color:rgba(180,120,100,.9)">2.2 billion people</strong> lack access to safe water. We pollute, we dam, we overpump. The system that sustained life for eons bends under a single century of human pressure.</p>
+    <div class="data-callout depth-rise dr-d4 callout-enter" style="border-color:rgba(180,120,100,.2)">
+      <div class="data-number" style="color:rgba(200,150,130,.9)">2030</div>
+      <div class="data-label">projected year of global water deficit</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+  <div class="section-veil"></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     WATER DATA SECTION v2 — paste just before </body>
+     All IDs prefixed wd2__ · All JS in IIFE · Zero conflict
+     FIX: no CSS background-clip animation (broke in Chrome)
+          water fill done via Canvas overlay instead
+     ══════════════════════════════════════════════════════ -->
+
+<style>
+#wd2__section {
+  position:relative;min-height:100vh;display:flex;flex-direction:column;
+  justify-content:center;z-index:10;overflow:hidden;
+}
+#wd2__section .wd2__photo {
+  position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;
+}
+#wd2__section .wd2__photo img {
+  width:100%;height:100%;object-fit:cover;object-position:center;
+  filter:saturate(.7) brightness(.5) contrast(1.2) hue-rotate(190deg);
+  animation:wd2__kb 24s ease-in-out infinite alternate;
+  transform:scale(1.1);will-change:transform;
+}
+@keyframes wd2__kb{0%{transform:scale(1.08) translateY(0)}100%{transform:scale(1.18) translateY(-2%)}}
+#wd2__section .wd2__photo::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(5,13,26,.7) 0%,rgba(5,13,26,.1) 40%,rgba(5,13,26,.1) 60%,rgba(5,13,26,.88) 100%);
+  pointer-events:none;
+}
+
+/* Mist particle canvas */
+#wd2__mist {
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  width:100%;height:100%;display:block;
+}
+
+/* Veil sweep line */
+#wd2__veil {
+  position:absolute;top:0;left:0;right:0;height:2px;z-index:25;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(140,200,230,.6),rgba(200,230,255,.9),rgba(140,200,230,.6),transparent);
+  transform:scaleX(0);transform-origin:left;
+}
+#wd2__veil.go { animation:wd2__veilrun 1.8s cubic-bezier(.16,1,.3,1) forwards; }
+@keyframes wd2__veilrun{0%{transform:scaleX(0);opacity:1;}70%{transform:scaleX(1);opacity:1;}100%{transform:scaleX(1);opacity:0;}}
+
+/* Content layout */
+#wd2__section .wd2__inner {
+  position:relative;z-index:20;max-width:680px;padding:0 6rem;
+}
+#wd2__section .wd2__num {
+  font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.3em;
+  color:#8aaec4;opacity:.4;margin-bottom:1.5rem;
+}
+
+/* Title — plain white, canvas overlay does the fill effect */
+#wd2__section .wd2__title {
+  font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,4rem);
+  font-weight:300;line-height:1.1;color:#f0f8ff;margin-bottom:2rem;
+  position:relative;display:inline-block;width:100%;
+}
+#wd2__section .wd2__title em { font-style:italic;color:#8aaec4; }
+
+/* Canvas that overlays title text for the water-fill wipe */
+#wd2__title-canvas {
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:5;
+}
+
+#wd2__section .wd2__line {
+  width:100%;height:.5px;
+  background:linear-gradient(90deg,transparent,rgba(200,220,235,.3),transparent);
+  margin:2.5rem 0;transform:scaleX(0);transform-origin:left;transition:transform 1s cubic-bezier(.16,1,.3,1) .2s;
+}
+#wd2__section .wd2__line.go { transform:scaleX(1); }
+
+#wd2__section .wd2__body {
+  font-family:'Jost',sans-serif;font-size:.85rem;font-weight:200;
+  line-height:2.2;color:#8aaec4;max-width:380px;
+  opacity:0;transform:translateY(16px);
+  transition:opacity 1s ease .55s,transform 1s cubic-bezier(.16,1,.3,1) .55s;
+}
+#wd2__section .wd2__body strong{color:#c8dce8;font-weight:300;}
+#wd2__section .wd2__body.go{opacity:1;transform:none;}
+
+/* Stat cards */
+#wd2__section .wd2__cards {
+  display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:2.5rem;
+}
+#wd2__section .wd2__card {
+  padding:1.5rem 2rem;border-left:.5px solid rgba(140,180,200,.2);
+  background:rgba(10,22,40,.5);backdrop-filter:blur(12px);
+  flex:1;min-width:160px;position:relative;overflow:hidden;
+}
+
+/* Stat number — plain color, canvas wipe goes on top */
+#wd2__section .wd2__stat {
+  font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;
+  color:#d4eaf7;line-height:1;display:block;position:relative;
+  opacity:0;transition:opacity .01s;
+}
+#wd2__section .wd2__stat.revealed { opacity:1; }
+
+/* Canvas overlay per stat for water-wipe */
+.wd2__stat-canvas {
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:4;
+}
+
+#wd2__section .wd2__label {
+  font-family:'Jost',sans-serif;font-size:.65rem;letter-spacing:.2em;
+  text-transform:uppercase;color:#8aaec4;margin-top:.5rem;display:block;
+  opacity:0;transform:translateY(6px);
+  transition:opacity .7s ease,transform .7s ease;
+}
+#wd2__section .wd2__label.go{opacity:1;transform:none;}
+
+/* Ripple ring on cards */
+.wd2__ripple {
+  position:absolute;border-radius:50%;border:.5px solid rgba(140,200,230,.5);
+  pointer-events:none;transform:translate(-50%,-50%);
+  animation:wd2__ring 1.2s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes wd2__ring{0%{width:0;height:0;opacity:.7;}100%{width:220px;height:220px;opacity:0;}}
+
+@media(max-width:768px){
+  #wd2__section .wd2__inner{padding:0 2rem;}
+  #wd2__section .wd2__cards{flex-direction:column;}
+}
+</style>
+
+<!-- ── SECTION MARKUP ── -->
+<section id="wd2__section">
+  <div class="wd2__photo">
+    <img src="https://plus.unsplash.com/premium_photo-1680555225031-5a2559c99e75?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Water surface" loading="lazy">
+  </div>
+  <canvas id="wd2__mist"></canvas>
+  <div id="wd2__veil"></div>
+
+  <div class="wd2__inner">
+    <div class="wd2__num">VIII</div>
+
+    <!-- Title with canvas water-fill overlay -->
+    <div class="wd2__title" id="wd2__title-wrap">
+      Water in <em>numbers</em> —<br>a world measured<br>in <em>scarcity</em>.
+      <canvas id="wd2__title-canvas"></canvas>
+    </div>
+
+    <div class="wd2__line" id="wd2__line"></div>
+
+    <p class="wd2__body" id="wd2__body">
+      Every statistic below is drawn from a living system. These are not
+      abstractions — each number represents <strong>rivers redirected, aquifers
+      emptied, and choices unmade.</strong> Water does not negotiate.
+    </p>
+
+    <div class="wd2__cards">
+      <div class="wd2__card" id="wd2__card0">
+        <span class="wd2__stat" id="wd2__stat0">703<span style="font-size:1.3rem">M</span></span>
+        <canvas class="wd2__stat-canvas" id="wd2__sc0"></canvas>
+        <span class="wd2__label" id="wd2__lbl0">people lack clean water access</span>
+      </div>
+      <div class="wd2__card" id="wd2__card1">
+        <span class="wd2__stat" id="wd2__stat1">3<span style="font-size:1.3rem">%</span></span>
+        <canvas class="wd2__stat-canvas" id="wd2__sc1"></canvas>
+        <span class="wd2__label" id="wd2__lbl1">of Earth's water is fresh</span>
+      </div>
+      <div class="wd2__card" id="wd2__card2">
+        <span class="wd2__stat" id="wd2__stat2">6<span style="font-size:1.3rem">hrs</span></span>
+        <canvas class="wd2__stat-canvas" id="wd2__sc2"></canvas>
+        <span class="wd2__label" id="wd2__lbl2">avg daily walk for water in dry regions</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+'use strict';
+
+// ── MIST PARTICLES ──────────────────────────────────────────
+var mC = document.getElementById('wd2__mist');
+var mX = mC.getContext('2d');
+var mPts=[], mActive=false, mT=0, mRAF=null;
+
+function mResize(){
+  var sec = document.getElementById('wd2__section');
+  mC.width  = sec.offsetWidth  || window.innerWidth;
+  mC.height = sec.offsetHeight || window.innerHeight;
+}
+mResize();
+function mInit(){
+  mPts=[];
+  for(var i=0;i<80;i++){
+    mPts.push({
+      x:Math.random()*mC.width, y:Math.random()*mC.height,
+      r:.2+Math.random()*.9, sp:.03+Math.random()*.15,
+      dr:(Math.random()-.5)*.06, op:.04+Math.random()*.28,
+      ph:Math.random()*Math.PI*2, tw:Math.random()*Math.PI*2
+    });
+  }
+}
+mInit();
+function mDraw(){
+  if(!mActive){mRAF=null;return;}
+  mT++;
+  mX.clearRect(0,0,mC.width,mC.height);
+  mPts.forEach(function(p){
+    p.y-=p.sp; p.x+=p.dr+Math.sin(mT*.0004+p.ph)*.09;
+    if(p.y<-6){p.y=mC.height+6;p.x=Math.random()*mC.width;}
+    var tw=.5+.5*Math.sin(mT*.003+p.tw);
+    var g=mX.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*4);
+    g.addColorStop(0,'rgba(140,200,235,'+(p.op*tw)+')');
+    g.addColorStop(1,'rgba(5,13,26,0)');
+    mX.beginPath();mX.arc(p.x,p.y,p.r*4,0,Math.PI*2);mX.fillStyle=g;mX.fill();
+  });
+  mRAF=requestAnimationFrame(mDraw);
+}
+
+function WaterWipe(canvas, targetEl, duration, delay, onDone){
+  var ctx = canvas.getContext('2d');
+  var startTime = null;
+  var dur = duration || 1800;
+  var started = false;
+
+  function resize(){
+    var r = targetEl.getBoundingClientRect();
+    canvas.width  = targetEl.offsetWidth  || r.width  || 200;
+    canvas.height = targetEl.offsetHeight || r.height || 60;
+  }
+  resize();
+
+  function tick(ts){
+    if(!started) return;
+    if(!startTime) startTime = ts;
+    var elapsed = ts - startTime;
+    var prog = Math.min(1, elapsed / dur);
+    // ease out cubic
+    var ease = 1 - Math.pow(1-prog, 3);
+
+    var W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+
+    // Reveal progress: 0 = fully covered, 1 = fully revealed
+    // Cover rect shrinks from top: coverHeight goes H→0
+    var coverH = H * (1 - ease);
+
+    // Draw cover (dark water) over the top portion
+    if(coverH > 0){
+      // Water body — deep blue overlay
+      var waterGrad = ctx.createLinearGradient(0, 0, 0, coverH);
+      waterGrad.addColorStop(0, 'rgba(5,13,30,0.96)');
+      waterGrad.addColorStop(0.7,'rgba(8,18,38,0.93)');
+      waterGrad.addColorStop(1,  'rgba(12,25,52,0.88)');
+      ctx.fillStyle = waterGrad;
+      ctx.fillRect(0, 0, W, coverH);
+
+      // Water surface wave at the boundary
+      if(coverH < H){
+        ctx.beginPath();
+        var waveY = coverH;
+        ctx.moveTo(0, waveY);
+        for(var x=0; x<=W; x+=4){
+          var wave = Math.sin((x * 0.04) + (elapsed * 0.004)) * 2.5
+                   + Math.sin((x * 0.07) + (elapsed * 0.006)) * 1.2;
+          ctx.lineTo(x, waveY + wave);
+        }
+        ctx.lineTo(W, 0); ctx.lineTo(0, 0); ctx.closePath();
+        var sfGrad = ctx.createLinearGradient(0, waveY-6, 0, waveY+6);
+        sfGrad.addColorStop(0,'rgba(140,210,240,0.0)');
+        sfGrad.addColorStop(0.4,'rgba(160,220,250,0.6)');
+        sfGrad.addColorStop(0.6,'rgba(180,230,255,0.8)');
+        sfGrad.addColorStop(1,'rgba(100,180,220,0.0)');
+        ctx.fillStyle = sfGrad;
+        ctx.fill();
+
+        // Shimmer specks on surface
+        for(var s=0;s<5;s++){
+          var sx = (W*0.15*s + elapsed*0.08 + s*37) % W;
+          var sy = waveY + Math.sin(elapsed*.005+s)*1.5;
+          var sg = ctx.createRadialGradient(sx,sy,0,sx,sy,8);
+          sg.addColorStop(0,'rgba(220,240,255,0.4)');
+          sg.addColorStop(1,'rgba(140,200,230,0)');
+          ctx.beginPath();ctx.arc(sx,sy,8,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+        }
+      }
+    }
+
+    if(prog < 1){
+      requestAnimationFrame(tick);
+    } else {
+      ctx.clearRect(0,0,W,H);
+      if(onDone) onDone();
+    }
+  }
+
+  return {
+    start: function(){
+      resize();
+      if(targetEl.classList) targetEl.classList.add('revealed');
+      else targetEl.style.opacity='1';
+      started = true;
+      requestAnimationFrame(tick);
+    }
+  };
+}
+
+// ── RIPPLE on card ───────────────────────────────────────────
+function spawnRipple(card){
+  var r = document.createElement('div');
+  r.className='wd2__ripple';
+  r.style.left='50%'; r.style.top='40%';
+  card.appendChild(r);
+  setTimeout(function(){r.remove();},1300);
+}
+
+// ── MASTER TRIGGER ───────────────────────────────────────────
+var triggered = false;
+
+function triggerAll(){
+  if(triggered) return;
+  triggered = true;
+
+  // 1. Veil sweep
+  var veil = document.getElementById('wd2__veil');
+  veil.classList.add('go');
+
+  // 2. Divider line
+  setTimeout(function(){
+    document.getElementById('wd2__line').classList.add('go');
+  }, 300);
+
+  // 3. Body paragraph
+  setTimeout(function(){
+    document.getElementById('wd2__body').classList.add('go');
+  }, 500);
+
+  // 4. Title water-wipe (text revealed as water drains upward)
+  setTimeout(function(){
+    var titleWrap = document.getElementById('wd2__title-wrap');
+    var titleCanvas = document.getElementById('wd2__title-canvas');
+    var wipe = WaterWipe(titleCanvas, titleWrap, 2000, 0);
+    wipe.start();
+  }, 200);
+
+  // 5. Stat cards — staggered water-wipes
+  var delays = [700, 1050, 1400];
+  for(var i=0;i<3;i++){
+    (function(idx){
+      setTimeout(function(){
+        var stat   = document.getElementById('wd2__stat'+idx);
+        var sCanvas= document.getElementById('wd2__sc'+idx);
+        var lbl    = document.getElementById('wd2__lbl'+idx);
+        var card   = document.getElementById('wd2__card'+idx);
+        spawnRipple(card);
+        var wipe = WaterWipe(sCanvas, stat, 1600, 0);
+        wipe.start();
+        setTimeout(function(){ lbl.classList.add('go'); }, 900);
+      }, delays[idx]);
+    })(i);
+  }
+}
+
+// ── INTERSECTION OBSERVER ────────────────────────────────────
+var obs = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      if(!mActive){ mActive=true; mDraw(); }
+      triggerAll();
+    } else {
+      mActive=false;
+    }
+  });
+},{threshold:0.2});
+
+obs.observe(document.getElementById('wd2__section'));
+
+// ── RESIZE ───────────────────────────────────────────────────
+window.addEventListener('resize',function(){
+  mResize(); mInit();
+},{passive:true});
+
+})();
+</script>
+<!-- ══ END WATER DATA SECTION v2 ══ -->
+
+
+<!-- ══ 7. FUTURE ══ pure crystal stream + light rays / caustics -->
+<section id="future" class="align-center">
+  <div class="photo-layer">
+    <!-- Crystal clear mountain stream -->
+    <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=75&auto=format&fit=crop" alt="Pure water stream future" loading="lazy">
+  </div>
+  <div class="future-glow"></div>
+  <div class="section-canvas-overlay"><canvas id="future-canvas"></canvas></div>
+  <div class="section-inner tide-enter">
+    <div class="section-number depth-rise dr-d1">VII</div>
+    <h2 class="section-title depth-rise dr-d2 shimmer-title" style="background:linear-gradient(180deg,var(--pure) 0%,var(--mist) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+      Water will always<br>find its way.<br><em>Will we?</em>
+    </h2>
+    <div class="impact-line line-draw"></div>
+    <p class="section-body depth-rise dr-d3">In desalination, in atmospheric harvesting, in rewilded watersheds — the answers exist. Water teaches us: <strong>move gently, persist quietly, and you will carve stone.</strong></p>
+    <div class="data-callout depth-rise dr-d4 callout-enter" style="border-color:rgba(140,200,220,.2)">
+      <div class="data-number" style="font-size:2rem">∞</div>
+      <div class="data-label">the water cycle continues</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-title">Water.</div>
+  <div class="foot-note">Photography · Unsplash open source<br>Data · WHO · UNESCO · USGS · IPCC<br>WebGL Shader · Canvas Engines · GSAP<br>Move. Touch. Breathe.</div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// LOADER
+// ═══════════════════════════════════════════
+const loaderFill = document.getElementById('loader-fill');
+let lp = 0;
+const li = setInterval(() => {
+  lp += Math.random() * 8 + 2;
+  if (lp >= 100) { lp = 100; clearInterval(li); }
+  loaderFill.style.width = lp + '%';
+}, 80);
+
+// ═══════════════════════════════════════════
+// CURSOR — spring physics ring
+// ═══════════════════════════════════════════
+const cursor = document.getElementById('cursor');
+const cRing = document.getElementById('cursor-ring');
+let mx=-100,my=-100,rx=-100,ry=-100,cvx=0,cvy=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx+'px'; cursor.style.top = my+'px';
+});
+(function ac(){
+  cvx += (mx-rx)*.12; cvy += (my-ry)*.12;
+  cvx *= .75; cvy *= .75; rx += cvx; ry += cvy;
+  cRing.style.left = rx+'px'; cRing.style.top = ry+'px';
+  requestAnimationFrame(ac);
+})();
+document.addEventListener('click', e => {
+  const r = document.createElement('div');
+  r.className = 'ripple-div';
+  r.style.left = e.clientX+'px'; r.style.top = e.clientY+'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 1400);
+});
+
+// ═══════════════════════════════════════════
+// PHOTO PARALLAX — each photo scrolls at 0.4x speed for depth
+// ═══════════════════════════════════════════
+function bindParallax() {
+  const imgs = document.querySelectorAll('.photo-layer img');
+  window.addEventListener('scroll', () => {
+    imgs.forEach(img => {
+      const sec = img.closest('section');
+      const rect = sec.getBoundingClientRect();
+      if (rect.bottom < -200 || rect.top > window.innerHeight + 200) return;
+      const prog = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+      // translateY: photo moves slower than scroll = parallax depth
+      img.style.transform = `scale(1.12) translateY(${(prog - .5) * 55}px)`;
+    });
+  }, { passive: true });
+}
+bindParallax();
+
+// ═══════════════════════════════════════════
+// WEBGL WATER ENGINE — full fragment shader preserved from v1
+// Ripples · Mouse wakes · Scroll flow · Section depth color
+// ═══════════════════════════════════════════
+const scene = new THREE.Scene();
+const cam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('water-canvas'), alpha:true, antialias:false });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+const MAX_R = 12; let rIdx = 0;
+const wu = {
+  uTime:           { value: 0 },
+  uResolution:     { value: new THREE.Vector2(innerWidth, innerHeight) },
+  uMouse:          { value: new THREE.Vector2(.5,.5) },
+  uMouseVelocity:  { value: new THREE.Vector2(0,0) },
+  uScrollY:        { value: 0 },
+  uSectionDepth:   { value: 0 },
+  uIdle:           { value: 1 },
+  uRipplePos:      { value: [] },
+  uRippleTime:     { value: [] },
+  uRippleStrength: { value: [] },
+};
+for (let i=0;i<MAX_R;i++){wu.uRipplePos.value.push(new THREE.Vector2(-1,-1));wu.uRippleTime.value.push(-100);wu.uRippleStrength.value.push(0);}
+
+const vert = `varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.);}`;
+const frag = `
+precision highp float;
+uniform float uTime;uniform vec2 uResolution;uniform vec2 uMouse;uniform vec2 uMouseVelocity;
+uniform float uScrollY;uniform float uSectionDepth;uniform float uIdle;
+uniform vec2 uRipplePos[12];uniform float uRippleTime[12];uniform float uRippleStrength[12];
+varying vec2 vUv;
+float hash(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
+float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p,int o){float v=0.,a=.5,fr=1.;for(int i=0;i<6;i++){if(i>=o)break;v+=a*noise(p*fr);a*=.5;fr*=2.1;}return v;}
+float ripple(vec2 uv,vec2 c,float t,float s){if(t<0.)return 0.;float d=length(uv-c);float ag=t*1.2;float rw=.06-ag*.03;if(rw<.002)return 0.;return smoothstep(rw,0.,abs(d-ag))*exp(-ag*1.8)*s*.8;}
+vec3 sectionColor(float d){
+  vec3 c[7];c[0]=vec3(.02,.05,.12);c[1]=vec3(.02,.08,.18);c[2]=vec3(.03,.10,.16);c[3]=vec3(.08,.14,.22);c[4]=vec3(.03,.09,.17);c[5]=vec3(.06,.08,.10);c[6]=vec3(.04,.10,.20);
+  float fi=clamp(d,0.,5.999);int i0=int(fi);int i1=min(i0+1,6);return mix(c[i0],c[i1],smoothstep(0.,1.,fi-float(i0)));
+}
+void main(){
+  vec2 uv=vUv;vec2 asp=vec2(uResolution.x/uResolution.y,1.);vec2 ua=(uv-.5)*asp;
+  float t=uTime;float sc=uScrollY*.001;
+  float w1=fbm(uv*3.+vec2(t*.06,sc*.3),4);float w2=fbm(uv*5.-vec2(t*.04,t*.02),3);float w3=fbm(uv*2.+vec2(-t*.03,sc*.5),3);
+  float bw=w1*.6+w2*.25+w3*.15;
+  vec2 md=uv-uMouse;float mi=exp(-dot(md,md)*8.)*.15;
+  float mw=sin(length(md*asp)*18.-t*3.)*mi*(0.5+.5*length(uMouseVelocity)*3.);
+  float tr=0.;for(int i=0;i<12;i++)tr+=ripple(uv*asp,uRipplePos[i]*asp,uTime-uRippleTime[i],uRippleStrength[i]);
+  float sf=sin(uv.x*8.+sc*2.-t*.5)*.04*clamp(sc,0.,1.);
+  float dist=bw+mw+tr*.6+sf;
+  vec2 duv=uv+vec2(sin(dist*6.28+t*.1)*.004,cos(dist*6.28-t*.08)*.003);
+  vec3 base=sectionColor(uSectionDepth);
+  float sh1=pow(sin(dist*12.+t*.8)*.5+.5,3.);float sh2=pow(cos(dist*9.-t*.6)*.5+.5,4.);
+  float dv=fbm(duv*4.+t*.02,3);
+  vec3 shine=vec3(.25,.45,.65);
+  vec3 wc=mix(base*.4,base*.75,dv);wc=mix(wc,base+shine*.4,sh1*.3+sh2*.15);
+  wc+=vec3(.15,.3,.4)*tr*.6;wc+=vec3(.08,.18,.28)*exp(-dot(md,md)*15.);
+  wc*=.7+.3*(1.-smoothstep(.4,1.2,length(ua)));
+  wc=mix(wc,wc*vec3(.08,.07,.05)*8.,clamp((uSectionDepth-4.5)*.8,0.,1.)*.4);
+  wc=mix(wc,wc*1.4+vec3(.02,.04,.06),clamp((uSectionDepth-5.5)*.8,0.,1.)*.4);
+  gl_FragColor=vec4(wc,.88);
+}`;
+const mat = new THREE.ShaderMaterial({ uniforms:wu, vertexShader:vert, fragmentShader:frag, transparent:true });
+scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), mat));
+
+let lmx=0,lmy=0,mvx=0,mvy=0;
+document.addEventListener('mousemove', e => {
+  const nx=e.clientX/innerWidth,ny=1-e.clientY/innerHeight;
+  wu.uMouse.value.set(nx,ny); mvx=(nx-lmx)*60; mvy=(ny-lmy)*60; lmx=nx; lmy=ny;
+});
+function addRipple(cx,cy){const i=rIdx%MAX_R;wu.uRipplePos.value[i].set(cx,cy);wu.uRippleTime.value[i]=clk.getElapsedTime();wu.uRippleStrength.value[i]=1.;rIdx++;}
+document.addEventListener('click', e => addRipple(e.clientX/innerWidth, 1-e.clientY/innerHeight));
+document.addEventListener('touchstart', e => {const t=e.touches[0];addRipple(t.clientX/innerWidth,1-t.clientY/innerHeight);});
+document.addEventListener('touchmove', e => {const t=e.touches[0];wu.uMouse.value.set(t.clientX/innerWidth,1-t.clientY/innerHeight);});
+window.addEventListener('scroll', () => wu.uScrollY.value = scrollY);
+window.addEventListener('resize', () => { renderer.setSize(innerWidth,innerHeight); wu.uResolution.value.set(innerWidth,innerHeight); });
+const clk = new THREE.Clock();
+
+// ═══════════════════════════════════════════
+// SECTION CANVAS ENGINES — each section has a unique 2D animation
+// ═══════════════════════════════════════════
+
+// ── ORIGIN: Cosmic star-mist drifting upward ──────────
+const oC = document.getElementById('origin-canvas');
+const oX = oC.getContext('2d');
+let oParticles=[], oActive=false, oTime=0;
+function initOrigin(){
+  oC.width=innerWidth; oC.height=innerHeight; oParticles=[];
+  for(let i=0;i<150;i++) oParticles.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.2+Math.random()*1.2,speed:.03+Math.random()*.2,drift:(Math.random()-.5)*.08,op:.05+Math.random()*.4,ph:Math.random()*Math.PI*2,tw:Math.random()*Math.PI*2});
+}
+function drawOrigin(t){
+  if(!oActive)return;
+  oX.clearRect(0,0,oC.width,oC.height);
+  oParticles.forEach(p=>{
+    p.y -= p.speed; p.x += p.drift + Math.sin(t*.0004+p.ph)*.12;
+    if(p.y<-5){p.y=oC.height+5;p.x=Math.random()*oC.width;}
+    const tw=.6+.4*Math.sin(t*.003+p.tw);
+    const g=oX.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*4);
+    g.addColorStop(0,`rgba(200,220,255,${p.op*tw})`);g.addColorStop(1,'rgba(5,13,26,0)');
+    oX.beginPath();oX.arc(p.x,p.y,p.r*4,0,Math.PI*2);oX.fillStyle=g;oX.fill();
+  });
+}
+initOrigin();
+
+// ── OCEAN: Bioluminescent ascending particles ──────────
+const pC=document.getElementById('particle-canvas');
+const pX=pC.getContext('2d');
+let particles=[],pActive=false;
+function initParticles(){
+  pC.width=innerWidth;pC.height=innerHeight;particles=[];
+  for(let i=0;i<180;i++) particles.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.3+Math.random()*1.5,speed:.05+Math.random()*.15,drift:(Math.random()-.5)*.1,op:.1+Math.random()*.5,ph:Math.random()*Math.PI*2});
+}
+function drawParticles(t){
+  if(!pActive)return;
+  pX.clearRect(0,0,pC.width,pC.height);
+  particles.forEach(p=>{
+    p.y-=p.speed;p.x+=p.drift+Math.sin(t*.0005+p.ph)*.15;
+    if(p.y<-5){p.y=innerHeight+5;p.x=Math.random()*innerWidth;}
+    const g=pX.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);
+    g.addColorStop(0,`rgba(160,210,240,${p.op})`);g.addColorStop(1,'rgba(10,22,40,0)');
+    pX.beginPath();pX.arc(p.x,p.y,p.r*3,0,Math.PI*2);pX.fillStyle=g;pX.fill();
+  });
+}
+initParticles();
+
+// ── RIVERS: Sinuous horizontal flow lines + travelling drops ──
+const rC=document.getElementById('rivers-canvas');
+const rX=rC.getContext('2d');
+let rStreams=[],rActive=false,rTime=0;
+function initRivers(){
+  rC.width=innerWidth;rC.height=innerHeight;rStreams=[];
+  for(let i=0;i<20;i++) rStreams.push({y:(i/19)*innerHeight,speed:.3+Math.random()*.4,amp:8+Math.random()*22,freq:.005+Math.random()*.006,ph:Math.random()*Math.PI*2,op:.04+Math.random()*.08,lw:.3+Math.random()*.7});
+}
+function drawRivers(t){
+  if(!rActive)return;
+  rX.clearRect(0,0,rC.width,rC.height);
+  rStreams.forEach((s,si)=>{
+    rX.beginPath();rX.strokeStyle=`rgba(140,200,230,${s.op})`;rX.lineWidth=s.lw;
+    for(let j=0;j<=100;j++){const x=(j/100)*rC.width;const y=s.y+Math.sin(x*s.freq+t*s.speed*.002+s.ph)*s.amp;j===0?rX.moveTo(x,y):rX.lineTo(x,y);}
+    rX.stroke();
+    // Travelling glow drop
+    const dp=((t*s.speed*.002+si*.7)%(Math.PI*2));
+    const dx=((dp/(Math.PI*2))*rC.width*1.2)%rC.width;
+    const dy=s.y+Math.sin(dx*s.freq+t*s.speed*.002+s.ph)*s.amp;
+    const g=rX.createRadialGradient(dx,dy,0,dx,dy,6);
+    g.addColorStop(0,`rgba(180,220,240,${s.op*4})`);g.addColorStop(1,'rgba(10,22,40,0)');
+    rX.beginPath();rX.arc(dx,dy,6,0,Math.PI*2);rX.fillStyle=g;rX.fill();
+  });
+}
+initRivers();
+
+// ── ICE: Voronoi fracture network cracking in ──────────
+const iC=document.getElementById('ice-canvas');
+const iX=iC.getContext('2d');
+let iPts=[],iProgress=0,iActive=false;
+function initIce(){
+  iC.width=innerWidth;iC.height=innerHeight;iPts=[];
+  for(let i=0;i<22;i++) iPts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,conn:[]});
+  iPts.forEach((p,i)=>iPts.forEach((q,j)=>{if(i!==j&&Math.hypot(p.x-q.x,p.y-q.y)<260&&p.conn.length<3)p.conn.push(j);}));
+}
+function drawIce(prog){
+  if(!iActive)return;
+  iX.clearRect(0,0,iC.width,iC.height);
+  iX.lineWidth=.5;
+  iPts.forEach((p,i)=>{
+    p.conn.forEach(j=>{
+      const q=iPts[j];const lp=Math.max(0,Math.min(1,prog*1.5-i*.06));if(lp<=0)return;
+      iX.beginPath();iX.moveTo(p.x,p.y);iX.lineTo(p.x+(q.x-p.x)*lp,p.y+(q.y-p.y)*lp);
+      iX.strokeStyle=`rgba(200,230,245,${.1*prog})`;iX.stroke();
+    });
+    iX.beginPath();iX.arc(p.x,p.y,2*prog,0,Math.PI*2);
+    iX.fillStyle=`rgba(220,240,255,${.25*prog})`;iX.fill();
+  });
+}
+initIce();
+
+// ── CYCLE: Orbiting drop on rotating pentagram ─────────
+const cyC=document.getElementById('cycle-canvas');
+const cyX=cyC.getContext('2d');
+let cyTime=0,cyActive=false;
+function initCycle(){cyC.width=innerWidth;cyC.height=innerHeight;}
+function drawCycle(t){
+  if(!cyActive)return;
+  cyX.clearRect(0,0,cyC.width,cyC.height);
+  const cx=cyC.width/2,cy=cyC.height/2,r=Math.min(cx,cy)*.38;
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2-Math.PI/2+t*.0003,na=((i+1)/5)*Math.PI*2-Math.PI/2+t*.0003;
+    const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r,nx=cx+Math.cos(na)*r,ny=cy+Math.sin(na)*r;
+    cyX.beginPath();cyX.moveTo(x,y);
+    cyX.quadraticCurveTo(cx+Math.cos(a+Math.PI/5)*(r*1.1),cy+Math.sin(a+Math.PI/5)*(r*1.1),nx,ny);
+    cyX.strokeStyle=`rgba(140,200,230,${.07+Math.sin(t*.002+i)*.03})`;cyX.lineWidth=1;cyX.stroke();
+    cyX.beginPath();cyX.arc(x,y,2.5,0,Math.PI*2);cyX.fillStyle='rgba(200,230,245,.25)';cyX.fill();
+  }
+  const da=(t*.0008)%(Math.PI*2)-Math.PI/2;
+  const dx=cx+Math.cos(da)*r,dy=cy+Math.sin(da)*r;
+  const g=cyX.createRadialGradient(dx,dy,0,dx,dy,8);
+  g.addColorStop(0,'rgba(180,220,245,.7)');g.addColorStop(1,'rgba(10,22,40,0)');
+  cyX.beginPath();cyX.arc(dx,dy,8,0,Math.PI*2);cyX.fillStyle=g;cyX.fill();
+}
+initCycle();
+
+// ── IMPACT: Corruption rings + oil-slick shimmer ───────
+const imC=document.getElementById('impact-canvas');
+const imX=imC.getContext('2d');
+let imTime=0,imActive=false;
+function initImpact(){imC.width=innerWidth;imC.height=innerHeight;}
+function drawImpact(t){
+  if(!imActive)return;
+  imX.clearRect(0,0,imC.width,imC.height);
+  const centers=[{x:imC.width*.25,y:imC.height*.4},{x:imC.width*.6,y:imC.height*.6},{x:imC.width*.8,y:imC.height*.3}];
+  centers.forEach((c,ci)=>{
+    for(let ri=0;ri<4;ri++){
+      const ph=((t*.0003+ci*.7+ri*.4)%1.);
+      imX.beginPath();imX.arc(c.x,c.y,ph*280,0,Math.PI*2);
+      imX.strokeStyle=`rgba(160,100,80,${(1-ph)*.07})`;imX.lineWidth=1;imX.stroke();
+    }
+  });
+  for(let i=0;i<6;i++){
+    const sx=imC.width*(.1+i*.16+Math.sin(t*.0004+i)*.05);
+    const sy=imC.height*(.35+Math.sin(t*.0003+i*1.3)*.12);
+    const g=imX.createRadialGradient(sx,sy,0,sx,sy,70+i*18);
+    g.addColorStop(0,`rgba(${90+i*18},${55+i*8},70,.05)`);g.addColorStop(1,'rgba(6,10,16,0)');
+    imX.beginPath();imX.arc(sx,sy,70+i*18,0,Math.PI*2);imX.fillStyle=g;imX.fill();
+  }
+}
+initImpact();
+
+// ── FUTURE: Caustic light rays + shimmer dots ──────────
+const fuC=document.getElementById('future-canvas');
+const fuX=fuC.getContext('2d');
+let fuTime=0,fuActive=false;
+function initFuture(){fuC.width=innerWidth;fuC.height=innerHeight;}
+function drawFuture(t){
+  if(!fuActive)return;
+  fuX.clearRect(0,0,fuC.width,fuC.height);
+  const cx=fuC.width/2;
+  for(let i=0;i<12;i++){
+    const a=-Math.PI/2+(i/11-.5)*.7*Math.PI+Math.sin(t*.0005+i*.8)*.04;
+    const len=fuC.height*1.1;const ex=cx+Math.cos(a)*len,ey=Math.sin(a)*len;
+    const op=.015+.01*Math.sin(t*.001+i*.6);
+    const g=fuX.createLinearGradient(cx,0,ex,ey);
+    g.addColorStop(0,`rgba(180,230,255,${op*3})`);g.addColorStop(.4,`rgba(140,200,240,${op})`);g.addColorStop(1,'rgba(10,22,40,0)');
+    const px=Math.cos(a+Math.PI/2)*28,py=Math.sin(a+Math.PI/2)*28;
+    fuX.beginPath();fuX.moveTo(cx,0);fuX.lineTo(ex+px,ey+py);fuX.lineTo(ex-px,ey-py);fuX.closePath();fuX.fillStyle=g;fuX.fill();
+  }
+  for(let i=0;i<35;i++){
+    const gx=cx+Math.sin(t*.0004+i*2.1)*fuC.width*.4;
+    const gy=fuC.height*(.2+.6*((i/35)+Math.sin(t*.0003+i)*.05));
+    const g=fuX.createRadialGradient(gx,gy,0,gx,gy,14);
+    const op=.04+.04*Math.sin(t*.002+i);
+    g.addColorStop(0,`rgba(200,240,255,${op})`);g.addColorStop(1,'rgba(5,13,26,0)');
+    fuX.beginPath();fuX.arc(gx,gy,14,0,Math.PI*2);fuX.fillStyle=g;fuX.fill();
+  }
+}
+initFuture();
+
+// ═══════════════════════════════════════════
+// SCROLL ENGINE + SECTION MANAGEMENT
+// ═══════════════════════════════════════════
+gsap.registerPlugin(ScrollTrigger);
+const sectionIds = ['origin','ocean','rivers','ice','cycle','impact','future'];
+const sectionEls = sectionIds.map(id => document.getElementById(id));
+
+const navDots = document.getElementById('nav-dots');
+const progressLine = document.getElementById('progress-line');
+sectionIds.forEach((id,i)=>{
+  const d=document.createElement('div');
+  d.className='nav-dot'+(i===0?' active':'');
+  d.addEventListener('click',()=>document.getElementById(id).scrollIntoView({behavior:'smooth'}));
+  navDots.appendChild(d);
+  const p=document.createElement('div');
+  p.className='prog-item'+(i===0?' active':'');
+  p.innerHTML=`<span class="prog-label">${id}</span><div class="prog-mark"></div>`;
+  p.addEventListener('click',()=>document.getElementById(id).scrollIntoView({behavior:'smooth'}));
+  progressLine.appendChild(p);
+});
+
+let targetDepth=0;
+sectionEls.forEach((el,i)=>{
+  ScrollTrigger.create({trigger:el,start:'top center',end:'bottom center',onEnter:()=>activateSection(i),onEnterBack:()=>activateSection(i)});
+});
+
+function activateSection(i){
+  targetDepth=i;
+  document.querySelectorAll('.nav-dot').forEach((d,j)=>d.classList.toggle('active',j===i));
+  document.querySelectorAll('.prog-item').forEach((p,j)=>p.classList.toggle('active',j===i));
+  // Show canvas for this section
+  oActive=i===0;    document.getElementById('origin-canvas').style.opacity = i===0?'1':'0';
+  pActive=i===1;    pC.style.opacity = i===1?'1':'0';
+  rActive=i===2;    document.getElementById('rivers-canvas').style.opacity = i===2?'1':'0';
+  iActive=i===3;    document.getElementById('ice-canvas').style.opacity = i===3?'1':'0';
+  cyActive=i===4;   document.getElementById('cycle-canvas').style.opacity = i===4?'1':'0';
+  imActive=i===5;   document.getElementById('impact-canvas').style.opacity = i===5?'1':'0';
+  fuActive=i===6;   document.getElementById('future-canvas').style.opacity = i===6?'1':'0';
+  if(i===3) iProgress=0;
+}
+
+// ═══════════════════════════════════════════
+// SECTION ENTRANCE ANIMATIONS — tide, depth-rise, shimmer, veil
+// Isolated from canvas engines; purely CSS-class-driven
+// ═══════════════════════════════════════════
+(function initEntranceObservers() {
+  const tideObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('tide-visible');
+        tideObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  const depthObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('depth-visible');
+        depthObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  const shimmerObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('shimmer-go');
+        shimmerObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const lineObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        // Reset then re-trigger for replay on scroll back
+        e.target.style.animation = 'none';
+        void e.target.offsetWidth;
+        e.target.style.animation = '';
+        e.target.style.transform = '';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  const veilObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.remove('veil-sweep');
+        void e.target.offsetWidth;
+        e.target.classList.add('veil-sweep');
+      }
+    });
+  }, { threshold: 0.85 });
+
+  document.querySelectorAll('.tide-enter').forEach(el => tideObs.observe(el));
+  document.querySelectorAll('.depth-rise').forEach(el => depthObs.observe(el));
+  document.querySelectorAll('.shimmer-title').forEach(el => shimmerObs.observe(el));
+  document.querySelectorAll('.impact-line.line-draw').forEach(el => lineObs.observe(el));
+  document.querySelectorAll('.section-veil').forEach(el => veilObs.observe(el));
+})();
+
+// Reveal on scroll
+new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.2}).observe || document.querySelectorAll('.reveal');
+
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.2});
+document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+
+// ═══════════════════════════════════════════
+// MAIN RENDER LOOP
+// ═══════════════════════════════════════════
+let isVis=true;
+document.addEventListener('visibilitychange',()=>{isVis=!document.hidden;});
+
+function render(t){
+  requestAnimationFrame(render);
+  if(!isVis)return;
+  const el=clk.getElapsedTime();
+  wu.uTime.value=el;
+  wu.uSectionDepth.value+=(targetDepth-wu.uSectionDepth.value)*.03;
+  mvx*=.85;mvy*=.85;wu.uMouseVelocity.value.set(mvx,mvy);
+
+  // Run section animations
+  if(oActive) {oTime++;drawOrigin(oTime);}
+  if(pActive) drawParticles(t);
+  if(rActive) {rTime++;drawRivers(rTime);}
+  if(iActive) {iProgress=Math.min(1,iProgress+.008);drawIce(iProgress);} else {iProgress=Math.max(0,iProgress-.02);}
+  if(cyActive){cyTime++;drawCycle(cyTime);}
+  if(imActive){imTime++;drawImpact(imTime);}
+  if(fuActive){fuTime++;drawFuture(fuTime);}
+
+  renderer.render(scene,cam);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    const loader=document.getElementById('loader');
+    
+    // Fade out the black loading screen
+    gsap.to(loader,{opacity:0,duration:1.2,ease:'power2.inOut',onComplete:()=>{
+      loader.style.display='none';
+      
+      const tl = gsap.timeline();
+
+      // 1. THE WIPER: Sweeps the fog away from left to right
+      tl.to('#fog-window', {
+        clipPath: 'polygon(100% 0, 100% 0, 100% 100%, 100% 100%)',
+        duration: 2.2,
+        ease: 'power3.inOut'
+      }, "+=0.2");
+
+      // 2. THE WATER FILL: Rises inside the text from bottom to top
+      tl.to('.water-fill', {
+        backgroundPosition: '0% 0%', // Moves the white 'water' to the top
+        duration: 2.5,
+        stagger: 0.4, // Fills eyebrow, then title, then subtitle
+        ease: 'power2.out'
+      }, "-=1.2"); // Starts slightly before the wiper finishes
+
+      // 3. EXPLORE HINT: Fades in at the end
+      tl.to('#scroll-hint',{opacity:1,duration:1,ease:'power2.out'}, "-=1");
+    }});
+  },2200);
+  
+  render(0);
+  activateSection(0);
+});
+
+// Audio reactive (M key)
+let audioCtx,audioEnabled=false;
+async function initAudio(){if(audioEnabled)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();const s=await navigator.mediaDevices.getUserMedia({audio:true});audioCtx.createMediaStreamSource(s);audioEnabled=true;}catch(e){}}
+document.addEventListener('keydown',e=>{if(e.key==='m'||e.key==='M')initAudio();});
+
+// Resize
+window.addEventListener('resize',()=>{
+  initOrigin();initParticles();initRivers();initIce();initCycle();initImpact();initFuture();
+});
+
+// Title hover — letters soften like water
+document.querySelectorAll('.section-title,.origin-title').forEach(el=>{
+  el.style.transition='letter-spacing .8s ease';
+  el.addEventListener('mouseenter',()=>{el.style.letterSpacing='-.01em';});
+  el.addEventListener('mouseleave',()=>{el.style.letterSpacing='';});
+});
+</script>
+<script>
+(function ForceTextReveal() {
+  // Wait 1.5 seconds to give your normal GSAP timeline a chance to run
+  setTimeout(() => {
+    console.warn("Fail-safe activated: Forcing text visibility.");
+    
+    // Target all common text containers and your specific water-fill classes
+    const textElements = document.querySelectorAll('h1, h2, h3, p, span, div, .section-title, .water-fill, #scroll-hint');
+    
+    textElements.forEach(el => {
+      // Check if it's currently invisible
+      const style = window.getComputedStyle(el);
+      if (style.opacity === '0' || style.visibility === 'hidden') {
+        // Brute-force the styles back to visible
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.setProperty('visibility', 'visible', 'important');
+        el.style.setProperty('transform', 'translateY(0) scale(1)', 'important');
+        el.style.setProperty('clip-path', 'none', 'important');
+        
+        // Specific fix for your .water-fill text effect
+        if (el.classList.contains('water-fill')) {
+          el.style.setProperty('background-position', '0% 0%', 'important');
+        }
+      }
+    });
+  }, 1500); 
+})();
+</script>
+</body>
+</html>
