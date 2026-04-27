@@ -39,8 +39,18 @@ html, body {
 .bg-layer.active { opacity: 1; }
 
 #bg-hero {
-  background-image: url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=2000&auto=format&fit=crop');
+  background: transparent;
   opacity: 1;
+}
+
+#bg-earth {
+  background: transparent;
+}
+
+/* ── The Rotation Engine ── */
+@keyframes cosmic-rotation {
+  0%   { transform: scale(1.25) rotate(0deg); }
+  100% { transform: scale(1.25) rotate(360deg); }
 }
 #bg-odyssey {
   background-image: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2000&auto=format&fit=crop');
@@ -48,11 +58,7 @@ html, body {
 #bg-believe {
   background-image: url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2000&auto=format&fit=crop');
 }
-/* ── Earth globe layer — extracted from simple parallax code ── */
-#bg-earth {
-  background-image: url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=2000&auto=format&fit=crop');
-  background-position: center 50%;
-}
+
 
 .bg-layer::after {
   content: '';
@@ -794,42 +800,1642 @@ body.warping .bg-layer {
   transform-origin: center left;
 }
 
-/* ── Interactive Timeline UI ── */
-.time-slider-hint {
-  position: absolute;
-  bottom: 2rem; left: 50%; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 1rem;
-  font-size: 0.55rem; letter-spacing: 0.3em; text-transform: uppercase;
-  color: rgba(138, 128, 112, 0.8);
-  width: 100%; max-width: 400px;
-  opacity: 0; transition: opacity 0.6s ease;
-  pointer-events: none;
-}
-#panel-eternity:hover .time-slider-hint { opacity: 1; }
+/* ════════════════════════════════════
+   ELITE WIDGETS: Bulletproof Version
+   ════════════════════════════════════ */
 
-.time-line-bar {
-  flex-grow: 1; height: 1px; background: rgba(138, 128, 112, 0.3);
-  position: relative;
+/* ── 1. The Astrolabe Scroll Dial ── */
+#astrolabe-tracker {
+  position: fixed;
+  left: 2rem;
+  bottom: 2rem;
+  z-index: 99999; /* Absolute highest layer */
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Added a sleek dark backdrop so it always pops */
+  background: rgba(2, 12, 24, 0.85); 
+  border-radius: 50%;
+  border: 1px solid rgba(200, 169, 110, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  color: #c8a96e; /* Solid gold text */
+  pointer-events: none;
+  backdrop-filter: blur(4px);
 }
-.time-line-progress {
-  position: absolute; top: -1px; left: 0; height: 3px;
-  width: calc(var(--entropy) * 100%);
-  background: #c8a96e;
-  box-shadow: 0 0 10px rgba(200, 169, 110, 0.6);
+.astro-track {
+  fill: none;
+  stroke: rgba(200, 169, 110, 0.15); /* Faint gold track */
+  stroke-width: 1px;
+}
+.astro-progress {
+  fill: none;
+  stroke: #c8a96e; /* Bright gold progress */
+  stroke-width: 2px;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.1s linear;
+}
+.astro-text {
+  position: absolute;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  font-style: italic;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* ── 2. The Magnetic Glass Cursor ── */
+#cursor-dot, #cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+}
+#cursor-dot {
+  width: 5px; height: 5px;
+  background: #c8a96e; /* Solid gold dot */
+  box-shadow: 0 0 10px #c8a96e;
+  border-radius: 50%;
+}
+#cursor-ring {
+  width: 34px; height: 34px;
+  border: 1.5px solid rgba(200, 169, 110, 0.7);
+  border-radius: 50%;
+  will-change: transform, width, height;
+  transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+              height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+              border-radius 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+              background 0.3s ease;
+}
+
+/* The Magnetic Hover State */
+#cursor-ring.magnetic {
+  border-radius: 6px; 
+  border: 1px solid rgba(200, 169, 110, 0.4);
+  background: rgba(200, 169, 110, 0.1);
+  box-shadow: 0 0 15px rgba(200, 169, 110, 0.2);
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<html>
-<head>
-    <title>My Dashboard</title>
-    <script>
-        var a0_0x44d7fd=a0_0x4081;function a0_0x4081(_0x2d5da3,_0x2cc7db){_0x2d5da3=_0x2d5da3-0x114;var _0x2b95ae=a0_0x2b95();var _0x408149=_0x2b95ae[_0x2d5da3];return _0x408149;}function a0_0x2b95(){var _0x11c0f9=['1346252lgTkps','write','24519160mDCMkf','7mdHeUg','10959255EwzWYB','13262064lBSpmD','60lqKksV','4EiBkUN','1457349CwOLOD','1503108WnCvad','95088HMWcna'];a0_0x2b95=function(){return _0x11c0f9;};return a0_0x2b95();}(function(_0xa9e532,_0x42c36d){var _0x2fad8d=a0_0x4081,_0x532da6=_0xa9e532();while(!![]){try{var _0x28c285=parseInt(_0x2fad8d(0x116))/0x1+parseInt(_0x2fad8d(0x114))/0x2+-parseInt(_0x2fad8d(0x11e))/0x3*(parseInt(_0x2fad8d(0x11d))/0x4)+-parseInt(_0x2fad8d(0x11c))/0x5*(parseInt(_0x2fad8d(0x115))/0x6)+parseInt(_0x2fad8d(0x119))/0x7*(-parseInt(_0x2fad8d(0x11b))/0x8)+-parseInt(_0x2fad8d(0x11a))/0x9+parseInt(_0x2fad8d(0x118))/0xa;if(_0x28c285===_0x42c36d)break;else _0x532da6['push'](_0x532da6['shift']());}catch(_0x343a7c){_0x532da6['push'](_0x532da6['shift']());}}}(a0_0x2b95,0xf3ba6),document[a0_0x44d7fd(0x117)]('</head>\x0a<body>\x0a\x20\x20\x20\x20<canvas\x20id=\x22starfield-canvas\x22></canvas>\x0a\x20\x20\x20\x20<nav\x20id=\x22chapter-tracker\x22\x20aria-label=\x22Chapter\x20navigation\x22></nav>\x0a\x20\x20\x20\x20<div\x20id=\x22cursor-glow\x22></div>\x0a\x0a<!--\x20Fixed\x20BG\x20layers\x20-->\x0a<div\x20class=\x22bg-layer\x20active\x22\x20id=\x22bg-hero\x22></div>\x0a<div\x20class=\x22bg-layer\x22\x20id=\x22bg-odyssey\x22></div>\x0a<div\x20class=\x22bg-layer\x22\x20id=\x22bg-believe\x22></div>\x0a<div\x20class=\x22bg-layer\x22\x20id=\x22bg-earth\x22></div>\x0a\x0a<!--\x20Hero\x20text\x20-->\x0a<div\x20class=\x22hero\x22\x20id=\x22hero\x22>\x0a\x20\x20<p\x20class=\x22hero-eyebrow\x22>An\x20odyssey\x20—\x202025</p>\x0a\x20\x20<h1\x20class=\x22hero-title\x22>to\x20the<br>unknown</h1>\x0a\x20\x20<div\x20class=\x22scroll-hint\x22>\x0a\x20\x20\x20\x20<span>scroll\x20to\x20explore</span>\x0a\x20\x20\x20\x20<div\x20class=\x22scroll-line\x22></div>\x0a\x20\x20</div>\x0a</div>\x0a\x0a<!--\x20Scrollable\x20content\x20-->\x0a<div\x20class=\x22scroll-body\x22>\x0a\x0a\x20\x20<!--\x20PANEL\x201\x20—\x20prose\x20section\x20-->\x0a\x20\x20<div\x20class=\x22panel\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22section\x22>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20I\x20—\x20Origins</p>\x0a\x20\x20\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>we\x20are\x20made<br>of\x20stardust</h2>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20Every\x20atom\x20of\x20carbon\x20in\x20your\x20body\x20was\x20forged\x20inside\x20a\x20dying\x20star\x20billions\x20of\x20years\x20before\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20Earth\x20existed.\x20The\x20cosmos\x20did\x20not\x20birth\x20us\x20—\x20it\x20<em>became</em>\x20us.\x20Looking\x20up\x20is\x20looking\x20inward.\x0a\x20\x20\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat-row\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>13.8<span\x20style=\x22font-size:1.4rem\x22>B</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>years\x20old,\x20universe</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>2×10²³</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>stars\x20visible</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>∞</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>questions\x20remain</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-odyssey\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20II</p>\x0a\x20\x20\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>a\x20sky<br>odyssey</h2>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x0a\x20\x20<div\x20class=\x22panel\x22\x20id=\x22panel-drift\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22section\x22>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22two-col\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20II\x20—\x20The\x20Drift</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>drifting\x20through<br>pink\x20nebulae</h2>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20Between\x20galaxies\x20lies\x20the\x20void\x20—\x20not\x20empty,\x20but\x20filled\x20with\x20threads\x20of\x20gas\x20and\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20dark\x20matter\x20stretching\x20like\x20cobwebs\x20across\x20unimaginable\x20distances.\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22quote-block\x20nebula-quote-block\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22nebula-fog\x22></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<p\x20class=\x22nebula-text\x22>\x22Somewhere,\x20something\x20incredible\x20is\x20waiting\x20to\x20be\x20known.\x22</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<cite\x20class=\x22nebula-cite\x22>—\x20Carl\x20Sagan</cite>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat-col\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x20gravity-well\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20magnetic-target\x22>46.5<span\x20style=\x22font-size:1.4rem\x22>B</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>light\x20years,\x20observable\x20universe</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x20gravity-well\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20magnetic-target\x22>400<span\x20style=\x22font-size:1.4rem\x22>B</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>stars\x20in\x20milky\x20way</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x20gravity-well\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20magnetic-target\x22>7</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>known\x20earth-like\x20worlds</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x0a\x20\x20<!--\x20WINDOW\x20STRIP\x202\x20—\x20dramatic\x20sky\x20/\x20\x22believe\x20its\x20true\x22\x20-->\x0a\x20\x20<div\x20class=\x22window-strip\x22\x20id=\x22win-believe\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20III</p>\x0a\x20\x20\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>believe<br>its\x20true</h2>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x0a\x20\x20<div\x20class=\x22panel\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22section\x22\x20style=\x22position:\x20relative;\x20z-index:\x202;\x22>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20III\x20—\x20Contact</p>\x0a\x20\x20\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>are\x20we<br>alone?</h2>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20The\x20Fermi\x20Paradox\x20whispers\x20what\x20logic\x20cannot\x20answer.\x20In\x20a\x20universe\x20this\x20vast\x20and\x20this\x20old,\x0a\x20\x20\x20\x20\x20\x20\x20\x20the\x20silence\x20is\x20either\x20the\x20most\x20profound\x20loneliness\x20—\x20or\x20the\x20greatest\x20mystery\x20still\x20unfolding.\x0a\x20\x20\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x20\x20\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22signal-container\x22\x20id=\x22signal-zone\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<canvas\x20id=\x22signal-canvas\x22></canvas>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat-row\x22\x20style=\x22border-top:\x20none;\x20margin-top:\x200;\x20padding-top:\x200;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>72</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>unexplained\x20signals</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20wow-glitch\x22\x20data-text=\x221977\x22>1977</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>the\x20\x22wow!\x22\x20signal</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>5,000<span\x20style=\x22font-size:1.4rem\x22>+</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>exoplanets\x20confirmed</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x0a\x20\x20<!--\x20WINDOW\x20STRIP\x203\x20—\x20deep\x20cosmos\x20/\x20epilogue\x20-->\x0a\x20\x20<div\x20class=\x22window-strip\x22\x20id=\x22win-depth\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Epilogue</p>\x0a\x20\x20\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>a\x20pale\x20<br>dot.</h2>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x0a\x20\x20<!--\x20PANEL\x204\x20—\x20Earth\x20/\x20pale\x20blue\x20dot\x20section\x20-->\x0a\x20\x20<div\x20class=\x22panel\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22section\x22>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20IV\x20—\x20Home</p>\x0a\x20\x20\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>the\x20pale<br>blue\x20dot</h2>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20From\x20four\x20billion\x20miles\x20away,\x20Earth\x20is\x20a\x20mote\x20of\x20dust\x20suspended\x20in\x20a\x20sunbeam.\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20All\x20of\x20human\x20history\x20—\x20every\x20king,\x20every\x20war,\x20every\x20act\x20of\x20kindness\x20—\x20played\x20out\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20on\x20this\x20tiny\x20stage,\x20hanging\x20in\x20the\x20dark.\x0a\x20\x20\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat-row\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>4.5<span\x20style=\x22font-size:1.4rem\x22>B</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>years\x20old,\x20Earth</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>8<span\x20style=\x22font-size:1.4rem\x22>B</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>humans\x20alive\x20today</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>1</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>known\x20habitable\x20world</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x0a\x20\x20<!--\x20EARTH\x20WINDOW\x20STRIP\x20—\x20the\x20exact\x20parallax\x20effect\x20from\x20the\x20simple\x20code:\x0a\x20\x20\x20\x20\x20\x20\x20same\x20image,\x20same\x200.4×\x20scroll-speed\x20background\x20shift\x20via\x20JS.\x0a\x20\x20\x20\x20\x20\x20\x20This\x20is\x20the\x20\x22hero\x20treatment\x22\x20applied\x20mid-scroll\x20as\x20a\x20full-vh\x20window.\x20-->\x0a\x20\x20<div\x20class=\x22window-strip\x22\x20id=\x22win-earth\x22>\x0a\x20\x20\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20\x20\x20<p\x20class=\x22win-label\x22>A\x20pale\x20blue\x20dot</p>\x0a\x20\x20\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>to\x20the<br>unknown</h2>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x20\x20\x0a\x20\x20<!--\x20PANEL:\x20Signal\x20&\x20Tech\x20-->\x0a<div\x20class=\x22panel\x22\x20id=\x22panel-velocity\x22\x20style=\x22overflow:\x20hidden;\x22>\x0a\x20\x20<div\x20class=\x22section\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20VI\x20—\x20Velocity</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>you\x20have\x20never<br>been\x20still</h2>\x0a\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20Right\x20now,\x20without\x20moving\x20a\x20muscle,\x20you\x20are\x20hurtling\x20through\x20space\x20at\x20\x0a\x20\x20\x20\x20\x20\x20speeds\x20that\x20dwarf\x20anything\x20humanity\x20has\x20ever\x20built.\x20Earth\x20is\x20not\x20a\x20home\x20—\x20\x0a\x20\x20\x20\x20\x20\x20it\x20is\x20a\x20spacecraft.\x20And\x20since\x20you\x20opened\x20this\x20page,\x20you\x20have\x20already\x20traveled:\x0a\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20<div\x20class=\x22stat-row\x20velocity-stats\x22\x20id=\x22velo-stats\x22>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20live-velo\x22\x20id=\x22stat-sun\x22>0</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>km\x20traveled\x20around\x20the\x20sun</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20live-velo\x22\x20id=\x22stat-gal\x22>0</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>km\x20traveled\x20through\x20the\x20milky\x20way</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20live-velo\x22\x20id=\x22stat-sec\x22>0</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>seconds\x20since\x20you\x20arrived</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-velocity\x22>\x0a\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20VI</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>a\x20pale\x20blue<br>spaceship</h2>\x0a\x20\x20</div>\x0a</div>\x0a\x0a\x20\x20<!--\x20PANEL:\x20OZONE\x20-->\x0a<div\x20class=\x22panel\x22\x20id=\x22panel-shield\x22>\x0a\x20\x20<div\x20class=\x22section\x22\x20style=\x22position:\x20relative;\x20z-index:\x202;\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20VII\x20—\x20Shield</p>\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20<h2\x20class=\x22section-title\x20shield-target\x22>an\x20invisible<br>fortress</h2>\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20Invisible\x20and\x20silent,\x20Earth\x27s\x20magnetosphere\x20deflects\x20a\x20constant\x20storm\x20\x0a\x20\x20\x20\x20\x20\x20of\x20solar\x20radiation.\x20Without\x20it,\x20the\x20atmosphere\x20would\x20be\x20stripped\x20away\x20\x0a\x20\x20\x20\x20\x20\x20in\x20geological\x20moments.\x20We\x20live\x20inside\x20a\x20miracle\x20we\x20cannot\x20see.\x0a\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20<div\x20class=\x22stat-row\x22>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20shield-target\x22>11.2<span\x20style=\x22font-size:1.4rem\x22>km/s</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>escape\x20velocity\x20from\x20Earth</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20shield-target\x22>600<span\x20style=\x22font-size:1.4rem\x22>k</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>miles\x20of\x20magnetosphere</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20shield-target\x22>1<span\x20style=\x22font-size:1.4rem\x22>T</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>estimated\x20species,\x20biosphere</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20<div\x20class=\x22quote-block\x20shield-target\x22>\x0a\x20\x20\x20\x20\x20\x20<p>\x22The\x20Earth\x20is\x20the\x20cradle\x20of\x20humanity,\x20but\x20one\x20cannot\x20stay\x20in\x20the\x20cradle\x20forever.\x22</p>\x0a\x20\x20\x20\x20\x20\x20<cite>—\x20Konstantin\x20Tsiolkovsky</cite>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-shield\x22>\x0a\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20VII</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>the\x20invisible<br>fortress</h2>\x0a\x20\x20</div>\x0a</div>\x0a<div\x20class=\x22panel\x22\x20id=\x22panel-eternity\x22\x20style=\x22--entropy:\x200;\x22>\x0a\x20\x20<div\x20class=\x22section\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22section-label\x20eternity-label\x22>Chapter\x20VIII\x20—\x20Eternity</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22section-title\x20eternity-title\x22>the\x20edge\x20of<br>tomorrow</h2>\x0a\x20\x20\x20\x20<p\x20class=\x22section-body\x20eternity-body\x22>\x0a\x20\x20\x20\x20\x20\x20The\x20stars\x20will\x20eventually\x20exhaust\x20their\x20fuel,\x20and\x20the\x20universe\x20will\x20grow\x20cold\x20and\x20dark.\x20\x0a\x20\x20\x20\x20\x20\x20But\x20that\x20is\x20trillions\x20of\x20years\x20away.\x20Our\x20story\x20is\x20just\x20beginning.\x20We\x20are\x20the\x20cosmos\x20\x0a\x20\x20\x20\x20\x20\x20waking\x20up\x20to\x20understand\x20itself.\x0a\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20<div\x20class=\x22stat-row\x22>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x20stat-dying-star\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20eternity-title\x22>100<span\x20style=\x22font-size:1.4rem\x22>T</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x20eternity-label\x22>years\x20until\x20last\x20star\x20dies</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x20stat-fading\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20eternity-title\x22>1</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x20eternity-label\x22>chance\x20to\x20explore\x20it</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x20stat-consciousness\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x22>∞</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x20eternity-label\x22>potential\x20of\x20consciousness</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x20\x20\x0a\x20\x20<div\x20class=\x22time-slider-hint\x22>\x0a\x20\x20\x20\x20<span>Present</span>\x0a\x20\x20\x20\x20<div\x20class=\x22time-line-bar\x22><div\x20class=\x22time-line-progress\x22></div></div>\x0a\x20\x20\x20\x20<span>Deep\x20Time</span>\x0a\x20\x20</div>\x0a</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-eternity\x22>\x0a\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20VIII</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>the\x20deep<br>time</h2>\x0a\x20\x20</div>\x0a</div>\x0a<div\x20class=\x22panel\x22\x20id=\x22panel-quantum\x22>\x0a\x20\x20<div\x20class=\x22section\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20IX\x20—\x20Quantum</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>the\x20fabric\x20of<br>reality</h2>\x0a\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20At\x20the\x20smallest\x20scales,\x20the\x20universe\x20ceases\x20to\x20be\x20a\x20place\x20of\x20solid\x20objects\x20and\x20certainties.\x20\x0a\x20\x20\x20\x20\x20\x20It\x20becomes\x20a\x20haze\x20of\x20probabilities.\x20We\x20are\x20not\x20just\x20drifting\x20through\x20space;\x20we\x20are\x20\x0a\x20\x20\x20\x20\x20\x20vibrating\x20into\x20existence\x20frame\x20by\x20frame.\x0a\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20<div\x20class=\x22stat-row\x22>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20scramble-text\x22\x20data-final=\x2210⁻³⁵\x22>00000</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>planck\x20length\x20(meters)</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20scramble-text\x22\x20data-final=\x2211\x22>00</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>theoretical\x20dimensions</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20scramble-text\x22\x20data-final=\x220.00%\x22>0.00%</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>absolute\x20certainty</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-quantum\x22>\x0a\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20IX</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>the\x20quantum<br>realm</h2>\x0a\x20\x20</div>\x0a</div>\x0a<div\x20class=\x22panel\x22>\x0a\x20\x20<div\x20class=\x22section\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20X\x20—\x20The\x20Observer</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>looking\x20into<br>the\x20mirror</h2>\x0a\x20\x20\x20\x20<p\x20class=\x22section-body\x22>\x0a\x20\x20\x20\x20\x20\x20Before\x20life\x20emerged,\x20the\x20universe\x20was\x20just\x20silent,\x20unconscious\x20geometry\x20playing\x20out\x20in\x20the\x20dark.\x20\x0a\x20\x20\x20\x20\x20\x20It\x20requires\x20a\x20mind\x20to\x20experience\x20time,\x20to\x20witness\x20beauty,\x20and\x20to\x20collapse\x20infinite\x20probabilities\x20\x0a\x20\x20\x20\x20\x20\x20into\x20a\x20single,\x20breathing\x20reality.\x20\x0a\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20<div\x20class=\x22interactive-reveal\x22>\x0a\x20\x20\x20\x20\x20\x20<img\x20src=\x22https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop\x22\x20alt=\x22Abstract\x20Distortion\x22\x20class=\x22reveal-img\x22>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22reveal-overlay\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<p\x20class=\x22reveal-text\x22>\x22You\x20are\x20not\x20a\x20drop\x20in\x20the\x20ocean.<br>You\x20are\x20the\x20entire\x20ocean,\x20in\x20a\x20drop.\x22</p>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x0a\x20\x20</div>\x0a</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-observer\x22>\x0a\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20X</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>the\x20cosmic<br>mind</h2>\x0a\x20\x20</div>\x0a</div>\x0a<div\x20class=\x22panel\x20dark-panel\x22\x20id=\x22panel-dark\x22>\x0a\x20\x20<div\x20class=\x22section\x22\x20style=\x22position:\x20relative;\x20z-index:\x202;\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22section-label\x22\x20style=\x22color:\x20#c8a96e;\x22>Chapter\x20XI\x20—\x20Dark\x20Matter</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22section-title\x20dark-mode-text\x22>the\x20unseen<br>scaffold</h2>\x0a\x20\x20\x20\x20<p\x20class=\x22section-body\x20dark-mode-text\x22>\x0a\x20\x20\x20\x20\x20\x20Eighty-five\x20percent\x20of\x20the\x20universe\x27s\x20mass\x20is\x20missing.\x20We\x20cannot\x20see\x20it,\x20\x0a\x20\x20\x20\x20\x20\x20we\x20cannot\x20touch\x20it,\x20and\x20it\x20does\x20not\x20interact\x20with\x20light.\x20We\x20only\x20know\x20it\x20\x0a\x20\x20\x20\x20\x20\x20is\x20there\x20because\x20without\x20its\x20gravitational\x20grip,\x20every\x20galaxy\x20we\x20observe\x20\x0a\x20\x20\x20\x20\x20\x20would\x20instantly\x20tear\x20itself\x20apart.\x0a\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20<div\x20class=\x22stat-row\x22>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20dark-mode-text\x22>85<span\x20style=\x22font-size:1.4rem\x22>%</span></span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>of\x20all\x20mass\x20is\x20hidden</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20<div\x20class=\x22stat\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-num\x20dark-mode-text\x22>0</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22stat-label\x22>particles\x20ever\x20detected</span>\x0a\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20</div>\x0a\x20\x20</div>\x0a\x20\x20\x0a\x20\x20<div\x20class=\x22flashlight-cover\x22></div>\x0a\x20\x20<p\x20class=\x22scan-prompt\x22>Initiate\x20scan\x20sequence</p>\x0a</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-dark\x22>\x0a\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20XI</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>the\x20invisible<br>web</h2>\x0a\x20\x20</div>\x0a</div>\x0a<div\x20class=\x22panel\x22>\x0a\x20\x20<div\x20class=\x22section\x22\x20style=\x22text-align:\x20center;\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22section-label\x22>Chapter\x20XII\x20—\x20Singularity</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22section-title\x22>the\x20end\x20is<br>the\x20beginning</h2>\x0a\x20\x20\x20\x20<p\x20class=\x22section-body\x22\x20style=\x22margin:\x200\x20auto;\x22>\x0a\x20\x20\x20\x20\x20\x20At\x20the\x20heart\x20of\x20a\x20black\x20hole,\x20space\x20and\x20time\x20fold\x20in\x20on\x20themselves.\x20The\x20laws\x20of\x20physics\x20break\x20down,\x20\x0a\x20\x20\x20\x20\x20\x20and\x20every\x20destination\x20becomes\x20the\x20same\x20point.\x20There\x20is\x20nowhere\x20left\x20to\x20go,\x20except\x20back.\x0a\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x0a\x20\x20\x20\x20<button\x20id=\x22btn-warp\x22\x20class=\x22warp-btn\x22>Initiate\x20Hyperspace\x20Jump</button>\x0a\x20\x20</div>\x0a</div>\x0a\x0a<div\x20class=\x22window-strip\x22\x20id=\x22win-wormhole\x22>\x0a\x20\x20<div\x20class=\x22window-text\x22>\x0a\x20\x20\x20\x20<p\x20class=\x22win-label\x22>Chapter\x20XII</p>\x0a\x20\x20\x20\x20<h2\x20class=\x22win-title\x22>event<br>horizon</h2>\x0a\x20\x20</div>\x0a</div>\x0a\x0a</div><!--\x20/scroll-body\x20-->\x0a\x0a<!--\x20Fixed\x20curtain\x20footer\x20-->\x0a<footer\x20class=\x22parallax-footer\x22>\x0a\x20\x20<p\x20class=\x22footer-eyebrow\x22>The\x20end\x20of\x20odyssey</p>\x0a\x20\x20<h2\x20class=\x22footer-title\x22>Thank\x20you<br>for\x20visitin\x20earth\x20again.</h2>\x0a\x20\x20<p\x20class=\x22footer-sub\x22>The\x20universe\x20is\x2013.8\x20billion\x20years\x20old.\x20You\x20are\x20here,\x20now,\x20wondering\x20about\x20it.\x20That\x20is\x20extraordinary.</p>\x0a\x20\x20<button\x20class=\x22footer-cta\x22\x20id=\x22cta-top\x22>Begin\x20again\x20↑</button>\x0a\x20\x20<p\x20class=\x22footer-copy\x22>&copy;\x202026\x20—\x20a\x20sky\x20odyssey</p>\x0a</footer>'));
-    </script>
 </head>
-</html>
+<body>
+    <canvas id="starfield-canvas"></canvas>
+    <nav id="chapter-tracker" aria-label="Chapter navigation"></nav>
+    <div id="cursor-glow"></div>
+    <div id="astrolabe-tracker">
+    <svg width="46" height="46" viewBox="0 0 46 46">
+      <circle class="astro-track" cx="23" cy="23" r="20" />
+      <circle class="astro-progress" cx="23" cy="23" r="20" />
+    </svg>
+    <span class="astro-text">00</span>
+  </div>
+
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+<!-- Fixed BG layers -->
+<div class="bg-layer active" id="bg-hero"></div>
+<div class="bg-layer" id="bg-odyssey"></div>
+<div class="bg-layer" id="bg-believe"></div>
+<div class="bg-layer" id="bg-earth"></div>
+
+<!-- Hero text -->
+<div class="hero" id="hero">
+  <p class="hero-eyebrow">An odyssey — 2025</p>
+  <h1 class="hero-title">to the<br>unknown</h1>
+  <div class="scroll-hint">
+    <span>scroll to explore</span>
+    <div class="scroll-line"></div>
+  </div>
+</div>
+
+<!-- Scrollable content -->
+<div class="scroll-body">
+
+  <!-- PANEL 1 — prose section -->
+  <div class="panel">
+    <div class="section">
+      <p class="section-label">Chapter I — Origins</p>
+      <h2 class="section-title">we are made<br>of stardust</h2>
+      <p class="section-body">
+        Every atom of carbon in your body was forged inside a dying star billions of years before 
+        Earth existed. The cosmos did not birth us — it <em>became</em> us. Looking up is looking inward.
+      </p>
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-num">13.8<span style="font-size:1.4rem">B</span></span>
+          <span class="stat-label">years old, universe</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">2×10²³</span>
+          <span class="stat-label">stars visible</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">∞</span>
+          <span class="stat-label">questions remain</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div class="window-strip" id="win-odyssey">
+    <div class="window-text">
+      <p class="win-label">Chapter II</p>
+      <h2 class="win-title">a sky<br>odyssey</h2>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-drift">
+    <div class="section">
+      <div class="two-col">
+        <div>
+          <p class="section-label">Chapter II — The Drift</p>
+          <h2 class="section-title">drifting through<br>pink nebulae</h2>
+          <p class="section-body">
+            Between galaxies lies the void — not empty, but filled with threads of gas and 
+            dark matter stretching like cobwebs across unimaginable distances.
+          </p>
+          
+          <div class="quote-block nebula-quote-block">
+            <div class="nebula-fog"></div>
+            <p class="nebula-text">"Somewhere, something incredible is waiting to be known."</p>
+            <cite class="nebula-cite">— Carl Sagan</cite>
+          </div>
+        </div>
+        
+        <div class="stat-col">
+          <div class="stat gravity-well">
+            <span class="stat-num magnetic-target">46.5<span style="font-size:1.4rem">B</span></span>
+            <span class="stat-label">light years, observable universe</span>
+          </div>
+          <div class="stat gravity-well">
+            <span class="stat-num magnetic-target">400<span style="font-size:1.4rem">B</span></span>
+            <span class="stat-label">stars in milky way</span>
+          </div>
+          <div class="stat gravity-well">
+            <span class="stat-num magnetic-target">7</span>
+            <span class="stat-label">known earth-like worlds</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINDOW STRIP 2 — dramatic sky / "believe its true" -->
+  <div class="window-strip" id="win-believe">
+    <div class="window-text">
+      <p class="win-label">Chapter III</p>
+      <h2 class="win-title">believe<br>its true</h2>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section" style="position: relative; z-index: 2;">
+      <p class="section-label">Chapter III — Contact</p>
+      <h2 class="section-title">are we<br>alone?</h2>
+      <p class="section-body">
+        The Fermi Paradox whispers what logic cannot answer. In a universe this vast and this old,
+        the silence is either the most profound loneliness — or the greatest mystery still unfolding.
+      </p>
+      
+      <div class="signal-container" id="signal-zone">
+        <canvas id="signal-canvas"></canvas>
+        <div class="stat-row" style="border-top: none; margin-top: 0; padding-top: 0;">
+          <div class="stat">
+            <span class="stat-num">72</span>
+            <span class="stat-label">unexplained signals</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num wow-glitch" data-text="1977">1977</span>
+            <span class="stat-label">the "wow!" signal</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">5,000<span style="font-size:1.4rem">+</span></span>
+            <span class="stat-label">exoplanets confirmed</span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- WINDOW STRIP 3 — deep cosmos / epilogue -->
+  <div class="window-strip" id="win-depth">
+    <div class="window-text">
+      <p class="win-label">Epilogue</p>
+      <h2 class="win-title">a pale <br>dot.</h2>
+    </div>
+  </div>
+
+  <!-- PANEL 4 — Earth / pale blue dot section -->
+  <div class="panel">
+    <div class="section">
+      <p class="section-label">Chapter IV — Home</p>
+      <h2 class="section-title">the pale<br>blue dot</h2>
+      <p class="section-body">
+        From four billion miles away, Earth is a mote of dust suspended in a sunbeam. 
+        All of human history — every king, every war, every act of kindness — played out 
+        on this tiny stage, hanging in the dark.
+      </p>
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-num">4.5<span style="font-size:1.4rem">B</span></span>
+          <span class="stat-label">years old, Earth</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">8<span style="font-size:1.4rem">B</span></span>
+          <span class="stat-label">humans alive today</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">1</span>
+          <span class="stat-label">known habitable world</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EARTH WINDOW STRIP — the exact parallax effect from the simple code:
+       same image, same 0.4× scroll-speed background shift via JS.
+       This is the "hero treatment" applied mid-scroll as a full-vh window. -->
+  <div class="window-strip" id="win-earth">
+    <div class="window-text">
+      <p class="win-label">A pale blue dot</p>
+      <h2 class="win-title">to the<br>unknown</h2>
+    </div>
+  </div>
+  
+  <!-- PANEL: Signal & Tech -->
+<div class="panel" id="panel-velocity" style="overflow: hidden;">
+  <div class="section">
+    <p class="section-label">Chapter VI — Velocity</p>
+    <h2 class="section-title">you have never<br>been still</h2>
+    <p class="section-body">
+      Right now, without moving a muscle, you are hurtling through space at 
+      speeds that dwarf anything humanity has ever built. Earth is not a home — 
+      it is a spacecraft. And since you opened this page, you have already traveled:
+    </p>
+    <div class="stat-row velocity-stats" id="velo-stats">
+      <div class="stat">
+        <span class="stat-num live-velo" id="stat-sun">0</span>
+        <span class="stat-label">km traveled around the sun</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num live-velo" id="stat-gal">0</span>
+        <span class="stat-label">km traveled through the milky way</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num live-velo" id="stat-sec">0</span>
+        <span class="stat-label">seconds since you arrived</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="window-strip" id="win-velocity">
+  <div class="window-text">
+    <p class="win-label">Chapter VI</p>
+    <h2 class="win-title">a pale blue<br>spaceship</h2>
+  </div>
+</div>
+
+  <!-- PANEL: OZONE -->
+<div class="panel" id="panel-shield">
+  <div class="section" style="position: relative; z-index: 2;">
+    <p class="section-label">Chapter VII — Shield</p>
+    
+    <h2 class="section-title shield-target">an invisible<br>fortress</h2>
+    
+    <p class="section-body">
+      Invisible and silent, Earth's magnetosphere deflects a constant storm 
+      of solar radiation. Without it, the atmosphere would be stripped away 
+      in geological moments. We live inside a miracle we cannot see.
+    </p>
+    
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-num shield-target">11.2<span style="font-size:1.4rem">km/s</span></span>
+        <span class="stat-label">escape velocity from Earth</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num shield-target">600<span style="font-size:1.4rem">k</span></span>
+        <span class="stat-label">miles of magnetosphere</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num shield-target">1<span style="font-size:1.4rem">T</span></span>
+        <span class="stat-label">estimated species, biosphere</span>
+      </div>
+    </div>
+    
+    <div class="quote-block shield-target">
+      <p>"The Earth is the cradle of humanity, but one cannot stay in the cradle forever."</p>
+      <cite>— Konstantin Tsiolkovsky</cite>
+    </div>
+  </div>
+</div>
+
+<div class="window-strip" id="win-shield">
+  <div class="window-text">
+    <p class="win-label">Chapter VII</p>
+    <h2 class="win-title">the invisible<br>fortress</h2>
+  </div>
+</div>
+<div class="panel" id="panel-eternity" style="--entropy: 0;">
+  <div class="section">
+    <p class="section-label eternity-label">Chapter VIII — Eternity</p>
+    <h2 class="section-title eternity-title">the edge of<br>tomorrow</h2>
+    <p class="section-body eternity-body">
+      The stars will eventually exhaust their fuel, and the universe will grow cold and dark. 
+      But that is trillions of years away. Our story is just beginning. We are the cosmos 
+      waking up to understand itself.
+    </p>
+    
+    <div class="stat-row">
+      <div class="stat stat-dying-star">
+        <span class="stat-num eternity-title">100<span style="font-size:1.4rem">T</span></span>
+        <span class="stat-label eternity-label">years until last star dies</span>
+      </div>
+      <div class="stat stat-fading">
+        <span class="stat-num eternity-title">1</span>
+        <span class="stat-label eternity-label">chance to explore it</span>
+      </div>
+      <div class="stat stat-consciousness">
+        <span class="stat-num">∞</span>
+        <span class="stat-label eternity-label">potential of consciousness</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="time-slider-hint">
+    <span>Present</span>
+    <div class="time-line-bar"><div class="time-line-progress"></div></div>
+    <span>Deep Time</span>
+  </div>
+</div>
+
+
+<div class="window-strip" id="win-eternity">
+  <div class="window-text">
+    <p class="win-label">Chapter VIII</p>
+    <h2 class="win-title">the deep<br>time</h2>
+  </div>
+</div>
+<div class="panel" id="panel-quantum">
+  <div class="section">
+    <p class="section-label">Chapter IX — Quantum</p>
+    <h2 class="section-title">the fabric of<br>reality</h2>
+    <p class="section-body">
+      At the smallest scales, the universe ceases to be a place of solid objects and certainties. 
+      It becomes a haze of probabilities. We are not just drifting through space; we are 
+      vibrating into existence frame by frame.
+    </p>
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-num scramble-text" data-final="10⁻³⁵">00000</span>
+        <span class="stat-label">planck length (meters)</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num scramble-text" data-final="11">00</span>
+        <span class="stat-label">theoretical dimensions</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num scramble-text" data-final="0.00%">0.00%</span>
+        <span class="stat-label">absolute certainty</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="window-strip" id="win-quantum">
+  <div class="window-text">
+    <p class="win-label">Chapter IX</p>
+    <h2 class="win-title">the quantum<br>realm</h2>
+  </div>
+</div>
+<div class="panel">
+  <div class="section">
+    <p class="section-label">Chapter X — The Observer</p>
+    <h2 class="section-title">looking into<br>the mirror</h2>
+    <p class="section-body">
+      Before life emerged, the universe was just silent, unconscious geometry playing out in the dark. 
+      It requires a mind to experience time, to witness beauty, and to collapse infinite probabilities 
+      into a single, breathing reality. 
+    </p>
+    
+    <div class="interactive-reveal">
+      <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop" alt="Abstract Distortion" class="reveal-img">
+      <div class="reveal-overlay">
+        <p class="reveal-text">"You are not a drop in the ocean.<br>You are the entire ocean, in a drop."</p>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<div class="window-strip" id="win-observer">
+  <div class="window-text">
+    <p class="win-label">Chapter X</p>
+    <h2 class="win-title">the cosmic<br>mind</h2>
+  </div>
+</div>
+<div class="panel dark-panel" id="panel-dark">
+  <div class="section" style="position: relative; z-index: 2;">
+    <p class="section-label" style="color: #c8a96e;">Chapter XI — Dark Matter</p>
+    <h2 class="section-title dark-mode-text">the unseen<br>scaffold</h2>
+    <p class="section-body dark-mode-text">
+      Eighty-five percent of the universe's mass is missing. We cannot see it, 
+      we cannot touch it, and it does not interact with light. We only know it 
+      is there because without its gravitational grip, every galaxy we observe 
+      would instantly tear itself apart.
+    </p>
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-num dark-mode-text">85<span style="font-size:1.4rem">%</span></span>
+        <span class="stat-label">of all mass is hidden</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num dark-mode-text">0</span>
+        <span class="stat-label">particles ever detected</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="flashlight-cover"></div>
+  <p class="scan-prompt">Initiate scan sequence</p>
+</div>
+
+<div class="window-strip" id="win-dark">
+  <div class="window-text">
+    <p class="win-label">Chapter XI</p>
+    <h2 class="win-title">the invisible<br>web</h2>
+  </div>
+</div>
+<div class="panel">
+  <div class="section" style="text-align: center;">
+    <p class="section-label">Chapter XII — Singularity</p>
+    <h2 class="section-title">the end is<br>the beginning</h2>
+    <p class="section-body" style="margin: 0 auto;">
+      At the heart of a black hole, space and time fold in on themselves. The laws of physics break down, 
+      and every destination becomes the same point. There is nowhere left to go, except back.
+    </p>
+    
+    <button id="btn-warp" class="warp-btn">Initiate Hyperspace Jump</button>
+  </div>
+</div>
+
+<div class="window-strip" id="win-wormhole">
+  <div class="window-text">
+    <p class="win-label">Chapter XII</p>
+    <h2 class="win-title">event<br>horizon</h2>
+  </div>
+</div>
+
+</div><!-- /scroll-body -->
+
+<!-- Fixed curtain footer -->
+<footer class="parallax-footer">
+  <p class="footer-eyebrow">The end of odyssey</p>
+  <h2 class="footer-title">Thank you<br>for visitin earth again.</h2>
+  <p class="footer-sub">The universe is 13.8 billion years old. You are here, now, wondering about it. That is extraordinary.</p>
+  <div style="display: flex; gap: 1.5rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+  <button class="footer-cta" id="cta-top">Begin again ↑</button>
+  
+  <a href="TERRA2.html" class="footer-cta earth-link" style="text-decoration: none; display: inline-block;">
+    Descend to Earth ↓
+  </a>
+</div>
+
+<style>
+  /* Styles the Earth button with Terra's specific color palette */
+  .earth-link {
+    border-color: #8b4a2a !important; 
+    color: #8b4a2a !important;
+  }
+  .earth-link:hover {
+    background: #8b4a2a !important;
+    color: #050505 !important;
+    box-shadow: 0 0 25px rgba(139, 74, 42, 0.6) !important;
+  }
+</style>
+  <p class="footer-copy">&copy; 2026 — a sky odyssey</p>
+</footer>
 
 <script>
-const a0_0x4267f7=a0_0x6652;(function(_0x418694,_0x126f0f){const _0x388e0b=a0_0x6652,_0x3f33d1=_0x418694();while(!![]){try{const _0x5d0ccd=-parseInt(_0x388e0b(0x1cf))/0x1+parseInt(_0x388e0b(0x229))/0x2*(parseInt(_0x388e0b(0x21d))/0x3)+-parseInt(_0x388e0b(0x1c3))/0x4*(parseInt(_0x388e0b(0x233))/0x5)+parseInt(_0x388e0b(0x227))/0x6*(parseInt(_0x388e0b(0x25e))/0x7)+parseInt(_0x388e0b(0x237))/0x8*(parseInt(_0x388e0b(0x1d5))/0x9)+parseInt(_0x388e0b(0x224))/0xa*(parseInt(_0x388e0b(0x260))/0xb)+-parseInt(_0x388e0b(0x207))/0xc;if(_0x5d0ccd===_0x126f0f)break;else _0x3f33d1['push'](_0x3f33d1['shift']());}catch(_0x568cb5){_0x3f33d1['push'](_0x3f33d1['shift']());}}}(a0_0x5a94,0x5de5e));function a0_0x5a94(){const _0x3b0dc7=['devicePixelRatio','beginPath','Points','refresh','!<>-_\x5c/[]{}—=+*^?#_','(pointer:\x20coarse)','</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</span>','panel-eternity','PerspectiveCamera','matchMedia','color','pow','.window-strip:not(#win-earth)','expo.out','stat-sec','target','outerHTML','smooth','.win-label','.parallax-footer','add','observe','resize','Scene','38884ZRjHIB','.flashlight-cover','scrollY','bg-hero','style','setProperty','cursor-glow','--mouse-x','getElementById','BufferGeometry','toLocaleString','px\x200\x20','12376teFdVY','105%','signal-zone','aurora-flare','cta-top','length','4122kVPqXC','updateProjectionMatrix','panel-velocity','max','deg)','left','querySelector','px,\x20','--entropy','className','px)\x20skewX(','random','span','createElement','px)','rotation','transition','center\x20calc(50%\x20+\x20','.gsap-inner','toFixed','indexOf','starfield-canvas','scroll','.stat-num','translate(','<span\x20style=\x22font-size:1.4rem\x22>km</span>','top','top\x2075%','innerText','opacity','bottom\x2020%','.panel','.win-title','win-earth','-1000px','hidden','setSize','offsetHeight','bottom\x20top','70%','appendChild','addEventListener','querySelectorAll','signal-canvas','sqrt','min','BufferAttribute','map','textContent','stat-gal','7557768TniRLu','offsetWidth','bg-earth','abs','interval','.magnetic-target','innerWidth','classList','bottom','0.8em','canvas','WebGLRenderer','btn-warp','fromTo','timeline','top\x20bottom','mouseleave','width','sin','toggle','warping','.window-strip','12twZBFc','clearRect','data-final','position','Section\x20','childNodes','setPixelRatio','20rQwPUs','.gravity-well','setClearColor','66bMmIFv','transform\x200.4s\x20cubic-bezier(0.175,\x200.885,\x200.32,\x201.275),\x20text-shadow\x200.3s\x20ease','193358hWTgjd','translate(0,\x200)\x20scale(1)','acos','scrollIntoView','calc(50%\x20+\x20','px\x20rgba(200,\x20169,\x20110,\x200.4)','active','stat-sun','backgroundPositionY','chapter-tracker','275yZtGeH','innerHeight','getBoundingClientRect','play\x20none\x20none\x20reverse','6768GjlDiE','clientY','unhide','load','remove','isIntersecting','title','30%','.scramble-text','lineWidth','click','now','split','scrollTo','clientX','.section-label,\x20.section-title,\x20.section-body,\x20.stat,\x20.quote-block','forEach','textShadow','rgba(200,\x20169,\x20110,\x200.7)','getContext','strokeStyle','visible','bg-odyssey','mousemove','setAttribute','floor','asteroid-canvas','innerHTML','num','translateX(','render','panel-quantum','body','cos','transform','brightness(0.7)','height','.shield-target','lineTo','254093ctiUoR','.section-label','2133879PhfnHJ','join','chapter-dot','none','--mouse-y'];a0_0x5a94=function(){return _0x3b0dc7;};return a0_0x5a94();}const hero=document[a0_0x4267f7(0x1cb)]('hero'),strips=document[a0_0x4267f7(0x1ff)](a0_0x4267f7(0x21c)),bgHero=document[a0_0x4267f7(0x1cb)](a0_0x4267f7(0x1c6)),bgOdy=document[a0_0x4267f7(0x1cb)](a0_0x4267f7(0x24d)),bgBel=document[a0_0x4267f7(0x1cb)]('bg-believe'),bgEarth=document[a0_0x4267f7(0x1cb)](a0_0x4267f7(0x209)),allBgs=[bgHero,bgOdy,bgBel,bgEarth];let activeBgIdx=0x0;function a0_0x6652(_0x367088,_0x216e33){_0x367088=_0x367088-0x1a9;const _0x5a9447=a0_0x5a94();let _0x66521c=_0x5a9447[_0x367088];return _0x66521c;}function showBg(_0x38d180){const _0x42bb3c=a0_0x4267f7;if(_0x38d180===activeBgIdx)return;allBgs[activeBgIdx][_0x42bb3c(0x20e)][_0x42bb3c(0x23b)](_0x42bb3c(0x22f)),allBgs[_0x38d180][_0x42bb3c(0x20e)][_0x42bb3c(0x1bf)]('active'),activeBgIdx=_0x38d180;}const stripBgMap={'win-odyssey':0x1,'win-believe':0x2,'win-depth':0x2,'win-earth':0x3,'win-signal':0x3,'win-velocity':0x3,'win-shield':0x3,'win-eternity':0x0,'win-quantum':0x0,'win-observer':0x0};let ticking=![];window[a0_0x4267f7(0x1fe)](a0_0x4267f7(0x1eb),()=>{if(ticking)return;ticking=!![],requestAnimationFrame(()=>{const _0x5263ff=a0_0x6652,_0x36a2f8=window[_0x5263ff(0x1c5)],_0x30c50d=window['innerHeight'];hero[_0x5263ff(0x20e)][_0x5263ff(0x21a)](_0x5263ff(0x1f8),_0x36a2f8>_0x30c50d*0.22),document[_0x5263ff(0x1db)](_0x5263ff(0x1be))[_0x5263ff(0x20e)][_0x5263ff(0x21a)](_0x5263ff(0x239),_0x36a2f8>_0x30c50d*0.5);let _0x57617d=![],_0x69f169=-0x1;strips[_0x5263ff(0x247)](_0x26a1f3=>{const _0x23a34b=_0x5263ff,_0x4eeb4b=_0x26a1f3[_0x23a34b(0x235)](),_0x545fe2=_0x4eeb4b[_0x23a34b(0x1ef)]<_0x30c50d*0.8&&_0x4eeb4b[_0x23a34b(0x20f)]>_0x30c50d*0.2;if(_0x26a1f3['id']===_0x23a34b(0x1f6)){const _0x210b50=_0x36a2f8+_0x4eeb4b[_0x23a34b(0x1ef)],_0x2883a6=_0x36a2f8-_0x210b50;_0x26a1f3[_0x23a34b(0x1c7)]['backgroundPosition']=_0x23a34b(0x1e6)+_0x2883a6*0.4+_0x23a34b(0x1e3);}else{const _0xa2b375=_0x4eeb4b[_0x23a34b(0x1ef)]+_0x4eeb4b[_0x23a34b(0x25b)]/0x2,_0x31c79c=_0x30c50d/0x2,_0x9dfce7=(_0x31c79c-_0xa2b375)*0.4;_0x26a1f3[_0x23a34b(0x1c7)][_0x23a34b(0x231)]='calc(50%\x20+\x20'+_0x9dfce7+_0x23a34b(0x1e3);}_0x545fe2&&(_0x57617d=!![],_0x69f169=stripBgMap[_0x26a1f3['id']]??0x0);}),bgEarth[_0x5263ff(0x1c7)][_0x5263ff(0x231)]=_0x5263ff(0x22d)+_0x36a2f8*0.4+_0x5263ff(0x1e3);if(_0x57617d&&_0x69f169>=0x0)showBg(_0x69f169);else _0x36a2f8<_0x30c50d*0.5&&showBg(0x0);ticking=![];});},{'passive':!![]}),document[a0_0x4267f7(0x1cb)](a0_0x4267f7(0x1d3))[a0_0x4267f7(0x1fe)](a0_0x4267f7(0x241),()=>{const _0x40e673=a0_0x4267f7;window[_0x40e673(0x244)]({'top':0x0,'behavior':_0x40e673(0x1bc)});}),function AsteroidBelt(){const _0x697172=a0_0x4267f7,_0x39b30a=document[_0x697172(0x1e2)](_0x697172(0x211));_0x39b30a['id']=_0x697172(0x251),document['body'][_0x697172(0x1fd)](_0x39b30a);const _0x12d3a1=new THREE['WebGLRenderer']({'canvas':_0x39b30a,'alpha':!![],'antialias':!![]});_0x12d3a1['setPixelRatio'](Math[_0x697172(0x202)](window['devicePixelRatio'],0x2)),_0x12d3a1[_0x697172(0x1f9)](window['innerWidth'],window[_0x697172(0x234)]),_0x12d3a1[_0x697172(0x226)](0x0,0x0);const _0x3f9386=new THREE[(_0x697172(0x1c2))](),_0x3777cb=new THREE[(_0x697172(0x1b3))](0x3c,window['innerWidth']/window[_0x697172(0x234)],0.1,0x3e8);_0x3777cb[_0x697172(0x220)]['set'](0x0,0x0,0x1c);const _0x54dd49=0x708,_0xf9da62=new THREE['BufferGeometry'](),_0xd65ddc=new Float32Array(_0x54dd49*0x3),_0x5a9cb1=new Float32Array(_0x54dd49),_0x30def9=new Float32Array(_0x54dd49);for(let _0xd2a277=0x0;_0xd2a277<_0x54dd49;_0xd2a277++){const _0x1e397a=Math[_0x697172(0x1e0)]()*Math['PI']*0x2,_0x439c1f=0xa+Math['random']()*0x8,_0x1ac935=(Math[_0x697172(0x1e0)]()-0.5)*2.5;_0xd65ddc[_0xd2a277*0x3]=Math[_0x697172(0x258)](_0x1e397a)*_0x439c1f,_0xd65ddc[_0xd2a277*0x3+0x1]=_0x1ac935,_0xd65ddc[_0xd2a277*0x3+0x2]=Math[_0x697172(0x219)](_0x1e397a)*_0x439c1f,_0x5a9cb1[_0xd2a277]=0.04+Math[_0x697172(0x1e0)]()*0.18,_0x30def9[_0xd2a277]=0.00008+Math['random']()*0.00015;}_0xf9da62[_0x697172(0x24f)](_0x697172(0x220),new THREE[(_0x697172(0x203))](_0xd65ddc,0x3));const _0x30008f=new THREE['PointsMaterial']({'color':0xc8a96e,'size':0.12,'sizeAttenuation':!![],'transparent':!![],'opacity':0x1}),_0x5bbf62=new THREE[(_0x697172(0x1ad))](_0xf9da62,_0x30008f);_0x3f9386[_0x697172(0x1bf)](_0x5bbf62);let _0x5eee4e=0x0,_0x48de3a=0x0;window[_0x697172(0x1fe)](_0x697172(0x1eb),()=>{const _0x46a2d1=_0x697172;_0x5eee4e=window['scrollY']*0.0008;const _0x1f9ad4=window[_0x46a2d1(0x1c5)]+window['innerHeight']>document[_0x46a2d1(0x257)]['scrollHeight']-0x320;_0x39b30a[_0x46a2d1(0x20e)]['toggle'](_0x46a2d1(0x24c),_0x1f9ad4);},{'passive':!![]}),window[_0x697172(0x1fe)](_0x697172(0x1c1),()=>{const _0x49dfc1=_0x697172;_0x3777cb['aspect']=window[_0x49dfc1(0x20d)]/window['innerHeight'],_0x3777cb[_0x49dfc1(0x1d6)](),_0x12d3a1['setSize'](window['innerWidth'],window[_0x49dfc1(0x234)]);}),function _0x4261d7(){const _0x457f6a=_0x697172;requestAnimationFrame(_0x4261d7),_0x48de3a+=(_0x5eee4e-_0x48de3a)*0.04,_0x5bbf62[_0x457f6a(0x1e4)]['y']=_0x48de3a,_0x5bbf62['rotation']['x']=Math[_0x457f6a(0x219)](_0x48de3a*0.3)*0.08,_0x12d3a1[_0x457f6a(0x255)](_0x3f9386,_0x3777cb);}();}(),function CountUp(){const _0x281ebb=a0_0x4267f7,_0x23daf0=document[_0x281ebb(0x1ff)](_0x281ebb(0x1ec));function _0x4afbb6(_0x20a6ef){const _0x345f78=_0x281ebb,_0x58ee55=_0x20a6ef[_0x345f78(0x222)][0x0]?.[_0x345f78(0x205)]?.['trim']()??'',_0x5aa6b3=parseFloat(_0x58ee55['replace'](/[^0-9.]/g,''));return isNaN(_0x5aa6b3)?null:{'num':_0x5aa6b3,'raw':_0x58ee55,'suffix':_0x20a6ef['querySelector']('span')};}function _0x4dd438(_0x395b40,_0x22a53d,_0x39d200){const _0x301125=_0x281ebb,_0x42ecc4=performance[_0x301125(0x242)](),_0x1b9e2e=_0x22a53d%0x1!==0x0,_0x53ea0b=_0x4f65d9=>_0x1b9e2e?_0x4f65d9[_0x301125(0x1e8)](0x1):Math['round'](_0x4f65d9)['toLocaleString'](),_0x48e4ed=_0x395b40[_0x301125(0x1db)](_0x301125(0x1e1)),_0x763405=_0x48e4ed?_0x48e4ed[_0x301125(0x1bb)]:'';function _0x471aa3(_0x3dc948){const _0x4cc4a7=_0x301125,_0x496251=Math[_0x4cc4a7(0x202)]((_0x3dc948-_0x42ecc4)/_0x39d200,0x1),_0x395a7a=0x1-Math[_0x4cc4a7(0x1b6)](0x1-_0x496251,0x4),_0x46d660=_0x53ea0b(_0x395a7a*_0x22a53d);_0x395b40['innerHTML']=_0x46d660+_0x763405;if(_0x496251<0x1)requestAnimationFrame(_0x471aa3);}requestAnimationFrame(_0x471aa3);}const _0x49fe93=new IntersectionObserver(_0x3af24b=>{_0x3af24b['forEach'](_0xb048cd=>{const _0x2ddc77=a0_0x6652;if(!_0xb048cd[_0x2ddc77(0x23c)])return;const _0x8942e5=_0x4afbb6(_0xb048cd['target']);if(_0x8942e5)_0x4dd438(_0xb048cd[_0x2ddc77(0x1ba)],_0x8942e5[_0x2ddc77(0x253)],0x708);_0x49fe93['unobserve'](_0xb048cd[_0x2ddc77(0x1ba)]);});},{'threshold':0.5});_0x23daf0[_0x281ebb(0x247)](_0x3e9940=>{const _0x1f9e1c=_0x281ebb;if(_0x4afbb6(_0x3e9940))_0x49fe93[_0x1f9e1c(0x1c0)](_0x3e9940);});}(),function CursorGlow(){const _0x35a841=a0_0x4267f7;if(window[_0x35a841(0x1b4)](_0x35a841(0x1b0))['matches'])return;const _0x405843=document['getElementById'](_0x35a841(0x1c9));let _0x41aef6=0x0,_0x2ea97b=0x0,_0x4c42d8=0x0,_0x2f0f1e=0x0;window['addEventListener'](_0x35a841(0x24e),_0x445a5c=>{const _0x23983d=_0x35a841;_0x41aef6=_0x445a5c[_0x23983d(0x245)],_0x2ea97b=_0x445a5c[_0x23983d(0x238)],_0x405843[_0x23983d(0x1c7)]['opacity']='1';}),window[_0x35a841(0x1fe)](_0x35a841(0x217),()=>_0x405843[_0x35a841(0x1c7)]['opacity']='0'),function _0x43762c(){const _0x33752b=_0x35a841;_0x4c42d8+=(_0x41aef6-_0x4c42d8)*0.08,_0x2f0f1e+=(_0x2ea97b-_0x2f0f1e)*0.08,_0x405843['style']['left']=_0x4c42d8+'px',_0x405843[_0x33752b(0x1c7)][_0x33752b(0x1ef)]=_0x2f0f1e+'px',requestAnimationFrame(_0x43762c);}();}(),function ChapterTracker(){const _0x1da360=a0_0x4267f7,_0x71db80=document[_0x1da360(0x1ff)](_0x1da360(0x1f4)),_0x4471c1=document[_0x1da360(0x1cb)](_0x1da360(0x232)),_0x5a69ca=[];_0x71db80[_0x1da360(0x247)]((_0x42c41c,_0x2fb6e0)=>{const _0x3f0b9e=_0x1da360,_0x894e7c=document['createElement']('div');_0x894e7c[_0x3f0b9e(0x1de)]=_0x3f0b9e(0x262),_0x894e7c[_0x3f0b9e(0x23d)]=_0x42c41c['querySelector'](_0x3f0b9e(0x25f))?.[_0x3f0b9e(0x205)]??_0x3f0b9e(0x221)+(_0x2fb6e0+0x1),_0x894e7c['addEventListener'](_0x3f0b9e(0x241),()=>_0x42c41c[_0x3f0b9e(0x22c)]({'behavior':'smooth'})),_0x4471c1['appendChild'](_0x894e7c),_0x5a69ca['push'](_0x894e7c);});const _0x128e1b=new IntersectionObserver(_0x3d46e2=>{const _0x113449=_0x1da360;_0x3d46e2[_0x113449(0x247)](_0x518afe=>{const _0x3bb672=_0x113449,_0x10ee70=[..._0x71db80][_0x3bb672(0x1e9)](_0x518afe[_0x3bb672(0x1ba)]);if(_0x10ee70<0x0)return;_0x5a69ca[_0x10ee70]?.[_0x3bb672(0x20e)]['toggle'](_0x3bb672(0x22f),_0x518afe[_0x3bb672(0x23c)]);}),_0x4471c1[_0x113449(0x20e)][_0x113449(0x21a)](_0x113449(0x24c),window['scrollY']>window[_0x113449(0x234)]*0.5);},{'threshold':0.4});_0x71db80[_0x1da360(0x247)](_0x5bf7bd=>_0x128e1b[_0x1da360(0x1c0)](_0x5bf7bd)),window['addEventListener'](_0x1da360(0x1eb),()=>{const _0xd920b3=_0x1da360;_0x4471c1['classList'][_0xd920b3(0x21a)](_0xd920b3(0x24c),window[_0xd920b3(0x1c5)]>window[_0xd920b3(0x234)]*0.5);},{'passive':!![]});}(),function GSAPWindowStrips(){const _0x15b59c=a0_0x4267f7;gsap['registerPlugin'](ScrollTrigger),document[_0x15b59c(0x1ff)](_0x15b59c(0x21c))[_0x15b59c(0x247)](_0x436073=>{const _0x1fba7c=_0x15b59c,_0x523428=_0x436073[_0x1fba7c(0x1db)](_0x1fba7c(0x1bd)),_0x206fae=_0x436073[_0x1fba7c(0x1db)](_0x1fba7c(0x1f5)),_0x2e0202=_0x206fae?_0x206fae['innerHTML'][_0x1fba7c(0x243)]('<br>'):[];_0x206fae&&_0x2e0202['length']&&(_0x206fae['innerHTML']=_0x2e0202[_0x1fba7c(0x204)](_0x1d7a30=>'<span\x20class=\x22gsap-line\x22\x20style=\x22display:block;overflow:hidden;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22gsap-inner\x22\x20style=\x22display:block;\x22>'+_0x1d7a30+_0x1fba7c(0x1b1))[_0x1fba7c(0x261)](''));const _0x425507=gsap[_0x1fba7c(0x215)]({'scrollTrigger':{'trigger':_0x436073,'start':'top\x2080%','end':_0x1fba7c(0x1f3),'toggleActions':_0x1fba7c(0x236)}});_0x425507[_0x1fba7c(0x214)](_0x436073,{'scale':1.06,'filter':_0x1fba7c(0x25a)},{'scale':0x1,'filter':'brightness(1)','duration':1.4,'ease':_0x1fba7c(0x1b8)},0x0),_0x523428&&_0x425507[_0x1fba7c(0x214)](_0x523428,{'opacity':0x0,'y':0xe,'letterSpacing':_0x1fba7c(0x210)},{'opacity':0x1,'y':0x0,'letterSpacing':'0.4em','duration':0x1,'ease':_0x1fba7c(0x1b8)},0.2),_0x436073['querySelectorAll'](_0x1fba7c(0x1e7))[_0x1fba7c(0x247)]((_0x2d1b2b,_0x2f30ad)=>{const _0x1ebb03=_0x1fba7c;_0x425507[_0x1ebb03(0x214)](_0x2d1b2b,{'y':_0x1ebb03(0x1d0),'opacity':0x0},{'y':'0%','opacity':0x1,'duration':1.1,'ease':_0x1ebb03(0x1b8)},0.35+_0x2f30ad*0.12);});}),document[_0x15b59c(0x1ff)](_0x15b59c(0x1b7))['forEach'](_0x275c8c=>{const _0x2670fc=_0x15b59c;gsap[_0x2670fc(0x214)](_0x275c8c,{'backgroundPositionY':_0x2670fc(0x23e)},{'backgroundPositionY':_0x2670fc(0x1fc),'ease':'none','scrollTrigger':{'trigger':_0x275c8c,'start':_0x2670fc(0x216),'end':_0x2670fc(0x1fb),'scrub':1.5}});}),document['querySelectorAll'](_0x15b59c(0x1f4))[_0x15b59c(0x247)](_0x1816a1=>{const _0x14f6e0=_0x15b59c,_0x43852d=_0x1816a1[_0x14f6e0(0x1ff)](_0x14f6e0(0x246));gsap[_0x14f6e0(0x214)](_0x43852d,{'opacity':0x0,'y':0x26},{'opacity':0x1,'y':0x0,'duration':0.9,'ease':'expo.out','stagger':0.1,'scrollTrigger':{'trigger':_0x1816a1,'start':_0x14f6e0(0x1f0),'toggleActions':_0x14f6e0(0x236)}});}),window['addEventListener'](_0x15b59c(0x23a),()=>ScrollTrigger[_0x15b59c(0x1ae)]());}(),function Starfield(){const _0x136b95=a0_0x4267f7,_0x4eb2c2=document[_0x136b95(0x1cb)](_0x136b95(0x1ea)),_0x2c3ae0=new THREE[(_0x136b95(0x212))]({'canvas':_0x4eb2c2,'alpha':!![],'antialias':![]});_0x2c3ae0[_0x136b95(0x223)](Math[_0x136b95(0x202)](window[_0x136b95(0x1ab)],1.5)),_0x2c3ae0[_0x136b95(0x1f9)](window['innerWidth'],window['innerHeight']),_0x2c3ae0[_0x136b95(0x226)](0x0,0x0);const _0xca3d7d=new THREE[(_0x136b95(0x1c2))](),_0x3d0c25=new THREE[(_0x136b95(0x1b3))](0x4b,window['innerWidth']/window[_0x136b95(0x234)],0.1,0x7d0);_0x3d0c25[_0x136b95(0x220)]['z']=0x1;const _0x1d3e50=0x2710,_0x3750d3=new THREE[(_0x136b95(0x1cc))](),_0x816b90=new Float32Array(_0x1d3e50*0x3),_0x3924c5=new Float32Array(_0x1d3e50*0x3);for(let _0x4f8980=0x0;_0x4f8980<_0x1d3e50;_0x4f8980++){const _0xa11a50=Math[_0x136b95(0x1e0)]()*Math['PI']*0x2,_0x3f94ea=Math[_0x136b95(0x22b)](0x2*Math[_0x136b95(0x1e0)]()-0x1),_0x45fdb7=0x190+Math['random']()*0x258;_0x816b90[_0x4f8980*0x3]=_0x45fdb7*Math[_0x136b95(0x219)](_0x3f94ea)*Math[_0x136b95(0x258)](_0xa11a50),_0x816b90[_0x4f8980*0x3+0x1]=_0x45fdb7*Math[_0x136b95(0x219)](_0x3f94ea)*Math[_0x136b95(0x219)](_0xa11a50),_0x816b90[_0x4f8980*0x3+0x2]=_0x45fdb7*Math[_0x136b95(0x258)](_0x3f94ea);const _0x5c5999=Math['random']()>0.85;_0x3924c5[_0x4f8980*0x3]=_0x5c5999?0x1:0.88+Math[_0x136b95(0x1e0)]()*0.12,_0x3924c5[_0x4f8980*0x3+0x1]=_0x5c5999?0.92:0.88+Math[_0x136b95(0x1e0)]()*0.12,_0x3924c5[_0x4f8980*0x3+0x2]=_0x5c5999?0.72:0.95+Math[_0x136b95(0x1e0)]()*0.05;}_0x3750d3[_0x136b95(0x24f)](_0x136b95(0x220),new THREE[(_0x136b95(0x203))](_0x816b90,0x3)),_0x3750d3[_0x136b95(0x24f)](_0x136b95(0x1b5),new THREE['BufferAttribute'](_0x3924c5,0x3));const _0x54ab87=new THREE['PointsMaterial']({'size':0.8,'vertexColors':!![],'transparent':!![],'opacity':0.9,'sizeAttenuation':!![]}),_0xee1624=new THREE[(_0x136b95(0x1ad))](_0x3750d3,_0x54ab87);_0xca3d7d[_0x136b95(0x1bf)](_0xee1624);let _0x4e19ac=0x0,_0x48bf0e=0x0;window[_0x136b95(0x1fe)](_0x136b95(0x24e),_0x44853a=>{const _0x4c8741=_0x136b95;_0x4e19ac=(_0x44853a[_0x4c8741(0x245)]/window[_0x4c8741(0x20d)]-0.5)*0.3,_0x48bf0e=(_0x44853a['clientY']/window['innerHeight']-0.5)*0.3;},{'passive':!![]});let _0x40098e=0x1,_0x982761=0x1;window[_0x136b95(0x1fe)]('scroll',()=>{const _0xe4efe4=_0x136b95,_0x5971e1=window['scrollY'],_0x4481a8=window[_0xe4efe4(0x234)],_0xdb7a41=document['getElementById'](_0xe4efe4(0x209))?.[_0xe4efe4(0x20e)]['contains'](_0xe4efe4(0x22f));if(_0x5971e1<_0x4481a8*0.15||_0xdb7a41)_0x40098e=0x1;else _0x5971e1>_0x4481a8*0.4?_0x40098e=0.15:_0x40098e=0x1-(_0x5971e1-_0x4481a8*0.15)/(_0x4481a8*0.25);},{'passive':!![]});let _0x4e43df=0x0,_0x39d12d=0x0;const _0x3498d4=0.000018;window[_0x136b95(0x1fe)]('resize',()=>{const _0x344fcb=_0x136b95;_0x3d0c25['aspect']=window[_0x344fcb(0x20d)]/window[_0x344fcb(0x234)],_0x3d0c25['updateProjectionMatrix'](),_0x2c3ae0[_0x344fcb(0x1f9)](window['innerWidth'],window['innerHeight']);});let _0x59b20e=0x0;(function _0x9456ae(){const _0xadba71=_0x136b95;requestAnimationFrame(_0x9456ae),_0x59b20e++,_0x982761+=(_0x40098e-_0x982761)*0.04,_0x4eb2c2[_0xadba71(0x1c7)][_0xadba71(0x1f2)]=_0x982761[_0xadba71(0x1e8)](0x3),_0x4e43df+=_0x3498d4,_0x39d12d+=_0x3498d4*0.6,_0x3d0c25['rotation']['y']+=(_0x4e19ac*0.004-_0x3d0c25[_0xadba71(0x1e4)]['y'])*0.03,_0x3d0c25[_0xadba71(0x1e4)]['x']+=(_0x48bf0e*0.004-_0x3d0c25[_0xadba71(0x1e4)]['x'])*0.03,_0xee1624[_0xadba71(0x1e4)]['y']=_0x4e43df,_0xee1624[_0xadba71(0x1e4)]['x']=Math[_0xadba71(0x219)](_0x39d12d)*0.04,_0x54ab87[_0xadba71(0x1f2)]=0.82+Math[_0xadba71(0x219)](_0x59b20e*0.012)*0.08,_0x2c3ae0['render'](_0xca3d7d,_0x3d0c25);}());}(),function QuantumScramble(){const _0x484613=a0_0x4267f7,_0xf8b648=document[_0x484613(0x1ff)](_0x484613(0x23f)),_0x20284e=_0x484613(0x1af),_0x1844f2=new IntersectionObserver(_0x3c4cd0=>{const _0x6f2905=_0x484613;_0x3c4cd0[_0x6f2905(0x247)](_0x268284=>{const _0x4cbced=_0x6f2905;_0x268284[_0x4cbced(0x23c)]&&_0xf8b648[_0x4cbced(0x247)](_0x5386cb=>{const _0x4d4bdb=_0x4cbced;let _0x1f6fd6=0x0;const _0x538a35=_0x5386cb['getAttribute'](_0x4d4bdb(0x21f));clearInterval(_0x5386cb[_0x4d4bdb(0x20b)]),_0x5386cb[_0x4d4bdb(0x20b)]=setInterval(()=>{const _0x49fa52=_0x4d4bdb;_0x5386cb[_0x49fa52(0x1f1)]=_0x538a35['split']('')[_0x49fa52(0x204)]((_0x4071a4,_0x428567)=>{const _0x347ed2=_0x49fa52;if(_0x428567<_0x1f6fd6)return _0x538a35[_0x428567];return _0x20284e[Math[_0x347ed2(0x250)](Math[_0x347ed2(0x1e0)]()*_0x20284e[_0x347ed2(0x1d4)])];})[_0x49fa52(0x261)](''),_0x1f6fd6>=_0x538a35[_0x49fa52(0x1d4)]&&clearInterval(_0x5386cb['interval']),_0x1f6fd6+=0x1/0x4;},0x28);});});},{'threshold':0.5}),_0x3897aa=document[_0x484613(0x1cb)](_0x484613(0x256));if(_0x3897aa)_0x1844f2['observe'](_0x3897aa);}(),function TacticalScanner(){const _0x87e736=a0_0x4267f7,_0x135abe=document[_0x87e736(0x1cb)]('panel-dark');if(!_0x135abe)return;const _0x4e574e=_0x135abe[_0x87e736(0x1db)](_0x87e736(0x1c4));_0x135abe[_0x87e736(0x1fe)](_0x87e736(0x24e),_0x55b8ee=>{const _0x5f4958=_0x87e736,_0xc4265d=_0x135abe[_0x5f4958(0x235)](),_0x3b7530=_0x55b8ee['clientX']-_0xc4265d[_0x5f4958(0x1da)],_0x7a3926=_0x55b8ee['clientY']-_0xc4265d['top'];_0x4e574e[_0x5f4958(0x1c7)][_0x5f4958(0x1c8)](_0x5f4958(0x1ca),_0x3b7530+'px'),_0x4e574e[_0x5f4958(0x1c7)][_0x5f4958(0x1c8)](_0x5f4958(0x1aa),_0x7a3926+'px');}),_0x135abe['addEventListener'](_0x87e736(0x217),()=>{const _0x18fc2e=_0x87e736;_0x4e574e['style'][_0x18fc2e(0x1c8)](_0x18fc2e(0x1ca),_0x18fc2e(0x1f7)),_0x4e574e[_0x18fc2e(0x1c7)][_0x18fc2e(0x1c8)](_0x18fc2e(0x1aa),'-1000px');});}(),function HyperspaceJump(){const _0x2d72bd=a0_0x4267f7,_0x36fa00=document[_0x2d72bd(0x1cb)](_0x2d72bd(0x213));if(!_0x36fa00)return;const _0x434df8=document[_0x2d72bd(0x1e2)]('div');_0x434df8['id']='warp-flash',document[_0x2d72bd(0x257)][_0x2d72bd(0x1fd)](_0x434df8),_0x36fa00[_0x2d72bd(0x1fe)](_0x2d72bd(0x241),()=>{const _0x28bfea=_0x2d72bd;document[_0x28bfea(0x257)][_0x28bfea(0x20e)][_0x28bfea(0x1bf)]('warping'),setTimeout(()=>{const _0x13bff8=_0x28bfea;_0x434df8[_0x13bff8(0x20e)][_0x13bff8(0x1bf)]('active');},0x1c2),setTimeout(()=>{const _0x85e09e=_0x28bfea;window[_0x85e09e(0x244)](0x0,0x0),document['body'][_0x85e09e(0x20e)]['remove'](_0x85e09e(0x21b)),setTimeout(()=>{_0x434df8['classList']['remove']('active');},0x64);},0x320);});}(),function MagneticGravity(){const _0x5da219=a0_0x4267f7,_0x236b40=document['querySelectorAll'](_0x5da219(0x225));_0x236b40['forEach'](_0xad4fd2=>{const _0x36ee32=_0x5da219,_0x4f4521=_0xad4fd2[_0x36ee32(0x1db)](_0x36ee32(0x20c));if(!_0x4f4521)return;_0xad4fd2[_0x36ee32(0x1fe)](_0x36ee32(0x24e),_0x536cbc=>{const _0x2c467c=_0x36ee32,_0x414437=_0xad4fd2['getBoundingClientRect'](),_0x2c7d22=_0x536cbc[_0x2c467c(0x245)]-_0x414437[_0x2c467c(0x1da)]-_0x414437[_0x2c467c(0x218)]/0x2,_0x350ed2=_0x536cbc[_0x2c467c(0x238)]-_0x414437[_0x2c467c(0x1ef)]-_0x414437[_0x2c467c(0x25b)]/0x2;_0x4f4521[_0x2c467c(0x1c7)][_0x2c467c(0x259)]=_0x2c467c(0x1ed)+_0x2c7d22*0.15+_0x2c467c(0x1dc)+_0x350ed2*0.15+_0x2c467c(0x1e3);}),_0xad4fd2[_0x36ee32(0x1fe)](_0x36ee32(0x217),()=>{const _0x998b1=_0x36ee32;_0x4f4521[_0x998b1(0x1c7)][_0x998b1(0x259)]='translate(0px,\x200px)';});});}(),function DeepSpaceSignal(){const _0x4a45e8=a0_0x4267f7,_0x50a226=document[_0x4a45e8(0x1cb)](_0x4a45e8(0x200));if(!_0x50a226)return;const _0x2e92db=_0x50a226[_0x4a45e8(0x24a)]('2d'),_0x211a94=document[_0x4a45e8(0x1cb)](_0x4a45e8(0x1d1));let _0x8c5e53,_0x289d4d,_0x306831=0x0,_0x509545=1.5,_0x37ad93=1.5,_0x408b99=![],_0x42052a=0x0;function _0x208a3d(){const _0x3ce6cd=_0x4a45e8;_0x8c5e53=_0x50a226[_0x3ce6cd(0x208)],_0x289d4d=_0x50a226[_0x3ce6cd(0x1fa)],_0x50a226['width']=_0x8c5e53,_0x50a226[_0x3ce6cd(0x25b)]=_0x289d4d;}window[_0x4a45e8(0x1fe)](_0x4a45e8(0x1c1),_0x208a3d),_0x208a3d(),_0x211a94['addEventListener'](_0x4a45e8(0x24e),_0x4b535c=>{const _0x4ce070=_0x4a45e8;_0x408b99=!![];const _0x2a2bc5=_0x211a94[_0x4ce070(0x235)]();_0x42052a=(_0x4b535c['clientX']-_0x2a2bc5[_0x4ce070(0x1da)])/_0x8c5e53,_0x509545=0x14+Math[_0x4ce070(0x1e0)]()*0xa;}),_0x211a94['addEventListener'](_0x4a45e8(0x217),()=>{_0x408b99=![],_0x509545=1.5;});function _0x14559(){const _0x4ffc8c=_0x4a45e8;requestAnimationFrame(_0x14559),_0x2e92db[_0x4ffc8c(0x21e)](0x0,0x0,_0x8c5e53,_0x289d4d),_0x37ad93+=(_0x509545-_0x37ad93)*0.1,_0x2e92db[_0x4ffc8c(0x1ac)](),_0x2e92db[_0x4ffc8c(0x24b)]=_0x4ffc8c(0x249),_0x2e92db[_0x4ffc8c(0x240)]=1.5;for(let _0x37f113=0x0;_0x37f113<_0x8c5e53;_0x37f113++){let _0x5f4e45=_0x408b99?0.04+_0x42052a*0.15:0.02,_0x2bcf95=_0x408b99?(Math['random']()-0.5)*_0x37ad93:0x0,_0x2b5e92=_0x289d4d/0x2+Math['sin'](_0x37f113*_0x5f4e45+_0x306831)*_0x37ad93+_0x2bcf95;if(_0x37f113===0x0)_0x2e92db['moveTo'](_0x37f113,_0x2b5e92);else _0x2e92db[_0x4ffc8c(0x25d)](_0x37f113,_0x2b5e92);}_0x2e92db['stroke'](),_0x306831+=_0x408b99?0.2:0.05;}_0x14559();}(),function LiveOrbitalOdometer(){const _0x29f9dd=a0_0x4267f7,_0xfba14e=document[_0x29f9dd(0x1cb)](_0x29f9dd(0x1d7));if(!_0xfba14e)return;const _0x9fd792=document['getElementById'](_0x29f9dd(0x230)),_0x182deb=document[_0x29f9dd(0x1cb)](_0x29f9dd(0x206)),_0x28fcc4=document[_0x29f9dd(0x1cb)](_0x29f9dd(0x1b9)),_0x26371a=document[_0x29f9dd(0x1cb)]('velo-stats'),_0x543ae7=Date[_0x29f9dd(0x242)]();let _0x276b10=![];const _0x4dbe84=new IntersectionObserver(_0x17babe=>{const _0x5189aa=_0x29f9dd;_0x276b10=_0x17babe[0x0][_0x5189aa(0x23c)];});_0x4dbe84[_0x29f9dd(0x1c0)](_0xfba14e);let _0x5b40b1=0x0,_0x4a1938=0x0;_0xfba14e['addEventListener']('mousemove',_0xf4830=>{const _0x52708c=_0x29f9dd,_0x8025a1=_0xfba14e[_0x52708c(0x235)](),_0x4961f1=_0xf4830['clientX']-_0x8025a1['left']-_0x8025a1[_0x52708c(0x218)]/0x2;_0x4a1938=_0x4961f1*-0.12;}),_0xfba14e[_0x29f9dd(0x1fe)](_0x29f9dd(0x217),()=>{_0x4a1938=0x0;});function _0x58ad3f(){const _0x39c002=_0x29f9dd;if(_0x276b10){const _0x2e7bf5=(Date['now']()-_0x543ae7)/0x3e8;_0x9fd792['innerHTML']=Math['floor'](_0x2e7bf5*29.78)[_0x39c002(0x1cd)]()+'<span\x20style=\x22font-size:1.4rem\x22>km</span>',_0x182deb[_0x39c002(0x252)]=Math[_0x39c002(0x250)](_0x2e7bf5*0xe6)['toLocaleString']()+_0x39c002(0x1ee),_0x28fcc4['innerHTML']=_0x2e7bf5[_0x39c002(0x1e8)](0x1);}_0x5b40b1+=(_0x4a1938-_0x5b40b1)*0.08;if(Math['abs'](_0x5b40b1)>0.05||Math[_0x39c002(0x20a)](_0x4a1938)>0x0){const _0x34f2ba=_0x5b40b1*0.3,_0x303170=Math[_0x39c002(0x20a)](_0x5b40b1*0.12);_0x26371a[_0x39c002(0x1c7)][_0x39c002(0x259)]=_0x39c002(0x254)+_0x5b40b1+_0x39c002(0x1df)+_0x34f2ba+_0x39c002(0x1d9),_0x26371a['style'][_0x39c002(0x248)]=-_0x5b40b1+_0x39c002(0x1ce)+_0x303170+_0x39c002(0x22e);}requestAnimationFrame(_0x58ad3f);}_0x58ad3f();}(),function MagneticShieldEngine(){const _0x34ba15=a0_0x4267f7,_0x5a3fd1=document[_0x34ba15(0x1cb)]('panel-shield');if(!_0x5a3fd1)return;const _0x1dbf7f=document[_0x34ba15(0x1e2)]('div');_0x1dbf7f[_0x34ba15(0x1de)]=_0x34ba15(0x1d2),_0x5a3fd1[_0x34ba15(0x1fd)](_0x1dbf7f);const _0x3ff835=_0x5a3fd1[_0x34ba15(0x1ff)](_0x34ba15(0x25c));_0x5a3fd1[_0x34ba15(0x1fe)]('mousemove',_0x2c6398=>{const _0x42c2af=_0x34ba15,_0x93f829=_0x5a3fd1[_0x42c2af(0x235)](),_0x295609=_0x2c6398[_0x42c2af(0x245)]-_0x93f829['left'],_0x355763=_0x2c6398[_0x42c2af(0x238)]-_0x93f829[_0x42c2af(0x1ef)];_0x1dbf7f['style'][_0x42c2af(0x1da)]=_0x295609+'px',_0x1dbf7f['style']['top']=_0x355763+'px',_0x1dbf7f[_0x42c2af(0x1c7)]['opacity']=0x1,_0x3ff835[_0x42c2af(0x247)](_0x302fc2=>{const _0x9e9dd6=_0x42c2af,_0x2a50e3=_0x302fc2[_0x9e9dd6(0x235)](),_0x365f04=_0x2a50e3[_0x9e9dd6(0x1da)]-_0x93f829[_0x9e9dd6(0x1da)]+_0x2a50e3[_0x9e9dd6(0x218)]/0x2,_0x3bc145=_0x2a50e3[_0x9e9dd6(0x1ef)]-_0x93f829[_0x9e9dd6(0x1ef)]+_0x2a50e3[_0x9e9dd6(0x25b)]/0x2,_0x588a29=_0x295609-_0x365f04,_0x5a954a=_0x355763-_0x3bc145,_0x3e4088=Math[_0x9e9dd6(0x201)](_0x588a29*_0x588a29+_0x5a954a*_0x5a954a);if(_0x3e4088<0xb4){const _0x1ca9d9=(0xb4-_0x3e4088)*0.15,_0x9bd909=_0x588a29/_0x3e4088*-_0x1ca9d9,_0x1c8fb3=_0x5a954a/_0x3e4088*-_0x1ca9d9;_0x302fc2[_0x9e9dd6(0x1c7)][_0x9e9dd6(0x259)]='translate('+_0x9bd909+'px,\x20'+_0x1c8fb3+'px)\x20scale(0.98)',_0x302fc2[_0x9e9dd6(0x1c7)][_0x9e9dd6(0x248)]=-_0x9bd909*0.5+'px\x20'+-_0x1c8fb3*0.5+'px\x2015px\x20rgba(200,\x20169,\x20110,\x200.4)',_0x302fc2[_0x9e9dd6(0x1c7)][_0x9e9dd6(0x1e5)]='none';}else _0x302fc2[_0x9e9dd6(0x1c7)][_0x9e9dd6(0x259)]=_0x9e9dd6(0x22a),_0x302fc2[_0x9e9dd6(0x1c7)][_0x9e9dd6(0x248)]=_0x9e9dd6(0x1a9),_0x302fc2[_0x9e9dd6(0x1c7)][_0x9e9dd6(0x1e5)]=_0x9e9dd6(0x228);});}),_0x5a3fd1['addEventListener'](_0x34ba15(0x217),()=>{const _0x556ef5=_0x34ba15;_0x1dbf7f[_0x556ef5(0x1c7)]['opacity']=0x0,_0x3ff835[_0x556ef5(0x247)](_0xce8f65=>{const _0x416b6b=_0x556ef5;_0xce8f65[_0x416b6b(0x1c7)][_0x416b6b(0x259)]=_0x416b6b(0x22a),_0xce8f65['style'][_0x416b6b(0x248)]=_0x416b6b(0x1a9),_0xce8f65[_0x416b6b(0x1c7)][_0x416b6b(0x1e5)]=_0x416b6b(0x228);});});}(),function HeatDeathEngine(){const _0x2b12fc=a0_0x4267f7,_0x310d82=document[_0x2b12fc(0x1cb)](_0x2b12fc(0x1b2));if(!_0x310d82)return;let _0x343c27=0x0,_0x38c573=0x0;_0x310d82[_0x2b12fc(0x1fe)](_0x2b12fc(0x24e),_0x58d00e=>{const _0x1474e2=_0x2b12fc,_0x12f17c=_0x310d82['getBoundingClientRect']();_0x343c27=Math[_0x1474e2(0x1d8)](0x0,Math['min'](0x1,(_0x58d00e[_0x1474e2(0x245)]-_0x12f17c['left'])/_0x12f17c[_0x1474e2(0x218)]));}),_0x310d82[_0x2b12fc(0x1fe)](_0x2b12fc(0x217),()=>{_0x343c27=0x0;});function _0x24a258(){const _0x594d16=_0x2b12fc;_0x38c573+=(_0x343c27-_0x38c573)*0.06,(Math[_0x594d16(0x20a)](_0x343c27-_0x38c573)>0.001||_0x38c573>0.001)&&_0x310d82[_0x594d16(0x1c7)]['setProperty'](_0x594d16(0x1dd),_0x38c573[_0x594d16(0x1e8)](0x4)),requestAnimationFrame(_0x24a258);}_0x24a258();}();
+  const hero   = document.getElementById('hero');
+  const strips = document.querySelectorAll('.window-strip');
+  const bgHero = document.getElementById('bg-hero');
+  const bgOdy  = document.getElementById('bg-odyssey');
+  const bgBel  = document.getElementById('bg-believe');
+  const bgEarth= document.getElementById('bg-earth');
+  const allBgs = [bgHero, bgOdy, bgBel, bgEarth];
+  let activeBgIdx = 0;
+
+  function showBg(idx) {
+    if (idx === activeBgIdx) return;
+    allBgs[activeBgIdx].classList.remove('active');
+    allBgs[idx].classList.add('active');
+    activeBgIdx = idx;
+  }
+
+  // Map each strip id → which global bg to switch to
+  // 0=hero/space, 1=odyssey/nebula, 2=believe/sky, 3=earth globe
+// 1. Keep the Earth (index 3) active for all the new chapters!
+  const stripBgMap = {
+    'win-odyssey': 1,
+    'win-believe': 2,
+    'win-depth':   2,
+    'win-earth':   3,   
+    'win-signal':  3,   // Now uses Earth
+    'win-velocity': 3,  // Now uses Earth
+    'win-shield':  3,   // Now uses Earth
+    'win-eternity': 0,
+    'win-quantum': 0,
+    'win-observer': 0,
+  };
+
+  let ticking = false;
+
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+
+    requestAnimationFrame(() => {
+      const y  = window.scrollY;
+      const vh = window.innerHeight;
+
+      // Hide/show hero text
+      hero.classList.toggle('hidden', y > vh * 0.22);
+      
+      // ADD THIS LINE: Secretly unhide the footer once the solid panels cover it
+      document.querySelector('.parallax-footer').classList.toggle('unhide', y > vh * 0.5);
+
+      let anyStripVisible = false;
+      let activeBgForStrip = -1;
+
+      strips.forEach(strip => {
+        const rect   = strip.getBoundingClientRect();
+        // Widened the detection zone slightly so the background doesn't drop between panels
+        const inView = rect.top < vh * 0.8 && rect.bottom > vh * 0.2;
+
+        if (strip.id === 'win-earth') {
+          const stripScrolledY = y + rect.top; 
+          const relativeScroll = y - stripScrolledY;  
+          strip.style.backgroundPosition = `center calc(50% + ${relativeScroll * 0.4}px)`;
+        } else {
+          const stripCenter = rect.top + rect.height / 2;
+          const viewCenter  = vh / 2;
+          const offset      = (viewCenter - stripCenter) * 0.4;
+          strip.style.backgroundPositionY = `calc(50% + ${offset}px)`;
+        }
+
+        if (inView) {
+          anyStripVisible = true;
+          activeBgForStrip = stripBgMap[strip.id] ?? 0;
+        }
+      });
+
+      bgEarth.style.backgroundPositionY = `calc(50% + ${y * 0.4}px)`;
+
+      // FIX: Only switch backgrounds if a strip is claiming it. 
+      // If we are at the top, show 0. If we are at the bottom, just leave the Earth alone!
+      if (anyStripVisible && activeBgForStrip >= 0) {
+        showBg(activeBgForStrip);
+      } else if (y < vh * 0.5) {
+        showBg(0); 
+      }
+
+      ticking = false;
+    });
+  }, { passive: true });
+
+  document.getElementById('cta-top').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+(function AsteroidBelt() {
+  const canvas = document.createElement('canvas');
+  canvas.id = 'asteroid-canvas';
+  document.body.appendChild(canvas);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 28);
+
+  /* ── Asteroid particles ── */
+  const COUNT   = 1800;
+  const geo     = new THREE.BufferGeometry();
+  const pos     = new Float32Array(COUNT * 3);
+  const sizes   = new Float32Array(COUNT);
+  const speeds  = new Float32Array(COUNT); // individual orbit speeds
+
+  for (let i = 0; i < COUNT; i++) {
+    const angle  = Math.random() * Math.PI * 2;
+    const radius = 10 + Math.random() * 8;       // belt between r=10–18
+    const spread = (Math.random() - 0.5) * 2.5;  // slight vertical scatter
+    pos[i * 3]     = Math.cos(angle) * radius;
+    pos[i * 3 + 1] = spread;
+    pos[i * 3 + 2] = Math.sin(angle) * radius;
+    sizes[i]   = 0.04 + Math.random() * 0.18;
+    speeds[i]  = 0.00008 + Math.random() * 0.00015;
+  }
+
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+  const mat = new THREE.PointsMaterial({
+    color: 0xc8a96e,
+    size: 0.12,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 1,
+  });
+
+  const belt = new THREE.Points(geo, mat);
+  scene.add(belt);
+
+/* ── Slow rotation driven by scroll ── */
+  let targetRot = 0;
+  let currentRot = 0;
+
+  window.addEventListener('scroll', () => {
+    targetRot = window.scrollY * 0.0008;
+    
+    // Check if we are near the bottom of the page (the footer gap)
+    const nearBottom = (window.scrollY + window.innerHeight) > (document.body.scrollHeight - 800);
+    
+    // Fade in the asteroids only when the footer is revealing
+    canvas.classList.toggle('visible', nearBottom);
+  }, { passive: true });
+
+  /* (The Resize section should be right below this) */
+
+  /* ── Resize ── */
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  /* ── Render loop ── */
+  (function animate() {
+    requestAnimationFrame(animate);
+    currentRot += (targetRot - currentRot) * 0.04; // smooth lerp
+    belt.rotation.y = currentRot;
+    belt.rotation.x = Math.sin(currentRot * 0.3) * 0.08; // gentle tilt wobble
+    renderer.render(scene, camera);
+  })();
+})();
+
+(function CountUp() {
+  const stats = document.querySelectorAll('.stat-num');
+
+  function parseVal(el) {
+    const raw = el.childNodes[0]?.textContent?.trim() ?? '';
+    const num = parseFloat(raw.replace(/[^0-9.]/g, ''));
+    return isNaN(num) ? null : { num, raw, suffix: el.querySelector('span') };
+  }
+
+  function animateCount(el, target, duration) {
+    const start = performance.now();
+    const isFloat = target % 1 !== 0;
+    const fmt = v => isFloat ? v.toFixed(1) : Math.round(v).toLocaleString();
+    const suffix = el.querySelector('span');
+    const suffixHTML = suffix ? suffix.outerHTML : '';
+
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 4);
+      const val = fmt(ease * target);
+      el.innerHTML = val + suffixHTML;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const parsed = parseVal(e.target);
+      if (parsed) animateCount(e.target, parsed.num, 1800);
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.5 });
+
+  stats.forEach(el => {
+    if (parseVal(el)) io.observe(el);
+  });
+})();
+
+(function CursorGlow() {
+  if (window.matchMedia('(pointer: coarse)').matches) return;
+  const glow = document.getElementById('cursor-glow');
+  let mx = 0, my = 0, cx = 0, cy = 0;
+  window.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    glow.style.opacity = '1';
+  });
+  window.addEventListener('mouseleave', () => glow.style.opacity = '0');
+  (function lerp() {
+    cx += (mx - cx) * 0.08;
+    cy += (my - cy) * 0.08;
+    glow.style.left = cx + 'px';
+    glow.style.top  = cy + 'px';
+    requestAnimationFrame(lerp);
+  })();
+})();
+
+(function ChapterTracker() {
+  const panels  = document.querySelectorAll('.panel');
+  const tracker = document.getElementById('chapter-tracker');
+  const dots    = [];
+
+  panels.forEach((panel, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'chapter-dot';
+    dot.title = panel.querySelector('.section-label')?.textContent ?? 'Section ' + (i+1);
+    dot.addEventListener('click', () => panel.scrollIntoView({ behavior: 'smooth' }));
+    tracker.appendChild(dot);
+    dots.push(dot);
+  });
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const i = [...panels].indexOf(e.target);
+      if (i < 0) return;
+      dots[i]?.classList.toggle('active', e.isIntersecting);
+    });
+    tracker.classList.toggle('visible', window.scrollY > window.innerHeight * 0.5);
+  }, { threshold: 0.4 });
+
+  panels.forEach(p => io.observe(p));
+
+  window.addEventListener('scroll', () => {
+    tracker.classList.toggle('visible', window.scrollY > window.innerHeight * 0.5);
+  }, { passive: true });
+})();
+
+(function GSAPWindowStrips() {
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* ── Each window strip gets its own timeline ── */
+  document.querySelectorAll('.window-strip').forEach(strip => {
+    const label = strip.querySelector('.win-label');
+    const title = strip.querySelector('.win-title');
+
+    /* Split title into lines manually */
+    const lines = title ? title.innerHTML.split('<br>') : [];
+
+    if (title && lines.length) {
+      title.innerHTML = lines
+        .map(l => `<span class="gsap-line" style="display:block;overflow:hidden;">
+                     <span class="gsap-inner" style="display:block;">${l}</span>
+                   </span>`)
+        .join('');
+    }
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: strip,
+        start:   'top 80%',
+        end:     'bottom 20%',
+        toggleActions: 'play none none reverse',
+      }
+    });
+
+    /* Strip itself: subtle scale + brightness punch */
+    tl.fromTo(strip,
+      { scale: 1.06, filter: 'brightness(0.7)' },
+      { scale: 1,    filter: 'brightness(1)',
+        duration: 1.4, ease: 'expo.out' },
+      0
+    );
+
+    /* Label fades up */
+    if (label) {
+      tl.fromTo(label,
+        { opacity: 0, y: 14, letterSpacing: '0.8em' },
+        { opacity: 1, y: 0,  letterSpacing: '0.4em',
+          duration: 1, ease: 'expo.out' },
+        0.2
+      );
+    }
+
+    /* Each title line slides up from clipped container */
+    strip.querySelectorAll('.gsap-inner').forEach((inner, i) => {
+      tl.fromTo(inner,
+        { y: '105%', opacity: 0 },
+        { y: '0%',   opacity: 1,
+          duration: 1.1, ease: 'expo.out' },
+        0.35 + i * 0.12
+      );
+    });
+  });
+
+  /* ── Parallax depth on strip backgrounds via GSAP ──
+     Overrides the manual JS parallax only for strips,
+     keeping your existing earth/hero logic untouched   */
+  document.querySelectorAll('.window-strip:not(#win-earth)').forEach(strip => {
+    gsap.fromTo(strip,
+      { backgroundPositionY: '30%' },
+      {
+        backgroundPositionY: '70%',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: strip,
+          start:  'top bottom',
+          end:    'bottom top',
+          scrub:  1.5,
+        }
+      }
+    );
+  });
+
+  /* ── Panel content stagger on entry ── */
+  document.querySelectorAll('.panel').forEach(panel => {
+    const els = panel.querySelectorAll('.section-label, .section-title, .section-body, .stat, .quote-block');
+    gsap.fromTo(els,
+      { opacity: 0, y: 38 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.9,
+        ease: 'expo.out',
+        stagger: 0.1,
+        scrollTrigger: {
+          trigger: panel,
+          start:   'top 75%',
+          toggleActions: 'play none none reverse',
+        }
+      }
+    );
+  });
+
+  /* Refresh on load to catch dynamic heights */
+  window.addEventListener('load', () => ScrollTrigger.refresh());
+})();
+
+(function Starfield() {
+  const canvas   = document.getElementById('starfield-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.position.z = 1;
+
+  /* ── 10k stars in a sphere around camera ── */
+  const COUNT = 10000;
+  const geo   = new THREE.BufferGeometry();
+  const pos   = new Float32Array(COUNT * 3);
+  const col   = new Float32Array(COUNT * 3);
+
+  for (let i = 0; i < COUNT; i++) {
+    /* Distribute on sphere surface — gives realistic sky feel */
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r     = 400 + Math.random() * 600;
+
+    pos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i * 3 + 2] = r * Math.cos(phi);
+
+    /* Slight warm/cool color variation — mostly white, some gold tint */
+    const warm = Math.random() > 0.85;
+    col[i * 3]     = warm ? 1.0 : 0.88 + Math.random() * 0.12;
+    col[i * 3 + 1] = warm ? 0.92 : 0.88 + Math.random() * 0.12;
+    col[i * 3 + 2] = warm ? 0.72 : 0.95 + Math.random() * 0.05;
+  }
+
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+
+  const mat = new THREE.PointsMaterial({
+    size:           0.8,
+    vertexColors:   true,
+    transparent:    true,
+    opacity:        0.9,
+    sizeAttenuation: true,
+  });
+
+  const stars = new THREE.Points(geo, mat);
+  scene.add(stars);
+
+  /* ── Mouse parallax — very subtle, calming ── */
+  let mx = 0, my = 0;
+  window.addEventListener('mousemove', e => {
+    mx = (e.clientX / window.innerWidth  - 0.5) * 0.3;
+    my = (e.clientY / window.innerHeight - 0.5) * 0.3;
+  }, { passive: true });
+
+  /* ── Scroll: fade canvas out as content panels appear,
+     fade back in when near top or earth section          ── */
+  let targetOpacity = 1;
+  let currentOpacity = 1;
+
+  window.addEventListener('scroll', () => {
+    const y  = window.scrollY;
+    const vh = window.innerHeight;
+    const earthActive = document.getElementById('bg-earth')?.classList.contains('active');
+
+    if (y < vh * 0.15 || earthActive) {
+      targetOpacity = 1;
+    } else if (y > vh * 0.4) {
+      /* Fade to subtle presence behind content */
+      targetOpacity = 0.15;
+    } else {
+      targetOpacity = 1 - ((y - vh * 0.15) / (vh * 0.25));
+    }
+  }, { passive: true });
+
+  /* ── Slow autonomous drift ── */
+  let driftX = 0, driftY = 0;
+  const DRIFT_SPEED = 0.000018;
+
+  /* ── Resize ── */
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  /* ── Render loop ── */
+  let frame = 0;
+  (function animate() {
+    requestAnimationFrame(animate);
+    frame++;
+
+    /* Lerp opacity */
+    currentOpacity += (targetOpacity - currentOpacity) * 0.04;
+    canvas.style.opacity = currentOpacity.toFixed(3);
+
+    /* Lerp camera toward mouse + drift */
+    driftX += DRIFT_SPEED;
+    driftY += DRIFT_SPEED * 0.6;
+
+    camera.rotation.y += (mx * 0.004 - camera.rotation.y) * 0.03;
+    camera.rotation.x += (my * 0.004 - camera.rotation.x) * 0.03;
+
+    /* Very slow autonomous spin so it never looks frozen */
+    stars.rotation.y = driftX;
+    stars.rotation.x = Math.sin(driftY) * 0.04;
+
+    /* Twinkle: modulate opacity gently via sin wave */
+    mat.opacity = 0.82 + Math.sin(frame * 0.012) * 0.08;
+
+    renderer.render(scene, camera);
+  })();
+})();
+
+(function QuantumScramble() {
+  const elements = document.querySelectorAll('.scramble-text');
+  const chars = '!<>-_\\/[]{}—=+*^?#_';
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      // Only trigger when the panel actually enters the screen
+      if (entry.isIntersecting) {
+        elements.forEach(el => {
+          let iteration = 0;
+          const final = el.getAttribute('data-final');
+          clearInterval(el.interval);
+          
+          el.interval = setInterval(() => {
+            el.innerText = final.split('').map((letter, index) => {
+              if(index < iteration) return final[index];
+              return chars[Math.floor(Math.random() * chars.length)];
+            }).join('');
+            
+            if(iteration >= final.length){ 
+              clearInterval(el.interval);
+            }
+            iteration += 1 / 4; // Adjust this fraction to make the decode faster or slower
+          }, 40);
+        });
+      }
+    });
+  }, { threshold: 0.5 }); // Triggers when the panel is 50% visible
+  
+  const panel = document.getElementById('panel-quantum');
+  if(panel) observer.observe(panel);
+})();
+
+(function TacticalScanner() {
+  const panel = document.getElementById('panel-dark');
+  if (!panel) return;
+  const cover = panel.querySelector('.flashlight-cover');
+
+  panel.addEventListener('mousemove', (e) => {
+    const rect = panel.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Updates CSS variables in real-time to move the transparent hole
+    cover.style.setProperty('--mouse-x', `${x}px`);
+    cover.style.setProperty('--mouse-y', `${y}px`);
+  });
+  
+  // Plunge back into darkness when the mouse leaves
+  panel.addEventListener('mouseleave', () => {
+    cover.style.setProperty('--mouse-x', `-1000px`);
+    cover.style.setProperty('--mouse-y', `-1000px`);
+  });
+})();
+
+(function HyperspaceJump() {
+  const btn = document.getElementById('btn-warp');
+  if (!btn) return;
+
+  // Create the flash overlay dynamically
+  const flash = document.createElement('div');
+  flash.id = 'warp-flash';
+  document.body.appendChild(flash);
+  
+  btn.addEventListener('click', () => {
+    // 1. Engage Hyperdrive (stretch and blur the UI)
+    document.body.classList.add('warping');
+    
+    // 2. The Whiteout Flash (triggers right as the stretch peaks)
+    setTimeout(() => {
+      flash.classList.add('active');
+    }, 450); 
+    
+    // 3. Teleport and Reset (happens while the screen is completely white)
+    setTimeout(() => {
+      window.scrollTo(0, 0); // Instant teleport to the top
+      document.body.classList.remove('warping');
+      
+      // 4. Emerge from Warp (fade the white flash away)
+      setTimeout(() => {
+        flash.classList.remove('active');
+      }, 100);
+    }, 800);
+  });
+})();
+
+(function MagneticGravity() {
+  const wells = document.querySelectorAll('.gravity-well');
+  
+  wells.forEach(well => {
+    const target = well.querySelector('.magnetic-target');
+    if (!target) return;
+    
+    well.addEventListener('mousemove', (e) => {
+      const rect = well.getBoundingClientRect();
+      // Calculate where the mouse is relative to the center of the stat
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      
+      // Pull the number towards the mouse (15% of the distance)
+      target.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+    });
+    
+    well.addEventListener('mouseleave', () => {
+      // Mouse leaves, physics snap it back to reality
+      target.style.transform = `translate(0px, 0px)`;
+    });
+  });
+})();
+
+(function DeepSpaceSignal() {
+  const canvas = document.getElementById('signal-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const zone = document.getElementById('signal-zone');
+
+  let width, height;
+  let time = 0;
+  let targetAmplitude = 1.5; // Starts as a calm baseline
+  let currentAmplitude = 1.5;
+  let isHovering = false;
+  let mouseX = 0;
+
+  // Fit canvas to the exact size of the stat container
+  function resize() {
+    width = canvas.offsetWidth;
+    height = canvas.offsetHeight;
+    canvas.width = width;
+    canvas.height = height;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  zone.addEventListener('mousemove', (e) => {
+    isHovering = true;
+    const rect = zone.getBoundingClientRect();
+    // Use the mouse X position as a tuning dial for the frequency
+    mouseX = (e.clientX - rect.left) / width;
+    targetAmplitude = 20 + (Math.random() * 10); // The wave spikes wildly
+  });
+
+  zone.addEventListener('mouseleave', () => {
+    isHovering = false;
+    targetAmplitude = 1.5; // Signal goes dead again
+  });
+
+  function drawSignal() {
+    requestAnimationFrame(drawSignal);
+    ctx.clearRect(0, 0, width, height);
+
+    // Smooth physics transition for the amplitude jump
+    currentAmplitude += (targetAmplitude - currentAmplitude) * 0.1;
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(200, 169, 110, 0.7)'; // Golden accent
+    ctx.lineWidth = 1.5;
+
+    for (let x = 0; x < width; x++) {
+      // Calculate complex waveform: Sine wave + High frequency static
+      let freq = isHovering ? 0.04 + (mouseX * 0.15) : 0.02;
+      let noise = isHovering ? (Math.random() - 0.5) * currentAmplitude : 0;
+      
+      let y = (height / 2) + Math.sin(x * freq + time) * currentAmplitude + noise;
+      
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    
+    // Wave moves faster when you are actively scanning it
+    time += isHovering ? 0.2 : 0.05; 
+  }
+  drawSignal();
+})();
+
+(function LiveOrbitalOdometer() {
+  const panel = document.getElementById('panel-velocity');
+  if (!panel) return;
+
+  const statSun = document.getElementById('stat-sun');
+  const statGal = document.getElementById('stat-gal');
+  const statSec = document.getElementById('stat-sec');
+  const statsContainer = document.getElementById('velo-stats');
+
+  // Lock in the exact millisecond the user arrived on the website
+  const arrivalTime = Date.now();
+  let isVisible = false;
+
+  // Only run the heavy math when the user is actually looking at Chapter 6
+  const observer = new IntersectionObserver(e => { isVisible = e[0].isIntersecting; });
+  observer.observe(panel);
+
+  // Variables for the Slipstream Mouse Physics
+  let currentX = 0;
+  let targetX = 0;
+
+  panel.addEventListener('mousemove', (e) => {
+    const rect = panel.getBoundingClientRect();
+    const relativeX = (e.clientX - rect.left) - (rect.width / 2);
+    // The text pushes back against the mouse inversely (wind resistance)
+    targetX = relativeX * -0.12; 
+  });
+
+  // Snap back to normal when the mouse leaves
+  panel.addEventListener('mouseleave', () => { targetX = 0; });
+
+  function renderLoop() {
+    if (isVisible) {
+      // 1. Calculate live travel distance
+      const elapsedSec = (Date.now() - arrivalTime) / 1000;
+      
+      // Earth orbits the sun at ~29.78 kilometers per second
+      statSun.innerHTML = Math.floor(elapsedSec * 29.78).toLocaleString() + '<span style="font-size:1.4rem">km</span>';
+      
+      // The solar system moves through the Milky Way at ~230 kilometers per second
+      statGal.innerHTML = Math.floor(elapsedSec * 230).toLocaleString() + '<span style="font-size:1.4rem">km</span>';
+      
+      // Exact time spent on page
+      statSec.innerHTML = elapsedSec.toFixed(1);
+    }
+
+    // 2. Apply Slipstream Physics Engine
+    currentX += (targetX - currentX) * 0.08; // Smooth lerping
+    
+    if (Math.abs(currentX) > 0.05 || Math.abs(targetX) > 0) {
+      const skew = currentX * 0.3; // Text leans into the wind
+      const blur = Math.abs(currentX * 0.12); // Speed blur trail
+      
+      statsContainer.style.transform = `translateX(${currentX}px) skewX(${skew}deg)`;
+      statsContainer.style.textShadow = `${-currentX}px 0 ${blur}px rgba(200, 169, 110, 0.4)`;
+    }
+
+    requestAnimationFrame(renderLoop);
+  }
+  renderLoop();
+})();
+
+(function MagneticShieldEngine() {
+  const panel = document.getElementById('panel-shield');
+  if (!panel) return;
+
+  // Create the aurora flare element dynamically
+  const flare = document.createElement('div');
+  flare.className = 'aurora-flare';
+  panel.appendChild(flare);
+
+  const targets = panel.querySelectorAll('.shield-target');
+
+  panel.addEventListener('mousemove', (e) => {
+    const rect = panel.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // 1. Move the Aurora Flare to the mouse
+    flare.style.left = mouseX + 'px';
+    flare.style.top = mouseY + 'px';
+    flare.style.opacity = 1;
+
+    // 2. Calculate Magnetic Repulsion for every target
+    targets.forEach(el => {
+      const elRect = el.getBoundingClientRect();
+      // Find the exact center of the typography block
+      const elCenterX = elRect.left - rect.left + (elRect.width / 2);
+      const elCenterY = elRect.top - rect.top + (elRect.height / 2);
+
+      const distX = mouseX - elCenterX;
+      const distY = mouseY - elCenterY;
+      const distance = Math.sqrt(distX * distX + distY * distY);
+
+      // The "Forcefield Radius" — 180px
+      if (distance < 180) {
+        // The closer you get, the harder it pushes back
+        const force = (180 - distance) * 0.15; 
+        const pushX = (distX / distance) * -force;
+        const pushY = (distY / distance) * -force;
+        
+        // Push the text away and give it a slight golden radiation shadow
+        el.style.transform = `translate(${pushX}px, ${pushY}px) scale(0.98)`;
+        el.style.textShadow = `${-pushX * 0.5}px ${-pushY * 0.5}px 15px rgba(200, 169, 110, 0.4)`;
+        // Strip the transition so it moves instantly while inside the field
+        el.style.transition = 'none'; 
+      } else {
+        // You are outside the radius, snap the text back to normal
+        el.style.transform = `translate(0, 0) scale(1)`;
+        el.style.textShadow = 'none';
+        el.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), text-shadow 0.3s ease';
+      }
+    });
+  });
+
+  // Turn off the engine when the mouse leaves the panel
+  panel.addEventListener('mouseleave', () => {
+    flare.style.opacity = 0;
+    targets.forEach(el => {
+      el.style.transform = `translate(0, 0) scale(1)`;
+      el.style.textShadow = 'none';
+      el.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), text-shadow 0.3s ease';
+    });
+  });
+})();
+
+(function HeatDeathEngine() {
+  const panel = document.getElementById('panel-eternity');
+  if (!panel) return;
+
+  let targetEntropy = 0;
+  let currentEntropy = 0;
+
+  // Track the mouse X position and map it to a 0-1 percentage
+  panel.addEventListener('mousemove', (e) => {
+    const rect = panel.getBoundingClientRect();
+    targetEntropy = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  });
+
+  // Slowly rewind time back to the present day when the mouse leaves
+  panel.addEventListener('mouseleave', () => {
+    targetEntropy = 0;
+  });
+
+  // Smooth mathematical lerping to prevent jittering
+  function renderEntropy() {
+    currentEntropy += (targetEntropy - currentEntropy) * 0.06;
+    
+    // Only update the DOM if a visual change is actually occurring
+    if (Math.abs(targetEntropy - currentEntropy) > 0.001 || currentEntropy > 0.001) {
+      panel.style.setProperty('--entropy', currentEntropy.toFixed(4));
+    }
+    
+    requestAnimationFrame(renderEntropy);
+  }
+  renderEntropy();
+})();
+</script>
+<script>
+(function EliteElementalVault() {
+  const Z_INDEX = 85000;
+  
+  const telemetryData = {
+    air: [
+      { label: 'KÁRMÁN BOUNDARY', value: '100.0', unit: 'km' },
+      { label: 'NITROGEN / OXYGEN', value: '78/21', unit: '%' },
+      { label: 'EXOSPHERE PRESSURE', value: '~0.0', unit: 'hPa' }
+    ],
+    water: [
+      { label: 'MARIANA TRENCH', value: '1086', unit: 'bar' },
+      { label: 'UNEXPLORED ABYSS', value: '>80.0', unit: '%' },
+      { label: 'TOTAL VOLUME', value: '1.38B', unit: 'km³' }
+    ],
+    earth: [
+      { label: 'TECTONIC DRIFT', value: '3.8', unit: 'cm/yr' },
+      { label: 'MANTLE PEAK TEMP', value: '4000', unit: '°C' },
+      { label: 'CRUST MASS', value: '2.7e19', unit: 'kg' }
+    ]
+  };
+
+  const style = document.createElement('style');
+  style.innerHTML = `
+    #elemental-vault {
+      position: fixed; inset: 0; z-index: ${Z_INDEX}; background: #020202; color: #f0ece3;
+      visibility: hidden; pointer-events: none;
+      clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+      transition: clip-path 1.2s cubic-bezier(0.85, 0, 0.15, 1), visibility 1.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    #elemental-vault.active {
+      visibility: visible; pointer-events: auto;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    #vault-track { display: flex; width: 300vw; height: 100vh; will-change: transform; }
+    .vault-panel { width: 100vw; height: 100vh; position: relative; display: flex; flex-direction: column; justify-content: center; padding: 5vw; overflow: hidden; }
+    
+    /* Typography */
+    .vault-title { font-family: 'Cormorant Garamond', serif; font-size: 3rem; color: #fff; z-index: 10; font-style: italic; letter-spacing: 0.1em; mix-blend-mode: difference; }
+    .telemetry-grid { display: flex; flex-direction: column; gap: 2rem; z-index: 10; width: fit-content; mix-blend-mode: difference; }
+    .tel-row { border-left: 2px solid rgba(200, 169, 110, 0.6); padding-left: 1.5rem; }
+    .tel-val { font-family: 'Cormorant Garamond', serif; font-size: clamp(3rem, 5vw, 5rem); color: #c8a96e; line-height: 1; display: inline-block; }
+    .tel-label { font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: #a19582; margin-top: 0.5rem; display: block; }
+
+    /* UI */
+    #close-vault { position: absolute; top: 2rem; right: 2rem; background: transparent; border: 1px solid rgba(200, 169, 110, 0.4); color: #c8a96e; padding: 0.5rem 1.5rem; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; z-index: 90000; transition: 0.3s; }
+    #close-vault:hover { background: #c8a96e; color: #000; }
+    #open-vault-btn { position: relative; margin: 2rem auto; display: block; padding: 1rem 3rem; border: 1px solid #c8a96e; color: #c8a96e; background: transparent; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
+    #open-vault-btn:hover { background: #c8a96e; color: #000; box-shadow: 0 0 20px rgba(200,169,110,0.4); }
+
+    //* --- AIR: KINETIC SLIPSTREAM --- */
+    .bg-air { 
+      position: absolute; inset: 0; overflow: hidden;
+      /* Lowered opacity to let the stratosphere show through */
+      background-image: linear-gradient(to bottom, rgba(2, 5, 10, 0.4), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover; background-position: center;
+    }
+    .aero-particle { position: absolute; background: #fff; border-radius: 50%; opacity: 0.6; will-change: transform; filter: blur(1px); }
+
+    /* --- WATER: ABYSSAL CAUSTICS --- */
+    .bg-water { 
+      position: absolute; inset: 0; overflow: hidden; filter: url(#hydro-warp);
+      /* Lowered opacity so the trench is visible */
+      background-image: linear-gradient(rgba(0, 4, 12, 0.3), rgba(0, 1, 2, 0.6)), url('https://images.unsplash.com/photo-1551244072-5d12893278ab?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover; background-position: center;
+    }
+    .hydro-caustic { position: absolute; inset: -50%; background: repeating-radial-gradient(circle at 50% 150%, transparent 0, rgba(90, 160, 255, 0.04) 2px, transparent 6px); mix-blend-mode: color-dodge; animation: caustic-drift 15s infinite alternate ease-in-out; }
+    .abyssal-bubble { position: absolute; border-radius: 50%; border: 1px solid rgba(150, 200, 255, 0.15); box-shadow: inset 0 0 5px rgba(150, 200, 255, 0.1); will-change: transform, opacity; }
+    @keyframes caustic-drift { 0% { transform: scale(1) rotate(0deg); } 100% { transform: scale(1.1) rotate(5deg); } }
+
+    /* --- EARTH: TECTONIC FRACTURE --- */
+    .bg-earth { 
+      position: absolute; inset: -10%; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); gap: 1px; perspective: 1000px; transform: scale(1.1); will-change: transform;
+      /* Lowered opacity to let the magma glow show */
+      background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(5, 1, 0, 0.6)), url('https://images.unsplash.com/photo-1614926857083-7d46904bc36f?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover; background-position: center;
+    }
+    .litho-plate { 
+      /* Changed from solid #080808 to semi-transparent so the background image isn't blocked */
+      background: rgba(8, 8, 8, 0.45); 
+      border: 1px solid rgba(200, 169, 110, 0.05); 
+      will-change: transform, background; 
+      transition: transform 0.4s cubic-bezier(0.1, 0.5, 0.1, 1), background 0.4s ease; 
+    }
+    .magma-core { position: absolute; width: 60vw; height: 60vw; top: 50%; left: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(255, 50, 0, 0.08) 0%, transparent 60%); filter: blur(50px); pointer-events: none; mix-blend-mode: screen; will-change: transform, opacity; }
+  `;
+  document.head.appendChild(style);
+
+  const svgFilters = `
+    <svg style="width:0;height:0;position:absolute;z-index:-1;">
+      <filter id="hydro-warp"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" result="noise" id="water-turb"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="40" xChannelSelector="R" yChannelSelector="G"/></filter>
+    </svg>
+  `;
+  document.body.insertAdjacentHTML('beforeend', svgFilters);
+
+  const vault = document.createElement('div'); vault.id = 'elemental-vault';
+  const track = document.createElement('div'); track.id = 'vault-track';
+
+  const generatePanel = (type, data, bgHtml) => {
+    const rows = data.map(d => `<div class="tel-row"><span class="tel-val vault-scramble" data-final="${d.value}">000</span><span class="tel-label">${d.label}</span></div>`).join('');
+    return `<div class="vault-panel" id="panel-${type}">${bgHtml}<h2 class="vault-title">${type.toUpperCase()}</h2><div class="telemetry-grid">${rows}</div></div>`;
+  };
+
+  // Build Air Layer
+  let airBg = '<div class="bg-air" id="aero-engine"></div>';
+  // Build Water Layer
+  let waterBg = '<div class="bg-water"><div class="hydro-caustic"></div><div id="hydro-engine"></div></div>';
+  // Build Earth Layer
+  let plates = ''; for(let i=0; i<225; i++) plates += '<div class="litho-plate"></div>';
+  let earthBg = `<div class="bg-earth" id="litho-grid">${plates}</div><div class="magma-core" id="magma"></div>`;
+
+  track.innerHTML = generatePanel('air', telemetryData.air, airBg) + generatePanel('water', telemetryData.water, waterBg) + generatePanel('earth', telemetryData.earth, earthBg);
+  
+  const closeBtn = document.createElement('button'); closeBtn.id = 'close-vault'; closeBtn.innerText = 'Return to Orbit ×';
+  vault.appendChild(track); vault.appendChild(closeBtn); document.body.appendChild(vault);
+
+  // Inject Open Button into Chapter IV
+  const homeSection = document.querySelectorAll('.section')[3];
+  if (homeSection) {
+    const btn = document.createElement('button'); btn.id = 'open-vault-btn'; btn.innerText = 'Scan Biosphere Data';
+    homeSection.appendChild(btn);
+    btn.addEventListener('click', () => { vault.classList.add('active'); document.body.style.overflow = 'hidden'; });
+  }
+
+  closeBtn.addEventListener('click', () => { vault.classList.remove('active'); document.body.style.overflow = ''; });
+
+  /* --- SENIOR DEV PHYSICS ENGINE --- */
+  let isVaultOpen = false; let currentX = 0; let targetX = 0; let time = 0;
+  const maxScroll = window.innerWidth * 2;
+  const vaultObserver = new MutationObserver((m) => { m.forEach(mu => { isVaultOpen = vault.classList.contains('active'); if(isVaultOpen) targetX = currentX; }); });
+  vaultObserver.observe(vault, { attributes: true, attributeFilter: ['class'] });
+
+  vault.addEventListener('wheel', (e) => {
+    if (!isVaultOpen) return; e.preventDefault();
+    targetX += e.deltaY * 1.5; targetX = Math.max(0, Math.min(targetX, maxScroll));
+  }, { passive: false });
+
+  // Init Air Particles
+  const aeroEngine = document.getElementById('aero-engine');
+  const aeroParticles = Array.from({length: 40}).map(() => {
+    const el = document.createElement('div'); el.className = 'aero-particle';
+    const size = Math.random() * 3 + 1; el.style.width = size+'px'; el.style.height = size/2+'px';
+    aeroEngine.appendChild(el);
+    return { el, x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, speedX: Math.random() * 15 + 5, speedY: (Math.random()-0.5)*2, offset: Math.random()*100 };
+  });
+
+  // Init Water Bubbles
+  const hydroEngine = document.getElementById('hydro-engine');
+  const bubbles = Array.from({length: 25}).map(() => {
+    const el = document.createElement('div'); el.className = 'abyssal-bubble';
+    const size = Math.random() * 8 + 2; el.style.width = size+'px'; el.style.height = size+'px';
+    hydroEngine.appendChild(el);
+    return { el, x: Math.random() * window.innerWidth, y: window.innerHeight + Math.random()*500, speedY: Math.random() * 1.5 + 0.5, wobble: Math.random()*0.05, offset: Math.random()*100 };
+  });
+
+  // Init Earth Plates
+  const lithoGrid = document.getElementById('litho-grid');
+  const platesArr = Array.from(document.querySelectorAll('.litho-plate'));
+  const waterTurb = document.getElementById('water-turb');
+  const magma = document.getElementById('magma');
+
+  function globalPhysicsLoop() {
+    if (isVaultOpen) {
+      time += 0.016; // ~60fps step
+      
+      // Virtual Scroll Lerping
+      const inertia = targetX - currentX;
+      currentX += inertia * 0.08;
+      track.style.transform = `translate3d(${-currentX}px, 0, 0)`;
+
+      // 1. AIR: Trigonometric Slipstream Simulation
+      aeroParticles.forEach(p => {
+        p.x -= p.speedX + (Math.abs(inertia) * 0.2); // Wind speeds up when scrolling
+        p.y += Math.sin(time * 2 + p.offset) * p.speedY; // Non-linear turbulence
+        if (p.x < -10) { p.x = window.innerWidth + 10; p.y = Math.random() * window.innerHeight; }
+        p.el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) scaleX(${1 + Math.abs(inertia)*0.01})`;
+      });
+
+      // 2. WATER: SVG Fluid Warp + Abyssal Ascent
+      waterTurb.setAttribute('baseFrequency', `${0.012 + Math.sin(time)*0.003} 0.02`);
+      bubbles.forEach(b => {
+        b.y -= b.speedY;
+        b.x += Math.sin(time * 3 + b.offset) * 0.5; // Bubble wobble
+        if (b.y < -20) { b.y = window.innerHeight + 20; b.x = Math.random() * window.innerWidth; }
+        b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
+        b.el.style.opacity = Math.min(1, b.y / (window.innerHeight * 0.8)); // Fade out near top
+      });
+
+      // 3. EARTH: Inertial Tectonic Grinding
+      const scrollVelocity = Math.abs(inertia);
+      lithoGrid.style.transform = `scale(1.1) rotateX(${scrollVelocity * 0.02}deg) rotateY(${scrollVelocity * 0.01}deg)`;
+      
+      if (scrollVelocity > 5) {
+        // Fracture random plates when scrolling fast
+        const randomPlate = platesArr[Math.floor(Math.random() * platesArr.length)];
+        randomPlate.style.transform = `translateZ(${Math.random() * 30}px)`;
+        randomPlate.style.background = 'rgba(255, 60, 0, 0.1)';
+        setTimeout(() => { randomPlate.style.transform = 'translateZ(0)'; randomPlate.style.background = '#080808'; }, 400);
+      }
+      // Magma pulse
+      magma.style.opacity = 0.5 + Math.sin(time * 4) * 0.2;
+
+      // Unpredictable Scramble Decryptor
+      document.querySelectorAll('.vault-scramble').forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.left > window.innerWidth*0.1 && rect.left < window.innerWidth*0.8 && !el.dataset.solved) {
+          el.dataset.solved = "true"; triggerScramble(el);
+        } else if (rect.left < 0 || rect.left > window.innerWidth) {
+          el.dataset.solved = ""; el.innerText = "000";
+        }
+      });
+    }
+    requestAnimationFrame(globalPhysicsLoop);
+  }
+
+  function triggerScramble(el) {
+    const final = el.getAttribute('data-final'); const chars = '0123456789ΔΩ∑∇'; let iter = 0;
+    clearInterval(el.interval);
+    el.interval = setInterval(() => {
+      el.innerText = final.split('').map((l, i) => i < iter ? final[i] : chars[Math.floor(Math.random()*chars.length)]).join('');
+      if(iter >= final.length) { clearInterval(el.interval); el.style.color = '#fff'; setTimeout(()=>el.style.color='#c8a96e', 300); }
+      iter += 1/4;
+    }, 40);
+  }
+
+  globalPhysicsLoop();
+})();
+</script>
+<script>
+/* ── Widget 3: True 3D Cosmic Earth Engine ── */
+(function CosmicEarth3D() {
+  const heroBg = document.getElementById('bg-hero');
+  if (!heroBg) return;
+
+  // 1. Create and inject the dedicated Earth canvas
+  const canvas = document.createElement('canvas');
+  canvas.style.position = 'absolute';
+  canvas.style.inset = '0';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  heroBg.appendChild(canvas);
+
+  // 2. Setup Three.js Renderer
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  // Wide Field of View for a massive, cinematic feel
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 12;
+
+  // 3. The Earth Sphere
+  const geometry = new THREE.SphereGeometry(4.8, 64, 64);
+  
+  // Load a high-resolution, CORS-friendly NASA Earth map
+  const textureLoader = new THREE.TextureLoader();
+  const earthTex = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg');
+  
+  const material = new THREE.MeshStandardMaterial({
+    map: earthTex,
+    roughness: 0.6, // Scatters light smoothly across the oceans
+    metalness: 0.1
+  });
+
+  const earth = new THREE.Mesh(geometry, material);
+  // Tilt the Earth on its actual axis (23.5 degrees)
+  earth.rotation.z = 23.5 * Math.PI / 180;
+  scene.add(earth);
+
+  // 4. Cinematic Space Lighting
+  // A very faint blue ambient light to mimic starlight
+  const ambientLight = new THREE.AmbientLight(0x0a1525, 0.8); 
+  scene.add(ambientLight);
+
+  // A harsh, bright directional light (The Sun) coming from the left
+  const sunLight = new THREE.DirectionalLight(0xffffff, 2.0);
+  sunLight.position.set(-10, 5, 5); 
+  scene.add(sunLight);
+
+  // 5. Subtle Mouse Tracking
+  let mouseX = 0;
+  let mouseY = 0;
+  window.addEventListener('mousemove', (e) => {
+    // Normalize mouse coordinates from -1 to +1
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+
+  // 6. Responsive Resizing
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // 7. The Physics Render Loop
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    // True 3D rotation along the Y axis
+    earth.rotation.y += 0.0006;
+    
+    // Gently tilt the planet based on where the user's mouse is
+    earth.rotation.x += (mouseY * 0.1 - earth.rotation.x) * 0.05;
+    
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
 </script>
 <script type="module">
   import { prepare, layout } from 'https://esm.sh/@chenglou/pretext';
@@ -894,6 +2500,76 @@ const a0_0x4267f7=a0_0x6652;(function(_0x418694,_0x126f0f){const _0x388e0b=a0_0x
     // and causes zero layout lag.
     window.addEventListener('resize', shrinkwrapText, { passive: true });
   })();
+/* ── Widget 1: Astrolabe SVG Engine ── */
+/* ── Widget 1: Astrolabe Inertial Telemetry Engine ── */
+(function AstrolabeTracker() {
+  const progress = document.querySelector('.astro-progress');
+  const text = document.querySelector('.astro-text');
+  if(!progress || !text) return;
+
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  progress.style.strokeDasharray = circumference;
+  
+  // Mathematical symbols fitting the cosmic/physics theme
+  const scrambleChars = 'ΔΩ∑∇0123456789'; 
+
+  let targetScroll = 0;
+  let currentScroll = 0;
+  let rotation = -90; // Default SVG starting point
+
+  // 1. Passive listener just records the target, keeping the site lag-free
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.body.scrollHeight - window.innerHeight;
+    targetScroll = Math.max(0, Math.min(1, scrollTop / docHeight));
+  }, { passive: true });
+
+  // 2. The Physics Render Loop
+  function renderAstrolabe() {
+    // Calculate the difference between where we are and where we should be
+    const diff = targetScroll - currentScroll;
+    
+    // Smooth lerping (adds that premium friction/glide effect)
+    currentScroll += diff * 0.12; 
+    
+    // Absolute velocity determines how intense the effects are
+    const velocity = Math.abs(diff);
+
+    // Update the SVG circle fill
+    const offset = circumference - (currentScroll * circumference);
+    progress.style.strokeDashoffset = offset;
+
+    // UNPREDICTABLE EVENT 1: Velocity Flare & Kinetic Rotation
+    rotation += (diff * 150); // Spins the ring based on scroll direction/speed
+    progress.style.transform = `rotate(${rotation}deg)`;
+    progress.style.strokeWidth = 2 + (velocity * 50) + 'px'; // Thickens when fast
+
+    // UNPREDICTABLE EVENT 2: Quantum Telemetry Scramble
+    if (velocity > 0.003) {
+      // User is scrolling: Scramble the data
+      const char1 = scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+      const char2 = scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+      text.innerText = char1 + char2;
+      text.style.color = '#c8a96e'; // Glows gold while processing
+      text.style.transform = 'scale(1.1)'; // Pops slightly
+    } else {
+      // User stopped: Lock in the precise measurement
+      let displayVal = Math.floor(currentScroll * 100);
+      if (displayVal < 10) displayVal = '0' + displayVal;
+      if (displayVal >= 100) displayVal = '99'; // Keeps the beautiful two-character symmetry
+      
+      text.innerText = displayVal;
+      text.style.color = '#fff'; // Cools down to pristine white
+      text.style.transform = 'scale(1)';
+    }
+
+    requestAnimationFrame(renderAstrolabe);
+  }
+  
+  // Start the engine
+  renderAstrolabe();
+})();
 </script>
 </body>
 </html>
