@@ -1,4 +1,4 @@
-/* ================================================================
+/*================================================================
    animations.js — Animal Kingdom & Planet Ecosystems
    Runs after performance.js. All animation uses:
    - GSAP + ScrollTrigger (GPU: transform + opacity only)
