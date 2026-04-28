@@ -122,8 +122,31 @@
   }
 
   /* ── Initialize ───────────────────────────────────────────── */
-  boot();
-  initFPS();
-  initSound();
+/* ── 4. Performance Toggle ────────────────────────────────── */
+  function initPerfToggle() {
+    const btn   = $('#btn-perf');
+    const label = $('#perf-label');
+    if (!btn || !label) return;
+
+    const cycle = { high: 'mid', mid: 'low', low: 'high' };
+
+    btn.addEventListener('click', () => {
+      const next = cycle[window.PERF.mode];
+      window.PERF._forceMode(next);
+      label.textContent = next.toUpperCase();
+    });
+
+    window.addEventListener('perfModeChange', (e) => {
+      label.textContent = e.detail.mode.toUpperCase();
+    });
+  }
+
+  /* ── Initialize ───────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    boot();
+    initFPS();
+    initSound();
+    initPerfToggle();
+  });
 
 })();
