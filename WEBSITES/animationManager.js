@@ -1,365 +1,176 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Animal Kingdom & Planet Ecosystems — A cinematic journey through Earth's biomes" />
-  <title>Animal Kingdom — Planet Ecosystems</title>
+/* ================================================================
+   animationManager.js — Central Animation Manager
+   Animal Kingdom & Planet Ecosystems
 
-  <!-- Preconnect to Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Cinematic fonts: Playfair Display (display) + Lato (body) -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+   ARCHITECTURE:
+   - Single source of truth for all section animation modules
+   - Each module registers itself and is activated/deactivated by
+     IntersectionObserver — only the visible section runs its RAF loop
+   - FPS monitor downgrades to LOW mode automatically if < 40 FPS
+   - All timelines are GSAP (preferred) or rAF with delta-time
+   - RULE: Only transform + opacity ever touched. Zero layout thrashing.
+================================================================ */
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+;(function (global) {
+  'use strict';
 
-  <link rel="stylesheet" href="styles.css" />
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" defer></script>
-</head>
-<body data-sound="off">
+  /* ─── Performance Profiler ─────────────────────────────────────
+     Benchmarks device on load. Exposes:
+       PERF.mode        → 'low' | 'mid' | 'high'
+       PERF.isLow()
+       PERF.isMid()
+       PERF.isHigh()
+       PERF.onModeChange(fn)  → subscribe to mode transitions
+  ──────────────────────────────────────────────────────────────── */
+  const PERF = (function () {
+    const subscribers = [];
+    let mode = 'high'; // default — will be refined after benchmark
 
-  <!-- ============================================================
-       LOADER SCREEN
-       Shows while critical assets load. Fades out on window load.
-  ============================================================ -->
-  <div id="loader" aria-hidden="true">
-    <div class="loader__inner">
-      <div class="loader__orb"></div>
-      <p class="loader__text">Entering the Kingdom</p>
-      <div class="loader__bar"><div class="loader__fill"></div></div>
-    </div>
-  </div>
+    /* Static device hints (cheap, instant) */
+    const mem    = navigator.deviceMemory     || 4;   // GB, may be 0.25–8
+    const cores  = navigator.hardwareConcurrency || 4;
+    const mobile = /Mobi|Android/i.test(navigator.userAgent);
 
-  <!-- ============================================================
-       FIXED UI CHROME
-       Navigation, FPS counter, performance toggle, sound toggle
-  ============================================================ -->
-  <header id="site-nav" aria-label="Site navigation">
-    <div class="nav__logo">
-      <span class="nav__logo-icon">◉</span>
-      <span>Animal Kingdom</span>
-    </div>
-    <nav class="nav__links" role="navigation">
-      <a href="#forest"  class="nav__link" data-section="forest">Forest</a>
-      <a href="#ocean"   class="nav__link" data-section="ocean">Ocean</a>
-      <a href="#desert"  class="nav__link" data-section="desert">Desert</a>
-      <a href="#arctic"  class="nav__link" data-section="arctic">Arctic</a>
-      <a href="#savanna" class="nav__link" data-section="savanna">Savanna</a>
-      <a href="#planet"  class="nav__link" data-section="planet">Planet</a>
-    </nav>
-    <div class="nav__controls">
-      <!-- Sound toggle -->
-      <button id="btn-sound" class="ctrl-btn" aria-label="Toggle ambient sound" title="Toggle sound">
-        <span class="sound-icon">♪</span>
-      </button>
-      <!-- Performance mode toggle -->
-      <button id="btn-perf" class="ctrl-btn" aria-label="Toggle performance mode" title="Performance mode">
-        <span id="perf-label">HIGH</span>
-      </button>
-      <!-- FPS counter toggle -->
-      <button id="btn-fps" class="ctrl-btn" aria-label="Toggle FPS counter" title="FPS counter">
-        FPS
-      </button>
-    </div>
-  </header>
+    /* Initial coarse classification */
+    /* Always start HIGH — user controls mode manually */
+    mode = 'high';
 
-  <!-- FPS counter overlay -->
-  <div id="fps-counter" aria-live="polite" aria-label="Frames per second">
-    <span id="fps-value">--</span> fps
-  </div>
+    /* Apply class to <html> immediately so CSS can react */
+    document.documentElement.classList.add('perf-' + mode);
 
-  <!-- ============================================================
-       HERO / INTRO SECTION
-  ============================================================ -->
-<section id="hero" class="section section--hero" aria-label="Introduction">
-    
-    <div class="parallax-bg" data-parallax-speed="0.3"
-         style="background-image:url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80&fm=webp')">
-    </div>
-    
-    <canvas id="hero-particles" aria-hidden="true"></canvas>
 
-    <canvas id="moon-canvas" aria-hidden="true"></canvas>
+    function setMode(m) {
+      if (m === mode) return;
+      const prev = mode;
+      mode = m;
+      document.documentElement.classList.remove('perf-low', 'perf-mid', 'perf-high');
+      document.documentElement.classList.add('perf-' + mode);
+      console.info('[ANIM] Performance mode →', mode.toUpperCase(), '(was', prev + ')');
+      subscribers.forEach(function (fn) { try { fn(mode, prev); } catch (e) {} });
+      /* Notify global handler (animations.js compat) */
+      window.dispatchEvent(new CustomEvent('perfModeChange', { detail: { mode: mode } }));
+    }
 
-    <div class="section__overlay"></div>
+    return {
+      get mode() { return mode; },
+      isLow:  function () { return mode === 'low'; },
+      isMid:  function () { return mode === 'mid'; },
+      isHigh: function () { return mode === 'high'; },
+      onModeChange: function (fn) { subscribers.push(fn); },
+      _forceMode: setMode,
+      onBenchmarkDone: null,
+    };
+    })();
 
-    <div class="section__content hero__content">
-      <p class="hero__eyebrow reveal-fade">A cinematic journey</p>
-      <h1 class="hero__title reveal-up">
-        <span class="hero__title-line">Animal</span>
-        <span class="hero__title-line hero__title-line--em">Kingdom</span>
-      </h1>
-      <p class="hero__subtitle reveal-fade">& Planet Ecosystems</p>
-      <div class="hero__scroll-cue reveal-fade" aria-label="Scroll to begin">
-        <span class="scroll-cue__line"></span>
-        <span class="scroll-cue__label">Scroll to explore</span>
-      </div>
-    </div>
-    
-  </section>
+  /* ─── Animation Manager ────────────────────────────────────────
+     Modules register via AnimationManager.register(id, module).
+     module must implement:
+       .init(el, perf)   → sets up timelines, no animations started
+       .enter()          → play / resume
+       .leave()          → pause / reverse
+       .destroy()        → kill timelines, remove listeners
+  ──────────────────────────────────────────────────────────────── */
+  const AnimationManager = (function () {
+    const registry = {};   // id → { module, el, io, active }
+    let gsapReady = false;
 
-  <!-- ============================================================
-       BIOME SECTIONS
-       Each section follows the same pattern:
-       - .parallax-bg  → slow-moving background image
-       - .section__particles (optional) → lightweight particle layer
-       - .section__overlay → cinematic dark gradient
-       - .section__content → text + fact chips
-  ============================================================ -->
+    /* Wait for GSAP (loaded async) */
+    function whenGSAP(cb) {
+      if (window.gsap && window.ScrollTrigger) { cb(); return; }
+      let tries = 0;
+      const iv = setInterval(function () {
+        tries++;
+        if (window.gsap && window.ScrollTrigger) {
+          clearInterval(iv);
+          gsap.registerPlugin(ScrollTrigger);
+          gsapReady = true;
+          cb();
+        } else if (tries > 60) {
+          clearInterval(iv);
+          console.warn('[ANIM] GSAP not found — modules disabled.');
+        }
+      }, 100);
+    }
 
-  <!-- 1. RAINFOREST -->
-  <section id="forest" class="section section--biome" data-biome="forest"
-           aria-label="The Rainforest Realm" data-sound-src="sounds/forest.mp3">
-    <div class="parallax-bg" data-parallax-speed="0.25"
-         style="background-image:url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=80&fm=webp')">
-    </div>
-    <!-- Fog / mist layer (CSS animated, GPU only) -->
-    <div class="biome-layer biome-layer--fog" aria-hidden="true"></div>
-    <div class="section__overlay section__overlay--forest"></div>
-    <div class="section__content">
-      <div class="biome-meta reveal-fade">
-        <span class="biome-id">01</span>
-        <span class="biome-tag">Rainforest</span>
-      </div>
-      <h2 class="section__title reveal-up">The Rainforest<br><em>Realm</em></h2>
-      <p class="section__subtitle reveal-fade">Lungs of the Earth</p>
-      <p class="section__desc reveal-fade">Dense, vibrant ecosystems filled with towering trees, rich biodiversity, and constant life cycles.</p>
-      <div class="animals-row reveal-up">
-        <span class="animal-chip">🐅 Tiger</span>
-        <span class="animal-chip">🐒 Monkey</span>
-        <span class="animal-chip">🦜 Parrot</span>
-        <span class="animal-chip">🐆 Jaguar</span>
-      </div>
-      <ul class="facts-list reveal-fade" aria-label="Ecosystem facts">
-        <li class="fact-item"><span class="fact-dot"></span>Rainforests cover only 6% of Earth but hold over 50% of species</li>
-        <li class="fact-item"><span class="fact-dot"></span>They produce 20% of the world's oxygen</li>
-        <li class="fact-item"><span class="fact-dot"></span>Home to millions of undiscovered species</li>
-      </ul>
-    </div>
-    <!-- Animated tree silhouettes (pure CSS, GPU) -->
-    <div class="forest-trees" aria-hidden="true">
-      <div class="tree tree--1"></div>
-      <div class="tree tree--2"></div>
-      <div class="tree tree--3"></div>
-    </div>
-  </section>
+    /* Register a section animation module */
+    function register(id, module) {
+      const el = document.getElementById(id);
+      if (!el) {
+        console.warn('[ANIM] Section #' + id + ' not found in DOM.');
+        return;
+      }
 
-  <!-- 2. OCEAN -->
-  <section id="ocean" class="section section--biome" data-biome="ocean"
-           aria-label="The Ocean Depths" data-sound-src="sounds/ocean.mp3">
-    
-    <div class="parallax-bg" data-parallax-speed="0.2"
-         style="background-image:url('https://images.unsplash.com/photo-1559825481-12a05cc00344?w=1920&q=80&auto=format&fit=crop')">
-    </div>
+      registry[id] = { module: module, el: el, io: null, active: false };
 
-    <canvas id="ocean-canvas" aria-hidden="true"></canvas>
+      /* Init module (no animations running yet) */
+      module.init(el, PERF);
 
-    <div class="section__overlay section__overlay--ocean"></div>
-    
-    <div class="section__content section__content--right">
-      <div class="biome-meta reveal-fade">
-        <span class="biome-id">02</span>
-        <span class="biome-tag">Ocean</span>
-      </div>
-      <h2 class="section__title reveal-up">The Ocean<br><em>Depths</em></h2>
-      <p class="section__subtitle reveal-fade">A Hidden Universe</p>
-      <p class="section__desc reveal-fade">Vast, mysterious waters covering most of our planet, filled with life from coral reefs to deep-sea creatures.</p>
-      <div class="animals-row reveal-up">
-        <span class="animal-chip">🐋 Whale</span>
-        <span class="animal-chip">🦈 Shark</span>
-        <span class="animal-chip">🐙 Octopus</span>
-        <span class="animal-chip">🪼 Jellyfish</span>
-      </div>
-      <ul class="facts-list reveal-fade">
-        <li class="fact-item"><span class="fact-dot"></span>Oceans cover over 70% of Earth's surface</li>
-        <li class="fact-item"><span class="fact-dot"></span>More than 80% of the ocean remains unexplored</li>
-        <li class="fact-item"><span class="fact-dot"></span>The deepest point plunges over 11,000 meters</li>
-      </ul>
-    </div>
-  </section>
+      /* IntersectionObserver — trigger enter/leave per section
+         Threshold at 0.15 so animation starts just as section
+         enters viewport (≈ 15% visible), pauses when fully gone.
+         This avoids running RAF loops for off-screen sections.    */
+      const io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          const rec = registry[id];
+          if (!rec) return;
+          if (entry.isIntersecting && !rec.active) {
+            rec.active = true;
+            rec.module.enter();
+          } else if (!entry.isIntersecting && rec.active) {
+            rec.active = false;
+            rec.module.leave();
+          }
+        });
+      }, { threshold: [0.05, 0.15] });
 
-  <!-- 3. DESERT -->
-  <section id="desert" class="section section--biome" data-biome="desert"
-           aria-label="The Desert Expanse" data-sound-src="sounds/wind.mp3">
-    <div class="parallax-bg" data-parallax-speed="0.3"
-         style="background-image:url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1920&q=80&fm=webp')">
-    </div>
-    <!-- Heat haze overlay (CSS SVG filter, GPU) -->
-    <div class="biome-layer biome-layer--haze" aria-hidden="true"></div>
-    <!-- Drifting sand particles -->
-    <canvas class="sand-canvas" aria-hidden="true"></canvas>
-    <div class="section__overlay section__overlay--desert"></div>
-    <div class="section__content">
-      <div class="biome-meta reveal-fade">
-        <span class="biome-id">03</span>
-        <span class="biome-tag">Desert</span>
-      </div>
-      <h2 class="section__title reveal-up">The Desert<br><em>Expanse</em></h2>
-      <p class="section__subtitle reveal-fade">Survival Against Odds</p>
-      <p class="section__desc reveal-fade">Harsh, dry landscapes where only the toughest life forms endure extreme heat and scarcity.</p>
-      <div class="animals-row reveal-up">
-        <span class="animal-chip">🐪 Camel</span>
-        <span class="animal-chip">🐍 Snake</span>
-        <span class="animal-chip">🦂 Scorpion</span>
-        <span class="animal-chip">🦊 Fox</span>
-      </div>
-      <ul class="facts-list reveal-fade">
-        <li class="fact-item"><span class="fact-dot"></span>Deserts receive less than 250mm of rain annually</li>
-        <li class="fact-item"><span class="fact-dot"></span>Some deserts are cold, not hot</li>
-        <li class="fact-item"><span class="fact-dot"></span>Desert plants store water for survival</li>
-      </ul>
-    </div>
-  </section>
+      io.observe(el);
+      registry[id].io = io;
+    }
 
-  <!-- 4. ARCTIC -->
-  <section id="arctic" class="section section--biome" data-biome="arctic"
-           aria-label="The Arctic Frontier" data-sound-src="sounds/wind-cold.mp3">
-    
-    <div class="parallax-bg" data-parallax-speed="0.2"
-         style="background-image:url('https://images.unsplash.com/photo-1494564605686-2e931f77a8e2?w=1920&q=80&auto=format&fit=crop')">
-    </div>
+    /* Boot: wait for DOM + GSAP, then init all registered modules */
+    function boot() {
+      document.addEventListener('DOMContentLoaded', function () {
+        whenGSAP(function () {
+          /* ScrollTrigger global refresh after all modules are registered */
+          ScrollTrigger.refresh();
+        });
+      });
+    }
 
-    <canvas id="arctic-webgl" aria-hidden="true"></canvas>
+    /* Tear down everything (SPA navigation, testing, etc.) */
+    function destroyAll() {
+      Object.keys(registry).forEach(function (id) {
+        const rec = registry[id];
+        if (rec.io) rec.io.disconnect();
+        try { rec.module.destroy(); } catch (e) {}
+      });
+    }
 
-    <canvas id="arctic-2d" aria-hidden="true"></canvas>
+    /* Performance mode change — allow each module to adapt */
+    PERF.onModeChange(function (mode) {
+      Object.keys(registry).forEach(function (id) {
+        const rec = registry[id];
+        if (rec.module.onPerfChange) {
+          try { rec.module.onPerfChange(mode, PERF); } catch (e) {}
+        }
+      });
+      if (window.ScrollTrigger) ScrollTrigger.refresh();
+    });
 
-    <div class="section__overlay section__overlay--arctic"></div>
-    
-    <div class="section__content section__content--right">
-      <div class="biome-meta reveal-fade">
-        <span class="biome-id">04</span>
-        <span class="biome-tag">Arctic</span>
-      </div>
+    boot();
 
-      <button id="btn-blizzard" class="ctrl-btn reveal-fade" style="margin-bottom: 24px; padding: 8px 16px; border-color: #4fc3f7; color: #4fc3f7;">
-        <span class="icon">❄️</span> Activate Blizzard
-      </button>
+    return {
+      register: register,
+      destroy:  destroyAll,
+      perf:     PERF,
+    };
+  })();
 
-      <h2 class="section__title reveal-up">The Arctic<br><em>Frontier</em></h2>
-      <p class="section__subtitle reveal-fade">Frozen but Alive</p>
-      <p class="section__desc reveal-fade">Icy landscapes with extreme cold, yet rich ecosystems adapted to survive the harshest climates on Earth.</p>
-      <div class="animals-row reveal-up">
-        <span class="animal-chip">🐻‍❄️ Polar Bear</span>
-        <span class="animal-chip">🦭 Seal</span>
-        <span class="animal-chip">🐧 Penguin</span>
-      </div>
-      <ul class="facts-list reveal-fade">
-        <li class="fact-item"><span class="fact-dot"></span>Temperatures can drop below −50°C</li>
-        <li class="fact-item"><span class="fact-dot"></span>Ice reflects sunlight, regulating Earth's temperature</li>
-        <li class="fact-item"><span class="fact-dot"></span>Wildlife depends on seasonal ice cycles</li>
-      </ul>
-    </div>
-  </section>
+  /* ─── Expose globals ───────────────────────────────────────────
+     window.PERF           → performance profiler
+     window.AnimationManager → register / destroy
+  ──────────────────────────────────────────────────────────────── */
+  global.PERF             = PERF;
+  global.AnimationManager = AnimationManager;
 
-  <!-- 5. SAVANNA -->
-  <section id="savanna" class="section section--biome" data-biome="savanna"
-           aria-label="The Savanna Plains" data-sound-src="sounds/grassland.mp3">
-           
-    <div class="parallax-bg" data-parallax-speed="0.25"
-         style="background-image:url('https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1920&q=80&fm=webp')">
-    </div>
-
-    <canvas id="savanna-2d" aria-hidden="true"></canvas>
-
-    <div class="section__overlay section__overlay--savanna"></div>
-    
-    <div class="section__overlay section__overlay--night"></div>
-
-    <canvas id="savanna-webgl" aria-hidden="true"></canvas>
-
-    <div class="biome-layer biome-layer--grass" aria-hidden="true"></div>
-    
-    <div class="section__content">
-      <div class="biome-meta reveal-fade">
-        <span class="biome-id">05</span>
-        <span class="biome-tag">Savanna</span>
-      </div>
-
-      <button id="btn-night-mode" class="ctrl-btn reveal-fade" style="margin-bottom: 24px; padding: 8px 16px;">
-        <span class="icon">🌙</span> Night Mode
-      </button>
-
-      <h2 class="section__title reveal-up">The Savanna<br><em>Plains</em></h2>
-      <p class="section__subtitle reveal-fade">The Circle of Life</p>
-      <p class="section__desc reveal-fade">Open grasslands where predators and prey coexist in a delicate, ancient balance.</p>
-      <div class="animals-row reveal-up">
-        <span class="animal-chip">🦁 Lion</span>
-        <span class="animal-chip">🐘 Elephant</span>
-        <span class="animal-chip">🦓 Zebra</span>
-        <span class="animal-chip">🦒 Giraffe</span>
-      </div>
-      <ul class="facts-list reveal-fade">
-        <li class="fact-item"><span class="fact-dot"></span>Savannas have distinct wet and dry seasons</li>
-        <li class="fact-item"><span class="fact-dot"></span>Fires help maintain ecosystem balance</li>
-        <li class="fact-item"><span class="fact-dot"></span>Home to Earth's largest land animals</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- 6. PLANET EARTH -->
-  <section id="planet" class="section section--biome section--planet" data-biome="planet"
-           aria-label="Planet Earth" data-sound-src="sounds/space.mp3">
-    <div class="parallax-bg" data-parallax-speed="0.1"
-         style="background-image:url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1920&q=80&fm=webp')">
-    </div>
-    <!-- Star field canvas -->
-    <canvas class="star-canvas" aria-hidden="true"></canvas>
-    <!-- Rotating planet element -->
-    <div class="planet-sphere" aria-hidden="true">
-      <div class="planet-sphere__inner"></div>
-      <div class="planet-sphere__glow"></div>
-    </div>
-    <div class="section__overlay section__overlay--planet"></div>
-    <div class="section__content section__content--center">
-      <div class="biome-meta reveal-fade">
-        <span class="biome-id">06</span>
-        <span class="biome-tag">Planet</span>
-      </div>
-      <h2 class="section__title reveal-up">Planet<br><em>Earth</em></h2>
-      <p class="section__subtitle reveal-fade">Our Living World</p>
-      <p class="section__desc reveal-fade">A unique planet supporting life through interconnected ecosystems and perfectly balanced conditions.</p>
-      <ul class="facts-list reveal-fade">
-        <li class="fact-item"><span class="fact-dot"></span>Earth is the only known planet with life</li>
-        <li class="fact-item"><span class="fact-dot"></span>It has a protective atmosphere filtering radiation</li>
-        <li class="fact-item"><span class="fact-dot"></span>Water exists here in all three physical states</li>
-      </ul>
-      <div class="planet-cta reveal-fade">
-        <p class="planet-cta__text">Every ecosystem is connected.<br>Every species matters.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       FOOTER
-  ============================================================ -->
-  <footer class="site-footer" aria-label="Site footer">
-    <div class="footer__inner">
-      <p class="footer__text">Animal Kingdom &amp; Planet Ecosystems</p>
-      <p class="footer__sub">A cinematic interactive journey through Earth's biomes</p>
-    </div>
-  </footer>
-
-  <!-- Hidden audio elements (loaded lazily via JS) -->
-<div id="audio-container" aria-hidden="true" style="display:none"></div>
-
-<script src="animationManager.js" defer></script>
-<script src="globalUI.js" defer></script>
-<script src="heroAnimation.js" defer></script>
-<script src="forestAnimation.js" defer></script>
-<script src="oceanAnimation.js" defer></script>
-<script src="desertAnimation.js" defer></script>
-<script src="arcticAnimation.js" defer></script>
-<script src="savannaAnimation.js" defer></script>
-<script src="planetAnimation.js" defer></script>
-</body>
-</html>
+})(window);
