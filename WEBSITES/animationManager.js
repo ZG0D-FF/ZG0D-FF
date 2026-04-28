@@ -1,4 +1,4 @@
-/* ================================================================
+/*================================================================
    animationManager.js — Central Animation Manager
    Animal Kingdom & Planet Ecosystems
 
