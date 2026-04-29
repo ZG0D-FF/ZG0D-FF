@@ -1287,10 +1287,10 @@
   // Call it right away
   createWeather();
   
-  // ── AMBIENT AUDIO PLAYLIST LOGIC (FIXED) ──
+  // ── AMBIENT AUDIO PLAYLIST LOGIC (BLOB CACHED) ──
   const audio = document.getElementById('ambient-audio');
   const btnPlayPause = document.getElementById('audio-play-pause');
-  const btnToggleText = document.getElementById('audio-toggle-text'); // The dual-nature text
+  const btnToggleText = document.getElementById('audio-toggle-text'); 
   const audioIcon = document.getElementById('audio-icon');
   const nowPlayingText = document.getElementById('now-playing-text');
   const btnPrev = document.getElementById('audio-prev');
@@ -1315,59 +1315,87 @@
 
   let currentTrack = 0;
   audio.volume = 1.0; 
-  audio.src = playlist[currentTrack];
+  
+  // The Memory Cache dictionary
+  const trackCache = {}; 
 
-  // Formats file names visually
   function getCleanName(filename) {
     return filename.split('.').slice(0, -1).join('.').replace(/[-_]/g, ' ').toUpperCase();
   }
 
-  // Master function to play track & update UI
-  function playCurrentTrack() {
-    audio.src = playlist[currentTrack];
-    audio.play();
-    btnPlayPause.innerHTML = '&#10074;&#10074;'; // Pause bars
-    audioIcon.innerHTML = 'ılı';
-    nowPlayingText.innerText = getCleanName(playlist[currentTrack]);
+  // Master function with Fetch/Blob caching
+  async function playCurrentTrack() {
+    const trackName = playlist[currentTrack];
+    
+    // UI: Set to buffering state
+    btnPlayPause.innerHTML = '⌛'; // Hourglass icon while loading
+    audioIcon.innerHTML = '⟳';
+    nowPlayingText.innerText = 'BUFFERING...';
     btnToggleText.classList.add('playing');
+
+    try {
+      // 1. If track isn't in RAM yet, fetch it from the server
+      if (!trackCache[trackName]) {
+        const response = await fetch(trackName);
+        if (!response.ok) throw new Error('Network error');
+        
+        // Convert to a local Blob (raw memory object)
+        const blob = await response.blob(); 
+        
+        // Create a temporary local URL for the browser to play
+        trackCache[trackName] = URL.createObjectURL(blob); 
+      }
+
+      // 2. Play from local memory
+      audio.src = trackCache[trackName];
+      await audio.play();
+
+      // UI: Set to playing state
+      btnPlayPause.innerHTML = '&#10074;&#10074;'; 
+      audioIcon.innerHTML = 'ılı';
+      nowPlayingText.innerText = getCleanName(trackName);
+
+    } catch (error) {
+      console.error("Error loading track:", error);
+      nowPlayingText.innerText = 'ERROR LOADING';
+      btnPlayPause.innerHTML = '&#9654;';
+    }
   }
 
-  // Shared Play/Pause logic for BOTH buttons
+  // Shared Play/Pause logic
   function toggleAudio() {
-    if (audio.paused) {
+    if (audio.paused || nowPlayingText.innerText === 'BUFFERING...') {
       playCurrentTrack();
     } else {
       audio.pause();
-      btnPlayPause.innerHTML = '&#9654;'; // Play arrow
+      btnPlayPause.innerHTML = '&#9654;'; 
       audioIcon.innerHTML = '♪';
       nowPlayingText.innerText = 'PAUSED';
       btnToggleText.classList.remove('playing');
     }
   }
 
-  // Bind the toggle to BOTH the play arrow and the text
   if (btnPlayPause) btnPlayPause.addEventListener('click', toggleAudio);
   if (btnToggleText) btnToggleText.addEventListener('click', toggleAudio);
 
-  // NEXT BUTTON
   if (btnNext) {
     btnNext.addEventListener('click', () => {
+      audio.pause();
       currentTrack++; 
       if (currentTrack >= playlist.length) currentTrack = 0;
       playCurrentTrack();
     });
   }
 
-  // PREVIOUS BUTTON
   if (btnPrev) {
     btnPrev.addEventListener('click', () => {
+      audio.pause();
       currentTrack--;
       if (currentTrack < 0) currentTrack = playlist.length - 1;
       playCurrentTrack();
     });
   }
 
-  // AUTO-PLAY NEXT WHEN SONG ENDS
   audio.addEventListener('ended', () => {
     currentTrack++; 
     if (currentTrack >= playlist.length) currentTrack = 0;
