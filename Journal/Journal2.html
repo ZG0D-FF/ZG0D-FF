@@ -682,6 +682,31 @@
   @media(max-width: 600px) {
     .slide-content { padding: 2rem; }
   }
+  /* ── AUDIO ARROWS ── */
+  .audio-arrow {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(245,240,232,0.5) !important;
+    font-size: 0.7rem !important;
+    padding: 0.3rem 0.5rem !important;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  .audio-arrow:hover {
+    color: var(--warm) !important;
+  }
+
+  /* ── AUDIO TEXT PULSE WHEN PLAYING ── */
+  #audio-toggle-text.playing {
+    color: var(--warm) !important;
+    animation: text-glow 2.5s infinite ease-in-out;
+  }
+  
+  @keyframes text-glow {
+    0%   { text-shadow: 0 0 0px rgba(201,169,110, 0); }
+    50%  { text-shadow: 0 0 10px rgba(201,169,110, 0.7); }
+    100% { text-shadow: 0 0 0px rgba(201,169,110, 0); }
+  }
 </style>
 </head>
 <body>
@@ -704,7 +729,21 @@
   <button onclick="showPage('gratitude', this)">Gratitude</button>
   <button onclick="showPage('people', this)">Hearts</button>
   <button onclick="showPage('goals', this)">Goals</button>
+  
+  <div style="display: flex; align-items: center; margin-left: 2rem; border-left: 1px solid rgba(201,169,110,0.3); padding-left: 1.5rem; gap: 0.5rem;">
+    <button id="audio-prev" class="audio-arrow" title="Previous Track">&#10094;</button>
+    
+    <button id="audio-play-pause" class="audio-arrow" title="Play/Pause" style="font-size: 0.9rem !important;">&#9654;</button>
+    
+    <button id="audio-next" class="audio-arrow" title="Next Track">&#10095;</button>
+
+    <button id="audio-toggle-text" style="display: flex; align-items: center; gap: 8px; white-space: nowrap; margin-left: 0.5rem; background: transparent; border: none; color: rgba(245,240,232,0.6); font-family: 'Josefin Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; padding: 0;">
+      <span id="audio-icon">♪</span> <span id="now-playing-text">AMBIENCE</span>
+    </button>
+  </div>
 </nav>
+
+<audio id="ambient-audio"></audio>
 
 <!-- ══ COVER ══ -->
 <div class="page active visible" id="cover" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding-top:0;">
@@ -1247,6 +1286,89 @@
   
   // Call it right away
   createWeather();
+  
+  // ── AMBIENT AUDIO PLAYLIST LOGIC (FIXED) ──
+  const audio = document.getElementById('ambient-audio');
+  const btnPlayPause = document.getElementById('audio-play-pause');
+  const btnToggleText = document.getElementById('audio-toggle-text'); // The dual-nature text
+  const audioIcon = document.getElementById('audio-icon');
+  const nowPlayingText = document.getElementById('now-playing-text');
+  const btnPrev = document.getElementById('audio-prev');
+  const btnNext = document.getElementById('audio-next');
+
+  // 1. MASTER PLAYLIST (Merged all your tracks)
+  const playlist = [
+    'Moon Knight.mp4',
+    'Tomake_Bhalobeshe.mp3',
+    'CALLIN YOU.mp4', 
+    'ISHQ_SUFIYANA.mp3',
+    'The Burning Ghat.mp4',
+    'Most Beautiful Music.mp4', 
+    'Krishna Flute.mp3', 
+    'Jai Sri Krsna.mp4',
+    'Hitman.mp3'
+  ];
+
+  let currentTrack = 0;
+  audio.volume = 1.0; 
+  audio.src = playlist[currentTrack];
+
+  // Formats file names visually
+  function getCleanName(filename) {
+    return filename.split('.').slice(0, -1).join('.').replace(/[-_]/g, ' ').toUpperCase();
+  }
+
+  // Master function to play track & update UI
+  function playCurrentTrack() {
+    audio.src = playlist[currentTrack];
+    audio.play();
+    btnPlayPause.innerHTML = '&#10074;&#10074;'; // Pause bars
+    audioIcon.innerHTML = 'ılı';
+    nowPlayingText.innerText = getCleanName(playlist[currentTrack]);
+    btnToggleText.classList.add('playing');
+  }
+
+  // Shared Play/Pause logic for BOTH buttons
+  function toggleAudio() {
+    if (audio.paused) {
+      playCurrentTrack();
+    } else {
+      audio.pause();
+      btnPlayPause.innerHTML = '&#9654;'; // Play arrow
+      audioIcon.innerHTML = '♪';
+      nowPlayingText.innerText = 'PAUSED';
+      btnToggleText.classList.remove('playing');
+    }
+  }
+
+  // Bind the toggle to BOTH the play arrow and the text
+  if (btnPlayPause) btnPlayPause.addEventListener('click', toggleAudio);
+  if (btnToggleText) btnToggleText.addEventListener('click', toggleAudio);
+
+  // NEXT BUTTON
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      currentTrack++; 
+      if (currentTrack >= playlist.length) currentTrack = 0;
+      playCurrentTrack();
+    });
+  }
+
+  // PREVIOUS BUTTON
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      currentTrack--;
+      if (currentTrack < 0) currentTrack = playlist.length - 1;
+      playCurrentTrack();
+    });
+  }
+
+  // AUTO-PLAY NEXT WHEN SONG ENDS
+  audio.addEventListener('ended', () => {
+    currentTrack++; 
+    if (currentTrack >= playlist.length) currentTrack = 0;
+    playCurrentTrack();
+  });
 </script>
 </body>
 </html>
