@@ -501,7 +501,6 @@
   ::-webkit-scrollbar-track { background: var(--deep); }
   ::-webkit-scrollbar-thumb { background: var(--warm); border-radius: 2px; }
 
-  /* ── FLOATING PETALS ── */
   .petal {
     position: fixed;
     width: 6px; height: 6px;
@@ -510,6 +509,8 @@
     pointer-events: none;
     animation: fall linear infinite;
     z-index: 0;
+    will-change: transform, opacity;
+    transform: translateZ(0); 
   }
   @keyframes fall {
     0%   { transform: translateY(-10px) rotate(0deg); opacity: 0.8; }
@@ -572,6 +573,8 @@
     width: 1px;
     height: 60px;
     animation: fallRain linear infinite;
+    will-change: transform, opacity;
+    transform: translateZ(0);
   }
   
   .leaf {
@@ -581,6 +584,8 @@
     background: rgba(138, 122, 106, 0.4);
     border-radius: 0 50% 50% 50%;
     animation: fallLeaf linear infinite;
+    will-change: transform, opacity;
+    transform: translateZ(0);
   }
 
   @keyframes fallRain {
@@ -706,6 +711,117 @@
     0%   { text-shadow: 0 0 0px rgba(201,169,110, 0); }
     50%  { text-shadow: 0 0 10px rgba(201,169,110, 0.7); }
     100% { text-shadow: 0 0 0px rgba(201,169,110, 0); }
+  }
+  /* ── DUAL IMAGE HOVER EFFECT ── */
+  .dual-hover { position: relative; }
+  .dual-hover .hover-img {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0;
+    transition: opacity 0.7s ease, transform 0.7s ease, filter 0.7s ease;
+  }
+  .person-card:hover .dual-hover .base-img { opacity: 0; }
+  .person-card:hover .dual-hover .hover-img { opacity: 1; }
+  
+  /* ── CARD PARTICLE SHOWERS ── */
+  @keyframes cardRain {
+    0% { transform: translateY(-30px) rotate(0deg); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { transform: translateY(350px) rotate(360deg); opacity: 0; }
+  }
+  .card-particle {
+    position: absolute;
+    top: 0;
+    font-size: 1.2rem;
+    pointer-events: none;
+    z-index: 10;
+    will-change: transform, opacity;
+    animation: cardRain linear forwards;
+  }
+  .binary-particle {
+    font-family: 'Josefin Sans', monospace;
+    font-weight: 600;
+    color: #4fc3f7; /* Matches Sharmik's/Gaming aesthetic */
+    font-size: 0.9rem;
+  }
+  /* ── OVERCLOCKED CONSTELLATION CANVAS ── */
+  #constellation-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Lets you still click/hover the cards */
+    z-index: 1; /* Sits above the dark background, below the content */
+    opacity: 0.85; 
+  }
+  
+  
+  .branch {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 45vw; 
+    min-width: 300px;
+    max-width: 550px;
+    transform-origin: 0% 0%; 
+    
+    /* THIS IS THE MAGIC: It makes pure black 100% invisible */
+    mix-blend-mode: screen; 
+    
+    will-change: transform;
+  }
+
+  /* Back layer: Pushed into the distance */
+  .branch.back {
+    opacity: 0.3; /* Lowered opacity */
+    /* Dim the light, remove harsh color, add blur */
+    filter: brightness(0.25) saturate(0.3) blur(6px); 
+    animation: swayBack 14s ease-in-out infinite;
+  }
+  
+  /* Front layer: In focus */
+  .branch.front {
+    opacity: 0.6; /* Lowered opacity */
+    /* Dim it heavily so it looks like it's in the shadows */
+    filter: brightness(0.35) saturate(0.4); 
+    animation: swayFront 11s ease-in-out infinite;
+  }
+
+  /* The wind physics */
+  @keyframes swayFront {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(3deg); }
+  }
+  
+  @keyframes swayBack {
+    0%, 100% { transform: scale(0.85) rotate(1.5deg) translateX(-20px); }
+    50% { transform: scale(0.85) rotate(-1.5deg) translateX(-20px); }
+  }
+  /* ── CANOPY LEAF PARTICLES ── */
+  .canopy-leaf {
+    position: absolute;
+    width: 10px; 
+    height: 10px;
+    border-radius: 0 50% 50% 50%; /* Classic teardrop leaf shape */
+    pointer-events: none;
+    z-index: 6; /* Floats above the canvas and the canopy image */
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  
+  @keyframes blowCanopyLeaf {
+    0% { 
+      transform: translate(0, 0) rotate(0deg) scale(var(--leaf-scale)); 
+      opacity: 0; 
+    }
+    15% { opacity: 0.8; } /* Fades in smoothly */
+    80% { opacity: 0.6; }
+    100% { 
+      /* Blows far across the screen and down to the bottom right */
+      transform: translate(60vw, 110vh) rotate(720deg) scale(var(--leaf-scale)); 
+      opacity: 0; 
+    }
   }
 </style>
 </head>
@@ -1127,8 +1243,9 @@
       </div>
 
       <div class="person-card">
-        <div class="person-img-wrap">
-          <img src="image2.png" alt="Pookie">
+        <div class="person-img-wrap dual-hover">
+          <img src="image2.png" alt="Pookie" class="base-img">
+          <img src="POOKIE AND ME.jpeg" alt="Pookie and DJ" class="hover-img">
         </div>
         <h3 class="person-name">Pookie</h3>
         <span class="person-note">The Artist Soul</span>
@@ -1141,12 +1258,35 @@
         </div>
         <p class="person-quote">You feel like a canvas painted in contrasts — the fire of red, the mystery of black, the elegance of Paris, and the soul of an artist who turns emotion into art.</p>
       </div>
+      <div class="person-card">
+        <div class="person-img-wrap">
+          <img src="SHARMIK.jpeg" alt="Sharmik">
+        </div>
+        <h3 class="person-name">Sharmik</h3>
+        <span class="person-note">The Safe Harbor</span>
+        <div class="person-detail">
+          🎨 Blue — deep, steady, and endless<br>
+          👥 Friends — the ultimate chosen family<br>
+          🏡 Home — the ultimate sanctuary<br>
+          🗣️ Finding joy in good company & deep talks<br>
+          🍲 Biriyani — pure comfort<br>
+        </div>
+        <p class="person-quote">You find your sanctuary in the warmth of home and the steady presence of friends. Like the color blue, your energy brings a deep, calming reliability to those lucky enough to share a plate of biriyani and a good conversation with you.</p>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ══ GOALS ══ -->
-<div class="page" id="goals">
+<div class="page" id="goals" style="position: relative;">
+  
+  <canvas id="constellation-canvas"></canvas>
+  
+  <div class="canopy-wrapper">
+    <img src="branch.png" class="branch back" alt="Background leaves">
+    <img src="branch.png" class="branch front" alt="Foreground leaves">
+  </div>
+  
   <div class="container">
     <div class="section-header">
       <span class="section-tag">Intentions</span>
@@ -1154,22 +1294,36 @@
       <div class="section-line"></div>
     </div>
 
-    <div class="goal-block">
-      <div class="goal-icon">✨</div>
-      <h3 class="goal-title">To be Simple</h3>
-      <p class="goal-sub">The highest form of sophistication</p>
-    </div>
+    <div class="goal-grid">
+      <div class="goal-card">
+        <div class="goal-img-bg" style="background-image: url('https://plus.unsplash.com/premium_photo-1676654935493-10ee2b4f2a25?q=80&w=870&auto=format&fit=crop');"></div>
+        <div class="goal-overlay"></div>
+        <div class="goal-content">
+          <div class="goal-icon">✨</div>
+          <h3 class="goal-title">To be Simple</h3>
+          <p class="goal-sub">The highest form of sophistication</p>
+        </div>
+      </div>
 
-    <div class="goal-block">
-      <div class="goal-icon">🕊</div>
-      <h3 class="goal-title">Move Through Life with a Light Heart</h3>
-      <p class="goal-sub">Take nothing personally · protect inner peace</p>
-    </div>
+      <div class="goal-card">
+        <div class="goal-img-bg" style="background-image: url('https://images.unsplash.com/photo-1527212986666-4d2d47a80d5f?q=80&w=435&auto=format&fit=crop');"></div>
+        <div class="goal-overlay"></div>
+        <div class="goal-content">
+          <div class="goal-icon">🕊</div>
+          <h3 class="goal-title">Move Through Life with a Light Heart</h3>
+          <p class="goal-sub">Take nothing personally · protect inner peace</p>
+        </div>
+      </div>
 
-    <div class="goal-block">
-      <div class="goal-icon">🏔</div>
-      <h3 class="goal-title">Keep Exploring</h3>
-      <p class="goal-sub">Waterfalls, mountains, and everything in between</p>
+      <div class="goal-card">
+        <div class="goal-img-bg" style="background-image: url('https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?q=80&w=870&auto=format&fit=crop');"></div>
+        <div class="goal-overlay"></div>
+        <div class="goal-content">
+          <div class="goal-icon">🏔</div>
+          <h3 class="goal-title">Keep Exploring</h3>
+          <p class="goal-sub">Waterfalls, mountains, and everything in between</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1186,11 +1340,20 @@
     goals:       'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1600&q=80',
   };
 
+  const pages = document.querySelectorAll('.page'); // Cache this globally
+
   function showPage(id, btn) {
-    document.querySelectorAll('.page').forEach(p => {
-      p.classList.remove('visible');
-      setTimeout(() => { if (!p.classList.contains('active')) { p.style.display = 'none'; } }, 400);
-      p.classList.remove('active');
+    pages.forEach(p => {
+      p.classList.remove('visible', 'active');
+      
+      // Clear any pending timeouts to prevent race conditions
+      if (p.hideTimeout) clearTimeout(p.hideTimeout);
+      
+      p.hideTimeout = setTimeout(() => { 
+        if (!p.classList.contains('active')) { 
+          p.style.display = 'none'; 
+        } 
+      }, 400);
     });
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
 
@@ -1200,11 +1363,21 @@
     setTimeout(() => page.classList.add('visible'), 30);
     btn.classList.add('active');
 
+    // ── THE FIX: Canvas Resizer for the Motherboard Sky ──
+    if (id === 'goals' && typeof resizeCanvas === 'function') {
+      setTimeout(resizeCanvas, 50); // Gives the DOM 50ms to paint before measuring
+    }
+    // ─────────────────────────────────────────────────────
+    
     // change BG
     const bgImg = document.getElementById('bgImg');
     bgImg.style.transition = 'opacity 0.8s';
     bgImg.style.opacity = '0';
-    setTimeout(() => {
+    
+    // Clear pending background swaps to prevent race conditions
+    if (window.bgTimeout) clearTimeout(window.bgTimeout);
+
+    window.bgTimeout = setTimeout(() => {
       bgImg.src = bgImages[id] || bgImages.cover;
       bgImg.style.opacity = '1';
     }, 400);
@@ -1241,27 +1414,31 @@
   
   // ── REFLECTIONS SLIDER LOGIC ──
   let currentRefSlide = 0;
+  const reflectionSlides = document.querySelectorAll('.reflection-slide'); // Cache globally once
+  
   function moveSlide(direction) {
-    const slides = document.querySelectorAll('.reflection-slide');
-    if (!slides.length) return;
+    if (!reflectionSlides.length) return;
     
     // Hide current
-    slides[currentRefSlide].classList.remove('active');
+    reflectionSlides[currentRefSlide].classList.remove('active');
     
     // Calculate next index
-    currentRefSlide = (currentRefSlide + direction + slides.length) % slides.length;
+    currentRefSlide = (currentRefSlide + direction + reflectionSlides.length) % reflectionSlides.length;
     
     // Show new
-    slides[currentRefSlide].classList.add('active');
+    reflectionSlides[currentRefSlide].classList.add('active');
   }
 
   // Init
   setTimeout(revealElements, 300);
   
   // ── WEATHER GENERATOR (RAIN & LEAVES) ──
+  // ── WEATHER GENERATOR (RAIN & LEAVES) ──
   function createWeather() {
     const weatherContainer = document.getElementById('weather-container');
     if (!weatherContainer) return;
+
+    const fragment = document.createDocumentFragment(); // BATCHING CACHE
 
     // Create Raindrops
     for (let i = 0; i < 40; i++) {
@@ -1270,7 +1447,7 @@
       drop.style.left = Math.random() * 100 + '%';
       drop.style.animationDuration = (0.5 + Math.random() * 1) + 's';
       drop.style.animationDelay = Math.random() * 2 + 's';
-      weatherContainer.appendChild(drop);
+      fragment.appendChild(drop); // Add to cache, not DOM
     }
 
     // Create Leaves
@@ -1280,14 +1457,16 @@
       leaf.style.left = Math.random() * 100 + '%';
       leaf.style.animationDuration = (5 + Math.random() * 8) + 's';
       leaf.style.animationDelay = Math.random() * 5 + 's';
-      weatherContainer.appendChild(leaf);
+      fragment.appendChild(leaf); // Add to cache, not DOM
     }
+    
+    weatherContainer.appendChild(fragment); // 1 SINGLE DOM INJECTION
   }
   
   // Call it right away
   createWeather();
   
-  // ── AMBIENT AUDIO PLAYLIST LOGIC (BLOB CACHED) ──
+  // ── AMBIENT AUDIO PLAYLIST LOGIC (AUTO-BUFFERING) ──
   const audio = document.getElementById('ambient-audio');
   const btnPlayPause = document.getElementById('audio-play-pause');
   const btnToggleText = document.getElementById('audio-toggle-text'); 
@@ -1296,111 +1475,408 @@
   const btnPrev = document.getElementById('audio-prev');
   const btnNext = document.getElementById('audio-next');
 
-  // 1. MASTER PLAYLIST (Merged all your tracks)
+  // 1. MASTER PLAYLIST
   const playlist = [
     'hesham nazih.mp3',
     'Moon Knight.mp4',
     'Tomake_Bhalobeshe.mp3',
     'CALLIN YOU.mp4', 
     'ISHQ_SUFIYANA.mp3',
-    
     'Most Beautiful Music.mp4', 
     'Krishna Flute.mp3', 
     'Jai Sri Krsna.mp4',
-    'Hitman.mp3',
-    
-    
-    
+    'Hitman.mp3'
   ];
 
   let currentTrack = 0;
-  audio.volume = 1.0; 
-  
-  // The Memory Cache dictionary
-  const trackCache = {}; 
+  if (audio) audio.volume = 1.0; 
+
+  const trackCache = {}; // The Memory RAM Dictionary
+  const fetchingTracks = new Set(); // Network lock to prevent duplicate fetch requests
 
   function getCleanName(filename) {
     return filename.split('.').slice(0, -1).join('.').replace(/[-_]/g, ' ').toUpperCase();
   }
 
-  // Master function with Fetch/Blob caching
-  async function playCurrentTrack() {
-    const trackName = playlist[currentTrack];
+  // 2. THE SMART CACHE PRELOADER
+  async function preloadTrack(index) {
+    const trackName = playlist[index];
     
-    // UI: Set to buffering state
-    btnPlayPause.innerHTML = '⌛'; // Hourglass icon while loading
-    audioIcon.innerHTML = '⟳';
-    nowPlayingText.innerText = 'BUFFERING...';
-    btnToggleText.classList.add('playing');
+    // Skip if it's already in RAM or currently being downloaded
+    if (trackCache[trackName] || fetchingTracks.has(trackName)) return;
+
+    fetchingTracks.add(trackName); // Lock the network request
 
     try {
-      // 1. If track isn't in RAM yet, fetch it from the server
-      if (!trackCache[trackName]) {
-        const response = await fetch(trackName);
-        if (!response.ok) throw new Error('Network error');
-        
-        // Convert to a local Blob (raw memory object)
+      const response = await fetch(trackName);
+      if (response.ok) {
         const blob = await response.blob(); 
-        
-        // Create a temporary local URL for the browser to play
         trackCache[trackName] = URL.createObjectURL(blob); 
       }
+    } catch (error) {
+      console.error("Silent preload failed for:", trackName, error);
+    } finally {
+      fetchingTracks.delete(trackName); // Unlock the network request
+    }
+  }
 
-      // 2. Play from local memory
+  // 3. SLIDING WINDOW MEMORY MANAGER
+  function manageMemory() {
+    if (!playlist.length) return;
+
+    // Calculate the neighbors
+    const nextTrackIndex = (currentTrack + 1) % playlist.length;
+    const prevTrackIndex = (currentTrack - 1 + playlist.length) % playlist.length;
+    
+    // The exact 3 files allowed to live in RAM
+    const keepTracks = [
+      playlist[currentTrack],
+      playlist[nextTrackIndex],
+      playlist[prevTrackIndex]
+    ];
+
+    // Clean up old memory blobs
+    for (let cachedTrack in trackCache) {
+      if (!keepTracks.includes(cachedTrack)) {
+        URL.revokeObjectURL(trackCache[cachedTrack]); // Free the RAM
+        delete trackCache[cachedTrack];               // Remove from dictionary
+      }
+    }
+
+    // Silently preload the core trio
+    preloadTrack(currentTrack); // CRITICAL FIX: Ensure track 0 buffers on initial load
+    preloadTrack(nextTrackIndex);
+    preloadTrack(prevTrackIndex);
+  }
+
+  // 💥 KICKOFF: Buffer the current track and neighbors immediately
+  manageMemory();
+
+  // 4. MASTER PLAY FUNCTION
+  async function playCurrentTrack() {
+    if (!playlist.length || !audio) return;
+
+    const trackName = playlist[currentTrack];
+    
+    // Safety net: If play is clicked BEFORE the preload finishes
+    if (!trackCache[trackName]) {
+      if (btnPlayPause) btnPlayPause.innerHTML = '⌛'; 
+      if (audioIcon) audioIcon.innerHTML = '⟳';
+      if (nowPlayingText) nowPlayingText.innerText = 'BUFFERING...';
+      if (btnToggleText) btnToggleText.classList.add('playing');
+      
+      await preloadTrack(currentTrack); 
+    }
+
+    try {
+      // Play instantly from local RAM memory
       audio.src = trackCache[trackName];
       await audio.play();
 
-      // UI: Set to playing state
-      btnPlayPause.innerHTML = '&#10074;&#10074;'; 
-      audioIcon.innerHTML = 'ılı';
-      nowPlayingText.innerText = getCleanName(trackName);
+      // Update UI to Playing State
+      if (btnPlayPause) btnPlayPause.innerHTML = '&#10074;&#10074;'; 
+      if (audioIcon) audioIcon.innerHTML = 'ılı';
+      if (nowPlayingText) nowPlayingText.innerText = getCleanName(trackName);
+      if (btnToggleText) btnToggleText.classList.add('playing');
+
+      // 🧠 LOOK-AHEAD: Shift the memory window
+      manageMemory();
 
     } catch (error) {
       console.error("Error loading track:", error);
-      nowPlayingText.innerText = 'ERROR LOADING';
-      btnPlayPause.innerHTML = '&#9654;';
+      if (nowPlayingText) nowPlayingText.innerText = 'ERROR LOADING';
+      if (btnPlayPause) btnPlayPause.innerHTML = '&#9654;';
     }
   }
 
   // Shared Play/Pause logic
   function toggleAudio() {
-    if (audio.paused || nowPlayingText.innerText === 'BUFFERING...') {
+    if (!audio) return;
+    if (audio.paused || (nowPlayingText && nowPlayingText.innerText === 'BUFFERING...')) {
       playCurrentTrack();
     } else {
       audio.pause();
-      btnPlayPause.innerHTML = '&#9654;'; 
-      audioIcon.innerHTML = '♪';
-      nowPlayingText.innerText = 'PAUSED';
-      btnToggleText.classList.remove('playing');
+      if (btnPlayPause) btnPlayPause.innerHTML = '&#9654;'; 
+      if (audioIcon) audioIcon.innerHTML = '♪';
+      if (nowPlayingText) nowPlayingText.innerText = 'PAUSED';
+      if (btnToggleText) btnToggleText.classList.remove('playing');
     }
   }
 
+  // ── EVENT LISTENERS ──
   if (btnPlayPause) btnPlayPause.addEventListener('click', toggleAudio);
   if (btnToggleText) btnToggleText.addEventListener('click', toggleAudio);
 
   if (btnNext) {
     btnNext.addEventListener('click', () => {
-      audio.pause();
-      currentTrack++; 
-      if (currentTrack >= playlist.length) currentTrack = 0;
+      if (audio) audio.pause();
+      currentTrack = (currentTrack + 1) % playlist.length;
       playCurrentTrack();
     });
   }
 
   if (btnPrev) {
     btnPrev.addEventListener('click', () => {
-      audio.pause();
-      currentTrack--;
-      if (currentTrack < 0) currentTrack = playlist.length - 1;
+      if (audio) audio.pause();
+      currentTrack = (currentTrack - 1 + playlist.length) % playlist.length;
       playCurrentTrack();
     });
   }
 
-  audio.addEventListener('ended', () => {
-    currentTrack++; 
-    if (currentTrack >= playlist.length) currentTrack = 0;
-    playCurrentTrack();
-  });
+  if (audio) {
+    audio.addEventListener('ended', () => {
+      currentTrack = (currentTrack + 1) % playlist.length;
+      playCurrentTrack();
+    });
+  }
+  
+  // ── MOBILE SWIPE FOR CAROUSEL (IIFE Encapsulated) ──
+  (function() {
+    const carousel = document.querySelector('.reflection-carousel');
+    if (!carousel) return; // Exit early if the carousel doesn't exist
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    function handleSwipe() {
+      const swipeThreshold = 50; // Minimum pixel distance
+      if (touchEndX < touchStartX - swipeThreshold) {
+        moveSlide(1);  // Accesses the global moveSlide function
+      }
+      if (touchEndX > touchStartX + swipeThreshold) {
+        moveSlide(-1); 
+      }
+    }
+
+    carousel.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    carousel.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, {passive: true});
+  })();
+  
+  // ── PERSONALIZED CARD SHOWERS (NO MEMORY LEAKS) ──
+  function triggerCardShowers() {
+    const cards = document.querySelectorAll('.person-card');
+    
+    // The visual payload mapped to exact names on the cards
+    const effects = {
+      'Pookie': ['❤️', '💖', '✨'],
+      'Prisha': ['🌸', '🌺', '🌷'],
+      'Adrija Kundu': ['🎉', '🎊', '✨'],
+      'RAHUL': ['🫂', '🤗', '💙'], // Assuming hugs for Rahul!
+      'Sharmik': ['0', '1']       // Binary rain
+    };
+
+    cards.forEach(card => {
+      const nameEl = card.querySelector('.person-name');
+      if (!nameEl) return;
+      
+      // Get the name as written in the HTML
+      const name = nameEl.innerText.trim();
+      const symbols = effects[name];
+      
+      if (!symbols) return; // Skip if no effect mapped
+
+      // Create a burst of 15-20 particles per card
+      const particleCount = 15 + Math.floor(Math.random() * 5);
+
+      for (let i = 0; i < particleCount; i++) {
+        // Stagger the drops so they don't fall in a straight line
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'card-particle';
+          
+          // Add specific binary styling for Sharmik
+          if (name === 'Sharmik') {
+            el.classList.add('binary-particle');
+          }
+
+          // Pick a random symbol
+          el.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+          
+          // Randomize X position and fall speed
+          el.style.left = (Math.random() * 90) + '%';
+          const duration = 3 + Math.random() * 2; // Falls for 3 to 5 seconds
+          el.style.animationDuration = duration + 's';
+          
+          card.appendChild(el);
+
+          // 🛑 GARBAGE COLLECTION: The absolute best way to prevent memory leaks
+          // Nukes the element from RAM the exact millisecond the animation finishes
+          el.addEventListener('animationend', () => {
+            el.remove();
+          });
+
+        }, Math.random() * 2500); // Random delay before each particle starts falling
+      }
+    });
+  }
+
+  // Fire once initially for testing (optional, remove if you only want it on the 60s mark)
+  setTimeout(triggerCardShowers, 2000);
+
+  // Fire exactly once every 60 seconds
+  setInterval(triggerCardShowers, 60000);
+  
+  // ── OVERCLOCKED CONSTELLATION ENGINE (ZERO LEAK CANVAS) ──
+  const canvas = document.getElementById('constellation-canvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+  let nodes = [];
+  let traces = [];
+
+  function resizeCanvas() {
+    if (!canvas) return;
+    const goalsPage = document.getElementById('goals');
+    // Match the canvas to the actual height of the goals section
+    canvas.width = goalsPage.offsetWidth;
+    canvas.height = goalsPage.offsetHeight;
+    initNodes();
+  }
+
+  function initNodes() {
+    nodes = [];
+    // Calculate node density based on screen width
+    const numNodes = Math.floor(window.innerWidth / 25); 
+    
+    for(let i = 0; i < numNodes; i++) {
+      nodes.push({
+        x: Math.random() * canvas.width,
+        // Keep nodes mostly in the top 75% of the page (the "sky")
+        y: Math.random() * (canvas.height * 0.75),
+        size: Math.random() * 1.2 + 0.4, // Subtle star sizes
+        pulseSpeed: Math.random() * 0.02 + 0.01,
+        pulsePhase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function animateConstellation() {
+    if (!canvas) return;
+    
+    // Performance optimization: Only draw if the Goals page is visible
+    const goalsPage = document.getElementById('goals');
+    if (!goalsPage.classList.contains('active')) {
+      requestAnimationFrame(animateConstellation);
+      return;
+    }
+
+    // Clear previous frame
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 1. Draw Idle Nodes (Stars)
+    nodes.forEach(node => {
+      node.pulsePhase += node.pulseSpeed;
+      // Oscillate opacity between 0.1 and 0.6 for a breathing effect
+      const opacity = (Math.sin(node.pulsePhase) + 1) / 2 * 0.5 + 0.1; 
+      
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(201, 169, 110, ${opacity})`; // Using your --warm color
+      ctx.fill();
+    });
+
+    // 2. Spawn Circuit Traces
+    if (Math.random() < 0.04) { // 4% chance per frame to fire a line
+      const n1 = nodes[Math.floor(Math.random() * nodes.length)];
+      const n2 = nodes[Math.floor(Math.random() * nodes.length)];
+      
+      // Only connect if they are somewhat close together
+      const dist = Math.hypot(n2.x - n1.x, n2.y - n1.y);
+      if (dist < 300) {
+        traces.push({
+          x1: n1.x, y1: n1.y,
+          x2: n2.x, y2: n2.y,
+          life: 0,
+          maxLife: Math.random() * 50 + 30 // Lifespan in frames
+        });
+      }
+    }
+
+    // 3. Draw Traces
+    for (let i = traces.length - 1; i >= 0; i--) {
+      let t = traces[i];
+      t.life++;
+
+      // Smooth fade in and out
+      let opacity = 0;
+      if (t.life < 15) opacity = t.life / 15; 
+      else if (t.life > t.maxLife - 15) opacity = (t.maxLife - t.life) / 15; 
+      else opacity = 1;
+
+      opacity *= 0.35; // Keep the lines very faint and ghostly
+
+      ctx.beginPath();
+      ctx.moveTo(t.x1, t.y1);
+      ctx.lineTo(t.x2, t.y2);
+      
+      ctx.strokeStyle = `rgba(201, 169, 110, ${opacity})`;
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+
+      // RAM Cleanup: Destroy trace when its life is over
+      if (t.life >= t.maxLife) traces.splice(i, 1);
+    }
+
+    requestAnimationFrame(animateConstellation);
+  }
+
+  // Bind to window resize to maintain crispness
+  window.addEventListener('resize', resizeCanvas);
+  
+  // Initialize slightly delayed to let the DOM calculate heights
+  setTimeout(() => {
+    resizeCanvas();
+    animateConstellation();
+  }, 500);
+  // ── 2D CANOPY LEAF EMITTER (ZERO LEAK) ──
+  function spawnCanopyLeaf() {
+    const goalsPage = document.getElementById('goals');
+    // Only run the engine if the Goals page is actually open
+    if (!goalsPage || !goalsPage.classList.contains('active')) return;
+
+    const leaf = document.createElement('div');
+    leaf.className = 'canopy-leaf';
+    
+    // 1. Spawn Location: Only spawn in the top-left area where the image is
+    const startX = -2 + Math.random() * 25; // Between -2vw and 25vw
+    const startY = -5 + Math.random() * 20; // Between -5vh and 20vh
+    leaf.style.left = startX + 'vw';
+    leaf.style.top = startY + 'vh';
+    
+    // 2. Leaf Aesthetics: Randomize size and pick a green tone
+    const size = 0.6 + Math.random() * 0.8; 
+    leaf.style.setProperty('--leaf-scale', size);
+    
+    // Matches the vibrant green of your canopy JPEG
+    // Moody, realistic tones matching the dark mountain background
+const greens = [
+  'rgba(65, 73, 52, 0.85)',   /* Dark olive */
+  'rgba(40, 48, 30, 0.75)',   /* Deep forest shadow */
+  'rgba(75, 80, 60, 0.65)',   /* Muted sage */
+  'rgba(25, 30, 20, 0.9)',    /* Almost black-green */
+  'rgba(90, 85, 65, 0.5)'     /* Slightly dry/brown edge */
+];
+    leaf.style.background = greens[Math.floor(Math.random() * greens.length)];
+
+    // 3. Flight Physics: Randomize how fast the wind blows it
+    const duration = 8 + Math.random() * 6; // Floats for 8 to 14 seconds
+    // cubic-bezier gives it that natural, floating drag effect
+    leaf.style.animation = `blowCanopyLeaf ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`;
+
+    goalsPage.appendChild(leaf);
+
+    // 🛑 GARBAGE COLLECTION: Nuke the leaf from RAM the second it hits the floor
+    leaf.addEventListener('animationend', () => {
+      leaf.remove();
+    });
+  }
+
+  // Fire a new leaf into the wind every 1.5 seconds
+  setInterval(spawnCanopyLeaf, 1500);
 </script>
 </body>
 </html>
