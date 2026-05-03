@@ -9,35 +9,43 @@ on:
 jobs:
   sync-config:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+      
     steps:
       - name: 🔄 Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: ⚙️ Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
       
       - name: 📋 Check for Changes
         id: changes
         run: |
-          if git diff HEAD~1 HEAD --quiet; then
-            echo "No changes detected"
-            echo "changed=false" >> $GITHUB_OUTPUT
+          if [ $(git rev-list --count HEAD) -gt 1 ]; then
+            if git diff HEAD~1 HEAD --quiet; then
+              echo "changed=false" >> $GITHUB_OUTPUT
+            else
+              echo "changed=true" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "Changes detected!"
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
       
       - name: 🏷️ Create Version Tag
         if: steps.changes.outputs.changed == 'true'
         run: |
-          VERSION=$(date +v%Y.%m.%d.%H%M%S)
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag -a $VERSION -m "Auto-tagged version: $VERSION"
-          git push origin $VERSION
+          VERSION="v$(date +%Y.%m.%d-%H%M%S)"
+          git tag -a "$VERSION" -m "Auto-tagged: $VERSION"
+          git push origin "$VERSION" || echo "Tag already exists"
           echo "✅ Tagged: $VERSION"
       
-      - name: 📢 Notify Sync Complete
+      - name: 📢 Sync Status
         run: |
-          echo "✅ Config sync completed successfully!"
+          echo "✅ Config sync completed!"
           echo "📦 Latest version: $(git describe --tags --always)"
