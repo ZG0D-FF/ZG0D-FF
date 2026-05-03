@@ -1,0 +1,43 @@
+name: Auto-Sync & Deploy Config
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+
+jobs:
+  sync-config:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔄 Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: 📋 Check for Changes
+        id: changes
+        run: |
+          if git diff HEAD~1 HEAD --quiet; then
+            echo "No changes detected"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected!"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 🏷️ Create Version Tag
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          VERSION=$(date +v%Y.%m.%d.%H%M%S)
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -a $VERSION -m "Auto-tagged version: $VERSION"
+          git push origin $VERSION
+          echo "✅ Tagged: $VERSION"
+      
+      - name: 📢 Notify Sync Complete
+        run: |
+          echo "✅ Config sync completed successfully!"
+          echo "📦 Latest version: $(git describe --tags --always)"
