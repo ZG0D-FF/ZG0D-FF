@@ -2573,10 +2573,508 @@ const CHAPTERS = [
           { value: "pdf", text: "PDF of C.R.V. (No Impulses)" },
           { value: "cdf", text: "CDF of C.R.V. (Amplitude Continuous)" }
         ]
-      }
+      },
+      // --- PMF NOT DEFINED FOR CRV ---
+      { type: "heading", text: "20.7 Why PMF is not defined for C.R.V." },
+      { type: "para", text: "Let X be a Continuous Random Variable (C.R.V.). The PMF evaluates the probability at an exact single point." },
+      { type: "eq", tex: "p_X(x_i) = P\\{X = x_i\\} = \\int_{x_i^-}^{x_i^+} f_X(x)dx = 0" },
+      { type: "eq", tex: "F_X(x_i^+) - F_X(x_i^-) = 0" },
+      
+      { type: "heading", text: "20.8 Note on Point Probabilities" },
+      { type: "list", items: [
+          "1. In case of D.R.V., Probability at a single point \\(P\\{X=a\\}\\) may or may not be zero.",
+          "2. In case of C.R.V., Probability at a single point \\(P\\{X=a\\}\\) is always zero."
+      ]},
+
+      // --- MIXED RANDOM VARIABLES ---
+      { type: "heading", text: "20.9 Mixed Random Variables (M.R.V.)" },
+      { type: "para", text: "Mixed random variables exhibit the nature of both C.R.V. and D.R.V. simultaneously." },
+      { type: "canvas_sim_select", simId: "mixed_rv_graph_sim", height: 260, controlLabel: "Mixed R.V. Visualizer:",
+        options: [
+          { value: "pdf", text: "PDF: Continuous Triangle + Discrete Impulses" },
+          { value: "cdf", text: "CDF: Continuous Ramps + Discrete Jumps" }
+        ]
+      },
+
+      // --- EXPECTATION OPERATOR ---
+      { type: "heading", text: "20.10 Statistical Averages of R.V. (Expectation Operator)" },
+      { type: "para", text: "The Expectation operator \\(E[\\cdot]\\) operates only on random variables and random signals." },
+      { type: "para", text: "Let \\(C\\) be a deterministic constant and \\(h(t)\\) be a deterministic signal. Let \\(X\\) and \\(Y\\) be Random Variables:" },
+      { type: "list", items: [
+          "1. \\(E[C] = C\\)",
+          "2. \\(E[h(t)] = h(t)\\)",
+          "3. \\(E[X] \\neq X\\)",
+          "4. \\(E[aX] = aE[X]\\)",
+          "5. \\(E[aX+b] = aE[X] + b\\)",
+          "6. \\(E[aX+bY] = aE[X] + bE[Y]\\)",
+          "7. \\(E[g(X)] \\neq g(X)\\)",
+          "8. \\(E[ag(X) + bH(Y)] = aE[g(X)] + bE[H(Y)]\\)",
+          "9. \\(E[X+g(X)+Y^2+H(Y)] = E[X] + E[g(X)] + E[Y^2] + E[H(Y)]\\)"
+      ]},
+      { type: "para", text: "<b>Note:</b> If \\(X\\) is an R.V., then any function \\(g(X)\\) is also an R.V.." },
+
+      // --- CALCULATING EXPECTATION ---
+      { type: "heading", text: "20.11 Definition of Expectation Operator" },
+      { type: "para", text: "The calculation of Expectation branches depending on whether the variable is Continuous (uses PDF and integration) or Discrete (uses PMF and summation)." },
+      { type: "table",
+        headers: ["Expected Value", "C.R.V. (Using PDF)", "D.R.V. (Using PMF)"],
+        rows: [
+          ["\\(E[X]\\)", "\\(\\int_{-\\infty}^{\\infty} x f_X(x) dx\\)", "\\(\\sum_i x_i P\\{X=x_i\\}\\)"],
+          ["\\(E[X^2]\\)", "\\(\\int_{-\\infty}^{\\infty} x^2 f_X(x) dx\\)", "\\(\\sum_i x_i^2 P\\{X=x_i\\}\\)"],
+          ["\\(E[g(X)]\\)", "\\(\\int_{-\\infty}^{\\infty} g(x) f_X(x) dx\\)", "\\(\\sum_i g(x_i) P\\{X=x_i\\}\\)"]
+        ]
+      },
+      { type: "para", text: "<b>Important:</b> The variable used inside the PDF integral is just a dummy variable. For example, let \\(Y\\) be a C.R.V: \\(E[Y] = \\int_{-\\infty}^{\\infty} y f_Y(y) dy\\) where \\(f_Y(y)\\) is the PDF of Y." },
+      
+      
     ]
   },
   
+  // ══════════════════════════
+  // CHAPTER 21 — Expectation Operator
+  // ══════════════════════════
+  {
+    "id": "expectation_operator",
+    "label": "21 · Expectation",
+    "title": "21. Statistical Averages & Expectation Operator",
+    "content": [
+      { "type": "heading", "text": "21.1 Properties of Expectation (Random Variables X and Y)" },
+      { "type": "para", "text": "The Expectation operator \\(E[\\cdot]\\) follows strict linearity properties. If \\(X\\) is a Random Variable, then any function \\(g(X)\\) is also a Random Variable." },
+      { "type": "list", "items": [
+          "3. \\(E[X] \\neq X\\)",
+          "4. \\(E[aX] = aE[X]\\)",
+          "5. \\(E[aX + b] = aE[X] + b\\)",
+          "6. \\(E[aX + bY] = aE[X] + bE[Y]\\)",
+          "7. \\(E[g(X)] \\neq g(X)\\)",
+          "8. \\(E[ag(X) + bH(Y)] = aE[g(X)] + bE[H(Y)]\\)",
+          "9. \\(E[X + g(X) + Y^2 + H(Y)] = E[X] + E[g(X)] + E[Y^2] + E[H(Y)]\\)"
+        ]
+      },
+
+      { "type": "heading", "text": "21.2 Definition Framework" },
+      { "type": "para", "text": "The definition and calculation of the Expectation Operator depend entirely on whether the Random Variable is Continuous (C.R.V.) or Discrete (D.R.V.):" },
+      { "type": "list", "items": [
+          "For <b>X: C.R.V.</b> \\(\\rightarrow\\) Use the <b>PDF</b> (Probability Density Function).",
+          "For <b>X: D.R.V.</b> \\(\\rightarrow\\) Use the <b>PMF</b> (Probability Mass Function)."
+        ]
+      },
+
+      { "type": "heading", "text": "21.3 Master Formulas for Expectation" },
+      { "type": "para", "text": "Let \\(X\\) be a Random Variable. The expected values are defined as follows:" },
+      { "type": "eq", "tex": "1. \\quad E[X] = \\begin{cases} \\int_{-\\infty}^{\\infty} x f_X(x) dx & \\text{X: C.R.V (using PDF)} \\\\ \\sum_i x_i P\\{X = x_i\\} & \\text{X: D.R.V (using PMF)} \\end{cases}" },
+      { "type": "eq", "tex": "2. \\quad E[g(X)] = \\begin{cases} \\int_{-\\infty}^{\\infty} g(x) f_X(x) dx & \\text{X: C.R.V} \\\\ \\sum_i g(x_i) P\\{X = x_i\\} & \\text{X: D.R.V} \\end{cases}" },
+      { "type": "eq", "tex": "3. \\quad E[X^2] = \\begin{cases} \\int_{-\\infty}^{\\infty} x^2 f_X(x) dx & \\text{X: C.R.V} \\\\ \\sum_i x_i^2 P\\{X = x_i\\} & \\text{X: D.R.V} \\end{cases}" },
+      { "type": "para", "text": "*(Equations codified from the core expectation framework)*." },
+
+      { "type": "heading", "text": "21.4 Continuous Random Variables (C.R.V) Examples" },
+      { "type": "para", "text": "For Continuous Random Variables \\(X\\) and \\(Y\\), the standard expectations are strictly based on their respective PDFs:" },
+      { "type": "eq", "tex": "E[X] = \\int_{-\\infty}^{\\infty} x f_X(x) dx \\quad \\text{where } f_X(x) \\text{ is PDF of X}" },
+      { "type": "eq", "tex": "E[Y] = \\int_{-\\infty}^{\\infty} y f_Y(y) dy \\quad \\text{where } f_Y(y) \\text{ is PDF of Y}" },
+      { "type": "para", "text": "<b>Function Evaluation Examples:</b> To calculate the expectation of a function of \\(X\\) (like \\(Y = X^2\\) or \\(Y = \\sin X\\)), you substitute the function directly into the integral while keeping the PDF of \\(X\\):" },
+      { "type": "eq", "tex": "E[Y = X^2] = \\int_{-\\infty}^{\\infty} y f_Y(y) dy = \\int_{-\\infty}^{\\infty} x^2 f_X(x) dx" },
+      { "type": "eq", "tex": "E[Y = \\sin X] = \\int_{-\\infty}^{\\infty} y f_Y(y) dy = \\int_{-\\infty}^{\\infty} \\sin(x) f_X(x) dx" },
+
+      { "type": "heading", "text": "21.5 Discrete Random Variables (D.R.V) Examples" },
+      { "type": "para", "text": "For Discrete Random Variables \\(X\\) and \\(Y\\), the expectations are based on their respective PMFs:" },
+      { "type": "eq", "tex": "E[X] = \\sum_i x_i P\\{X = x_i\\} \\quad \\text{where } P\\{X = x_i\\} \\text{ is PMF of X}" },
+      { "type": "eq", "tex": "E[Y] = \\sum_j y_j P\\{X = y_j\\} \\quad \\text{where } P\\{Y = y_j\\} \\text{ is PMF of Y}" },
+      { "type": "para", "text": "<b>Function Evaluation (Let \\(Y = g(X)\\)):</b> By expanding the substitution across the summations, the expected value of \\(Y\\) maps back to the PMF of \\(X\\):" },
+      { "type": "eq", "tex": "E[Y = g(X)] = \\sum_j y_j P\\{Y = y_j\\} = \\sum_i g(x_i) P\\{X = x_i\\}" }
+    ]
+  },
+  
+  // ══════════════════════════
+  // CHAPTER 22 — Statistical Average & Moments
+  // ══════════════════════════
+  {
+    "id": "statistical_moments",
+    "label": "22 · Moments & Variance",
+    "title": "22. Statistical Average of R.V. (Moments)",
+    "content": [
+
+      // --- SECTION: N-TH ORDER ABOUT ORIGIN ---
+      { "type": "heading", "text": "22.1  \\(n^{th}\\) Order Moment About Origin" },
+      { "type": "para", "text": "The general formula for the \\(n^{th}\\) order moment about the origin evaluates the expected value of \\(X^n\\):" },
+      { "type": "eq", "tex": "E[(X-0)^n] = E[X^n] = \\begin{cases} \\sum_i x_i^n P\\{X = x_i\\} & X:DRV \\\\ \\int_{-\\infty}^{\\infty} x^n f_X(x)dx & X:CRV \\end{cases}" },
+
+      // --- SECTION: 1ST ORDER ABOUT ORIGIN ---
+      { "type": "heading", "text": "22.2  First Order Moment About Origin (Mean)" },
+      { "type": "para", "text": "Substituting \\(n = 1\\) yields the first moment about the origin:" },
+      { "type": "eq", "tex": "E[(X-0)^1] = E[X] = \\begin{cases} \\sum_i x_i P\\{X = x_i\\} & X:DRV \\\\ \\int_{-\\infty}^{\\infty} x f_X(x)dx & X:CRV \\end{cases}" },
+      { "type": "para", "text": "This value has several critical notations and physical interpretations in signal analysis:" },
+      { "type": "list", "items": [
+          "\\(E[X] = \\bar{X} = \\mu_x = m_1\\).",
+          "It represents the <b>dc value</b>, <b>mean value</b>, or <b>avg value</b> of the Random Variable.",
+          "Squaring this value \\((E[X])^2 = \\mu_x^2 = (\\bar{X})^2 = m_1^2\\) represents the <b>dc power</b> of the Random Variable."
+        ]
+      },
+
+      // --- SECTION: 2ND ORDER ABOUT ORIGIN ---
+      { "type": "heading", "text": "22.3  Second Order Moment About Origin" },
+      { "type": "para", "text": "Substituting \\(n = 2\\) yields the second moment about the origin:" },
+      { "type": "eq", "tex": "E[(X-0)^2] = E[X^2] = \\begin{cases} \\sum_i x_i^2 P\\{X = x_i\\} & X:DRV \\\\ \\int_{-\\infty}^{\\infty} x^2 f_X(x)dx & X:CRV \\end{cases}" },
+      { "type": "para", "text": "Physical interpretation of the second moment:" },
+      { "type": "list", "items": [
+          "\\(E[X^2] = \\overline{X^2} = m_2\\), which represents the <b>Mean square value</b> of R.V. X.",
+          "This equates directly to the <b>Total or avg power</b> of R.V. X."
+        ]
+      },
+
+      // --- SECTION: N-TH ORDER ABOUT MEAN ---
+      { "type": "heading", "text": "22.4  \\(n^{th}\\) Order Moment About Mean (Central Moments)" },
+      { "type": "para", "text": "Moments calculated around the mean (\\(\\mu_x\\)) rather than the origin (0) are defined as:" },
+      { "type": "eq", "tex": "E[(X-\\mu_x)^n] = \\begin{cases} \\sum_i (x_i - \\mu_x)^n P\\{X = x_i\\} & X:DRV \\\\ \\int_{-\\infty}^{\\infty} (x - \\mu_x)^n f_X(x)dx & X:CRV \\end{cases}" },
+
+      // --- SECTION: 1ST ORDER ABOUT MEAN ---
+      { "type": "heading", "text": "22.5  First Order Moment About Mean" },
+      { "type": "para", "text": "Evaluating the first order moment about the mean always results in zero. Because the expectation of a constant (\\(\\mu_x\\)) is the constant itself:" },
+      { "type": "eq", "tex": "E[(X-\\mu_x)] = E[X-\\mu_x] = E[X] - E[\\mu_x]" },
+      { "type": "eq", "tex": "= \\mu_x - \\mu_x = 0" },
+
+      // --- SECTION: 2ND ORDER ABOUT MEAN (VARIANCE) ---
+      { "type": "heading", "text": "22.6  Second Order Moment About Mean (Variance)" },
+      { "type": "para", "text": "The second order moment about the mean is one of the most important statistical parameters. The mathematical derivation unfolds as follows:" },
+      { "type": "eq", "tex": "E[(X-\\mu_x)^2] = E[X^2 + \\mu_x^2 - 2X\\mu_x]" },
+      { "type": "eq", "tex": "= E[X^2] + E[\\mu_x^2] - E[2X\\mu_x]" },
+      { "type": "para", "text": "Since \\(\\mu_x\\) is a constant, it factors out of the expectation operator:" },
+      { "type": "eq", "tex": "= E[X^2] + \\mu_x^2 - 2\\mu_x E[X]" },
+      { "type": "eq", "tex": "= E[X^2] + \\mu_x^2 - 2\\mu_x^2" },
+      { "type": "eq", "tex": "\\sigma_x^2 = E[X^2] - \\mu_x^2" },
+      { "type": "para", "text": "Key interpretations of this result:" },
+      { "type": "list", "items": [
+          "\\(E[(X-\\mu_x)^2] = \\sigma_x^2\\) represents the <b>Variance of R.V. X</b>.",
+          "It can be written in terms of moments: \\(\\sigma_x^2 = m_2 - m_1^2\\).",
+          "In signal terminology, \\(\\sigma_x^2\\) exactly represents the <b>AC power of R.V. \"X\"</b>."
+        ]
+      }
+    ]
+  },
+  // ══════════════════════════
+  // CHAPTER 23 — Properties of Variance & Problems
+  // ══════════════════════════
+  {
+    "id": "variance_properties_problems",
+    "label": "23 · Variance & Probs",
+    "title": "23. Properties of Variance & Problem Solving",
+    "content": [
+
+      // --- SECTION: PROPERTIES OF VARIANCE ---
+      { "type": "heading", "text": "23.1  Important Properties of Variance" },
+      { "type": "list", "items": [
+          "<b>1. Non-negativity:</b> Since variance physically represents AC power, it must be strictly non-negative: \\(\\sigma_x^2 \\ge 0 \\implies E[X^2] \\ge (E[X])^2\\).",
+          "<b>2. Zero Mean R.V.:</b> If a random variable has a mean of zero (\\(\\mu_x = 0\\)), then its variance is exactly equal to its Mean Square Value (M.S.V.): \\(\\sigma_x^2 = E[X^2]\\).",
+          "<b>3. Standard Deviation:</b> The square root of the variance defines the standard deviation: \\(\\text{Standard Deviation} = \\sqrt{\\text{Variance}} = \\sqrt{\\sigma_x^2} = \\pm \\sigma_x\\)."
+        ]
+      },
+
+      // --- SECTION: LINEAR TRANSFORMATION VARIANCE ---
+      { "type": "heading", "text": "23.2  Variance of a Linear Transformation" },
+      { "type": "para", "text": "Let \\(Y = aX + b\\). We calculate the variance of \\(Y\\) by expanding the fundamental variance formula:" },
+      { "type": "eq", "tex": "\\sigma_y^2 = E[Y^2] - (E[Y])^2" },
+      { "type": "eq", "tex": "\\sigma_y^2 = E[(aX + b)^2] - (E[aX + b])^2" },
+      { "type": "eq", "tex": "\\sigma_y^2 = E[a^2X^2 + b^2 + 2abX] - (aE[X] + b)^2" },
+      { "type": "para", "text": "Knowing that \\(E[X] = \\mu_x\\), the expansion simplifies to:" },
+      { "type": "eq", "tex": "\\sigma_y^2 = a^2E[X^2] + b^2 + 2ab\\mu_x - (a^2\\mu_x^2 + b^2 + 2ab\\mu_x)" },
+      { "type": "eq", "tex": "\\sigma_y^2 = a^2E[X^2] - a^2\\mu_x^2 = a^2(E[X^2] - \\mu_x^2)" },
+      { "type": "para", "text": "Since \\(E[X^2] - \\mu_x^2 = \\sigma_x^2\\), the definitive relationship is established:" },
+      { "type": "eq", "tex": "\\sigma_y^2 = a^2 \\sigma_x^2" },
+
+      // --- SECTION: VARIANCE OF CONSTANT ---
+      { "type": "heading", "text": "23.3  Variance of a Constant" },
+      { "type": "para", "text": "Let \\(C\\) be a deterministic constant. Its variance evaluates to zero because it has no AC power or spread:" },
+      { "type": "eq", "tex": "Var(C) = E[C^2] - (E[C])^2 = C^2 - (C)^2 = 0" },
+      { "type": "para", "text": "<b>Master Summary Rules:</b>" },
+      { "type": "eq", "tex": "X \\longrightarrow \\sigma_x^2" },
+      { "type": "eq", "tex": "Y = aX + b \\longrightarrow \\sigma_y^2 = a^2\\sigma_x^2" },
+
+      // --- SECTION: CENTRAL MOMENTS ---
+      { "type": "heading", "text": "23.4  Central Moments (\\(n^{th}\\) order)" },
+      { "type": "para", "text": "For symmetric distributions, the \\(n^{th}\\) order central moments, \\(E[(X - \\mu_x)^n]\\), follow specific expansion rules:" },
+      { "type": "eq", "tex": "E[(X - \\mu_x)^n] = \\begin{cases} 0 & : n \\text{ is odd} \\\\ \\{1 \\times 3 \\times 5 \\times 7 \\times \\dots \\times (n-1)\\} \\sigma_x^n & : n \\text{ is even} \\end{cases}" },
+      { "type": "para", "text": "Example evaluating the \\(4^{th}\\) moment (\\(n=4\\)):" },
+      { "type": "eq", "tex": "E[(X - \\mu_x)^4] = (1 \\times 3)\\sigma_x^4 = 3\\sigma_x^4" },
+
+      // --- SECTION: PROBLEM: MEAN & VARIANCE ---
+      { "type": "heading", "text": "23.5  Problem: Mean and Variance of a D.R.V." },
+      { "type": "para", "text": "<b>Question:</b> The PMF of D.R.V. \\(X\\) is given as follows. Calculate (i) Mean of R.V. and (ii) Variance of DRV." },
+      { "type": "eq", "tex": "P_X(x) = \\begin{cases} 1/3 & x = 0 \\\\ 2/3 & x = 2 \\end{cases}" },
+      { "type": "para", "text": "<b>Solution (i) Mean:</b> The sample space is \\(X \\in \\{0, 2\\}\\)." },
+      { "type": "eq", "tex": "E[X] = \\sum_i x_i P\\{X = x_i\\} = 0 \\times P\\{X=0\\} + 2 \\times P\\{X=2\\}" },
+      { "type": "eq", "tex": "E[X] = 0 \\left(\\frac{1}{3}\\right) + 2 \\left(\\frac{2}{3}\\right) = \\frac{4}{3}" },
+      { "type": "para", "text": "<b>Solution (ii) Variance:</b> First, find the mean square value \\(E[X^2]\\):" },
+      { "type": "eq", "tex": "E[X^2] = \\sum_i x_i^2 P\\{X = x_i\\} = 0^2 P\\{X=0\\} + 2^2 P\\{X=2\\}" },
+      { "type": "eq", "tex": "E[X^2] = 0 \\left(\\frac{1}{3}\\right) + 4 \\left(\\frac{2}{3}\\right) = \\frac{8}{3}" },
+      { "type": "para", "text": "Now apply the variance formula:" },
+      { "type": "eq", "tex": "\\sigma_x^2 = E[X^2] - (E[X])^2 = \\frac{8}{3} - \\left(\\frac{4}{3}\\right)^2 = \\frac{8}{3} - \\frac{16}{9} = \\frac{24 - 16}{9} = \\frac{8}{9}" },
+
+      // --- SECTION: PROBLEM: EXPECTED VALUE SET ---
+      { "type": "heading", "text": "23.6  Problem: Expected Value from a Set" },
+      { "type": "para", "text": "<b>Question:</b> Let \\(X\\) be an R.V. chosen uniformly from the set of odd numbers less than 100. Calculate the expected value of \\(X\\)." },
+      { "type": "para", "text": "<b>Solution:</b> The set of possible values is \\(X = \\{1, 3, 5, 7, \\dots, 99\\}\\). Since a number is chosen uniformly, the probability of each outcome is \\(1/50\\) (as there are 50 odd numbers less than 100)." },
+      { "type": "eq", "tex": "E[X] = \\sum_{i} x_i P\\{X = x_i\\} = \\frac{1}{50} [1 + 3 + 5 + 7 + \\dots + 99]" },
+      { "type": "para", "text": "Using the sum of an arithmetic progression \\(S_n = \\frac{n}{2}(a + l)\\), where \\(n=50\\), \\(a=1\\), and the last term \\(l=99\\):" },
+      { "type": "eq", "tex": "E[X] = \\frac{1}{50} \\left[ \\frac{50}{2} (1 + 99) \\right] = \\frac{1}{50} \\times \\frac{50}{2} \\times 100 = 50" },
+
+      // --- SECTION: IMPORTANT SERIES ---
+      { "type": "heading", "text": "23.7  Mathematical Prerequisites: Important Series" },
+      { "type": "para", "text": "The following infinite series expansions frequently appear when calculating the expectations of complex discrete distributions:" },
+      { "type": "eq", "tex": "(1+x)^{-1} = 1 - x + x^2 - x^3 + \\dots" },
+      { "type": "eq", "tex": "(1-x)^{-1} = 1 + x + x^2 + x^3 + \\dots" },
+      { "type": "para", "text": "Differentiating or manipulating these base series yields higher-order forms:" },
+      { "type": "eq", "tex": "(1+x)^{-2} = 1 - 2x + 3x^2 - 4x^3 + \\dots" },
+      { "type": "eq", "tex": "x(1+x)^{-2} = x - 2x^2 + 3x^3 - 4x^4 + \\dots" },
+      { "type": "para", "text": "And for the subtraction case:" },
+      { "type": "eq", "tex": "(1-x)^{-2} = 1 + 2x + 3x^2 + 4x^3 + \\dots" },
+      { "type": "eq", "tex": "x(1-x)^{-2} = x + 2x^2 + 3x^3 + 4x^4 + \\dots" }
+    ]
+  },
+  
+  // ══════════════════════════
+  // CHAPTER 25 — Types of Distributions
+  // ══════════════════════════
+  {
+    id: "types_of_distributions",
+    label: "25 · Distributions",
+    title: "25. Types of Distributions",
+    content: [
+      { type: "heading", text: "25.1  Classification of Random Variables" },
+      { type: "para", text: "Random variables are broadly classified into Continuous (C.R.V.) and Discrete (D.R.V.), each utilizing a specific probability function and specific standard distributions:" },
+      { type: "table",
+        headers: ["Category", "Function Used", "Standard Distributions"],
+        rows: [
+          ["<b>Continuous Random Variable (C.R.V.)</b>", "<b>P.D.F.</b> (Probability Density Function)", "Uniform, Triangular, Gaussian, Rayleigh, Exponential, Laplacian, Cauchy"],
+          ["<b>Discrete Random Variable (D.R.V.)</b>", "<b>P.M.F.</b> (Probability Mass Function)", "Binomial, Poisson's"]
+        ]
+      },
+      
+      { type: "heading", text: "25.2  Expected Value of a Geometric Sequence (Dice Problem)" },
+      { type: "para", text: "<b>Question:</b> A dice is Rolled until 3 is observed for the first time. Calculate the expected value of number of times dice Rolled." },
+      { type: "para", text: "<b>Mathematical Derivation:</b> The sample space represents the number of rolls until a '3' appears. Let \\(X\\) be the number of rolls. This is a Discrete Random Variable (D.R.V.)." },
+      { type: "eq", tex: "S = \\{3, \\bar{3}3, \\bar{3}\\bar{3}3, \\dots\\}" },
+      { type: "eq", tex: "X = \\{1, 2, 3, \\dots\\} \\implies D.R.V." },
+      { type: "para", text: "Applying the Expectation formula for a D.R.V.:" },
+      { type: "eq", tex: "E[\\text{no. of times dice Rolled}] = E[X] = \\sum_{i} x_i P\\{X=x_i\\}" },
+      { type: "eq", tex: "E[X] = 1P(X=1) + 2P(X=2) + 3P(X=3) + 4P(X=4) + \\dots" },
+      { type: "para", text: "The probability of rolling a 3 is \\(1/6\\), and the probability of not rolling a 3 is \\(5/6\\):" },
+      { type: "eq", tex: "E[X] = 1 \\times \\frac{1}{6} + 2 \\left(\\frac{5}{6}\\right)\\left(\\frac{1}{6}\\right) + 3 \\left(\\frac{5}{6}\\right)^2 \\left(\\frac{1}{6}\\right) + \\dots" },
+      { type: "para", text: "Factor out \\(1/6\\) and define \\(x = 5/6\\) to match the infinite series expansion \\((1-x)^{-2}\\):" },
+      { type: "eq", tex: "E[X] = \\frac{1}{6} \\left\\{ 1 + 2\\left(\\frac{5}{6}\\right) + 3\\left(\\frac{5}{6}\\right)^2 + \\dots \\right\\} = \\frac{1}{6} (1 - x)^{-2}" },
+      { type: "eq", tex: "E[X] = \\frac{1}{6} \\left(1 - \\frac{5}{6}\\right)^{-2} = \\frac{1}{6} \\left(\\frac{1}{6}\\right)^{-2} = \\frac{1}{6} \\times 36 = 6" }
+    ]
+  },
+
+  // ══════════════════════════
+  // CHAPTER 26 — Uniform Distribution
+  // ══════════════════════════
+  {
+    id: "uniform_distribution",
+    label: "26 · Uniform C.R.V.",
+    title: "26. Distribution of C.R.V. (Uniform Distribution)",
+    content: [
+      
+      // --- SECTION: UNIFORM INTRO ---
+      { type: "heading", text: "26.1  Uniform Distribution Definition" },
+      { type: "para", text: "A Continuous Random Variable (C.R.V.) is uniformly distributed between boundaries \\(a\\) and \\(b\\) if it has a constant (uniform) Probability Density Function (PDF) across that entire interval." },
+      { type: "list", items: [
+          "<b>Standard Notation:</b> \\(X \\sim U[a, b]\\)",
+          "<b>Nomenclature:</b> Referred to as a \"uniform R.V.\""
+        ]
+      },
+
+      // --- SECTION: INTERACTIVE GRAPHS ---
+      { type: "heading", text: "26.2  Interactive Uniform Distribution Graphs" },
+      { type: "para", text: "The PDF forms a flat rectangular block (to maintain a total area of 1), while the CDF forms a linear ramp integrating that area over time." },
+      { type: "canvas_sim_select", simId: "uniform_dist_sim", height: 260, controlLabel: "Select Function to View:",
+        options: [
+          { value: "pdf", text: "1. Probability Density Function (P.D.F)" },
+          { value: "cdf", text: "2. Cumulative Distribution Function (CDF)" }
+        ]
+      },
+
+      // --- SECTION: PDF DEFINITIONS ---
+      { type: "heading", text: "26.3  Mathematical Forms of the PDF" },
+      { type: "para", text: "The PDF of a Uniform Distribution can be expressed mathematically in three equivalent ways. Notice that the height of the PDF must be \\(\\frac{1}{b-a}\\) to ensure the total area \\(\\int_{-\\infty}^{\\infty} f_X(x)dx = 1\\)." },
+      { type: "list", items: [
+          "<b>1. Using Unit Step Functions:</b> <br>\\(f_X(x) = \\frac{1}{(b-a)} [u(x-a) - u(x-b)]\\)",
+          "<b>2. Strict Piecewise:</b> <br>\\(f_X(x) = \\begin{cases} 0 & : x < a \\\\ \\frac{1}{b-a} & : a \\le x \\le b \\\\ 0 & : x > b \\end{cases}\\)",
+          "<b>3. Compact Piecewise:</b> <br>\\(f_X(x) = \\begin{cases} \\frac{1}{b-a} & : a \\le x \\le b \\\\ 0 & : \\text{elsewhere} \\end{cases}\\)"
+        ]
+      },
+
+      // --- SECTION: CDF DEFINITION ---
+      { type: "heading", text: "26.4  Mathematical Form of the CDF" },
+      { type: "para", text: "The Cumulative Distribution Function (CDF) integrates the PDF, resulting in a ramp that rises linearly from 0 at boundary \\(a\\) to 1 at boundary \\(b\\)." },
+      { type: "eq", tex: "F_X(x) = \\begin{cases} 0 & : x < a \\\\ \\frac{x-a}{b-a} & : a \\le x \\le b \\\\ 1 & : x > b \\end{cases}" },
+
+      // --- SECTION: STATISTICAL AVERAGES ---
+      { type: "heading", text: "26.5  Statistical Averages for \\(X \\sim U[a, b]\\)" },
+      { type: "para", text: "For a Uniform Random Variable, the moments and variance evaluate to the following standard formulas via integration:" },
+      { type: "list", items: [
+          "<b>1. Mean (First Moment):</b> <br>\\(E[X] = \\int_{-\\infty}^{\\infty} x f_X(x) dx = \\int_{a}^{b} \\frac{x}{(b-a)} dx = \\frac{a+b}{2}\\)",
+          "<b>2. Mean Square Value (Second Moment):</b> <br>\\(E[X^2] = \\int_{-\\infty}^{\\infty} x^2 f_X(x) dx = \\int_{a}^{b} \\frac{x^2}{(b-a)} dx = \\frac{(b^3-a^3)}{3(b-a)} = \\frac{a^2+b^2+ab}{3}\\)",
+          "<b>3. Variance:</b> <br>\\(\\sigma_x^2 = E[X^2] - (E[X])^2 = \\frac{(b-a)^2}{12}\\)"
+        ]
+      },
+
+      // --- SECTION: POINT PROBABILITY ---
+      { type: "heading", text: "26.6  Probability at a Point" },
+      { type: "para", text: "Because the Uniform Distribution is a Continuous Random Variable, it contains no impulses. Therefore, the probability of the variable taking any exact point value \\(c\\) (where \\(a \\le c \\le b\\)) is strictly zero." },
+      { type: "eq", tex: "P\\{X = c\\} = \\int_{c^-}^{c^+} f_X(x)dx = F_X(c^+) - F_X(c^-) = 0" }
+    ]
+  },
+  // ══════════════════════════
+  // CHAPTER 27 — Uniform Problems
+  // ══════════════════════════
+  {
+    id: "uniform_problems",
+    label: "27 · Uniform Probs",
+    title: "27. Uniform Distribution Problem Solving",
+    content: [
+      { type: "heading", text: "27.1  Symmetric Uniform Distribution Examples" },
+      { type: "para", text: "When a Uniform Continuous Random Variable is centered at the origin (ranging from \\(-m\\) to \\(m\\)), its basic parameters simplify significantly." },
+      { type: "list", items: [
+          "<b>Mean:</b> \\(E[X] = 0\\)",
+          "<b>Variance / MSV:</b> \\(E[X^2] = \\sigma_x^2 = \\frac{m^2}{3}\\)"
+      ]},
+      { type: "para", text: "<b>Example 1:</b> Given a uniform PDF \\(f_X(x)\\) spanning from -5 to 5. Find the constant \\(K\\), Mean, and Variance." },
+      { type: "list", items: [
+          "<b>Total Area = 1:</b> \\(K \\times (5 - (-5)) = 1 \\implies 10K = 1 \\implies K = \\frac{1}{10}\\)",
+          "<b>Mean:</b> \\(E[X] = \\frac{5 + (-5)}{2} = 0\\)",
+          "<b>Mean Square Value:</b> \\(E[X^2] = \\frac{5^2 + 5^2 + (5)(-5)}{3} = \\frac{25}{3}\\)",
+          "<b>Variance:</b> \\(\\sigma_x^2 = \\frac{25}{3}\\)"
+      ]},
+      { type: "canvas_sim", simId: "uniform_symmetric_sim", height: 220, controlLabel: "Boundary parameter (m):", min: 1, max: 10, step: 1, defaultVal: 5 }
+    ]
+  },
+
+  // ══════════════════════════
+  // CHAPTER 28 — Triangular Distribution
+  // ══════════════════════════
+  {
+    id: "triangular_distribution",
+    label: "28 · Triangular Dist",
+    title: "28. Triangular Distribution",
+    content: [
+      { type: "heading", text: "28.1  General Triangular Distribution" },
+      { type: "para", text: "<b>Standard Notation:</b> \\(X \\sim \\Delta[a, m, b]\\) or \\(X \\sim tri[a, m, b]\\)." },
+      { type: "para", text: "A triangular PDF begins at \\(x = a\\), reaches its peak mode at \\(x = m\\), and terminates at \\(x = b\\)." },
+      { type: "list", items: [
+          "<b>Peak Height:</b> To ensure the total integrated area is 1, the maximum value of the PDF at \\(x = m\\) is \\(f_X(m) = \\frac{2}{(b-a)}\\).",
+          "<b>Expected Value (Mean):</b> \\(E[X] = \\frac{a + m + b}{3}\\)."
+      ]},
+      { type: "heading", text: "28.2  Symmetric Triangular Distribution" },
+      { type: "para", text: "If the distribution is perfectly symmetric around the y-axis, starting at \\(-m\\) and ending at \\(m\\), its peak sits exactly at the origin (0):" },
+      { type: "list", items: [
+          "<b>Peak Height:</b> \\(f_X(0) = \\frac{1}{m}\\)",
+          "<b>Mean:</b> \\(E[X] = \\frac{-m + 0 + m}{3} = 0\\)",
+          "<b>Variance / MSV:</b> \\(E[X^2] = \\sigma_x^2 = \\frac{m^2}{6}\\)"
+      ]},
+      { type: "canvas_sim", simId: "triangular_symmetric_sim", height: 220, controlLabel: "Boundary parameter (m):", min: 1, max: 10, step: 1, defaultVal: 5 }
+    ]
+  },
+
+  // ══════════════════════════
+  // CHAPTER 29 — Gaussian (Normal) Distribution
+  // ══════════════════════════
+  {
+    id: "gaussian_distribution",
+    label: "29 · Gaussian (Normal)",
+    title: "29. Gaussian or Normal Distribution",
+    content: [
+      { type: "heading", text: "29.1  Definition & Nomenclature" },
+      { type: "list", items: [
+          "If a CRV is having a Gaussian distribution, it means the PDF of the CRV is having a \"GAUSSIAN SHAPE\".",
+          "If the PDF of a CRV is of Gaussian shape, then the CRV is called a Gaussian R.V.."
+      ]},
+      { type: "para", text: "<b>Standard Notation:</b> \\(X \\sim N[\\mu_x, \\sigma_x^2]\\)." },
+      { type: "list", items: [
+          "\\(X \\sim N[\\mu_x, \\sigma_x^2] \\rightarrow\\) X is a GRV with mean = \\(\\mu_x\\), variance = \\(\\sigma_x^2\\).",
+          "\\(X \\sim N[0, \\sigma_x^2] \\rightarrow\\) X is a GRV with mean = 0, variance = \\(\\sigma_x^2\\).",
+          "\\(X \\sim N[0, 1] \\rightarrow\\) X is a Zero mean unit variance GRV (Standard Normal).",
+          "\\(X \\sim N[4, 4] \\rightarrow\\) X is a GRV with mean = 4, variance = 4."
+      ]},
+
+      { type: "heading", text: "29.2  PDF Equation" },
+      { type: "para", text: "The Probability Density Function of a Gaussian Random Variable relies on an exponential decay bounded by the variance:" },
+      { type: "eq", tex: "f_X(x) = \\frac{1}{\\sqrt{2\\pi\\sigma_x^2}} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}} \\quad : -\\infty < x < \\infty" },
+
+      { type: "heading", text: "29.3  Properties of the Gaussian PDF" },
+      { type: "para", text: "Visualizing the Gaussian PDF reveals several crucial properties:" },
+      { type: "list", items: [
+          "<b>Bell Shape:</b> The curve is perfectly symmetric around its mean \\(\\mu_x\\).",
+          "<b>Area Split:</b> The area to the left of the mean is 1/2, and the area to the right is 1/2.",
+          "<b>Maximum Value:</b> The absolute peak of the distribution occurs exactly at the mean. \\(\\{f_X(x)\\}_{\\max} = f_X(\\mu_x)\\).",
+          "<b>Point Probability:</b> Like all continuous random variables, the probability at any exact point is zero: \\(P\\{X = c\\} = 0\\)."
+      ]},
+      { type: "canvas_sim_dual", simId: "gaussian_pdf_sim", height: 260, controlLabel1: "Mean (μ):", min1: -5, max1: 5, step1: 1, defaultVal1: 0, controlLabel2: "Variance (σ²):", min2: 0.5, max2: 5, step2: 0.5, defaultVal2: 1 },
+
+      { type: "heading", text: "29.4  Integration Trick (Area under Gaussian)" },
+      { type: "para", text: "By the axioms of probability, the total area under the normalized Gaussian PDF must equal exactly 1:" },
+      { type: "eq", tex: "\\int_{-\\infty}^{\\infty} \\frac{1}{\\sqrt{2\\pi\\sigma_x^2}} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}} dx = 1" },
+      { type: "para", text: "This allows us to evaluate complex exponential integrals rapidly without manual integration by matching them to the standard Gaussian form. Extracting the normalization constant yields:" },
+      { type: "eq", tex: "\\int_{-\\infty}^{\\infty} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}} dx = \\sqrt{2\\pi\\sigma_x^2}" },
+      { type: "para", text: "<b>Example Problem:</b> Evaluate \\(\\int_{-\\infty}^{\\infty} e^{\\frac{-(x-2)^2}{5}} dx\\)." },
+      { type: "list", items: [
+          "Compare the exponent to the standard form: \\(\\frac{-(x-2)^2}{5} \\equiv \\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}\\).",
+          "This yields \\(2\\sigma_x^2 = 5 \\implies \\sigma_x^2 = 2.5\\).",
+          "The integral evaluates to \\(\\sqrt{2\\pi\\sigma_x^2}\\). Substituting \\(2\\sigma_x^2 = 5\\) gives \\(\\sqrt{5\\pi}\\)."
+      ]}
+    ]
+  },
+  // ══════════════════════════
+  // CHAPTER 30 — Gaussian Integration Tricks
+  // ══════════════════════════
+  {
+    id: "gaussian_integration",
+    label: "30 · Gaussian Tricks",
+    title: "30. Gaussian PDF Integration & Problem Solving",
+    content: [
+      
+      // --- SECTION: HALF AREAS ---
+      { type: "heading", text: "30.1 Gaussian Symmetry (Half Areas)" },
+      { type: "para", text: "Because the Gaussian PDF is perfectly symmetric around its mean (\\(\\mu_x\\)), integrating from the mean to either infinity or negative infinity always yields exactly half the total area (0.5)." },
+      { type: "eq", tex: "\\int_{\\mu_x}^{\\infty} \\underbrace{\\frac{1}{\\sqrt{2\\pi\\sigma_x^2}} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}}}_{\\text{VALID PDF}} dx = \\frac{1}{2}" },
+      { type: "eq", tex: "\\int_{-\\infty}^{\\mu_x} \\underbrace{\\frac{1}{\\sqrt{2\\pi\\sigma_x^2}} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}}}_{\\text{VALID PDF}} dx = \\frac{1}{2}" },
+
+      // --- SECTION: EXPECTED VALUE EXTRACTION ---
+      { type: "heading", text: "30.2 Extracting Moments via PDF Matching" },
+      { type: "para", text: "When evaluating integrals where a variable (like \\(x\\) or \\(x^2\\)) is multiplied by a valid Gaussian PDF over the entire space, you don't need to integrate manually. The integral perfectly maps to the definitions of Expected Value and Mean Square Value." },
+      { type: "eq", tex: "\\int_{-\\infty}^{\\infty} x \\cdot \\underbrace{\\frac{1}{\\sqrt{2\\pi\\sigma_x^2}} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}}}_{\\text{VALID PDF}} dx = E[X] = \\mu_x" },
+      { type: "eq", tex: "\\int_{-\\infty}^{\\infty} x^2 \\cdot \\underbrace{\\frac{1}{\\sqrt{2\\pi\\sigma_x^2}} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}}}_{\\text{VALID PDF}} dx = E[X^2] = \\mu_x^2 + \\sigma_x^2" },
+
+      // --- SECTION: TRICK 1 - e^(-5x^2) ---
+      { type: "heading", text: "30.3 Trick: Forcing a Valid PDF (Example 1)" },
+      { type: "para", text: "<b>Question:</b> Evaluate \\(\\int_{-\\infty}^{\\infty} e^{-5x^2} dx\\)." },
+      { type: "para", text: "<b>Step 1: Match the exponent to the standard form.</b> We need the exponent to look like \\(\\frac{-x^2}{2\\sigma_x^2}\\)." },
+      { type: "eq", tex: "-5x^2 = \\frac{-x^2}{(1/5)} \\implies 2\\sigma_x^2 = \\frac{1}{5}" },
+      { type: "para", text: "<b>Step 2: Find the required normalization constant.</b> The denominator of a standard Gaussian PDF is \\(\\sqrt{2\\pi\\sigma_x^2}\\). Substituting our value:" },
+      { type: "eq", tex: "\\sqrt{2\\pi\\sigma_x^2} = \\sqrt{\\pi \\left(\\frac{1}{5}\\right)} = \\sqrt{\\frac{\\pi}{5}}" },
+      { type: "para", text: "<b>Step 3: Multiply and divide to create a valid PDF.</b>" },
+      { type: "eq", tex: "\\sqrt{\\frac{\\pi}{5}} \\left\\{ \\int_{-\\infty}^{\\infty} \\underbrace{\\frac{1}{\\sqrt{\\pi/5}} e^{\\frac{-x^2}{1/5}}}_{\\text{VALID PDF}} dx \\right\\}" },
+      { type: "para", text: "Since the integral of a valid PDF from \\(-\\infty\\) to \\(\\infty\\) is strictly 1, the final answer is simply the constant we pulled out:" },
+      { type: "eq", tex: "= \\sqrt{\\frac{\\pi}{5}}" },
+
+      // --- SECTION: TRICK 2 - EVEN FUNCTION ---
+      { type: "heading", text: "30.4 Trick: Even Function Bounds (Example 2)" },
+      { type: "para", text: "<b>Question:</b> Evaluate \\(\\int_{0}^{\\infty} e^{-3x^2} dx\\)." },
+      { type: "para", text: "<b>Step 1: Exploit the Even Property.</b> The function \\(e^{-3x^2}\\) is perfectly symmetric across the y-axis. Integrating from \\(0\\) to \\(\\infty\\) is exactly half the area of integrating from \\(-\\infty\\) to \\(\\infty\\)." },
+      { type: "eq", tex: "\\int_{0}^{\\infty} e^{-3x^2} dx = \\frac{1}{2} \\int_{-\\infty}^{\\infty} e^{-3x^2} dx" },
+      { type: "para", text: "<b>Step 2: Force the valid PDF.</b> Rewrite the exponent to find \\(2\\sigma_x^2 = 1/3\\). The required normalization constant is \\(\\sqrt{\\pi/3}\\)." },
+      { type: "eq", tex: "= \\frac{1}{2} \\sqrt{\\frac{\\pi}{3}} \\int_{-\\infty}^{\\infty} \\underbrace{\\frac{1}{\\sqrt{\\pi/3}} e^{\\frac{-x^2}{1/3}}}_{\\text{VALID PDF}} dx" },
+      { type: "eq", tex: "= \\frac{1}{2} \\sqrt{\\frac{\\pi}{3}}" },
+
+      // --- SECTION: INTERACTIVE ---
+      { type: "heading", text: "30.5 Interactive Gaussian Area Tricks" },
+      { type: "para", text: "Select a problem type below to visualize how the integration bounds and standard deviation visually affect the total area calculation." },
+      { type: "canvas_sim_select", simId: "gaussian_tricks_sim", height: 320, controlLabel: "Select Integration Problem:",
+        options: [
+          { value: "half", text: "1. Half Area: μ to ∞ for Valid PDF" },
+          { value: "trick1", text: "2. Full Area trick: ∫ e^(-5x²) dx" },
+          { value: "trick2", text: "3. Even Function: ∫ e^(-3x²) from 0 to ∞" }
+        ]
+      }
+    ]
+  },
   // ══════════════════════════
   // CHAPTER 6 — Interactives
   // ══════════════════════════
@@ -4417,6 +4915,559 @@ function initCrvGraphsSim() {
   draw();
   select.addEventListener('change', draw);
 }
+
+// ── 24. Mixed R.V. Graph Simulator ──
+function initMixedRvGraphSim() {
+  const canvas = document.getElementById('canvas-mixed_rv_graph_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const select = document.getElementById('select-mixed_rv_graph_sim');
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    const mode = select.value;
+    const baseLine = H - 40;
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+    for(let i=0; i<=4; i++) { ctx.moveTo(0, i*(H/4)); ctx.lineTo(W, i*(H/4)); }
+    ctx.stroke();
+
+    // Axes
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(30, baseLine); ctx.lineTo(W - 30, baseLine); // X
+    ctx.moveTo(W / 2, baseLine + 10); ctx.lineTo(W / 2, 20); // Y
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff'; ctx.font = '12px "JetBrains Mono"';
+    ctx.fillText("x", W - 25, baseLine + 15);
+    
+    // Scale map
+    const cx = W / 2;
+    const scaleX = (W - 100) / 6; // 6 units wide (-3 to 3)
+
+    // X-axis ticks
+    ctx.textAlign = 'center';
+    [-2, -1, 0, 1, 2].forEach(tick => {
+       ctx.fillText(tick, cx + (tick * scaleX), baseLine + 18);
+       ctx.beginPath(); ctx.moveTo(cx + (tick * scaleX), baseLine); ctx.lineTo(cx + (tick * scaleX), baseLine+4); ctx.stroke();
+    });
+    ctx.textAlign = 'left';
+
+    if (mode === "pdf") {
+      ctx.fillText("fx(x)", cx + 10, 25);
+      
+      // Draw Triangle
+      const topY = baseLine - 100;
+      ctx.strokeStyle = '#ffdd57'; ctx.lineWidth = 2.5; ctx.beginPath();
+      ctx.moveTo(cx - (2 * scaleX), baseLine);
+      ctx.lineTo(cx, topY);
+      ctx.lineTo(cx + (2 * scaleX), baseLine);
+      ctx.stroke();
+
+      // Draw Impulses at 0 and 1
+      function drawImpulse(val, height, label) {
+          const x = cx + (val * scaleX);
+          const y = baseLine - height;
+          ctx.beginPath(); ctx.strokeStyle = '#00d4ff'; ctx.lineWidth = 3;
+          ctx.moveTo(x, baseLine); ctx.lineTo(x, y);
+          ctx.lineTo(x - 5, y + 8); ctx.moveTo(x, y); ctx.lineTo(x + 5, y + 8);
+          ctx.stroke();
+          ctx.fillStyle = '#00d4ff'; ctx.font = 'bold 12px Inter';
+          ctx.fillText(label, x + 8, y + 10);
+      }
+      drawImpulse(0, 120, "K1");
+      drawImpulse(1, 90, "K2");
+
+    } else if (mode === "cdf") {
+      ctx.fillText("Fx(x)", cx + 10, 25);
+      
+      // Draw Mixed CDF
+      ctx.strokeStyle = '#ffdd57'; ctx.lineWidth = 2.5; ctx.beginPath();
+      
+      // Flat 0
+      ctx.moveTo(30, baseLine); ctx.lineTo(cx - (2 * scaleX), baseLine);
+      // Ramp 1
+      ctx.lineTo(cx, baseLine - 40); ctx.stroke();
+      
+      // Jump 1
+      ctx.strokeStyle = '#00d4ff'; ctx.setLineDash([4,4]); ctx.beginPath();
+      ctx.moveTo(cx, baseLine - 40); ctx.lineTo(cx, baseLine - 80); ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Ramp 2
+      ctx.strokeStyle = '#ffdd57'; ctx.beginPath();
+      ctx.moveTo(cx, baseLine - 80); ctx.lineTo(cx + (1 * scaleX), baseLine - 100); ctx.stroke();
+
+      // Jump 2
+      ctx.strokeStyle = '#00d4ff'; ctx.setLineDash([4,4]); ctx.beginPath();
+      ctx.moveTo(cx + (1 * scaleX), baseLine - 100); ctx.lineTo(cx + (1 * scaleX), baseLine - 140); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Ramp 3 & Flat
+      ctx.strokeStyle = '#ffdd57'; ctx.beginPath();
+      ctx.moveTo(cx + (1 * scaleX), baseLine - 140); 
+      ctx.lineTo(cx + (2 * scaleX), baseLine - 160);
+      ctx.lineTo(W - 30, baseLine - 160);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.fillText("1", cx - 15, baseLine - 155);
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.setLineDash([2,2]);
+      ctx.beginPath(); ctx.moveTo(cx, baseLine - 160); ctx.lineTo(cx + (2 * scaleX), baseLine - 160); ctx.stroke();
+    }
+  }
+  draw();
+  select.addEventListener('change', draw);
+}
+
+// ── 27. Uniform Distribution Simulator ──
+function initUniformDistSim() {
+  const canvas = document.getElementById('canvas-uniform_dist_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const select = document.getElementById('select-uniform_dist_sim');
+  const state = setupInteractive(canvas);
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    const mode = select.value;
+    const baseLine = H - 40;
+    const topLimit = 40;
+    
+    // Grid Setup
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+    for(let i=0; i<=4; i++) { ctx.moveTo(0, i*(H/4)); ctx.lineTo(W, i*(H/4)); }
+    ctx.stroke();
+
+    // Axes
+    const startX = 60;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(30, baseLine); ctx.lineTo(W - 30, baseLine); // X Axis
+    ctx.moveTo(startX, baseLine + 10); ctx.lineTo(startX, 20); // Y Axis
+    ctx.stroke();
+
+    // Standard Labels
+    ctx.fillStyle = '#fff'; ctx.font = '12px "JetBrains Mono"';
+    ctx.fillText("x", W - 25, baseLine + 15);
+    ctx.fillText("0", startX - 15, baseLine + 15);
+    
+    // Define Boundaries a and b
+    const mapX = (val) => startX + (val * ((W - 100) / 5)); 
+    const a = mapX(1);
+    const b = mapX(4);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffb86c';
+    ctx.fillText("a", a, baseLine + 18);
+    ctx.fillText("b", b, baseLine + 18);
+    ctx.beginPath(); ctx.moveTo(a, baseLine); ctx.lineTo(a, baseLine+5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b, baseLine); ctx.lineTo(b, baseLine+5); ctx.stroke();
+    ctx.textAlign = 'left';
+
+    if (mode === "pdf") {
+      ctx.fillStyle = '#fff';
+      ctx.fillText("fx(x)", startX + 10, 25);
+      
+      const heightY = baseLine - 100;
+      
+      // Y-axis tick
+      ctx.fillText("1/(b-a)", startX - 55, heightY + 4);
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(startX, heightY); ctx.lineTo(a, heightY); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw PDF Rectangle
+      ctx.fillStyle = 'rgba(139, 233, 253, 0.2)';
+      ctx.fillRect(a, heightY, b - a, baseLine - heightY);
+      
+      ctx.strokeStyle = '#8be9fd'; ctx.lineWidth = 3; ctx.beginPath();
+      ctx.moveTo(30, baseLine); ctx.lineTo(a, baseLine);
+      ctx.lineTo(a, heightY); ctx.lineTo(b, heightY); ctx.lineTo(b, baseLine);
+      ctx.lineTo(W - 30, baseLine); ctx.stroke();
+
+      ctx.fillStyle = '#8be9fd'; ctx.font = 'bold 13px Inter';
+      ctx.fillText("Total Area = 1", a + (b-a)/2 - 40, heightY + 50);
+
+    } else if (mode === "cdf") {
+      ctx.fillStyle = '#fff';
+      ctx.fillText("Fx(x)", startX + 10, 25);
+      
+      const heightY = topLimit + 20;
+
+      // Y-axis tick
+      ctx.fillText("1", startX - 15, heightY + 4);
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(startX, heightY); ctx.lineTo(b, heightY); ctx.stroke();
+      
+      // Projection for 'b'
+      ctx.beginPath(); ctx.moveTo(b, baseLine); ctx.lineTo(b, heightY); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw CDF Ramp
+      ctx.strokeStyle = '#50fa7b'; ctx.lineWidth = 3; ctx.beginPath();
+      ctx.moveTo(30, baseLine); ctx.lineTo(a, baseLine);
+      ctx.lineTo(b, heightY);
+      ctx.lineTo(W - 30, heightY); ctx.stroke();
+
+      // Math Annotations
+      ctx.fillStyle = '#50fa7b'; ctx.font = 'bold 12px Inter';
+      
+      // Slope annotation line
+      ctx.beginPath(); ctx.lineWidth = 1.5;
+      ctx.moveTo(a + 40, baseLine - 10); ctx.lineTo(a + 80, baseLine - 10); ctx.lineTo(a + 80, heightY + 50); ctx.stroke();
+      ctx.fillText("Slope = 1/(b-a)", a + 90, baseLine - 30);
+    }
+    
+    if(state) drawCursor(ctx, W, H, state);
+  }
+  draw();
+  select.addEventListener('change', draw);
+}
+
+  // ── 25. Uniform Symmetric Simulator ──
+  function initUniformSymmetricSim() {
+    const canvas = document.getElementById('canvas-uniform_symmetric_sim');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('slide-uniform_symmetric_sim');
+    const valDisplay = document.getElementById('val-uniform_symmetric_sim');
+    const state = setupInteractive(canvas);
+
+    function draw() {
+      const W = canvas.offsetWidth, H = canvas.height;
+      canvas.width = W; ctx.clearRect(0, 0, W, H);
+      
+      const m = parseFloat(slider.value);
+      valDisplay.textContent = m;
+      const baseLine = H - 40;
+      const cx = W / 2;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+      for(let i=0; i<=4; i++) { ctx.moveTo(0, i*(H/4)); ctx.lineTo(W, i*(H/4)); }
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+      ctx.moveTo(30, baseLine); ctx.lineTo(W - 30, baseLine); 
+      ctx.moveTo(cx, baseLine + 10); ctx.lineTo(cx, 20); 
+      ctx.stroke();
+
+      const scaleX = (W - 100) / 20; 
+      const left = cx - m * scaleX;
+      const right = cx + m * scaleX;
+      const h = (H - 80) / (m * 0.5 + 1); 
+
+      ctx.fillStyle = 'rgba(139, 233, 253, 0.2)';
+      ctx.fillRect(left, baseLine - h, right - left, h);
+
+      ctx.strokeStyle = '#8be9fd'; ctx.lineWidth = 3; ctx.beginPath();
+      ctx.moveTo(30, baseLine); ctx.lineTo(left, baseLine);
+      ctx.lineTo(left, baseLine - h); ctx.lineTo(right, baseLine - h);
+      ctx.lineTo(right, baseLine); ctx.lineTo(W - 30, baseLine);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff'; ctx.font = '12px "JetBrains Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText("-m", left, baseLine + 18);
+      ctx.fillText("m", right, baseLine + 18);
+      ctx.fillText("0", cx, baseLine + 18);
+      
+      ctx.textAlign = 'right';
+      ctx.fillText("1/2m", cx - 10, baseLine - h + 5);
+      ctx.beginPath(); ctx.moveTo(cx - 5, baseLine - h); ctx.lineTo(cx + 5, baseLine - h); ctx.stroke();
+      
+      ctx.textAlign = 'left';
+      ctx.fillText("fx(x)", cx + 10, 25);
+      ctx.fillText("x", W - 25, baseLine + 15);
+
+      ctx.fillStyle = '#8be9fd'; ctx.font = 'bold 12px Inter';
+      ctx.fillText(`Var(X) = m²/3 = ${(m*m/3).toFixed(2)}`, 40, 40);
+
+      drawCursor(ctx, W, H, state);
+    }
+    draw();
+    slider.addEventListener('input', draw);
+  }
+
+  // ── 26. Triangular Symmetric Simulator ──
+  function initTriangularSymmetricSim() {
+    const canvas = document.getElementById('canvas-triangular_symmetric_sim');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('slide-triangular_symmetric_sim');
+    const valDisplay = document.getElementById('val-triangular_symmetric_sim');
+    const state = setupInteractive(canvas);
+
+    function draw() {
+      const W = canvas.offsetWidth, H = canvas.height;
+      canvas.width = W; ctx.clearRect(0, 0, W, H);
+      
+      const m = parseFloat(slider.value);
+      valDisplay.textContent = m;
+      const baseLine = H - 40;
+      const cx = W / 2;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+      for(let i=0; i<=4; i++) { ctx.moveTo(0, i*(H/4)); ctx.lineTo(W, i*(H/4)); }
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+      ctx.moveTo(30, baseLine); ctx.lineTo(W - 30, baseLine); 
+      ctx.moveTo(cx, baseLine + 10); ctx.lineTo(cx, 20); 
+      ctx.stroke();
+
+      const scaleX = (W - 100) / 20; 
+      const left = cx - m * scaleX;
+      const right = cx + m * scaleX;
+      const h = (H - 80) / (m * 0.5 + 1); 
+
+      ctx.fillStyle = 'rgba(189, 147, 249, 0.2)';
+      ctx.beginPath();
+      ctx.moveTo(left, baseLine); ctx.lineTo(cx, baseLine - h); ctx.lineTo(right, baseLine);
+      ctx.fill();
+
+      ctx.strokeStyle = '#bd93f9'; ctx.lineWidth = 3; ctx.beginPath();
+      ctx.moveTo(30, baseLine); ctx.lineTo(left, baseLine);
+      ctx.lineTo(cx, baseLine - h); ctx.lineTo(right, baseLine);
+      ctx.lineTo(W - 30, baseLine);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff'; ctx.font = '12px "JetBrains Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText("-m", left, baseLine + 18);
+      ctx.fillText("m", right, baseLine + 18);
+      ctx.fillText("0", cx, baseLine + 18);
+      
+      ctx.textAlign = 'right';
+      ctx.fillText("1/m", cx - 10, baseLine - h + 5);
+      ctx.beginPath(); ctx.moveTo(cx - 5, baseLine - h); ctx.lineTo(cx + 5, baseLine - h); ctx.stroke();
+      
+      ctx.textAlign = 'left';
+      ctx.fillText("fx(x)", cx + 10, 25);
+      ctx.fillText("x", W - 25, baseLine + 15);
+
+      ctx.fillStyle = '#bd93f9'; ctx.font = 'bold 12px Inter';
+      ctx.fillText(`Var(X) = m²/6 = ${(m*m/6).toFixed(2)}`, 40, 40);
+
+      drawCursor(ctx, W, H, state);
+    }
+    draw();
+    slider.addEventListener('input', draw);
+  }
+
+  // ── 27. Gaussian PDF Simulator ──
+  function initGaussianPdfSim() {
+    const canvas = document.getElementById('canvas-gaussian_pdf_sim');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const slideMu = document.getElementById('slide1-gaussian_pdf_sim');
+    const slideVar = document.getElementById('slide2-gaussian_pdf_sim');
+    const valMu = document.getElementById('val1-gaussian_pdf_sim');
+    const valVar = document.getElementById('val2-gaussian_pdf_sim');
+    const valTot = document.getElementById('valTotal-gaussian_pdf_sim'); 
+    valTot.parentElement.innerHTML = `Max Peak Height: <span id="valTotal-gaussian_pdf_sim" style="color:var(--accent);">...</span>`;
+    const valTotSpan = document.getElementById('valTotal-gaussian_pdf_sim');
+    const state = setupInteractive(canvas);
+
+    function draw() {
+      const W = canvas.offsetWidth, H = canvas.height;
+      canvas.width = W; ctx.clearRect(0, 0, W, H);
+      
+      const mu = parseFloat(slideMu.value);
+      const var_x = parseFloat(slideVar.value);
+      valMu.textContent = mu;
+      valVar.textContent = var_x;
+
+      const baseLine = H - 40;
+      const cx = W / 2;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+      for(let i=0; i<=4; i++) { ctx.moveTo(0, i*(H/4)); ctx.lineTo(W, i*(H/4)); }
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+      ctx.moveTo(30, baseLine); ctx.lineTo(W - 30, baseLine); 
+      ctx.moveTo(cx, baseLine + 10); ctx.lineTo(cx, 20); 
+      ctx.stroke();
+
+      const scaleX = (W - 100) / 20;
+      const sigma = Math.sqrt(var_x);
+      const peak = 1 / (Math.sqrt(2 * Math.PI * var_x));
+      valTotSpan.textContent = peak.toFixed(3);
+      
+      const visualScaleY = (H - 80) / 0.8; 
+
+      ctx.fillStyle = 'rgba(80, 250, 123, 0.2)';
+      ctx.beginPath();
+      ctx.moveTo(30, baseLine);
+      for(let i = 30; i <= W - 30; i++) {
+          let x_val = (i - cx) / scaleX;
+          let pdf = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x_val - mu)/sigma, 2));
+          let y = baseLine - (pdf * visualScaleY);
+          ctx.lineTo(i, y);
+      }
+      ctx.lineTo(W-30, baseLine);
+      ctx.fill();
+
+      ctx.strokeStyle = '#50fa7b'; ctx.lineWidth = 3; ctx.beginPath();
+      for(let i = 30; i <= W - 30; i++) {
+          let x_val = (i - cx) / scaleX;
+          let pdf = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x_val - mu)/sigma, 2));
+          let y = baseLine - (pdf * visualScaleY);
+          if(i===30) ctx.moveTo(i, y); else ctx.lineTo(i, y);
+      }
+      ctx.stroke();
+
+      let muX = cx + mu * scaleX;
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(muX, baseLine); ctx.lineTo(muX, baseLine - (peak * visualScaleY)); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#fff'; ctx.font = '12px "JetBrains Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText("0", cx, baseLine + 18);
+      ctx.fillText("μ=" + mu, muX, baseLine - (peak * visualScaleY) - 10);
+      
+      ctx.textAlign = 'left';
+      ctx.fillText("fx(x)", cx + 10, 25);
+      ctx.fillText("x", W - 25, baseLine + 15);
+
+      drawCursor(ctx, W, H, state);
+    }
+    draw();
+    slideMu.addEventListener('input', draw);
+    slideVar.addEventListener('input', draw);
+  }
+
+// ── 28. Gaussian Integration Tricks Simulator ──
+function initGaussianTricksSim() {
+  const canvas = document.getElementById('canvas-gaussian_tricks_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const select = document.getElementById('select-gaussian_tricks_sim');
+  const state = setupInteractive(canvas);
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    const mode = select.value;
+    const baseLine = H - 50;
+    const cx = W / 2;
+    
+    // Grid Setup
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+    for(let i=0; i<=4; i++) { ctx.moveTo(0, i*(H/4)); ctx.lineTo(W, i*(H/4)); }
+    ctx.stroke();
+
+    // Axes
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(30, baseLine); ctx.lineTo(W - 30, baseLine); // X Axis
+    ctx.moveTo(cx, baseLine + 10); ctx.lineTo(cx, 30); // Y Axis
+    ctx.stroke();
+
+    // Standard Labels
+    ctx.fillStyle = '#fff'; ctx.font = '11px "JetBrains Mono"';
+    ctx.fillText("x", W - 25, baseLine + 15);
+    ctx.textAlign = 'right';
+    ctx.fillText("Amplitude", cx - 10, 40);
+    ctx.textAlign = 'left';
+
+    const scaleX = (W - 100) / 10; // 10 units wide
+
+    // Helper to draw curves
+    function drawCurve(coef, exponentMult, fillColor, strokeColor, startX, endX, fillLabel, labelY) {
+        ctx.beginPath();
+        for(let i = 30; i <= W - 30; i++) {
+            let x_val = (i - cx) / scaleX;
+            let y_val = coef * Math.exp(-exponentMult * Math.pow(x_val, 2));
+            let y = baseLine - (y_val * 150); // Scale visually
+            if(i === 30) ctx.moveTo(i, y); else ctx.lineTo(i, y);
+        }
+        ctx.strokeStyle = strokeColor; ctx.lineWidth = 3; ctx.stroke();
+
+        // Shading Region
+        ctx.fillStyle = fillColor;
+        ctx.beginPath();
+        ctx.moveTo(startX, baseLine);
+        for(let i = startX; i <= endX; i++) {
+            let x_val = (i - cx) / scaleX;
+            let y_val = coef * Math.exp(-exponentMult * Math.pow(x_val, 2));
+            let y = baseLine - (y_val * 150);
+            ctx.lineTo(i, y);
+        }
+        ctx.lineTo(endX, baseLine);
+        ctx.fill();
+
+        // Area text
+        ctx.fillStyle = strokeColor; ctx.font = 'bold 14px Inter';
+        ctx.fillText(fillLabel, cx + 20, labelY);
+    }
+
+    if (mode === "half") {
+        // Standard Gaussian (sigma=1), filling from 0 to inf
+        const coef = 1 / Math.sqrt(2 * Math.PI);
+        drawCurve(coef, 0.5, 'rgba(80, 250, 123, 0.25)', '#50fa7b', cx, W-30, "Area = 1/2", baseLine - 50);
+        
+        ctx.fillStyle = '#fff'; ctx.font = '12px JetBrains Mono'; ctx.textAlign = 'center';
+        ctx.fillText("μx", cx, baseLine + 18);
+        ctx.fillText("∞", W - 40, baseLine + 18);
+
+    } else if (mode === "trick1") {
+        // e^(-5x^2)
+        drawCurve(1, 5, 'rgba(139, 233, 253, 0.25)', '#8be9fd', 30, W-30, "Area = √(π/5)", baseLine - 80);
+        
+        ctx.fillStyle = '#fff'; ctx.font = '12px JetBrains Mono'; ctx.textAlign = 'center';
+        ctx.fillText("0", cx, baseLine + 18);
+        
+        ctx.fillStyle = '#8be9fd'; ctx.font = '12px Inter'; ctx.textAlign = 'left';
+        ctx.fillText("Note: Graph is much narrower due to 5x²", cx + 20, baseLine - 60);
+
+    } else if (mode === "trick2") {
+        // e^(-3x^2) from 0 to inf
+        drawCurve(1, 3, 'rgba(255, 121, 198, 0.25)', '#ff79c6', cx, W-30, "Area = 1/2 * √(π/3)", baseLine - 60);
+        
+        ctx.fillStyle = '#fff'; ctx.font = '12px JetBrains Mono'; ctx.textAlign = 'center';
+        ctx.fillText("0", cx, baseLine + 18);
+        ctx.fillText("∞", W - 40, baseLine + 18);
+
+        // Draw dotted line for the un-integrated negative half
+        ctx.strokeStyle = 'rgba(255, 121, 198, 0.4)'; ctx.setLineDash([4,4]); ctx.lineWidth = 2;
+        ctx.beginPath();
+        for(let i = 30; i <= cx; i++) {
+            let x_val = (i - cx) / scaleX;
+            let y_val = 1 * Math.exp(-3 * Math.pow(x_val, 2));
+            let y = baseLine - (y_val * 150);
+            if(i === 30) ctx.moveTo(i, y); else ctx.lineTo(i, y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+        
+        ctx.fillStyle = 'rgba(255, 121, 198, 0.7)'; ctx.textAlign = 'center';
+        ctx.fillText("(Unshaded Even Half)", cx - 80, baseLine - 20);
+    }
+    
+    ctx.textAlign = 'left';
+    drawCursor(ctx, W, H, state);
+  }
+  draw();
+  select.addEventListener('change', draw);
+}
 // ============================================================
 // 🔄 UI INTERACTIONS
 // ============================================================
@@ -5119,6 +6170,12 @@ setTimeout(() => {
   initDrvPdfGraphSim();
   initDrvCdfGraphSim();
   initCrvGraphsSim();
+  initMixedRvGraphSim();
+  initUniformDistSim();
+  initUniformSymmetricSim();
+  initTriangularSymmetricSim();
+  initGaussianPdfSim();
+  initGaussianTricksSim();
 }, 500);
 </script>
 </body>
