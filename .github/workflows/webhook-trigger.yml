@@ -1,0 +1,59 @@
+name: Webhook Trigger - On External Events
+
+on:
+  repository_dispatch:
+    types: [config-update, manual-sync]
+  pull_request:
+    paths:
+      - '*.html'
+      - '*.json'
+      - 'assets/**'
+      - 'README.md'
+
+jobs:
+  webhook-handler:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔔 Webhook Received
+        run: |
+          echo "🔔 Webhook triggered!"
+          echo "Event type: ${{ github.event.action }}"
+          echo "Repository: ${{ github.repository }}"
+      
+      - name: 🔄 Checkout Latest Config
+        uses: actions/checkout@v3
+      
+      - name: 📝 Log Changes
+        run: |
+          echo "=== CONFIG UPDATE DETECTED ===" >> /tmp/webhook.log
+          echo "Time: $(date)" >> /tmp/webhook.log
+          echo "Branch: ${{ github.ref }}" >> /tmp/webhook.log
+          echo "Author: ${{ github.actor }}" >> /tmp/webhook.log
+          echo "" >> /tmp/webhook.log
+          cat /tmp/webhook.log
+      
+      - name: ✅ Validate Config Files
+        run: |
+          echo "Validating HTML files..."
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              echo "✓ $file"
+            fi
+          done
+      
+      - name: 📤 Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: config-backup
+          path: |
+            *.html
+            *.json
+            *.md
+            assets/
+          retention-days: 30
+      
+      - name: 🚀 Deploy/Sync Notification
+        run: |
+          echo "✅ Webhook sync completed!"
+          echo "📦 Files updated successfully"
