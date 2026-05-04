@@ -3,227 +3,736 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OASIS Terminal Map</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<title>OASIS Neural Constellation — DJ's AI Brain Map</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #11151c;
-    --text: #e8d9a8;
-    --dim: #4a5d73;
-    --neon-cyan: #4df0ff;
-    --neon-orange: #ff6b35;
-    --neon-green: #39ff14;
-    --neon-gold: #ffcf00;
-    --neon-pink: #ff1493;
+    --bg: #060912;
+    --panel: rgba(8,12,22,0.92);
+    --border: #1a2540;
+    --cyan: #4df0ff;
+    --gold: #ffcf00;
+    --orange: #ff6b35;
+    --pink: #ff1493;
+    --green: #39ff14;
+    --purple: #a855f7;
+    --blue: #3b82f6;
+    --red: #ef4444;
+    --teal: #14b8a6;
   }
-  
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     background: var(--bg);
-    color: var(--text);
+    color: #e8d9a8;
     font-family: 'Share Tech Mono', monospace;
-    margin: 0; padding: 40px;
-    overflow-x: auto;
-    background-image: radial-gradient(circle at 50% 50%, #1a2436 0%, #0a0d14 100%);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
   }
 
-  .header {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2rem;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 15px rgba(77,240,255,0.4);
-    margin-bottom: 40px;
-    text-align: center;
+  /* Starfield bg */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 15% 25%, rgba(77,240,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 15%, rgba(255,207,0,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 75%, rgba(255,107,53,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 55%, rgba(57,255,20,0.2) 0%, transparent 100%),
+      radial-gradient(ellipse at 50% 50%, #0d1526 0%, #060912 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+    pointer-events: none; z-index: 9998;
+  }
+
+  #mynetwork {
+    width: 100vw; height: 100vh;
+    position: absolute; top: 0; left: 0; z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    position: absolute; top: 18px; left: 24px; z-index: 100;
+    pointer-events: none;
+  }
+  #header .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem; font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 20px rgba(77,240,255,0.6), 0 0 60px rgba(77,240,255,0.2);
     letter-spacing: 0.2em;
   }
-
-  /* ─── THE SUBWAY MAP GRID ─── */
-  #map-container {
-    display: flex;
-    gap: 60px;
-    padding-bottom: 50px;
-    align-items: flex-start;
+  #header .sub {
+    font-size: 0.7rem; color: #4a6080; letter-spacing: 0.3em;
+    margin-top: 2px;
   }
 
-  .subway-line {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  /* ── LEGEND ── */
+  #legend {
+    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 30px; padding: 8px 20px;
+    backdrop-filter: blur(10px);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.68rem; letter-spacing: 0.08em; color: #8090a8;
+    cursor: pointer; transition: color 0.2s;
+  }
+  .legend-item:hover { color: #e8d9a8; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  /* ── CONTROLS ── */
+  #controls {
+    position: absolute; bottom: 24px; left: 24px; z-index: 100;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .ctrl-btn {
+    width: 40px; height: 40px;
+    background: var(--panel); border: 1px solid var(--border);
+    color: #4a6080; font-size: 1.1rem; cursor: pointer;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; backdrop-filter: blur(10px);
+  }
+  .ctrl-btn:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 12px rgba(77,240,255,0.3); }
+
+  /* ── SEARCH BAR ── */
+  #search-wrap {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; gap: 0;
+  }
+  #search-input {
+    width: 280px; background: var(--panel); border: 1px solid var(--border);
+    border-right: none; color: #e8d9a8; font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem; padding: 10px 16px; outline: none;
+    border-radius: 6px 0 0 6px; backdrop-filter: blur(10px);
+    transition: border-color 0.2s;
+  }
+  #search-input:focus { border-color: var(--cyan); }
+  #search-input::placeholder { color: #2a3a50; }
+  #search-btn {
+    background: var(--cyan); border: none; color: #060912;
+    font-family: 'Orbitron', monospace; font-size: 0.7rem; font-weight: 700;
+    padding: 10px 16px; cursor: pointer; border-radius: 0 6px 6px 0;
+    letter-spacing: 0.1em; transition: all 0.2s;
+  }
+  #search-btn:hover { background: #fff; }
+
+  /* ── STATUS BAR ── */
+  #status {
+    position: absolute; bottom: 24px; right: 24px; z-index: 100;
+    color: #1a2a40; font-size: 0.72rem; text-align: right;
+    pointer-events: none; letter-spacing: 0.1em;
+  }
+  #node-count { color: #2a4060; }
+
+  /* ── INFO PANEL ── */
+  #info-panel {
+    position: absolute; top: 80px; right: 24px; z-index: 100;
+    width: 320px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0; backdrop-filter: blur(16px);
+    display: none; overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(77,240,255,0.05);
+    animation: panel-in 0.25s ease-out;
+  }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .panel-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
     position: relative;
-    padding-left: 30px;
-    min-width: 280px;
-    transition: opacity 0.3s;
+  }
+  .panel-module {
+    font-size: 0.65rem; letter-spacing: 0.25em; color: #4a6080;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .panel-title {
+    font-family: 'Orbitron', monospace; font-size: 0.9rem; font-weight: 700;
+    line-height: 1.3; color: var(--gold);
+  }
+  .panel-accent {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .panel-body { padding: 14px 20px; }
+
+  .panel-section { margin-bottom: 12px; }
+  .panel-label { font-size: 0.65rem; color: #3a5070; letter-spacing: 0.2em; margin-bottom: 6px; }
+  .tags-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-size: 0.68rem; padding: 3px 10px; border-radius: 20px;
+    border: 1px solid; letter-spacing: 0.05em;
   }
 
-  .line-header {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    letter-spacing: 0.1em;
-    position: relative;
-    left: -30px; /* Aligns with the border line */
+  .connections-list { display: flex; flex-direction: column; gap: 4px; }
+  .conn-item {
+    font-size: 0.72rem; color: #6080a0; padding: 4px 0;
+    border-bottom: 1px solid rgba(26,37,64,0.5);
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    transition: color 0.2s;
+  }
+  .conn-item:hover { color: var(--cyan); }
+  .conn-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .action-btn {
+    width: 100%; margin-top: 4px;
+    background: linear-gradient(135deg, #ff6b35, #ff1493);
+    border: none; color: #fff; font-family: 'Orbitron', monospace;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    padding: 10px; cursor: pointer; border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .action-btn:hover { box-shadow: 0 0 20px rgba(255,107,53,0.5); transform: translateY(-1px); }
+
+  #close-panel {
+    position: absolute; top: 12px; right: 14px;
+    background: none; border: none; color: #2a3a50;
+    font-size: 1rem; cursor: pointer; transition: color 0.2s; z-index: 1;
+  }
+  #close-panel:hover { color: var(--orange); }
+
+  /* ── FILTER PANEL (top-left modules) ── */
+  #filter-wrap {
+    position: absolute; top: 80px; left: 24px; z-index: 100;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .filter-btn {
+    background: var(--panel); border: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace; font-size: 0.68rem;
+    color: #3a5070; padding: 6px 12px; cursor: pointer;
+    border-radius: 4px; letter-spacing: 0.1em; transition: all 0.2s;
+    text-align: left; backdrop-filter: blur(10px);
+  }
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--cyan); color: var(--cyan);
+    background: rgba(77,240,255,0.05);
+  }
+  .filter-btn .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; }
+
+  /* ── TOOLTIP ── */
+  #tooltip {
+    position: absolute; z-index: 200;
+    background: rgba(8,12,22,0.95); border: 1px solid #1a2540;
+    color: #e8d9a8; font-size: 0.72rem; padding: 6px 12px;
+    border-radius: 4px; pointer-events: none; display: none;
+    backdrop-filter: blur(10px); max-width: 200px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
 
-  /* ─── THE STATIONS (NODES) ─── */
-  .station {
-    background: rgba(10, 13, 20, 0.8);
-    border: 1px solid var(--dim);
-    padding: 12px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    position: relative;
-    font-family: 'IM Fell English', serif;
-    font-size: 1rem;
-    transition: all 0.3s ease;
+  /* ── LOADING ── */
+  #loading {
+    position: absolute; inset: 0; z-index: 9999;
+    background: var(--bg); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 20px;
   }
-
-  /* The Subway "Dot" on the line */
-  .station::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: -36px; /* Pushes the dot exactly onto the track */
-    transform: translateY(-50%);
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: var(--bg);
-    border: 3px solid currentColor;
-    z-index: 10;
-    transition: all 0.3s ease;
+  .load-ring {
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 2px solid #1a2540;
+    border-top-color: var(--cyan);
+    animation: spin 0.8s linear infinite;
   }
-
-  /* Hover & Neural Highlight Effects */
-  .station:hover {
-    transform: translateX(5px) scale(1.02);
-    border-color: currentColor;
-    box-shadow: 0 0 15px currentColor;
-    z-index: 20;
-  }
-  .station:hover::before { background: currentColor; box-shadow: 0 0 15px currentColor; }
-
-  /* Dynamic Neural Classes applied by JS */
-  .map-dimmed .subway-line { opacity: 0.3; }
-  .map-dimmed .station { opacity: 0.3; filter: grayscale(1); }
-  .map-dimmed .station.neural-glow { 
-    opacity: 1; 
-    filter: grayscale(0); 
-    border-color: currentColor; 
-    box-shadow: 0 0 20px currentColor; 
-    transform: scale(1.05);
-  }
-  .map-dimmed .station.neural-glow::before {
-    background: currentColor;
-  }
-
-  /* Line Colors */
-  .line-1 { border-left: 6px solid var(--neon-gold); color: var(--neon-gold); }
-  .line-2 { border-left: 6px solid var(--neon-orange); color: var(--neon-orange); }
-  .line-3 { border-left: 6px solid var(--neon-green); color: var(--neon-green); }
-  .line-4 { border-left: 6px solid var(--neon-cyan); color: var(--neon-cyan); }
-  .line-5 { border-left: 6px solid var(--neon-pink); color: var(--neon-pink); }
-
-  .station span { color: #fff; } /* Keep text white, let borders/dots glow */
-
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .load-text { font-family: 'Orbitron', monospace; color: var(--cyan); font-size: 0.8rem; letter-spacing: 0.3em; }
+  .load-sub { color: #2a3a50; font-size: 0.7rem; letter-spacing: 0.2em; }
 </style>
 </head>
 <body>
 
-<div class="header">NEURAL KNOWLEDGE MAP</div>
-<div id="map-container"></div>
+<div id="loading">
+  <div class="load-ring"></div>
+  <div class="load-text">OASIS INITIALISING</div>
+  <div class="load-sub">MAPPING KNOWLEDGE CONSTELLATION...</div>
+</div>
+
+<div id="mynetwork"></div>
+
+<div id="header">
+  <div class="logo">OASIS</div>
+  <div class="sub">NEURAL CONSTELLATION MAP v2.0</div>
+</div>
+
+<div id="legend">
+  <div class="legend-item" data-module="mod2"><span class="legend-dot" style="background:#ffcf00;color:#ffcf00"></span>MOD2 SEARCH</div>
+  <div class="legend-item" data-module="mod3"><span class="legend-dot" style="background:#4df0ff;color:#4df0ff"></span>MOD3 ML</div>
+  <div class="legend-item" data-module="mod4"><span class="legend-dot" style="background:#ff6b35;color:#ff6b35"></span>MOD4 ALGORITHMS</div>
+  <div class="legend-item" data-module="mod5"><span class="legend-dot" style="background:#a855f7;color:#a855f7"></span>MOD5 UNSUPERVISED</div>
+  <div class="legend-item" data-module="mod6"><span class="legend-dot" style="background:#39ff14;color:#39ff14"></span>MOD6 RL</div>
+  <div class="legend-item" data-module="exam"><span class="legend-dot" style="background:#ff1493;color:#ff1493"></span>EXAM</div>
+  <div class="legend-item" data-module="code"><span class="legend-dot" style="background:#14b8a6;color:#14b8a6"></span>CODE</div>
+</div>
+
+<div id="filter-wrap">
+  <div class="filter-btn active" data-filter="all">⬡ ALL NODES</div>
+  <div class="filter-btn" data-filter="mod2"><span class="dot" style="background:#ffcf00"></span>MOD 2</div>
+  <div class="filter-btn" data-filter="mod3"><span class="dot" style="background:#4df0ff"></span>MOD 3</div>
+  <div class="filter-btn" data-filter="mod4"><span class="dot" style="background:#ff6b35"></span>MOD 4</div>
+  <div class="filter-btn" data-filter="mod5"><span class="dot" style="background:#a855f7"></span>MOD 5</div>
+  <div class="filter-btn" data-filter="mod6"><span class="dot" style="background:#39ff14"></span>MOD 6</div>
+  <div class="filter-btn" data-filter="exam"><span class="dot" style="background:#ff1493"></span>EXAM PARTS</div>
+  <div class="filter-btn" data-filter="code"><span class="dot" style="background:#14b8a6"></span>CODE LABS</div>
+</div>
+
+<div id="controls">
+  <button class="ctrl-btn" id="btn-zoom-in" title="Zoom In">+</button>
+  <button class="ctrl-btn" id="btn-zoom-out" title="Zoom Out">−</button>
+  <button class="ctrl-btn" id="btn-fit" title="Fit All">⊡</button>
+  <button class="ctrl-btn" id="btn-physics" title="Toggle Physics">⚛</button>
+</div>
+
+<div id="search-wrap">
+  <input id="search-input" type="text" placeholder="SEARCH TOPIC OR MODULE...">
+  <button id="search-btn">SCAN</button>
+</div>
+
+<div id="status">
+  <div id="node-count">-- NODES LOADED</div>
+  <div style="margin-top:3px">DOUBLE-CLICK → JUMP TO SECTION</div>
+</div>
+
+<div id="info-panel">
+  <div class="panel-header">
+    <div class="panel-accent" id="panel-accent"></div>
+    <button id="close-panel">✕</button>
+    <div class="panel-module" id="panel-module">MODULE</div>
+    <div class="panel-title" id="panel-title">Node Title</div>
+  </div>
+  <div class="panel-body">
+    <div class="panel-section">
+      <div class="panel-label">⬡ SEMANTIC TAGS</div>
+      <div class="tags-wrap" id="panel-tags"></div>
+    </div>
+    <div class="panel-section" id="connections-section">
+      <div class="panel-label">⟶ LINKED NODES</div>
+      <div class="connections-list" id="connections-list"></div>
+    </div>
+    <button class="action-btn" id="jump-btn">⚡ OPEN IN MAIN TERMINAL</button>
+  </div>
+</div>
+
+<div id="tooltip"></div>
 
 <script>
-  // 1. Fetch data from Main Tab
-  const rawData = localStorage.getItem('oasis_map_data');
-  if (!rawData) {
-    document.getElementById('map-container').innerHTML = "<h3 style='color:red;'>ERROR: No data received. Open this from the main terminal.</h3>";
-  } else {
-    const data = JSON.parse(rawData);
-    buildSubwayMap(data);
-  }
+// ═══════════════════════════════════════════════════════════════
+// OASIS NEURAL CONSTELLATION — FULL KNOWLEDGE GRAPH
+// Built from DJ's AI Exam OASIS Study Terminal
+// ═══════════════════════════════════════════════════════════════
 
-  function buildSubwayMap(data) {
-    const container = document.getElementById('map-container');
-    
-    // Sort sections into "Subway Lines"
-    const lines = {
-      'CORE BASICS': { colorClass: 'line-1', items: [] },
-      'MODULE 2 (Search)': { colorClass: 'line-2', items: [] },
-      'MODULE 3 (ML & Pre-proc)': { colorClass: 'line-3', items: [] },
-      'MODULE 4 (Advanced Models)': { colorClass: 'line-4', items: [] },
-      'PRACTICE & CODE': { colorClass: 'line-5', items: [] }
-    };
+// ── 1. CONCEPT DATABASE (extracted from AIML.html) ──────────────
+const conceptDB = [
+  // EXAM STRUCTURE
+  { id: 'part-a',       title: 'PART A — 2 Marks',               module: 'exam',  weight: 3, tags: ['Short Answer', 'Definitions', 'Quick Fire'] },
+  { id: 'part-b',       title: 'PART B — 5 Marks',               module: 'exam',  weight: 4, tags: ['Medium Answer', 'Explanation', 'Examples'] },
+  { id: 'part-c',       title: 'PART C — 10 Marks',              module: 'exam',  weight: 5, tags: ['Deep Analysis', 'Long Form', 'High Value'] },
+  { id: 'formulas',     title: 'Formula Cheat Sheet',            module: 'exam',  weight: 4, tags: ['Math', 'Reference', 'Key Equations'] },
+  { id: 'suggestions',  title: "Prof's Last-Minute Tips",        module: 'exam',  weight: 3, tags: ['Exam Strategy', 'Priority Topics'] },
+  { id: 'extra-theory', title: 'Concept Definitions Q31–40',     module: 'exam',  weight: 2, tags: ['Theory', 'Definitions', 'Concepts'] },
+  { id: 'final-theory', title: 'Final Concepts Q41–50',          module: 'exam',  weight: 2, tags: ['Theory', 'Advanced', 'Final Push'] },
 
-    data.forEach(item => {
-      let t = item.title.toUpperCase();
-      let id = item.id.toLowerCase();
+  // MOD 2 — SEARCH & LOGIC
+  { id: 'mod2a', title: 'Search Algorithms & Optimization',    module: 'mod2', weight: 4, tags: ['BFS', 'DFS', 'A*', 'Heuristics', 'UCS'] },
+  { id: 'mod2b', title: 'Game Theory & Logical Agents',        module: 'mod2', weight: 3, tags: ['Minimax', 'Alpha-Beta', 'Logic', 'Agents'] },
+  { id: 'mod2c', title: 'Advanced Logic & Search Methods',     module: 'mod2', weight: 3, tags: ['Propositional Logic', 'FOL', 'Resolution'] },
+  { id: 'mod2d', title: 'Planning & Advanced Heuristics',      module: 'mod2', weight: 3, tags: ['STRIPS', 'Planning', 'Heuristics', 'PDDL'] },
+  { id: 'mod2e', title: 'Advanced Search & Formulations',      module: 'mod2', weight: 3, tags: ['Hill Climbing', 'Simulated Annealing', 'Local Search'] },
+  { id: 'mod2f', title: 'Constraints & Continuous Search',     module: 'mod2', weight: 3, tags: ['CSP', 'Backtracking', 'Arc Consistency'] },
 
-      if (t.includes('MOD 2') || id.includes('mod2')) lines['MODULE 2 (Search)'].items.push(item);
-      else if (t.includes('MOD 3') || id.includes('mod3')) lines['MODULE 3 (ML & Pre-proc)'].items.push(item);
-      else if (t.includes('MOD 4') || id.includes('mod4')) lines['MODULE 4 (Advanced Models)'].items.push(item);
-      else if (id.includes('code') || id.includes('practice') || id.includes('formulas')) lines['PRACTICE & CODE'].items.push(item);
-      else lines['CORE BASICS'].items.push(item);
+  // MOD 3 — MACHINE LEARNING
+  { id: 'mod3a',   title: 'ML Basics & Data Pre-processing',   module: 'mod3', weight: 5, tags: ['Supervised', 'Unsupervised', 'Features', 'Pre-processing'] },
+  { id: 'mod3b-a', title: 'Model Evaluation & Neural Nets',    module: 'mod3', weight: 4, tags: ['Cross-Validation', 'Neural Nets', 'Overfitting'] },
+  { id: 'mod3b-b', title: 'Training Methods & Data Prep',      module: 'mod3', weight: 4, tags: ['Gradient Descent', 'Batch', 'Epoch', 'Training'] },
+  { id: 'mod3b-c', title: 'Applied Models & Decision Trees',   module: 'mod3', weight: 4, tags: ['Decision Tree', 'ID3', 'Information Gain'] },
+  { id: 'mod3c',   title: 'End-to-End ML Process & Scaling',  module: 'mod3', weight: 4, tags: ['Pipeline', 'Scaling', 'Normalization', 'PCA'] },
+  { id: 'mod3d',   title: 'Advanced Decision Structures',      module: 'mod3', weight: 3, tags: ['Random Forest', 'Bagging', 'Ensemble'] },
+  { id: 'mod3e',   title: 'Feature Engineering & ML Challenges', module: 'mod3', weight: 3, tags: ['Feature Selection', 'Curse of Dimensionality', 'Overfitting'] },
+  { id: 'mod3f',   title: 'Leave-One-Out Cross-Validation',    module: 'mod3', weight: 2, tags: ['LOOCV', 'Cross-Validation', 'Evaluation'] },
+  { id: 'mod3g',   title: 'Sequential Decision List Learning', module: 'mod3', weight: 2, tags: ['Decision List', 'Rules', 'Classification'] },
+  { id: 'mod3h',   title: 'Bias-Variance Tradeoff & AI Ethics', module: 'mod3', weight: 4, tags: ['Bias', 'Variance', 'Ethics', 'Fairness'] },
+  { id: 'mod3i',   title: 'No Free Lunch (NFL) Theorem',       module: 'mod3', weight: 3, tags: ['NFL Theorem', 'Generalization', 'Theory'] },
+  { id: 'mod3j',   title: 'Hyperparameter Tuning',             module: 'mod3', weight: 3, tags: ['Grid Search', 'Hyperparameters', 'Tuning'] },
+  { id: 'mod3k',   title: 'L1 vs L2 Loss (KNN)',               module: 'mod3', weight: 3, tags: ['KNN', 'L1', 'L2', 'Manhattan', 'Euclidean'] },
+  { id: 'mod3l',   title: 'Decision List vs Decision Tree',    module: 'mod3', weight: 2, tags: ['Decision Tree', 'Decision List', 'Comparison'] },
+  { id: 'normalize', title: 'Normalization & Standardization', module: 'mod3', weight: 4, tags: ['Min-Max', 'Z-Score', 'Scaling', 'Manual Calc'] },
+  { id: 'practice',  title: 'Pen & Paper Practice Problems',   module: 'mod3', weight: 3, tags: ['Practice', 'Manual', 'Calculations'] },
+  { id: 'entropy',   title: 'Entropy — Pass/Fail Example',     module: 'mod3', weight: 3, tags: ['Entropy', 'Information Gain', 'ID3'] },
+
+  // CODE LABS
+  { id: 'code1', title: 'Code 1 — t-SNE (MNIST)',              module: 'code', weight: 3, tags: ['t-SNE', 'MNIST', 'Visualization', 'Python'] },
+  { id: 'code2', title: 'Code 2 — Data Visualization',         module: 'code', weight: 2, tags: ['Matplotlib', 'Plots', 'EDA'] },
+  { id: 'code3', title: 'Code 3 — Logistic Regression',        module: 'code', weight: 3, tags: ['Logistic Regression', 'Breast Cancer', 'sklearn'] },
+  { id: 'code4', title: 'Code 4 — Normalization & PCA',        module: 'code', weight: 3, tags: ['PCA', 'Normalization', 'Dimensionality'] },
+  { id: 'code5', title: 'Code 5 — Decision Tree',              module: 'code', weight: 3, tags: ['Decision Tree', 'Football', 'sklearn'] },
+  { id: 'code6', title: 'Code 6 — SVM Breast Cancer',          module: 'code', weight: 3, tags: ['SVM', 'Breast Cancer', 'Classification'] },
+
+  // MOD 4 — ALGORITHMS & EVALUATION
+  { id: 'mod4',  title: 'Core Algorithms & Evaluation',        module: 'mod4', weight: 5, tags: ['Algorithms', 'Evaluation', 'Core ML'] },
+  { id: 'mod4b', title: 'Optimization, SVM & Association',     module: 'mod4', weight: 4, tags: ['SVM', 'Apriori', 'Association Rules', 'Optimization'] },
+  { id: 'mod4c', title: 'Decision Trees, Ensembles & MLE',     module: 'mod4', weight: 4, tags: ['Decision Tree', 'Ensemble', 'MLE', 'Parametric'] },
+  { id: 'mod4d', title: 'Density Estimation, MLE & KDE',       module: 'mod4', weight: 3, tags: ['KDE', 'MLE', 'Density', 'Gaussian'] },
+  { id: 'mod4e', title: 'Confusion Matrix Calculations',       module: 'mod4', weight: 4, tags: ['Confusion Matrix', 'Precision', 'Recall', 'F1'] },
+  { id: 'mod4f', title: 'ROC Curves & AUC',                    module: 'mod4', weight: 4, tags: ['ROC', 'AUC', 'TPR', 'FPR', 'Threshold'] },
+  { id: 'mod4g', title: 'Random Forest Classifiers',           module: 'mod4', weight: 3, tags: ['Random Forest', 'Bagging', 'Ensemble', 'Trees'] },
+  { id: 'mod4h', title: 'Linear Regression: Cost Function',    module: 'mod4', weight: 4, tags: ['Linear Regression', 'MSE', 'Cost Function', 'Hypothesis'] },
+  { id: 'mod4i', title: 'Metric Suitability & PR Tradeoff',    module: 'mod4', weight: 3, tags: ['Precision', 'Recall', 'F1', 'Tradeoff'] },
+  { id: 'mod4j', title: 'Decision Tree vs Random Forest',      module: 'mod4', weight: 3, tags: ['Decision Tree', 'Random Forest', 'Comparison'] },
+  { id: 'mod4k', title: 'KNN: Euclidean Distance',             module: 'mod4', weight: 3, tags: ['KNN', 'Euclidean', 'Distance Metrics'] },
+  { id: 'mod4l', title: 'SVM Deep Dive',                       module: 'mod4', weight: 4, tags: ['SVM', 'Hyperplane', 'Margin', 'Support Vectors'] },
+  { id: 'mod4m', title: 'Advanced SVM Mathematics',            module: 'mod4', weight: 3, tags: ['SVM', 'Kernel Trick', 'Lagrangian', 'QP'] },
+  { id: 'mod4n', title: 'Naïve Bayes: Spam Classification',    module: 'mod4', weight: 3, tags: ['Naïve Bayes', 'Bayes Theorem', 'Probabilistic'] },
+  { id: 'mod4o', title: 'Confusion Matrix Interpretation',     module: 'mod4', weight: 3, tags: ['Confusion Matrix', 'TP', 'FP', 'Interpretation'] },
+
+  // MOD 5 — UNSUPERVISED
+  { id: 'mod5a', title: 'End-of-Term Concepts',                module: 'mod5', weight: 3, tags: ['Definitions', 'Exam Prep', 'Concepts'] },
+  { id: 'mod5b', title: 'Manifolds & Advanced Clustering',     module: 'mod5', weight: 4, tags: ['Manifold', 'Clustering', 'k-Means', 'Topology'] },
+  { id: 'mod5c', title: 'PCA, Curse of Dimensionality & GMMs', module: 'mod5', weight: 5, tags: ['PCA', 'GMM', 'Dimensionality', 'Gaussian Mixture'] },
+  { id: 'mod5d', title: 'Autoencoders & Spectral Clustering',  module: 'mod5', weight: 4, tags: ['Autoencoder', 'Spectral Clustering', 'Silhouette'] },
+  { id: 'mod5e', title: 'Curse of Dimensionality & Bias-Var',  module: 'mod5', weight: 3, tags: ['Curse of Dimensionality', 'Bias-Variance'] },
+  { id: 'mod5f', title: 'Missing Data & Hierarchical Clustering', module: 'mod5', weight: 3, tags: ['Hierarchical', 'Dendogram', 'Missing Data', 'Imputation'] },
+  { id: 'mod5g', title: 'Spectral Clustering Deep Dive',       module: 'mod5', weight: 3, tags: ['Spectral', 'Laplacian', 'Graph Cuts'] },
+  { id: 'mod5h', title: 'Principal Component Analysis',        module: 'mod5', weight: 5, tags: ['PCA', 'Eigenvalues', 'Eigenvectors', 'Variance'] },
+  { id: 'mod5i', title: 'High Dimensions & Autoencoders',      module: 'mod5', weight: 3, tags: ['Autoencoder', 'Neural Net', 'Latent Space'] },
+  { id: 'mod5j', title: 'DBSCAN & Generative Models',          module: 'mod5', weight: 3, tags: ['DBSCAN', 'GAN', 'Generative', 'Density-Based'] },
+  { id: 'mod5k', title: 't-SNE Mathematics',                   module: 'mod5', weight: 3, tags: ['t-SNE', 'KL Divergence', 'Dimensionality Reduction'] },
+  { id: 'mod5l', title: 'Clustering Eval & Distance Metrics',  module: 'mod5', weight: 4, tags: ['Silhouette', 'Inertia', 'Distances', 'Evaluation'] },
+
+  // MOD 6 — REINFORCEMENT LEARNING
+  { id: 'mod6a', title: 'SLAM, TD Updates & Biological RL',    module: 'mod6', weight: 4, tags: ['SLAM', 'TD Learning', 'Q-Learning', 'Reward'] },
+  { id: 'mod6b', title: 'IRL, Localization, HMMs & EKF',       module: 'mod6', weight: 4, tags: ['HMM', 'EKF', 'Localization', 'Kalman Filter', 'IRL'] },
+];
+
+// ── 2. SEMANTIC RELATION MAP ─────────────────────────────────────
+// Each concept knows its semantic neighbours — hand-crafted connections
+const semanticLinks = [
+  // Exam → Core modules
+  ['part-c', 'mod4', 3], ['part-c', 'mod5h', 2], ['part-c', 'mod3a', 2],
+  ['part-b', 'mod3b-a', 2], ['part-b', 'mod4e', 2], ['part-b', 'mod4l', 2],
+  ['formulas', 'mod4h', 3], ['formulas', 'normalize', 3], ['formulas', 'mod4e', 3],
+  ['suggestions', 'part-c', 2], ['suggestions', 'mod4', 2],
+
+  // MOD2 internal
+  ['mod2a', 'mod2b', 2], ['mod2a', 'mod2c', 2], ['mod2a', 'mod2d', 2],
+  ['mod2b', 'mod2c', 2], ['mod2c', 'mod2d', 2], ['mod2d', 'mod2e', 2],
+  ['mod2e', 'mod2f', 2],
+
+  // MOD3 internal flow
+  ['mod3a', 'mod3b-a', 3], ['mod3a', 'mod3b-b', 2], ['mod3a', 'normalize', 3],
+  ['mod3b-a', 'mod3b-b', 2], ['mod3b-b', 'mod3b-c', 2],
+  ['mod3b-c', 'entropy', 3], ['mod3b-c', 'mod3d', 2],
+  ['mod3c', 'normalize', 3], ['mod3c', 'mod3e', 2],
+  ['mod3d', 'mod4g', 3], ['mod3d', 'mod4j', 3],
+  ['mod3h', 'mod3e', 2], ['mod3h', 'mod5e', 2],
+  ['mod3i', 'mod3h', 2],
+  ['mod3j', 'mod3b-a', 2],
+  ['mod3k', 'mod4k', 3], ['mod3k', 'normalize', 2],
+  ['mod3l', 'mod3b-c', 2], ['mod3l', 'mod3g', 2],
+  ['entropy', 'mod3b-c', 3], ['entropy', 'formulas', 2],
+  ['practice', 'normalize', 3], ['practice', 'mod4e', 2],
+
+  // Code ↔ Theory
+  ['code1', 'mod5k', 3], ['code1', 'mod5h', 2],
+  ['code2', 'mod3a', 2],
+  ['code3', 'mod4', 3], ['code3', 'mod4e', 2],
+  ['code4', 'normalize', 3], ['code4', 'mod5h', 3], ['code4', 'mod5c', 2],
+  ['code5', 'mod3b-c', 3], ['code5', 'entropy', 2],
+  ['code6', 'mod4l', 3], ['code6', 'mod4b', 2],
+
+  // MOD4 internal
+  ['mod4', 'mod4b', 3], ['mod4', 'mod4c', 3], ['mod4', 'mod4h', 3],
+  ['mod4b', 'mod4l', 3], ['mod4b', 'mod4c', 2],
+  ['mod4c', 'mod4d', 2], ['mod4c', 'mod4g', 2],
+  ['mod4d', 'mod4', 2],
+  ['mod4e', 'mod4f', 3], ['mod4e', 'mod4i', 3], ['mod4e', 'mod4o', 3],
+  ['mod4f', 'mod4i', 3],
+  ['mod4g', 'mod4j', 3],
+  ['mod4h', 'formulas', 2], ['mod4h', 'mod4', 2],
+  ['mod4k', 'mod3k', 3], ['mod4k', 'mod4', 2],
+  ['mod4l', 'mod4m', 3], ['mod4l', 'mod4b', 3],
+  ['mod4n', 'mod4', 2], ['mod4n', 'formulas', 2],
+  ['mod4o', 'mod4e', 3],
+
+  // MOD5 internal
+  ['mod5b', 'mod5g', 3], ['mod5b', 'mod5f', 2], ['mod5b', 'mod5l', 3],
+  ['mod5c', 'mod5h', 3], ['mod5c', 'mod5e', 2],
+  ['mod5d', 'mod5g', 3], ['mod5d', 'mod5i', 2],
+  ['mod5e', 'mod5c', 2], ['mod5e', 'mod3h', 2],
+  ['mod5f', 'mod5b', 2],
+  ['mod5g', 'mod5b', 3],
+  ['mod5h', 'mod5c', 3], ['mod5h', 'code4', 2],
+  ['mod5i', 'mod5d', 2], ['mod5i', 'mod5j', 2],
+  ['mod5j', 'mod5b', 2], ['mod5j', 'mod5g', 2],
+  ['mod5k', 'mod5h', 2], ['mod5k', 'code1', 3],
+  ['mod5l', 'mod5b', 3], ['mod5l', 'mod5f', 2],
+
+  // MOD5 ↔ MOD3/4 bridges
+  ['mod5h', 'mod3c', 2], ['mod5c', 'mod3c', 2],
+  ['mod5b', 'mod3a', 2], ['mod5l', 'mod4e', 2],
+
+  // MOD6
+  ['mod6a', 'mod6b', 3],
+  ['mod6a', 'mod5b', 1], // RL relates to search too
+  ['mod6b', 'mod2a', 1],
+];
+
+// ── 3. VISUAL CONFIG ─────────────────────────────────────────────
+const moduleColors = {
+  exam:  { node: '#ff1493', glow: 'rgba(255,20,147,0.5)' },
+  mod2:  { node: '#ffcf00', glow: 'rgba(255,207,0,0.5)' },
+  mod3:  { node: '#4df0ff', glow: 'rgba(77,240,255,0.5)' },
+  mod4:  { node: '#ff6b35', glow: 'rgba(255,107,53,0.5)' },
+  mod5:  { node: '#a855f7', glow: 'rgba(168,85,247,0.5)' },
+  mod6:  { node: '#39ff14', glow: 'rgba(57,255,20,0.5)' },
+  code:  { node: '#14b8a6', glow: 'rgba(20,184,166,0.5)' },
+};
+
+// ── 4. BUILD GRAPH ───────────────────────────────────────────────
+const nodes = new vis.DataSet();
+const edges = new vis.DataSet();
+
+conceptDB.forEach(concept => {
+  const mc = moduleColors[concept.module];
+  const sz = concept.weight * 6 + 8;
+
+  nodes.add({
+    id: concept.id,
+    label: concept.title.length > 20 ? concept.title.substring(0, 19) + '…' : concept.title,
+    fullTitle: concept.title,
+    module: concept.module,
+    tags: concept.tags,
+    value: sz,
+    color: {
+      background: '#0a0f1e',
+      border: mc.node,
+      highlight: { background: mc.node + '22', border: '#ffffff' },
+      hover: { background: mc.node + '18', border: mc.node }
+    },
+    font: {
+      color: '#b0c0d8', face: 'Share Tech Mono', size: 11,
+      strokeWidth: 3, strokeColor: '#060912'
+    },
+    shape: 'dot',
+    shadow: { enabled: true, color: mc.glow, size: sz / 2, x: 0, y: 0 }
+  });
+});
+
+// Sequential thin connectors within each module
+const moduleOrder = {};
+conceptDB.forEach((c, i) => {
+  if (!moduleOrder[c.module]) moduleOrder[c.module] = [];
+  moduleOrder[c.module].push(c.id);
+});
+
+Object.values(moduleOrder).forEach(ids => {
+  for (let i = 0; i < ids.length - 1; i++) {
+    edges.add({
+      from: ids[i], to: ids[i+1],
+      color: { color: '#1a2540', opacity: 0.4 },
+      dashes: [4, 6], width: 1,
+      smooth: { type: 'continuous' }
     });
-
-    // Neural Keywords for cross-referencing
-    const keywords = ['Search', 'Logic', 'Regression', 'Data', 'Tree', 'Neural', 'SVM', 'Evaluation', 'Agent', 'Heuristic', 'Optimization', 'Metrics'];
-
-    // Render the Map
-    for (const [lineName, lineData] of Object.entries(lines)) {
-      if (lineData.items.length === 0) continue;
-
-      const col = document.createElement('div');
-      col.className = `subway-line ${lineData.colorClass}`;
-      col.innerHTML = `<div class="line-header">${lineName}</div>`;
-
-      lineData.items.forEach(item => {
-        // Strip out the "MOD X — " part for a cleaner map label
-        let shortLabel = item.title.includes('—') ? item.title.split('—')[1].trim() : item.title;
-        
-        // Find which keywords this node contains
-        let nodeKeywords = keywords.filter(kw => item.title.toLowerCase().includes(kw.toLowerCase()));
-
-        const station = document.createElement('div');
-        station.className = 'station';
-        station.setAttribute('data-keywords', nodeKeywords.join(','));
-        station.innerHTML = `<span>${shortLabel}</span>`;
-        
-        // --- TAB COMMUNICATOR: Click to scroll main window ---
-        station.onclick = () => {
-          if (window.opener && !window.opener.closed) {
-            // Change the hash of the main window to jump to the section
-            window.opener.location.hash = item.id;
-            window.opener.focus(); // Bring main window to front
-          } else {
-            alert("Main terminal disconnected. Please reopen from AIML.html");
-          }
-        };
-
-        // --- NEURAL NETWORK HIGHLIGHTER ---
-        station.onmouseenter = () => {
-          container.classList.add('map-dimmed');
-          if (nodeKeywords.length > 0) {
-            // Find all other stations that share a keyword with this one
-            document.querySelectorAll('.station').forEach(otherNode => {
-              const otherKWs = otherNode.getAttribute('data-keywords').split(',');
-              const hasSharedKeyword = nodeKeywords.some(kw => otherKWs.includes(kw));
-              if (hasSharedKeyword) {
-                otherNode.classList.add('neural-glow');
-              }
-            });
-          }
-          station.classList.add('neural-glow'); // Always glow the one you are hovering
-        };
-
-        station.onmouseleave = () => {
-          container.classList.remove('map-dimmed');
-          document.querySelectorAll('.station').forEach(n => n.classList.remove('neural-glow'));
-        };
-
-        col.appendChild(station);
-      });
-
-      container.appendChild(col);
-    }
   }
+});
+
+// Semantic links
+semanticLinks.forEach(([a, b, strength]) => {
+  const mc = moduleColors[conceptDB.find(c => c.id === a)?.module || 'mod3'];
+  edges.add({
+    from: a, to: b,
+    color: { color: mc.node, opacity: 0.3 + (strength * 0.12) },
+    width: strength * 0.8,
+    smooth: { type: 'curvedCW', roundness: 0.15 + Math.random() * 0.15 }
+  });
+});
+
+// ── 5. INIT VIS NETWORK ──────────────────────────────────────────
+const container = document.getElementById('mynetwork');
+const network = new vis.Network(container, { nodes, edges }, {
+  physics: {
+    barnesHut: {
+      gravitationalConstant: -6000,
+      centralGravity: 0.15,
+      springLength: 220,
+      springConstant: 0.025,
+      damping: 0.12
+    },
+    stabilization: { iterations: 300, fit: true }
+  },
+  interaction: {
+    hover: true,
+    tooltipDelay: 300,
+    zoomView: true,
+    navigationButtons: false
+  }
+});
+
+// Hide loading when done
+network.on('stabilizationIterationsDone', () => {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('node-count').textContent = conceptDB.length + ' NODES LOADED';
+  network.fit({ animation: { duration: 800, easingFunction: 'easeInOutQuad' } });
+});
+
+// ── 6. PANEL INTERACTION ─────────────────────────────────────────
+const panel     = document.getElementById('info-panel');
+const panelTitle  = document.getElementById('panel-title');
+const panelModule = document.getElementById('panel-module');
+const panelTags   = document.getElementById('panel-tags');
+const panelAccent = document.getElementById('panel-accent');
+const connList    = document.getElementById('connections-list');
+const jumpBtn     = document.getElementById('jump-btn');
+let activeId = null;
+
+network.on('selectNode', params => {
+  activeId = params.nodes[0];
+  const n = nodes.get(activeId);
+  const mc = moduleColors[n.module];
+
+  panel.style.display = 'block';
+  panelAccent.style.background = `linear-gradient(90deg, ${mc.node}, transparent)`;
+  panelModule.textContent = n.module.toUpperCase().replace('MOD', 'MODULE ');
+  panelTitle.textContent = n.fullTitle;
+  panelTitle.style.color = mc.node;
+
+  // Tags
+  panelTags.innerHTML = n.tags.map(t =>
+    `<span class="tag" style="border-color:${mc.node}33;color:${mc.node};background:${mc.node}0d">${t}</span>`
+  ).join('');
+
+  // Connected nodes
+  const connIds = network.getConnectedNodes(activeId);
+  connList.innerHTML = connIds.slice(0, 6).map(id => {
+    const cn = nodes.get(id);
+    if (!cn) return '';
+    const cmc = moduleColors[cn.module];
+    return `<div class="conn-item" onclick="focusNode('${id}')">
+      <span class="conn-dot" style="background:${cmc.node}"></span>
+      <span>${cn.fullTitle.substring(0, 28)}${cn.fullTitle.length > 28 ? '…' : ''}</span>
+    </div>`;
+  }).join('');
+
+  // Dim non-connected
+  const allIds = nodes.getIds();
+  nodes.update(allIds.map(id => ({
+    id,
+    font: { color: id === activeId || connIds.includes(id) ? '#e8d9a8' : '#1a2030' }
+  })));
+});
+
+network.on('deselectNode', () => {
+  panel.style.display = 'none';
+  activeId = null;
+  nodes.update(nodes.getIds().map(id => ({ id, font: { color: '#b0c0d8' } })));
+});
+
+document.getElementById('close-panel').onclick = () => {
+  network.unselectAll();
+};
+
+// ── 7. JUMP TO SECTION ───────────────────────────────────────────
+jumpBtn.onclick = () => {
+  if (!activeId) return;
+  localStorage.setItem('oasis_scroll_target', activeId);
+  localStorage.setItem('oasis_scroll_trigger', Date.now());
+  jumpBtn.textContent = '✓ COMMAND TRANSMITTED';
+  setTimeout(() => jumpBtn.textContent = '⚡ OPEN IN MAIN TERMINAL', 1800);
+};
+
+network.on('doubleClick', params => {
+  if (params.nodes.length > 0) {
+    localStorage.setItem('oasis_scroll_target', params.nodes[0]);
+    localStorage.setItem('oasis_scroll_trigger', Date.now());
+  }
+});
+
+function focusNode(id) {
+  network.selectNodes([id]);
+  network.focus(id, { scale: 1.2, animation: { duration: 500 } });
+  network.emit('selectNode', { nodes: [id] });
+}
+
+// ── 8. SEARCH ────────────────────────────────────────────────────
+document.getElementById('search-btn').onclick = doSearch;
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  if (!q) return;
+  const hit = conceptDB.find(c =>
+    c.title.toLowerCase().includes(q) ||
+    c.tags.some(t => t.toLowerCase().includes(q)) ||
+    c.id.toLowerCase().includes(q)
+  );
+  if (hit) {
+    network.selectNodes([hit.id]);
+    network.focus(hit.id, { scale: 1.4, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+    network.emit('selectNode', { nodes: [hit.id] });
+  } else {
+    document.getElementById('search-input').style.borderColor = '#ff4444';
+    setTimeout(() => document.getElementById('search-input').style.borderColor = '', 1000);
+  }
+}
+
+// ── 9. FILTER BY MODULE ──────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const f = this.dataset.filter;
+
+    if (f === 'all') {
+      nodes.update(nodes.getIds().map(id => ({
+        id, hidden: false, font: { color: '#b0c0d8' }
+      })));
+      edges.update(edges.getIds().map(id => ({ id, hidden: false })));
+    } else {
+      const visIds = new Set(conceptDB.filter(c => c.module === f).map(c => c.id));
+      nodes.update(nodes.getIds().map(id => ({
+        id, hidden: !visIds.has(id)
+      })));
+    }
+    network.fit({ animation: { duration: 500 } });
+  });
+});
+
+// Legend click also filters
+document.querySelectorAll('.legend-item').forEach(item => {
+  item.addEventListener('click', function() {
+    const m = this.dataset.module;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === m);
+    });
+    const visIds = new Set(conceptDB.filter(c => c.module === m).map(c => c.id));
+    nodes.update(nodes.getIds().map(id => ({ id, hidden: !visIds.has(id) })));
+    network.fit({ animation: { duration: 500 } });
+  });
+});
+
+// ── 10. CONTROLS ─────────────────────────────────────────────────
+document.getElementById('btn-zoom-in').onclick  = () => network.moveTo({ scale: network.getScale() * 1.3, animation: true });
+document.getElementById('btn-zoom-out').onclick = () => network.moveTo({ scale: network.getScale() * 0.75, animation: true });
+document.getElementById('btn-fit').onclick      = () => network.fit({ animation: { duration: 500 } });
+
+let physicsOn = true;
+document.getElementById('btn-physics').onclick = function() {
+  physicsOn = !physicsOn;
+  network.setOptions({ physics: { enabled: physicsOn } });
+  this.style.color = physicsOn ? '' : '#39ff14';
+  this.style.borderColor = physicsOn ? '' : '#39ff14';
+};
 </script>
 </body>
 </html>
