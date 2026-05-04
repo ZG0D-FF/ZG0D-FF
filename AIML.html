@@ -9,9 +9,18 @@
 <script>
   window.MathJax = {
     tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
-    options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    options: { 
+      skipHtmlTags: ['script','noscript','style','textarea','pre'],
+      enableMenu: false /* 🚀 MASSIVE RAM SAVER: Disables the right-click math menu */
+    },
+    chtml: {
+      matchFontHeight: false /* 🚀 SPEED BOOST: Stops MathJax from calculating exact font heights */
+    }
   };
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 
 <!-- Google Fonts: Orbitron (display) + Share Tech Mono (code/body) -->
@@ -52,7 +61,7 @@
 
 /* ─── RESET & BASE ──────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+
 
 body {
   /* Layered parchment texture: subtle noise + warm gradient */
@@ -237,6 +246,72 @@ nav a.nav-return:hover {
   box-shadow: 0 0 10px rgba(107,15,26,0.25);
 }
 
+/* ─── DROPDOWN NAV SYSTEM ──────────────────────────────── */
+.nav-group {
+  position: relative;
+  display: inline-block;
+}
+.nav-group-btn {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.85rem;
+  color: var(--neon-gold);
+  text-decoration: none;
+  padding: 6px 16px;
+  border: 1px solid var(--neon-gold);
+  background: rgba(255,250,235,0.8);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.1);
+  outline: none; /* For mobile tap focus */
+}
+.nav-group:hover .nav-group-btn, .nav-group:focus-within .nav-group-btn {
+  background: rgba(154,123,44,0.1);
+  box-shadow: 0 0 10px rgba(154,123,44,0.3);
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e8d9a8;
+  min-width: 140px;
+  box-shadow: 0px 8px 16px rgba(100,65,20,0.3);
+  z-index: 1001;
+  border: 2px double var(--border);
+  border-radius: 0 0 4px 4px;
+  padding: 6px 0;
+}
+.nav-group:hover .dropdown-content, .nav-group:focus-within .dropdown-content {
+  display: flex;
+  flex-direction: column;
+  animation: lumos 0.3s ease;
+}
+nav .dropdown-content a {
+  color: var(--text);
+  padding: 10px 16px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+  font-size: 0.75rem;
+  border-radius: 0;
+  border-bottom: 1px dashed rgba(139,115,68,0.3);
+  transform: none;
+}
+nav .dropdown-content a:last-child {
+  border-bottom: none;
+}
+nav .dropdown-content a:hover {
+  background: rgba(26,58,92,0.08);
+  color: var(--neon-cyan);
+  box-shadow: inset 0 0 8px rgba(26,58,92,0.05);
+}
 .nav-divider {
   width: 1px;
   height: 20px;
@@ -314,6 +389,9 @@ section { margin-bottom: 80px; }
   transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   /* Slight page-curl feel */
   border-radius: 1px;
+  /* 🚀 PERFORMANCE BOOSTS: */
+  contain: layout style; 
+  will-change: transform, box-shadow;
 }
 
 /* Corner pen-nib ornaments */
@@ -823,6 +901,37 @@ section:nth-child(7) { animation-delay: 0.60s; }
   width: auto; height: auto;
   border: none;
 }
+/* ─── DROPDOWN SCROLLBAR FIX ───────────────────────────── */
+.dropdown-content {
+  max-height: 60vh;       /* Limits the dropdown height to 60% of the screen */
+  overflow-y: auto;       /* Turns on the vertical scrollbar */
+  overflow-x: hidden;     /* Prevents accidental horizontal scrolling */
+}
+
+/* ─── CUSTOM GOLD SCROLLBAR FOR DROPDOWNS ──────────────── */
+.dropdown-content::-webkit-scrollbar {
+  width: 6px;
+}
+.dropdown-content::-webkit-scrollbar-track {
+  background: rgba(139, 115, 68, 0.1); 
+  border-radius: 0 0 4px 0;
+}
+.dropdown-content::-webkit-scrollbar-thumb {
+  background: var(--neon-gold); 
+  border-radius: 4px;
+}
+.dropdown-content::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-orange); 
+}
+section { 
+  content-visibility: auto; 
+  contain-intrinsic-size: 1000px; /* Gives the browser a rough guess of the height */
+  animation: apparate 0.9s ease-out both; 
+}
+/* 🚀 TELLS BROWSER NOT TO PANIC DURING FAST SCROLLS */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 </style>
 </head>
 <body>
@@ -840,42 +949,84 @@ section:nth-child(7) { animation-delay: 0.60s; }
 <!-- ══════════════════════════════════════════════════════════
      NAVIGATION
 ══════════════════════════════════════════════════════════ -->
-<nav>
+<nav id="dynamic-nav">
   <a href="notes.html" class="nav-return">← NOTES HUB</a>
-  
   <div class="nav-divider"></div>
-  
-  <a href="#part-a">PART A (2M)</a>
-  <a href="#part-b">PART B (5M)</a>
-  <a href="#part-c">PART C (10M)</a>
-  <a href="#suggestions" style="color: var(--neon-gold); border-color: var(--neon-gold);">MOD1</a>
-  <a href="#extra-theory" style="color: var(--neon-gold); border-color: var(--neon-gold);">MOD1A</a>
-  <a href="#final-theory" style="color: var(--neon-gold); border-color: var(--neon-gold);">MOD1B</a>
-  <a href="#mod2a">MOD2A</a>
-  <a href="#mod2b">MOD2B</a>
-  <a href="#mod2c">MOD2C</a>
-  <a href="#mod2d">MOD 2D</a>
-  <a href="#mod2e">MOD 2E</a>
-  <a href="#mod2f">MOD 2F</a>
-  <a href="#mod3a">MOD 3A</a>
-  <a href="#mod3b-a">MOD 3B-A</a>
-  <a href="#mod3b-b">MOD 3B-B</a>
-  <a href="#mod3b-c">MOD 3B-C</a>
-  <div class="nav-divider"></div>
-  
-  <a href="#normalize">Norm &amp; Std</a>
-  <a href="#practice">Practice</a>
-  <a href="#entropy">Entropy</a>
-  
-  <div class="nav-divider"></div>
-  
-  <a href="#code1">t-SNE</a>
-  <a href="#code2">Plots</a>
-  <a href="#code3">Log Reg</a>
-  <a href="#code4">Scaling</a>
-  <a href="#code5">Tree</a>
-  <a href="#code6">SVM</a>
+  <!-- JavaScript will inject categorized dropdowns here -->
 </nav>
+
+<script>
+  // Auto-generate grouped dropdown navigation based on <section id="...">
+  document.addEventListener('DOMContentLoaded', () => {
+    const nav = document.getElementById('dynamic-nav');
+    const sections = document.querySelectorAll('section[id]');
+    
+    // Define the buckets for the dropdown menus
+    const groups = {
+      'EXAMS': [],
+      'MOD 1': [],
+      'MOD 2': [],
+      'MOD 3': [],
+      'MOD 4': [],
+      'MOD 5': [],
+      'MOD 6': [],
+      'CODE': [],
+      'MISC': []
+    };
+
+    sections.forEach(section => {
+      const id = section.id;
+      let label = id.toUpperCase().replace(/-/g, ' ');
+      
+      // Map custom names for specific sections to match your old layout
+      if (id === 'suggestions') label = 'MOD 1 (SUGGESTIONS)';
+      if (id === 'extra-theory') label = 'MOD 1A (EXTRA)';
+      if (id === 'final-theory') label = 'MOD 1B (FINAL)';
+      if (id === 'normalize') label = 'NORM & STD';
+
+      // Sort sections into their proper dropdown groups
+      if (id.startsWith('part')) groups['EXAMS'].push({ id, label });
+      else if (id === 'suggestions' || id === 'extra-theory' || id === 'final-theory') groups['MOD 1'].push({ id, label });
+      else if (id.startsWith('mod2')) groups['MOD 2'].push({ id, label });
+      else if (id.startsWith('mod3')) groups['MOD 3'].push({ id, label });
+      else if (id.startsWith('mod4')) groups['MOD 4'].push({ id, label });
+      else if (id.startsWith('mod5')) groups['MOD 5'].push({ id, label });
+      else if (id.startsWith('mod6')) groups['MOD 6'].push({ id, label });
+      else if (id.startsWith('code')) groups['CODE'].push({ id, label });
+      else groups['MISC'].push({ id, label });
+    });
+
+    // Build the Dropdown UI
+    for (const [groupName, items] of Object.entries(groups)) {
+      if (items.length === 0) continue; // Skip empty groups if you haven't added that module yet
+
+      // Create Group Container (tabindex="0" makes it tap-friendly on mobile)
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'nav-group';
+      groupDiv.tabIndex = 0; 
+
+      // Create Group Button
+      const groupBtn = document.createElement('div');
+      groupBtn.className = 'nav-group-btn';
+      groupBtn.textContent = groupName;
+      groupDiv.appendChild(groupBtn);
+
+      // Create Dropdown Menu
+      const dropdown = document.createElement('div');
+      dropdown.className = 'dropdown-content';
+
+      items.forEach(item => {
+        const anchor = document.createElement('a');
+        anchor.href = `#${item.id}`;
+        anchor.textContent = item.label;
+        dropdown.appendChild(anchor);
+      });
+
+      groupDiv.appendChild(dropdown);
+      nav.appendChild(groupDiv);
+    }
+  });
+</script>
 
 <main>
 
@@ -963,6 +1114,29 @@ section:nth-child(7) { animation-delay: 0.60s; }
           <strong>Entropy (Decision Trees):</strong>
           $$E = - \sum p_i \log_2(p_i)$$
         </div>
+      </div>
+    </div>
+    <div class="q-card green" style="margin-bottom: 0;">
+      <div class="q-num">8 · STATISTICAL ESTIMATION</div>
+      <div class="q-title">Gaussian, MLE &amp; KDE Math</div>
+      <div class="q-body">
+        <ul>
+          <li><strong>Gaussian Distribution:</strong> $$p(x) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$</li>
+          <li><strong>MLE Parameters:</strong><br> Mean: $\mu = \frac{1}{n}\sum x_i$<br> Variance: $\sigma^2 = \frac{1}{n}\sum (x_i - \mu)^2$</li>
+          <li><strong>Kernel Density Est. (KDE):</strong> $$\hat{f}(x) = \frac{1}{nh} \sum K\left(\frac{x - x_i}{h}\right)$$</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card gold" style="margin-bottom: 0;">
+      <div class="q-num">9 · ADVANCED MODEL MATH</div>
+      <div class="q-title">Normal Equation &amp; Hinge Loss</div>
+      <div class="q-body">
+        <ul>
+          <li><strong>Normal Equation (Lin Reg):</strong> $$\theta = (X^T X)^{-1} X^T y$$</li>
+          <li><strong>SVM Hinge Loss:</strong> $$L = \max(0, 1 - y \cdot f(x))$$</li>
+          <li><strong>False Positive Rate (ROC):</strong> $$FPR = \frac{FP}{FP + TN}$$</li>
+        </ul>
       </div>
     </div>
 
@@ -1217,7 +1391,7 @@ section:nth-child(7) { animation-delay: 0.60s; }
       <div class="trace-grid">
       <div class="output-img-wrap" style="margin-bottom: 14px;">
         <div class="output-img-label">▸ GRAPH REFERENCE</div>
-        <img src="BFS & DFS (Graph Traversal).png" alt="BFS and DFS Graph">
+        <img loading="lazy" decoding="async" src="BFS & DFS (Graph Traversal).png" alt="BFS and DFS Graph">
       </div>
         <div class="trace-box">
           <div class="trace-title">◈ BFS — BREADTH-FIRST SEARCH (Queue)</div>
@@ -5609,7 +5783,7 @@ plt.<span class="fn">show</span>()</pre>
 
     <div class="output-img-wrap">
       <div class="output-img-label">▸ OUTPUT — t-SNE Visualization</div>
-      <img src="t-SNE Dimensionality Reduction.png" alt="t-SNE Visualization">
+      <img loading="lazy" decoding="async" src="t-SNE Dimensionality Reduction.png" alt="t-SNE Visualization">
     </div>
       <div id="missing1" class="img-missing"><div class="icon">🖼</div><div></div><div style="font-size:0.6rem;opacity:0.5;">Place your t-SNE output image here — it will appear automatically</div></div>
     </div>
@@ -5686,11 +5860,11 @@ plt.<span class="fn">show</span>()</pre>
 
     <div class="output-img-wrap">
       <div class="output-img-label">▸ OUTPUT — Data Visualization Plots</div>
-      <img src="Data visualization using- Histogram Plot.png" alt="Histogram" style="margin-bottom:10px;">
-      <img src="Data visualization using- Scatter Plot.png" alt="Scatter Plot" style="margin-bottom:10px;">
-      <img src="Data visualization using- Line Plot.png" alt="Line Plot" style="margin-bottom:10px;">
-      <img src="Data visualization using-Bar Plot.png" alt="Bar Plot" style="margin-bottom:10px;">
-      <img src="Data visualization using- Box Plot.png" alt="Box Plot">
+      <img loading="lazy" decoding="async" src="Data visualization using- Histogram Plot.png" alt="Histogram" style="margin-bottom:10px;">
+      <img loading="lazy" decoding="async" src="Data visualization using- Scatter Plot.png" alt="Scatter Plot" style="margin-bottom:10px;">
+      <img loading="lazy" decoding="async" src="Data visualization using- Line Plot.png" alt="Line Plot" style="margin-bottom:10px;">
+      <img loading="lazy" decoding="async" src="Data visualization using-Bar Plot.png" alt="Bar Plot" style="margin-bottom:10px;">
+      <img loading="lazy" decoding="async" src="Data visualization using- Box Plot.png" alt="Box Plot">
     </div>
       <div id="missing2" class="img-missing"><div class="icon">🖼</div><div> THE PLOTS above </div></div>
     </div>
@@ -5935,8 +6109,8 @@ plt.<span class="fn">title</span>(<span class="str">'PCA of MNIST Dataset (2D Pr
 
     <div class="output-img-wrap">
       <div class="output-img-label">▸ OUTPUT — Normalization & PCA</div>
-      <img src="Normalization vs. Standardization.png" alt="Standardization Box Plot" style="margin-bottom:10px;">
-      <img src="Principal Component Analysis (PCA).png" alt="PCA Scatter Plot">
+      <img loading="lazy" decoding="async" src="Normalization vs. Standardization.png" alt="Standardization Box Plot" style="margin-bottom:10px;">
+      <img loading="lazy" decoding="async" src="Principal Component Analysis (PCA).png" alt="PCA Scatter Plot">
     </div>
       <div id="missing4" class="img-missing"><div class="icon"></div><div></div></div>
     </div>
@@ -5997,7 +6171,7 @@ plt.<span class="fn">figure</span>(figsize=(<span class="num">8</span>, <span cl
 
     <div class="output-img-wrap">
       <div class="output-img-label">▸ OUTPUT — Decision Tree</div>
-      <img src="Using suitable dataset, build model using Decision Tree algorithm..png" alt="Decision Tree Model">
+      <img loading="lazy" decoding="async" src="Using suitable dataset, build model using Decision Tree algorithm..png" alt="Decision Tree Model">
     </div>
       <div id="missing5" class="img-missing"><div class="icon">🖼</div><div></div></div>
     </div>
@@ -7253,6 +7427,2463 @@ plt.<span class="fn">figure</span>(figsize=(<span class="num">8</span>, <span cl
 
 </section>
 
+<section id="mod4l">
+  <div class="section-label">MODULE 4 (CONT.)</div>
+  <h2 class="section-title">MOD 4 — Support Vector Machine (Deep Dive)</h2>
+
+  <div class="q-card">
+    <div class="q-num">Q49 · CORE CONCEPT</div>
+    <div class="q-title">The Concept of SVM &amp; Optimal Hyperplane</div>
+    <div class="q-body">
+      <p>A Support Vector Machine is a supervised learning algorithm that separates data into classes using a <strong>Hyperplane</strong> (a line in 2D, a flat plane in 3D, and a hyperplane in higher dimensions).</p>
+      
+      <div style="margin-top: 12px; padding: 12px; background: rgba(26,58,92,0.05); border-left: 3px solid var(--neon-cyan);">
+        <strong style="color:var(--neon-cyan)">👉 Key Idea: Maximum Separation</strong>
+        <p style="margin-top: 6px; font-size: 0.9rem;">The goal is not just to separate the data, but to find the hyperplane that <strong>maximizes the margin</strong> (distance) between the two classes.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">The Optimal Hyperplane</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Maximizes the absolute distance from the nearest data points of both classes.</li>
+            <li>These critical, closest points are known as <strong>Support Vectors</strong>.</li>
+          </ul>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">Why Maximum Margin?</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>A larger margin mathematically ensures <strong>better generalization</strong>.</li>
+            <li>Heavily reduces overfitting.</li>
+            <li>Makes the model highly robust to noise.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q50 · SVM MATHEMATICS</div>
+    <div class="q-title">Mathematical Form &amp; Optimization Goal</div>
+    <div class="q-body">
+      <div class="trace-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 0;">
+        
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ THE EQUATIONS</div>
+          <p style="font-size:0.85rem; margin-top:8px;"><strong>Hyperplane Equation:</strong></p>
+          <div class="formula-box" style="margin: 6px 0; padding: 10px; font-size:1rem;">
+            $$w \cdot x + b = 0$$
+          </div>
+          <p style="font-size:0.85rem; margin-top:8px;"><strong>Margin Maximization:</strong></p>
+          <div class="formula-box" style="margin: 6px 0; padding: 10px; font-size:1rem;">
+            $$\text{Maximize Margin} = \frac{2}{\|w\|}$$
+          </div>
+        </div>
+
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ THE OPTIMIZATION PROBLEM</div>
+          <p style="font-size:0.85rem; margin-top:8px;">To maximize $\frac{2}{\|w\|}$, we mathematically invert it to a minimization problem for computational ease:</p>
+          <div class="formula-box" style="margin: 6px 0; padding: 10px; font-size:1rem; text-align:left;">
+            <strong>Minimize:</strong><br> $$\frac{1}{2}\|w\|^2$$
+            <br>
+            <strong>Subject to:</strong><br> Correct classification constraints.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q51 · ADVANCED DATA HANDLING</div>
+    <div class="q-title">The Kernel Trick (Very Important)</div>
+    <div class="q-body">
+      <p>Real-world data is extremely rarely linearly separable (you can't just draw a straight line through it).</p>
+      
+      <div style="margin-top: 12px; padding: 12px; background: rgba(45,90,39,0.05); border-left: 3px solid var(--neon-green);">
+        <strong style="color:var(--neon-green)">👉 How it works:</strong>
+        <p style="margin-top: 6px; font-size: 0.9rem;">The Kernel Trick maps data points into a <strong>higher-dimensional space</strong> where they <em>do</em> become linearly separable, and it does so mathematically <strong>without explicitly computing</strong> that heavy transformation (making it highly memory & compute efficient).</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+        <div>
+          <strong style="color:var(--neon-green); font-size:0.9rem;">Common Kernels:</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li><strong>Linear Kernel:</strong> For natively linearly separable data.</li>
+            <li><strong>Polynomial Kernel:</strong> Creates curved boundaries.</li>
+            <li><strong>RBF (Gaussian) Kernel:</strong> Creates complex, highly flexible island-like boundaries.</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color:var(--neon-green); font-size:0.9rem;">Classic Example:</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Suppose Class A forms a circle, completely surrounded by a ring of Class B.</li>
+            <li><strong style="color:#ff2d78">In 2D:</strong> Cannot be separated by a straight line ❌.</li>
+            <li><strong style="color:var(--neon-green)">With Kernel Trick:</strong> Map to 3D (a cone shape). Now separable by a flat plane ✅.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card gold" style="box-shadow: 0 0 15px rgba(154,123,44,0.15);">
+    <div class="q-num">⭐ FINAL EXAM SUMMARY ⭐</div>
+    <div class="q-title">The "Write This" Paragraph</div>
+    <div class="q-body">
+      <p style="font-size: 1.05rem; line-height: 1.7; color: var(--text);">
+        <strong>Support Vector Machine (SVM)</strong> is a supervised learning algorithm that finds the optimal hyperplane to separate classes by maximizing the margin between them. The closest points to the hyperplane, called <strong>support vectors</strong>, determine the decision boundary. SVM solves an optimization problem to maximize this margin, greatly improving generalization. For non-linearly separable data, the <strong>kernel trick</strong> is heavily used to map data into a higher-dimensional space where it becomes linearly separable, using functions such as linear, polynomial, or RBF kernels.
+      </p>
+      <div style="margin-top: 10px; font-weight: bold; color: var(--neon-gold); text-align: center; border-top: 1px dashed rgba(154,123,44,0.3); padding-top: 8px;">
+        Key Advantages: Highly effective in high-dimensional spaces, creates complex boundaries, and is memory efficient (only relies on support vectors).
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod4m">
+  <div class="section-label">MODULE 4 (CONT.)</div>
+  <h2 class="section-title">MOD 4 — Advanced SVM Mathematics</h2>
+
+  <div class="q-card">
+    <div class="q-num">Q52 · ADVANCED OPTIMIZATION</div>
+    <div class="q-title">Soft Margin SVM &amp; Slack Variables ($\xi$)</div>
+    <div class="q-body">
+      <p>Instead of forcing perfect separation (which causes severe overfitting on noisy data), a Soft Margin SVM mathematically allows some violations by introducing <strong>Slack Variables ($\xi_i \ge 0$)</strong>.</p>
+      
+      <div class="trace-box" style="margin: 16px 0; border-color: rgba(26,58,92,0.4); background: rgba(26,58,92,0.04);">
+        <div class="trace-title" style="color: var(--neon-cyan); border-bottom-color: rgba(26,58,92,0.4);">◈ THE SOFT MARGIN OPTIMIZATION FUNCTION</div>
+        <div class="formula-box" style="margin: 8px 0; padding: 14px; font-size: 1rem;">
+          $$\min_{w,b,\xi} \frac{1}{2}\|w\|^2 + C \sum_{i} \xi_i$$
+        </div>
+        <p style="font-size:0.85rem; margin-top:8px;"><strong>Subject to the constraints:</strong></p>
+        <div class="formula-box" style="margin: 6px 0; padding: 10px; font-size: 0.95rem;">
+          $$y_i(w \cdot x_i + b) \ge 1 - \xi_i$$
+        </div>
+      </div>
+
+      <div style="padding: 10px; border-left: 3px solid var(--neon-cyan); background: rgba(26,58,92,0.05);">
+        <strong style="color:var(--neon-cyan)">The Role of $C$:</strong> It controls the trade-off.
+        <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+          <li><strong>Large $C$:</strong> Heavy penalty for $\xi$. Fewer violations allowed (risk of overfitting).</li>
+          <li><strong>Small $C$:</strong> Low penalty. Wider margin, more tolerance (better generalization).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q53 · NON-LINEAR BOUNDARIES</div>
+    <div class="q-title">The Formal Mathematical Kernel Trick</div>
+    <div class="q-body">
+      <p>For intrinsically non-linear patterns, SVM maps the input $x$ to a higher-dimensional feature space $\phi(x)$ and learns a linear separator there.</p>
+      
+      <div style="margin-top: 10px; padding: 12px; background: rgba(139,58,15,0.05); border-left: 3px solid var(--neon-orange);">
+        <strong style="color:var(--neon-orange)">The Efficiency Secret:</strong>
+        <p style="margin-top: 6px; font-size: 0.9rem;">It computes inner products directly via a Kernel function $K$, avoiding the computationally explosive need to explicitly compute $\phi(x)$.</p>
+        <div class="formula-box" style="margin: 8px 0; padding: 10px; font-size: 0.95rem; border-color: var(--neon-orange);">
+          $$K(x_i, x_j) = \phi(x_i) \cdot \phi(x_j)$$
+        </div>
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.9rem; display:block; margin-top:16px;">Common Kernel Functions:</strong>
+      <ul style="display:grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px;">
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--neon-orange);">Linear:</strong> $K(x, z) = x \cdot z$
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--neon-orange);">Polynomial:</strong> $K(x, z) = (x \cdot z + c)^d$
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--neon-orange);">RBF (Gaussian):</strong> $K(x, z) = \exp(-\gamma \|x - z\|^2)$
+        </li>
+      </ul>
+      <div style="text-align: center; font-style: italic; color: var(--text-dim); margin-top: 10px; font-size: 0.85rem;">
+        👉 The choice of kernel mathematically dictates the shape and complexity of the final decision boundary.
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card gold" style="box-shadow: 0 0 15px rgba(154,123,44,0.15);">
+    <div class="q-num">⭐ FINAL EXAM SUMMARY ⭐</div>
+    <div class="q-title">Advanced SVM (The "Write This" Paragraph)</div>
+    <div class="q-body">
+      <p style="font-size: 1.05rem; line-height: 1.7; color: var(--text);">
+        For non-linearly separable data, SVM uses a <strong>soft margin</strong> to allow some misclassification and introduces <strong>slack variables ($\xi$)</strong> controlled by a regularization parameter <strong>$C$</strong>. Additionally, it applies the <strong>kernel trick</strong> to implicitly map data into a higher-dimensional space where it becomes linearly separable. Kernel functions such as linear, polynomial, and RBF compute inner products in this transformed space without explicit mapping. For example, data arranged in concentric circles cannot be separated linearly in 2D, but using an RBF kernel, SVM can form a circular decision boundary and achieve correct classification.
+      </p>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod4n">
+    <div class="section-label">EXAM PRACTICE</div>
+  <h2 class="section-title">Naïve Bayes: Spam Classification</h2>
+
+  <div class="problem-card">
+    <div class="problem-num">PROBLEM 54 · NAÏVE BAYES</div>
+    <div class="problem-title">Calculate Probability Using Priors &amp; Likelihoods</div>
+    
+    <div class="given-box">
+      <div class="label">GIVEN DATASET</div>
+      <table class="norm-table" style="max-width: 500px; margin-top: 8px; background: transparent; border: 1px solid #8b7355;">
+        <tr><th style="text-align:center;">Email ID</th><th>Words in Email</th><th style="text-align:center;">Spam (Yes=1, No=0)</th></tr>
+        <tr><td style="text-align:center;">1</td><td>Free, Win, Offer</td><td style="text-align:center; color:#ff2d78; font-weight:bold;">1</td></tr>
+        <tr><td style="text-align:center;">2</td><td>Free, Money, Buy</td><td style="text-align:center; color:#ff2d78; font-weight:bold;">1</td></tr>
+        <tr><td style="text-align:center;">3</td><td>Hello, Meeting, Project</td><td style="text-align:center; color:var(--neon-cyan); font-weight:bold;">0</td></tr>
+        <tr><td style="text-align:center;">4</td><td>Free, Win, Gift</td><td style="text-align:center; color:#ff2d78; font-weight:bold;">1</td></tr>
+        <tr><td style="text-align:center;">5</td><td>Meeting, Schedule, Work</td><td style="text-align:center; color:var(--neon-cyan); font-weight:bold;">0</td></tr>
+        <tr><td style="text-align:center;">6</td><td>Buy, Money, Offer</td><td style="text-align:center; color:#ff2d78; font-weight:bold;">1</td></tr>
+        <tr><td style="text-align:center;">7</td><td>Win, Lottery, Free</td><td style="text-align:center; color:#ff2d78; font-weight:bold;">1</td></tr>
+        <tr><td style="text-align:center;">8</td><td>Schedule, Meeting, Project</td><td style="text-align:center; color:var(--neon-cyan); font-weight:bold;">0</td></tr>
+      </table>
+      <div style="margin-top: 12px; font-size: 0.9rem;">
+        <strong>Total Emails:</strong> 8<br>
+        <strong>Spam Emails:</strong> 5 (IDs 1, 2, 4, 6, 7)<br>
+        <strong>Not Spam Emails:</strong> 3 (IDs 3, 5, 8)
+      </div>
+    </div>
+    
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Task:</strong> Calculate the probability of an email with the words <strong>"Free"</strong> and <strong>"Win"</strong> being spam.</p>
+    
+    <button class="solution-toggle" onclick="toggleSolution(this)">▶ SHOW SOLUTION</button>
+    <div class="solution-body">
+      
+      <div class="step-label">I) COMPUTE THE PRIOR PROBABILITIES</div>
+      <p style="margin-top: 8px;">The prior probability is simply the ratio of each class in the total dataset.</p>
+      <ul>
+        <li>$P(\text{Spam}) = 5 / 8 = \mathbf{0.625}$</li>
+        <li>$P(\text{Not Spam}) = 3 / 8 = \mathbf{0.375}$</li>
+      </ul>
+
+      <div class="step-label" style="margin-top: 24px;">II) COMPUTE THE LIKELIHOOD PROBABILITIES</div>
+      <p style="margin-top: 8px;">We calculate the likelihood by counting how many emails in a specific class contain the word, divided by the total number of emails in that class (Document Frequency).</p>
+      
+      <strong style="color:var(--text); font-size: 0.9rem; display:block; margin-top:12px;">For Spam (out of 5 emails):</strong>
+      <ul>
+        <li>"Free" appears in 4 emails (IDs 1, 2, 4, 7) &rarr; $P(\text{Free} | \text{Spam}) = 4 / 5 = \mathbf{0.8}$</li>
+        <li>"Win" appears in 3 emails (IDs 1, 4, 7) &rarr; $P(\text{Win} | \text{Spam}) = 3 / 5 = \mathbf{0.6}$</li>
+      </ul>
+
+      <strong style="color:var(--text); font-size: 0.9rem; display:block; margin-top:12px;">For Not Spam (out of 3 emails):</strong>
+      <ul>
+        <li>"Free" appears in 0 emails &rarr; $P(\text{Free} | \text{Not Spam}) = 0 / 3 = \mathbf{0}$</li>
+        <li>"Win" appears in 0 emails &rarr; $P(\text{Win} | \text{Not Spam}) = 0 / 3 = \mathbf{0}$</li>
+      </ul>
+
+      <div class="step-label" style="margin-top: 24px;">III) USE THE NAÏVE BAYES FORMULA</div>
+      <p style="margin-top: 8px;">The theorem states that the probability of a class given a set of features is proportional to the prior probability of the class multiplied by the likelihood of each feature.</p>
+
+      <div style="background: rgba(139,0,0,0.05); padding: 10px; border-left: 3px solid #ff2d78; margin-top: 12px;">
+        <strong style="color:#ff2d78; font-size: 0.9rem;">1. Calculate the score for Spam:</strong>
+        <p style="margin-top: 6px; font-size: 0.9rem;">$P(\text{Spam} | \text{Free, Win}) \propto P(\text{Spam}) \times P(\text{Free} | \text{Spam}) \times P(\text{Win} | \text{Spam})$</p>
+        <p style="margin-top: 4px; font-weight: bold;">Spam Score = $0.625 \times 0.8 \times 0.6 = \mathbf{0.3}$</p>
+      </div>
+
+      <div style="background: rgba(26,58,92,0.05); padding: 10px; border-left: 3px solid var(--neon-cyan); margin-top: 12px;">
+        <strong style="color:var(--neon-cyan); font-size: 0.9rem;">2. Calculate the score for Not Spam:</strong>
+        <p style="margin-top: 6px; font-size: 0.9rem;">$P(\text{Not Spam} | \text{Free, Win}) \propto P(\text{Not Spam}) \times P(\text{Free} | \text{Not Spam}) \times P(\text{Win} | \text{Not Spam})$</p>
+        <p style="margin-top: 4px; font-weight: bold;">Not Spam Score = $0.375 \times 0 \times 0 = \mathbf{0}$</p>
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.9rem; display:block; margin-top:16px;">3. Normalize the Probabilities:</strong>
+      <p style="margin-top: 6px; font-size: 0.85rem;">To get the final percentage, divide the score by the sum of all scores.</p>
+      <ul style="font-size: 0.9rem;">
+        <li>$P(\text{Spam}) = \frac{0.3}{0.3 + 0} = \mathbf{1.0} \text{ (or 100\%)}$</li>
+        <li>$P(\text{Not Spam}) = \frac{0}{0.3 + 0} = \mathbf{0.0} \text{ (or 0\%)}$</li>
+      </ul>
+      <p style="font-size:0.8rem; font-style:italic; color:var(--text-dim); margin-top:4px;">(Note: In real-world apps, "Laplace Smoothing" is used to prevent 0 probabilities from wiping out the score, but based on raw formulas, the result is exactly 0).</p>
+
+      <div class="step-label" style="margin-top: 24px;">IV) DETERMINE THE CLASSIFICATION</div>
+      <div class="highlight-answer" style="margin-top: 12px;">
+        Because the probability score for Spam ($1.0$) is strictly greater than the score for Not Spam ($0.0$), the email containing the words "Free" and "Win" is classified as <strong style="color:#ff2d78;">SPAM</strong>.
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod4o">
+  <div class="section-label">EXAM PRACTICE</div>
+  <h2 class="section-title">Confusion Matrix: Calculations &amp; Interpretation</h2>
+  
+  <div class="problem-card">
+    <div class="problem-num">PROBLEM 55 · MODEL EVALUATION</div>
+    <div class="problem-title">Calculate Metrics &amp; Interpret Performance</div>
+    
+    <div class="given-box">
+      <div class="label">GIVEN CONFUSION MATRIX</div>
+      <table class="norm-table" style="max-width: 400px; margin-top: 8px; background: transparent; border: 1px solid #8b7355; text-align: center;">
+        <tr>
+          <th></th>
+          <th style="text-align:center;">Predicted 0</th>
+          <th style="text-align:center;">Predicted 1</th>
+        </tr>
+        <tr>
+          <td style="font-weight:bold; text-align:left;">Actual 0</td>
+          <td>50</td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold; text-align:left;">Actual 1</td>
+          <td>5</td>
+          <td>35</td>
+        </tr>
+      </table>
+    </div>
+    
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Task:</strong> i) Define components (TP, TN, FP, FN). &nbsp; ii) Compute Accuracy, Precision, Recall, and F1-Score. &nbsp; iii) Interpret the model's performance.</p>
+    
+    <button class="solution-toggle" onclick="toggleSolution(this)">▶ SHOW SOLUTION</button>
+    <div class="solution-body">
+      
+      <div class="step-label">I) DEFINE THE COMPONENTS (POSITIVE CLASS = 1)</div>
+      <p style="margin-top: 8px;">A Confusion Matrix compares predicted classifications against actual true labels. For Class = 1:</p>
+      <ul>
+        <li><strong>True Positive (TP):</strong> Correctly predicted positive (Actual 1, Predicted 1) &rarr; <strong style="color:var(--neon-green)">35</strong></li>
+        <li><strong>True Negative (TN):</strong> Correctly predicted negative (Actual 0, Predicted 0) &rarr; <strong style="color:var(--neon-green)">50</strong></li>
+        <li><strong>False Positive (FP):</strong> Incorrectly predicted positive (Actual 0, Predicted 1) &rarr; <strong style="color:#ff2d78">10</strong> <em>(Type I Error)</em></li>
+        <li><strong>False Negative (FN):</strong> Incorrectly predicted negative (Actual 1, Predicted 0) &rarr; <strong style="color:#ff2d78">5</strong> <em>(Type II Error)</em></li>
+      </ul>
+      <p style="margin-top: 8px;"><em>Total Observations ($N$) = $35 + 50 + 10 + 5 = \mathbf{100}$</em></p>
+
+      <div class="step-label" style="margin-top: 24px;">II) COMPUTE THE METRICS</div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+        <div style="background: rgba(26,58,92,0.05); padding: 10px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); font-size: 0.9rem;">1. Accuracy</strong>
+          <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-dim);">Proportion of total correct predictions.</p>
+          <p style="margin-top: 6px;">$\frac{TP + TN}{N} = \frac{35 + 50}{100} = \mathbf{0.85 \text{ (85\%)}}$</p>
+        </div>
+        
+        <div style="background: rgba(26,58,92,0.05); padding: 10px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); font-size: 0.9rem;">2. Precision</strong>
+          <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-dim);">Proportion of positive predictions that were correct.</p>
+          <p style="margin-top: 6px;">$\frac{TP}{TP + FP} = \frac{35}{35 + 10} \approx \mathbf{0.7778 \text{ (77.8\%)}}$</p>
+        </div>
+
+        <div style="background: rgba(26,58,92,0.05); padding: 10px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); font-size: 0.9rem;">3. Recall (Sensitivity)</strong>
+          <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-dim);">Proportion of actual positives correctly identified.</p>
+          <p style="margin-top: 6px;">$\frac{TP}{TP + FN} = \frac{35}{35 + 5} = \mathbf{0.875 \text{ (87.5\%)}}$</p>
+        </div>
+
+        <div style="background: rgba(26,58,92,0.05); padding: 10px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); font-size: 0.9rem;">4. F1-Score</strong>
+          <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-dim);">Harmonic mean of Precision and Recall.</p>
+          <p style="margin-top: 6px; font-size: 0.9rem;">$2 \times \frac{0.7778 \times 0.875}{0.7778 + 0.875} \approx \mathbf{0.8235 \text{ (82.35\%)}}$</p>
+        </div>
+      </div>
+
+      <div class="step-label" style="margin-top: 24px; color: var(--neon-gold); border-bottom-color: rgba(154,123,44,0.3);">III) INTERPRET THE MODEL'S PERFORMANCE</div>
+      <div style="background: rgba(154,123,44,0.05); padding: 14px; border: 1px solid rgba(154,123,44,0.2); margin-top: 12px;">
+        <ul style="font-size: 0.9rem; margin: 0; padding-left: 20px;">
+          <li style="margin-bottom: 8px;"><strong>Strong Recall (87.5%):</strong> The model is highly effective at identifying positive cases, missing only 5 out of the 40 actual instances.</li>
+          <li style="margin-bottom: 8px;"><strong>Moderate Precision (77.8%):</strong> While good at finding positives, it is slightly "trigger-happy." When it flags something as positive, it is wrong about 22% of the time.</li>
+          <li style="margin-bottom: 8px;"><strong>Solid Balance (F1-Score 82.35%):</strong> Confirms a healthy balance. It prioritizes finding positives without sacrificing too much accuracy in its positive predictions.</li>
+          <li><strong>Good Overall Accuracy (85%):</strong> With 85/100 correct predictions, it is a solid baseline classifier, assuming the cost of a False Positive is not catastrophic.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5a">
+  <div class="section-label">RAPID REVIEW</div>
+  <h2 class="section-title">End-of-Term Concepts &amp; Definitions</h2>
+
+  <div class="q-card">
+    <div class="q-num">Q1, 5, 7, 9, 10, 16, 19, 21 · FOUNDATIONS</div>
+    <div class="q-title">Core ML Fundamentals &amp; Evaluation</div>
+    <div class="q-body">
+      
+      <table class="norm-table" style="margin-bottom: 16px;">
+        <tr>
+          <th style="width: 50%;">Paradigm 1</th>
+          <th style="width: 50%;">Paradigm 2</th>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">Supervised Learning (Q9):</strong> Uses specifically labeled data to train the model.</td>
+          <td><strong style="color:var(--neon-cyan)">Unsupervised Learning (Q9):</strong> Finds hidden patterns in entirely unlabeled data.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">Parametric Models (Q21):</strong> Has a fixed number of parameters (e.g., Linear Regression).</td>
+          <td><strong style="color:var(--neon-cyan)">Non-parametric Models (Q21):</strong> Flexible, parameter count grows with the data (e.g., KNN).</td>
+        </tr>
+      </table>
+
+      <ul style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin: 0; padding: 0;">
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--text);">Loss Function (Q1):</strong> Measures how far predicted values are from actual values. The model minimizes this error.
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--text);">Linear Regression (Q7):</strong> Used exclusively to predict continuous values (e.g., price, temperature).
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--text);">Overfitting (Q16):</strong> The model strictly learns the training noise. Performs well on training but fails on new data.
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--text);">Cross-Validation (Q5):</strong> Evaluates the model on different subsets to reduce overfitting and improve generalization.
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--text);">Confusion Matrix (Q10):</strong> Shows exact performance breakdown (TP, FP, TN, FN) to calculate precision and recall.
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong style="color:var(--text);">p-value (Q19):</strong> The mathematical probability that results occurred purely by chance (used for hypothesis testing).
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q4, 6, 8, 13, 14, 15, 18, 22-24, 28, 29 · DIM REDUCTION</div>
+    <div class="q-title">PCA, LDA &amp; Feature Extraction</div>
+    <div class="q-body">
+      
+      <div style="padding: 10px; border-left: 3px solid var(--neon-orange); background: rgba(139,58,15,0.05); margin-bottom: 12px;">
+        <strong style="color:var(--neon-orange)">The Curse of Dimensionality (Q6):</strong> As dimensions increase, data becomes sparsely distributed. Distance measures (like Euclidean) become mathematically meaningless.
+      </div>
+
+      <p style="font-size: 0.85rem; margin-bottom: 12px;"><strong>Dimensionality Reduction (Q4)</strong> reduces the number of features while retaining important information. It is evaluated via visualization, reconstruction error, and model performance (Q22). Multiple methods can be combined, like PCA + t-SNE (Q8).</p>
+
+      <div class="trace-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 12px;">
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ PCA (Unsupervised)</div>
+          <ul style="font-size:0.8rem; margin-top:8px;">
+            <li><strong style="color:var(--text)">Goal:</strong> Maximizes variance (Q15).</li>
+            <li><strong style="color:var(--text)">Explained Variance Ratio (Q14):</strong> Shows how much variance each principal component captures.</li>
+            <li><strong style="color:#ff2d78">Limitation (Q28):</strong> Strictly linear. Cannot capture non-linear patterns.</li>
+            <li><strong style="color:var(--text)">Incremental PCA (Q18):</strong> Processes data in batches (good for huge datasets).</li>
+            <li><strong style="color:var(--text)">Randomized PCA (Q24):</strong> Faster approximation for large data.</li>
+          </ul>
+        </div>
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ LDA &amp; FACTOR ANALYSIS</div>
+          <ul style="font-size:0.8rem; margin-top:8px;">
+            <li><strong style="color:var(--neon-orange)">LDA (Supervised) (Q15, Q23):</strong> Projects data to maximize <em>class separability</em>. Uses class labels to improve classification boundaries.</li>
+            <li><strong style="color:var(--neon-orange)">Factor Analysis (Q13, Q29):</strong> Discovers hidden (latent) variables that are causing the observed correlations in your data.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q2, 20, 25 · ADVANCED GEOMETRY</div>
+    <div class="q-title">Manifold Learning &amp; Non-Linearity</div>
+    <div class="q-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div style="background:rgba(45,90,39,0.05); padding:12px; border:1px solid rgba(45,90,39,0.2);">
+          <strong style="color:var(--neon-green);">t-SNE (Q2)</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">Reduces high-dimensional data to 2D/3D while strictly preserving local structure, making hidden clusters visually obvious.</p>
+        </div>
+        <div style="background:rgba(45,90,39,0.05); padding:12px; border:1px solid rgba(45,90,39,0.2);">
+          <strong style="color:var(--neon-green);">Isomap (Q20)</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">Unlike PCA (which is linear), Isomap preserves geodesic distances, successfully capturing complex, curved non-linear structures.</p>
+        </div>
+        <div style="background:rgba(45,90,39,0.05); padding:12px; border:1px solid rgba(45,90,39,0.2);">
+          <strong style="color:var(--neon-green);">Geodesic Distance (Q25)</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">The absolute shortest path between points <em>along a curved surface/manifold</em> (not a simple straight-line cut).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card gold">
+    <div class="q-num">Q3, 11, 12, 17, 26, 27, 30 · UNSUPERVISED &amp; DISTANCE</div>
+    <div class="q-title">Clustering Algorithms &amp; KNN</div>
+    <div class="q-body">
+      
+      <div style="margin-bottom: 16px;">
+        <strong style="color:var(--neon-gold); font-size: 1.05rem;">K-Nearest Neighbors (KNN)</strong>
+        <ul style="font-size:0.85rem; margin-top:6px;">
+          <li><strong>K (Q17):</strong> The number of nearest neighbors used for prediction.</li>
+          <li><strong>Euclidean Distance (Q11):</strong> Measures straight-line similarity between data points.</li>
+          <li><strong>Very Large K (Q3):</strong> Leads to over-smoothing. The model ignores vital local patterns and heavily underfits.</li>
+        </ul>
+      </div>
+
+      <table class="norm-table" style="margin-bottom: 16px;">
+        <tr>
+          <th style="width:30%;">Algorithm</th>
+          <th>Key Characteristic</th>
+        </tr>
+        <tr>
+          <td><strong>K-Means (Q12, Q26)</strong></td>
+          <td>Partitions data into a predefined $K$ number of strictly spherical clusters.</td>
+        </tr>
+        <tr>
+          <td><strong>Hierarchical (Q12)</strong></td>
+          <td>Builds a tree structure (dendrogram). No need to predefine the value of $K$.</td>
+        </tr>
+        <tr>
+          <td><strong>Spectral (Q26)</strong></td>
+          <td>Uses advanced graph theory to handle highly complex, non-spherical shapes.</td>
+        </tr>
+        <tr>
+          <td><strong>EM Algorithm (Q27)</strong></td>
+          <td>Iterative process used in Gaussian Mixture Models. <strong>E-step:</strong> estimates probabilities. <strong>M-step:</strong> updates parameters.</td>
+        </tr>
+      </table>
+
+      <div style="padding: 10px; border-left: 3px solid var(--neon-gold); background: rgba(154,123,44,0.05);">
+        <strong style="color:var(--neon-gold)">Partitioning Types (Q30):</strong>
+        <ul style="font-size:0.85rem; margin-top:4px; margin-bottom:0;">
+          <li><strong>Hard Partitioning:</strong> Each point strictly belongs to exactly one cluster (e.g., K-Means).</li>
+          <li><strong>Soft Partitioning:</strong> Points have a calculated probability distribution across multiple clusters (e.g., GMMs).</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5b">
+  <div class="section-label">MODULE 5</div>
+  <h2 class="section-title">MOD 5 — Manifolds &amp; Advanced Clustering</h2>
+
+  <div class="q-card">
+    <div class="q-num">Q1 · MANIFOLD LEARNING</div>
+    <div class="q-title">Compare Isomap, LLE, and MDS</div>
+    <div class="q-body">
+      <table class="norm-table" style="margin-bottom: 16px;">
+        <tr>
+          <th>Method</th>
+          <th>Key Idea</th>
+          <th>What it Preserves</th>
+          <th>Strength / Limitation</th>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">Isomap</strong></td>
+          <td>Uses geodesic (manifold) distances.</td>
+          <td><strong>Global</strong> nonlinear structure</td>
+          <td><span style="color:var(--neon-green)">✔ Captures nonlinear shapes</span><br><span style="color:#ff2d78">✖ Sensitive to noise</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">LLE</strong> <br><span style="font-size:0.75rem; font-weight:normal; color:var(--text-dim)">(Locally Linear Embedding)</span></td>
+          <td>Preserves local neighborhood relationships.</td>
+          <td><strong>Local</strong> structure</td>
+          <td><span style="color:var(--neon-green)">✔ Good for manifold learning</span><br><span style="color:#ff2d78">✖ Poor global preservation</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">MDS</strong> <br><span style="font-size:0.75rem; font-weight:normal; color:var(--text-dim)">(Multidimensional Scaling)</span></td>
+          <td>Preserves strict pairwise distances.</td>
+          <td><strong>Global</strong> linear distances</td>
+          <td><span style="color:var(--neon-green)">✔ Simple and widely used</span><br><span style="color:#ff2d78">✖ Fails for nonlinear manifolds</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q2 · DENSITY-BASED CLUSTERING</div>
+    <div class="q-title">DBSCAN &amp; Differences from K-Means</div>
+    <div class="q-body">
+      <p><strong>DBSCAN</strong> (Density-Based Spatial Clustering of Applications with Noise) mathematically groups points based on density (regions with tightly packed points).</p>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+        <div style="background:rgba(139,58,15,0.05); padding:12px; border:1px solid rgba(139,58,15,0.2);">
+          <strong style="color:var(--neon-orange);">Core Parameters:</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li><strong>$\varepsilon$ (Epsilon):</strong> The neighborhood radius.</li>
+            <li><strong>MinPts:</strong> Minimum points required to form a cluster.</li>
+          </ul>
+        </div>
+        <div style="background:rgba(139,58,15,0.05); padding:12px; border:1px solid rgba(139,58,15,0.2);">
+          <strong style="color:var(--neon-orange);">Key Concepts:</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li><strong>Core points:</strong> Inside the dense region.</li>
+            <li><strong>Border points:</strong> On the edge of a dense region.</li>
+            <li><strong>Noise:</strong> Outliers far away from any cluster.</li>
+          </ul>
+        </div>
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.95rem; display:block; margin-top:16px;">Comparison: DBSCAN vs. K-Means</strong>
+      <table class="norm-table" style="margin-top: 8px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-orange)">DBSCAN</th>
+          <th>K-Means</th>
+        </tr>
+        <tr>
+          <td><strong>Cluster Shape</strong></td>
+          <td><strong style="color:var(--neon-green)">Arbitrary (Any shape)</strong></td>
+          <td>Strictly Spherical</td>
+        </tr>
+        <tr>
+          <td><strong>Outliers</strong></td>
+          <td>Explicitly handles noise</td>
+          <td>Highly sensitive to outliers</td>
+        </tr>
+        <tr>
+          <td><strong>Number of Clusters</strong></td>
+          <td>Not dynamically required</td>
+          <td>Must explicitly specify $K$</td>
+        </tr>
+        <tr>
+          <td><strong>Method</strong></td>
+          <td>Density-based</td>
+          <td>Distance-based (Centroids)</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q3 · PARTITIONAL CLUSTERING</div>
+    <div class="q-title">K-Means Clustering &amp; The Effect of 'K'</div>
+    <div class="q-body">
+      <div class="trace-box" style="margin-bottom: 12px; border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+        <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ THE ALGORITHM STEPS</div>
+        <ol style="margin-top: 8px; margin-bottom: 0; padding-left: 20px; font-size: 0.9rem;">
+          <li>Initialize $K$ random centroids.</li>
+          <li>Assign every data point to its nearest centroid.</li>
+          <li>Update the centroids (move them to the mean of their assigned points).</li>
+          <li>Repeat steps 2 & 3 until convergence (centroids stop moving).</li>
+        </ol>
+      </div>
+
+      <div style="padding: 10px; border-left: 3px solid var(--neon-green); background: rgba(45,90,39,0.05);">
+        <strong style="color:var(--neon-green)">The Mathematical Effect of $K$:</strong>
+        <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+          <li><strong>Small $K$:</strong> Underfitting (clusters are far too broad and merge distinct groups).</li>
+          <li><strong>Large $K$:</strong> Overfitting (forces too many tiny, fragmented clusters).</li>
+          <li><em>Crucial Note:</em> Choosing $K$ is vital. We mathematically find the optimal $K$ using the <strong>Elbow Method</strong>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-num">Q4 · MACHINE LEARNING PARADIGMS</div>
+    <div class="q-title">Supervised vs. Unsupervised Learning</div>
+    <div class="q-body">
+      <table class="norm-table">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-cyan)">Supervised Learning</th>
+          <th style="color:var(--neon-cyan)">Unsupervised Learning</th>
+        </tr>
+        <tr>
+          <td><strong>Data</strong></td>
+          <td>Labeled (Answers provided)</td>
+          <td>Unlabeled (No answers)</td>
+        </tr>
+        <tr>
+          <td><strong>Primary Goal</strong></td>
+          <td>Predict an output mapped from an input</td>
+          <td>Find hidden patterns or strict groupings</td>
+        </tr>
+        <tr>
+          <td><strong>Classic Example</strong></td>
+          <td>Spam detection, Predicting House Prices</td>
+          <td>Customer segmentation by buying behavior</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="q-card gold">
+    <div class="q-num">Q5 · HIERARCHICAL CLUSTERING</div>
+    <div class="q-title">Agglomerative, Divisive &amp; The Dendrogram</div>
+    <div class="q-body">
+      <p>Builds a strict tree of clusters rather than a flat partition.</p>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+        <div style="background:rgba(154,123,44,0.05); padding:12px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:var(--neon-gold);">1. Agglomerative</strong>
+          <p style="font-size:0.85rem; margin-top:4px; color:var(--text-dim);"><strong>Bottom-Up:</strong> Starts with every point as its own cluster, then iteratively <em>merges</em> the closest ones.</p>
+        </div>
+        <div style="background:rgba(154,123,44,0.05); padding:12px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:var(--neon-gold);">2. Divisive</strong>
+          <p style="font-size:0.85rem; margin-top:4px; color:var(--text-dim);"><strong>Top-Down:</strong> Starts with one massive cluster, then iteratively <em>splits</em> it into smaller ones.</p>
+        </div>
+      </div>
+
+      <div class="trace-box" style="border-color: rgba(154,123,44,0.4); background: rgba(154,123,44,0.04);">
+        <div class="trace-title" style="color: var(--neon-gold); border-bottom-color: rgba(154,123,44,0.4);">◈ THE DENDROGRAM</div>
+        <p style="font-size:0.85rem; margin-top:8px;">A tree-like diagram visually showing the cluster formation over time/distance.</p>
+        <ul style="font-size:0.85rem; margin-top:6px;">
+          <li><strong>Y-Axis (Height):</strong> Represents the mathematical distance between clusters when they merged.</li>
+          <li><strong>Horizontal Cut:</strong> Drawing a horizontal line across the dendrogram at a specific height determines the final number of clusters.</li>
+          <li><strong>Exam Use:</strong> It explicitly helps data scientists visually decide the optimal number of clusters without guessing.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5c">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — PCA, Curse of Dimensionality &amp; GMMs</h2>
+
+  <div class="q-card">
+    <div class="q-num">Q6, Q7 · DIMENSIONALITY REDUCTION</div>
+    <div class="q-title">Quantitative Evaluation &amp; PCA Pipelines</div>
+    <div class="q-body">
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">Evaluation Metrics (Q6)</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li><strong>Reconstruction Error:</strong> How well original data is recovered (Lower = Better).</li>
+            <li><strong>Explained Variance (PCA):</strong> Percentage of variance retained (Higher = Better).</li>
+            <li><strong>Stress (MDS):</strong> Measures structural distortion in distances.</li>
+            <li><strong>Trustworthiness:</strong> Checks preservation of neighborhood structure.</li>
+            <li><strong>Model Performance:</strong> If downstream ML accuracy remains high, the reduction was good.</li>
+          </ul>
+        </div>
+        
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">PCA + Random Forest (Q7)</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);"><strong>Idea:</strong> Reduce dimensionality before applying RF.</p>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li><strong style="color:var(--neon-green)">1. Apply PCA</strong> and select top principal components.</li>
+            <li><strong style="color:var(--neon-green)">2. Train RF</strong> on the reduced data.</li>
+            <li><strong>Benefits:</strong> Drastically reduces computation time, removes noise/redundancy, and improves generalization.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q8 · NON-LINEAR DIMENSIONALITY</div>
+    <div class="q-title">Kernel PCA (Theory &amp; Advantages)</div>
+    <div class="q-body">
+      <p><strong>Theoretical Basis:</strong> Extends standard PCA using the Kernel Trick. It mathematically maps data into a higher-dimensional feature space, then performs standard linear PCA in that new space.</p>
+      
+      <div class="trace-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin: 12px 0;">
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ THE KEY IDEA</div>
+          <p style="font-size:0.85rem; margin-top:8px;">Uses kernel functions like <strong>RBF (Gaussian)</strong> or <strong>Polynomial</strong>. Instead of computing coordinates directly, it efficiently computes a kernel (similarity) matrix.</p>
+        </div>
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ ADVANTAGES OVER PCA</div>
+          <ul style="font-size:0.8rem; margin-top:6px;">
+            <li>Captures non-linear relationships.</li>
+            <li>Works well for complex, curved manifolds.</li>
+            <li><strong>Example:</strong> Data shaped like concentric circles &rarr; Standard PCA fails entirely, Kernel PCA easily unravels it.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-num">Q10 · DATA GEOMETRY</div>
+    <div class="q-title">The Curse of Dimensionality</div>
+    <div class="q-body">
+      <div style="padding: 10px; border-left: 3px solid #ff2d78; background: rgba(255,45,120,0.05); margin-bottom: 16px;">
+        <strong style="color:#ff2d78">Definition:</strong> As dimensions increase, data points become exponentially sparse and isolated, making them mathematically harder to analyze.
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <strong style="color:var(--text); font-size: 0.95rem;">The Problems:</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Distance measures (like Euclidean) become essentially meaningless because all points appear equidistant.</li>
+            <li>Algorithms relying on distance (KNN, clustering) perform terribly.</li>
+            <li>Massive computation costs and a severe risk of overfitting.</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color:var(--text); font-size: 0.95rem;">The Solutions:</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Apply Dimensionality Reduction (PCA, t-SNE) or Feature Selection.</li>
+            <li>Increase the volume of training data exponentially.</li>
+            <li>Use models inherently robust to high dimensions (e.g., Random Forests).</li>
+            <li>Apply strong Regularization.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q9, Q11 · ADVANCED CLUSTERING</div>
+    <div class="q-title">Partitioning Types, EM Algorithm &amp; GMMs</div>
+    <div class="q-body">
+      
+      <table class="norm-table" style="margin-bottom: 16px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-green)">Hard Partitioning</th>
+          <th style="color:var(--neon-green)">Soft Partitioning</th>
+        </tr>
+        <tr>
+          <td><strong>Assignment</strong></td>
+          <td>One cluster only</td>
+          <td>Probabilistic membership</td>
+        </tr>
+        <tr>
+          <td><strong>Example Algorithm</strong></td>
+          <td>K-Means</td>
+          <td>Gaussian Mixture Models (GMM)</td>
+        </tr>
+        <tr>
+          <td><strong>Flexibility</strong></td>
+          <td>Less (rigid boundaries)</td>
+          <td>More (handles uncertainty well)</td>
+        </tr>
+      </table>
+
+      <div class="trace-box" style="margin-top: 16px; border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+        <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ GAUSSIAN MIXTURE MODELS (GMM) &amp; THE EM ALGORITHM</div>
+        <p style="font-size:0.85rem; margin-top:8px;"><strong>GMM Idea:</strong> Assumes all data is generated from a mixture of underlying Gaussian distributions. Each cluster has a Mean ($\mu$), Covariance ($\Sigma$), and Weight ($\pi$).</p>
+        
+        <p style="font-size:0.85rem; margin-top:8px;"><strong>Expectation-Maximization (EM):</strong> An iterative method used to estimate those parameters.</p>
+        <ul style="font-size:0.85rem; margin-top:6px;">
+          <li><strong>E-step (Expectation):</strong> Compute the strict probability that each individual point belongs to each cluster.</li>
+          <li><strong>M-step (Maximization):</strong> Update the parameters ($\mu$, $\Sigma$, weights) based on those probabilities.</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 12px; padding: 10px; border-left: 3px solid var(--neon-green); background: rgba(45,90,39,0.05); text-align:center;">
+        <strong style="color:var(--text); letter-spacing: 0.05em;">⭐ EXAM CONCLUSION ⭐</strong><br>
+        <span style="font-size: 0.9rem;">EM + GMM provides a highly probabilistic and mathematically flexible clustering approach compared to K-means, allowing for soft clustering and complex, elliptical cluster shapes.</span>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5d">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — Autoencoders, Spectral Clustering &amp; Silhouette Score</h2>
+
+<div class="q-card">
+    <div class="q-num">Q12, Q13 · ADVANCED DIMENSIONALITY REDUCTION</div>
+    <div class="q-title">Comparing Isomap, PCA, LDA &amp; t-SNE</div>
+    <div class="q-body">
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-top: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">Isomap (Non-Linear)</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li><strong style="color:var(--neon-green)">✔</strong> Captures non-linear structure using geodesic distances.</li>
+            <li><strong style="color:var(--neon-green)">✔</strong> Works perfectly for curved datasets (e.g., Swiss roll).</li>
+            <li><strong style="color:#ff2d78">✖</strong> Computationally expensive &amp; sensitive to noise/outliers.</li>
+          </ul>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-top: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">PCA (Linear Contrast)</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Only captures linear relationships.</li>
+            <li>Much faster and simpler.</li>
+            <li><strong>Conclusion:</strong> Use Isomap for complex non-linear manifolds, and PCA for standard/simple linear data.</li>
+          </ul>
+        </div>
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.95rem;">The Grand Comparison (Q13):</strong>
+      <table class="norm-table" style="margin-top: 8px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-cyan)">PCA</th>
+          <th style="color:var(--neon-cyan)">LDA</th>
+          <th style="color:var(--neon-cyan)">t-SNE</th>
+        </tr>
+        <tr>
+          <td><strong>Type</strong></td>
+          <td>Unsupervised</td>
+          <td>Supervised</td>
+          <td>Unsupervised</td>
+        </tr>
+        <tr>
+          <td><strong>Primary Goal</strong></td>
+          <td>Maximize variance</td>
+          <td>Maximize class separation</td>
+          <td>Preserve local similarity</td>
+        </tr>
+        <tr>
+          <td><strong>Best Used For</strong></td>
+          <td>General reduction</td>
+          <td>Classification prep</td>
+          <td>2D/3D Visualization</td>
+        </tr>
+        <tr>
+          <td><strong>Linearity</strong></td>
+          <td>Linear</td>
+          <td>Linear</td>
+          <td>Non-linear</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q14, Q15 · MODEL SELECTION & HYPOTHESIS</div>
+    <div class="q-title">Cross-Validation &amp; General-to-Specific Ordering</div>
+    <div class="q-body">
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:rgba(139,58,15,0.05); padding:12px; border:1px solid rgba(139,58,15,0.2);">
+          <strong style="color:var(--neon-orange);">Cross-Validation (Q14)</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">Splits data into multiple train/test sets (e.g., K-Fold).</p>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Uses all data for both training and testing across iterations.</li>
+            <li>Prevents overfitting (ensures model doesn't just memorize one lucky split).</li>
+            <li>Allows you to reliably compare and select the best model.</li>
+          </ul>
+        </div>
+        <div style="background:rgba(139,58,15,0.05); padding:12px; border:1px solid rgba(139,58,15,0.2);">
+          <strong style="color:var(--neon-orange);">General-to-Specific Ordering (Q15)</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">Hypothesis spaces are mathematically ordered.</p>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li><strong>General:</strong> "All points belong to exactly one cluster."</li>
+            <li><strong>Specific:</strong> "Every single point is its own cluster."</li>
+            <li><strong>Application:</strong> Algorithms often refine clusters step-by-step, starting broad and splitting into finer details.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q16 · NEURAL NETWORKS</div>
+    <div class="q-title">Autoencoders vs. PCA</div>
+    <div class="q-body">
+      <p><strong>Autoencoders</strong> are Neural Networks used specifically for unsupervised feature learning and dimensionality reduction.</p>
+      
+      <div class="trace-box" style="margin: 12px 0; border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+        <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ THE AUTOENCODER STRUCTURE</div>
+        <ul style="font-size:0.85rem; margin-top:8px;">
+          <li><strong>Encoder:</strong> Compresses the input data into a lower-dimensional latent-space representation.</li>
+          <li><strong>Decoder:</strong> Attempts to perfectly reconstruct the original data from that compressed representation.</li>
+        </ul>
+      </div>
+
+      <table class="norm-table" style="margin-top: 12px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-green)">Autoencoder</th>
+          <th>PCA</th>
+        </tr>
+        <tr>
+          <td><strong>Model Base</strong></td>
+          <td>Neural Network</td>
+          <td>Statistical Math</td>
+        </tr>
+        <tr>
+          <td><strong>Type</strong></td>
+          <td>Non-linear</td>
+          <td>Linear</td>
+        </tr>
+        <tr>
+          <td><strong>Flexibility & Power</strong></td>
+          <td><strong style="color:var(--neon-green)">Extremely High</strong> (Complex data)</td>
+          <td>Limited (Simple data)</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="q-card gold">
+    <div class="q-num">Q17, Q18 · EVALUATION & GRAPHS</div>
+    <div class="q-title">Silhouette Score &amp; Spectral Clustering</div>
+    <div class="q-body">
+      
+      <div style="margin-bottom: 24px;">
+        <strong style="color:var(--neon-gold); font-size: 1.05rem;">Silhouette Score (Q17)</strong>
+        <p style="font-size:0.85rem; margin-top:4px;">Measures how well a point fits within its own cluster compared to other clusters.</p>
+        
+        <div class="formula-box" style="margin: 12px 0; padding: 12px; font-size: 1.1rem;">
+          $$s = \frac{b - a}{\max(a, b)}$$
+        </div>
+        
+        <ul style="font-size:0.85rem; margin-top:8px;">
+          <li><strong>$a$:</strong> Average distance to points in the <em>same</em> cluster.</li>
+          <li><strong>$b$:</strong> Average distance to points in the <em>nearest other</em> cluster.</li>
+        </ul>
+        
+        <div style="background:rgba(154,123,44,0.05); padding:10px; border:1px solid rgba(154,123,44,0.2); margin-top: 8px;">
+          <strong style="font-size:0.85rem;">Interpretation (Range: -1 to 1):</strong><br>
+          <span style="font-size:0.85rem;"><strong style="color:var(--neon-green)">+1</strong> &rarr; Perfectly clustered (tightly grouped, far from others).<br>
+          <strong style="color:var(--neon-orange)">0</strong> &rarr; Overlapping clusters (point is on the boundary).<br>
+          <strong style="color:#ff2d78">-1</strong> &rarr; Wrongly clustered (point is closer to a different cluster).</span>
+        </div>
+      </div>
+
+      <div>
+        <strong style="color:var(--neon-gold); font-size: 1.05rem;">Spectral Clustering vs. K-Means (Q18)</strong>
+        <p style="font-size:0.85rem; margin-top:4px;">Spectral Clustering uses a <strong>similarity matrix (Graph Theory)</strong> to transform data before clustering.</p>
+        
+        <ul style="font-size:0.85rem; margin-top:8px; margin-bottom: 12px;">
+          <li><strong>Steps:</strong> Construct similarity matrix &rarr; Compute Laplacian &rarr; Find Eigenvectors &rarr; Apply standard clustering.</li>
+        </ul>
+        
+        <table class="norm-table">
+          <tr>
+            <th>Feature</th>
+            <th style="color:var(--neon-gold)">Spectral Clustering</th>
+            <th>K-Means</th>
+          </tr>
+          <tr>
+            <td><strong>Approach</strong></td>
+            <td>Graph-based (Connectivity)</td>
+            <td>Distance-based (Centroids)</td>
+          </tr>
+          <tr>
+            <td><strong>Data Shape</strong></td>
+            <td>Complex, Non-linear manifolds</td>
+            <td>Strictly Spherical</td>
+          </tr>
+          <tr>
+            <td><strong>Speed</strong></td>
+            <td><strong style="color:#ff2d78">Slower</strong></td>
+            <td><strong style="color:var(--neon-green)">Faster</strong></td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5e">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — The Curse of Dimensionality &amp; Bias-Variance</h2>
+
+  <div class="q-card orange">
+    <div class="q-num">Q19 · HIGH-DIMENSIONAL SPACE</div>
+    <div class="q-title">Challenges in High-Dimensional Clustering</div>
+    <div class="q-body">
+      
+      <div style="padding: 10px; border-left: 3px solid var(--neon-orange); background: rgba(139,58,15,0.05); margin-bottom: 16px;">
+        <strong style="color:var(--neon-orange)">The Curse of Dimensionality:</strong>
+        <p style="margin-top: 4px; font-size: 0.9rem;">As the number of features (dimensions) increases, data becomes exponentially sparse and mathematically difficult to analyze.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-orange); letter-spacing: 0.1em;">The 5 Major Challenges</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li><strong>Distance Measures Lose Meaning:</strong> In high dimensions, distances between points become very similar &rarr; hard to distinguish clusters.</li>
+            <li><strong>Data Sparsity:</strong> Points spread out so far that meaningful patterns vanish.</li>
+            <li><strong>Computational Cost:</strong> More dimensions = exponentially more calculations.</li>
+            <li><strong>Overfitting Risk:</strong> Models easily capture noise instead of real structural signals.</li>
+            <li><strong>Poor Clustering:</strong> Algorithms relying on distance (like K-Means and KNN) struggle immensely.</li>
+          </ul>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+          <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid #ff2d78;">
+            <strong style="color:#ff2d78; font-size:0.9rem;">Impact on Unsupervised Learning</strong>
+            <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+              <li>Harder to detect natural groupings.</li>
+              <li>Clusters may appear heavily unclear or misleading.</li>
+            </ul>
+          </div>
+          <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid var(--neon-green);">
+            <strong style="color:var(--neon-green); font-size:0.9rem;">The Solutions</strong>
+            <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+              <li>Dimensionality reduction (PCA, t-SNE).</li>
+              <li>Aggressive Feature Selection.</li>
+              <li>Use alternate distance measures better suited for high dimensions (like Cosine Similarity).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-num">Q20 · MODEL EVALUATION</div>
+    <div class="q-title">The Bias-Variance Trade-off</div>
+    <div class="q-body">
+      
+      <p style="margin-bottom: 12px; font-size: 0.95rem;"><strong>Concept:</strong> Balancing the two primary types of errors in a predictive model to achieve optimal generalization on unseen data.</p>
+      
+      <table class="norm-table" style="margin-bottom: 16px;">
+        <tr>
+          <th>Error Type</th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">Bias</strong></td>
+          <td>Error due to an overly simple model assumptions (e.g., assuming linear when it's curved).</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-cyan)">Variance</strong></td>
+          <td>Error due to extreme model sensitivity to fluctuations or noise in the training data.</td>
+        </tr>
+      </table>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:rgba(26,58,92,0.05); padding:12px; border:1px solid rgba(26,58,92,0.2);">
+          <strong style="color:var(--neon-cyan);">High Bias (Underfitting)</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Model is too simple.</li>
+            <li>Misses underlying patterns completely.</li>
+            <li><strong style="color:var(--text)">Result:</strong> Low variance, High training error, High test error.</li>
+          </ul>
+        </div>
+        <div style="background:rgba(26,58,92,0.05); padding:12px; border:1px solid rgba(26,58,92,0.2);">
+          <strong style="color:var(--neon-cyan);">High Variance (Overfitting)</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Model is too complex.</li>
+            <li>Fits the training noise perfectly.</li>
+            <li><strong style="color:var(--text)">Result:</strong> Low training error, High test error.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="padding: 10px; border-left: 3px solid var(--neon-cyan); background: rgba(26,58,92,0.05);">
+        <strong style="color:var(--text)">Goal &amp; Control Mechanisms:</strong>
+        <p style="font-size:0.85rem; margin-top:4px; margin-bottom:4px;">Find the exact balance where both bias and variance are minimized to ensure strong generalization. You can strictly control this trade-off using:</p>
+        <ul style="font-size:0.85rem; margin-top:0; margin-bottom:0;">
+          <li>Cross-validation techniques.</li>
+          <li>Regularization (L1/L2 penalties).</li>
+          <li>Proper model selection (adjusting complexity/depth).</li>
+          <li>Feeding the model more training data.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5f">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — Missing Data &amp; Hierarchical Clustering</h2>
+
+<div class="q-card">
+    <div class="q-num">CONCEPT 1 · PREPROCESSING</div>
+    <div class="q-title">Handling Incomplete / Missing Data</div>
+    <div class="q-body">
+      <p>In unsupervised learning, many algorithms (like K-Means) strictly assume complete data. When data is missing, it can severely distort clustering, making preprocessing critical.</p>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">1. Imputation (Most Common)</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">Replace missing values with statistical estimates:</p>
+          <ul style="font-size:0.85rem; margin-top:4px;">
+            <li><strong>Mean:</strong> Replace missing income with the average income.</li>
+            <li><strong>Median:</strong> Used if the data has extreme outliers.</li>
+          </ul>
+        </div>
+        
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">2. Distance-Based Handling</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">Used actively during clustering:</p>
+          <ul style="font-size:0.85rem; margin-top:4px;">
+            <li>Compute the distance metric (like Euclidean) using <em>only</em> the available features for that specific pair of points.</li>
+          </ul>
+        </div>
+
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">3. Model-Based Approaches</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Use probabilistic algorithms like <strong>EM (Expectation-Maximization)</strong> to mathematically estimate the missing values based on the distribution of the rest of the data.</li>
+          </ul>
+        </div>
+
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid #ff2d78;">
+          <strong style="color:#ff2d78; letter-spacing: 0.1em;">4. Ignoring Missing Values</strong>
+          <ul style="font-size:0.85rem; margin-top:6px;">
+            <li>Delete the entire row containing missing entries.</li>
+            <li><strong>Warning:</strong> Highly discouraged for small datasets as you lose vital information.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">CONCEPT 2 · ALGORITHM ARCHITECTURE</div>
+    <div class="q-title">Agglomerative vs. Divisive Clustering</div>
+    <div class="q-body">
+      <p>Hierarchical clustering builds a tree-like structure called a <strong>Dendrogram</strong>.</p>
+      
+      <div class="trace-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 16px;">
+        
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ AGGLOMERATIVE (BOTTOM-UP)</div>
+          <p style="font-size:0.85rem; margin-top:8px;">Start with each data point as its own cluster, then recursively merge the closest clusters.</p>
+          <ul style="font-size:0.85rem; margin-top:6px; font-family: var(--mono); color: var(--text-dim);">
+            <li>Step 1: {A} {B} {C} {D}</li>
+            <li>Step 2: {A,B} {C} {D}</li>
+            <li>Step 3: {A,B,C} {D}</li>
+            <li>Step 4: {A,B,C,D}</li>
+          </ul>
+          <div style="margin-top: 8px; font-size: 0.8rem;">
+            <span style="color:var(--neon-green)">✔ Simple & widely used</span><br>
+            <span style="color:var(--neon-green)">✔ Greedy approach (no backtracking)</span>
+          </div>
+        </div>
+
+        <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+          <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ DIVISIVE (TOP-DOWN)</div>
+          <p style="font-size:0.85rem; margin-top:8px;">Start with all data inside one massive cluster, then recursively split it.</p>
+          <ul style="font-size:0.85rem; margin-top:6px; font-family: var(--mono); color: var(--text-dim);">
+            <li>Step 1: {A,B,C,D}</li>
+            <li>Step 2: {A,B} {C,D}</li>
+            <li>Step 3: {A} {B} {C} {D}</li>
+          </ul>
+          <div style="margin-top: 24px; font-size: 0.8rem;">
+            <span style="color:var(--neon-green)">✔ More accurate (global view)</span><br>
+            <span style="color:#ff2d78">✖ Computationally expensive</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">CONCEPT 3 · DISTANCE METRICS</div>
+    <div class="q-title">Linkage Criteria in Hierarchical Clustering</div>
+    <div class="q-body">
+      <p>When deciding whether to merge two clusters, we need a mathematical rule to measure the exact distance between them.</p>
+
+      <ul style="display:grid; grid-template-columns:1fr; gap:12px; margin-top: 12px; padding: 0;">
+        <li style="background:rgba(45,90,39,0.05); padding:14px; border:1px solid rgba(45,90,39,0.2); list-style:none;">
+          <strong style="color:var(--neon-green); font-size: 1.05rem;">A) Single Linkage (Nearest Neighbor)</strong>
+          <div class="formula-box" style="margin: 8px 0; padding: 10px; font-size: 0.95rem; text-align: left;">
+            $d(A,B) = \min(\text{distance between points})$
+          </div>
+          <p style="font-size:0.85rem; margin-top:4px;">Distance between the <strong>closest</strong> points of two clusters.</p>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong style="color:var(--neon-green)">Shape:</strong> Long, chain-like clusters.</li>
+            <li><strong style="color:#ff2d78">Sensitivity:</strong> High noise sensitivity (Chaining effect).</li>
+          </ul>
+        </li>
+
+        <li style="background:rgba(45,90,39,0.05); padding:14px; border:1px solid rgba(45,90,39,0.2); list-style:none;">
+          <strong style="color:var(--neon-green); font-size: 1.05rem;">B) Complete Linkage (Farthest Neighbor)</strong>
+          <div class="formula-box" style="margin: 8px 0; padding: 10px; font-size: 0.95rem; text-align: left;">
+            $d(A,B) = \max(\text{distance})$
+          </div>
+          <p style="font-size:0.85rem; margin-top:4px;">Distance between the <strong>farthest</strong> points of two clusters.</p>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong style="color:var(--neon-green)">Shape:</strong> Tight, spherical, compact clusters.</li>
+            <li><strong style="color:#ff2d78">Sensitivity:</strong> Highly sensitive to outliers.</li>
+          </ul>
+        </li>
+
+        <li style="background:rgba(45,90,39,0.05); padding:14px; border:1px solid rgba(45,90,39,0.2); list-style:none;">
+          <strong style="color:var(--neon-green); font-size: 1.05rem;">C) Average Linkage</strong>
+          <div class="formula-box" style="margin: 8px 0; padding: 10px; font-size: 0.95rem; text-align: left;">
+            $d(A,B) = \frac{1}{n \times m} \sum \text{distances}$
+          </div>
+          <p style="font-size:0.85rem; margin-top:4px;">Average distance between <strong>all possible pairs</strong> of points across the two clusters.</p>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong style="color:var(--neon-green)">Shape:</strong> Balanced approach.</li>
+            <li><strong style="color:var(--neon-green)">Sensitivity:</strong> Moderate/Less sensitive to noise.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="q-card gold" style="box-shadow: 0 0 15px rgba(154,123,44,0.15);">
+    <div class="q-num">⭐ FINAL INSIGHT ⭐</div>
+    <div class="q-title">Exam Summary Checklist</div>
+    <div class="q-body">
+      <ul style="font-size: 1rem; line-height: 1.7; color: var(--text); list-style: square; padding-left: 20px;">
+        <li>Handling missing data via imputation or algorithm modification is mathematically crucial before clustering.</li>
+        <li><strong>Agglomerative</strong> is bottom-up (practical, widely used).</li>
+        <li><strong>Divisive</strong> is top-down (theoretically better global view, but computationally expensive).</li>
+        <li>The choice of <strong>Linkage</strong> (Single, Complete, Average) heavily dictates the final cluster shape and structural accuracy.</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5g">
+  <div class="section-label">MODULE 5 (CONCLUSION)</div>
+  <h2 class="section-title">MOD 5 — Spectral Clustering (Deep Dive)</h2>
+
+  <div class="q-card">
+    <div class="q-num">Q21 · GRAPH-BASED CLUSTERING</div>
+    <div class="q-title">The Core Idea &amp; Step-by-Step Working</div>
+    <div class="q-body">
+      <p>Spectral Clustering is a powerful graph-based algorithm designed to detect complex, <strong>non-convex cluster shapes</strong>—something traditional distance-based methods like K-means fundamentally struggle with.</p>
+      
+      <div style="padding: 10px; border-left: 3px solid var(--neon-cyan); background: rgba(26,58,92,0.05); margin-bottom: 16px;">
+        <strong style="color:var(--neon-cyan)">👉 The Core Idea:</strong>
+        <p style="margin-top: 4px; font-size: 0.9rem;">Instead of working directly in the original feature space, it treats data points as <strong>nodes of a graph</strong>, uses similarity as <strong>weighted edges</strong>, and relies on Eigenvalues/Eigenvectors to transform the data into a new space where clusters become easily separable.</p>
+      </div>
+
+      <div class="trace-box" style="border-color: rgba(26,58,92,0.4); background: rgba(26,58,92,0.04);">
+        <div class="trace-title" style="color: var(--neon-cyan); border-bottom-color: rgba(26,58,92,0.4);">◈ THE 6-STEP ALGORITHM</div>
+        
+        <ol style="margin-top: 8px; margin-bottom: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6;">
+          <li style="margin-bottom: 12px;"><strong>Construct Similarity (Affinity) Matrix ($W$):</strong> Create matrix $W$, where $W_{ij}$ is the similarity between points. Commonly uses Gaussian similarity:
+            <div class="formula-box" style="margin: 6px 0; padding: 8px;">$$W_{ij} = e^{-\frac{||x_i - x_j||^2}{2\sigma^2}}$$</div>
+          </li>
+          <li style="margin-bottom: 12px;"><strong>Compute Degree Matrix ($D$):</strong> A diagonal matrix containing the sum of weights for each node:
+            <div class="formula-box" style="margin: 6px 0; padding: 8px;">$$D_{ii} = \sum_{j} W_{ij}$$</div>
+          </li>
+          <li style="margin-bottom: 12px;"><strong>Compute Graph Laplacian ($L$):</strong> The core graph matrix.
+            <div class="formula-box" style="margin: 6px 0; padding: 8px;">$$L = D - W$$</div>
+          </li>
+          <li><strong>Compute Eigenvalues & Eigenvectors:</strong> Find the smallest $k$ eigenvalues and take their corresponding $k$ eigenvectors (these capture the structure of the graph).</li>
+          <li><strong>Form New Feature Space:</strong> Each data point is now represented strictly using these eigenvectors, transforming complex shapes into linearly separable clusters.</li>
+          <li><strong>Apply K-means:</strong> Run standard K-means on this newly transformed data.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q22 · MATHEMATICS & LIMITATIONS</div>
+    <div class="q-title">Why Eigenvalues? &amp; Computational Complexity</div>
+    <div class="q-body">
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-orange); letter-spacing: 0.1em;">Why do Eigenvalues help?</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>They directly capture the connectivity of the graph.</li>
+            <li>They mathematically identify natural partitions.</li>
+            <li>They minimize connections between distinct clusters.</li>
+            <li><strong style="color:var(--text)">Insight:</strong> This solves the "Graph Cut" problem—dividing the graph with minimal edge loss.</li>
+          </ul>
+        </div>
+        
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid #ff2d78;">
+          <strong style="color:#ff2d78; letter-spacing: 0.1em;">Computational Complexity</strong>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-dim);">Spectral Clustering is highly expensive:</p>
+          <ul style="font-size:0.85rem; margin-top:4px;">
+            <li>Similarity Matrix: $O(n^2)$</li>
+            <li>Eigen Decomposition: $\mathbf{O(n^3)}$ (Dominant Term)</li>
+            <li>K-Means step: $O(nkt)$</li>
+          </ul>
+          <div style="margin-top: 8px; font-weight: bold; color: #ff2d78; font-size: 0.85rem;">
+            👉 Final Complexity: $O(n^3)$<br>
+            <span style="font-weight:normal;">Not suitable for very large datasets.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q23 · PERFORMANCE COMPARISON</div>
+    <div class="q-title">Spectral Clustering vs. K-Means</div>
+    <div class="q-body">
+      
+      <table class="norm-table" style="margin-bottom: 16px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-green)">Spectral Clustering</th>
+          <th>K-Means</th>
+        </tr>
+        <tr>
+          <td><strong>Cluster Shape</strong></td>
+          <td><strong style="color:var(--neon-green)">Any (Non-Convex / Arbitrary)</strong></td>
+          <td>Strictly Convex (Spherical)</td>
+        </tr>
+        <tr>
+          <td><strong>Method</strong></td>
+          <td>Graph-based (Connectivity)</td>
+          <td>Distance-based (Centroids)</td>
+        </tr>
+        <tr>
+          <td><strong>Complex Shapes</strong></td>
+          <td><strong style="color:var(--neon-green)">✔ Handles Rings, Spirals</strong></td>
+          <td><strong style="color:#ff2d78">✖ Fails completely</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Initialization</strong></td>
+          <td>Low sensitivity</td>
+          <td>High sensitivity</td>
+        </tr>
+      </table>
+
+    </div>
+  </div>
+
+  <div class="q-card gold" style="box-shadow: 0 0 15px rgba(154,123,44,0.15);">
+    <div class="q-num">⭐ FINAL EXAM INSIGHT ⭐</div>
+    <div class="q-title">The "When to Use What" Rule</div>
+    <div class="q-body">
+      <ul style="font-size: 1rem; line-height: 1.7; color: var(--text); list-style: none; padding-left: 0;">
+        <li style="margin-bottom: 8px; padding: 10px; border-left: 3px solid var(--text); background: rgba(255,255,255,0.05);">
+          <strong>Use K-Means &rarr;</strong> When clusters are simple/spherical and the dataset is massive.
+        </li>
+        <li style="padding: 10px; border-left: 3px solid var(--neon-gold); background: rgba(154,123,44,0.05);">
+          <strong>Use Spectral Clustering &rarr;</strong> When data has highly complex, non-convex geometry (like intertwined spirals or concentric rings) and dataset size allows for heavy $O(n^3)$ math.
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5h">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — Principal Component Analysis (PCA)</h2>
+
+  <div class="q-card">
+      <div class="q-num">CONCEPT 1 · DIMENSIONALITY REDUCTION</div>
+    <div class="q-title">The Core Idea &amp; 5-Step Process</div>
+    <div class="q-body">
+      <p>PCA transforms high-dimensional data into a lower-dimensional space while strictly preserving as much variance (information) as possible.</p>
+      
+      <div style="padding: 10px; border-left: 3px solid var(--neon-cyan); background: rgba(26,58,92,0.05); margin-bottom: 16px;">
+        <strong style="color:var(--neon-cyan)">The Core Idea:</strong> Data often has redundant/correlated features. PCA finds new axes (principal components) that are completely uncorrelated (orthogonal) and capture the maximum mathematical variance.
+      </div>
+
+      <div class="trace-box" style="border-color: rgba(26,58,92,0.4); background: rgba(26,58,92,0.04);">
+        <div class="trace-title" style="color: var(--neon-cyan); border-bottom-color: rgba(26,58,92,0.4);">◈ HOW PCA REDUCES DIMENSIONALITY (THE 5 STEPS)</div>
+        <ol style="margin-top: 8px; margin-bottom: 0; padding-left: 20px; font-size: 0.9rem;">
+          <li><strong>Standardize Data:</strong> Convert all features to the same scale (mean = 0, variance = 1).</li>
+          <li><strong>Compute Covariance Matrix:</strong> Shows mathematically how features vary together.</li>
+          <li><strong>Compute Eigenvalues &amp; Eigenvectors:</strong> Extracts the core components of the matrix.</li>
+          <li><strong>Sort Components:</strong> Arrange the eigenvalues in descending order and select the top $k$ components.</li>
+          <li><strong>Project Data:</strong> The original data is mapped onto the selected eigenvectors, reducing dimensions from $n \rightarrow k$.</li>
+        </ol>
+      </div>
+      <div style="text-align: center; font-style: italic; color: var(--text-dim); margin-top: 10px; font-size: 0.85rem;">
+        👉 Result: A lower-dimensional representation with minimal information loss.
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">CONCEPT 2 · LINEAR ALGEBRA</div>
+    <div class="q-title">The Role of Eigenvalues &amp; Eigenvectors</div>
+    <div class="q-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-top: 3px solid var(--neon-orange);">
+          <strong style="color:var(--neon-orange); letter-spacing: 0.1em;">Eigenvectors ($v$)</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Define the new axes (the principal components).</li>
+            <li>Show the exact <strong>direction</strong> of maximum variance.</li>
+          </ul>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-top: 3px solid var(--neon-orange);">
+          <strong style="color:var(--neon-orange); letter-spacing: 0.1em;">Eigenvalues ($\lambda$)</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Indicate the <strong>importance</strong> (magnitude) of each component.</li>
+            <li>Larger eigenvalue &rarr; More information captured.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top: 12px; font-size: 0.9rem; text-align: center;">
+        👉 The First Principal Component (PC1) = Direction with the <strong>highest variance</strong>.
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">CONCEPT 3 · VARIANCE PRESERVATION</div>
+    <div class="q-title">Explained Variance Ratio (EVR)</div>
+    <div class="q-body">
+      <p>The Explained Variance Ratio tells you the exact percentage of total variance mathematically captured by each individual component.</p>
+      
+      <div class="formula-box" style="margin: 12px 0; padding: 12px; font-size: 1rem;">
+        $$EVR_i = \frac{\lambda_i}{\sum_{j} \lambda_j}$$
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px; margin-top: 16px;">
+        <div>
+          <strong style="color:var(--neon-green)">Example Calculation:</strong>
+          <table class="norm-table" style="margin-top: 8px;">
+            <tr>
+              <th>Component</th>
+              <th>Eigenvalue</th>
+              <th>EVR</th>
+            </tr>
+            <tr>
+              <td>PC1</td>
+              <td>5</td>
+              <td>50%</td>
+            </tr>
+            <tr>
+              <td>PC2</td>
+              <td>3</td>
+              <td>30%</td>
+            </tr>
+            <tr>
+              <td>PC3</td>
+              <td>2</td>
+              <td>20%</td>
+            </tr>
+          </table>
+          <p style="font-size: 0.85rem; margin-top: 8px; font-style: italic;">👉 Selecting PC1 + PC2 retains exactly <strong>80%</strong> of the information.</p>
+        </div>
+        
+        <div>
+          <strong style="color:var(--neon-green)">Selecting Components:</strong>
+          <p style="font-size: 0.85rem; margin-top: 6px;">How many components should you keep?</p>
+          <ul style="font-size: 0.85rem; margin-top: 4px;">
+            <li>Choose a number of components such that the <strong>Cumulative EVR $\ge$ 90% (or 95%)</strong>.</li>
+            <li>This systematically reduces dimensions while keeping the most useful information for the ML model.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card gold" style="box-shadow: 0 0 15px rgba(154,123,44,0.15);">
+    <div class="q-num">⭐ FINAL INSIGHT ⭐</div>
+    <div class="q-title">Advantages, Limitations &amp; Conclusion</div>
+    <div class="q-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div style="background:rgba(154,123,44,0.05); padding:10px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:var(--neon-gold)">Advantages</strong>
+          <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+            <li>Removes redundancy (correlated features).</li>
+            <li>Drastically reduces computation cost.</li>
+            <li>Helps in 2D/3D visualization of complex data.</li>
+          </ul>
+        </div>
+        <div style="background:rgba(154,123,44,0.05); padding:10px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:var(--neon-gold)">Limitations</strong>
+          <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+            <li>Loses human interpretability (axes are no longer "Age" or "Income", just math).</li>
+            <li>Assumes strict linear relationships.</li>
+            <li>Highly sensitive to scaling.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; font-size: 0.95rem; line-height: 1.7; color: var(--text);">
+        <strong>The Exam Summary:</strong> PCA = Variance Maximization + Dimensionality Reduction. Eigenvectors provide the <em>directions</em>, Eigenvalues provide the <em>importance</em>, and the EVR mathematically dictates exactly <em>how many components</em> you must keep to retain the dataset's integrity.
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5i">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — High Dimensions &amp; Neural Autoencoders</h2>
+
+  <div class="q-card">
+    <div class="q-num">CONCEPT 7 · HIGH-DIMENSIONAL CLUSTERING</div>
+    <div class="q-title">The Curse of Dimensionality: Effects &amp; Solutions</div>
+    <div class="q-body">
+      <div style="padding: 10px; border-left: 3px solid var(--neon-cyan); background: rgba(26,58,92,0.05); margin-bottom: 16px;">
+        <strong style="color:var(--neon-cyan)">The Intuition:</strong> In high dimensions, the ratio between the nearest and farthest neighbor distances approaches $1.0$. All points start to look equally far apart, making clustering mathematically impossible.
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:12px;">
+          <strong style="color:#ff2d78; letter-spacing: 0.1em;">Effect on K-Means</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Relies strictly on Euclidean distance.</li>
+            <li>Distances between points become almost equal.</li>
+            <li><strong style="color:var(--text)">Result:</strong> Algorithm cannot assign clusters correctly; extremely poor quality.</li>
+          </ul>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--border);padding:12px;">
+          <strong style="color:#ff2d78; letter-spacing: 0.1em;">Effect on DBSCAN</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Relies on density (neighborhood radius $\varepsilon$).</li>
+            <li>Density estimation becomes completely unreliable.</li>
+            <li><strong style="color:var(--text)">Result:</strong> Either all points become noise, or everything merges into one big cluster.</li>
+          </ul>
+        </div>
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.95rem;">Strategies to Overcome It:</strong>
+      <ul style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top: 8px; padding: 0;">
+        <li style="background:rgba(26,58,92,0.05); padding:10px; border:1px solid rgba(26,58,92,0.2); list-style:none;">
+          <strong style="color:var(--neon-cyan);">1. Dimensionality Reduction</strong><br>
+          <span style="font-size:0.8rem;">Use PCA (variance), t-SNE (local structure), or Autoencoders (compressed representation).</span>
+        </li>
+        <li style="background:rgba(26,58,92,0.05); padding:10px; border:1px solid rgba(26,58,92,0.2); list-style:none;">
+          <strong style="color:var(--neon-cyan);">2. Feature Selection</strong><br>
+          <span style="font-size:0.8rem;">Aggressively remove irrelevant or redundant features. Keep only important variables.</span>
+        </li>
+        <li style="background:rgba(26,58,92,0.05); padding:10px; border:1px solid rgba(26,58,92,0.2); list-style:none;">
+          <strong style="color:var(--neon-cyan);">3. Alternative Distance Measures</strong><br>
+          <span style="font-size:0.8rem;">Use Cosine Similarity or Manhattan distance, which are more robust in high dimensions.</span>
+        </li>
+        <li style="background:rgba(26,58,92,0.05); padding:10px; border:1px solid rgba(26,58,92,0.2); list-style:none;">
+          <strong style="color:var(--neon-cyan);">4. Subspace Clustering</strong><br>
+          <span style="font-size:0.8rem;">Mathematically find clusters within isolated subsets of features.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">CONCEPT 8 · NEURAL NETWORKS</div>
+    <div class="q-title">Autoencoders in Unsupervised Learning</div>
+    <div class="q-body">
+      <p>An Autoencoder is a neural network used to learn highly efficient, non-linear representations of data without human labels.</p>
+      
+      <div class="trace-box" style="border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04); margin: 16px 0;">
+        <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ THE ARCHITECTURE &amp; WORKFLOW</div>
+        <div style="text-align: center; font-weight: bold; font-family: var(--mono); color: var(--neon-orange); margin-bottom: 12px; font-size: 0.95rem;">
+          Input &rarr; Encoder &rarr; Latent Space (Bottleneck) &rarr; Decoder &rarr; Output
+        </div>
+        <ol style="font-size:0.85rem; margin-top:8px; padding-left:20px;">
+          <li><strong>Encoder:</strong> Input data is passed through layers and compressed into a low-dimensional representation.</li>
+          <li><strong>Latent Space:</strong> A "bottleneck" layer that strictly forces the model to retain only the most essential features.</li>
+          <li><strong>Decoder:</strong> Takes the compressed data and attempts to perfectly reconstruct the original input.</li>
+          <li><strong>Goal:</strong> The model trains by continuously minimizing the <em>reconstruction error</em>.</li>
+        </ol>
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.95rem; display:block; margin-top:20px;">Autoencoders vs. PCA</strong>
+      <table class="norm-table" style="margin-top: 8px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-orange)">Autoencoder</th>
+          <th>PCA</th>
+        </tr>
+        <tr>
+          <td><strong>Type</strong></td>
+          <td><strong style="color:var(--neon-green)">Nonlinear</strong></td>
+          <td>Linear</td>
+        </tr>
+        <tr>
+          <td><strong>Method</strong></td>
+          <td>Neural Network</td>
+          <td>Mathematical / Statistical</td>
+        </tr>
+        <tr>
+          <td><strong>Captures Nonlinearity</strong></td>
+          <td><strong style="color:var(--neon-green)">✅ Yes</strong></td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td><strong>Complexity & Training</strong></td>
+          <td>High (Requires heavy training)</td>
+          <td>Low (Fast computation)</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="q-card gold" style="box-shadow: 0 0 15px rgba(154,123,44,0.15);">
+    <div class="q-num">⭐ FINAL TAKEAWAY ⭐</div>
+    <div class="q-title">When to Use What</div>
+    <div class="q-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:rgba(154,123,44,0.05); padding:10px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:var(--neon-gold)">Curse of Dimensionality</strong>
+          <p style="font-size:0.85rem; margin-top:6px; margin-bottom:0; color:var(--text-dim);">Makes clustering entirely unreliable. You must solve it using dimensionality reduction + feature selection.</p>
+        </div>
+        <div style="background:rgba(154,123,44,0.05); padding:10px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:var(--neon-gold)">Autoencoders Outperform PCA When:</strong>
+          <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+            <li>Data is highly non-linear.</li>
+            <li>High complexity (Images, Audio, Speech).</li>
+            <li>You have massive, large-scale datasets.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5j">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — DBSCAN &amp; Generative Models</h2>
+
+  <div class="q-card">
+    <div class="q-num">CONCEPT 9 · DENSITY-BASED CLUSTERING</div>
+    <div class="q-title">DBSCAN: Parameters &amp; Point Types</div>
+    <div class="q-body">
+      <p>DBSCAN groups together points that are closely packed and explicitly marks isolated points as noise. Unlike K-means, it absolutely <strong>does not</strong> require the number of clusters ($K$) in advance.</p>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">The Key Parameters</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li><strong>$\varepsilon$ (Epsilon):</strong> The neighborhood radius.</li>
+            <li><strong>MinPts:</strong> The minimum number of points required within $\varepsilon$ to form a dense region.</li>
+          </ul>
+        </div>
+        
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-cyan); letter-spacing: 0.1em;">The 3 Point Types</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li><strong style="color:var(--neon-green)">Core Point:</strong> Has at least MinPts within its $\varepsilon$ radius. (Expands cluster)</li>
+            <li><strong style="color:var(--neon-orange)">Border Point:</strong> Has fewer than MinPts, but lies within $\varepsilon$ of a Core point. (Attaches to cluster)</li>
+            <li><strong style="color:#ff2d78">Noise Point:</strong> Not reachable from any core point. (Ignored/Outlier)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="trace-box" style="border-color: rgba(26,58,92,0.4); background: rgba(26,58,92,0.04);">
+        <div class="trace-title" style="color: var(--neon-cyan); border-bottom-color: rgba(26,58,92,0.4);">◈ DBSCAN WORKFLOW</div>
+        <ol style="font-size:0.85rem; margin-top:8px; padding-left:20px;">
+          <li>Pick an unvisited point and check its $\varepsilon$-neighborhood.</li>
+          <li><strong>If Core:</strong> Form a cluster. Expand it by recursively adding neighbors.</li>
+          <li><strong>If Not:</strong> Mark as noise (Note: It may later be reclassified as a border point if a nearby core point expands to it).</li>
+          <li>Repeat until all points are processed.</li>
+        </ol>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">CONCEPT 10.1 · GENERATIVE AI</div>
+    <div class="q-title">Generative Models &amp; VAEs</div>
+    <div class="q-body">
+      <div style="padding: 10px; border-left: 3px solid var(--neon-orange); background: rgba(139,58,15,0.05); margin-bottom: 16px;">
+        <strong style="color:var(--neon-orange)">Generative Models:</strong> Learn the underlying data distribution so they can <strong>generate new, highly similar data</strong>. Instead of just classifying existing data, they create it!
+      </div>
+
+      <strong style="color:var(--text); font-size: 1.05rem;">Variational Autoencoders (VAEs)</strong>
+      <p style="font-size:0.85rem; margin-top:4px; color:var(--text-dim);">A probabilistic version of standard autoencoders.</p>
+      
+      <ul style="font-size:0.85rem; margin-top:8px;">
+        <li><strong>Encoder:</strong> Maps the input to a <em>probability distribution</em> (rather than a fixed point).</li>
+        <li><strong>Latent Space:</strong> Learns a smooth, structured, continuous latent representation.</li>
+        <li><strong>Decoder:</strong> Samples from that latent space to reconstruct or generate new data.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">CONCEPT 10.2 · ADVERSARIAL NETWORKS</div>
+    <div class="q-title">Generative Adversarial Networks (GANs)</div>
+    <div class="q-body">
+      <p>Two distinct neural networks mathematically compete against each other in a zero-sum game.</p>
+
+      <div class="trace-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin: 12px 0;">
+        <div class="trace-box" style="border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+          <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ THE GENERATOR</div>
+          <p style="font-size:0.85rem; margin-top:8px;">Creates "fake" data from random noise. Its sole goal is to fool the discriminator into thinking its data is real.</p>
+        </div>
+        <div class="trace-box" style="border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+          <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ THE DISCRIMINATOR</div>
+          <p style="font-size:0.85rem; margin-top:8px;">Evaluates inputs and acts as a detective. Its sole goal is to accurately classify data as "Real" (from the dataset) or "Fake" (from the Generator).</p>
+        </div>
+      </div>
+
+      <div style="background:rgba(45,90,39,0.05); padding:10px; border:1px solid rgba(45,90,39,0.2); text-align:center;">
+        <strong style="font-size:0.9rem; color:var(--text);">🔥 The GAN Concept: Adversarial Training 🔥</strong><br>
+        <span style="font-size:0.85rem;">Both networks continuously improve through competition. Eventually, the generator creates highly realistic data!</span>
+      </div>
+
+      <table class="norm-table" style="margin-top: 16px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-green)">VAE</th>
+          <th style="color:var(--neon-green)">GAN</th>
+        </tr>
+        <tr>
+          <td><strong>Output Quality</strong></td>
+          <td>Moderate (Can be blurry)</td>
+          <td><strong style="color:var(--neon-green)">Very High (Sharp)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Training Stability</strong></td>
+          <td><strong style="color:var(--neon-green)">Stable</strong></td>
+          <td>Difficult (Mode Collapse)</td>
+        </tr>
+        <tr>
+          <td><strong>Approach</strong></td>
+          <td>Probabilistic</td>
+          <td>Adversarial</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="q-card gold" style="box-shadow: 0 0 15px rgba(154,123,44,0.15);">
+    <div class="q-num">⭐ FINAL INSIGHT ⭐</div>
+    <div class="q-title">Applications &amp; Exam Summary</div>
+    <div class="q-body">
+      <ul style="font-size: 0.9rem; line-height: 1.6; color: var(--text); padding-left: 20px;">
+        <li><strong>Applications:</strong> Image synthesis (Deepfakes, Faces), Style Transfer, Anomaly Detection (when reconstruction fails on normal data), and Data Augmentation.</li>
+        <li><strong>Limitations:</strong> GANs are notoriously hard to train, suffer from mode collapse, require massive datasets, and are computationally expensive.</li>
+        <li style="margin-top: 8px;"><strong>Exam Takeaway:</strong> DBSCAN strictly finds clusters using mathematical density (handling outliers perfectly), whereas Generative Models (VAEs & GANs) learn the actual data distribution to generate entirely new, realistic samples.</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5l">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — t-SNE Mathematics &amp; Hypothesis Spaces</h2>
+
+  <div class="q-card">
+      <div class="q-num">CONCEPT 11.1 · THE CORE MAGIC</div>
+    <div class="q-title">t-SNE: Converting Distances into Probabilities</div>
+    <div class="q-body">
+      <p>Unlike PCA which preserves exact distances, t-SNE preserves <strong>neighborhood relationships</strong>. It does this by converting physical distances into mathematical probabilities.</p>
+      
+      <div class="trace-box" style="margin: 16px 0; border-color: rgba(26,58,92,0.4); background: rgba(26,58,92,0.04);">
+        <div class="trace-title" style="color: var(--neon-cyan); border-bottom-color: rgba(26,58,92,0.4);">◈ STEP 1: HIGH-DIMENSIONAL WORLD (GAUSSIAN)</div>
+        <p style="font-size:0.85rem; margin-top:8px;">For each pair of points $x_i, x_j$, compute the probability that they are neighbors using a Gaussian distribution:</p>
+        <div class="formula-box" style="margin: 8px 0; padding: 12px; font-size: 1rem;">
+          $$p_{j|i} = \frac{\exp(-||x_i - x_j||^2 / 2\sigma_i^2)}{\sum_{k \neq i} \exp(-||x_i - x_k||^2 / 2\sigma_i^2)}$$
+        </div>
+        <p style="font-size:0.85rem; margin-top:8px;"><strong>Interpretation:</strong> If $x_j$ is close to $x_i$, probability is high. If far, probability is tiny. This is then symmetrized into $p_{ij}$.</p>
+      </div>
+
+      <div class="trace-box" style="margin: 16px 0; border-color: rgba(26,58,92,0.4); background: rgba(26,58,92,0.04);">
+        <div class="trace-title" style="color: var(--neon-cyan); border-bottom-color: rgba(26,58,92,0.4);">◈ STEP 2: LOW-DIMENSIONAL WORLD (STUDENT-t)</div>
+        <p style="font-size:0.85rem; margin-top:8px;">In the reduced space (e.g., 2D), compute similarities using a Student-t distribution:</p>
+        <div class="formula-box" style="margin: 8px 0; padding: 12px; font-size: 1rem;">
+          $$q_{ij} = \frac{(1 + ||y_i - y_j||^2)^{-1}}{\sum_{k \neq l} (1 + ||y_k - y_l||^2)^{-1}}$$
+        </div>
+        <div style="background:rgba(26,58,92,0.1); padding:8px; border-left:2px solid var(--neon-cyan); margin-top:8px;">
+          <strong style="font-size:0.85rem;">Why Student-t?</strong> It has <em>heavy tails</em>, which mathematically prevents the "crowding problem" (everything collapsing together).
+        </div>
+      </div>
+
+      <div class="trace-box" style="margin: 16px 0; border-color: rgba(26,58,92,0.4); background: rgba(26,58,92,0.04);">
+        <div class="trace-title" style="color: var(--neon-cyan); border-bottom-color: rgba(26,58,92,0.4);">◈ STEP 3: MATCHING WORLDS (KL DIVERGENCE)</div>
+        <p style="font-size:0.85rem; margin-top:8px;">t-SNE uses Gradient Descent to minimize the Kullback-Leibler (KL) Divergence, forcing the low-dim $q_{ij}$ to mimic the high-dim $p_{ij}$:</p>
+        <div class="formula-box" style="margin: 8px 0; padding: 12px; font-size: 1rem;">
+          $$KL(P||Q) = \sum p_{ij} \log \frac{p_{ij}}{q_{ij}}$$
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">CONCEPT 11.2 · EVALUATION & COMPARISON</div>
+    <div class="q-title">Advantages, Limitations &amp; vs. PCA</div>
+    <div class="q-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:var(--neon-green); letter-spacing: 0.1em;">Advantages</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Excellent visualization (reveals clusters clearly).</li>
+            <li>Captures complex nonlinear structure.</li>
+            <li>Perfect local structure preservation.</li>
+          </ul>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--border);padding:14px;">
+          <strong style="color:#ff2d78; letter-spacing: 0.1em;">Limitations</strong>
+          <ul style="font-size:0.85rem; margin-top:8px;">
+            <li>Poor global structure (distances between distant clusters are misleading).</li>
+            <li>Slow and computationally expensive.</li>
+            <li>Non-deterministic (different runs = different layouts).</li>
+            <li>Only for visualization (Not for downstream ML tasks).</li>
+          </ul>
+        </div>
+      </div>
+
+      <table class="norm-table" style="margin-top: 8px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-orange)">t-SNE</th>
+          <th style="color:var(--neon-orange)">PCA</th>
+        </tr>
+        <tr>
+          <td><strong>Type</strong></td>
+          <td>Nonlinear</td>
+          <td>Linear</td>
+        </tr>
+        <tr>
+          <td><strong>Primary Goal</strong></td>
+          <td>Visualization (Neighborhoods)</td>
+          <td>Variance preservation</td>
+        </tr>
+        <tr>
+          <td><strong>Speed</strong></td>
+          <td><strong style="color:#ff2d78">Slow</strong></td>
+          <td><strong style="color:var(--neon-green)">Fast</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Interpretability</strong></td>
+          <td>Low</td>
+          <td>High</td>
+        </tr>
+      </table>
+      <div style="text-align: center; font-style: italic; color: var(--text-dim); margin-top: 10px; font-size: 0.85rem;">
+        👉 Quick metaphor: PCA = projector lens (faithful but flat). t-SNE = artist sketch (stylized but insightful).
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">CONCEPT 12 · HYPOTHESIS EXPLORATION</div>
+    <div class="q-title">General-to-Specific Ordering</div>
+    <div class="q-body">
+      <p>This describes how algorithms mathematically explore hypotheses, acting like a "zoom" function on your dataset.</p>
+      
+      <ul style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top: 12px; padding: 0;">
+        <li style="background:rgba(45,90,39,0.05); padding:14px; border:1px solid rgba(45,90,39,0.2); list-style:none;">
+          <strong style="color:var(--neon-green); font-size: 1.05rem;">Agglomerative Clustering</strong>
+          <p style="font-size:0.85rem; margin-top:4px;"><strong>Start:</strong> Each point is its own cluster (<strong style="color:var(--text)">Very Specific</strong>).</p>
+          <p style="font-size:0.85rem; margin-top:4px;">Merge step-by-step &rarr; becomes <strong style="color:var(--text)">General</strong>.</p>
+        </li>
+        <li style="background:rgba(45,90,39,0.05); padding:14px; border:1px solid rgba(45,90,39,0.2); list-style:none;">
+          <strong style="color:var(--neon-green); font-size: 1.05rem;">Divisive Clustering</strong>
+          <p style="font-size:0.85rem; margin-top:4px;"><strong>Start:</strong> All data is one giant blob (<strong style="color:var(--text)">Very General</strong>).</p>
+          <p style="font-size:0.85rem; margin-top:4px;">Split into smaller groups &rarr; becomes <strong style="color:var(--text)">Specific</strong>.</p>
+        </li>
+      </ul>
+
+      <div style="margin-top: 16px; padding: 10px; border-left: 3px solid var(--neon-green); background: rgba(45,90,39,0.05);">
+        <strong style="color:var(--text)">Impact on Hypothesis Space:</strong>
+        <ul style="font-size:0.85rem; margin-top:6px; margin-bottom:0;">
+          <li><strong>Systematic:</strong> Explores all levels of abstraction instead of guessing randomly.</li>
+          <li><strong>Multi-resolution:</strong> Allows analysis at coarse levels (few clusters) and fine levels (many clusters).</li>
+          <li><strong>No Predefined $K$:</strong> Unlike K-means, you don't fix the number of clusters beforehand.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<section id="mod5m">
+  <div class="section-label">MODULE 5 (CONT.)</div>
+  <h2 class="section-title">MOD 5 — Clustering Evaluation, Distances &amp; K-PCA Math</h2>
+
+  <div class="q-card">
+    <div class="q-num">CONCEPT 13 · EVALUATING CLUSTERING</div>
+    <div class="q-title">Silhouette, DBI, and ARI Metrics</div>
+    <div class="q-body">
+      <p>Clustering is unsupervised, so judging it is like critiquing abstract art without knowing the artist’s intent. We rely on internal and external metrics.</p>
+
+      <ul style="display:grid; grid-template-columns:1fr; gap:12px; margin-top: 16px; padding: 0;">
+        
+        <li style="background:#050d14; padding:14px; border:1px solid var(--border); border-left:3px solid var(--neon-cyan); list-style:none;">
+          <strong style="color:var(--neon-cyan); font-size: 1.05rem;">1. Silhouette Score</strong>
+          <p style="font-size:0.85rem; margin-top:4px;">Measures how well a point fits within its cluster ($a$) vs outside it ($b$).</p>
+          <div class="formula-box" style="margin: 8px 0; padding: 10px; font-size: 0.95rem; text-align: left;">
+            $$s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}$$
+          </div>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong style="color:var(--text)">Range:</strong> $+1$ (Perfect) &rarr; $0$ (Overlapping) &rarr; $-1$ (Wrong assignment).</li>
+            <li><strong style="color:var(--text)">Use When:</strong> No ground truth labels exist. Works best for well-separated, non-spherical clusters.</li>
+          </ul>
+        </li>
+
+        <li style="background:#050d14; padding:14px; border:1px solid var(--border); border-left:3px solid var(--neon-cyan); list-style:none;">
+          <strong style="color:var(--neon-cyan); font-size: 1.05rem;">2. Davies-Bouldin Index (DBI)</strong>
+          <p style="font-size:0.85rem; margin-top:4px;">Measures cluster compactness ($\sigma$) vs separation ($d$).</p>
+          <div class="formula-box" style="margin: 8px 0; padding: 10px; font-size: 0.95rem; text-align: left;">
+            $$DB = \frac{1}{k} \sum_{i=1}^{k} \max_{j \neq i} \left( \frac{\sigma_i + \sigma_j}{d(c_i, c_j)} \right)$$
+          </div>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong style="color:var(--text)">Interpretation:</strong> <strong>Lower is better.</strong> Penalizes large spread clusters and closely spaced clusters.</li>
+            <li><strong style="color:var(--text)">Use When:</strong> Comparing multiple models, assuming clusters are spherical.</li>
+          </ul>
+        </li>
+
+        <li style="background:#050d14; padding:14px; border:1px solid var(--border); border-left:3px solid var(--neon-cyan); list-style:none;">
+          <strong style="color:var(--neon-cyan); font-size: 1.05rem;">3. Adjusted Rand Index (ARI)</strong>
+          <p style="font-size:0.85rem; margin-top:4px;">Compares clustering results directly with ground truth labels by counting agreements and disagreements, adjusted for chance.</p>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong style="color:var(--text)">Range:</strong> $1$ (Perfect match) &rarr; $0$ (Random) &rarr; $&lt;0$ (Worse than random).</li>
+            <li><strong style="color:var(--text)">Use When:</strong> True labels exist (benchmarking).</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div style="margin-top: 12px; padding: 10px; border-left: 2px dashed var(--neon-cyan); background: rgba(26,58,92,0.05);">
+        <strong style="font-size:0.85rem;">👉 Quick Metaphors:</strong><br />
+        <span style="font-size:0.8rem;"><strong>Silhouette</strong> = “Do I belong here?” | <strong>DBI</strong> = “Are clusters neat and far apart?” | <strong>ARI</strong> = “Did we match the answer key?”</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">CONCEPT 14 · ADVANCED DISTANCE METRICS</div>
+    <div class="q-title">Mahalanobis Distance in Clustering</div>
+    <div class="q-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div>
+          <strong style="color:#ff2d78; font-size: 0.95rem;">Why Euclidean Fails</strong>
+          <p style="font-size:0.85rem; margin-top:4px;">Euclidean treats all features as equally important and uncorrelated. If Height & Weight are correlated, Euclidean double-counts that effect.</p>
+        </div>
+        <div>
+          <strong style="color:var(--neon-orange); font-size: 0.95rem;">Why Mahalanobis Works</strong>
+          <p style="font-size:0.85rem; margin-top:4px;">Accounts for variance, removes redundancy between correlated variables, and scales data automatically without manual normalization.</p>
+        </div>
+      </div>
+
+      <div class="trace-box" style="margin: 12px 0; border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+        <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ THE MATHEMATICAL FORMULA</div>
+        <div class="formula-box" style="margin: 8px 0; padding: 12px; font-size: 1rem;">
+          $$D_M(x) = \sqrt{(x - \mu)^T S^{-1} (x - \mu)}$$
+        </div>
+        <p style="font-size:0.85rem; margin-top:8px; text-align:center;">Where $\mu$ = Mean vector, and $S$ = Covariance matrix.</p>
+      </div>
+
+      <table class="norm-table" style="margin-top: 16px;">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-orange)">Euclidean</th>
+          <th style="color:var(--neon-orange)">Mahalanobis</th>
+        </tr>
+        <tr>
+          <td><strong>Scaling & Correlation</strong></td>
+          <td>Ignored</td>
+          <td><strong style="color:var(--neon-green)">Considered</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Shape Assumption</strong></td>
+          <td>Spherical</td>
+          <td>Elliptical</td>
+        </tr>
+      </table>
+      <div style="text-align: center; font-style: italic; color: var(--text-dim); margin-top: 10px; font-size: 0.85rem;">
+        👉 Intuition: Euclidean = straight-line ruler 📏 | Mahalanobis = “statistically aware compass” 🧭
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">CONCEPT 15 · MATHEMATICAL FOUNDATIONS</div>
+    <div class="q-title">The Derivation of Kernel PCA</div>
+    <div class="q-body">
+      <p>Standard PCA relies on the Covariance matrix $C = \frac{1}{n} X^T X$, which only captures linear relationships. Kernel PCA steps into elegant math territory to fix this.</p>
+
+      <div class="trace-box" style="margin: 16px 0; border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+        <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ STEP-BY-STEP DERIVATION</div>
+        <ol style="font-size:0.85rem; margin-top:8px; padding-left:20px; line-height: 1.8;">
+          <li><strong>Map the Data:</strong> Map data into a higher-dimensional space: <br />$$x \rightarrow \phi(x)$$</li>
+          <li><strong>Covariance in Feature Space:</strong> Compute the covariance matrix in that new space: <br />$$C = \frac{1}{n} \sum \phi(x_i)\phi(x_i)^T$$</li>
+          <li><strong>Eigenvalue Problem:</strong> Solve for the principal components: <br />$$C v = \lambda v$$</li>
+        </ol>
+      </div>
+
+      <div style="padding: 10px; border-left: 3px solid #ff2d78; background: rgba(255,45,120,0.05); margin-bottom: 12px;">
+        <strong style="color:#ff2d78">🚨 The Problem:</strong> The feature space $\phi(x)$ may be mathematically <em>infinite-dimensional</em>, making Step 2 computationally impossible.
+      </div>
+
+      <div style="padding: 12px; border-left: 3px solid var(--neon-green); background: rgba(45,90,39,0.05); margin-bottom: 16px;">
+        <strong style="color:var(--neon-green); font-size: 1.05rem;">✨ The Kernel Trick (The Magic Portal)</strong>
+        <p style="font-size: 0.85rem; margin-top: 6px;">Instead of computing $\phi(x)$, we use a Kernel function to compute the inner products directly, giving us the Kernel Matrix $K$:</p>
+        <div class="formula-box" style="margin: 8px 0; padding: 10px; font-size: 0.95rem;">
+          $$K(x_i, x_j) = \phi(x_i)^T \phi(x_j)$$
+        </div>
+        <p style="font-size: 0.85rem; margin-top: 6px;"><strong>Final Eigenvalue Problem:</strong> $K\alpha = \lambda\alpha$</p>
+        <p style="font-size: 0.85rem; margin-top: 6px;"><strong>Final Projection:</strong> $y_k(x) = \sum_{i=1}^{n} \alpha_i^{(k)} K(x_i, x)$</p>
+      </div>
+
+      <table class="norm-table">
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--neon-green)">Standard PCA</th>
+          <th style="color:var(--neon-green)">Kernel PCA</th>
+        </tr>
+        <tr>
+          <td><strong>Complexity / Flexiblity</strong></td>
+          <td>Low / Limited</td>
+          <td><strong style="color:var(--neon-green)">High / Very High</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Best For</strong></td>
+          <td>Linear Data</td>
+          <td>Nonlinear (Spirals, Images)</td>
+        </tr>
+      </table>
+      <div style="text-align: center; font-style: italic; color: var(--text-dim); margin-top: 10px; font-size: 0.85rem;">
+        👉 Intuition: PCA = flattening a crumpled paper | Kernel PCA = unfolding it first, then flattening.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="border-top: 4px dashed var(--neon-cyan); margin: 40px 0; padding-top: 20px; text-align: center; font-family: var(--display); color: var(--neon-cyan); letter-spacing: 0.2em; font-size: 1.5rem; text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);">
+  MODULE 6: REINFORCEMENT LEARNING &amp; FILTERS
+</div>
+
+<section id="mod6">
+  
+  <div class="q-card">
+    <div class="q-num">Q2, 6, 11, 13, 14, 16-21 · RL FOUNDATIONS</div>
+    <div class="q-title">Markov Decision Processes &amp; Value Functions</div>
+    <div class="q-body">
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div style="background:#050d14;border:1px solid var(--border);padding:12px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); font-size:0.9rem;">The Markov Property (Q6, Q18)</strong>
+          <p style="font-size:0.85rem; margin-top:4px;">Future states depend <em>only</em> on the current state, not past history. This is why policies must be Markovian in an MDP.</p>
+        </div>
+        <div style="background:#050d14;border:1px solid var(--border);padding:12px; border-left: 3px solid var(--neon-cyan);">
+          <strong style="color:var(--neon-cyan); font-size:0.9rem;">Exploration vs. Exploitation (Q13)</strong>
+          <ul style="font-size:0.85rem; margin-top:4px; padding-left:16px;">
+            <li><strong>Exploration:</strong> Try new actions (gather data).</li>
+            <li><strong>Exploitation:</strong> Use known best actions (maximize reward).</li>
+            <li><em>Handled using $\varepsilon$-greedy or softmax algorithms.</em></li>
+          </ul>
+        </div>
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.95rem;">Rewards &amp; Returns:</strong>
+      <ul style="font-size:0.85rem; margin-top:6px;">
+        <li><strong>Reward Function (Q14):</strong> Defines the goal by assigning feedback to actions.</li>
+        <li><strong>Reward Hypothesis (Q21):</strong> All goals can be mathematically represented as maximizing expected cumulative reward.</li>
+        <li><strong>Discount Factor $\gamma$ (Q20):</strong> Controls the importance of future rewards ($0$ = short-term, $1$ = long-term).</li>
+        <li><strong>Return $G_t$ (Q19):</strong> The total discounted reward from time $t$: 
+          <div style="text-align:center; margin: 6px 0; font-size: 0.95rem;">$$G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots$$</div>
+        </li>
+      </ul>
+
+      <strong style="color:var(--text); font-size: 0.95rem; display:block; margin-top:12px;">Value Functions &amp; Bellman:</strong>
+      <ul style="font-size:0.85rem; margin-top:6px;">
+        <li><strong>State-Value Function $V(s)$ (Q16):</strong> Expected return starting directly from state $s$ under a given policy.</li>
+        <li><strong>Q-Value Function $Q(s, a)$ (Q11):</strong> Expected cumulative reward for taking action $a$ in state $s$, and following a policy thereafter.</li>
+        <li><strong>Bellman Equation (Q17):</strong> Provides the recursive mathematical relation needed to dynamically compute these value functions.</li>
+      </ul>
+      
+      <div style="background:rgba(26,58,92,0.1); padding:8px; border:1px solid rgba(26,58,92,0.3); margin-top:8px; font-size:0.85rem;">
+        <strong>RL Applications (Q2):</strong> Robotics 🤖, Game playing 🎮 (AlphaGo), Autonomous vehicles 🚗, Finance 💰, Healthcare 🏥, Recommendation systems 📺.
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q1, 12, 15 · RL ALGORITHMS</div>
+    <div class="q-title">Q-Learning, SARSA &amp; Policy Gradients</div>
+    <div class="q-body">
+      
+      <table class="norm-table" style="margin-bottom: 16px;">
+        <tr>
+          <th>Algorithm Type</th>
+          <th style="color:var(--neon-orange)">Off-Policy (Q1, Q15)</th>
+          <th style="color:var(--neon-orange)">On-Policy (Q1, Q15)</th>
+        </tr>
+        <tr>
+          <td><strong>Algorithm</strong></td>
+          <td><strong>Q-Learning</strong></td>
+          <td><strong>SARSA</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Behavior</strong></td>
+          <td>Learns the value of the <em>optimal</em> (greedy) policy independently of the agent's actions.</td>
+          <td>Learns the value of the <em>current</em> policy the agent is actually executing.</td>
+        </tr>
+      </table>
+
+      <div style="padding: 10px; border-left: 3px solid var(--neon-orange); background: rgba(139,58,15,0.05);">
+        <strong style="color:var(--neon-orange)">Policy Gradient vs. Value-Based (Q12):</strong>
+        <ul style="font-size:0.85rem; margin-top:4px; margin-bottom:0;">
+          <li><strong>Policy Gradient:</strong> Directly optimizes the policy (the behavior) itself.</li>
+          <li><strong>Value-Based:</strong> Estimates value functions (like Q-values) to indirectly find the best policy.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q5, 8, 9, 10, 22-25, 30 · STATE ESTIMATION</div>
+    <div class="q-title">Kalman Filters &amp; Extended Kalman Filters (EKF)</div>
+    <div class="q-body">
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div style="background:rgba(45,90,39,0.05); padding:10px; border:1px solid rgba(45,90,39,0.2);">
+          <strong style="color:var(--neon-green)">Kalman Filter Basics (Q8, Q22)</strong>
+          <p style="font-size:0.8rem; margin-top:4px;">Strictly assumes <strong>linear, Gaussian systems</strong>. Gaussian noise is used because it greatly simplifies computation and guarantees optimal estimates under linear conditions.</p>
+        </div>
+        <div style="background:rgba(45,90,39,0.05); padding:10px; border:1px solid rgba(45,90,39,0.2);">
+          <strong style="color:var(--neon-green)">EKF Linearization (Q5, Q10)</strong>
+          <p style="font-size:0.8rem; margin-top:4px;">Because real-world systems are non-linear, the Extended Kalman Filter (EKF) explicitly linearizes non-linear functions using the <strong>Jacobian Matrix</strong> (first-order Taylor expansion).</p>
+        </div>
+      </div>
+
+      <div class="trace-box" style="margin: 12px 0; border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+        <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ KALMAN FILTER EQUATIONS (Q9, Q23, Q30)</div>
+        <ul style="font-size:0.85rem; margin-top:8px;">
+          <li><strong>State Transition Model:</strong> Describes how the system evolves. <br>$$x_k = A x_{k-1} + B u_k + w_k$$</li>
+          <li><strong>Prediction Covariance:</strong> Represents uncertainty in the state estimate ($P$). <br>$$P_k = A P_{k-1} A^T + Q$$</li>
+          <li><strong>State Update:</strong> Adjusts the estimate based on new sensor data. <br>$$x_k = x_k + K(y_k - Hx_k)$$</li>
+        </ul>
+      </div>
+
+      <div style="padding: 10px; border-left: 3px solid var(--neon-green); background: rgba(45,90,39,0.05);">
+        <strong style="color:var(--neon-green)">The Role of Kalman Gain ($K$) &amp; Noise (Q24, Q25):</strong>
+        <p style="font-size:0.85rem; margin-top:4px; margin-bottom:0;">The Kalman Gain actively balances trust between the mathematical prediction and the raw sensor measurement. If <strong>Process Noise is modeled too low</strong>, the filter becomes overconfident in its prediction, leading to poor adaptation to sudden changes.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card gold">
+    <div class="q-num">Q3, 4, 7, 26-29 · PROBABILISTIC ROBOTICS</div>
+    <div class="q-title">Particle Filters &amp; Monte Carlo Localization</div>
+    <div class="q-body">
+      
+      <p style="font-size: 0.9rem; margin-bottom: 12px;"><strong>Particle Filter (Q3):</strong> A probabilistic method that completely drops linear/Gaussian assumptions (unlike Kalman). It represents the belief state using a set of weighted samples (particles).</p>
+
+      <table class="norm-table" style="margin-bottom: 12px;">
+        <tr>
+          <th>Concept</th>
+          <th>Definition</th>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-gold)">MCL (Q4)</strong></td>
+          <td><strong>Monte Carlo Localization:</strong> Uses particle filters to estimate a robot's exact position based on sensor data and motion.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-gold)">Resampling (Q7)</strong></td>
+          <td>Removes low-weight particles and aggressively duplicates high-weight ones to avoid mathematical degeneration.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-gold)">Importance Sampling (Q26)</strong></td>
+          <td>Improves efficiency by sampling from a <em>better</em> distribution and mathematically reweighting the samples.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--neon-gold)">Posterior Approx. (Q29)</strong></td>
+          <td>Achieved directly by the weighted particles acting as a physical representation of the probability distribution.</td>
+        </tr>
+      </table>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:rgba(154,123,44,0.05); padding:10px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:var(--neon-gold); font-size:0.9rem;">High Noise Scenarios (Q27)</strong>
+          <p style="font-size:0.8rem; margin-top:4px;">When noise/uncertainty increases, you MUST use more particles to accurately represent the wide distribution.</p>
+        </div>
+        <div style="background:rgba(154,123,44,0.05); padding:10px; border:1px solid rgba(154,123,44,0.2);">
+          <strong style="color:#ff2d78; font-size:0.9rem;">Limitations (Q28)</strong>
+          <p style="font-size:0.8rem; margin-top:4px;">Particle Filters are vastly more computationally expensive compared to Kalman filters.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<section id="mod6b">
+  <div class="section-label">MODULE 6 (CONT.)</div>
+  <h2 class="section-title">MOD 6 — SLAM, TD Updates &amp; Biological RL</h2>
+
+  <div class="q-card">
+    <div class="q-num">Q1, Q2 · ROBOTICS & ESTIMATION</div>
+    <div class="q-title">SLAM &amp; The Kalman Filter</div>
+    <div class="q-body">
+      
+      <div style="margin-bottom: 24px;">
+        <strong style="color:var(--neon-cyan); font-size: 1.05rem;">Simultaneous Localization and Mapping (SLAM)</strong>
+        <p style="font-size:0.85rem; margin-top:4px;">The computational problem of a robot constructing or updating a map of an unknown environment while simultaneously keeping track of its own location within that evolving map.</p>
+        <div style="padding: 10px; border-left: 3px solid var(--neon-cyan); background: rgba(26,58,92,0.05); margin: 8px 0;">
+          <strong style="font-size:0.85rem;">The "Chicken-and-Egg" Problem:</strong> The agent needs the map to know where it is, but needs to know where it is to build the map! (Solved using probabilistic methods like Particle/Kalman Filters).
+        </div>
+        <ul style="font-size:0.85rem; margin-top:8px;">
+          <li><strong>Autonomous Vehicles:</strong> Self-driving cars mapping streets relative to obstacles.</li>
+          <li><strong>Robotic Vacuums:</strong> Roombas mapping a living room to ensure full coverage.</li>
+          <li><strong>AR/VR:</strong> Headsets mapping physical room geometry to track where you are looking.</li>
+        </ul>
+      </div>
+
+      <div>
+        <strong style="color:var(--neon-cyan); font-size: 1.05rem;">The Main Benefit of the Kalman Filter</strong>
+        <p style="font-size:0.85rem; margin-top:4px;">It provides an optimal, recursive mathematical algorithm for estimating the true state of a linear dynamic system from a series of incomplete and noisy measurements.</p>
+        <ul style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top: 12px; padding: 0;">
+          <li style="background:#050d14; padding:12px; border:1px solid var(--border); list-style:none;">
+            <strong style="color:var(--text);">Efficiency (Recursive)</strong>
+            <p style="font-size:0.8rem; margin-top:4px; color:var(--text-dim);">Does not need to store past history. Only uses the current state estimate and current uncertainty to calculate the next state (highly efficient for real-time).</p>
+          </li>
+          <li style="background:#050d14; padding:12px; border:1px solid var(--border); list-style:none;">
+            <strong style="color:var(--text);">Handling Uncertainty</strong>
+            <p style="font-size:0.8rem; margin-top:4px; color:var(--text-dim);">Explicitly models noise, finding the statistically optimal estimate by minimizing the mean square error (assuming Gaussian noise).</p>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">Q3 · VALUE APPROXIMATION</div>
+    <div class="q-title">TD Learning Parameter Update Equations</div>
+    <div class="q-body">
+      <p>In Temporal Difference (TD) learning with linear function approximation, the estimated utility function $\hat{U}(s)$ is represented as a linear combination of features $f_i(s)$ and weights $\theta_i$.</p>
+      
+      <div class="trace-box" style="margin: 16px 0; border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+        <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ THE FOUNDATIONAL MATH</div>
+        <p style="font-size:0.85rem; margin-top:8px;"><strong>1. The Specific Utility Function:</strong></p>
+        <div class="formula-box" style="margin: 6px 0; padding: 10px; font-size: 0.95rem;">
+          $$\hat{U}(x, y) = \theta_0 + \theta_1 x + \theta_2 y + \theta_3 \sqrt{(x - x_g)^2 + (y - y_g)^2}$$
+        </div>
+        
+        <p style="font-size:0.85rem; margin-top:12px;"><strong>2. The TD(0) Update Rule:</strong></p>
+        <div class="formula-box" style="margin: 6px 0; padding: 10px; font-size: 0.95rem;">
+          $$\theta_i \leftarrow \theta_i + \alpha \delta \frac{\partial \hat{U}(x, y)}{\partial \theta_i}$$
+        </div>
+        
+        <ul style="font-size:0.8rem; margin-top:8px;">
+          <li><strong>$\alpha$:</strong> Learning rate.</li>
+          <li><strong>$\delta$:</strong> TD Error &rarr; $\delta = R(x, y) + \gamma \hat{U}(x', y') - \hat{U}(x, y)$</li>
+        </ul>
+      </div>
+
+      <div style="padding: 10px; border-left: 3px solid var(--neon-orange); background: rgba(139,58,15,0.05); margin-bottom: 12px;">
+        <strong style="color:var(--text); font-size: 0.9rem;">The Partial Derivatives:</strong> Because the function is strictly linear with respect to $\theta$, the derivative $\frac{\partial \hat{U}}{\partial \theta_i}$ is simply the corresponding feature $f_i(x, y)$!
+      </div>
+
+      <strong style="color:var(--text); font-size: 0.95rem;">Explicit Parameter Update Equations:</strong>
+      <ul style="display:grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; padding: 0;">
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong>For $\theta_0$:</strong> &nbsp; $\theta_0 \leftarrow \theta_0 + \alpha \delta (1)$
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong>For $\theta_1$:</strong> &nbsp; $\theta_1 \leftarrow \theta_1 + \alpha \delta x$
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong>For $\theta_2$:</strong> &nbsp; $\theta_2 \leftarrow \theta_2 + \alpha \delta y$
+        </li>
+        <li style="background:#050d14; padding:10px; border:1px solid var(--border); list-style:none;">
+          <strong>For $\theta_3$:</strong> &nbsp; $\theta_3 \leftarrow \theta_3 + \alpha \delta \sqrt{(x - x_g)^2 + (y - y_g)^2}$
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">Q4, Q5 · COGNITIVE SCIENCE</div>
+    <div class="q-title">RL in Evolution &amp; Animal Behavior</div>
+    <div class="q-body">
+      
+      <div style="margin-bottom: 20px;">
+        <strong style="color:var(--neon-green); font-size: 1.05rem;">RL as a Model for Evolution (Q4)</strong>
+        <p style="font-size:0.85rem; margin-top:4px;">RL is not a perfect model for evolution itself (Genetic Algorithms are a closer fit, operating on populations across generations). RL models a single agent learning within its own lifetime.</p>
+        <div style="background:rgba(45,90,39,0.05); padding:10px; border:1px solid rgba(45,90,39,0.2); margin-top: 8px;">
+          <strong style="font-size:0.85rem;">Hardwired Rewards vs. Fitness:</strong> Evolution has hardwired local reward signals (pleasure of eating, pain of touching fire). When an RL agent (or animal) maximizes these daily rewards, it is indirectly maximizing the long-term evolutionary fitness (survival/reproduction) that the species was shaped to achieve.
+        </div>
+      </div>
+
+      <div>
+        <strong style="color:var(--neon-green); font-size: 1.05rem;">Modeling Human &amp; Animal Behavior (Q5)</strong>
+        <p style="font-size:0.85rem; margin-top:4px;">RL actually originated from animal behavior psychology (Pavlov, Skinner) before becoming a computer science discipline.</p>
+        
+        <ul style="font-size:0.85rem; margin-top:8px;">
+          <li><strong style="color:var(--text)">Dopamine & TD Error:</strong> The firing rates of midbrain dopamine neurons in mammals perfectly encode the Reward Prediction Error (the $\delta$ term). Unexpected reward = dopamine spike ($+\delta$). Predicted reward fails = dopamine drop ($-\delta$).</li>
+          <li><strong style="color:var(--text)">Psychopathology:</strong> RL models are used to study conditions like <strong>addiction</strong> (drugs artificially hijack the reward prediction error, forcing $\theta$ to continuously increase) and <strong>depression</strong> (discount factor $\gamma$ is skewed or reward sensitivity is dulled).</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<section id="mod6c">
+  <div class="section-label">MODULE 6 (CONT.)</div>
+  <h2 class="section-title">MOD 6 — IRL, Localization, HMMs &amp; EKF</h2>
+
+  <div class="q-card">
+    <div class="q-num">CONCEPT 1 · REVERSE ENGINEERING</div>
+    <div class="q-title">Inverse Reinforcement Learning (IRL)</div>
+    <div class="q-body">
+      <div style="padding: 10px; border-left: 3px solid var(--neon-cyan); background: rgba(26,58,92,0.05); margin-bottom: 12px;">
+        <strong style="color:var(--neon-cyan)">The Core Concept:</strong> Learn the underlying reward function by strictly observing an expert's behavior.
+      </div>
+      <p style="font-size:0.9rem; margin-bottom: 12px;"><strong>The Reversal:</strong></p>
+      <ul style="font-size:0.85rem; margin-top:4px;">
+        <li><strong>Standard RL:</strong> An agent is given a specific reward function and must learn the optimal policy (how to act).</li>
+        <li><strong>Inverse RL:</strong> The agent is given a policy or successful trajectories demonstrated by an expert (e.g., a human driving a car), and it must deduce <em>what reward function</em> the expert is actively trying to maximize.</li>
+      </ul>
+      <p style="font-size:0.85rem; font-style:italic; color:var(--text-dim); margin-top:8px;">👉 Highly useful when it is mathematically difficult to explicitly code what makes a behavior "good" (like driving gracefully), but easy to just provide human examples.</p>
+    </div>
+  </div>
+
+  <div class="q-card orange">
+    <div class="q-num">CONCEPT 2 · STATE ESTIMATION</div>
+    <div class="q-title">Localization for the Vacuum World</div>
+    <div class="q-body">
+      <p>Localization is the problem of a robot determining its exact current location on a grid when its initial starting position is completely unknown.</p>
+      
+      <div class="trace-box" style="margin: 12px 0; border-color: rgba(139,58,15,0.4); background: rgba(139,58,15,0.04);">
+        <div class="trace-title" style="color: var(--neon-orange); border-bottom-color: rgba(139,58,15,0.4);">◈ THE BELIEF STATE MECHANISM</div>
+        <ul style="font-size:0.85rem; margin-top:8px;">
+          <li><strong>The Problem:</strong> Sensors are limited (only detecting bumps or dirt). Because of this, many grid squares look absolutely identical to the robot.</li>
+          <li><strong>The Solution:</strong> The robot maintains a <strong>Belief State</strong> — a mathematical probability distribution of <em>all possible squares</em> it could currently be in.</li>
+          <li><strong>The Update:</strong> As it moves, bumps walls, and senses dirt, it continuously updates this belief state, systematically ruling out impossible locations until the probability securely converges on a single, certain location.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card green">
+    <div class="q-num">CONCEPT 3 · PROBABILISTIC NETWORKS</div>
+    <div class="q-title">The Sleep DBN and HMM Formulation</div>
+    <div class="q-body">
+      <p style="font-size:0.85rem; margin-bottom: 12px;"><strong>Variables:</strong> State Variable $S_t$ (Enough Sleep), Observation 1 $R_t$ (Red Eyes), Observation 2 $C_t$ (Sleeping in Class).</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:rgba(45,90,39,0.05); padding:12px; border:1px solid rgba(45,90,39,0.2);">
+          <strong style="color:var(--neon-green);">Dynamic Bayesian Network (DBN)</strong>
+          <p style="font-size:0.8rem; margin-top:4px; color:var(--text-dim);">Observations are kept entirely separate.</p>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong>Prior:</strong> $P(S_0 = T) = 0.7$</li>
+            <li><strong>Transition Model:</strong><br>$P(S_t=T \mid S_{t-1}=T) = 0.8$<br>$P(S_t=T \mid S_{t-1}=F) = 0.3$</li>
+            <li><strong>Observation Models:</strong><br>$P(R_t=T \mid S_t=T) = 0.2$<br>$P(C_t=T \mid S_t=T) = 0.1$</li>
+          </ul>
+        </div>
+        <div style="background:rgba(45,90,39,0.05); padding:12px; border:1px solid rgba(45,90,39,0.2);">
+          <strong style="color:var(--neon-green);">Hidden Markov Model (HMM)</strong>
+          <p style="font-size:0.8rem; margin-top:4px; color:var(--text-dim);">Strictly requires a single joint observation variable ($O_t$).</p>
+          <ul style="font-size:0.8rem; margin-top:4px;">
+            <li><strong>TT:</strong> Red Eyes AND Sleeping</li>
+            <li><strong>TF:</strong> Red Eyes AND Awake</li>
+            <li><strong>FT:</strong> Clear Eyes AND Sleeping</li>
+            <li><strong>FF:</strong> Clear Eyes AND Awake</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="trace-box" style="margin: 16px 0; border-color: rgba(45,90,39,0.4); background: rgba(45,90,39,0.04);">
+        <div class="trace-title" style="color: var(--neon-green); border-bottom-color: rgba(45,90,39,0.4);">◈ THE HMM EMISSION TABLE</div>
+        <p style="font-size:0.85rem; margin-top:8px;">Because $R_t$ and $C_t$ are conditionally independent given $S_t$, we simply multiply them. Example: $P(O_t=TT \mid S_t=T) = P(R_t=T \mid S_t=T) \times P(C_t=T \mid S_t=T) = 0.2 \times 0.1 = \mathbf{0.02}$</p>
+        
+        <table class="norm-table" style="margin-top: 12px; font-size: 0.8rem;">
+          <tr>
+            <th>State ($S_t$)</th>
+            <th>$O_t$ = TT</th>
+            <th>$O_t$ = TF</th>
+            <th>$O_t$ = FT</th>
+            <th>$O_t$ = FF</th>
+          </tr>
+          <tr>
+            <td><strong>Enough Sleep (T)</strong></td>
+            <td>$0.2 \times 0.1 = \mathbf{0.02}$</td>
+            <td>$0.2 \times 0.9 = \mathbf{0.18}$</td>
+            <td>$0.8 \times 0.1 = \mathbf{0.08}$</td>
+            <td>$0.8 \times 0.9 = \mathbf{0.72}$</td>
+          </tr>
+          <tr>
+            <td><strong>Not Enough (F)</strong></td>
+            <td>$0.7 \times 0.3 = \mathbf{0.21}$</td>
+            <td>$0.7 \times 0.7 = \mathbf{0.49}$</td>
+            <td>$0.3 \times 0.3 = \mathbf{0.09}$</td>
+            <td>$0.3 \times 0.7 = \mathbf{0.21}$</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-card gold">
+    <div class="q-num">CONCEPT 4 · KINEMATICS & FILTERING</div>
+    <div class="q-title">What is EKF? (Extended Kalman Filter)</div>
+    <div class="q-body">
+      <div style="padding: 10px; border-left: 3px solid var(--neon-gold); background: rgba(154,123,44,0.05); margin-bottom: 12px;">
+        <strong style="color:var(--text)">The Problem:</strong> A standard Kalman Filter optimally tracks linear systems. However, real-world physics and robot kinematics (like turning in arcs or accelerating) are intrinsically <strong>highly non-linear</strong>.
+      </div>
+      <p style="font-size:0.9rem;"><strong>The EKF Solution:</strong></p>
+      <ul style="font-size:0.85rem; margin-top:4px;">
+        <li>The EKF physically solves this by <strong>linearizing</strong> the non-linear transition and observation models around the current state estimate.</li>
+        <li>It does this using advanced calculus — specifically, the <strong>Jacobian Matrix</strong> (which contains the first partial derivatives).</li>
+        <li>This mathematical bridge allows standard linear Kalman tracking math to be reliably applied to complex, non-linear environments!</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+
+
+
 
 
 <!-- ══════════════════════════════════════════════════════════
@@ -7384,6 +10015,57 @@ function toggleExplain(btn) {
   const open  = panel.classList.toggle('open');
   btn.textContent = open ? '▼ COLLAPSE EXPLANATION' : '▶ EXPLAIN CODE LINE BY LINE';
 }
+</script>
+<!-- Lenis Smooth Scroll Library -->
+<script src="https://unpkg.com/lenis@latest/dist/lenis.min.js"></script>
+<script>
+  // Initialize Lenis
+  const lenis = new Lenis({
+    duration: 1.2, // Controls the "momentum" or "friction" of the scroll
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Easing function
+    direction: 'vertical', // vertical, horizontal
+    gestureDirection: 'vertical', // vertical, horizontal, both
+    smooth: true,
+    mouseMultiplier: 1,
+    smoothTouch: false, // Keep false to let mobile swipe naturally
+    touchMultiplier: 2,
+    infinite: false,
+  });
+
+  // Connect Lenis to the browser's render loop
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+
+  requestAnimationFrame(raf);
+</script>
+<!-- ─── DUAL-SCREEN LAUNCHER ─── -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const nav = document.getElementById('dynamic-nav');
+    if(nav && !document.getElementById('mesh-nav-btn')) {
+      nav.insertAdjacentHTML('beforeend', '<div class="nav-divider"></div><a href="#" id="mesh-nav-btn" onclick="launchSubwayMap(); return false;" style="color: var(--neon-orange); border-color: var(--neon-orange); font-weight: bold; box-shadow: 0 0 8px rgba(139,58,15,0.4);">🗺️ LAUNCH TERMINAL MAP</a>');
+    }
+  });
+
+  function launchSubwayMap() {
+    // 1. Scan the document for all sections
+    const sections = Array.from(document.querySelectorAll('section[id]'));
+    const mapData = sections.map(sec => {
+      const h2 = sec.querySelector('h2');
+      return {
+        id: sec.id,
+        title: h2 ? h2.textContent.trim() : 'Unknown Database Entry',
+      };
+    });
+
+    // 2. Save to browser memory so the second screen can read it
+    localStorage.setItem('oasis_map_data', JSON.stringify(mapData));
+
+    // 3. Launch the second screen as a pop-up tool window
+    window.open('OASIS_Graph.html', 'OASIS_MAP', 'width=1400,height=800,menubar=no,toolbar=no');
+  }
 </script>
 </body>
 </html>
