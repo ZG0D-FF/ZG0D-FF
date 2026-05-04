@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OASIS Terminal Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #11151c;
+    --text: #e8d9a8;
+    --dim: #4a5d73;
+    --neon-cyan: #4df0ff;
+    --neon-orange: #ff6b35;
+    --neon-green: #39ff14;
+    --neon-gold: #ffcf00;
+    --neon-pink: #ff1493;
+  }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    margin: 0; padding: 40px;
+    overflow-x: auto;
+    background-image: radial-gradient(circle at 50% 50%, #1a2436 0%, #0a0d14 100%);
+  }
+
+  .header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 15px rgba(77,240,255,0.4);
+    margin-bottom: 40px;
+    text-align: center;
+    letter-spacing: 0.2em;
+  }
+
+  /* ─── THE SUBWAY MAP GRID ─── */
+  #map-container {
+    display: flex;
+    gap: 60px;
+    padding-bottom: 50px;
+    align-items: flex-start;
+  }
+
+  .subway-line {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    padding-left: 30px;
+    min-width: 280px;
+    transition: opacity 0.3s;
+  }
+
+  .line-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    letter-spacing: 0.1em;
+    position: relative;
+    left: -30px; /* Aligns with the border line */
+  }
+
+  /* ─── THE STATIONS (NODES) ─── */
+  .station {
+    background: rgba(10, 13, 20, 0.8);
+    border: 1px solid var(--dim);
+    padding: 12px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    font-family: 'IM Fell English', serif;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  /* The Subway "Dot" on the line */
+  .station::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -36px; /* Pushes the dot exactly onto the track */
+    transform: translateY(-50%);
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 3px solid currentColor;
+    z-index: 10;
+    transition: all 0.3s ease;
+  }
+
+  /* Hover & Neural Highlight Effects */
+  .station:hover {
+    transform: translateX(5px) scale(1.02);
+    border-color: currentColor;
+    box-shadow: 0 0 15px currentColor;
+    z-index: 20;
+  }
+  .station:hover::before { background: currentColor; box-shadow: 0 0 15px currentColor; }
+
+  /* Dynamic Neural Classes applied by JS */
+  .map-dimmed .subway-line { opacity: 0.3; }
+  .map-dimmed .station { opacity: 0.3; filter: grayscale(1); }
+  .map-dimmed .station.neural-glow { 
+    opacity: 1; 
+    filter: grayscale(0); 
+    border-color: currentColor; 
+    box-shadow: 0 0 20px currentColor; 
+    transform: scale(1.05);
+  }
+  .map-dimmed .station.neural-glow::before {
+    background: currentColor;
+  }
+
+  /* Line Colors */
+  .line-1 { border-left: 6px solid var(--neon-gold); color: var(--neon-gold); }
+  .line-2 { border-left: 6px solid var(--neon-orange); color: var(--neon-orange); }
+  .line-3 { border-left: 6px solid var(--neon-green); color: var(--neon-green); }
+  .line-4 { border-left: 6px solid var(--neon-cyan); color: var(--neon-cyan); }
+  .line-5 { border-left: 6px solid var(--neon-pink); color: var(--neon-pink); }
+
+  .station span { color: #fff; } /* Keep text white, let borders/dots glow */
+
+</style>
+</head>
+<body>
+
+<div class="header">NEURAL KNOWLEDGE MAP</div>
+<div id="map-container"></div>
+
+<script>
+  // 1. Fetch data from Main Tab
+  const rawData = localStorage.getItem('oasis_map_data');
+  if (!rawData) {
+    document.getElementById('map-container').innerHTML = "<h3 style='color:red;'>ERROR: No data received. Open this from the main terminal.</h3>";
+  } else {
+    const data = JSON.parse(rawData);
+    buildSubwayMap(data);
+  }
+
+  function buildSubwayMap(data) {
+    const container = document.getElementById('map-container');
+    
+    // Sort sections into "Subway Lines"
+    const lines = {
+      'CORE BASICS': { colorClass: 'line-1', items: [] },
+      'MODULE 2 (Search)': { colorClass: 'line-2', items: [] },
+      'MODULE 3 (ML & Pre-proc)': { colorClass: 'line-3', items: [] },
+      'MODULE 4 (Advanced Models)': { colorClass: 'line-4', items: [] },
+      'PRACTICE & CODE': { colorClass: 'line-5', items: [] }
+    };
+
+    data.forEach(item => {
+      let t = item.title.toUpperCase();
+      let id = item.id.toLowerCase();
+
+      if (t.includes('MOD 2') || id.includes('mod2')) lines['MODULE 2 (Search)'].items.push(item);
+      else if (t.includes('MOD 3') || id.includes('mod3')) lines['MODULE 3 (ML & Pre-proc)'].items.push(item);
+      else if (t.includes('MOD 4') || id.includes('mod4')) lines['MODULE 4 (Advanced Models)'].items.push(item);
+      else if (id.includes('code') || id.includes('practice') || id.includes('formulas')) lines['PRACTICE & CODE'].items.push(item);
+      else lines['CORE BASICS'].items.push(item);
+    });
+
+    // Neural Keywords for cross-referencing
+    const keywords = ['Search', 'Logic', 'Regression', 'Data', 'Tree', 'Neural', 'SVM', 'Evaluation', 'Agent', 'Heuristic', 'Optimization', 'Metrics'];
+
+    // Render the Map
+    for (const [lineName, lineData] of Object.entries(lines)) {
+      if (lineData.items.length === 0) continue;
+
+      const col = document.createElement('div');
+      col.className = `subway-line ${lineData.colorClass}`;
+      col.innerHTML = `<div class="line-header">${lineName}</div>`;
+
+      lineData.items.forEach(item => {
+        // Strip out the "MOD X — " part for a cleaner map label
+        let shortLabel = item.title.includes('—') ? item.title.split('—')[1].trim() : item.title;
+        
+        // Find which keywords this node contains
+        let nodeKeywords = keywords.filter(kw => item.title.toLowerCase().includes(kw.toLowerCase()));
+
+        const station = document.createElement('div');
+        station.className = 'station';
+        station.setAttribute('data-keywords', nodeKeywords.join(','));
+        station.innerHTML = `<span>${shortLabel}</span>`;
+        
+        // --- TAB COMMUNICATOR: Click to scroll main window ---
+        station.onclick = () => {
+          if (window.opener && !window.opener.closed) {
+            // Change the hash of the main window to jump to the section
+            window.opener.location.hash = item.id;
+            window.opener.focus(); // Bring main window to front
+          } else {
+            alert("Main terminal disconnected. Please reopen from AIML.html");
+          }
+        };
+
+        // --- NEURAL NETWORK HIGHLIGHTER ---
+        station.onmouseenter = () => {
+          container.classList.add('map-dimmed');
+          if (nodeKeywords.length > 0) {
+            // Find all other stations that share a keyword with this one
+            document.querySelectorAll('.station').forEach(otherNode => {
+              const otherKWs = otherNode.getAttribute('data-keywords').split(',');
+              const hasSharedKeyword = nodeKeywords.some(kw => otherKWs.includes(kw));
+              if (hasSharedKeyword) {
+                otherNode.classList.add('neural-glow');
+              }
+            });
+          }
+          station.classList.add('neural-glow'); // Always glow the one you are hovering
+        };
+
+        station.onmouseleave = () => {
+          container.classList.remove('map-dimmed');
+          document.querySelectorAll('.station').forEach(n => n.classList.remove('neural-glow'));
+        };
+
+        col.appendChild(station);
+      });
+
+      container.appendChild(col);
+    }
+  }
+</script>
+</body>
+</html>
