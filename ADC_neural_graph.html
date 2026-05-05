@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="adc_data.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADC Neural Graph</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #04060f;
+    --bg2: #080c1a;
+    --node-am: #00d4ff;
+    --node-fm: #ff6b35;
+    --node-angle: #a855f7;
+    --node-power: #22c55e;
+    --node-core: #ffd700;
+    --edge: rgba(255,255,255,0.06);
+    --edge-active: rgba(0,212,255,0.5);
+    --panel: rgba(8,12,26,0.97);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --formula-bg: rgba(0,212,255,0.06);
+    --formula-border: rgba(0,212,255,0.2);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    /* The dark overlay + the Unsplash image */
+    background-color: var(--bg);
+    background-image: linear-gradient(rgba(4, 6, 15, 0.88), rgba(4, 6, 15, 0.88)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    height: 100vh;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  /* Header */
+  #header {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    padding: 14px 24px;
+    display: flex; align-items:center; justify-content:space-between;
+    background: linear-gradient(180deg, rgba(4,6,15,0.98) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  #header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem; font-weight:800;
+    letter-spacing: 0.15em; text-transform:uppercase;
+    color: var(--node-am);
+  }
+  #header span { font-size:0.65rem; color:var(--muted); letter-spacing:0.1em; }
+
+  /* Legend */
+  #legend {
+    position: fixed; bottom:20px; left:20px; z-index:100;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .leg { display:flex; align-items:center; gap:8px; font-size:0.6rem; color:var(--muted); }
+  .leg-dot { width:8px; height:8px; border-radius:50%; }
+
+  /* Canvas */
+  #canvas { width:100vw; height:100vh; display:block; }
+
+  /* Info Panel */
+  #panel {
+    position: fixed; right:0; top:0; bottom:0;
+    width: 380px;
+    background: var(--panel);
+    border-left: 1px solid rgba(255,255,255,0.06);
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    overflow-y: auto;
+    z-index: 200;
+    padding: 24px;
+  }
+  #panel.open { transform: translateX(0); }
+
+  #panel-close {
+    position:absolute; top:16px; right:16px;
+    background:rgba(255,255,255,0.05); border:none;
+    color:var(--muted); font-family:inherit;
+    font-size:0.75rem; padding:6px 12px;
+    border-radius:4px; cursor:pointer;
+    transition: all 0.2s;
+  }
+  #panel-close:hover { color:white; background:rgba(255,255,255,0.1); }
+
+  .panel-chapter {
+    font-size:0.6rem; letter-spacing:0.15em;
+    text-transform:uppercase; margin-bottom:4px;
+  }
+  .panel-title {
+    font-family:'Syne',sans-serif;
+    font-size:1.3rem; font-weight:800;
+    margin-bottom:16px; line-height:1.2;
+  }
+  .panel-desc {
+    font-size:0.72rem; line-height:1.8;
+    color: #94a3b8; margin-bottom:20px;
+  }
+
+  .formula-block {
+    background: var(--formula-bg);
+    border: 1px solid var(--formula-border);
+    border-radius:8px;
+    padding:14px 16px;
+    margin-bottom:12px;
+  }
+  .formula-label {
+    font-size:0.55rem; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--muted);
+    margin-bottom:8px;
+  }
+  .formula-eq {
+    font-size:0.85rem; color:var(--node-am);
+    font-weight:600; line-height:1.6;
+  }
+  .formula-note {
+    font-size:0.62rem; color:#64748b;
+    margin-top:6px; line-height:1.6;
+  }
+
+  .sections-list { margin-top:20px; }
+  .section-tag {
+    display:inline-block;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:4px; padding:3px 8px;
+    font-size:0.58rem; color:var(--muted);
+    margin:3px 3px 3px 0;
+  }
+
+  /* Tooltip */
+  #tooltip {
+    position:fixed; pointer-events:none;
+    background:rgba(8,12,26,0.95);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:6px; padding:8px 12px;
+    font-size:0.65rem; z-index:300;
+    opacity:0; transition: opacity 0.15s;
+    max-width:200px; line-height:1.5;
+  }
+  #tooltip.show { opacity:1; }
+  #tooltip strong { color:var(--node-am); display:block; margin-bottom:2px; }
+
+  /* Pulse ring animation */
+  @keyframes pulse-ring {
+    0% { transform:scale(1); opacity:0.8; }
+    100% { transform:scale(2.5); opacity:0; }
+  }
+  @keyframes float {
+    0%,100% { transform:translateY(0px); }
+    50% { transform:translateY(-6px); }
+  }
+  @keyframes data-flow {
+    0% { stroke-dashoffset: 200; opacity:0; }
+    20% { opacity:1; }
+    100% { stroke-dashoffset: 0; opacity:0; }
+  }
+  /* Master Cheat Sheet (Left Panel) */
+  #toggle-cheat-sheet {
+    position: fixed; top: 60px; left: 24px; 
+    z-index: 99999; /* Absolute highest layer on the page */
+    background: rgba(0, 212, 255, 0.15); 
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    color: var(--node-am); font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; font-weight: bold; padding: 10px 18px;
+    border-radius: 4px; cursor: pointer; transition: all 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  #toggle-cheat-sheet:hover {
+    background: var(--node-am); color: var(--bg);
+  }
+
+  #left-panel {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 600px; /* Massive textbook width */
+    max-width: 90vw; /* Prevents it from breaking on smaller laptop screens */
+    height: 100vh; /* Forces it to span top-to-bottom */
+    background: rgba(4, 6, 15, 0.90); /* Mostly dark, slightly transparent */
+    backdrop-filter: blur(12px); /* Glassmorphism effect over the Unsplash BG */
+    border-right: 1px solid rgba(0,212,255,0.3);
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    overflow-y: auto;
+    z-index: 99998; /* Just under the button, way above the canvas/legend */
+    padding: 120px 32px 40px 32px;
+    box-shadow: 30px 0 60px rgba(0,0,0,0.95);
+  }
+  #left-panel.open { transform: translateX(0); }
+</style>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath:  [['\\(','\\)']],
+    displayMath: [['\\[','\\]']]
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] },
+  startup:  { typeset: true }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<div id="header">
+    <button id="toggle-cheat-sheet">∑ MASTER CHEAT SHEET</button>
+
+<div id="left-panel">
+  <div class="left-panel-header">ALL FORMULAS</div>
+  <div id="all-formulas-container"></div>
+</div>
+  <h1>ADC · Neural Graph</h1>
+  <span>CLICK NODE → FORMULAS + CONTEXT</span>
+</div>
+
+<div id="legend">
+  <div class="leg"><div class="leg-dot" style="background:#00d4ff"></div>AM & Prob Basics</div>
+  <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Power & Expectation</div>
+  <div class="leg"><div class="leg-dot" style="background:#ffd700"></div>Core & RV Models</div>
+  <div class="leg"><div class="leg-dot" style="background:#ff6b35"></div>Math, Spectra & PYQs</div>
+  <div class="leg"><div class="leg-dot" style="background:#a855f7"></div>Angle Mod & Q-Func</div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div id="panel">
+  <button id="panel-close">✕ CLOSE</button>
+  <div class="panel-chapter" id="p-chapter"></div>
+  <div class="panel-title" id="p-title"></div>
+  <div class="panel-desc" id="p-desc"></div>
+  <div id="p-formulas"></div>
+  <div class="sections-list" id="p-sections"></div>
+</div>
+
+<div id="tooltip"><strong id="tt-title"></strong><span id="tt-hint"></span></div>
+
+<script>
+// ─── NODE DATA ───────────────────────────────────────────────────────────────
+const NODES = [
+  {
+    id: 'ch1', label: 'AM\nBasics', chapter:'Chapter 1', color:'#00d4ff',
+    desc: 'Foundation of Amplitude Modulation. A carrier wave is varied in amplitude proportional to the message signal. The envelope of the modulated signal carries the information.',
+    formulas: [
+      { label:'Standard AM Signal', eq:'s(t) = Ac[1 + ka·m(t)]·cos(2πfct)', note:'ka = amplitude sensitivity, m(t) = message, Ac = carrier amplitude' },
+      { label:'Modulation Index', eq:'μ = ka·Am  →  0 < μ ≤ 1', note:'Am = peak message amplitude. μ > 1 causes overmodulation → distortion' },
+      { label:'Envelope', eq:'E(t) = Ac[1 + μ·cos(2πfmt)]', note:'Must stay ≥ 0 for distortion-free envelope detection' },
+    ],
+    sections:['AM Definition','Carrier + Message','Modulation Index μ','Envelope Condition'],
+  },
+  {
+    id: 'ch2', label: 'Freq &\nPower', chapter:'Chapter 2', color:'#00d4ff',
+    desc: 'Frequency domain view of AM. The modulated signal creates sidebands around the carrier. Power is distributed between carrier and sidebands — key for efficiency.',
+    formulas: [
+      { label:'AM Spectrum Components', eq:'fc,  fc ± fm', note:'Upper sideband: fc+fm, Lower sideband: fc−fm' },
+      { label:'Bandwidth', eq:'BW = 2·fm (single tone)\nBW = 2·W (general)', note:'W = message bandwidth. AM doubles the message bandwidth' },
+      { label:'Total Power', eq:'Pt = Pc(1 + μ²/2)', note:'Carrier power Pc = Ac²/2R. Sideband power = μ²Pc/2' },
+    ],
+    sections:['Frequency Spectrum','USB & LSB','Bandwidth = 2fm','Power Distribution'],
+  },
+  {
+    id: 'ch3', label: 'Envelope\nDet.', chapter:'Chapter 3', color:'#00d4ff',
+    desc: 'Envelope detection extracts the message by following the peaks of the AM signal. Requires proper RC time constant. You can also calculate modulation index directly from the waveform limits.',
+    formulas: [
+      { label:'Vmax & Vmin (Oscilloscope)', eq:'Vmax = Ac(1 + μ)\nVmin = Ac(1 - μ)', note:'The absolute peak and minimum of the modulated envelope.' },
+      { label:'Finding μ and Ac', eq:'μ = (Vmax - Vmin) / (Vmax + Vmin)\nAc = (Vmax + Vmin) / 2', note:'Crucial for numerical problems given an envelope graph.' },
+      { label:'RC Time Constant Rule', eq:'1/fc ≪ RC ≪ 1/W', note:'fc = carrier freq, W = message bandwidth. Avoids diagonal clipping.' },
+    ],
+    sections:['Envelope Parameters','Oscilloscope Math','Diode + RC Circuit','Time Constant'],
+  },
+  {
+    id: 'ch4', label: 'DSB-SC', chapter:'Chapter 4', color:'#ffd700',
+    desc: 'Double Sideband Suppressed Carrier — removes the carrier entirely. 100% efficient power-wise but requires a complex coherent (synchronous) detector.',
+    formulas: [
+      { label:'DSB-SC Signal & BW', eq:'s(t) = m(t)·cos(2πfct)\nBW = 2fm', note:'No carrier term! Envelope is |m(t)|, not m(t).' },
+      { label:'Power & Efficiency', eq:'Pt = Psb\nη = 100%', note:'All transmitted power contains information.' },
+      { label:'Coherent Demodulation', eq:'s(t)·cos(2πfct) = m(t)/2 + [m(t)/2]·cos(4πfct)\n→ LPF cuts 4πfct → output = m(t)/2', note:'Must multiply by perfectly synchronized local oscillator.' },
+    ],
+    sections:['Signal Expression','Spectrum','100% Efficiency','Coherent Detection (Math)'],
+  },
+  {
+    id: 'ch5', label: 'Gen Power\nAnalysis', chapter:'Chapter 5', color:'#22c55e',
+    desc: 'General power framework applicable to any modulation. Total power is the sum of carrier power and sideband power, derived directly from the message signal power (Pm).',
+    formulas: [
+      { label:'Core Power Formula', eq:'Pt = Pc + Psb\nPc = Ac²/2,  Psb = Pm/2', note:'Pm is the power of the message signal m(t).' },
+      { label:'General Power Equation', eq:'Pt = Pc[1 + (Pm / Ac²)]', note:'Crucial for non-sinusoidal signals where μ isn\'t directly applicable.' },
+      { label:'Sideband Split', eq:'PUSB = PLSB = Pm/4', note:'Information power is equally split between both sidebands.' },
+      { label:'Efficiency', eq:'η = (Psb / Pt) × 100%', note:'Ratio of useful power (sidebands) to total power.' },
+    ],
+    sections:['Envelope Requisite','Total Power Equation','General Power Components','Sideband Distribution'],
+  },
+  {
+    id: 'ch7', label: 'Fourier\nSpectrum', chapter:'Chapter 7', color:'#ff6b35',
+    desc: 'Mathematical transformation from time-domain to frequency-domain. Proves how the low-pass baseband message M(f) is shifted to the high-frequency passband ±fc.',
+    formulas: [
+      { label:'Fourier Transform S(f)', eq:'S(f) = (Ac/2)[δ(f-fc) + δ(f+fc)]\n       + (1/2)[M(f-fc) + M(f+fc)]', note:'δ functions represent the carrier impulse. M(f) is the shifted message.' },
+      { label:'Baseband vs Passband', eq:'Baseband: Centered at 0 Hz\nPassband: Shifted to ±fc', note:'AM creates a passband signal from a baseband message.' },
+      { label:'Inefficiency Proof', eq:'BW = 2fm', note:'S(f) shows identical information in both sidebands plus a massive zero-data carrier.' },
+    ],
+    sections:['Time to Freq Domain','The Spectrum Equation S(f)','Baseband vs Passband','Bandwidth Inefficiency'],
+  },
+  {
+    id: 'ch8', label: 'Single-Tone\nAM', chapter:'Chapter 8', color:'#00d4ff',
+    desc: 'Deep dive into single sinusoidal message m(t) = Am·cos(2πfmt). Expands AM signal into 3 components: carrier + USB + LSB. Foundation for all numerical problems.',
+    formulas: [
+      { label:'Single Tone AM Expansion', eq:'s(t) = Ac·cos(2πfct)\n   + (μAc/2)·cos(2π(fc+fm)t)\n   + (μAc/2)·cos(2π(fc−fm)t)', note:'Three frequency components: carrier, USB, LSB' },
+      { label:'Amplitudes', eq:'Carrier: Ac\nUSB = LSB: μAc/2', note:'When μ=1: sidebands are half the carrier amplitude' },
+      { label:'m(t) = Am·cos(2πfmt)', eq:'μ = Am/Ac  (for sinusoidal msg)', note:'Modulation index = ratio of message to carrier amplitude' },
+    ],
+    sections:['Context','Derivation','Component Breakdown','3-Line Spectrum'],
+  },
+  {
+    id: 'ch9', label: 'Single-Tone\nPower', chapter:'Chapter 9', color:'#22c55e',
+    desc: 'Power calculations for single-tone AM. Translating spectrum amplitudes to power components. Remember the 0 to 100% modulation shortcut!',
+    formulas: [
+      { label:'Component Powers', eq:'Pc = Ac²/2\nPUSB = PLSB = μ²Pc/4', note:'Total sideband power Psb = μ²Pc/2' },
+      { label:'Total Power (Single Tone)', eq:'Pt = Pc(1 + μ²/2)', note:'At μ=1: Pt = 1.5·Pc. (Going from 0 to 100% modulation increases total power by exactly 50%).' },
+      { label:'Efficiency', eq:'η = μ²/(2+μ²) × 100%', note:'At μ=1: η ≈ 33.33%. 66.6% of power is completely wasted on the carrier.' },
+    ],
+    sections:['Spectrum Translation','Component Calcs','Efficiency','The 50% Power Jump'],
+  },
+  {
+    id: 'ch10', label: 'Multi-Tone\nAM', chapter:'Chapter 10', color:'#ff6b35',
+    desc: 'When multiple frequencies modulate the carrier simultaneously. Each message frequency creates its own pair of sidebands.',
+    formulas: [
+      { label:'Multi-Tone Signal', eq:'s(t) = Ac[1 + μ₁cos(2πfm1t) + μ₂cos(2πfm2t)]·cos(2πfct)', note:'Expands into a carrier and multiple USB/LSB pairs.' },
+      { label:'Total Modulation Index', eq:'μt = √(μ₁² + μ₂² + ...)', note:'⚠ GATE TRAP: Do not just add them algebraically! Must root-sum-square.' },
+      { label:'Bandwidth (Multi-Tone)', eq:'BW = 2 × max(fm1, fm2, ...)', note:'Determined strictly by the highest frequency component in the message.' },
+    ],
+    sections:['Power Scaling','Multi-Tone Expression','Spectrum Breakdown','GATE Takeaways'],
+  },
+  {
+    id: 'ch11', label: 'Wave\nShapes', chapter:'Chapter 11', color:'#ff6b35',
+    desc: 'How message signal shape alters power and efficiency. The Pt = Pc(1+μ²/2) formula is a trap—it ONLY applies to sine waves.',
+    formulas: [
+      { label:'Square Wave AM', eq:'Pm = Am²  →  Pt = Pc(1 + μ²)\nη_max = 50% (at μ=1)', note:'Most efficient shape. Sideband power equals carrier power at μ=1.' },
+      { label:'Triangular Wave AM', eq:'Pm = Am²/3  →  Pt = Pc(1 + μ²/3)\nη_max = 25% (at μ=1)', note:'Least efficient standard shape.' },
+      { label:'⚠ GATE TRAP: μ vs μ', eq:'Modulation Index (μt) = √(μ₁² + μ₂²)\nMobility (1/μt) = 1/μ₁ + 1/μ₂', note:'Same symbol, totally different math! Do not mix up Communications with Semiconductor Physics.' },
+    ],
+    sections:['Multi-Tone Power','Square Wave AM','Triangular Wave AM','GATE Trap: Mod vs Mobility'],
+  },
+  {
+    id: 'ch12', label: 'Adv. Spectrum\n& Extract', chapter:'Chapter 12', color:'#ff6b35',
+    desc: 'Advanced extraction of the message signal from the AM envelope, and the critical harmonic behavior of non-sinusoidal waves.',
+    formulas: [
+      { label:'Extracting m(t)', eq:'m(t) = E(t) - Ac\nVmax = Ac + Am,  Vmin = Ac - Am', note:'The center baseline of the envelope is Ac. Subtract it to get the message.' },
+      { label:'Square Wave Spectrum', eq:'fc ± fm, fc ± 3fm, fc ± 5fm...', note:'⚠ GATE TRAP: Symmetrical square waves ONLY produce odd harmonics!' },
+      { label:'Master Efficiency Rule', eq:'Sinusoidal: 33.33%\nSquare: 50%\nTriangular: 25%', note:'Evaluated at maximum modulation (μ=1).' },
+    ],
+    sections:['Master Summary','Extracting m(t)','Square Wave Harmonics'],
+  },
+  {
+    id: 'ch13', label: 'Hardware\nLimits', chapter:'Chapter 13', color:'#ffd700',
+    desc: 'Physical constraints of signal synthesis and envelope detection. Balancing the RC time constant is the key to clear demodulation.',
+    formulas: [
+      { label:'RC Too Low (Fast)', eq:'Excessive Ripple', note:'Capacitor discharges too quickly between peaks.' },
+      { label:'RC Too High (Slow)', eq:'Diagonal Clipping', note:'Capacitor cannot discharge fast enough to track the dropping message envelope.' },
+      { label:'Square Wave Synthesis', eq:'Fundamental + Infinite Odd Harmonics', note:'Adding odd harmonics (fm, 3fm, 5fm) shapes a sine wave into a square wave.' },
+    ],
+    sections:['Fourier Synthesizer','RC Envelope Limits','Diagonal Clipping','Ripple Effect'],
+  },
+  {
+    id: 'ch14', label: 'GATE\nPYQs', chapter:'Chapter 14', color:'#ff6b35',
+    desc: 'The ultimate compilation of high-yield exam traps. Do not lose marks on these technicalities.',
+    formulas: [
+      { label:'Trap I: Max Efficiency', eq:'η_max = 50%', note:'If waveform isn\'t specified, assume theoretical max (Square Wave), NOT 33.3%.' },
+      { label:'Trap II: Demod Choice', eq:'μ ≤ 1 : Envelope Detector\nμ > 1 : Synchronous Detector', note:'Envelope detectors fail completely during overmodulation.' },
+      { label:'Trap III: Overmod Output', eq:'E(t) = |Ac[1 + k·m(t)]|', note:'Envelope detectors trace absolute peaks, ignoring the phase reversals of overmodulation.' },
+      { label:'Trap IV: Multi-Tone η', eq:'1. Find μt = √(μ₁² + μ₂²)\n2. η = μt² / (2 + μt²)', note:'Never add efficiencies or pure μ values directly.' },
+    ],
+    sections:['Max Efficiency Trick','Choosing a Demodulator','Overmodulation Output','Odd Harmonics Trap','Multi-Tone PYQ'],
+  },
+  {
+    id: 'ch15', label: 'Angle Mod\nBasics', chapter:'Chapter 15 (Core)', color:'#a855f7',
+    desc: 'The fundamental relationship between Phase and Frequency. Frequency is the derivative of phase; phase is the integral of frequency.',
+    formulas: [
+      { label:'Instantaneous Frequency', eq:'fi(t) = (1 / 2π) · dθi(t)/dt\nωi(t) = dθi(t)/dt', note:'Given the angle, differentiate to find frequency.' },
+      { label:'Instantaneous Phase', eq:'θi(t) = ∫ ωi(t) dt\n      = 2π ∫ fi(t) dt', note:'Given the frequency, integrate to find the angle.' },
+      { label:'General Expression', eq:'S(t) = Ac·cos[ωct + Δφ(t)]', note:'Δφ(t) changes based on whether it is PM or FM.' },
+    ],
+    sections:['Topics & Cheat Sheet','Inst. Angle & Frequency','Interchanging Variables'],
+  },
+  {
+    id: 'ch15b', label: 'FM\nDeep Dive', chapter:'Chapter 15 (FM)', color:'#a855f7',
+    desc: 'Frequency Modulation: The instantaneous frequency tracks the message. Therefore, the phase is the INTEGRAL of the message.',
+    formulas: [
+      { label:'FM Phase Integration', eq:'θi(t) = ωct + 2πKf ∫ m(t) dt\nΔφ(t) = 2πKf ∫ m(t) dt', note:'If Kf is in Hz/V. Max phase deviation is the max area under m(t).' },
+      { label:'FM Modulation Index', eq:'β_FM = |Δf|_max / f_max\nβ_FM = (Kf·Am) / fm', note:'For a single tone sinusoidal message.' },
+      { label:'⚠ FM Proportionality', eq:'Δf ∝ Am  (Independent of fm)\nβ_FM ∝ Am / fm', note:'GATE TRAP: Frequency deviation in FM does not care about the message frequency!' },
+    ],
+    sections:['FM Sensitivity','Phase Integration','Modulation Index','Crucial Proportionalities'],
+  },
+  {
+    id: 'ch15c', label: 'PM\nDeep Dive', chapter:'Chapter 15 (PM)', color:'#a855f7',
+    desc: 'Phase Modulation: The instantaneous phase directly tracks the message. Therefore, frequency deviation depends on the SLOPE (derivative) of the message.',
+    formulas: [
+      { label:'PM Phase Equation', eq:'θi(t) = ωct + Kp·m(t)', note:'Kp = Phase sensitivity (rad/V).' },
+      { label:'PM Frequency Limits', eq:'Δf(t) = (Kp / 2π) · dm(t)/dt', note:'To find max frequency deviation, you must find the maximum SLOPE of m(t).' },
+      { label:'⚠ PM Proportionality', eq:'Δf ∝ Am · fm\nβ_PM ∝ Am  (Independent of fm)', note:'GATE TRAP: In PM, high-frequency messages cause massive frequency deviations.' },
+    ],
+    sections:['PM Sensitivity','Frequency Calculation','Deviation Limits','Crucial Proportionalities'],
+  },
+  {
+    id: 'ch15d', label: 'Angle Mod\nPYQs', chapter:'Chapter 15 (PYQs)', color:'#ff6b35',
+    desc: 'Advanced problem-solving tricks. Extracting slopes for PM, finding cumulative area for FM, and manipulating Bessel functions for Wideband FM.',
+    formulas: [
+      { label:'Bessel Symmetry', eq:'J_{-n}(β) = (-1)^n J_n(β)', note:'Even harmonics are identical. Odd harmonics invert their sign. Critical for coefficient ratios.' },
+      { label:'Carson\'s Rule (BW)', eq:'BW = 2(Δf + f_max)', note:'Applies to both FM and PM. f_max is the essential bandwidth of the message.' },
+      { label:'Multi-Tone FM Index', eq:'β = Kf(|Am1| + |Am2|) / max(fm1, fm2)', note:'Deviation adds algebraically. Divide by the highest single frequency component.' },
+    ],
+    sections:['Graphical Slopes (PM)','Fractional/Sinc Phase Max','Bessel Coefficients','Bandwidth Problems'],
+  },
+  {
+    id: 'ch16a', label: 'NBFM\n(Narrowband)', chapter:'Chapter 16 (NBFM)', color:'#a855f7',
+    desc: 'Angle modulation where the index β < 0.6. The spectrum mimics AM perfectly, except for a massive 180° phase inversion on the lower sideband.',
+    formulas: [
+      { label:'Condition & Bandwidth', eq:'β ≪ 1  (or β < 0.6)\nBW = 2fm', note:'Exactly the same bandwidth as AM/DSB-FC.' },
+      { label:'⚠ LSB Phase Trap', eq:'S(t) = Carrier + USB - LSB', note:'Notice the negative sign! The lower sideband is inverted compared to AM.' },
+      { label:'Total Power', eq:'Pt = Pc[1 + (β²/2)]', note:'Power calculation is mathematically identical to single-tone AM.' },
+    ],
+    sections:['NBFM Condition','Derivation & Approximation','Phase Trap','Power Calculation'],
+  },
+  {
+    id: 'ch16b', label: 'WBFM &\nBessel', chapter:'Chapter 16 (WBFM)', color:'#a855f7',
+    desc: 'Wideband Angle Modulation (β > 0.6). Uses Bessel functions to map out an infinite spectrum of sidebands while miraculously conserving total power.',
+    formulas: [
+      { label:'Carson\'s Rule (BW)', eq:'BW = 2(β + 1)fm\nBW = 2(Δf + fm)', note:'Captures 98% of the total signal power.' },
+      { label:'Power Conservation', eq:'Σ Jn²(β) = 1  →  Pt = Pc', note:'The total transmitted power is always constant and equal to the unmodulated carrier power. Massive exam fact.' },
+      { label:'100% Efficiency', eq:'J₀(β) = 0  at  β = 2.4, 5.5, 8.6...', note:'Efficiency hits 100% when the carrier component vanishes entirely.' },
+    ],
+    sections:['Bessel Properties','Power Conservation Proof','Carson\'s Rule','100% Efficiency'],
+  },
+  {
+    id: 'ch18a', label: 'Probability\nBasics', chapter:'Chapter 18', color:'#00d4ff',
+    desc: 'Fundamental definitions of Random Experiments, Sample Spaces, and the Axioms of Probability.',
+    formulas: [
+      { label:'Random Experiment', eq:'0 < P(E) < 1', note:'Outcomes are uncertain. If P(E)=1 or 0, it is deterministic.' },
+      { label:'Axiom of Certainty', eq:'P(S) = 1', note:'The probability of the entire sample space is always 1.' },
+      { label:'General Addition Rule', eq:'P(A ∪ B) = P(A) + P(B) - P(A ∩ B)', note:'Subtract the intersection to avoid double-counting.' },
+    ],
+    sections:['Experiment & Outcome', 'Sample Space', 'Axioms of Probability'],
+  },
+  {
+    id: 'ch18b', label: 'Event\nTypes', chapter:'Chapter 18', color:'#22c55e',
+    desc: 'Mathematical conditions for different types of events. Do not mix up Mutually Exclusive with Independent!',
+    formulas: [
+      { label:'Mutually Exclusive', eq:'E₁ ∩ E₂ = φ', note:'Cannot occur simultaneously. (Intersection is a null set).' },
+      { label:'Independent Events', eq:'P(E₁ ∩ E₂) = P(E₁) · P(E₂)', note:'⚠ GATE TRAP: The occurrence of one does not affect the other.' },
+      { label:'Exhaustive Events', eq:'E₁ ∪ E₂ = S', note:'At least one of the events is guaranteed to happen.' },
+    ],
+    sections:['Mutually Exclusive', 'Independent', 'Equally Likely', 'Exhaustive'],
+  },
+  {
+    id: 'ch18c', label: 'Random\nVariables', chapter:'Chapter 18', color:'#ffd700',
+    desc: 'A Random Variable (X) is NOT a variable. It is a mapping rule from the sample space to the real number line.',
+    formulas: [
+      { label:'Mapping Concept', eq:'S → (-∞, ∞)', note:'Assigns a specific real number to every outcome.' },
+      { label:'Types of RVs', eq:'Discrete: Countable values\nContinuous: Infinite range\nMixed: Jumps + Range', note:'Discrete RVs are described by a Probability Mass Function (PMF).' },
+      { label:'PMF Validity', eq:'Σ Px(xi) = 1', note:'The sum of all individual probabilities must exactly equal 1.' },
+    ],
+    sections:['Mapping Concept', 'Discrete vs Continuous', 'Probability Mass Function (PMF)'],
+  },
+  {
+    id: 'ch18d', label: 'CDF\nProperties', chapter:'Chapter 18', color:'#ff6b35',
+    desc: 'Cumulative Distribution Function. The foundational graph of probability. It is monotonically non-decreasing and right-continuous.',
+    formulas: [
+      { label:'CDF Definition', eq:'Fx(x) = P(X ≤ x)', note:'The probability that X takes a value less than or equal to x.' },
+      { label:'Absolute Bounds', eq:'Fx(-∞) = 0\nFx(∞) = 1', note:'The graph always starts at 0 and plateaus at 1. It NEVER decreases.' },
+      { label:'Right Continuity', eq:'Fx(a) = Fx(a⁺)', note:'At a discontinuous jump, the exact value tracks the right-hand limit.' },
+    ],
+    sections:['Bounds & Range', 'Non-Decreasing Rule', 'Right Continuity', 'Validity Conditions'],
+  },
+  {
+    id: 'ch18e', label: 'CDF Interval\nMath', chapter:'Chapter 18 (Math)', color:'#ff6b35',
+    desc: 'Calculating probabilities over intervals. A continuous point has 0 exact probability, but a discontinuity (jump) represents an exact point probability.',
+    formulas: [
+      { label:'Interval Probability', eq:'P(x₁ < X ≤ x₂) = Fx(x₂) - Fx(x₁)', note:'Pay strict attention to the inclusive/exclusive inequality signs!' },
+      { label:'Point Probability (Jump)', eq:'P(X = a) = Fx(a⁺) - Fx(a⁻)', note:'⚠ GATE TRAP: The exact probability at a point equals the size of the vertical jump on the CDF graph.' },
+      { label:'Continuous Point', eq:'P(X = a) = 0', note:'If the CDF is perfectly smooth at "a", the probability of hitting exactly "a" is zero.' },
+    ],
+    sections:['Interval Probabilities', 'Single Value Probabilities', 'Jump Size Analysis'],
+  },
+  {
+    id: 'ch19a', label: 'PDF\nProperties', chapter:'Chapter 19 (PDF)', color:'#00d4ff',
+    desc: 'The Probability Density Function (PDF) is the exact derivative of the CDF. It defines density, not exact probability.',
+    formulas: [
+      { label:'Definition & Area', eq:'fx(x) = d/dx Fx(x)\n∫ fx(x) dx = 1', note:'The total area under the PDF curve across all space MUST exactly equal 1.' },
+      { label:'Non-Negativity', eq:'fx(x) ≥ 0', note:'The PDF graph must exist entirely on or above the x-axis, but it can increase or decrease.' },
+      { label:'Symmetry (Even Function)', eq:'2 ∫ fx(x) dx = 1  (from 0 to ∞)', note:'If the PDF is perfectly symmetric across the y-axis, you only need to integrate half of it.' },
+    ],
+    sections:['PDF Definition', 'Properties & Validity', 'Symmetry Parameters'],
+  },
+  {
+    id: 'ch19b', label: 'PDF\nIntervals', chapter:'Chapter 19 (Math)', color:'#ff6b35',
+    desc: 'Calculating probabilities using PDF areas. You must pay critical attention to inclusive (≤) vs exclusive (<) inequalities!',
+    formulas: [
+      { label:'Range Probability', eq:'P(a < X ≤ b) = ∫ fx(x) dx', note:'Integrate the PDF strictly between the bounds. Watch out for impulses at a or b!' },
+      { label:'⚠ Point Probability (Impulse)', eq:'P(X = a) = Area of Impulse', note:'If the PDF has a Dirac delta impulse at "a", the exact probability equals the weight/area of that impulse.' },
+      { label:'Continuous Point Trap', eq:'P(X = a) = 0', note:'If the PDF curve is perfectly continuous at "a" (no impulse), the exact point probability is ZERO.' },
+    ],
+    sections:['Probability in a Range', 'Point Probabilities', 'Continuous vs Impulse'],
+  },
+  {
+    id: 'ch19c', label: 'Mixed RVs\n& Traps', chapter:'Chapter 19 (Adv)', color:'#ffd700',
+    desc: 'Handling Mixed Random Variables and advanced shortcuts. Mixed PDFs contain both continuous shapes and discrete impulses.',
+    formulas: [
+      { label:'⚠ Inclusive vs Exclusive', eq:'P(-1 < X < 1) ignores boundary impulses.\nP(-1 ≤ X ≤ 1) INCLUDES boundary impulses.', note:'GATE TRAP: Always check if the inequality line includes the boundary!' },
+      { label:'Laplacian Shortcut', eq:'f(x) = M·e^(-α|x|) + N·e^(-β|x|)\n→ (2M / α) + (2N / β) = 1', note:'Instructor\'s rapid shortcut for calculating unknown coefficients using the total area rule.' },
+      { label:'D.R.V. Structure', eq:'PMF = Discrete Probabilities\nPDF = Pure Impulses\nCDF = Pure Staircase', note:'A completely discrete variable has zero continuous area.' },
+    ],
+    sections:['Mixed RV Analysis', 'Triangular PDF Geometry', 'Laplacian Normalization', 'D.R.V. Deep Dive'],
+  },
+  {
+    id: 'ch20', label: 'DRV vs CRV\nAnalysis', chapter:'Chapter 20', color:'#ffd700',
+    desc: 'Deep dive into Discrete vs Continuous variables. A D.R.V. PDF is built entirely of impulses, while a C.R.V. PDF has zero point-probabilities.',
+    formulas: [
+      { label:'D.R.V. PDF', eq:'fx(x) = Σ P(X=xi)·δ(x - xi)', note:'A D.R.V. PDF is exclusively a train of Dirac delta impulses.' },
+      { label:'C.R.V. Point Prob', eq:'P(X = a) = 0', note:'Because the C.R.V. PDF lacks impulses, the probability of an exact value is always zero.' },
+      { label:'D.R.V. CDF', eq:'Fx(x) = Σ P(X=xi)·u(x - xi)', note:'Integrating impulses gives unit steps, creating a pure staircase CDF.' },
+    ],
+    sections:['PMF to PDF','CDF Staircase','CRV Characteristics','Mixed RVs'],
+  },
+  {
+    id: 'ch21', label: 'Expectation\nOperator', chapter:'Chapter 21', color:'#22c55e',
+    desc: 'The statistical average. It acts as a linear operator that maps random variables to deterministic expected values.',
+    formulas: [
+      { label:'Linearity', eq:'E[aX + bY] = aE[X] + bE[Y]', note:'Expectation distributes linearly. However, E[g(X)] ≠ g(E[X]) in general.' },
+      { label:'C.R.V. Expectation', eq:'E[g(X)] = ∫ g(x)·fx(x) dx', note:'Integrate the function against the PDF over all space.' },
+      { label:'D.R.V. Expectation', eq:'E[g(X)] = Σ g(xi)·P(X=xi)', note:'Sum the function values weighted by their PMF probabilities.' },
+    ],
+    sections:['Linearity Rules','C.R.V. Integration','D.R.V. Summation'],
+  },
+  {
+    id: 'ch22', label: 'Moments &\nPower', chapter:'Chapters 22 & 23', color:'#ff6b35',
+    desc: 'Moments link abstract probability to physical signal power. Mean is DC, Mean Square is Total Power, Variance is AC Power.',
+    formulas: [
+      { label:'Mean (DC Value)', eq:'E[X] = μx = m₁', note:'First moment about the origin. (E[X])² is the DC power.' },
+      { label:'Mean Square (Total Pwr)', eq:'E[X²] = m₂', note:'Second moment about the origin. Represents the total average power of the signal.' },
+      { label:'Variance (AC Power)', eq:'σx² = E[X²] - (E[X])²', note:'Second central moment. Total Power minus DC Power.' },
+      { label:'Linear Transf. Variance', eq:'Var(aX + b) = a²·σx²', note:'Constants shift the DC level but do not affect the AC spread (variance).' },
+    ],
+    sections:['nth Order Moments','Central Moments','AC vs DC Power','Linear Transformation'],
+  },
+  {
+    id: 'ch25', label: 'Distribution\nTypes', chapter:'Chapter 25', color:'#00d4ff',
+    desc: 'Broad classification of Random Variables into standard models. C.R.V.s use Probability Density Functions, while D.R.V.s use Probability Mass Functions.',
+    formulas: [
+      { label:'C.R.V. Models (PDF)', eq:'Uniform, Triangular, Gaussian,\nRayleigh, Exponential', note:'Describes the density of continuous intervals.' },
+      { label:'D.R.V. Models (PMF)', eq:'Binomial, Poisson, Geometric', note:'Describes discrete point probabilities.' },
+      { label:'Geometric Expectation', eq:'E[X] = (1/p) = (1/6) / (1/6)² = 6', note:'Uses the infinite series expansion (1-x)⁻² to solve repetition problems (like rolling a 3).' },
+    ],
+    sections:['Classification of R.V.s', 'Geometric Sequence Expectation'],
+  },
+  {
+    id: 'ch26', label: 'Uniform\nC.R.V.', chapter:'Chapters 26 & 27', color:'#22c55e',
+    desc: 'A flat, constant density function where probability is equally spread across an interval [a, b].',
+    formulas: [
+      { label:'PDF Function', eq:'fx(x) = 1 / (b - a)', note:'Forms a rectangular block to maintain a total area of 1.' },
+      { label:'Standard Mean & Variance', eq:'E[X] = (a + b) / 2\nσ² = (b - a)² / 12', note:'Calculated via standard integration of the flat PDF.' },
+      { label:'Symmetric Uniform [-m, m]', eq:'E[X] = 0\nσ² = m² / 3', note:'When centered exactly at the origin.' },
+    ],
+    sections:['Mathematical Forms', 'CDF Ramp', 'Symmetric Problems'],
+  },
+  {
+    id: 'ch28', label: 'Triangular\nC.R.V.', chapter:'Chapter 28', color:'#ffd700',
+    desc: 'A distribution that peaks at a specific mode and tapers off linearly to zero at its boundaries.',
+    formulas: [
+      { label:'Peak Height', eq:'fx(m) = 2 / (b - a)', note:'Required to maintain a total triangular area of 1.' },
+      { label:'General Mean', eq:'E[X] = (a + m + b) / 3', note:'Where m is the peak (mode) of the triangle.' },
+      { label:'Symmetric Triangular [-m, m]', eq:'E[X] = 0\nσ² = m² / 6', note:'Peak occurs exactly at the origin (x=0) with a height of 1/m.' },
+    ],
+    sections:['General Form', 'Symmetric Parameters', 'Variance Shortcut'],
+  },
+  {
+    id: 'ch29', label: 'Gaussian\n(Normal)', chapter:'Chapter 29', color:'#ff6b35',
+    desc: 'The ubiquitous bell-shaped distribution. It is perfectly symmetric and characterized entirely by its mean and variance.',
+    formulas: [
+      { label:'Gaussian PDF', eq:'fx(x) = [1 / √(2πσ²)] · e^[-(x-μ)² / 2σ²]', note:'The absolute maximum peak occurs exactly at the mean (μ).' },
+      { label:'Standard Notation', eq:'X ~ N[μ, σ²]', note:'If N[0,1], it is a Standard Normal Distribution.' },
+      { label:'Integration Trick', eq:'∫ e^[-(x-μ)² / 2σ²] dx = √(2πσ²)', note:'Extracts the normalization constant. Crucial shortcut for bypassing complex integration.' },
+    ],
+    sections:['Nomenclature', 'Bell Curve Properties', 'Area Normalization Trick'],
+  },
+  {
+    id: 'ch30', label: 'Gaussian\nTricks', chapter:'Chapter 30', color:'#ffd700',
+    desc: 'Bypassing impossible manual integrations by exploiting symmetry, even functions, and forcing the integrand to match a valid Gaussian PDF.',
+    formulas: [
+      { label:'Forcing a Valid PDF', eq:'Multiply and divide by √(2πσ²)', note:'The integral of a valid PDF across all space is exactly 1. Whatever constant you factored out becomes your final answer.' },
+      { label:'Extracting Moments', eq:'∫ x²·fx(x) dx = E[X²] = μ² + σ²', note:'If the valid PDF is multiplied by x², the integral maps directly to the Mean Square Value.' },
+      { label:'Symmetry & Even Bounds', eq:'∫₀^∞ e^(-ax²) dx = 1/2 ∫ e^(-ax²)', note:'Because the Gaussian decay is perfectly symmetric, integrating from 0 is exactly half the total area.' },
+    ],
+    sections:['Half Areas', 'Extracting Moments', 'Forcing Valid PDF', 'Even Function Bounds'],
+  },
+  {
+    id: 'ch31', label: 'Q-Function', chapter:'Chapter 31', color:'#a855f7',
+    desc: 'The standard right-tail probability function for the Standard Normal distribution. Used because the Gaussian PDF has no closed-form integral.',
+    formulas: [
+      { label:'Right Tail Probability', eq:'P(X > a) = Q((a - μ) / σ)', note:'Scales any Gaussian threshold (a) into the normalized Q-function format.' },
+      { label:'Gaussian CDF', eq:'Fx(z) = 1 - Q((z - μ) / σ)', note:'Because CDF is P(X ≤ z), we use the complement rule 1 - P(X > z).' },
+      { label:'Symmetry Rule', eq:'Q(x) + Q(-x) = 1', note:'Also, Q(0) = 1/2, Q(-∞) = 1, and Q(∞) = 0.' },
+    ],
+    sections:['Q-Function Definition', 'Properties & Symmetry', 'Calculating P(X > a)', 'CDF of GRV'],
+  },
+  {
+    id: 'ch32', label: 'Gaussian\nNumericals', chapter:'Chapter 32', color:'#ff6b35',
+    desc: 'Solving interval and threshold probability problems using the Q-Function.',
+    formulas: [
+      { label:'Interval Probabilities', eq:'P(a < X ≤ b) = Fx(b) - Fx(a)\n= Q((a-μ)/σ) - Q((b-μ)/σ)', note:'⚠ GATE TRAP: Notice how the \'a\' and \'b\' terms swap positions when you substitute 1 - Q() for the CDF!' },
+      { label:'Q-Function Area', eq:'Q(x) represents shaded area to the right', note:'As x increases, the tail area Q(x) monotonically decreases.' },
+      { label:'Non-Gaussian vs GRV', eq:'Non-Gaussian: Integrate manually\nGaussian: Use Q-function', note:'Never try to manually integrate a Gaussian PDF on an exam.' },
+    ],
+    sections:['Tail Probability', 'Visualizing PDF vs CDF', 'Interval Probabilities', 'Master Summary'],
+  },
+  {
+    id: 'ch33', label: 'Bivariate\nR.V. (2D)', chapter:'Chapter 33', color:'#00d4ff',
+    desc: 'Transitioning from single variables to Joint Probability Density Functions. Requires double integration over a 2D region.',
+    formulas: [
+      { label:'2D Region Probability', eq:'P(X,Y ∈ R) = ∫∫_R fxy(x,y) dx dy', note:'The region R is the intersection of the condition region and the existence region.' },
+      { label:'Total Volume = 1', eq:'∫∫ fxy(x,y) dx dy = 1', note:'Used to find unknown scaling constants (like C) in the Joint PDF equation.' },
+      { label:'Independence', eq:'fxy(x,y) = fx(x)·fy(y)', note:'If X and Y are independent, the double integral can be separated into the product of two 1D integrals.' },
+    ],
+    sections:['Joint PDF Notation', '2-D Integration Region', 'Complement Rule in 2D', 'Independence', 'Finding Constant C'],
+  },
+  {
+    id: 'ch30', label: 'Gaussian\nTricks', chapter:'Chapter 30', color:'#ffd700',
+    desc: 'Advanced Gaussian PDF integration tricks. Bypasses manual calculation using symmetry, even functions, and matching standard expected values to force a valid PDF.',
+    formulas: [
+      { label:'Symmetry (Half Areas)', eq:'\\int_{\\mu_x}^{\\infty} f_X(x) dx = \\frac{1}{2}', note:'Because the Gaussian PDF is perfectly symmetric around its mean, integrating from the mean to ±∞ is exactly 0.5.' },
+      { label:'Extracting Moments', eq:'\\int_{-\\infty}^{\\infty} x^2 \\cdot f_X(x) dx = E[X^2] = \\mu_x^2 + \\sigma_x^2', note:'When integrating a valid PDF multiplied by x or x², it maps directly to the Mean or Mean Square Value.' },
+      { label:'Forcing Valid PDF', eq:'-5x^2 = \\frac{-x^2}{2\\sigma_x^2} \\implies 2\\sigma_x^2 = \\frac{1}{5}', note:'Match exponent to standard form, then multiply/divide by \\(\\sqrt{2\\pi\\sigma^2}\\) to extract the constant.' },
+      { label:'Even Function Bounds', eq:'\\int_{0}^{\\infty} e^{-3x^2} dx = \\frac{1}{2} \\int_{-\\infty}^{\\infty} e^{-3x^2} dx', note:'Symmetric across the y-axis. Integrating from 0 to ∞ is exactly half the total area.' },
+    ],
+    sections:['Gaussian Symmetry', 'Extracting Moments', 'Trick 1: Forcing a Valid PDF', 'Trick 2: Even Function Bounds', 'Interactive Area Visuals'],
+  },
+  {
+    id: 'ch31', label: 'Q-Function', chapter:'Chapter 31', color:'#a855f7',
+    desc: 'The Q-Function calculates the right-tail probability of a Standard Normal distribution, completely bypassing complex PDF integration for Gaussian Random Variables.',
+    formulas: [
+      { label:'Adv. Moment Trick', eq:'I = \\sqrt{12\\pi} E[X^2] = 22\\sqrt{12\\pi}', note:'Match exponent to find μ=4, σ²=6. Multiply/divide by \\(\\sqrt{12\\pi}\\) to force valid PDF and easily extract E[X²].' },
+      { label:'Q-Function Definition', eq:'Q(x) = \\int_{x}^{\\infty} \\frac{1}{\\sqrt{2\\pi}} e^{\\frac{-z^2}{2}} dz', note:'Calculates the shaded right-tail probability for a Standard Normal N(0,1) distribution.' },
+      { label:'Key Properties', eq:'Q(0) = 1/2, \\quad Q(-\\infty) = 1, \\quad Q(\\infty) = 0', note:'Also follows the strict symmetry rule: Q(x) + Q(-x) = 1. Tail area decreases as x increases.' },
+      { label:'P(X > a) for GRV', eq:'P(X > a) = Q\\left( \\frac{a - \\mu_x}{\\sigma_x} \\right)', note:'Scales the limit using the Q-function. Non-Gaussian variables require manual integration instead.' },
+      { label:'CDF of GRV', eq:'F_X(z) = 1 - Q\\left( \\frac{z - \\mu_x}{\\sigma_x} \\right)', note:'CDF is P(X ≤ z). Use the complement rule 1 - P(X > z) to express it entirely via the Q-function.' },
+    ],
+    sections:['Adv Moment Extraction', 'Q-Function Definition', 'Properties & Symmetry', 'Calculating P(X > a)', 'CDF of GRV'],
+  },
+  {
+    id: 'ch32', label: 'Gaussian\nNumericals', chapter:'Chapter 32', color:'#ff6b35',
+    desc: 'Applying the Q-function and CDF concepts to solve numerical interval problems for Gaussian Random Variables. Pay strict attention to the interval boundaries.',
+    formulas: [
+      { label:'Tail Prob Trap', eq:'P(X > a) = \\text{Integrate PDF (Non-GRV)}\nP(X > a) = Q-Function (GRV)', note:'Always verify if the variable is explicitly stated as Gaussian before using Q.' },
+      { label:'Visualizing G.R.V.', eq:'\\text{PDF } f_X(z) \\rightarrow \\text{Bell Curve}\n\\text{CDF } F_X(z) \\rightarrow \\text{S-Curve}', note:'The PDF peaks at the mean. The CDF hits exactly 0.5 at the mean.' },
+      { label:'Interval Boundaries', eq:'P(a < X \\le b) = F_X(b^+) - F_X(a^+)', note:'Standard probability interval calculated by subtracting the lower CDF boundary from the upper.' },
+      { label:'Interval (Q-Function)', eq:'P(a < X \\le b) = Q\\left(\\frac{a^+ - \\mu_X}{\\sigma_X}\\right) - Q\\left(\\frac{b^+ - \\mu_X}{\\sigma_X}\\right)', note:'⚠ GATE TRAP: Notice how the a and b terms swap positions when you substitute \\(1 - Q()\\)!' },
+    ],
+    sections:['Tail Probability', 'CDF Definitions', 'Visualizing Distributions', 'Interval Probabilities', 'Master Summary Table'],
+  },
+  {
+    id: 'ch33', label: 'Bivariate\nR.V. (2D)', chapter:'Chapter 33', color:'#00d4ff',
+    desc: 'Transitioning from single events to multiple variables. Requires understanding Joint Probability Density Functions and performing double integration over 2D regions.',
+    formulas: [
+      { label:'2D Region Probability', eq:'P(X,Y \\in R) = \\iint_R f_{XY}(x,y) dx dy', note:'The region R is the intersection of the condition region (R1) and the existence region (R2).' },
+      { label:'Complement Rule in 2D', eq:'P(X+Y \\ge 3) = 1 - P(X+Y < 3)', note:'Use this if integrating the primary region is too complex.' },
+      { label:'Independence', eq:'f_{XY}(x,y) = f_X(x) \\cdot f_Y(y)', note:'If independent, the double integral separates into the product of two 1D marginal integrals.' },
+      { label:'Finding Constant C', eq:'\\iint_{R_2} f_{XY}(x,y) dx dy = 1', note:'Just like 1D PDF area is 1, the total volume under a Joint PDF across its entire existence region must be 1.' },
+      { label:'Double Integration', eq:'\\int_{x=0}^{2} \\left( \\int_{y=1}^{3} C x y \\, dy \\right) dx = 1', note:'Integrate inner (w.r.t y) treating x as constant, then substitute result into outer integral (w.r.t x).' },
+    ],
+    sections:['Notation Updates', 'Probability in 2-D Region', 'Complement Rule', 'Independence', 'Finding Constant C', 'Double Integration Breakdown'],
+  },
+  {
+    id: 'ch34', label: '2D\nIntegration', chapter:'Chapter 34', color:'#00d4ff',
+    desc: 'Solving 2D Joint PDFs over geometric boundaries. Uses the Arrow Method (differential strip) to mathematically extract integration limits from visual regions.',
+    formulas: [
+      { label:'Arrow Method (Limits)', eq:'\\int_{x=0}^{1} \\int_{y=0}^{1-x} Kx \\, dy \\, dx = 1', note:'Vertical arrow tail hits y=0, head hits slanted roof y=1-x. The arrow then sweeps horizontally from x=0 to x=1.' },
+      { label:'Inner Integral (dy)', eq:'\\int_{0}^{1-x} Kx \\, dy = Kx(1-x) = Kx - Kx^2', note:'Treat x as a constant while integrating with respect to y.' },
+      { label:'Solving for K', eq:'K \\left( \\frac{1}{2} - \\frac{1}{3} \\right) = 1 \\implies K = 6', note:'Evaluate the outer integral (dx) and set equal to the total volume of 1.' },
+      { label:'Complement Rule (Region)', eq:'P(X < 1/2) = 1 - P(X \\ge 1/2)', note:'The region X ≥ 1/2 is a simpler sub-triangle. Integrate over that and subtract from 1.' },
+    ],
+    sections:['Problem Setup (Triangle)', 'The Arrow Method', 'Solving for K', 'Sub-Region Probabilities', 'Interactive Visualization'],
+  },
+  {
+    id: 'ch35', label: 'Joint\nPMF', chapter:'Chapter 35', color:'#ffd700',
+    desc: 'Handling Discrete Bivariate Random Variables. Probabilities map to a Joint PMF grid where the inner cells are intersections and outer edges are Marginal PMFs.',
+    formulas: [
+      { label:'Total Grid Sum', eq:'\\sum \\sum p_{XY}(x,y) = 1', note:'The sum of every intersection cell inside the Joint PMF table must exactly equal 1.' },
+      { label:'Finding Constant C', eq:'20C + 24C + 36C = 1 \\implies C = \\frac{1}{80}', note:'Sum up all the row probabilities and set equal to 1 to find the scaling constant.' },
+      { label:'Subset Probability', eq:'P\\{(X \\le 1) \\cap (Y > 2)\\} = 30C = \\frac{3}{8}', note:'Identify the block of cells satisfying both conditions and sum their probabilities.' },
+      { label:'Independent Binary R.V.', eq:'P(X \\cap Y) = P(X) \\cdot P(Y)', note:'If independent, build the table by simply multiplying the marginal probabilities (e.g., p and q).' },
+      { label:'Complement Shortcut', eq:'P(X+Y \\ge 1) = 1 - P(X=0 \\cap Y=0) = 1 - pq', note:'Much faster than algebraically summing all three passing conditions.' },
+    ],
+    sections:['Joint PMF Table structure', 'Finding Constant C', 'Calculating Subsets', 'Independent Binary R.V.', 'Tabular vs Algebraic Math'],
+  },
+  
+];
+
+// ─── EDGES ────────────────────────────────────────────────────────────────────
+const EDGES = [
+  ['ch1','ch2'],['ch1','ch3'],['ch1','ch4'],
+  ['ch2','ch5'],['ch2','ch8'],
+  ['ch3','ch8'],
+  ['ch4','ch5'],['ch4','ch8'],
+  ['ch5','ch9'],['ch8','ch9'],
+  ['ch9','ch10'],['ch10','ch11'],
+  ['ch11','ch12'],
+  ['ch1','ch15'],['ch15','ch15b'],['ch15','ch15c'],
+  ['ch15b','ch15c'],
+  ['ch2','ch10'],['ch5','ch12'],
+  ['ch2','ch7'],
+  ['ch7','ch8'],
+  ['ch3','ch13'],  // Connects Envelope Detector to Hardware Limits
+  ['ch11','ch12'], // Connects Wave Shapes to Adv Spectrum
+  ['ch12','ch14'], // Connects Adv Spectrum to GATE PYQs
+  ['ch10','ch14'], // Connects Multi-Tone to GATE PYQs (for the RSS math)
+  ['ch15b', 'ch15d'],
+  ['ch15c', 'ch15d'],
+  ['ch15', 'ch16a'],  // Basics to NBFM
+  ['ch15', 'ch16b'],  // Basics to WBFM
+  ['ch16b', 'ch15d'], // WBFM to Angle Mod PYQs (for Bessel traps)
+  ['ch18a', 'ch18b'], // Basics to Event Types
+  ['ch18a', 'ch18c'], // Basics to Random Variables
+  ['ch18c', 'ch18d'], // Random Variables to CDF Properties
+  ['ch18d', 'ch18e'], // CDF Properties to CDF Math
+  ['ch18d', 'ch19a'], // CDF Properties connects to PDF Properties
+  ['ch18e', 'ch19b'], // CDF Math connects to PDF Interval Math
+  ['ch19a', 'ch19b'], // PDF Properties connects to PDF Intervals
+  ['ch18c', 'ch19c'], // Random Variables connects to Mixed RVs
+  ['ch19b', 'ch19c'], // PDF Intervals connects to Mixed RVs & Traps
+  ['ch19c', 'ch20'], // Mixed RVs leads into DRV/CRV deep dive
+  ['ch20', 'ch21'],  // RV analysis unlocks the Expectation Operator
+  ['ch21', 'ch22'],  // Expectation operator builds the Moments & Power
+  ['ch20', 'ch25'], // DRV/CRV analysis connects to specific Distribution Types
+  ['ch25', 'ch26'], // Distribution Types branches to Uniform
+  ['ch25', 'ch28'], // Distribution Types branches to Triangular
+  ['ch25', 'ch29'], // Distribution Types branches to Gaussian
+  ['ch19b', 'ch33'], // 1D PDF Interval Math evolves into 2D Bivariate Joint PDFs
+
+  // --- GAUSSIAN EXPANSION CONNECTIONS ---
+  ['ch29', 'ch30'],  // Gaussian connects to Gaussian Integration Tricks
+  ['ch29', 'ch31'],  // Gaussian connects to the Q-Function
+  ['ch31', 'ch32'],  // Q-Function connects directly to Gaussian Numericals
+  ['ch30', 'ch32'],  // Tricks also flow into Gaussian Numericals
+  
+  // --- USER MANUAL CONNECTIONS ---
+  ['ch22', 'ch30'],  // Links "Moments & Power" to "Gaussian Tricks"
+  ['ch19a', 'ch30'], // Links "PDF Properties" to "Gaussian Tricks"
+  ['ch30', 'ch31'],  // Links "Gaussian Tricks" directly to "Q-Function"
+  ['ch18d', 'ch31'], // Links "CDF Properties" to "Q-Function"
+
+  // --- BIVARIATE EXPANSION CONNECTIONS ---
+  ['ch33', 'ch34'], // Bivariate intro connects to Continuous 2D Integration
+  ['ch33', 'ch35'], // Bivariate intro connects to Discrete Joint PMFs
+];
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ─── LAYOUT (manual positions 0..1) ──────────────────────────────────────────
+const POSITIONS = {
+  ch1:  [0.50, 0.12],
+  ch2:  [0.30, 0.25],
+  ch3:  [0.68, 0.25],
+  ch4:  [0.18, 0.38],
+  ch5:  [0.38, 0.42],
+  ch8:  [0.62, 0.42],
+  ch9:  [0.50, 0.58],
+  ch10: [0.30, 0.68],
+  ch11: [0.20, 0.80],
+  ch12: [0.40, 0.82],
+  ch15: [0.75, 0.30],
+  ch15b:[0.88, 0.50],
+  ch15c:[0.72, 0.60],
+
+  // --- GAUSSIAN EXPANSION POSITIONS ---
+  ch30: [0.82, 0.70],
+  ch31: [0.92, 0.72],
+  ch32: [0.87, 0.84],
+
+  // --- BIVARIATE EXPANSION POSITIONS ---
+  ch33: [0.65, 0.88], 
+  ch34: [0.55, 0.94], // Places 2D Integration to the bottom-left of Bivariate
+  ch35: [0.75, 0.94], // Places Joint PMF to the bottom-right of Bivariate
+};
+
+// ─── CANVAS SETUP & GLOBALS ──────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [], pulses = [], hoveredNode = null, selectedNode = null;
+let time = 0;
+
+// Camera, Physics, & Filter State
+let camera = { x: 0, y: 0, zoom: 1 };
+let isDragging = false, lastMouse = { x: 0, y: 0 };
+let activeFilter = null;
+
+// DOM Elements
+const tooltip = document.getElementById('tooltip');
+const ttTitle = document.getElementById('tt-title');
+const ttHint = document.getElementById('tt-hint');
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── PHYSICS INITIALIZATION ──────────────────────────────────────────────────
+NODES.forEach(n => {
+  if (POSITIONS[n.id]) {
+    n.x = W * POSITIONS[n.id][0];
+    n.y = H * POSITIONS[n.id][1];
+  } else {
+    n.x = W/2 + (Math.random()-0.5)*800; 
+    n.y = H/2 + (Math.random()-0.5)*600;
+  }
+  n.vx = 0; n.vy = 0;
+});
+
+function getPos(id) {
+  const node = NODES.find(n => n.id === id);
+  return node ? { x: node.x, y: node.y } : { x: W/2, y: H/2 };
+}
+
+// ─── PARTICLES & PULSES ──────────────────────────────────────────────────────
+for (let i = 0; i < 60; i++) {
+  particles.push({
+    x: Math.random() * 1920, y: Math.random() * 1080,
+    vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3,
+    r: Math.random()*1.5+0.3, a: Math.random()*0.3+0.05
+  });
+}
+
+function spawnPulse() {
+  if (EDGES.length === 0) return;
+  const edge = EDGES[Math.floor(Math.random()*EDGES.length)];
+  const from = getPos(edge[0]), to = getPos(edge[1]);
+  pulses.push({ x: from.x, y: from.y, tx: to.x, ty: to.y, t: 0, speed: 0.008 + Math.random()*0.006 });
+}
+setInterval(spawnPulse, 600);
+
+// ─── DRAW LOOP ────────────────────────────────────────────────────────────────
+function draw() {
+  time += 0.01;
+  ctx.clearRect(0, 0, W, H);
+
+  // --- PHYSICS ENGINE ---
+  const K_REP = 3500, K_SPRING = 0.02, SPRING_LEN = 140, DAMP = 0.85;
+  for(let i=0; i<NODES.length; i++) {
+    for(let j=i+1; j<NODES.length; j++) {
+      let dx = NODES[i].x - NODES[j].x, dy = NODES[i].y - NODES[j].y;
+      let dist = Math.hypot(dx, dy) || 1;
+      let f = K_REP / (dist * dist);
+      NODES[i].vx += (dx/dist)*f; NODES[i].vy += (dy/dist)*f;
+      NODES[j].vx -= (dx/dist)*f; NODES[j].vy -= (dy/dist)*f;
+    }
+  }
+  EDGES.forEach(([aId, bId]) => {
+    let a = NODES.find(n => n.id === aId), b = NODES.find(n => n.id === bId);
+    if(!a || !b) return;
+    let dx = b.x - a.x, dy = b.y - a.y;
+    let dist = Math.hypot(dx, dy) || 1;
+    let f = (dist - SPRING_LEN) * K_SPRING;
+    a.vx += (dx/dist)*f; a.vy += (dy/dist)*f;
+    b.vx -= (dx/dist)*f; b.vy -= (dy/dist)*f;
+  });
+  NODES.forEach(n => {
+    n.vx += (W/2 - n.x) * 0.0015; n.vy += (H/2 - n.y) * 0.0015; // Center gravity
+    n.vx *= DAMP; n.vy *= DAMP;
+    n.x += n.vx; n.y += n.vy;
+  });
+
+  // --- CAMERA APPLY ---
+  ctx.save();
+  ctx.translate(camera.x, camera.y);
+  ctx.scale(camera.zoom, camera.zoom);
+
+  // Background grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.015)';
+  ctx.lineWidth = 1;
+  const gs = 60;
+  // Expand grid drawing so it covers pan area
+  for (let x = -W; x < W*2; x += gs) { ctx.beginPath(); ctx.moveTo(x,-H); ctx.lineTo(x,H*2); ctx.stroke(); }
+  for (let y = -H; y < H*2; y += gs) { ctx.beginPath(); ctx.moveTo(-W,y); ctx.lineTo(W*2,y); ctx.stroke(); }
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(0,212,255,${p.a})`;
+    ctx.fill();
+  });
+
+  // Edges
+  EDGES.forEach(([a, b]) => {
+    const pa = getPos(a), pb = getPos(b);
+    const isHighlighted = selectedNode && (selectedNode.id === a || selectedNode.id === b);
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.strokeStyle = isHighlighted ? 'rgba(0,212,255,0.35)' : 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = isHighlighted ? 1.5 : 1;
+    ctx.stroke();
+  });
+
+  // Pulses
+  pulses = pulses.filter(p => p.t <= 1);
+  pulses.forEach(p => {
+    p.t += p.speed;
+    const x = p.x + (p.tx - p.x) * p.t;
+    const y = p.y + (p.ty - p.y) * p.t;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 8);
+    g.addColorStop(0, 'rgba(0,212,255,0.9)');
+    g.addColorStop(1, 'rgba(0,212,255,0)');
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI*2);
+    ctx.fillStyle = g;
+    ctx.fill();
+  });
+
+  // Nodes
+  NODES.forEach(node => {
+    // Filter Dimming
+    if (activeFilter && node.color !== activeFilter) {
+      ctx.globalAlpha = 0.15;
+    } else {
+      ctx.globalAlpha = 1;
+    }
+
+    const { x, y } = getPos(node.id);
+    const isHov = hoveredNode === node.id;
+    const isSel = selectedNode && selectedNode.id === node.id;
+    const bob = Math.sin(time + node.id.charCodeAt(2)) * 3;
+    const cy = y + bob;
+
+    if (isSel) {
+      const pulse = (Math.sin(time * 3) + 1) / 2;
+      ctx.beginPath();
+      ctx.arc(x, cy, 28 + pulse * 15, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(${hexToRgb(node.color)},${0.4 - pulse*0.35})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    const glowSize = isHov || isSel ? 40 : 25;
+    const glow = ctx.createRadialGradient(x, cy, 0, x, cy, glowSize);
+    glow.addColorStop(0, `rgba(${hexToRgb(node.color)},0.25)`);
+    glow.addColorStop(1, `rgba(${hexToRgb(node.color)},0)`);
+    ctx.beginPath();
+    ctx.arc(x, cy, glowSize, 0, Math.PI*2);
+    ctx.fillStyle = glow;
+    ctx.fill();
+
+    const r = isHov || isSel ? 26 : 22;
+    ctx.beginPath();
+    ctx.arc(x, cy, r, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(8,12,26,0.9)';
+    ctx.fill();
+    ctx.strokeStyle = node.color;
+    ctx.lineWidth = isHov || isSel ? 2.5 : 1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x, cy, 4, 0, Math.PI*2);
+    ctx.fillStyle = node.color;
+    ctx.fill();
+
+    ctx.fillStyle = isSel || isHov ? '#ffffff' : '#94a3b8';
+    ctx.font = `${isSel||isHov ? '600' : '400'} 9px JetBrains Mono`;
+    ctx.textAlign = 'center';
+    const lines = node.label.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x, cy + r + 14 + i*12);
+    });
+    
+    ctx.globalAlpha = 1; // Reset alpha
+  });
+
+  ctx.restore(); // Restore camera transform
+  requestAnimationFrame(draw);
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+// Start loop
+draw();
+
+// ─── INTERACTION (PAN, ZOOM, LEGEND) ─────────────────────────────────────────
+function getMouseWorld(e) {
+  return { x: (e.clientX - camera.x)/camera.zoom, y: (e.clientY - camera.y)/camera.zoom };
+}
+
+function nodeAtPoint(wx, wy) {
+  for (const node of NODES) {
+    if (activeFilter && node.color !== activeFilter) continue;
+    const bob = Math.sin(time + node.id.charCodeAt(2)) * 3;
+    if (Math.hypot(wx - node.x, wy - (node.y + bob)) < 28) return node;
+  }
+  return null;
+}
+
+// Legend Category Clicks
+document.querySelectorAll('.leg').forEach(el => {
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', () => {
+    // UPDATED MAP to match the new legend categories
+    const hexMap = {
+      'AM & Prob Basics': '#00d4ff', 
+      'Power & Expectation': '#22c55e', 
+      'Core & RV Models': '#ffd700', 
+      'Math, Spectra & PYQs': '#ff6b35',
+      'Angle Mod & Q-Func': '#a855f7'
+    };
+    const clickedColor = hexMap[el.textContent.trim()];
+    activeFilter = activeFilter === clickedColor ? null : clickedColor;
+    document.querySelectorAll('.leg').forEach(l => l.style.opacity = activeFilter ? (hexMap[l.textContent.trim()]===activeFilter ? 1 : 0.3) : 1);
+  });
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const z = e.deltaY > 0 ? 0.9 : 1.1;
+  camera.x = e.clientX - (e.clientX - camera.x) * z;
+  camera.y = e.clientY - (e.clientY - camera.y) * z;
+  camera.zoom *= z;
+}, {passive: false});
+
+canvas.addEventListener('mousedown', e => {
+  const w = getMouseWorld(e);
+  if(!nodeAtPoint(w.x, w.y)) { 
+    isDragging = true; 
+    lastMouse = {x: e.clientX, y: e.clientY}; 
+    canvas.style.cursor = 'grabbing'; 
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (isDragging) {
+    camera.x += (e.clientX - lastMouse.x); camera.y += (e.clientY - lastMouse.y);
+    lastMouse = {x: e.clientX, y: e.clientY}; 
+    return;
+  }
+  const w = getMouseWorld(e); 
+  const node = nodeAtPoint(w.x, w.y);
+  hoveredNode = node ? node.id : null;
+  canvas.style.cursor = node ? 'pointer' : 'crosshair';
+  
+  if (node) {
+    tooltip.style.left = (e.clientX + 14) + 'px'; tooltip.style.top = (e.clientY - 10) + 'px';
+    ttTitle.textContent = node.chapter; 
+    ttHint.textContent = ' → click for formulas';
+    tooltip.classList.add('show');
+  } else { 
+    tooltip.classList.remove('show'); 
+  }
+});
+
+canvas.addEventListener('mouseup', () => { 
+  isDragging = false; 
+  canvas.style.cursor = 'crosshair'; 
+});
+
+canvas.addEventListener('click', e => {
+  if (isDragging) return;
+  const w = getMouseWorld(e), node = nodeAtPoint(w.x, w.y);
+  if (node) openPanel(node);
+});
+
+// ─── PANEL ───────────────────────────────────────────────────────────────────
+function openPanel(node) {
+  selectedNode = node;
+  document.getElementById('p-chapter').textContent = node.chapter;
+  document.getElementById('p-chapter').style.color = node.color;
+  document.getElementById('p-title').textContent = node.label.replace('\n',' · ');
+  document.getElementById('p-title').style.color = node.color;
+  document.getElementById('p-desc').textContent = node.desc;
+
+  const fDiv = document.getElementById('p-formulas');
+  fDiv.innerHTML = '';
+  node.formulas.forEach(f => {
+    // Safely wrap each equation line in MathJax display delimiters
+    const formattedEq = f.eq.split('\n').map(line => `\\[ ${line} \\]`).join('');
+    
+    const block = document.createElement('div');
+    block.className = 'formula-block';
+    block.style.borderColor = node.color + '33';
+    block.style.background = `rgba(${hexToRgb(node.color)},0.04)`;
+    block.innerHTML = `
+      <div class="formula-label">${f.label}</div>
+      <div class="formula-eq" style="color:${node.color}">${formattedEq}</div>
+      <div class="formula-note">${f.note}</div>
+    `;
+    fDiv.appendChild(block);
+  });
+
+  const sDiv = document.getElementById('p-sections');
+  sDiv.innerHTML = '<div style="font-size:0.55rem;letter-spacing:0.12em;text-transform:uppercase;color:#475569;margin-bottom:8px">Sections in this chapter</div>';
+  node.sections.forEach(s => {
+    const tag = document.createElement('span');
+    tag.className = 'section-tag';
+    tag.textContent = s;
+    sDiv.appendChild(tag);
+  });
+
+  document.getElementById('panel').classList.add('open');
+  // Trigger MathJax to render the newly injected formulas
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById('panel')]).catch((err) => console.log(err.message));
+  }
+}
+
+document.getElementById('panel-close').addEventListener('click', () => {
+  document.getElementById('panel').classList.remove('open');
+  selectedNode = null;
+});
+// ─── MASTER CHEAT SHEET (LEFT PANEL LOGIC) ──────────────────────────────────
+const leftPanel = document.getElementById('left-panel');
+const cheatSheetBtn = document.getElementById('toggle-cheat-sheet');
+const allFormulasContainer = document.getElementById('all-formulas-container');
+
+// Toggle button click
+cheatSheetBtn.addEventListener('click', () => {
+  leftPanel.classList.toggle('open');
+  if(leftPanel.classList.contains('open')) {
+    cheatSheetBtn.textContent = '✕ CLOSE CHEAT SHEET';
+  } else {
+    cheatSheetBtn.textContent = '∑ MASTER CHEAT SHEET';
+  }
+});
+
+// Auto-generate the formula list
+function buildMasterCheatSheet() {
+  allFormulasContainer.innerHTML = '';
+  
+  NODES.forEach(node => {
+    // Only build a section if the node actually has formulas
+    if (node.formulas && node.formulas.length > 0) {
+      const group = document.createElement('div');
+      group.className = 'ch-group';
+      
+      const title = document.createElement('div');
+      title.className = 'ch-group-title';
+      title.style.color = node.color;
+      title.textContent = `${node.chapter} · ${node.label.replace('\n', ' ')}`;
+      group.appendChild(title);
+
+      // Reuse the exact same formula block HTML from your right panel
+      node.formulas.forEach(f => {
+        const formattedEq = f.eq.split('\n').map(line => `\\[ ${line} \\]`).join('');
+        const block = document.createElement('div');
+        block.className = 'formula-block';
+        block.style.borderColor = node.color + '33';
+        block.style.background = `rgba(${hexToRgb(node.color)},0.04)`;
+        block.innerHTML = `
+          <div class="formula-label">${f.label}</div>
+          <div class="formula-eq" style="color:${node.color}">${formattedEq}</div>
+          <div class="formula-note">${f.note}</div>
+        `;
+        group.appendChild(block);
+      });
+      
+      allFormulasContainer.appendChild(group);
+    }
+  });
+
+  // Tell MathJax to render all the newly generated LaTeX
+  if (window.MathJax) {
+    MathJax.typesetPromise([allFormulasContainer]).catch((err) => console.log(err.message));
+  }
+}
+
+// Build it immediately when the page loads
+buildMasterCheatSheet();
+</script>
+</body>
+</html>
