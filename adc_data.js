@@ -1,5 +1,803 @@
 const CHAPTERS = [
+  
+  {
+    "id": "exam_cheat_sheet",
+    "label": "0 · Cheat Sheet",
+    "title": "EXAM CHEAT SHEET: The Instant Solve Formula Core",
+    "content": [
+      { 
+        "type": "para", 
+        "text": "These are the absolute 'weapons-grade' equations extracted directly from your notes, stripped of derivations, and formatted for rapid numerical solving." 
+      },
 
+      { "type": "heading", "text": "1. Amplitude Modulation (AM) Core" },
+      { "type": "para", "text": "Use these when dealing with standard DSB-FC or power/efficiency calculations." },
+      { "type": "para", "text": "<b>Modulation Index (\\(\\mu\\)):</b><br><em>When to use:</em> To find the depth of modulation given the message signal's peak amplitude and carrier amplitude." },
+      { "type": "eq", "tex": "\\mu = \\frac{\\max|m(t)|}{A_c}" },
+      { "type": "para", "text": "<b>Total Transmitted Power (\\(P_t\\)):</b><br><em>When to use:</em> Only for <b>single-tone sinusoidal</b> messages to find total power." },
+      { "type": "eq", "tex": "P_t = P_c\\left(1 + \\frac{\\mu^2}{2}\\right)" },
+      { "type": "para", "text": "<b>Total Transmitted Power (Square Wave):</b><br><em>When to use:</em> A classic exam trap; use this if the message is specifically a square wave." },
+      { "type": "eq", "tex": "P_t = P_c(1 + \\mu^2)" },
+      { "type": "para", "text": "<b>Modulation Efficiency (\\(\\eta\\)):</b><br><em>When to use:</em> To find the percentage of useful power (sidebands) for sinusoidal signals. Maximum is 33.33% at \\(\\mu=1\\)." },
+      { "type": "eq", "tex": "\\eta = \\frac{\\mu^2}{2+\\mu^2} \\times 100\\%" },
+      { "type": "para", "text": "<b>Multi-Tone Modulation Index (\\(\\mu_t\\)):</b><br><em>When to use:</em> When the message signal has multiple frequencies, use the root-sum-square to find the total index before calculating power." },
+      { "type": "eq", "tex": "\\mu_t = \\sqrt{\\mu_1^2 + \\mu_2^2 + \\dots}" },
+
+      { "type": "heading", "text": "2. Angle Modulation (FM & PM) Core" },
+      { "type": "para", "text": "Use these for bandwidth, phase deviation, and frequency deviation numericals." },
+      { "type": "para", "text": "<b>Frequency Deviation (\\(\\Delta f\\)) in FM:</b><br><em>When to use:</em> To find the max frequency shift. Note that it is strictly proportional to amplitude \\(A_m\\) and <em>independent</em> of message frequency \\(f_m\\)." },
+      { "type": "eq", "tex": "\\Delta f = K_f A_m" },
+      { "type": "para", "text": "<b>Modulation Index (\\(\\beta\\)):</b><br><em>When to use:</em> To classify as Narrowband (\\(\\beta < 0.6\\)) or Wideband (\\(\\beta > 0.6\\))." },
+      { "type": "eq", "tex": "\\beta_{FM} = \\frac{K_f A_m}{f_m} = \\frac{\\Delta f}{f_m}, \\qquad \\beta_{PM} = K_p A_m" },
+      { "type": "para", "text": "<b>Carson’s Rule (Bandwidth):</b><br><em>When to use:</em> The universal formula for finding the practical bandwidth of Wideband FM or PM containing 98% of the power." },
+      { "type": "eq", "tex": "BW = 2(\\beta + 1)f_{\\max} = 2(\\Delta f + f_{\\max})" },
+      { "type": "para", "text": "<b>Total Power (Wideband/Angle):</b><br><em>When to use:</em> Always. Total power in angle modulation is completely constant and independent of the modulation index \\(\\beta\\)." },
+      { "type": "eq", "tex": "P_t = P_c = \\frac{A_c^2}{2}" },
+
+      { "type": "heading", "text": "3. Probability, Random Variables & Noise" },
+      { "type": "para", "text": "Crucial for finding expectations, power, and error probabilities." },
+      { "type": "para", "text": "<b>Expected Value / Mean (CRV):</b><br><em>When to use:</em> To find the DC value or mean of a continuous random variable given its PDF." },
+      { "type": "eq", "tex": "E[X] = \\int_{-\\infty}^{\\infty} x f_X(x) dx" },
+      { "type": "para", "text": "<b>Variance (\\(\\sigma_x^2\\)):</b><br><em>When to use:</em> To calculate the AC power of a signal. \\(E[X^2]\\) is the Mean Square Value (total power)." },
+      { "type": "eq", "tex": "\\sigma_x^2 = E[X^2] - (E[X])^2" },
+      { "type": "para", "text": "<b>Variance of a Linear Combination:</b><br><em>When to use:</em> If \\(X\\) and \\(Y\\) are <b>independent</b> or <b>uncorrelated</b>, the covariance term vanishes, leaving just \\(a^2\\sigma_X^2 + b^2\\sigma_Y^2\\)." },
+      { "type": "eq", "tex": "Var(aX + bY) = a^2\\sigma_X^2 + b^2\\sigma_Y^2 + 2ab \\cdot cov(XY)" },
+      { "type": "para", "text": "<b>The Q-Function Shortcut (Gaussian RVs):</b><br><em>When to use:</em> To find the right-tail probability of a Gaussian signal exceeding threshold \\(a\\) without integrating the messy PDF." },
+      { "type": "eq", "tex": "P(X > a) = Q\\left( \\frac{a - \\mu_X}{\\sigma_X} \\right)" },
+
+      { "type": "heading", "text": "4. Digital Comms & Information Theory" },
+      { "type": "para", "text": "Use these for digital transmission, channel capacity, and error rates." },
+      { "type": "para", "text": "<b>Entropy / Avg Info:</b><br><em>When to use:</em> To find the average information in bits/symbol." },
+      { "type": "eq", "tex": "H(X) = -\\sum P(x_i) \\log_2 P(x_i)" },
+      { "type": "para", "text": "<b>Information Rate (\\(R\\)):</b><br><em>When to use:</em> To find bits/sec, where \\(r\\) is the symbol rate (symbols/sec)." },
+      { "type": "eq", "tex": "R = r \\times H(X)" },
+      { "type": "para", "text": "<b>Superheterodyne Image Frequency:</b><br><em>When to use:</em> To find the dangerous ghost frequency that will interfere with your target station \\(f_s\\)." },
+      { "type": "eq", "tex": "f_{si} = f_s + 2IF" },
+      { "type": "para", "text": "<b>General Probability of Error (\\(P_e\\)):</b><br><em>When to use:</em> The universal baseband error formula, where \\(d_{12}\\) is the distance between points on the constellation diagram." },
+      { "type": "eq", "tex": "P_e = Q\\left[ \\sqrt{\\frac{d_{12}^2}{2N_0}} \\right]" },
+      { "type": "para", "text": "<b>2-Ary PAM \\(P_e\\):</b><br><em>When to use:</em> Specific error formula for binary Pulse Amplitude Modulation (since \\(d_{12} = 2\\sqrt{E_s}\\))." },
+      { "type": "eq", "tex": "P_e = Q\\left[ \\sqrt{\\frac{2A^2 T_b}{N_0}} \\right]" },
+      
+      {
+    "type": "heading",
+    "text": "5. Advanced Random Variables & Probability"
+  },
+  {
+    "type": "para",
+    "text": "Use these to bypass heavy integration when dealing with distributions and combined variables."
+  },
+  {
+    "type": "para",
+    "text": "<b>Uniform Distribution Variance (\\(X \\sim U[a, b]\\)):</b><br><em>When to use:</em> Instant variance calculation for a flat/uniform PDF without integrating."
+  },
+  {
+    "type": "eq",
+    "tex": "\\sigma_x^2 = \\frac{(b-a)^2}{12}"
+  },
+  {
+    "type": "para",
+    "text": "<b>Correlation Coefficient (\\(\\rho\\)):</b><br><em>When to use:</em> To find the normalized relationship between two variables. Bounded between -1 and 1."
+  },
+  {
+    "type": "eq",
+    "tex": "\\rho(X,Y) = \\frac{cov(XY)}{\\sigma_X \\sigma_Y} = \\frac{R_{XY} - \\mu_X\\mu_Y}{\\sigma_X \\sigma_Y}"
+  },
+  {
+    "type": "para",
+    "text": "<b>Point Probability from CDF:</b><br><em>When to use:</em> If asked for exact point probability from a CDF. If the graph is continuous, it's 0. If there's a jump, it's the height of the jump."
+  },
+  {
+    "type": "eq",
+    "tex": "P(X=a) = F_X(a^+) - F_X(a^-)"
+  },
+  {
+    "type": "para",
+    "text": "<b>Q-Function Symmetry Rule:</b><br><em>When to use:</em> When your standard normal calculation results in a negative Z-score."
+  },
+  {
+    "type": "eq",
+    "tex": "Q(-z) = 1 - Q(z)"
+  },
+  {
+    "type": "heading",
+    "text": "6. Superheterodyne Receivers"
+  },
+  {
+    "type": "para",
+    "text": "Use these when dealing with antenna frequencies, local oscillators, and interference."
+  },
+  {
+    "type": "para",
+    "text": "<b>Intermediate Frequency (\\(IF\\)):</b><br><em>When to use:</em> The core mixer formula to find the stepped-down target frequency."
+  },
+  {
+    "type": "eq",
+    "tex": "IF = |f_s - f_{LO}|"
+  },
+  {
+    "type": "para",
+    "text": "<b>Image Rejection Ratio (IRR or \\(\\alpha\\)):</b><br><em>When to use:</em> To calculate how well the antenna's pre-selector filter (with Quality factor \\(Q\\)) blocks the ghost image frequency (\\(f_{si}\\))."
+  },
+  {
+    "type": "eq",
+    "tex": "\\rho = \\frac{f_{si}}{f_s} - \\frac{f_s}{f_{si}}, \\qquad \\alpha = \\sqrt{1 + Q^2 \\rho^2}"
+  },
+  {
+    "type": "heading",
+    "text": "7. Digital Baseband & Bandpass Modulation (ASK, PSK, FSK, PAM)"
+  },
+  {
+    "type": "para",
+    "text": "Crucial for calculating energy, constellation distances, and probability of error (\\(P_e\\))."
+  },
+  {
+    "type": "para",
+    "text": "<b>Baseband vs. Bandpass Pulse Energy:</b><br><em>When to use:</em> Baseband is for raw digital pulses (PAM). Bandpass is for carrier-modulated signals (ASK, PSK, FSK)."
+  },
+  {
+    "type": "eq",
+    "tex": "E_s (\\text{Baseband}) = A^2 T_b, \\qquad E_s (\\text{Bandpass}) = \\frac{A^2 T_b}{2}"
+  },
+  {
+    "type": "para",
+    "text": "<b>Universal Probability of Error (\\(P_e\\)):</b><br><em>When to use:</em> The master formula for <em>any</em> constellation diagram. \\(d_{12}\\) is the distance between the two dots in energy space."
+  },
+  {
+    "type": "eq",
+    "tex": "P_e = Q\\left[ \\sqrt{\\frac{d_{12}^2}{2N_0}} \\right]"
+  },
+  {
+    "type": "para",
+    "text": "<b>ASK / OOK Average Bit Energy:</b><br><em>When to use:</em> Because ASK sends energy for '1' but zero energy for '0', the average energy is exactly half of the active pulse energy."
+  },
+  {
+    "type": "eq",
+    "tex": "(E_b)_{avg} = \\frac{A^2 T_b}{4}"
+  },
+  {
+    "type": "para",
+    "text": "<b>ASK Probability of Error:</b><br><em>When to use:</em> Instant substitution for standard Amplitude Shift Keying."
+  },
+  {
+    "type": "eq",
+    "tex": "P_e = Q \\left[ \\sqrt{\\frac{(E_b)_{avg}}{N_0}} \\right]"
+  },
+  {
+    "type": "para",
+    "text": "<b>Phase Error Impact (ASK):</b><br><em>When to use:</em> If the correlator receiver has a phase mismatch (\\(\\theta\\)), multiplying the energy inside the Q-function by \\(\\cos^2 \\theta\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "P_e = Q \\left[ \\sqrt{\\frac{A^2 T_b \\cos^2 \\theta}{4 N_0}} \\right]"
+  },
+  {
+    "type": "heading",
+    "text": "8. Information Theory Matrices"
+  },
+  {
+    "type": "para",
+    "text": "Use these for discrete communication channels and entropy."
+  },
+  {
+    "type": "para",
+    "text": "<b>Output Probability Matrix:</b><br><em>When to use:</em> To find the final probabilities at the receiver. Note: \\([P(Y|X)]\\) is the Conditional Matrix, where <b>rows must sum to 1</b>."
+  },
+  {
+    "type": "eq",
+    "tex": "[P(Y)] = [P(X)] \\times [P(Y|X)]"
+  },
+  {
+    "type": "para",
+    "text": "<b>Mutual Information (\\(I(X;Y)\\)):</b><br><em>When to use:</em> To find the actual useful data transferred. \\(H(X|Y)\\) is Equivocation (lost info), and \\(H(Y|X)\\) is Noise Entropy (fake info)."
+  },
+  {
+    "type": "eq",
+    "tex": "I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X)"
+  },
+  
+  {
+    "type": "heading",
+    "text": "1. Advanced AM & Waveform Traps"
+  },
+  {
+    "type": "para",
+    "text": "Use these when given oscilloscope readings or non-standard message shapes."
+  },
+  {
+    "type": "para",
+    "text": "<b>Oscilloscope Envelope Measurements:</b><br><em>When to use:</em> When given the maximum and minimum peak voltages of an AM envelope directly from a graph."
+  },
+  {
+    "type": "eq",
+    "tex": "\\mu = \\frac{V_{\\max}-V_{\\min}}{V_{\\max}+V_{\\min}}, \\qquad A_c = \\frac{V_{\\max}+V_{\\min}}{2}"
+  },
+  {
+    "type": "para",
+    "text": "<b>General Message Power (\\(P_m\\)) Shortcuts:</b><br><em>When to use:</em> To plug into the universal power formula \\(P_t = P_c \\left[ 1 + \\frac{P_m}{A_c^2} \\right]\\) when the message is not a simple sine wave."
+  },
+  {
+    "type": "eq",
+    "tex": "P_m (\\text{Sine}) = \\frac{A_m^2}{2}, \\quad P_m (\\text{Square}) = A_m^2, \\quad P_m (\\text{Triangular}) = \\frac{A_m^2}{3}"
+  },
+  {
+    "type": "heading",
+    "text": "2. The Phase Modulation (PM) Trap"
+  },
+  {
+    "type": "para",
+    "text": "Use this to avoid the most common mistake when switching between FM and PM."
+  },
+  {
+    "type": "para",
+    "text": "<b>Max Frequency Deviation in PM:</b><br><em>When to use:</em> To find \\(\\Delta f\\) for Phase Modulation. <b>Crucial difference:</b> FM depends on the maximum <em>amplitude</em> of the message, but PM depends strictly on the maximum <em>derivative (slope)</em> of the message."
+  },
+  {
+    "type": "eq",
+    "tex": "| \\Delta f(t) |_{\\max} = \\frac{K_p}{2\\pi} \\left| \\frac{dm(t)}{dt} \\right|_{\\max}"
+  },
+  {
+    "type": "heading",
+    "text": "3. Advanced Gaussian & Probability Shortcuts"
+  },
+  {
+    "type": "para",
+    "text": "Use these to bypass pages of integration during high-level random variable numericals."
+  },
+  {
+    "type": "para",
+    "text": "<b>The Gaussian Area Trick:</b><br><em>When to use:</em> When asked to integrate a complex exponential that looks like a bell curve. Find the variance and plug it into the right side to get the area instantly."
+  },
+  {
+    "type": "eq",
+    "tex": "\\int_{-\\infty}^{\\infty} e^{\\frac{-(x-\\mu_x)^2}{2\\sigma_x^2}} dx = \\sqrt{2\\pi\\sigma_x^2}"
+  },
+  {
+    "type": "para",
+    "text": "<b>Gaussian Interval Probabilities:</b><br><em>When to use:</em> When calculating the probability of a Gaussian variable falling <em>between</em> two bounds. (Note the subtraction order!)."
+  },
+  {
+    "type": "eq",
+    "tex": "P(a < X \\le b) = Q\\left(\\frac{a - \\mu_X}{\\sigma_X}\\right) - Q\\left(\\frac{b - \\mu_X}{\\sigma_X}\\right)"
+  },
+  {
+    "type": "para",
+    "text": "<b>Independent MAX Logic:</b><br><em>When to use:</em> If asked for the probability that the maximum of two independent variables is <em>less than</em> \\(z\\), simply multiply their individual CDFs."
+  },
+  {
+    "type": "eq",
+    "tex": "P[\\max(X,Y) \\le z] = F_X(z) \\times F_Y(z)"
+  },
+  {
+    "type": "para",
+    "text": "<b>Independent MIN Logic:</b><br><em>When to use:</em> If asked for the probability that the minimum of two independent variables is <em>greater than</em> \\(z\\), multiply their right-tail probabilities."
+  },
+  {
+    "type": "eq",
+    "tex": "P[\\min(X,Y) \\ge z] = P(X \\ge z) \\times P(Y \\ge z)"
+  },
+  {
+    "type": "heading",
+    "text": "4. High-Level Digital & Information Matrices"
+  },
+  {
+    "type": "para",
+    "text": "Use these for multi-level constellations and channel probability routing."
+  },
+  {
+    "type": "para",
+    "text": "<b>4-Ary PAM Coordinate Rule:</b><br><em>When to use:</em> To find where a 4-Ary symbol lives on the energy constellation diagram. Because it sends 2 bits at once, the time duration is \\(2T_b\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "\\text{Coordinate} = \\text{Voltage} \\times \\sqrt{2T_b}"
+  },
+  {
+    "type": "para",
+    "text": "<b>4-Ary PAM Minimum Distance (\\(d_{min}\\)):</b><br><em>When to use:</em> To find the critical distance gap between the two closest points on a 4-Ary PAM constellation for error calculation."
+  },
+  {
+    "type": "eq",
+    "tex": "d_{min} = \\frac{A}{2}\\sqrt{2T_b}"
+  },
+  {
+    "type": "para",
+    "text": "<b>Receiver Total Output Probability:</b><br><em>When to use:</em> To find the total probability of receiving a specific symbol (e.g., \\(y_1\\)) across <em>all</em> possible transmission paths in a channel matrix."
+  },
+  {
+    "type": "eq",
+    "tex": "P(y_j) = \\sum_i P(x_i) P(y_j | x_i)"
+  }
+    ]
+  },
+
+  
+  {
+    "id": "pattern_numericals",
+    "label": "1 · Pattern Numericals",
+    "title": "PATTERN NUMERICALS: Layer 2 Execution",
+    "content": [
+      {
+        "type": "para",
+        "text": "We are going to train the brain to recognize the <em>structure</em> of the questions so you don't freeze up on the exam. Here are highly-tested patterns derived directly from the core materials."
+      },
+      {
+        "type": "heading",
+        "text": "🧩 Type 1: AM Power & Efficiency (The Multi-Tone & Wave Shape Trap)"
+      },
+      {
+        "type": "para",
+        "text": "Examiners love to trick you by giving you a message signal that is <em>not</em> a single sine wave. If it has multiple frequencies or is a square/triangular wave, the standard formulas change."
+      },
+      {
+        "type": "heading",
+        "text": "Solved Example (Multi-Tone Efficiency)"
+      },
+      {
+        "type": "para",
+        "text": "<b>The Problem:</b> Given an AM message signal \\(m(t) = \\frac{1}{2} \\cos(\\omega_1 t) - \\frac{1}{2} \\sin(\\omega_2 t)\\), find the total modulation efficiency \\(\\eta\\)."
+      },
+      {
+        "type": "para",
+        "text": "<b>Step-by-Step Execution:</b><br>1. <b>Extract Individual Indices:</b> Ignore the signs and phases; they do not impact power."
+      },
+      {
+        "type": "eq",
+        "tex": "\\mu_1 = 0.5, \\quad \\mu_2 = 0.5"
+      },
+      {
+        "type": "para",
+        "text": "2. <b>Calculate Total Modulation Index (RSS Rule):</b> Never just add them. Use the Root-Sum-Square method."
+      },
+      {
+        "type": "eq",
+        "tex": "\\mu_t = \\sqrt{0.5^2 + 0.5^2} = \\sqrt{0.5} = \\frac{1}{\\sqrt{2}}"
+      },
+      {
+        "type": "para",
+        "text": "3. <b>Calculate Efficiency:</b> Plug \\(\\mu_t\\) into the standard sinusoidal efficiency formula."
+      },
+      {
+        "type": "eq",
+        "tex": "\\eta = \\frac{\\mu_t^2}{2 + \\mu_t^2} = \\frac{0.5}{2 + 0.5} = \\frac{0.5}{2.5} = 20\\%"
+      },
+      {
+        "type": "heading",
+        "text": "Exam-Style Variations"
+      },
+      {
+        "type": "para",
+        "text": "<b>Variation A (The Square Wave Trap):</b> You are given a square wave message with 100% modulation (\\(\\mu = 1\\)). What is the efficiency?<br><em>Pattern Recognition:</em> Do NOT use the formula above. For a square wave, \\(P_m = A_m^2\\), making \\(\\eta = \\frac{\\mu^2}{1 + \\mu^2}\\). At \\(\\mu=1\\), efficiency is <b>50%</b>."
+      },
+      {
+        "type": "para",
+        "text": "<b>Variation B (Power Scaling):</b> What happens to the total transmitted power if a single-tone AM signal goes from 0% to 100% modulation?<br><em>Pattern Recognition:</em> Total power increases by exactly <b>50%</b> (\\(P_t = 1.5P_c\\)), and all of that extra power goes directly into the sidebands."
+      },
+      {
+        "type": "heading",
+        "text": "🧩 Type 2: Angle Modulation Bandwidth (Carson's Rule)"
+      },
+      {
+        "type": "para",
+        "text": "FM and PM calculate maximum frequency deviation (\\(\\Delta f\\)) differently. If you mix them up, your bandwidth calculation will be entirely wrong."
+      },
+      {
+        "type": "heading",
+        "text": "Solved Example (Triangular Wave FM vs PM)"
+      },
+      {
+        "type": "para",
+        "text": "<b>The Problem:</b> A periodic triangular signal \\(m(t)\\) has a peak amplitude of \\(\\pm 1\\text{V}\\), a period \\(T_0 = 2 \\times 10^{-4}\\text{ s}\\), and essential bandwidth up to the 3rd harmonic. Given \\(K_f = 2\\pi \\times 10^5\\text{ rad/V-s}\\) and \\(K_p = 5\\pi\\text{ rad/V}\\), calculate the FM and PM bandwidth."
+      },
+      {
+        "type": "para",
+        "text": "<b>Step-by-Step Execution:</b><br>1. <b>Find Frequencies:</b> \\(f_0 = \\frac{1}{T_0} = 5\\text{ kHz}\\). Max frequency \\(f_{\\max} = 3 \\times 5\\text{ kHz} = 15\\text{ kHz}\\)."
+      },
+      {
+        "type": "para",
+        "text": "2. <b>FM Bandwidth:</b> FM \\(\\Delta f\\) depends <em>only</em> on the absolute peak amplitude (\\(|m(t)|_{\\max} = 1\\text{V}\\))."
+      },
+      {
+        "type": "eq",
+        "tex": "| \\Delta f |_{\\max} = \\frac{K_f}{2\\pi} |m(t)|_{\\max} = 10^5(1) = 100\\text{ kHz}"
+      },
+      {
+        "type": "eq",
+        "tex": "BW_{FM} = 2(\\Delta f + f_{\\max}) = 2(100 + 15) = 230\\text{ kHz}"
+      },
+      {
+        "type": "para",
+        "text": "3. <b>PM Bandwidth:</b> PM \\(\\Delta f\\) depends on the <em>maximum slope</em> (derivative) of \\(m(t)\\). It rises \\(2\\text{V}\\) (from -1 to 1) over half a period (\\(1 \\times 10^{-4}\\text{ s}\\))."
+      },
+      {
+        "type": "eq",
+        "tex": "\\text{Slope} = \\frac{2}{10^{-4}} = 2 \\times 10^4\\text{ V/s}"
+      },
+      {
+        "type": "eq",
+        "tex": "| \\Delta f |_{\\max} = \\frac{K_p}{2\\pi} \\times \\text{Slope} = 2.5 \\times (2 \\times 10^4) = 50\\text{ kHz}"
+      },
+      {
+        "type": "eq",
+        "tex": "BW_{PM} = 2(50 + 15) = 130\\text{ kHz}"
+      },
+      {
+        "type": "heading",
+        "text": "Exam-Style Variations"
+      },
+      {
+        "type": "para",
+        "text": "<b>Variation A (Amplitude Doubling):</b> What happens to the bandwidths if the message amplitude doubles to \\(\\pm 2\\text{V}\\)?<br><em>Pattern Recognition:</em> Both \\(\\Delta f\\) values double. \\(f_{\\max}\\) stays the same. \\(BW_{FM} = 2(200+15) = 430\\text{ kHz}\\) and \\(BW_{PM} = 2(100+15) = 230\\text{ kHz}\\)."
+      },
+      {
+        "type": "para",
+        "text": "<b>Variation B (Time Expansion):</b> What happens to the bandwidths if the signal is time-expanded by a factor of 2 (period becomes \\(4 \\times 10^{-4}\\text{ s}\\))?<br><em>Pattern Recognition:</em> Frequencies halve (\\(f_{\\max} = 7.5\\text{ kHz}\\)). FM \\(\\Delta f\\) stays the exact same because amplitude didn't change! PM \\(\\Delta f\\) halves because the slope became less steep."
+      },
+      {
+    "type": "heading",
+    "text": "🧩 Type 3: Probability & PDF Area Tricks (The \"No Calculus\" Gaussian)"
+  },
+  {
+    "type": "para",
+    "text": "Examiners intentionally write integrals that are mathematically impossible to solve by hand. The pattern is to recognize the Gaussian shape and bypass integration entirely by matching coefficients."
+  },
+  {
+    "type": "heading",
+    "text": "Solved Example (The Full Area Trick)"
+  },
+  {
+    "type": "para",
+    "text": "<b>The Problem:</b> Evaluate the integral \\(I = \\int_{-\\infty}^{\\infty} e^{-5x^2} dx\\)."
+  },
+  {
+    "type": "para",
+    "text": "<b>Step-by-Step Execution:</b><br>1. <b>Match the Exponent:</b> Force the given exponent to match the standard Gaussian form \\(\\frac{-x^2}{2\\sigma_x^2}\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "-5x^2 = \\frac{-x^2}{(1/5)} \\implies 2\\sigma_x^2 = \\frac{1}{5}"
+  },
+  {
+    "type": "para",
+    "text": "2. <b>Extract the Variance:</b>"
+  },
+  {
+    "type": "eq",
+    "tex": "\\sigma_x^2 = \\frac{1}{10} = 0.1"
+  },
+  {
+    "type": "para",
+    "text": "3. <b>Apply the Total Area Shortcut:</b> We know the integral of a standard un-normalized Gaussian \\(e^{\\frac{-x^2}{2\\sigma_x^2}}\\) over all space is simply \\(\\sqrt{2\\pi\\sigma_x^2}\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "I = \\sqrt{2\\pi \\left(\\frac{1}{10}\\right)} = \\sqrt{\\frac{\\pi}{5}}"
+  },
+  {
+    "type": "heading",
+    "text": "Exam-Style Variations"
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation A (The Even Function Bound):</b> Evaluate \\(\\int_{0}^{\\infty} e^{-3x^2} dx\\).<br><em>Pattern Recognition:</em> The bounds are 0 to \\(\\infty\\). Because \\(e^{-3x^2}\\) is a perfectly symmetrical even function, this is exactly half the total area. Calculate the full area using \\(2\\sigma_x^2 = 1/3\\), then multiply by \\(0.5\\). Answer: \\(\\frac{1}{2} \\sqrt{\\frac{\\pi}{3}}\\)."
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation B (Extracting Moments):</b> Evaluate \\(\\int_{-\\infty}^{\\infty} x^2 e^{\\frac{-(x-4)^2}{12}} dx\\).<br><em>Pattern Recognition:</em> You are multiplying \\(x^2\\) by a Gaussian shape. This is the definition of the second moment (Mean Square Value, \\(E[X^2]\\)). Find the normalization constant (\\(\\sqrt{12\\pi}\\)), find \\(\\mu_x\\) (4) and \\(\\sigma_x^2\\) (6), then use \\(E[X^2] = \\sigma_x^2 + \\mu_x^2\\). Multiply the final expected value by the missing normalization constant."
+  },
+  {
+    "type": "heading",
+    "text": "🧩 Type 4: Baseband Digital PAM (Constellations & \\(P_e\\))"
+  },
+  {
+    "type": "para",
+    "text": "In digital communications, questions revolve around mapping voltages into \"Energy Space\" to find the distance between symbols. The closer the symbols, the higher the Probability of Error (\\(P_e\\))."
+  },
+  {
+    "type": "heading",
+    "text": "Solved Example (2-Ary PAM Error Calculation)"
+  },
+  {
+    "type": "para",
+    "text": "<b>The Problem:</b> A 2-Ary PAM system transmits pulses of amplitude \\(+A\\) for bit '1' and \\(-A\\) for bit '0' over a bit duration \\(T_b\\). Find the exact Probability of Error (\\(P_e\\)) given noise spectral density \\(N_0\\)."
+  },
+  {
+    "type": "para",
+    "text": "<b>Step-by-Step Execution:</b><br>1. <b>Calculate Symbol Energy (\\(E_s\\)):</b> Energy is voltage squared times time."
+  },
+  {
+    "type": "eq",
+    "tex": "E_s = (A)^2 \\times T_b = A^2 T_b"
+  },
+  {
+    "type": "para",
+    "text": "2. <b>Map to Constellation:</b> The symbols live on a 1D number line at coordinates \\(+\\sqrt{E_s}\\) and \\(-\\sqrt{E_s}\\)."
+  },
+  {
+    "type": "para",
+    "text": "3. <b>Find the Distance (\\(d_{12}\\)):</b>"
+  },
+  {
+    "type": "eq",
+    "tex": "d_{12} = \\sqrt{E_s} - (-\\sqrt{E_s}) = 2\\sqrt{E_s}"
+  },
+  {
+    "type": "para",
+    "text": "4. <b>Plug into Master Error Formula:</b> Use \\(P_e = Q\\left[ \\sqrt{\\frac{d_{12}^2}{2N_0}} \\right]\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "d_{12}^2 = 4E_s = 4A^2 T_b, \\qquad P_e = Q\\left[ \\sqrt{\\frac{4A^2 T_b}{2N_0}} \\right] = Q\\left[ \\sqrt{\\frac{2A^2 T_b}{N_0}} \\right]"
+  },
+  {
+    "type": "heading",
+    "text": "Exam-Style Variations"
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation A (The 4-Ary Time Trap):</b> Calculate the minimum distance (\\(d_{min}\\)) for 4-Ary PAM where symbols are \\(+A, +A/2, -A/2, -A\\).<br><em>Pattern Recognition:</em> 4-Ary sends 2 bits at once, meaning the symbol time doubles to \\(T = 2T_b\\). The coordinate rule is \\(\\text{Voltage} \\times \\sqrt{\\text{Time}}\\). The smallest gap is between \\(A/2\\) and \\(A\\), which is a voltage gap of \\(A/2\\). Therefore, \\(d_{min} = \\frac{A}{2}\\sqrt{2T_b}\\)."
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation B (Bandpass ASK Energy):</b> Find \\(P_e\\) if the baseband pulse is replaced by an ASK (On-Off Keying) high-frequency carrier wave.<br><em>Pattern Recognition:</em> Carriers are sine waves, which average out to half power. The active pulse energy drops to \\(\\frac{A^2 T_b}{2}\\). Since bit '0' transmits nothing (0 energy), the Average Bit Energy is cut in half again: \\((E_b)_{avg} = \\frac{A^2 T_b}{4}\\)."
+  },
+  {
+    "type": "heading",
+    "text": "🧩 Type 5: Channel Matrices (The Information Theory Trap)"
+  },
+  {
+    "type": "para",
+    "text": "In Information Theory, you will be given matrices and asked to find output probabilities or joint probabilities. The pattern is to recognize <em>which</em> matrix you are looking at to avoid violating the laws of probability."
+  },
+  {
+    "type": "heading",
+    "text": "Solved Example (Binary Output Calculation)"
+  },
+  {
+    "type": "para",
+    "text": "<b>The Problem:</b> You are given the Conditional Matrix \\([P(Y|X)]\\) for a non-symmetric binary channel, where the crossover errors are \\(p = 0.2\\) and \\(q = 0.3\\). If the input probabilities are \\(P(X_0) = 0.6\\) and \\(P(X_1) = 0.4\\), find the output probabilities \\([P(Y)]\\)."
+  },
+  {
+    "type": "para",
+    "text": "<b>Step-by-Step Execution:</b><br>1. <b>Build the Conditional Matrix \\([P(Y|X)]\\):</b> The Golden Rule: <b>Every row MUST sum to 1</b>.<br>Row 1 (\\(X_0\\)): \\((1-p)\\) and \\(p \\implies [0.8 \\quad 0.2]\\)<br>Row 2 (\\(X_1\\)): \\(q\\) and \\((1-q)\\) \\implies [0.3 \\quad 0.7]\\)"
+  },
+  {
+    "type": "eq",
+    "tex": "[P(Y|X)] = \\begin{bmatrix} 0.8 & 0.2 \\\\ 0.3 & 0.7 \\end{bmatrix}"
+  },
+  {
+    "type": "para",
+    "text": "2. <b>Set up the Input Matrix \\([P(X)]\\):</b> This is always a row matrix."
+  },
+  {
+    "type": "eq",
+    "tex": "[P(X)] = \\begin{bmatrix} 0.6 & 0.4 \\end{bmatrix}"
+  },
+  {
+    "type": "para",
+    "text": "3. <b>Execute the Matrix Multiplication:</b> \\([P(Y)] = [P(X)] \\times [P(Y|X)]\\)"
+  },
+  {
+    "type": "eq",
+    "tex": "P(Y_0) = (0.6 \\times 0.8) + (0.4 \\times 0.3) = 0.60, \\quad P(Y_1) = (0.6 \\times 0.2) + (0.4 \\times 0.7) = 0.40"
+  },
+  {
+    "type": "heading",
+    "text": "Exam-Style Variations"
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation A (The Joint Matrix Conversion):</b> You are asked to find the overall Joint Matrix \\([P(X,Y)]\\).<br><em>Pattern Recognition:</em> Do not use matrix multiplication. Multiply <em>Row 1</em> of the conditional matrix by \\(P(X_0)\\), and <em>Row 2</em> by \\(P(X_1)\\). The rule here changes: the <b>entire matrix</b> must sum to 1."
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation B (Matrix Identification):</b> You are given a matrix and asked to identify the channel type.<br><em>Pattern Recognition:</em> If the matrix is a perfect identity matrix (diagonal 1s, everything else 0), it is a <b>Noiseless Channel</b>. If every column has exactly one non-zero element, it is a <b>Lossless Channel</b>."
+  },
+  {
+    "type": "heading",
+    "text": "🧩 Type 6: Superheterodyne Receivers (The Image Frequency Ghost)"
+  },
+  {
+    "type": "para",
+    "text": "Exams test your understanding of why we use an Intermediate Frequency (\\(IF\\)) and how to calculate the interference it accidentally creates."
+  },
+  {
+    "type": "heading",
+    "text": "Solved Example (Image Frequency & IRR)"
+  },
+  {
+    "type": "para",
+    "text": "<b>The Problem:</b> A superheterodyne receiver is tuned to a target signal frequency \\(f_s = 1000\\text{ kHz}\\). The receiver's \\(IF\\) is \\(455\\text{ kHz}\\). Calculate the Image Frequency (\\(f_{si}\\)) and the Image Rejection Ratio (\\(\\alpha\\)) if the antenna's Quality Factor (\\(Q\\)) is 50."
+  },
+  {
+    "type": "para",
+    "text": "<b>Step-by-Step Execution:</b><br>1. <b>Calculate the Image Frequency (\\(f_{si}\\)):</b> This is the \"Cheat Code\" formula. The ghost frequency is always \\(2 \\times IF\\) away from your target."
+  },
+  {
+    "type": "eq",
+    "tex": "f_{si} = f_s + 2IF = 1000 + 2(455) = 1910\\text{ kHz}"
+  },
+  {
+    "type": "para",
+    "text": "2. <b>Calculate the Ratio \\(\\rho\\):</b>"
+  },
+  {
+    "type": "eq",
+    "tex": "\\rho = \\frac{f_{si}}{f_s} - \\frac{f_s}{f_{si}} = \\frac{1910}{1000} - \\frac{1000}{1910} = 1.387"
+  },
+  {
+    "type": "para",
+    "text": "3. <b>Calculate Image Rejection Ratio (\\(\\alpha\\)):</b>"
+  },
+  {
+    "type": "eq",
+    "tex": "\\alpha = \\sqrt{1 + Q^2 \\rho^2} = \\sqrt{1 + 2500(1.387)^2} \\approx 69.2"
+  },
+  {
+    "type": "heading",
+    "text": "🧩 Type 7: Variance of Linear Combinations (The Negative Sign Trap)"
+  },
+  {
+    "type": "para",
+    "text": "Professors notoriously bait students into subtracting variances when combining random signals."
+  },
+  {
+    "type": "heading",
+    "text": "Solved Example (Variance of a Difference)"
+  },
+  {
+    "type": "para",
+    "text": "<b>The Problem:</b> You define a new signal \\(Z = 2X - 3Y\\). If \\(X\\) and \\(Y\\) are statistically independent, what is the variance of \\(Z\\) (\\(\\sigma_Z^2\\))?"
+  },
+  {
+    "type": "para",
+    "text": "<b>Step-by-Step Execution:</b><br>1. <b>Apply the Master Variance Formula:</b>"
+  },
+  {
+    "type": "eq",
+    "tex": "\\sigma_Z^2 = a^2\\sigma_X^2 + b^2\\sigma_Y^2 + 2ab \\cdot cov(XY)"
+  },
+  {
+    "type": "para",
+    "text": "2. <b>Analyze Independence:</b> Because \\(X\\) and \\(Y\\) are independent, they are automatically uncorrelated. Therefore, the covariance term becomes strictly zero (\\(cov = 0\\)).<br>3. <b>Square the Coefficients (The Trap):</b> Variance measures AC power (chaos). It <b>never</b> subtracts. The negative sign gets squared away."
+  },
+  {
+    "type": "eq",
+    "tex": "\\sigma_Z^2 = (2)^2\\sigma_X^2 + (-3)^2\\sigma_Y^2 = 4\\sigma_X^2 + 9\\sigma_Y^2"
+  },
+  {
+    "type": "heading",
+    "text": "Exam-Style Variations"
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation A (The \"Orthogonal\" Trigger):</b> The problem states \\(X\\) and \\(Y\\) are orthogonal instead of independent.<br><em>Pattern Recognition:</em> Orthogonal means Correlation \\(R_{XY} = 0\\). The covariance term \\(cov(XY) = R_{XY} - \\mu_X\\mu_Y\\) becomes just \\(-\\mu_X\\mu_Y\\). The formula becomes \\(\\sigma_W^2 = a^2\\sigma_X^2 + b^2\\sigma_Y^2 - 2ab\\mu_X\\mu_Y\\)."
+  },
+  {
+    "type": "heading",
+    "text": "🧩 Type 8: 2D Joint PDF (The \"Arrow Method\" Trap)"
+  },
+  {
+    "type": "para",
+    "text": "When you are given a Joint PDF \\(f_{XY}(x,y)\\) over a triangular region, setting the integration limits is where 90% of mistakes happen."
+  },
+  {
+    "type": "heading",
+    "text": "Solved Example (Finding Constant \\(K\\))"
+  },
+  {
+    "type": "para",
+    "text": "<b>The Problem:</b> \\(f_{XY}(x,y) = Kx\\) for the region bounded by \\((x \\ge 0) \\cap (y \\ge 0) \\cap (x+y \\le 1)\\). Find \\(K\\)."
+  },
+  {
+    "type": "para",
+    "text": "<b>Step-by-Step Execution:</b><br>1. <b>Visualize the Region:</b> It's a right-angled triangle. The slanted roof is the line \\(x+y=1\\), which rearranges to \\(y = 1-x\\).<br>2. <b>Set Limits via the \"Arrow Method\":</b><br><em>Inner (Vertical Arrow):</em> Tail is at \\(y=0\\), head hits the roof \\(y=1-x\\). So, integrate \\(dy\\) from \\(0\\) to \\(1-x\\).<br><em>Outer (Horizontal Sweep):</em> The triangle spans from \\(x=0\\) to \\(x=1\\). So, integrate \\(dx\\) from \\(0\\) to \\(1\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "\\int_{0}^{1} \\int_{0}^{1-x} Kx \\, dy \\, dx = 1"
+  },
+  {
+    "type": "para",
+    "text": "3. <b>Execute the Double Integral:</b>"
+  },
+  {
+    "type": "eq",
+    "tex": "\\int_{0}^{1} (Kx - Kx^2) dx = K\\left[\\frac{1}{2} - \\frac{1}{3}\\right] = \\frac{K}{6}"
+  },
+  {
+    "type": "para",
+    "text": "4. <b>Solve:</b> \\(\\frac{K}{6} = 1 \\implies K = 6\\)."
+  },
+  {
+    "type": "heading",
+    "text": "🧩 Type 9: Convolution Shapes (The \"No Calculus\" Trick)"
+  },
+  {
+    "type": "para",
+    "text": "When summing two independent Uniform Random Variables (\\(Z = X + Y\\)), their PDF is the convolution of two rectangles. Do not integrate; use pure geometry."
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation A (Same Widths):</b> \\(X \\sim U[-2, 2]\\) and \\(Y \\sim U[-2, 2]\\). Find the shape of \\(Z\\).<br><em>Pattern Recognition:</em> Two rectangles of the <em>same</em> width convoluted always make a <b>Triangle</b>."
+  },
+  {
+    "type": "para",
+    "text": "<b>Variation B (Different Widths):</b> \\(X \\sim U[-2, 2]\\) and \\(Y \\sim U[-4, 4]\\). Find the shape of \\(Z\\).<br><em>Pattern Recognition:</em> Two rectangles of <em>different</em> widths always make a <b>Trapezium</b>. The top flat plateau width is just the difference of their individual widths (\\(8 - 4 = 4\\)). Total base width is the sum (\\(8 + 4 = 12\\))."
+  },
+  {
+    "type": "heading",
+    "text": "🧩 Type 10: WBFM Bessel Harmonics"
+  },
+  {
+    "type": "para",
+    "text": "Wideband FM expands into an infinite series. Exams will ask for the amplitude of one specific frequency."
+  },
+  {
+    "type": "heading",
+    "text": "Solved Example (Finding the Coefficient)"
+  },
+  {
+    "type": "para",
+    "text": "<b>The Problem:</b> \\(C(t) = 5\\cos(2\\pi \\times 10^6 t)\\) and \\(m(t) = \\cos(4\\pi \\times 10^3 t)\\). The FM modulation index \\(\\beta = 6\\). Find the coefficient of the \\(\\cos(2\\pi \\times 1016 \\times 10^3 t)\\) term."
+  },
+  {
+    "type": "para",
+    "text": "<b>Step-by-Step Execution:</b><br>1. <b>Extract Frequencies:</b> \\(f_c = 1000\\text{ kHz}\\) and \\(f_m = 2\\text{ kHz}\\).<br>2. <b>Match the Target:</b> A WBFM component is at \\(f_c + n f_m\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "1000 + n(2) = 1016 \\implies 2n = 16 \\implies n = 8"
+  },
+  {
+    "type": "para",
+    "text": "3. <b>Extract Coefficient:</b> The amplitude is always \\(A_c J_n(\\beta)\\)."
+  },
+  {
+    "type": "eq",
+    "tex": "\\text{Answer: } 5 J_8(6)"
+  }
+]
+To permanently lock in the "No Calculus" Convolution trick from Type 9, here is an interactive simulator. You can adjust the widths of the uniform variables to see exactly when the geometry snaps from a triangle to a trapezium.Executing Layer 3: The Theory CoreHere is the exact code block to create your final major chapter, perfectly structuring those 5-mark and 10-mark block diagram questions so you can write them out flawlessly under time pressure.JSON[
+  {
+    "id": "theory_core",
+    "label": "2 · Theory Core",
+    "title": "THEORY CORE: Layer 3 Execution",
+    "content": [
+      {
+        "type": "para",
+        "text": "Bulletproof structures to memorize fast for written theory and viva questions."
+      },
+      {
+        "type": "heading",
+        "text": "📝 5-Mark Question: Compare Narrowband FM (NBFM) vs. Wideband FM (WBFM)"
+      },
+      {
+        "type": "para",
+        "text": "<table border='1' cellpadding='8' style='border-collapse: collapse; width: 100%; text-align: left;'><tr><th>Parameter</th><th>Narrowband FM (NBFM)</th><th>Wideband FM (WBFM)</th></tr><tr><td><b>Modulation Index (\\(\\beta\\))</b></td><td>\\(\\beta < 0.6\\) (or \\(\\beta \\ll 1\\))</td><td>\\(\\beta > 0.6\\) (or \\(\\beta \\gg 1\\))</td></tr><tr><td><b>Bandwidth</b></td><td>\\(BW = 2f_m\\) (Same as AM)</td><td>\\(BW = 2(\\beta + 1)f_m\\) (Carson's Rule)</td></tr><tr><td><b>Frequency Spectrum</b></td><td>Carrier + 1 USB + 1 LSB</td><td>Carrier + Infinite Sidebands</td></tr><tr><td><b>LSB Phase</b></td><td>180° out of phase (inverted)</td><td>Evaluated via Bessel functions</td></tr><tr><td><b>Mathematical Expansion</b></td><td>Simple trigonometric approximation</td><td>Infinite series using Bessel Functions (\\(J_n(\\beta)\\))</td></tr></table>"
+      },
+      {
+        "type": "heading",
+        "text": "📝 10-Mark Question: Explain the Superheterodyne Receiver with a Block Diagram"
+      },
+      {
+        "type": "para",
+        "text": "<b>1. The Core Problem:</b> Radio signals are weak and high-frequency. Building a tunable amplifier for every possible channel is expensive and unstable.<br><br><b>2. The Solution:</b> Step <em>any</em> incoming signal down to one standard, fixed Intermediate Frequency (IF), allowing the use of one highly optimized amplifier.<br><br><b>3. Key Components (The Diagram Flow):</b><br><ul><li><b>Antenna & Pre-selector:</b> Filters out the dangerous Image Frequency (\\(f_{si} = f_s + 2IF\\)) before it enters the system.</li><li><b>Local Oscillator (\\(f_{LO}\\)):</b> An internal signal generator. Tuning the radio actually changes this frequency.</li><li><b>The Mixer (\\(\\otimes\\)):</b> Multiplies the incoming signal (\\(f_s\\)) with the Local Oscillator (\\(f_{LO}\\)) to produce the difference frequency: \\(IF = |f_s - f_{LO}|\\). For AM, this is standard at \\(455\\text{ kHz}\\).</li><li><b>IF Amplifier:</b> Amplifies the fixed IF signal cleanly.</li><li><b>Demodulator:</b> Recovers the original baseband message.</li></ul>"
+      },
+      {
+        "type": "heading",
+        "text": "📝 10-Mark Question: Explain the Correlator Receiver Architecture for Bandpass Signals"
+      },
+      {
+        "type": "para",
+        "text": "<b>1. Purpose:</b> Detects digital bandpass signals (ASK, PSK, FSK) buried in Additive White Gaussian Noise (AWGN).<br><br><b>2. Architecture Steps:</b><br><ul><li><b>Multiplier (Mixer):</b> The noisy incoming signal \\(S(t) + W(t)\\) is multiplied by a perfectly synchronized, locally generated basis function \\(\\phi(t)\\). <em>Note:</em> If there is a phase mismatch (\\(\\theta\\)), the detected energy is degraded by \\(\\cos \\theta\\).</li><li><b>Integrator:</b> The multiplied signal is integrated precisely over one bit duration (\\(T_b\\)) to accumulate the symbol energy.</li><li><b>Sampler:</b> A switch closes exactly at \\(t = T_b\\) to sample the final scalar energy value (\\(Y\\)).</li><li><b>Decision Device:</b> Compares \\(Y\\) against an optimal threshold (\\(\\lambda_{opt}\\)). If \\(Y > \\lambda_{opt}\\), it outputs bit '1'. If below, it outputs bit '0'.</li></ul>"
+      }
+    ]
+  },
+    ]
+  },
+
+  
+  
   // ══════════════════════════
   // CHAPTER 1 — AM Basics
   // ══════════════════════════
@@ -3855,8 +4653,450 @@ const CHAPTERS = [
     ]
   },
   
+  // ══════════════════════════
+  // CHAPTER 44 — Info Theory & Channel Matrices
+  // ══════════════════════════
+  {
+    "id": "info_theory_matrices",
+    "label": "44 · Info & Matrices",
+    "title": "44. Information Theory & Channel Matrices",
+    "content": [
+
+      // --- SECTION: MASTER FORMULA CHEAT SHEET ---
+      { "type": "heading", "text": "44.1 The Master Formula Cheat Sheet" },
+      { "type": "para", "text": "Memorize this block. This is 90% of the math you will need for this chapter." },
+      { "type": "list", "items": [
+          "<b>Information (Bits):</b> \\( I(x_i) = -\\log_2 P(x_i) \\)",
+          "<b>Entropy (Avg Information):</b> \\( H(X) = -\\sum_{i=1}^{m} P(x_i) \\log_2 P(x_i) \\) [bits/symbol]",
+          "<b>Information Rate:</b> \\( R = r \\times H(X) \\) [bits/sec] <i>(where r = symbols/sec)</i>",
+          "<b>Output Matrix:</b> \\( [P(Y)] = [P(X)][P(Y|X)] \\) <i>(Note: P(X) is a Row Matrix)</i>",
+          "<b>Joint Matrix Conversion:</b> \\( [P(X,Y)] = \\text{Multiply each row of } [P(Y|X)] \\text{ by its input } P(x_i) \\)"
+        ]
+      },
+
+      // --- SECTION: INFO & ENTROPY ---
+      { "type": "heading", "text": "44.2 Information & Entropy (The 'Surprise' Factor)" },
+      { "type": "para", "text": "<b>Information</b> is a measure of surprise. If something is guaranteed to happen ($P=1$), it gives you zero information ($I=0$). The smaller the probability, the larger the information. We use Log Base 2 to measure it in 'Bits'." },
+      { "type": "table",
+        "headers": ["Log Base Used", "Unit of Information"],
+        "rows": [
+          ["\\(\\log_2\\) (Base 2)", "<b>Bits</b> (Most common in exams)"],
+          ["\\(\\log_{10}\\) (Base 10)", "<b>Decit</b> or Hartley"],
+          ["\\(\\ln\\) (Base e)", "<b>Nat</b>"]
+        ]
+      },
+      { "type": "para", "text": "<b>Entropy \\(H(X)\\)</b> is simply the weighted average of all the information in a system. You multiply every probability by its information and add them all up." },
+
+      // --- SECTION: CHANNEL MATRICES ---
+      { "type": "heading", "text": "44.3 Channel Matrices (The Golden Row Rule)" },
+      { "type": "para", "text": "When transmitting data through a channel, noise causes errors (crossovers). We represent these paths using Matrices. There are two main types you must not confuse:" },
+      
+      { "type": "heading", "text": "1. The Conditional Matrix [P(Y|X)]" },
+      { "type": "para", "text": "This matrix tells you: <i>'Given that I sent X, what is the probability it arrives as Y?'</i>" },
+      { "type": "list", "items": [
+          "<b>THE GOLDEN RULE:</b> The sum of every single row in a Conditional Matrix <b>MUST ALWAYS EQUAL 1</b>.",
+          "<b>Why?</b> Because if you transmit a signal, it MUST arrive as something at the output. It cannot just disappear. The probabilities of all possible output paths from a single input must total 100%."
+        ]
+      },
+
+      { "type": "heading", "text": "2. The Joint Matrix [P(X,Y)]" },
+      { "type": "para", "text": "This matrix tells you: <i>'What is the total overall probability of sending X AND receiving Y?'</i>" },
+      { "type": "list", "items": [
+          "You calculate this by taking the Conditional Matrix and multiplying Row 1 by \\(P(x_1)\\), Row 2 by \\(P(x_2)\\), etc.",
+          "<b>The Matrix Rule:</b> The sum of the ENTIRE Joint Matrix equals 1 (not just the rows)."
+        ]
+      },
+
+      // --- SECTION: BINARY CHANNELS ---
+      { "type": "heading", "text": "44.4 Binary Channels: Symmetric vs. Non-Symmetric" },
+      { "type": "para", "text": "A Binary Channel only has two inputs (0 and 1) and two outputs (0 and 1). The 'crossover' paths represent errors." },
+      { "type": "table",
+        "headers": ["Channel Type", "Error Probabilities", "Conditional Matrix \\([P(Y|X)]\\)"],
+        "rows": [
+          ["<b>Binary Symmetric (BSC)</b>", "Errors are equal. <br>\\(0 \\to 1\\) is \\(p\\). <br>\\(1 \\to 0\\) is also \\(p\\).", "\\( \\begin{bmatrix} 1-p & p \\\\ p & 1-p \\end{bmatrix} \\)"],
+          ["<b>Non-Symmetric</b>", "Errors are different. <br>\\(0 \\to 1\\) is \\(p\\). <br>\\(1 \\to 0\\) is \\(q\\).", "\\( \\begin{bmatrix} 1-p & p \\\\ q & 1-q \\end{bmatrix} \\)"]
+        ]
+      },
+      { "type": "para", "text": "<i>Notice the Golden Rule here: \\((1-p) + p = 1\\). The rows always sum to 1!</i>" },
+
+      // --- SECTION: SIMULATOR ---
+      { "type": "heading", "text": "44.5 Interactive Binary Channel Matrix Builder" },
+      { "type": "para", "text": "Adjust the Input Probability and the Crossover Errors (p and q) below. Watch how the diagram automatically updates the Conditional Matrix (Rows sum to 1) and the Joint Matrix (Total sums to 1)." },
+      { "type": "canvas_sim", "simId": "binary_channel_sim", "height": 380, "controlLabel": "Binary Channel Visualizer", "min": 0, "max": 1, "step": 0.01, "defaultVal": 0.5 }
+    ]
+  },
   
+  // ══════════════════════════
+  // CHAPTER 45 — Info Theory Master Cheat Sheet
+  // ══════════════════════════
+  {
+    "id": "info_theory_master",
+    "label": "45 · Info Theory Cheats",
+    "title": "45. Information Theory: The Master Cheat Sheet",
+    "content": [
+
+      // --- SECTION: MASTER FORMULA BLOCK ---
+      { "type": "heading", "text": "45.1 The Master Formula Block" },
+      { "type": "para", "text": "Screenshot this section. This contains every core formula you need for Information Theory calculations." },
+      { "type": "list", "items": [
+          "<b>Information (Bits):</b> \\( I(x_i) = -\\log_2 P(x_i) \\)",
+          "<b>Entropy / Avg Info (Bits/Symbol):</b> \\( H(X) = -\\sum P(x_i) \\log_2 P(x_i) \\)",
+          "<b>Information Rate (Bits/Sec):</b> \\( R = r \\times H(X) \\) <i>(where r = symbols/sec)</i>",
+          "<b>Output Matrix:</b> \\( [P(Y)] = [P(X)] \\times [P(Y|X)] \\)",
+          "<b>Total Probability (Receiver):</b> \\( P(y_j) = \\sum_i P(x_i) P(y_j | x_i) \\)",
+          "<b>Probability of Error (Pe):</b> \\( P_e = 1 - P_c \\) <i>(where Pc is Probability of Correct reception)</i>"
+        ]
+      },
+
+      // --- SECTION: PMF VS PDF RECAP ---
+      { "type": "heading", "text": "45.2 Recap: Why are we using PMF here?" },
+      { "type": "para", "text": "In the previous chapters, we used <b>PDFs (Integration)</b> because we were dealing with continuous analog signals (like voltages that can be 1.1V, 1.15V, 1.156V, etc.)." },
+      { "type": "para", "text": "In Information Theory, we are dealing with Digital Communications. We send discrete, distinct symbols (like sending a '0' or a '1', or symbols 'A', 'B', 'C'). Because these are countable and distinct, we use <b>PMFs (Summation)</b>. You don't integrate in this chapter; you just multiply and add!" },
+
+      // --- SECTION: CHANNEL MATRICES ---
+      { "type": "heading", "text": "45.3 The Two Channel Matrices (Do Not Confuse Them)" },
+      { "type": "para", "text": "You will be given or asked to find matrices. You must know which one you are looking at:" },
+      { "type": "table",
+        "headers": ["Matrix Type", "Symbol", "The Golden Rule"],
+        "rows": [
+          ["<b>Conditional Matrix</b><br>(Transition Matrix)", "\\( [P(Y|X)] \\)", "<b>ROWS SUM TO 1.</b> <br>Because whatever you put into the channel MUST come out as something."],
+          ["<b>Joint Matrix</b>", "\\( [P(X,Y)] \\)", "<b>ENTIRE MATRIX SUMS TO 1.</b> <br>This represents the total global probability of the entire system."]
+        ]
+      },
+
+      // --- SECTION: SPECIAL CHANNELS ---
+      { "type": "heading", "text": "45.4 Cheat Codes: The Special Channel Matrices" },
+      { "type": "para", "text": "If a question asks you to identify a channel type based on its Conditional Matrix \\([P(Y|X)]\\), use these instant visual rules:" },
+      { "type": "list", "items": [
+          "<b>1. Deterministic Channel:</b> Each <b>ROW</b> has exactly ONE non-zero element (which must be a '1'). <i>Meaning: If you know the input, the output is 100% certain.</i>",
+          "<b>2. Lossless Channel:</b> Each <b>COLUMN</b> has exactly ONE non-zero element. <i>Meaning: If you see the output, you know exactly what the input was. No info is lost.</i>",
+          "<b>3. Noiseless Channel:</b> It is both Deterministic AND Lossless. The matrix is a perfectly diagonal <b>Identity Matrix</b> (1s on the diagonal, 0s everywhere else).",
+          "<b>4. Symmetric Channel:</b> The rows are shifted copies of each other, and the columns are shifted copies of each other. (e.g., the Binary Symmetric Channel)."
+        ]
+      },
+
+      // --- SECTION: MUTUAL INFO ---
+      { "type": "heading", "text": "45.5 Mutual Information & Advanced Entropy" },
+      { "type": "para", "text": "Mutual Information \\( I(X;Y) \\) tells you how much knowing \\(Y\\) reduces your uncertainty about \\(X\\)." },
+      { "type": "eq", "tex": "I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X)" },
+      { "type": "list", "items": [
+          "<b>The Independence Rule:</b> If \\(X\\) and \\(Y\\) are completely statistically independent, they share zero information. Therefore, <b>\\( I(X;Y) = 0 \\)</b>.",
+          "<b>\\( H(X|Y) \\)</b> is called <i>Equivocation</i>. It is the information lost in the noisy channel.",
+          "<b>\\( H(Y|X) \\)</b> is called <i>Noise Entropy</i>. It is the fake information added by the channel."
+        ]
+      },
+
+      // --- SECTION: SIMULATOR ---
+      { "type": "heading", "text": "45.6 Interactive Special Matrix Visualizer" },
+      { "type": "para", "text": "Select a special channel type below to see exactly how its Conditional Matrix is structured based on the rules we just covered." },
+      { "type": "canvas_sim_select", "simId": "special_matrices_sim", "height": 300, "controlLabel": "Select Channel Type:",
+        "options": [
+          { "value": "deterministic", "text": "1. Deterministic Channel (Row Rule)" },
+          { "value": "lossless", "text": "2. Lossless Channel (Column Rule)" },
+          { "value": "noiseless", "text": "3. Noiseless Channel (Identity Matrix)" },
+          { "value": "symmetric", "text": "4. Binary Symmetric Channel (BSC)" }
+        ]
+      }
+    ]
+  },
   
+  // ══════════════════════════
+  // CHAPTER 47 — Superheterodyne Receivers
+  // ══════════════════════════
+  {
+    "id": "superhet_receivers",
+    "label": "47 · Superheterodyne",
+    "title": "47. Radio Receivers & The Superheterodyne Cheat Codes",
+    "content": [
+
+      // --- SECTION: THE PROBLEM ---
+      { "type": "heading", "text": "47.1 The Problem: Why not just amplify the antenna signal?" },
+      { "type": "para", "text": "Radio signals from the air (like FM radio at 98.3 MHz) are extremely high frequency and very weak. Building an amplifier that can perfectly tune to and amplify *any* high frequency without adding massive noise is incredibly difficult and expensive." },
+      { "type": "para", "text": "<b>The Solution:</b> Instead of building a complex amplifier for every possible channel, we use a <b>Superheterodyne Receiver</b>. Its job is to take ANY incoming high-frequency signal and 'step it down' to one single, standard, lower frequency. Then, we just build one really good, cheap amplifier for that exact lower frequency." },
+
+      // --- SECTION: THE MAGIC COMPONENTS ---
+      { "type": "heading", "text": "47.2 The Magic Components: LO, Mixer, and IF" },
+      { "type": "para", "text": "To step the frequency down, the receiver uses two main components to create a third:" },
+      { "type": "table",
+        "headers": ["Component", "Symbol", "What does it do?"],
+        "rows": [
+          ["<b>Local Oscillator</b>", "\\(f_{LO}\\)", "An internal signal generator inside your radio. When you turn the tuning knob on a radio, you are actually just changing the frequency of the Local Oscillator."],
+          ["<b>The Mixer</b>", "\\(\\otimes\\)", "A multiplier. It takes the incoming antenna signal (\\(f_s\\)) and multiplies it with the Local Oscillator (\\(f_{LO}\\)). This math creates two new frequencies: the sum and the <b>difference</b>."],
+          ["<b>Intermediate Frequency</b>", "\\(IF\\)", "The 'Difference' frequency produced by the mixer. This is our target 'stepped-down' frequency. <b>\\(IF = |f_s - f_{LO}|\\)</b>. For standard AM radio, \\(IF\\) is always 455 kHz."]
+        ]
+      },
+
+      // --- SECTION: THE EXAM CHEAT CODE ---
+      { "type": "heading", "text": "47.3 The Enemy: Image Frequency (\\(f_{si}\\))" },
+      { "type": "para", "text": "Here is the biggest flaw of the mixer: Mathematics is a two-way street. If \\(IF = f_{LO} - f_s\\), there is mathematically <i>another</i> ghost frequency higher up the spectrum that will produce the exact same IF if it enters the mixer: \\(IF = f_{si} - f_{LO}\\)." },
+      { "type": "para", "text": "This ghost frequency is called the <b>Image Frequency</b>. If it sneaks into your antenna, it will sit directly on top of your desired station and ruin the audio. It is exactly \\(2 \\times IF\\) away from your target station." },
+      
+      { "type": "heading", "text": "47.4 Master Formula: Image Frequency" },
+      { "type": "para", "text": "<b>THE CHEAT CODE:</b> If a question gives you the signal frequency (\\(f_s\\)) and the Intermediate Frequency (\\(IF\\)), use this exact formula:" },
+      { "type": "eq", "tex": "f_{si} = f_s + 2IF" },
+      { "type": "list", "items": [
+          "<b>Example:</b> You want to listen to a station at \\(1000\\text{ kHz}\\). Your radio has an \\(IF\\) of \\(455\\text{ kHz}\\).",
+          "What is the Image Frequency? \\(f_{si} = 1000 + 2(455) = 1000 + 910 = 1910\\text{ kHz}\\).",
+          "<i>Meaning:</i> If there is a radio station broadcasting at \\(1910\\text{ kHz}\\), you will hear both stations at the same time!"
+        ]
+      },
+
+      // --- SECTION: IMAGE REJECTION RATIO ---
+      { "type": "heading", "text": "47.5 Fixing the Problem: Image Rejection Ratio (IRR)" },
+      { "type": "para", "text": "To stop the Image Frequency, we put a basic filter (the Pre-selector) right at the antenna to block \\(f_{si}\\) before it ever reaches the mixer." },
+      { "type": "para", "text": "Exams will ask you to calculate the <b>Image Rejection Ratio (\\(\\alpha\\))</b>. You need two formulas for this:" },
+      { "type": "list", "items": [
+          "<b>Step 1: Calculate \\(\\rho\\) (rho).</b> This is just a ratio of the two frequencies: <br>\\( \\rho = \\frac{f_{si}}{f_s} - \\frac{f_s}{f_{si}} \\)",
+          "<b>Step 2: Calculate IRR (\\(\\alpha\\)).</b> You need the Quality Factor (\\(Q\\)) of the antenna filter. <br>\\( \\alpha = \\sqrt{1 + Q^2 \\rho^2} \\)"
+        ]
+      },
+
+      // --- SECTION: SIMULATOR ---
+      { "type": "heading", "text": "47.6 Interactive Superheterodyne Spectrum Visualizer" },
+      { "type": "para", "text": "Adjust the target Signal Frequency (\\(f_s\\)) and watch how the Local Oscillator (\\(f_{LO}\\)) automatically tracks it to maintain a constant IF. Notice how the dangerous Image Frequency (\\(f_{si}\\)) is always exactly \\(2 \\times IF\\) away!" },
+      { "type": "canvas_sim", "simId": "superhet_spectrum_sim", "height": 340, "controlLabel": "Target Antenna Signal (fs) in kHz:", "min": 500, "max": 1500, "step": 10, "defaultVal": 1000 }
+    ]
+  },
+  
+  {
+    "id": "baseband_pam_constellation",
+    "label": "48 · Constellations & PAM",
+    "title": "48. Baseband Digital (2-Ary PAM) & Constellation Diagrams",
+    "content": [
+      { "type": "heading", "text": "48.1 Master Formula Block: 2-Ary PAM" },
+      { "type": "para", "text": "Screenshot this. This is the ultimate cheat sheet for 2-Ary Pulse Amplitude Modulation." },
+      { "type": "list", "items": [
+          "<b>Symbol Energy ($E_s$):</b> $E_s = A^2 T_b$ <i>(Amplitude squared times bit duration)</i>",
+          "<b>Distance between points ($d_{12}$):</b> $d_{12} = 2\\sqrt{E_s}$",
+          "<b>General Error Formula:</b> $P_e = Q\\left[ \\sqrt{\\frac{d_{12}^2}{2N_0}} \\right]$",
+          "<b>Exact 2-Ary PAM Error:</b> $P_e = Q\\left[ \\sqrt{\\frac{2A^2 T_b}{N_0}} \\right]$"
+        ]
+      },
+      { "type": "heading", "text": "48.2 What is 2-Ary PAM? (The Simple Kid Translation)" },
+      { "type": "para", "text": "In digital baseband, we aren't sending smooth analog sine waves anymore. We are sending raw digital bits (0s and 1s)." },
+      { "type": "para", "text": "<b>2-Ary</b> just means 'Binary' (2 levels). <b>PAM</b> means 'Pulse Amplitude Modulation'. So, we are just sending flat rectangular pulses of voltage to represent our bits over a specific time duration called $T_b$ (Bit Time)." },
+      { "type": "list", "items": [
+          "<b>To send a '1':</b> We send a positive voltage pulse ($+A$). Signal $S_1(t) = A$.",
+          "<b>To send a '0':</b> We send a negative voltage pulse ($-A$). Signal $S_2(t) = -A$."
+        ]
+      },
+      { "type": "heading", "text": "48.3 Calculating the Energy ($E_s$)" },
+      { "type": "para", "text": "In digital communications, receivers don't just look at the peak voltage to decide if a bit is a 1 or a 0. They look at the total <b>Energy</b> of the pulse. This makes it much harder for noise to trick the receiver." },
+      { "type": "para", "text": "Energy is simply the Area of the squared voltage over time: $Energy = Voltage^2 \\times Time$." },
+      { "type": "list", "items": [
+          "Energy of sending a '1': $E_{s1} = (A)^2 \\times T_b = A^2 T_b$",
+          "Energy of sending a '0': $E_{s2} = (-A)^2 \\times T_b = A^2 T_b$"
+        ]
+      },
+      { "type": "para", "text": "<i>Notice that it takes the exact same amount of energy to send a 0 as it does to send a 1!</i> We call this average symbol energy $E_s$." },
+      { "type": "heading", "text": "48.4 What the heck is a Constellation Diagram?" },
+      { "type": "para", "text": "This is what confuses everyone. You are used to seeing Voltage vs. Time graphs. A Constellation Diagram is different: <b>It is just a 1D Number Line of Energy.</b>" },
+      { "type": "para", "text": "Instead of drawing boxes over time, we just put dots on a number line to show where our signals live in 'Energy Space' (which has an axis labeled $\\phi(t)$)." },
+      { "type": "list", "items": [
+          "<b>Point 1 (for bit '1'):</b> Lives on the right side at $+\\sqrt{E_s}$.",
+          "<b>Point 2 (for bit '0'):</b> Lives on the left side at $-\\sqrt{E_s}$."
+        ]
+      },
+      { "type": "para", "text": "<b>Why do we care? Distance!</b><br>The receiver has to guess which dot was sent. If noise pushes the dot past the '0' origin line, the receiver makes an error. Therefore, the distance between the two dots ($d_{12}$) is the most important metric in digital comms. The further apart they are, the harder it is to make an error." },
+      { "type": "eq", "tex": "d_{12} = \\sqrt{E_s} - (-\\sqrt{E_s}) = 2\\sqrt{E_s}" },
+      { "type": "heading", "text": "48.5 Calculating Probability of Error ($P_e$)" },
+      { "type": "para", "text": "Sir uses a master formula that works for *any* constellation diagram. The probability of error depends purely on how far apart the dots are ($d_{12}$) and how strong the noise is ($N_0$)." },
+      { "type": "eq", "tex": "P_e = Q\\left[ \\sqrt{\\frac{d_{12}^2}{2N_0}} \\right]" },
+      { "type": "para", "text": "Since we just proved that $d_{12} = 2\\sqrt{E_s}$, we can plug that in:" },
+      { "type": "eq", "tex": "d_{12}^2 = (2\\sqrt{E_s})^2 = 4E_s = 4A^2 T_b" },
+      { "type": "para", "text": "Substitute this into the Master Formula:" },
+      { "type": "eq", "tex": "P_e = Q\\left[ \\sqrt{\\frac{4A^2 T_b}{2N_0}} \\right] = Q\\left[ \\sqrt{\\frac{2A^2 T_b}{N_0}} \\right]" },
+      { "type": "heading", "text": "48.6 Interactive Constellation & Energy Visualizer" },
+      { "type": "para", "text": "Adjust the pulse Amplitude ($A$), Bit Duration ($T_b$), and Noise to see how the Constellation dots move on the number line. Notice that increasing Amplitude or Time pushes the dots further apart, increasing the distance ($d_{12}$) and lowering the Error Probability!" }
+    ]
+  },
+  {
+    "id": "4ary_pam_constellations",
+    "label": "49 · 4-Ary PAM",
+    "title": "49. 4-Ary PAM & The 'Energies From Hell'",
+    "content": [
+      { "type": "heading", "text": "49.1 What is 4-Ary PAM?" },
+      { "type": "para", "text": "In 2-Ary PAM, we sent 1 bit at a time using 2 voltage levels ($+A$ and $-A$). In <b>4-Ary PAM</b>, we get greedy. We want to send <b>2 bits at the exact same time</b>." },
+      { "type": "list", "items": [
+          "Since we are sending 2 bits together, there are 4 possible combinations: '00', '01', '10', '11'.",
+          "To represent 4 different combinations, we need <b>4 different voltage levels</b>.",
+          "<b>The Time Bonus:</b> Because we are sending 2 bits at once, the pulse gets to last twice as long! So the new Symbol Duration is <b>\\(T = 2T_b\\)</b>."
+        ]
+      },
+      { "type": "heading", "text": "49.2 Sir's Voltage Mapping" },
+      { "type": "para", "text": "Based on the lecture notes, here is how the 4 bit combinations are mapped to voltages over the time period \\(T = 2T_b\\):" },
+      { "type": "table",
+        "headers": ["Bits", "Voltage Level"],
+        "rows": [
+          ["<b>00</b>", "\\(+A\\)"],
+          ["<b>01</b>", "\\(+A/2\\)"],
+          ["<b>10</b>", "\\(-A/2\\)"],
+          ["<b>11</b>", "\\(-A\\)"]
+        ]
+      },
+      { "type": "heading", "text": "49.3 Where do the 'Energies' come from?" },
+      { "type": "para", "text": "To draw the Constellation Diagram, we must convert those Voltages into Energy Coordinates. Here is the 'Simple Kid' rule:" },
+      { "type": "eq", "tex": "\\text{Coordinate} = \\text{Voltage} \\times \\sqrt{\\text{Time}}" },
+      { "type": "para", "text": "Since our Time for 4-Ary PAM is \\(2T_b\\), we just multiply every voltage level by \\(\\sqrt{2T_b}\\):" },
+      { "type": "list", "items": [
+          "<b>Outer Right Dot ('00'):</b> \\(+A \\times \\sqrt{2T_b}\\)",
+          "<b>Inner Right Dot ('01'):</b> \\(+\\frac{A}{2} \\times \\sqrt{2T_b}\\)",
+          "<b>Inner Left Dot ('10'):</b> \\(-\\frac{A}{2} \\times \\sqrt{2T_b}\\)",
+          "<b>Outer Left Dot ('11'):</b> \\(-A \\times \\sqrt{2T_b}\\)"
+        ]
+      },
+      { "type": "heading", "text": "49.4 The Distance Trap (\\(d_{min}\\))" },
+      { "type": "para", "text": "The Probability of Error (\\(P_e\\)) depends entirely on how close the dots are to each other. The closer they are, the easier it is for noise to push one dot into another's territory." },
+      { "type": "para", "text": "In Sir's specific example, the dots are NOT equally spaced!" },
+      { "type": "list", "items": [
+          "The distance between \\(A\\) and \\(A/2\\) is <b>\\(A/2\\)</b>.",
+          "The distance between \\(A/2\\) and \\(-A/2\\) across the zero line is <b>\\(A\\)</b>."
+        ]
+      },
+      { "type": "para", "text": "Because the smallest gap is what causes the most errors, our Minimum Distance (\\(d_{min}\\)) is based on the \\(A/2\\) gap. In energy space, this becomes:" },
+      { "type": "eq", "tex": "d_{min} = \\frac{A}{2}\\sqrt{2T_b}" },
+      { "type": "heading", "text": "49.5 Interactive 2-Ary vs 4-Ary Constellation Plotter" },
+      { "type": "para", "text": "Use the widget below to switch between 2-Ary and 4-Ary PAM. Watch how grouping the bits instantly doubles the time (\\(T_b \\to 2T_b\\)), splits the voltages, and forces 4 dots onto the Constellation line. You can clearly see where the coordinate math comes from." }
+    ]
+  },
+  {
+    "id": "bandpass_digital_modulation",
+    "label": "50 · ASK, PSK, FSK",
+    "title": "50. Bandpass Digital Communication & Master Energy Sheet",
+    "content": [
+      { "type": "heading", "text": "50.1 Master Cheat Sheet: Energies & P_e" },
+      { "type": "para", "text": "Screenshot this. If you are asked to calculate Energy or Probability of Error (\\(P_e\\)), use these shortcuts. Note: A sinusoidal carrier averages out to half power, which is why Bandpass energy divides by 2!" },
+      { "type": "list", "items": [
+          "<b>Baseband Pulse Energy:</b> \\( E = A^2 T_b \\)",
+          "<b>Bandpass (Sinusoidal) Energy:</b> \\( E = \\frac{A^2 T_b}{2} \\)",
+          "<b>ASK (On-Off Keying) Energy:</b> \\(E_1 = \\frac{A^2 T_b}{2}\\) (for '1'), \\(E_2 = 0\\) (for '0').",
+          "<b>PSK (Phase Shift) Energy:</b> \\(E_1 = \\frac{A^2 T_b}{2}\\) (for '1'), \\(E_2 = \\frac{A^2 T_b}{2}\\) (for '0').",
+          "<b>General Error Formula:</b> \\(P_e = Q\\left[ \\frac{d_{12}}{\\sqrt{2N_0}} \\right]\\) <i>(where \\(d_{12}\\) is the distance between points on the constellation)</i>"
+        ]
+      },
+      { "type": "heading", "text": "50.2 The Shapes: Baseband vs. Bandpass (Fourier)" },
+      { "type": "para", "text": "Why do we even use carriers? Because baseband digital pulses are square waves. If you try to transmit a square wave over the air, it dies. We use a carrier wave (a high-frequency sine wave) to carry the square wave through the air." },
+      { "type": "table",
+        "headers": ["Time Domain Shape", "Fourier Transform (Frequency Domain)", "Why it matters"],
+        "rows": [
+          ["<b>Baseband Pulse</b> (A square box from 0 to \\(T_b\\))", "<b>Sinc Function</b> \\(P(f)\\) centered at 0 Hz.", "Low frequency. Cannot travel through the air. Antenna would have to be miles long."],
+          ["<b>Carrier Wave</b> (Pure continuous sine wave)", "<b>Two Impulses</b> at \\(+f_c\\) and \\(-f_c\\).", "The 'vehicle' that carries the data."],
+          ["<b>Bandpass Pulse</b> (A sine wave trapped inside a square box)", "<b>Shifted Sinc Function</b> \\(S(f)\\) centered at \\(f_c\\).", "This is what is actually transmitted! The data is now at a high frequency."]
+        ]
+      },
+      { "type": "heading", "text": "50.3 The Big Three: ASK, PSK, FSK" },
+      { "type": "para", "text": "To send digital 1s and 0s using a carrier wave, we must change one of three things about the wave: its Amplitude, its Phase, or its Frequency." },
+      { "type": "list", "items": [
+          "<b>1. ASK (Amplitude Shift Keying):</b> Also called OOK (On-Off Keying).<br>• Send a '1': Turn the carrier ON. \\(S_1(t) = A\\cos(2\\pi f_c t)\\)<br>• Send a '0': Turn the carrier OFF. \\(S_2(t) = 0\\)",
+          "<b>2. PSK (Phase Shift Keying):</b><br>• Send a '1': Carrier starts normal. \\(S_1(t) = A\\cos(2\\pi f_c t)\\)<br>• Send a '0': Flip the carrier upside down (180° phase shift). \\(S_2(t) = -A\\cos(2\\pi f_c t)\\)",
+          "<b>3. FSK (Frequency Shift Keying):</b><br>• Send a '1': Fast sine wave. \\(S_1(t) = A\\cos(2\\pi f_{c1} t)\\)<br>• Send a '0': Slow sine wave. \\(S_2(t) = A\\cos(2\\pi f_{c2} t)\\)"
+        ]
+      },
+      { "type": "heading", "text": "50.4 The Transmitter Diagram (How it works)" },
+      { "type": "para", "text": "Sir showed a block diagram of the Transmitter. Here is the 'Simple Kid' translation:" },
+      { "type": "list", "items": [
+          "<b>\\(m(t) \\to S \\to Q \\to E\\):</b> This just means Sampling, Quantizing, and Encoding. It turns an analog voice into digital 1s and 0s.",
+          "<b>Line Coder:</b> Turns the 1s and 0s into actual physical DC voltages (like +5V for '1' and 0V for '0'). This is the baseband pulse \\(p(t)\\).",
+          "<b>Mixer (\\(\\otimes\\)):</b> The magic multiplier. It takes the DC voltages \\(p(t)\\) and multiplies them by the Carrier \\(\\cos(2\\pi f_c t)\\). This creates the final Bandpass Signal!"
+        ]
+      },
+      { "type": "heading", "text": "50.5 The Receiver & Matched Filter" },
+      { "type": "para", "text": "At the receiver, the signal arrives mixed with AWGN (noise). To clean it up, we use a <b>Matched Filter</b>." },
+      { "type": "para", "text": "<b>What does it do?</b> A Matched Filter is mathematically designed to maximize the Signal-to-Noise Ratio (SNR) exactly at the end of the bit duration (\\(t = T_b\\)). It takes the messy incoming wave, integrates the energy, and outputs a single dot. The <b>Decision Device</b> looks at that dot. If it is above a certain threshold (\\(\\lambda\\)), it guesses '1'. If it is below, it guesses '0'." },
+      { "type": "heading", "text": "50.6 Interactive Transmitter Visualizer" },
+      { "type": "para", "text": "This simulator perfectly recreates the Transmitter Mixer diagram from Sir's lecture. Select the Modulation Type (ASK, PSK, or FSK). Watch how the Baseband Pulse \\(p(t)\\) (the digital 1s and 0s) interacts with the Carrier Wave to generate the final Transmitted Bandpass Signal." },
+      
+      // --- SECTION: PAM SIMULATOR HOOK ---
+      { "type": "heading", "text": "50.4 Interactive: 2-Ary vs 4-Ary PAM Constellations" },
+      { "type": "para", "text": "To plot a constellation dot, the coordinate rule is always: <b>Voltage × √(Time)</b>. Watch how changing to 4-Ary PAM doubles the time to \\(2T_b\\) and shifts the energy coordinates." },
+      { "type": "canvas_sim_select", "simId": "pam_constellation_sim", "height": 380, "controlLabel": "Select PAM Type:",
+        "options": [
+          { "value": "2ary", "text": "2-Ary PAM (1 bit per symbol)" },
+          { "value": "4ary", "text": "4-Ary PAM (2 bits per symbol)" }
+        ]
+      },
+
+      // --- SECTION: TRANSMITTER SIMULATOR HOOK ---
+      { "type": "heading", "text": "50.5 Interactive: ASK, PSK, FSK Transmitter Waveforms" },
+      { "type": "para", "text": "Watch exactly how the Baseband Pulse \\(p(t)\\) multiplies with the Carrier Wave to generate the final Transmitted Bandpass Signal." },
+      { "type": "canvas_sim_select", "simId": "bandpass_transmitter_sim", "height": 400, "controlLabel": "Select Modulation Type:",
+        "options": [
+          { "value": "ask", "text": "1. ASK / OOK (Amplitude Shift Keying)" },
+          { "value": "psk", "text": "2. PSK (Phase Shift Keying)" },
+          { "value": "fsk", "text": "3. FSK (Frequency Shift Keying)" }
+        ]
+      },
+    ]
+  },
+
+  // ══════════════════════════
+  // CHAPTER 51 — Correlator Receivers & ASK
+  // ══════════════════════════
+  {
+    "id": "correlator_receivers_ask",
+    "label": "51 · Correlators & ASK",
+    "title": "51. Correlator Receivers & ASK Performance",
+    "content": [
+
+      // --- SECTION: CORRELATOR RECEIVER ---
+      { "type": "heading", "text": "51.1 The Correlator Receiver Architecture" },
+      { "type": "para", "text": "For bandpass digital signals like ASK, PSK, and FSK, we use a <b>Correlator Receiver</b> to detect the signal in the presence of Additive White Gaussian Noise (AWGN). The architecture consists of a multiplier, an integrator, a sampler, and a decision device." },
+      { "type": "list", "items": [
+          "<b>1. Multiplier (Mixer):</b> The incoming noisy signal \\(S(t) + W(t)\\) is multiplied by a locally generated orthonormal basis function \\(\\phi(t)\\).",
+          "<b>2. Integrator:</b> The product \\(x(t)\\) is integrated over one exact bit duration \\(T_b\\). <br>\\(y(t) = \\int_0^{T_b} x(t) dt\\)",
+          "<b>3. Sampler:</b> A switch closes exactly at \\(t = T_b\\) to sample the accumulated energy, yielding a scalar value \\(Y\\).",
+          "<b>4. Decision Device (D.D.):</b> Compares \\(Y\\) against an optimal threshold (\\(\\lambda_{opt}\\)) to output the estimated bit \\(\\hat{Y}\\)."
+        ]
+      },
+      { "type": "para", "text": "For this to work, the bit duration \\(T_b\\) must be an integer multiple of the carrier period: \\(T_b = \\frac{K}{f_c}\\)." },
+
+      // --- SECTION: BASIS FUNCTION ---
+      { "type": "heading", "text": "51.2 The Basis Function & Phase Error" },
+      { "type": "para", "text": "The local basis function \\(\\phi(t)\\) must be perfectly synchronized with the incoming carrier. It is defined as:" },
+      { "type": "eq", "tex": "\\phi(t) = \\sqrt{\\frac{2}{T_b}} \\cos(\\omega_c t + \\theta) \\quad \\text{for } 0 \\le t \\le T_b" },
+      { "type": "para", "text": "If there is a phase mismatch (\\(\\theta\\)) between the transmitter and the receiver's local oscillator, it degrades the detected energy by a factor of \\(\\cos \\theta\\). If \\(\\theta = 0\\), the detection is perfectly coherent." },
+
+      // --- SECTION: ASK ENERGY ---
+      { "type": "heading", "text": "51.3 ASK (OOK) Signal Energy" },
+      { "type": "para", "text": "In Amplitude Shift Keying (or On-Off Keying), we transmit a carrier for '1' and nothing for '0'. The symbol energies are calculated by integrating the squared signal over \\(T_b\\):" },
+      { "type": "list", "items": [
+          "<b>For Bit '1':</b> \\(S_1(t) = A \\cos(2\\pi f_c t)\\). <br>Energy \\(E_{s1} = \\int_0^{T_b} A^2 \\cos^2(2\\pi f_c t) dt = \\frac{A^2}{2} \\times T_b\\)",
+          "<b>For Bit '0':</b> \\(S_2(t) = 0\\). <br>Energy \\(E_{s2} = 0\\)"
+        ]
+      },
+
+      // --- SECTION: AVERAGE BIT ENERGY ---
+      { "type": "heading", "text": "51.4 Average Bit Energy \\((E_b)_{avg}\\)" },
+      { "type": "para", "text": "Assuming 1s and 0s are equally likely (\\(P(0) = P(1) = 0.5\\)), the Average Bit Energy is the weighted sum of the individual symbol energies:" },
+      { "type": "eq", "tex": "(E_b)_{avg} = p_1 E_{s1} + p_2 E_{s2}" },
+      { "type": "eq", "tex": "(E_b)_{avg} = \\frac{E_{s1} + E_{s2}}{2} = \\frac{\\frac{A^2 T_b}{2} + 0}{2} = \\frac{A^2 T_b}{4}" },
+
+      // --- SECTION: CONSTELLATION & PROBABILITY OF ERROR ---
+      { "type": "heading", "text": "51.5 Constellation & Probability of Error (\\(P_e\\))" },
+      { "type": "para", "text": "On the 1D constellation diagram for ASK, the symbols are located at:" },
+      { "type": "list", "items": [
+          "\\(S_1\\) is at coordinate \\(\\sqrt{E_{s1}}\\) (or \\(\\sqrt{A^2 T_b / 2}\\)).",
+          "\\(S_2\\) is at the origin \\((0, 0)\\)."
+        ]
+      },
+      { "type": "para", "text": "The optimal decision threshold \\(\\lambda_{opt}\\) is placed exactly halfway between them: \\(\\lambda_{opt} = \\frac{\\sqrt{E_{s1}}}{2}\\)." },
+      { "type": "para", "text": "The probability of error is determined by the distance energy \\(E_d\\), where \\(E_d = \\int_0^{T_b} [S_1(t) - S_2(t)]^2 dt = \\frac{A^2 T_b}{2}\\):" },
+      { "type": "eq", "tex": "P_e = Q \\left[ \\sqrt{\\frac{E_d}{2N_0}} \\right] = Q \\left[ \\sqrt{\\frac{A^2 T_b}{4N_0}} \\right]" },
+      { "type": "para", "text": "Substituting the Average Bit Energy \\((E_b)_{avg} = \\frac{A^2 T_b}{4}\\) back into the equation reveals a massive shortcut for standard ASK/OOK:" },
+      { "type": "eq", "tex": "P_e = Q \\left[ \\sqrt{\\frac{(E_b)_{avg}}{N_0}} \\right]" },
+      
+      // --- SECTION: PHASE ERROR IMPACT ---
+      { "type": "heading", "text": "51.6 Impact of Phase Error on \\(P_e\\)" },
+      { "type": "para", "text": "If the correlator basis function has a phase error \\(\\theta\\), the effective distance between the constellation points shrinks, increasing the probability of error:" },
+      { "type": "eq", "tex": "P_e = Q \\left[ \\sqrt{\\frac{A^2 T_b \\cos^2 \\theta}{4 N_0}} \\right]" },
+
+      // --- SECTION: SIMULATOR ---
+      { "type": "heading", "text": "51.7 Interactive Correlator & ASK Constellation" },
+      { "type": "para", "text": "Adjust the Amplitude, Bit Time, and Phase Error (\\(\\theta\\)) to see how the Correlator maps the Bandpass signal onto the 1D Energy Constellation. Notice how Phase Error shrinks the coordinate of \\(S_1\\), moving it closer to the threshold and ruining the error rate." },
+      { "type": "canvas_sim", "simId": "correlator_ask_sim", "height": 380, "controlLabel": "Phase Error (θ) in degrees:", "min": 0, "max": 90, "step": 1, "defaultVal": 0 }
+
+    ]
+  },
   
   
   // ══════════════════════════
