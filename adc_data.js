@@ -755,9 +755,9 @@ const CHAPTERS = [
   {
     "type": "eq",
     "tex": "\\text{Answer: } 5 J_8(6)"
-  }
-]
-To permanently lock in the "No Calculus" Convolution trick from Type 9, here is an interactive simulator. You can adjust the widths of the uniform variables to see exactly when the geometry snaps from a triangle to a trapezium.Executing Layer 3: The Theory CoreHere is the exact code block to create your final major chapter, perfectly structuring those 5-mark and 10-mark block diagram questions so you can write them out flawlessly under time pressure.JSON[
+  },
+
+
   {
     "id": "theory_core",
     "label": "2 · Theory Core",
@@ -790,12 +790,11 @@ To permanently lock in the "No Calculus" Convolution trick from Type 9, here is 
       {
         "type": "para",
         "text": "<b>1. Purpose:</b> Detects digital bandpass signals (ASK, PSK, FSK) buried in Additive White Gaussian Noise (AWGN).<br><br><b>2. Architecture Steps:</b><br><ul><li><b>Multiplier (Mixer):</b> The noisy incoming signal \\(S(t) + W(t)\\) is multiplied by a perfectly synchronized, locally generated basis function \\(\\phi(t)\\). <em>Note:</em> If there is a phase mismatch (\\(\\theta\\)), the detected energy is degraded by \\(\\cos \\theta\\).</li><li><b>Integrator:</b> The multiplied signal is integrated precisely over one bit duration (\\(T_b\\)) to accumulate the symbol energy.</li><li><b>Sampler:</b> A switch closes exactly at \\(t = T_b\\) to sample the final scalar energy value (\\(Y\\)).</li><li><b>Decision Device:</b> Compares \\(Y\\) against an optimal threshold (\\(\\lambda_{opt}\\)). If \\(Y > \\lambda_{opt}\\), it outputs bit '1'. If below, it outputs bit '0'.</li></ul>"
-      }
+      },
     ]
   },
-    ]
-  },
-
+]
+},
   
   
   // ══════════════════════════
