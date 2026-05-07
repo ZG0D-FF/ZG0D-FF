@@ -3598,6 +3598,837 @@ function initConvolutionShapeSim() {
   draw();
   slideW2.addEventListener('input', draw);
 }
+// ── 37. Binary Channel Matrix Simulator ──
+function initBinaryChannelSim() {
+  const canvas = document.getElementById('canvas-binary_channel_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  // Inject sliders for probabilities
+  const wrapper = document.getElementById('slide-binary_channel_sim').parentElement;
+  // Hide the default slider entirely
+  document.getElementById('slide-binary_channel_sim').style.display = 'none';
+  wrapper.querySelector('label').style.display = 'none';
+
+  const topHtml = `
+    <div style="display:flex; gap:15px; margin-bottom:15px; background:rgba(0,0,0,0.2); padding:15px; border-radius:4px;">
+      <div style="flex:1;">
+        <div style="color:#8be9fd; font-family:var(--ui); font-size:12px; font-weight:bold; margin-bottom:5px;">Input Probabilities</div>
+        <label style="font-size:10px; color:#ccc;">P(x₁) = <span id="val_px1">0.60</span></label>
+        <input type="range" id="slide_px1" min="0.01" max="0.99" step="0.01" value="0.6" style="width:100%; margin-bottom:8px;">
+        <label style="font-size:10px; color:#ccc; font-style:italic;">P(x₂) automatically = <span id="val_px2">0.40</span></label>
+      </div>
+      <div style="flex:1;">
+        <div style="color:#ffb86c; font-family:var(--ui); font-size:12px; font-weight:bold; margin-bottom:5px;">Crossover Errors</div>
+        <label style="font-size:10px; color:#ccc;">Error p (x₁→y₂): <span id="val_p">0.10</span></label>
+        <input type="range" id="slide_p" min="0" max="0.5" step="0.01" value="0.1" style="width:100%; margin-bottom:8px;">
+        <label style="font-size:10px; color:#ccc;">Error q (x₂→y₁): <span id="val_q">0.20</span></label>
+        <input type="range" id="slide_q" min="0" max="0.5" step="0.01" value="0.2" style="width:100%;">
+      </div>
+    </div>
+  `;
+  wrapper.insertAdjacentHTML('afterbegin', topHtml);
+
+  const slidePx1 = document.getElementById('slide_px1');
+  const slideP = document.getElementById('slide_p');
+  const slideQ = document.getElementById('slide_q');
+  const state = setupInteractive(canvas);
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    // Read Values
+    const px1 = parseFloat(slidePx1.value);
+    const px2 = 1.0 - px1;
+    const p = parseFloat(slideP.value);
+    const q = parseFloat(slideQ.value);
+    
+    // Update labels
+    document.getElementById('val_px1').textContent = px1.toFixed(2);
+    document.getElementById('val_px2').textContent = px2.toFixed(2);
+    document.getElementById('val_p').textContent = p.toFixed(2);
+    document.getElementById('val_q').textContent = q.toFixed(2);
+
+    // --- DRAW DIAGRAM ---
+    const cx = W / 4;
+    const nodeY1 = 80;
+    const nodeY2 = H - 80;
+    const nodeXLeft = 60;
+    const nodeXRight = cx * 1.5 + 40;
+
+    // Helper to draw nodes
+    function drawNode(x, y, label, probText) {
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 14px JetBrains Mono';
+        if (x < W/2) {
+            ctx.textAlign = 'right'; ctx.fillText(label, x - 15, y + 5);
+            ctx.fillStyle = '#8be9fd'; ctx.font = '11px Inter'; ctx.fillText(probText, x - 15, y - 10);
+        } else {
+            ctx.textAlign = 'left'; ctx.fillText(label, x + 15, y + 5);
+        }
+    }
+
+    // Draw Lines
+    ctx.lineWidth = 2;
+    // x1 -> y1 (Correct)
+    ctx.strokeStyle = '#50fa7b'; ctx.beginPath(); ctx.moveTo(nodeXLeft, nodeY1); ctx.lineTo(nodeXRight, nodeY1); ctx.stroke();
+    // x2 -> y2 (Correct)
+    ctx.beginPath(); ctx.moveTo(nodeXLeft, nodeY2); ctx.lineTo(nodeXRight, nodeY2); ctx.stroke();
+    
+    // x1 -> y2 (Error p)
+    ctx.strokeStyle = '#ff79c6'; ctx.beginPath(); ctx.moveTo(nodeXLeft, nodeY1); ctx.lineTo(nodeXRight, nodeY2); ctx.stroke();
+    // x2 -> y1 (Error q)
+    ctx.beginPath(); ctx.moveTo(nodeXLeft, nodeY2); ctx.lineTo(nodeXRight, nodeY1); ctx.stroke();
+
+    // Arrows
+    const drawArrow = (fromX, fromY, toX, toY, color) => {
+        const midX = (fromX + toX)/2; const midY = (fromY + toY)/2;
+        const angle = Math.atan2(toY - fromY, toX - fromX);
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.moveTo(midX, midY);
+        ctx.lineTo(midX - 10*Math.cos(angle - Math.PI/6), midY - 10*Math.sin(angle - Math.PI/6));
+        ctx.lineTo(midX - 10*Math.cos(angle + Math.PI/6), midY - 10*Math.sin(angle + Math.PI/6));
+        ctx.fill();
+    };
+    drawArrow(nodeXLeft, nodeY1, nodeXRight, nodeY1, '#50fa7b');
+    drawArrow(nodeXLeft, nodeY2, nodeXRight, nodeY2, '#50fa7b');
+    drawArrow(nodeXLeft, nodeY1, nodeXRight, nodeY2, '#ff79c6');
+    drawArrow(nodeXLeft, nodeY2, nodeXRight, nodeY1, '#ff79c6');
+
+    // Line Labels
+    ctx.textAlign = 'center'; ctx.font = 'bold 12px Inter';
+    ctx.fillStyle = '#50fa7b';
+    ctx.fillText(`1-p = ${(1-p).toFixed(2)}`, (nodeXLeft+nodeXRight)/2, nodeY1 - 10);
+    ctx.fillText(`1-q = ${(1-q).toFixed(2)}`, (nodeXLeft+nodeXRight)/2, nodeY2 + 20);
+    ctx.fillStyle = '#ff79c6';
+    ctx.fillText(`p = ${p.toFixed(2)}`, (nodeXLeft+nodeXRight)/2 + 20, (nodeY1+nodeY2)/2 - 20);
+    ctx.fillText(`q = ${q.toFixed(2)}`, (nodeXLeft+nodeXRight)/2 - 20, (nodeY1+nodeY2)/2 + 30);
+
+    // Nodes
+    drawNode(nodeXLeft, nodeY1, "x₁", `P=${px1.toFixed(2)}`);
+    drawNode(nodeXLeft, nodeY2, "x₂", `P=${px2.toFixed(2)}`);
+    drawNode(nodeXRight, nodeY1, "y₁", "");
+    drawNode(nodeXRight, nodeY2, "y₂", "");
+
+    // --- DRAW MATRICES ---
+    const matrixX = W / 2 + 50;
+    const matrixYTop = 60;
+    const matrixYBot = 220;
+
+    const drawMatrix = (title, r1c1, r1c2, r2c1, r2c2, x, y, noteColor, noteText) => {
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Inter'; ctx.textAlign = 'left';
+        ctx.fillText(title, x, y - 15);
+        
+        // Brackets
+        ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2;
+        ctx.beginPath(); 
+        ctx.moveTo(x + 10, y + 10); ctx.lineTo(x, y + 10); ctx.lineTo(x, y + 70); ctx.lineTo(x + 10, y + 70);
+        ctx.moveTo(x + 110, y + 10); ctx.lineTo(x + 120, y + 10); ctx.lineTo(x + 120, y + 70); ctx.lineTo(x + 110, y + 70);
+        ctx.stroke();
+
+        ctx.font = '14px JetBrains Mono';
+        ctx.fillText(r1c1.toFixed(2), x + 20, y + 30);
+        ctx.fillText(r1c2.toFixed(2), x + 70, y + 30);
+        ctx.fillText(r2c1.toFixed(2), x + 20, y + 60);
+        ctx.fillText(r2c2.toFixed(2), x + 70, y + 60);
+
+        // Math Note
+        ctx.fillStyle = noteColor; ctx.font = '11px Inter';
+        ctx.fillText(noteText, x + 130, y + 45);
+    };
+
+    // 1. Conditional Matrix P(Y|X)
+    drawMatrix(
+        "Conditional [P(Y|X)]", 
+        (1-p), p, q, (1-q), 
+        matrixX, matrixYTop, 
+        '#ffb86c', `← ROW SUM = 1.00 ALWAYS`
+    );
+
+    // 2. Joint Matrix P(X,Y)
+    const j11 = px1 * (1-p);
+    const j12 = px1 * p;
+    const j21 = px2 * q;
+    const j22 = px2 * (1-q);
+    const totalJointSum = j11 + j12 + j21 + j22;
+
+    drawMatrix(
+        "Joint [P(X,Y)]", 
+        j11, j12, j21, j22, 
+        matrixX, matrixYBot, 
+        '#8be9fd', `← TOTAL SUM = ${totalJointSum.toFixed(2)}`
+    );
+
+    drawCursor(ctx, W, H, state);
+  }
+  
+  draw();
+  slidePx1.addEventListener('input', draw);
+  slideP.addEventListener('input', draw);
+  slideQ.addEventListener('input', draw);
+}
+// ── 38. Special Channel Matrices Simulator ──
+function initSpecialMatricesSim() {
+  const canvas = document.getElementById('canvas-special_matrices_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const select = document.getElementById('select-special_matrices_sim');
+  const state = setupInteractive(canvas);
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    const mode = select.value;
+    
+    // Matrix drawing helper
+    const drawMatrix = (matrix, title, ruleText, highlightRule) => {
+        const rows = matrix.length;
+        const cols = matrix[0].length;
+        
+        const cellW = 50;
+        const cellH = 40;
+        const matW = cols * cellW;
+        const matH = rows * cellH;
+        
+        const startX = W/2 - matW/2;
+        const startY = H/2 - matH/2;
+
+        // Title
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Inter'; ctx.textAlign = 'center';
+        ctx.fillText(title, W/2, startY - 30);
+        
+        // Rule Text
+        ctx.fillStyle = '#ffb86c'; ctx.font = '13px Inter';
+        ctx.fillText(ruleText, W/2, startY + matH + 30);
+
+        // Brackets
+        ctx.strokeStyle = '#8be9fd'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        // Left bracket
+        ctx.moveTo(startX - 10, startY); ctx.lineTo(startX - 20, startY);
+        ctx.lineTo(startX - 20, startY + matH); ctx.lineTo(startX - 10, startY + matH);
+        // Right bracket
+        ctx.moveTo(startX + matW + 10, startY); ctx.lineTo(startX + matW + 20, startY);
+        ctx.lineTo(startX + matW + 20, startY + matH); ctx.lineTo(startX + matW + 10, startY + matH);
+        ctx.stroke();
+
+        // Highlight Logic
+        if (highlightRule === 'row') {
+            for (let r=0; r<rows; r++) {
+                ctx.fillStyle = 'rgba(80, 250, 123, 0.2)';
+                ctx.fillRect(startX, startY + r*cellH + 5, matW, cellH - 10);
+                ctx.strokeStyle = '#50fa7b'; ctx.lineWidth = 1;
+                ctx.strokeRect(startX, startY + r*cellH + 5, matW, cellH - 10);
+            }
+        } else if (highlightRule === 'col') {
+            for (let c=0; c<cols; c++) {
+                ctx.fillStyle = 'rgba(255, 121, 198, 0.2)';
+                ctx.fillRect(startX + c*cellW + 5, startY, cellW - 10, matH);
+                ctx.strokeStyle = '#ff79c6'; ctx.lineWidth = 1;
+                ctx.strokeRect(startX + c*cellW + 5, startY, cellW - 10, matH);
+            }
+        } else if (highlightRule === 'diag') {
+            ctx.fillStyle = 'rgba(189, 147, 249, 0.3)';
+            for (let i=0; i<rows; i++) {
+                ctx.fillRect(startX + i*cellW + 5, startY + i*cellH + 5, cellW - 10, cellH - 10);
+            }
+        }
+
+        // Draw Numbers
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 18px JetBrains Mono';
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                let val = matrix[r][c];
+                if (val !== 0 && val !== "0") {
+                    ctx.fillStyle = '#fff'; // Bright for non-zero
+                } else {
+                    ctx.fillStyle = '#555'; // Dim for zeros
+                }
+                ctx.fillText(val, startX + c*cellW + cellW/2, startY + r*cellH + cellH/2 + 6);
+            }
+        }
+        ctx.textAlign = 'left'; // reset
+    };
+
+    // Define Matrices
+    if (mode === "deterministic") {
+        const mat = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 0]
+        ];
+        drawMatrix(mat, "DETERMINISTIC CHANNEL [P(Y|X)]", "RULE: Exactly ONE non-zero element in every ROW.", "row");
+        
+    } else if (mode === "lossless") {
+        const mat = [
+            ["1/2", "1/2", 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ];
+        drawMatrix(mat, "LOSSLESS CHANNEL [P(Y|X)]", "RULE: Exactly ONE non-zero element in every COLUMN.", "col");
+        
+    } else if (mode === "noiseless") {
+        const mat = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ];
+        drawMatrix(mat, "NOISELESS CHANNEL [P(Y|X)]", "RULE: Identity Matrix. Both Lossless & Deterministic.", "diag");
+        
+    } else if (mode === "symmetric") {
+        const mat = [
+            ["1-p", "p"],
+            ["p", "1-p"]
+        ];
+        drawMatrix(mat, "BINARY SYMMETRIC CHANNEL (BSC)", "RULE: Rows are shifted copies. Columns are shifted copies.", "none");
+    }
+
+    drawCursor(ctx, W, H, state);
+  }
+  
+  draw();
+  select.addEventListener('change', draw);
+}
+// ── 40. Superheterodyne Spectrum Visualizer ──
+function initSuperhetSim() {
+  const canvas = document.getElementById('canvas-superhet_spectrum_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const slider = document.getElementById('slide-superhet_spectrum_sim');
+  const valDisplay = document.getElementById('val-superhet_spectrum_sim');
+  const state = setupInteractive(canvas);
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    // Read Values
+    const fs = parseFloat(slider.value); // Target Signal
+    valDisplay.textContent = fs.toFixed(0) + " kHz";
+    
+    const IF = 455; // Standard AM IF
+    const fLO = fs + IF; // Local Oscillator (High-side injection)
+    const fsi = fs + (2 * IF); // Image Frequency
+    
+    const baseLine = H - 80;
+    
+    // Grid Setup (X from 0 to 2500 kHz)
+    const minX = 0, maxX = 2500;
+    const mapX = (val) => 40 + ((val - minX) / (maxX - minX)) * (W - 80);
+    
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=minX; i<=maxX; i+=250) { ctx.moveTo(mapX(i), 0); ctx.lineTo(mapX(i), H); }
+    for(let i=0; i<=4; i++) { ctx.moveTo(0, i*(H/4)); ctx.lineTo(W, i*(H/4)); }
+    ctx.stroke();
+
+    // Axes
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(30, baseLine); ctx.lineTo(W - 20, baseLine); // X Axis
+    ctx.moveTo(mapX(0), baseLine + 10); ctx.lineTo(mapX(0), 20); // Y Axis
+    ctx.stroke();
+
+    // X-Axis Ticks
+    ctx.fillStyle = '#fff'; ctx.font = '10px "JetBrains Mono"'; ctx.textAlign = 'center';
+    for(let i=minX; i<=maxX; i+=500) {
+        ctx.fillText(i, mapX(i), baseLine + 15);
+        ctx.beginPath(); ctx.moveTo(mapX(i), baseLine); ctx.lineTo(mapX(i), baseLine+4); ctx.stroke();
+    }
+    ctx.textAlign = 'left';
+
+    // Helper to draw frequency spikes
+    const drawSpike = (freq, height, color, labelTop, labelBot) => {
+        const x = mapX(freq);
+        const yTop = baseLine - height;
+        
+        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 3;
+        ctx.moveTo(x, baseLine); ctx.lineTo(x, yTop);
+        // Arrow head
+        ctx.lineTo(x - 5, yTop + 8); ctx.moveTo(x, yTop); ctx.lineTo(x + 5, yTop + 8);
+        ctx.stroke();
+
+        ctx.fillStyle = color; ctx.font = 'bold 12px Inter'; ctx.textAlign = 'center';
+        ctx.fillText(labelTop, x, yTop - 10);
+        
+        ctx.fillStyle = '#ccc'; ctx.font = '11px JetBrains Mono';
+        ctx.fillText(labelBot, x, baseLine + 35);
+        ctx.textAlign = 'left';
+    };
+
+    // Draw IF Region (The hardware filter)
+    const filterW = mapX(IF + 50) - mapX(IF - 50);
+    ctx.fillStyle = 'rgba(80, 250, 123, 0.15)';
+    ctx.fillRect(mapX(IF) - filterW/2, 30, filterW, baseLine - 30);
+    ctx.strokeStyle = 'rgba(80, 250, 123, 0.4)'; ctx.setLineDash([4,4]);
+    ctx.strokeRect(mapX(IF) - filterW/2, 30, filterW, baseLine - 30);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#50fa7b'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
+    ctx.fillText("IF Filter (Hardware)", mapX(IF), 25);
+
+    // Draw the Frequencies
+    drawSpike(IF, 150, '#50fa7b', 'IF Output', `${IF} kHz`);
+    drawSpike(fs, 120, '#8be9fd', 'Target (fs)', `${fs} kHz`);
+    drawSpike(fLO, 90, '#ffb86c', 'Local Osc.', `${fLO} kHz`);
+    drawSpike(fsi, 120, '#ff79c6', 'IMAGE (fsi)', `${fsi} kHz`);
+
+    // Draw Distance Brackets
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath();
+    
+    // fs to fLO
+    ctx.moveTo(mapX(fs), baseLine - 60); ctx.lineTo(mapX(fLO), baseLine - 60);
+    ctx.moveTo(mapX(fs), baseLine - 65); ctx.lineTo(mapX(fs), baseLine - 55);
+    ctx.moveTo(mapX(fLO), baseLine - 65); ctx.lineTo(mapX(fLO), baseLine - 55);
+    
+    // fLO to fsi
+    ctx.moveTo(mapX(fLO), baseLine - 60); ctx.lineTo(mapX(fsi), baseLine - 60);
+    ctx.moveTo(mapX(fsi), baseLine - 65); ctx.lineTo(mapX(fsi), baseLine - 55);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff'; ctx.font = '11px JetBrains Mono'; ctx.textAlign = 'center';
+    ctx.fillText(`Δ = IF (${IF})`, mapX(fs + IF/2), baseLine - 65);
+    ctx.fillText(`Δ = IF (${IF})`, mapX(fLO + IF/2), baseLine - 65);
+
+    // Math Readout
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = 'bold 13px Inter';
+    ctx.fillText(`1. Local Oscillator sets itself to: fs + IF = ${fLO} kHz`, 40, H - 25);
+    ctx.fillStyle = '#ff79c6';
+    ctx.fillText(`2. Image Frequency Formula: fs + 2(IF) = ${fs} + 910 = ${fsi} kHz`, 40, H - 5);
+
+    drawCursor(ctx, W, H, state);
+  }
+  
+  draw();
+  slider.addEventListener('input', draw);
+}
+// ── 41. 2-Ary vs 4-Ary PAM Constellation Simulator ──
+function initPamConstellationSim() {
+  const canvas = document.getElementById('canvas-pam_constellation_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const select = document.getElementById('select-pam_constellation_sim');
+  
+  // Inject sliders for Amplitude and Bit Time dynamically
+  const wrapper = select.parentElement;
+  const sliderHtml = `
+    <div style="display:flex; gap:15px; margin-top:10px; background:rgba(0,0,0,0.2); padding:10px; border-radius:4px;">
+      <div style="flex:1;">
+        <label style="font-size:11px; color:#ccc;">Voltage Amplitude (A): <span id="val_pam_A" style="color:#8be9fd; font-weight:bold;">2.0</span></label>
+        <input type="range" id="slide_pam_A" min="1" max="5" step="0.5" value="2" style="width:100%;">
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:11px; color:#ccc;">Bit Time (Tb): <span id="val_pam_Tb" style="color:#ffb86c; font-weight:bold;">1.0</span></label>
+        <input type="range" id="slide_pam_Tb" min="0.5" max="3" step="0.5" value="1" style="width:100%;">
+      </div>
+    </div>
+  `;
+  select.insertAdjacentHTML('afterend', sliderHtml);
+  
+  const slideA = document.getElementById('slide_pam_A');
+  const slideTb = document.getElementById('slide_pam_Tb');
+  const state = setupInteractive(canvas);
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    const mode = select.value;
+    const A = parseFloat(slideA.value);
+    const Tb = parseFloat(slideTb.value);
+    
+    document.getElementById('val_pam_A').textContent = A.toFixed(1);
+    document.getElementById('val_pam_Tb').textContent = Tb.toFixed(1);
+
+    const baseLine = 120;
+    const cx = W / 2;
+    
+    // Scale X so max energy fits on screen
+    const maxScale = 5 * Math.sqrt(3 * 2); // Max A * sqrt(max T)
+    const scaleX = (W - 100) / (maxScale * 2); 
+    const mapX = (val) => cx + (val * scaleX);
+
+    // Draw Grid & Axis
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+    ctx.stroke();
+
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(30, baseLine); ctx.lineTo(W - 20, baseLine); // X Axis
+    ctx.moveTo(cx, baseLine - 20); ctx.lineTo(cx, baseLine + 20); // Origin Mark
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff'; ctx.font = '11px "JetBrains Mono"';
+    ctx.fillText("0", cx - 4, baseLine + 15);
+    ctx.fillText("Energy Coordinate φ(t)", W - 140, baseLine - 10);
+
+    const drawDot = (coord, labelTop, labelBot, color) => {
+        const x = mapX(coord);
+        ctx.beginPath(); ctx.arc(x, baseLine, 6, 0, Math.PI*2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        
+        ctx.fillStyle = color; ctx.font = 'bold 14px Inter'; ctx.textAlign = 'center';
+        ctx.fillText(labelTop, x, baseLine - 15);
+        ctx.fillStyle = '#ccc'; ctx.font = '12px JetBrains Mono';
+        ctx.fillText(labelBot, x, baseLine + 25);
+        ctx.textAlign = 'left';
+    };
+
+    const drawDimension = (x1, x2, yOffset, text, color) => {
+        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo(x1, baseLine + yOffset); ctx.lineTo(x2, baseLine + yOffset);
+        ctx.moveTo(x1, baseLine + yOffset - 5); ctx.lineTo(x1, baseLine + yOffset + 5);
+        ctx.moveTo(x2, baseLine + yOffset - 5); ctx.lineTo(x2, baseLine + yOffset + 5);
+        ctx.stroke();
+        ctx.fillStyle = color; ctx.font = 'bold 12px Inter'; ctx.textAlign = 'center';
+        ctx.fillText(text, (x1+x2)/2, baseLine + yOffset - 5);
+        ctx.textAlign = 'left';
+    };
+
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Inter';
+    ctx.fillText("The 'Energies from Hell' Explained:", 30, baseLine + 90);
+    ctx.font = '13px JetBrains Mono';
+
+    if (mode === '2ary') {
+        const T = Tb;
+        const e1 = A * Math.sqrt(T);
+        const e2 = -A * Math.sqrt(T);
+        const d = e1 - e2;
+
+        drawDot(e1, "Bit '1'", `+A√Tb`, '#50fa7b');
+        drawDot(e2, "Bit '0'", `-A√Tb`, '#ff79c6');
+        drawDimension(mapX(e2), mapX(e1), 50, `d₁₂ = 2A√Tb = ${d.toFixed(2)}`, '#f1fa8c');
+
+        ctx.fillStyle = '#8be9fd';
+        ctx.fillText(`1. Symbol Time (T) = 1 bit at a time = Tb = ${T.toFixed(1)}`, 30, baseLine + 120);
+        ctx.fillText(`2. Coordinate Rule = Voltage × √(Time)`, 30, baseLine + 140);
+        ctx.fillText(`3. Dot 1 ('1') = (+${A.toFixed(1)}) × √${T.toFixed(1)} = +${e1.toFixed(2)}`, 30, baseLine + 160);
+        ctx.fillText(`4. Dot 2 ('0') = (-${A.toFixed(1)}) × √${T.toFixed(1)} = ${e2.toFixed(2)}`, 30, baseLine + 180);
+        
+        ctx.fillStyle = '#f1fa8c';
+        ctx.fillText(`Error Distance (d₁₂) = ${d.toFixed(2)}`, 30, baseLine + 210);
+
+    } else if (mode === '4ary') {
+        const T = 2 * Tb; // 2 bits combined!
+        const e_out_pos = A * Math.sqrt(T);
+        const e_in_pos = (A/2) * Math.sqrt(T);
+        const e_in_neg = -(A/2) * Math.sqrt(T);
+        const e_out_neg = -A * Math.sqrt(T);
+        
+        const d_min = e_in_pos - e_in_neg;
+
+        drawDot(e_out_pos, "'00'", `+A√2Tb`, '#50fa7b');
+        drawDot(e_in_pos, "'01'", `+A/2√2Tb`, '#50fa7b');
+        drawDot(e_in_neg, "'10'", `-A/2√2Tb`, '#ff79c6');
+        drawDot(e_out_neg, "'11'", `-A√2Tb`, '#ff79c6');
+        
+        drawDimension(mapX(e_in_neg), mapX(e_in_pos), 50, `d_min = A√2Tb = ${d_min.toFixed(2)}`, '#f1fa8c');
+
+        ctx.fillStyle = '#ffb86c';
+        ctx.fillText(`1. Symbol Time (T) = 2 bits combined = 2Tb = ${T.toFixed(1)}`, 30, baseLine + 120);
+        ctx.fillStyle = '#8be9fd';
+        ctx.fillText(`2. Coordinate Rule = Voltage × √(Time)`, 30, baseLine + 140);
+        ctx.fillText(`3. Outer Dot = (A) × √${T.toFixed(1)} = ${e_out_pos.toFixed(2)}`, 30, baseLine + 160);
+        ctx.fillText(`4. Inner Dot = (A/2) × √${T.toFixed(1)} = ${e_in_pos.toFixed(2)}`, 30, baseLine + 180);
+        
+        ctx.fillStyle = '#f1fa8c';
+        ctx.fillText(`Minimum Error Distance (d_min) = ${d_min.toFixed(2)}`, 30, baseLine + 210);
+        ctx.fillStyle = '#ccc'; ctx.font = '11px Inter';
+        ctx.fillText(`(The closer the dots are, the higher the Probability of Error)`, 30, baseLine + 230);
+    }
+
+    drawCursor(ctx, W, H, state);
+  }
+  
+  draw();
+  slideA.addEventListener('input', draw);
+  slideTb.addEventListener('input', draw);
+  select.addEventListener('change', draw);
+}
+
+// ── 42. ASK / PSK / FSK Transmitter Simulator ──
+function initBandpassTransmitterSim() {
+  const canvas = document.getElementById('canvas-bandpass_transmitter_sim');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const select = document.getElementById('select-bandpass_transmitter_sim');
+  const state = setupInteractive(canvas);
+  let time = 0;
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    const mode = select.value;
+    
+    // Y-axis base lines for the 3 stacked graphs
+    const y1 = 70;  // Baseband Pulse
+    const y2 = 190; // Carrier Wave
+    const y3 = 310; // Modulated Output
+    const amp = 40; // Amplitude for drawing
+    
+    // Digital Bit Sequence: 1, 0, 1, 1, 0
+    const bits = [1, 0, 1, 1, 0];
+    const bitWidth = W / 5;
+    
+    // Draw Grid & Boundaries
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=1; i<5; i++) {
+        ctx.moveTo(i * bitWidth, 0); ctx.lineTo(i * bitWidth, H);
+    }
+    ctx.stroke();
+    
+    // Bit Labels
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Inter'; ctx.textAlign = 'center';
+    bits.forEach((b, i) => {
+        ctx.fillText(`Bit: ${b}`, i*bitWidth + bitWidth/2, 20);
+    });
+    ctx.textAlign = 'left';
+
+    // Draw Axes
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(10, y1); ctx.lineTo(W - 10, y1);
+    ctx.moveTo(10, y2); ctx.lineTo(W - 10, y2);
+    ctx.moveTo(10, y3); ctx.lineTo(W - 10, y3);
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = '#8be9fd'; ctx.font = '12px JetBrains Mono';
+    ctx.fillText("Baseband p(t) [Line Coder]", 10, y1 - amp - 10);
+    ctx.fillStyle = '#ffb86c';
+    ctx.fillText("Carrier c(t) [Oscillator]", 10, y2 - amp - 10);
+    ctx.fillStyle = '#50fa7b';
+    ctx.fillText(`Output S(t) [${mode.toUpperCase()} Signal]`, 10, y3 - amp - 10);
+
+    // frequencies
+    const fc = 0.3; // standard carrier
+    const fc_slow = 0.1; // for FSK '0'
+
+    ctx.beginPath();
+    for (let x = 0; x < W; x++) {
+        const bitIndex = Math.floor(x / bitWidth);
+        if (bitIndex >= 5) break;
+        const currentBit = bits[bitIndex];
+        const t = x + time;
+        
+        // 1. Draw Baseband Pulse p(t)
+        let p_val = 0;
+        if (mode === 'ask' || mode === 'fsk') {
+            p_val = currentBit === 1 ? amp : 0; // Unipolar
+        } else if (mode === 'psk') {
+            p_val = currentBit === 1 ? amp : -amp; // Polar
+        }
+        if (x === 0 || x % bitWidth === 0) ctx.moveTo(x, y1 - p_val); // Jump for sharp edges
+        ctx.lineTo(x, y1 - p_val);
+    }
+    ctx.strokeStyle = '#8be9fd'; ctx.lineWidth = 3; ctx.stroke();
+
+    // 2. Draw Carrier c(t)
+    ctx.beginPath();
+    for (let x = 0; x < W; x++) {
+        const t = x + time;
+        const c_val = amp * Math.cos(fc * t);
+        if (x === 0) ctx.moveTo(x, y2 - c_val); else ctx.lineTo(x, y2 - c_val);
+    }
+    ctx.strokeStyle = '#ffb86c'; ctx.lineWidth = 2; ctx.stroke();
+
+    // 3. Draw Modulated Output S(t)
+    ctx.beginPath();
+    for (let x = 0; x < W; x++) {
+        const bitIndex = Math.floor(x / bitWidth);
+        if (bitIndex >= 5) break;
+        const currentBit = bits[bitIndex];
+        const t = x + time;
+        let s_val = 0;
+
+        if (mode === 'ask') {
+            s_val = currentBit === 1 ? amp * Math.cos(fc * t) : 0;
+        } else if (mode === 'psk') {
+            s_val = currentBit === 1 ? amp * Math.cos(fc * t) : -amp * Math.cos(fc * t);
+        } else if (mode === 'fsk') {
+            s_val = currentBit === 1 ? amp * Math.cos(fc * t) : amp * Math.cos(fc_slow * t);
+        }
+
+        if (x === 0) ctx.moveTo(x, y3 - s_val); else ctx.lineTo(x, y3 - s_val);
+    }
+    ctx.strokeStyle = '#50fa7b'; ctx.lineWidth = 2.5; ctx.stroke();
+
+    // Multiplier Graphic
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Inter'; ctx.textAlign = 'center';
+    ctx.fillText("⊗", W - 40, (y1 + y2)/2);
+    ctx.font = '12px Inter'; ctx.fillText("MIXER", W - 40, (y1 + y2)/2 + 20);
+    ctx.textAlign = 'left';
+
+    if (!state.paused) time += 1.5;
+    requestAnimationFrame(draw);
+  }
+  
+  draw();
+  select.addEventListener('change', () => { if(state.paused) draw(); });
+}
+
+// ── 51. Correlator & ASK Constellation Simulator ──
+function initCorrelatorAskSim() {
+  const canvas = document.getElementById('canvas-correlator_ask_sim');
+  if (!canvas) return; 
+  const ctx = canvas.getContext('2d');
+  
+  const wrapper = document.getElementById('slide-correlator_ask_sim').parentElement;
+  
+  if (!document.getElementById('slide_c_A')) {
+      const topHtml = `
+        <div style="display:flex; gap:15px; margin-bottom:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:4px;">
+          <div style="flex:1;">
+            <label style="font-family:var(--ui); font-size:11px; color:#ccc;">Amplitude (A): <span id="val_c_A" style="color:#8be9fd; font-weight:bold;">2.0</span></label>
+            <input type="range" id="slide_c_A" min="1" max="5" step="0.5" value="2" style="width:100%;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-family:var(--ui); font-size:11px; color:#ccc;">Bit Time (Tb): <span id="val_c_Tb" style="color:#ffb86c; font-weight:bold;">1.0</span></label>
+            <input type="range" id="slide_c_Tb" min="0.5" max="3" step="0.5" value="1" style="width:100%;">
+          </div>
+        </div>
+      `;
+      wrapper.insertAdjacentHTML('afterbegin', topHtml);
+  }
+
+  const slideTheta = document.getElementById('slide-correlator_ask_sim');
+  const slideA = document.getElementById('slide_c_A');
+  const slideTb = document.getElementById('slide_c_Tb');
+  const valTheta = document.getElementById('val-correlator_ask_sim');
+  
+  const state = typeof setupInteractive === 'function' ? setupInteractive(canvas) : { paused: false };
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.height;
+    canvas.width = W; ctx.clearRect(0, 0, W, H);
+    
+    const thetaDeg = parseFloat(slideTheta.value);
+    const thetaRad = thetaDeg * (Math.PI / 180);
+    const A = parseFloat(slideA.value);
+    const Tb = parseFloat(slideTb.value);
+    
+    valTheta.textContent = thetaDeg + "°";
+    document.getElementById('val_c_A').textContent = A.toFixed(1);
+    document.getElementById('val_c_Tb').textContent = Tb.toFixed(1);
+
+    const baseLine = 160;
+    const cx = 60; 
+    
+    const maxEnergy = Math.sqrt((5*5 * 3) / 2); 
+    const scaleX = (W - 120) / maxEnergy; 
+    const mapX = (val) => cx + (val * scaleX);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<=10; i++) { ctx.moveTo(i*(W/10), 0); ctx.lineTo(i*(W/10), H); }
+    ctx.stroke();
+
+    ctx.strokeStyle = '#50fa7b'; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(30, baseLine); ctx.lineTo(W - 20, baseLine); 
+    ctx.lineTo(W - 30, baseLine - 5); ctx.moveTo(W - 20, baseLine); ctx.lineTo(W - 30, baseLine + 5);
+    ctx.stroke();
+
+    ctx.fillStyle = '#50fa7b'; ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.fillText("φ(t)", W - 50, baseLine - 15);
+
+    const e2 = 0; 
+    const e1_ideal = Math.sqrt((A * A * Tb) / 2);
+    const e1_actual = e1_ideal * Math.cos(thetaRad);
+    const lambda_opt = e1_ideal / 2;
+    
+    const drawCross = (coord, color, labelTop, labelBot) => {
+        const x = mapX(coord);
+        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 3;
+        ctx.moveTo(x - 6, baseLine - 6); ctx.lineTo(x + 6, baseLine + 6);
+        ctx.moveTo(x - 6, baseLine + 6); ctx.lineTo(x + 6, baseLine - 6);
+        ctx.stroke();
+        
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Inter, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(labelTop, x, baseLine - 20);
+        ctx.fillStyle = '#ccc'; ctx.font = '12px "JetBrains Mono", monospace';
+        ctx.fillText(labelBot, x, baseLine + 25);
+        ctx.textAlign = 'left';
+    };
+
+    drawCross(e2, '#ff79c6', 'S₂', '(0, 0)');
+    
+    if (thetaDeg > 0) {
+        ctx.globalAlpha = 0.3;
+        drawCross(e1_ideal, '#8be9fd', 'S₁ (Ideal)', '');
+        ctx.globalAlpha = 1.0;
+        
+        ctx.strokeStyle = '#ffb86c'; ctx.setLineDash([4,4]); ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(mapX(e1_ideal), baseLine - 10);
+        ctx.lineTo(mapX(e1_actual), baseLine - 10);
+        ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    drawCross(e1_actual, '#8be9fd', 'S₁', `(√Es₁, 0)`);
+
+    const t_x = mapX(lambda_opt);
+    ctx.strokeStyle = '#f1fa8c'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(t_x, baseLine - 60); ctx.lineTo(t_x, baseLine + 40);
+    ctx.stroke(); ctx.setLineDash([]);
+    
+    ctx.fillStyle = '#f1fa8c'; ctx.textAlign = 'center'; ctx.font = '12px Inter, sans-serif';
+    ctx.fillText("λ_opt", t_x, baseLine - 65);
+    ctx.fillText("Threshold", t_x, baseLine + 55);
+    ctx.textAlign = 'left';
+
+    if (e1_actual <= lambda_opt && thetaDeg !== 90) {
+        ctx.fillStyle = 'rgba(255, 85, 85, 0.2)';
+        ctx.fillRect(cx, baseLine - 80, t_x - cx, 160);
+        ctx.fillStyle = '#ff5555'; ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.fillText("CRITICAL ERROR: S₁ crossed threshold!", cx + 20, baseLine - 90);
+    }
+
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(mapX(e2), baseLine + 45); ctx.lineTo(mapX(e1_actual), baseLine + 45);
+    ctx.moveTo(mapX(e2), baseLine + 40); ctx.lineTo(mapX(e2), baseLine + 50);
+    ctx.moveTo(mapX(e1_actual), baseLine + 40); ctx.lineTo(mapX(e1_actual), baseLine + 50);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#fff'; ctx.font = '12px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+    ctx.fillText(`d₁₂ = ${e1_actual.toFixed(2)}`, mapX(e1_actual/2), baseLine + 60);
+    ctx.textAlign = 'left';
+
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(10, H - 110, W - 20, 100);
+    
+    ctx.fillStyle = '#8be9fd'; ctx.font = 'bold 13px Inter, sans-serif';
+    ctx.fillText(`1. Average Energy (Eb)avg = A²Tb / 4 = ${((A*A*Tb)/4).toFixed(2)}`, 20, H - 85);
+    
+    ctx.fillStyle = '#ffb86c';
+    ctx.fillText(`2. Distance (d₁₂) = √(A²Tb / 2) × cos(θ) = ${e1_actual.toFixed(2)}`, 20, H - 60);
+    
+    ctx.fillStyle = '#50fa7b';
+    ctx.fillText(`3. Prob. of Error (Pe) = Q[ √( (A²Tb cos²θ) / 4N₀ ) ]`, 20, H - 35);
+    
+    ctx.fillStyle = '#ccc'; ctx.font = '11px Inter, sans-serif';
+    if (thetaDeg === 90) {
+        ctx.fillStyle = '#ff5555';
+        ctx.fillText(`At θ=90°, signal is completely lost (Orthogonal).`, 20, H - 15);
+    } else {
+        ctx.fillText(`Notice how Phase Error (θ) shrinks the distance, increasing Pe.`, 20, H - 15);
+    }
+
+    if(typeof drawCursor === 'function') drawCursor(ctx, W, H, state);
+  }
+  
+  draw();
+  slideTheta.addEventListener('input', draw);
+  slideA.addEventListener('input', draw);
+  slideTb.addEventListener('input', draw);
+}
+
+
 // ============================================================
 // 🔄 UI INTERACTIONS
 // ============================================================
@@ -4315,6 +5146,12 @@ setTimeout(() => {
   initSumGaussianSim();
   initSimpleZScoreSim();
   initConvolutionShapeSim();
+  initBinaryChannelSim();
+  initSpecialMatricesSim();
+  initSuperhetSim();
+  initPamConstellationSim();
+  initBandpassTransmitterSim();
+  initCorrelatorAskSim();
 }, 500);
 </script>
 </body>
