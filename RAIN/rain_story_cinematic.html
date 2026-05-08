@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Into the Rain</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;background:#000;font-family:'Georgia',serif;overflow-x:hidden}
+body{color:#fff}
+
+#rain-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#lightning-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;opacity:0}
+
+.scene{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;z-index:10}
+
+.bg-layer{position:fixed;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;transition:opacity 1.5s ease}
+
+#bg1{background-image:url('https://images.unsplash.com/photo-1503435824048-a799a3a84bf7?q=80&w=1200&auto=format&fit=crop');opacity:1;z-index:0}
+#bg2{background-image:url('https://images.unsplash.com/photo-1507027682794-35e6c12ad5b4?q=80&w=1200&auto=format&fit=crop');opacity:0;z-index:0}
+#bg3{background-image:url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?q=80&w=1200&auto=format&fit=crop');opacity:0;z-index:0}
+
+.bg-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;background:rgba(0,0,10,0.55);pointer-events:none}
+
+.scene-content{text-align:center;padding:3rem 2rem;max-width:800px;position:relative;z-index:20}
+
+.scene-label{font-size:0.7rem;letter-spacing:0.35em;text-transform:uppercase;color:rgba(180,200,255,0.5);margin-bottom:1.2rem;opacity:0;transform:translateY(20px);transition:opacity 1s ease,transform 1s ease}
+.scene-title{font-size:clamp(2.2rem,6vw,4.5rem);font-weight:300;letter-spacing:0.05em;line-height:1.15;color:#fff;text-shadow:0 0 60px rgba(100,150,255,0.3);opacity:0;transform:translateY(30px);transition:opacity 1.2s ease,transform 1.2s ease;margin-bottom:1.2rem}
+.scene-text{font-size:clamp(1rem,2.2vw,1.2rem);line-height:1.85;color:rgba(200,215,240,0.8);font-style:italic;opacity:0;transform:translateY(20px);transition:opacity 1s ease 0.3s,transform 1s ease 0.3s;max-width:620px;margin:0 auto 2rem}
+.scene-divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(150,180,255,0.5),transparent);margin:0 auto 1.5rem;opacity:0;transition:opacity 1s ease 0.6s}
+
+.in-view .scene-label,.in-view .scene-title,.in-view .scene-text,.in-view .scene-divider{opacity:1;transform:translateY(0)}
+
+.droplet-field{position:relative;height:160px;display:flex;align-items:center;justify-content:center;margin:1rem 0}
+.droplet{position:absolute;width:10px;height:10px;border-radius:50% 50% 50% 10px;transform:rotate(-45deg);opacity:0;animation:dropletFloat 3s ease-in-out infinite;border:1px solid rgba(150,190,255,0.6);background:rgba(100,160,255,0.15)}
+@keyframes dropletFloat{0%{opacity:0;transform:rotate(-45deg) translateY(20px) scale(0.5)}20%{opacity:0.8}60%{opacity:0.6}100%{opacity:0;transform:rotate(-45deg) translateY(-60px) scale(1.2)}}
+
+.entry-card{background:rgba(255,255,255,0.04);border:1px solid rgba(150,180,255,0.15);border-radius:12px;padding:2rem 2.5rem;margin:1rem 0;backdrop-filter:blur(8px);text-align:left;opacity:0;transform:translateY(25px);transition:opacity 0.9s ease,transform 0.9s ease}
+.entry-card.in-view{opacity:1;transform:translateY(0)}
+.entry-card h3{font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(140,180,255,0.6);margin-bottom:0.5rem;font-family:'Georgia',serif;font-weight:400}
+.entry-card p{font-size:1rem;line-height:1.75;color:rgba(210,225,250,0.85);font-style:italic}
+.entry-time{font-size:0.7rem;color:rgba(120,160,220,0.4);margin-top:0.8rem;letter-spacing:0.15em}
+
+.city-lights{position:fixed;bottom:0;left:0;width:100%;height:35%;pointer-events:none;z-index:3;opacity:0;transition:opacity 3s ease}
+.light-dot{position:absolute;border-radius:50%;animation:lightPulse 2s ease-in-out infinite alternate}
+@keyframes lightPulse{0%{opacity:0.3;transform:scale(1)}100%{opacity:0.9;transform:scale(1.15)}}
+
+.scroll-hint{position:fixed;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:20;display:flex;flex-direction:column;align-items:center;gap:0.5rem;opacity:1;transition:opacity 1.5s ease}
+.scroll-hint span{font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(180,200,255,0.45)}
+.scroll-arrow{width:1px;height:40px;background:linear-gradient(to bottom,rgba(150,180,255,0.5),transparent);animation:scrollBounce 1.8s ease-in-out infinite}
+@keyframes scrollBounce{0%,100%{transform:scaleY(0.6);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}}
+
+.progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,rgba(100,150,255,0.8),rgba(160,200,255,0.9));z-index:100;transition:width 0.1s ease;width:0%}
+
+.thunder-text{font-size:clamp(3rem,10vw,7rem);font-weight:200;letter-spacing:0.08em;color:rgba(255,255,255,0.95);text-shadow:0 0 80px rgba(100,150,255,0.8),0 0 160px rgba(80,120,255,0.4);line-height:1}
+.rain-count{font-size:4rem;font-weight:200;color:rgba(150,190,255,0.9)}
+
+#soundToggle{position:fixed;top:1.5rem;right:1.5rem;z-index:100;background:rgba(255,255,255,0.07);border:1px solid rgba(150,180,255,0.2);color:rgba(200,220,255,0.7);padding:0.5rem 1rem;border-radius:20px;cursor:pointer;font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;transition:all 0.3s}
+#soundToggle:hover{background:rgba(100,150,255,0.15);color:#fff}
+
+.fog-overlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;opacity:0;transition:opacity 4s ease;background:radial-gradient(ellipse at center,transparent 30%,rgba(5,10,30,0.7) 100%)}
+
+@media(max-width:600px){.scene-content{padding:2rem 1.2rem}.entry-card{padding:1.5rem 1.2rem}}
+/* --- CHOICE NODES --- */
+.choice-node {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2.5rem auto;
+  max-width: 600px;
+}
+.choice-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(150,180,255,0.25);
+  color: rgba(200,220,255,0.9);
+  padding: 0.9rem 1.8rem;
+  border-radius: 40px;
+  cursor: pointer;
+  font-family: 'Georgia', serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  transition: background 0.3s, border-color 0.3s, transform 0.2s;
+  backdrop-filter: blur(6px);
+}
+.choice-btn:hover {
+  background: rgba(100,150,255,0.18);
+  border-color: rgba(150,200,255,0.55);
+  transform: translateY(-2px);
+}
+.choice-btn.chosen {
+  background: rgba(100,150,255,0.22);
+  border-color: rgba(150,200,255,0.7);
+  pointer-events: none;
+}
+.branch-text {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 1.2s ease, max-height 1.2s ease;
+  font-size: clamp(0.95rem,2vw,1.1rem);
+  line-height: 1.85;
+  color: rgba(200,215,240,0.8);
+  font-style: italic;
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto;
+}
+.branch-text.visible {
+  opacity: 1;
+  max-height: 400px;
+}
+.choice-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(180,200,255,0.45);
+  text-align: center;
+  margin-bottom: 0.8rem;
+}
+
+/* --- READER BEHAVIOUR / ADAPTIVE CITY --- */
+.adaptive-fragment {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 1.2s ease, transform 1.2s ease;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: rgba(200,220,255,0.75);
+  font-style: italic;
+  text-align: center;
+  margin: 1.2rem auto;
+  max-width: 560px;
+}
+.adaptive-fragment.show {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- PUDDLE CANVAS --- */
+#puddle-canvas {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30vh;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+
+/* --- LENS DROPLETS --- */
+#lens-layer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 6;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lens-drop {
+  position: absolute;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: rgba(180,210,255,0.18);
+  border: 1px solid rgba(180,210,255,0.35);
+  backdrop-filter: blur(3px);
+  animation: lensDrop 6s ease-in-out infinite;
+}
+@keyframes lensDrop {
+  0%   { opacity: 0; transform: scale(0.5) translateY(0); }
+  15%  { opacity: 0.9; }
+  70%  { opacity: 0.7; transform: scale(1) translateY(30px); }
+  100% { opacity: 0; transform: scale(0.8) translateY(60px); }
+}
+
+/* --- DISSOLVING LETTERS --- */
+.dissolve-title {
+  position: relative;
+  display: inline-block;
+}
+.dissolve-title .char {
+  display: inline-block;
+  transition: opacity 0.6s ease, transform 0.8s ease, filter 0.8s ease;
+}
+.dissolve-title.dissolving .char {
+  opacity: 0;
+  transform: translateY(12px) scale(0.85);
+  filter: blur(4px);
+}
+.dissolve-title.resolving .char {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+/* --- COLLECTIBLE FRAGMENTS --- */
+.collectible {
+  position: fixed;
+  z-index: 50;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.8s ease, transform 0.4s ease;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+.collectible.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.collectible:hover {
+  transform: rotate(0deg) scale(1.06);
+}
+.collectible-inner {
+  background: rgba(20,25,50,0.88);
+  border: 1px solid rgba(150,180,255,0.3);
+  border-radius: 4px;
+  padding: 0.7rem 1rem;
+  font-family: 'Georgia', serif;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: rgba(200,220,255,0.85);
+  max-width: 200px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 24px rgba(0,0,10,0.6);
+}
+.collectible-inner .coll-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(140,180,255,0.5);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.collectible-inner .coll-close {
+  float: right;
+  font-size: 0.7rem;
+  color: rgba(150,180,255,0.5);
+  cursor: pointer;
+  margin-left: 8px;
+  margin-top: -2px;
+}
+#collectible-counter {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 100;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(150,180,255,0.5);
+  transition: color 0.5s;
+}
+#collectible-counter.pulse {
+  color: rgba(200,230,255,0.95);
+}
+
+/* --- CAMERA GRAIN / IMPERFECTION --- */
+#cam-vignette {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 7;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 50%,
+    transparent 55%,
+    rgba(0,0,10,0.45) 100%
+  );
+}
+#cam-scratch {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0;
+}
+/* ── 1. GLASS MESSAGES (Revealed by Lightning) ── */
+#glass-messages { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 11; pointer-events: none; }
+.glass-msg { position: absolute; font-family: 'Georgia', serif; font-size: clamp(0.75rem, 1.8vw, 1rem); font-style: italic; color: rgba(200, 225, 255, 0); text-shadow: 0 0 12px rgba(180, 210, 255, 0); letter-spacing: 0.12em; transition: color 0.08s ease, text-shadow 0.08s ease; white-space: nowrap; }
+.glass-msg.flash { color: rgba(200, 225, 255, 0.82); text-shadow: 0 0 18px rgba(150, 200, 255, 0.9); }
+
+/* ── 2. PUDDLE REVERSED TEXT (Wavy Water Reflection) ── */
+#puddle-text-layer { position: fixed; bottom: 0; left: 0; width: 100%; height: 30vh; z-index: 6; pointer-events: none; opacity: 0; transition: opacity 3s ease; }
+.puddle-word { position: absolute; font-family: 'Georgia', serif; font-size: clamp(0.6rem, 1.4vw, 0.85rem); color: rgba(120, 170, 220, 0.28); letter-spacing: 0.08em; font-style: italic; filter: blur(0.6px); animation: puddleWaver 5s ease-in-out infinite alternate; }
+@keyframes puddleWaver { 0% { transform: scaleX(1) translateY(0); } 100% { transform: scaleX(1.04) translateY(2px); } }
+
+/* ── 3. EDGE SPLASH CANVAS ── */
+#edge-splash-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 12; pointer-events: none; }
+
+/* ── 4. CARD DROPLET HITS & SLIDING TRAILS ── */
+.card-drip { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: rgba(180, 210, 255, 0.7); pointer-events: none; animation: dripSlide 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.card-drip::after { content: ''; position: absolute; bottom: 100%; left: 0; width: 3px; height: 15px; background: linear-gradient(to top, rgba(180,210,255,0.4), transparent); opacity: 0; animation: trailFade 2.5s ease-in forwards; }
+@keyframes dripSlide { 0% { opacity: 0; transform: translateY(0) scale(0.8); } 10% { opacity: 0.9; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(40px) scale(0.5); } }
+@keyframes trailFade { 0%, 10% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; height: 30px; } }
+
+/* ── 5. LENS REFRACTION STREAKS ── */
+.lens-streak { position: fixed; pointer-events: none; border-radius: 50%; background: linear-gradient(120deg, rgba(180, 210, 255, 0) 0%, rgba(180, 220, 255, 0.18) 45%, rgba(200, 235, 255, 0.08) 55%, rgba(180, 210, 255, 0) 100%); z-index: 13; opacity: 0; transition: opacity 0.6s ease; mix-blend-mode: screen; }
+
+/* ── 6. BACKGROUND ENTITIES (Train & Pedestrian) ── */
+/* ── 6. DISTANT TRAIN (Layered perfectly) ── */
+#distant-train { 
+    position: fixed; 
+    bottom: 35vh; 
+    left: -800px; 
+    z-index: 5; /* Above background (0), strictly below text (20) */
+    pointer-events: none; 
+    opacity: 0; 
+    transition: opacity 2s ease; 
+}
+.pedestrian { position: fixed; z-index: 14; pointer-events: none; }
+
+</style>
+</head>
+<body>
+
+<audio id="snd-rain"     src="rain.mp3"     loop preload="auto"></audio>
+<audio id="snd-thunder"  src="thunder.mp3"  loop preload="auto"></audio>
+<audio id="snd-frogs"    src="rain and thunder.mp3"    loop preload="auto"></audio>
+
+<div class="progress-bar" id="progressBar"></div>
+<div id="bg1" class="bg-layer"></div>
+<div id="bg2" class="bg-layer"></div>
+<div id="bg3" class="bg-layer"></div>
+<div class="bg-overlay"></div>
+<div class="fog-overlay" id="fogOverlay"></div>
+<canvas id="rain-canvas"></canvas>
+<canvas id="lightning-canvas"></canvas>
+<div class="city-lights" id="cityLights"></div>
+<div class="collectible" id="coll-1" style="top:30vh; left:3vw;">
+  <div class="collectible-inner">
+    <span class="coll-label"><span class="coll-close" onclick="closeCollectible('coll-1')">✕</span>Diary Page · June</span>
+    "Left in a hurry. Forgot the umbrella, forgot the keys, remembered only the address. Some escapes are not escapes at all."
+  </div>
+</div>
+
+<div class="collectible" id="coll-2" style="top:55vh; right:4vw;">
+  <div class="collectible-inner">
+    <span class="coll-label"><span class="coll-close" onclick="closeCollectible('coll-2')">✕</span>Train Ticket · Unused</span>
+    Platform 7 — 22:48<br>
+    <em>Destination: Redacted by moisture</em><br>
+    "I bought it but I never went."
+  </div>
+</div>
+
+<div class="collectible" id="coll-3" style="bottom:20vh; left:6vw;">
+  <div class="collectible-inner">
+    <span class="coll-label"><span class="coll-close" onclick="closeCollectible('coll-3')">✕</span>Matchbook · Empty</span>
+    <em>Hotel Céleste — where strangers become stories</em><br>
+    Every match struck. Nothing lit.
+  </div>
+</div>
+
+<div class="collectible" id="coll-4" style="top:15vh; right:5vw;">
+  <div class="collectible-inner">
+    <span class="coll-label"><span class="coll-close" onclick="closeCollectible('coll-4')">✕</span>Postcard · Sent</span>
+    "Weather here is unbearable and perfect. Wish you were here. Wish I was elsewhere. Both are true."
+  </div>
+</div>
+
+<canvas id="puddle-canvas"></canvas>
+<div id="lens-layer"></div>
+<div id="cam-vignette"></div>
+<canvas id="cam-scratch"></canvas>
+<div id="collectible-counter">0 / 4 found</div>
+
+<button id="soundToggle" onclick="toggleSound()">♪ Sound On</button>
+
+<div class="scroll-hint" id="scrollHint">
+  <span>Scroll to begin</span>
+  <div class="scroll-arrow"></div>
+</div>
+
+<main>
+
+<section class="scene" style="min-height:100vh">
+  <div class="scene-content" id="s0">
+    <div class="scene-label">A Cinematic Experience</div>
+    <h1 class="scene-title thunder-text">Into the<br>Rain</h1>
+    <div class="scene-divider"></div>
+    <p class="scene-text">Some storms begin long before the first drop falls.<br>This is one of those stories.</p>
+  </div>
+</section>
+
+<section class="scene" style="min-height:120vh">
+  <div class="scene-content" id="s1">
+    <div class="scene-label">Chapter I</div>
+    <h2 class="scene-title" style="font-size:clamp(1.8rem,5vw,3.5rem)">The City Never<br>Sleeps Dry</h2>
+    <div class="scene-divider"></div>
+    <p class="scene-text">Ten million windows. Each one a story sealed in glass, breathing fog against the cold. The streets below hiss with memory — of every midnight that ever was, every soul that ever wandered through the wet.</p>
+    <div class="droplet-field" id="droplets1"></div>
+  </div>
+</section>
+
+<section class="scene" style="min-height:110vh">
+  <div class="scene-content" id="s-choice">
+    <div class="scene-label">The Crossroads</div>
+    <h2 class="scene-title" style="font-size:clamp(1.6rem,4.5vw,3rem)">Which way<br>do you go?</h2>
+    <div class="scene-divider"></div>
+    <p class="scene-text">The rain does not judge direction.<br>But the city changes depending on which streets you choose.</p>
+    <div class="choice-label">Choose your path</div>
+    <div class="choice-node">
+      <button class="choice-btn" onclick="choosePathA(this)">Follow the taxi lights</button>
+      <button class="choice-btn" onclick="choosePathB(this)">Stay under the awning</button>
+    </div>
+    <div class="branch-text" id="branch-a">
+      The cab peels away into neon-streaked asphalt. You follow the red tail-lights like a moth follows warmth — past the shuttered flower market, past two lovers arguing in a doorway, past everything you meant to leave behind. The city at speed blurs into something almost beautiful.
+    </div>
+    <div class="branch-text" id="branch-b">
+      You stay. The awning drums above you like a small tin heart. A cat appears from nowhere, sits beside you, and also watches the rain. You are, for this moment, exactly where you are supposed to be. The city breathes slower here.
+    </div>
+  </div>
+</section>
+
+<section class="scene" style="min-height:130vh">
+  <div class="scene-content" id="s2">
+    <div class="scene-label">Chapter II — The Storm Arrives</div>
+    <h2 class="scene-title" style="font-size:clamp(1.8rem,5vw,3.5rem)">Lightning Finds<br>the Lonely</h2>
+    <div class="scene-divider"></div>
+    <p class="scene-text">It starts as a tremor in the heavens — a held breath, a gathering of clouds that know too much. Then the sky breaks open and everything is washed clean of its pretending.</p>
+    
+    <div style="margin:2.5rem 0;display:flex;flex-direction:column;gap:1rem">
+      <div class="entry-card" id="e1">
+        <h3>Entry · Night One</h3>
+        <p>"I stood at the window for an hour watching rain collect in the gutters. Every drop a small world, born and swallowed in seconds."</p>
+        <div class="entry-time">23:47 · The Old Quarter</div>
+      </div>
+      <div class="entry-card" id="e2">
+        <h3>Entry · Night Two</h3>
+        <p>"She left an umbrella by the door. I never asked whose it was. Some things are better kept as questions."</p>
+        <div class="entry-time">01:12 · Rooftop Bar, Fifth Floor</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="scene" style="min-height:120vh">
+  <div class="scene-content" id="s-adaptive">
+    <div class="scene-label">The City Reads You</div>
+    <h2 class="scene-title dissolve-title" id="dissolveTitle">
+      The Rain<br>Remembers
+    </h2>
+    <div class="scene-divider"></div>
+    <p class="scene-text">It has been watching. The way you moved through these streets. Whether you hurried or lingered. The city has formed an opinion of you.</p>
+    <div id="adaptive-slow" class="adaptive-fragment">
+      You pause. You always pause. The city has noticed — it softens its edges for you, lets the lamplights hold a little longer in the puddles.
+    </div>
+    <div id="adaptive-fast" class="adaptive-fragment">
+      You move like someone with somewhere to be, or somewhere to escape. The streets here are colder — sharper angles, no softness. The rain falls faster around people like you.
+    </div>
+    <div id="adaptive-sound" class="adaptive-fragment">
+      You listen. That changes everything. Most people pass through this city deaf to it. But you heard the rain and let it in — so it tells you things it tells no one else.
+    </div>
+  </div>
+</section>
+
+<section class="scene" style="min-height:130vh">
+  <div class="scene-content" id="s3">
+    <div class="scene-label">Chapter III — The Deep Hour</div>
+    <h2 class="scene-title" style="font-size:clamp(1.8rem,5vw,3.5rem)">When the City<br>Turns to Water</h2>
+    <div class="scene-divider"></div>
+    <p class="scene-text">Three in the morning. The rain has become something else now — a companion, a white noise of the universe reminding you it was here long before you, and will remain long after.</p>
+    
+    <div style="margin:2.5rem 0;display:flex;flex-direction:column;gap:1rem">
+      <div class="entry-card" id="e3">
+        <h3>Entry · Night Three</h3>
+        <p>"The taxi driver said he'd been driving these streets for twenty years. Every storm, he said, brings people closer. Nobody walks fast in the rain — they drift."</p>
+        <div class="entry-time">03:04 · River District</div>
+      </div>
+      <div class="entry-card" id="e4">
+        <h3>Entry · Night Four</h3>
+        <p>"Found a note tucked under a café door. It read: <em>Meet me when it stops raining.</em> I'm still waiting."</p>
+        <div class="entry-time">04:30 · Montmartre Adjacent</div>
+      </div>
+    </div>
+    <div class="droplet-field" id="droplets2"></div>
+  </div>
+</section>
+
+<section class="scene" style="min-height:120vh">
+  <div class="scene-content" id="s4">
+    <div class="scene-label">Epilogue</div>
+    <h2 class="scene-title thunder-text" style="font-size:clamp(2rem,7vw,5rem)">The Rain<br>Remembers</h2>
+    <div class="scene-divider"></div>
+    <p class="scene-text">Every city has a soul. In the rain, that soul rises to the surface — shimmering in puddles, singing in downpipes, whispering through every alley it has ever loved. You just have to stand still long enough to hear it.</p>
+    <div class="entry-card" id="e5" style="margin-top:2rem">
+      <h3>Final Entry</h3>
+      <p>"I think I finally understand why I love the rain. It falls the same way everywhere. It doesn't care who you are. It lands on kings and strangers with equal tenderness."</p>
+      <div class="entry-time">Dawn · Somewhere Between Then and Now</div>
+    </div>
+  </div>
+</section>
+
+<div style="height:40vh"></div>
+</main>
+
+<audio id="rain-audio" loop>
+  <source src="https://www.soundjay.com/nature/sounds/rain-01.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const canvas = document.getElementById('rain-canvas');
+const ctx = canvas.getContext('2d');
+const lCanvas = document.getElementById('lightning-canvas');
+const lCtx = lCanvas.getContext('2d');
+
+let W, H, drops = [], soundOn = false, rafId;
+
+function resize(){
+  W = canvas.width = lCanvas.width = window.innerWidth;
+  H = canvas.height = lCanvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function makeDrop(){
+  return {
+    x: Math.random()*W,
+    y: Math.random()*H,
+    len: Math.random()*18+8,
+    speed: Math.random()*6+4,
+    opacity: Math.random()*0.4+0.1,
+    width: Math.random()*0.7+0.3
+  };
+}
+
+let intensity = 0;
+let targetIntensity = 0;
+let maxDrops = 0;
+
+function updateRain(){
+  const needed = Math.floor(maxDrops * intensity);
+  while(drops.length < needed) drops.push(makeDrop());
+  if(drops.length > needed+20) drops.splice(0, drops.length-needed);
+}
+
+function drawRain(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  drops.forEach(d=>{
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x - d.len*0.15, d.y + d.len);
+    ctx.strokeStyle = `rgba(160,200,255,${d.opacity})`;
+    ctx.lineWidth = d.width;
+    ctx.stroke();
+    d.y += d.speed * (0.5 + intensity*0.8);
+    d.x -= d.speed * 0.12;
+    if(d.y > H || d.x < -10){
+      d.y = -d.len;
+      d.x = Math.random()*W;
+    }
+  });
+  ctx.restore();
+  rafId = requestAnimationFrame(drawRain);
+}
+
+drawRain();
+
+function doLightning(){
+  if(intensity < 0.5) return;
+  const prob = (intensity - 0.4) * 0.015;
+  if(Math.random() < prob){
+    let flash = 1;
+    function flashFrame(){
+      lCtx.clearRect(0,0,W,H);
+      if(flash > 0){
+        lCtx.fillStyle = `rgba(200,220,255,${flash * 0.18})`;
+        lCtx.fillRect(0,0,W,H);
+        drawLightningBolt();
+        flash -= 0.12;
+        setTimeout(flashFrame, 40);
+      } else {
+        lCtx.clearRect(0,0,W,H);
+      }
+    }
+    flashFrame();
+    if(soundOn){ playThunder(); }
+  }
+}
+
+function drawLightningBolt(){
+  const startX = W*0.2 + Math.random()*W*0.6;
+  lCtx.beginPath();
+  lCtx.moveTo(startX, 0);
+  let cx = startX, cy = 0;
+  while(cy < H*0.6){
+    cx += (Math.random()-0.5)*80;
+    cy += Math.random()*60+20;
+    lCtx.lineTo(cx, cy);
+  }
+  lCtx.strokeStyle = 'rgba(200,230,255,0.9)';
+  lCtx.lineWidth = 1.5;
+  lCtx.shadowColor = 'rgba(150,200,255,0.8)';
+  lCtx.shadowBlur = 15;
+  lCtx.stroke();
+  lCtx.shadowBlur = 0;
+}
+
+setInterval(doLightning, 800);
+
+function playThunder(){
+  const aCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const buf = aCtx.createBuffer(1,aCtx.sampleRate*2,aCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<data.length;i++){
+    data[i] = (Math.random()*2-1)*Math.exp(-i/(aCtx.sampleRate*0.4))*(Math.random()<0.01?3:0.3);
+  }
+  const src = aCtx.createBufferSource();
+  src.buffer = buf;
+  const g = aCtx.createGain();
+  g.gain.value = 0.3;
+  const f = aCtx.createBiquadFilter();
+  f.type = 'lowpass';
+  f.frequency.value = 200;
+  src.connect(f);
+  f.connect(g);
+  g.connect(aCtx.destination);
+  src.start();
+}
+
+function createCityLights(){
+  const container = document.getElementById('cityLights');
+  const colors = ['#FFD700','#FF8C00','#87CEEB','#FFF','#FFB347','#98FB98','#DDA0DD'];
+  for(let i=0;i<90;i++){
+    const d = document.createElement('div');
+    d.className = 'light-dot';
+    const size = Math.random()*3+1;
+    d.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      bottom:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      box-shadow:0 0 ${size*3}px ${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${1.5+Math.random()*3}s;
+      animation-delay:${Math.random()*2}s;
+    `;
+    container.appendChild(d);
+  }
+}
+createCityLights();
+
+function createDroplets(containerId){
+  const c = document.getElementById(containerId);
+  if(!c) return;
+  for(let i=0;i<18;i++){
+    const d = document.createElement('div');
+    d.className='droplet';
+    const size = 6+Math.random()*10;
+    d.style.cssText=`
+      width:${size}px;height:${size}px;
+      left:${5+Math.random()*90}%;
+      top:${10+Math.random()*80}%;
+      animation-duration:${2+Math.random()*3}s;
+      animation-delay:${Math.random()*3}s;
+      opacity:0;
+    `;
+    c.appendChild(d);
+  }
+}
+createDroplets('droplets1');
+createDroplets('droplets2');
+
+const scenes = [
+  {el:'s0',threshold:0.05},
+  {el:'s1',threshold:0.2},
+  {el:'s-choice', threshold:0.22}, // <-- ADDED THIS
+  {el:'s2',threshold:0.4},
+  {el:'s-adaptive', threshold:0.48}, // <-- ADDED THIS
+  {el:'s3',threshold:0.6},
+  {el:'s4',threshold:0.8}
+];
+const cards = ['e1','e2','e3','e4','e5'];
+const bgs = [document.getElementById('bg1'),document.getElementById('bg2'),document.getElementById('bg3')];
+const fogOverlay = document.getElementById('fogOverlay');
+const cityLightsEl = document.getElementById('cityLights');
+const scrollHint = document.getElementById('scrollHint');
+const progressBar = document.getElementById('progressBar');
+
+let lastBg = 0;
+
+function showBg(idx){
+  if(idx === lastBg) return;
+  bgs.forEach((b,i)=>{ b.style.opacity = i===idx ? '1':'0'; });
+  lastBg = idx;
+}
+
+function onScroll(){
+  const scrollTop = window.scrollY;
+  const docH = document.body.scrollHeight - window.innerHeight;
+  const progress = Math.min(scrollTop/docH, 1);
+  
+  progressBar.style.width = (progress*100)+'%';
+  targetIntensity = progress;
+  maxDrops = Math.floor(50 + progress*350);
+  intensity += (targetIntensity - intensity)*0.08;
+  updateRain();
+
+  if(progress < 0.1) showBg(0);
+  else if(progress < 0.55) showBg(1);
+  else showBg(2);
+
+  cityLightsEl.style.opacity = Math.max(0, (progress-0.35)*3);
+  fogOverlay.style.opacity = progress > 0.6 ? Math.min((progress-0.6)*2.5, 0.8) : 0;
+
+  if(scrollTop > 100) scrollHint.style.opacity='0';
+  else scrollHint.style.opacity='1';
+
+  scenes.forEach(s=>{
+    const el = document.getElementById(s.el);
+    if(!el) return;
+    if(progress >= s.threshold || isInView(el)){
+      el.classList.add('in-view');
+    }
+  });
+
+  cards.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && isInView(el)) el.classList.add('in-view');
+  });
+}
+
+function isInView(el){
+  const rect = el.getBoundingClientRect();
+  return rect.top < window.innerHeight*0.88 && rect.bottom > 0;
+}
+
+window.addEventListener('scroll', onScroll, {passive:true});
+document.getElementById('s0').classList.add('in-view');
+
+let audioCtx = null;
+let rainSource = null;
+let gainNode = null;
+let soundActive = false;
+
+function toggleSound(){
+  const btn = document.getElementById('soundToggle');
+  const rain    = document.getElementById('snd-rain');
+  const thunder = document.getElementById('snd-thunder');
+  const frogs   = document.getElementById('snd-frogs');
+
+  if(!soundActive){
+    // Set starting volumes
+    rain.volume    = 0.5;
+    thunder.volume = 0.35;
+    frogs.volume   = 0.25;
+
+    rain.play();
+    thunder.play();
+    frogs.play();
+
+    soundActive = true;
+    soundOn = true;
+    btn.textContent = '♪ Sound Off';
+
+    // Sync rain volume to scroll intensity continuously
+    function updateGain(){
+  if(!soundActive) return;
+  
+  // Check if a path was chosen to multiply the base volumes
+  let rMult = window._chosenPath === 'a' ? 1.25 : (window._chosenPath === 'b' ? 0.7 : 1);
+  let tMult = window._chosenPath === 'a' ? 1.3  : (window._chosenPath === 'b' ? 0.6 : 1);
+  let fMult = window._chosenPath === 'b' ? 1.5  : (window._chosenPath === 'a' ? 0.5 : 1);
+
+  rain.volume    = Math.min(1, (0.15 + intensity * 0.85) * rMult);
+  thunder.volume = Math.min(1, (0.10 + intensity * 0.60) * tMult);
+  frogs.volume   = Math.min(1, (0.20 + (1 - intensity) * 0.30) * fMult);
+  
+  requestAnimationFrame(updateGain);
+}
+    updateGain();
+
+  } else {
+    [rain, thunder, frogs].forEach(a => { a.pause(); a.currentTime = 0; });
+    soundActive = false;
+    soundOn = false;
+    btn.textContent = '♪ Sound On';
+  }
+}
+
+setTimeout(()=>{
+  document.querySelectorAll('.droplet').forEach(d=>{
+    d.style.opacity='';
+  });
+}, 100);
+
+/* ----- READER BEHAVIOUR TRACKER ----- */
+var _pauseTimer = null;
+var _pauseCount = 0;
+var _fastScrolls = 0;
+var _lastScrollY = 0;
+var _lastScrollTime = Date.now();
+var _soundUsed = false;
+var _readerProfile = 'neutral'; // 'slow' | 'fast' | 'listener'
+
+function _trackScroll() {
+  var now = Date.now();
+  var dy = Math.abs(window.scrollY - _lastScrollY);
+  var dt = now - _lastScrollTime;
+  var speed = dt > 0 ? dy / dt : 0;
+
+  if (speed > 2.2) {
+    _fastScrolls++;
+  }
+
+  clearTimeout(_pauseTimer);
+  _pauseTimer = setTimeout(function() {
+    _pauseCount++;
+    _evaluateReader();
+  }, 2800);
+
+  _lastScrollY = window.scrollY;
+  _lastScrollTime = now;
+  _evaluateReader();
+}
+
+function _evaluateReader() {
+  var profile;
+  if (_soundUsed) {
+    profile = 'listener';
+  } else if (_pauseCount >= 3 && _fastScrolls < 4) {
+    profile = 'slow';
+  } else if (_fastScrolls >= 5) {
+    profile = 'fast';
+  } else {
+    return;
+  }
+
+  if (profile === _readerProfile) return;
+  _readerProfile = profile;
+
+  var slow  = document.getElementById('adaptive-slow');
+  var fast  = document.getElementById('adaptive-fast');
+  var sound = document.getElementById('adaptive-sound');
+  if (!slow) return;
+
+  [slow, fast, sound].forEach(function(el) {
+    if (el) el.classList.remove('show');
+  });
+
+  var target = profile === 'slow' ? slow
+             : profile === 'fast' ? fast
+             : sound;
+
+  setTimeout(function() {
+    if (target && isInView(target.parentElement || target)) {
+      target.classList.add('show');
+    }
+  }, 400);
+
+  /* Adaptive rain colour tint */
+  var rainTint = profile === 'fast'
+    ? 'rgba(180,200,230,0.55)'
+    : profile === 'slow'
+    ? 'rgba(160,200,255,0.55)'
+    : 'rgba(200,230,255,0.65)';
+  window._rainTint = rainTint;
+}
+
+/* Patch toggleSound to flag listener profile */
+var _origToggleSound = window.toggleSound;
+window.toggleSound = function() {
+  _origToggleSound();
+  if (!_soundUsed && soundActive) {
+    _soundUsed = true;
+    _readerProfile = 'listener';
+    _evaluateReader();
+  }
+};
+
+window.addEventListener('scroll', _trackScroll, { passive: true });
+
+
+/* ----- BRANCHING NARRATIVE ----- */
+var _chosenPath = null;
+
+/* Per-branch soundtrack tweaks (uses existing audio elements) */
+function _applyBranchSound(path) {
+  var rain    = document.getElementById('snd-rain');
+  var thunder = document.getElementById('snd-thunder');
+  var frogs   = document.getElementById('snd-frogs');
+  if (!rain) return;
+  if (path === 'a') {
+    /* Taxi path — heavier rain, more thunder */
+    if (soundActive) {
+      rain.volume    = Math.min(1, (rain.volume || 0.5) + 0.25);
+      thunder.volume = Math.min(1, (thunder.volume || 0.35) + 0.2);
+      frogs.volume   = Math.max(0, (frogs.volume || 0.25) - 0.15);
+    }
+  } else {
+    /* Awning path — softer, more frogs */
+    if (soundActive) {
+      rain.volume    = Math.max(0.1, (rain.volume || 0.5) - 0.15);
+      thunder.volume = Math.max(0.05, (thunder.volume || 0.35) - 0.15);
+      frogs.volume   = Math.min(1, (frogs.volume || 0.25) + 0.25);
+    }
+  }
+}
+
+/* Change background tint for branch */
+function _applyBranchBg(path) {
+  var overlay = document.querySelector('.bg-overlay');
+  if (!overlay) return;
+  overlay.style.transition = 'background 2s ease';
+  overlay.style.background = path === 'a'
+    ? 'rgba(0,5,20,0.62)'   /* cooler, darker — moving fast */
+    : 'rgba(5,10,5,0.48)';  /* slightly warmer — still, green */
+}
+
+window.choosePathA = function(btn) {
+  if (_chosenPath) return;
+  _chosenPath = 'a';
+  btn.classList.add('chosen');
+  var siblingBtns = btn.closest('.choice-node').querySelectorAll('.choice-btn');
+  siblingBtns.forEach(function(b) { b.classList.add('chosen'); });
+  var el = document.getElementById('branch-a');
+  if (el) {
+    el.classList.add('visible');
+    /* Hide path B text */
+    var elB = document.getElementById('branch-b');
+    if (elB) { elB.style.display = 'none'; }
+  }
+  _applyBranchSound('a');
+  _applyBranchBg('a');
+};
+
+window.choosePathB = function(btn) {
+  if (_chosenPath) return;
+  _chosenPath = 'b';
+  btn.classList.add('chosen');
+  var siblingBtns = btn.closest('.choice-node').querySelectorAll('.choice-btn');
+  siblingBtns.forEach(function(b) { b.classList.add('chosen'); });
+  var el = document.getElementById('branch-b');
+  if (el) {
+    el.classList.add('visible');
+    var elA = document.getElementById('branch-a');
+    if (elA) { elA.style.display = 'none'; }
+  }
+  _applyBranchSound('b');
+  _applyBranchBg('b');
+};
+
+
+/* ----- PUDDLE REFLECTIONS ----- */
+var puddleCanvas = null;
+var puddleCtx = null;
+var _puddleRipples = [];
+
+function _initPuddle() {
+  puddleCanvas = document.getElementById('puddle-canvas');
+  if (!puddleCanvas) return;
+  puddleCtx = puddleCanvas.getContext('2d');
+  _resizePuddle();
+  window.addEventListener('resize', _resizePuddle);
+  _animatePuddle();
+}
+
+function _resizePuddle() {
+  if (!puddleCanvas) return;
+  puddleCanvas.width  = window.innerWidth;
+  puddleCanvas.height = window.innerHeight * 0.3;
+}
+
+function _spawnRipple() {
+  _puddleRipples.push({
+    x:       Math.random() * window.innerWidth,
+    y:       Math.random() * (window.innerHeight * 0.28),
+    r:       0,
+    maxR:    20 + Math.random() * 40,
+    alpha:   0.35 + Math.random() * 0.25,
+    speed:   0.6 + Math.random() * 0.8
+  });
+}
+
+function _animatePuddle() {
+  if (!puddleCtx) return;
+  var pw = puddleCanvas.width;
+  var ph = puddleCanvas.height;
+
+  puddleCtx.clearRect(0, 0, pw, ph);
+
+  /* dark water base */
+  puddleCtx.fillStyle = 'rgba(5,8,20,0.55)';
+  puddleCtx.fillRect(0, 0, pw, ph);
+
+  /* reflected lightning glow if lightning canvas is active */
+  var lc = document.getElementById('lightning-canvas');
+  if (lc) {
+    try {
+      var ldata = lc.getContext('2d').getImageData(0, 0, 1, 1).data;
+      if (ldata[3] > 10) {
+        puddleCtx.fillStyle = 'rgba(180,210,255,0.12)';
+        puddleCtx.fillRect(0, 0, pw, ph);
+      }
+    } catch(e) {}
+  }
+
+  /* ripples */
+  _puddleRipples = _puddleRipples.filter(function(rp) {
+    rp.r     += rp.speed;
+    rp.alpha -= 0.006;
+    if (rp.alpha <= 0) return false;
+
+    puddleCtx.beginPath();
+    puddleCtx.ellipse(rp.x, rp.y, rp.r, rp.r * 0.35, 0, 0, Math.PI * 2);
+    puddleCtx.strokeStyle = 'rgba(160,200,255,' + rp.alpha + ')';
+    puddleCtx.lineWidth = 1;
+    puddleCtx.stroke();
+    return true;
+  });
+
+  /* reflected city-light streaks */
+  var numStreaks = 6;
+  for (var i = 0; i < numStreaks; i++) {
+    var sx   = (pw / numStreaks) * i + pw / (numStreaks * 2);
+    var cols = ['rgba(255,200,80,0.12)','rgba(80,150,255,0.1)','rgba(255,100,80,0.08)'];
+    puddleCtx.beginPath();
+    puddleCtx.moveTo(sx, 0);
+    puddleCtx.lineTo(sx + (Math.random() - 0.5) * 10, ph);
+    puddleCtx.strokeStyle = cols[i % cols.length];
+    puddleCtx.lineWidth   = 1.5 + Math.random() * 2;
+    puddleCtx.stroke();
+  }
+
+  requestAnimationFrame(_animatePuddle);
+}
+
+/* spawn ripples on existing rain drop positions */
+setInterval(function() {
+  if (typeof intensity !== 'undefined' && intensity > 0.05) {
+    var n = Math.floor(intensity * 4);
+    for (var i = 0; i < n; i++) _spawnRipple();
+  }
+}, 300);
+
+/* show puddle when scroll progress > 40% */
+window.addEventListener('scroll', function() {
+  var pc = document.getElementById('puddle-canvas');
+  if (!pc) return;
+  var progress = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  pc.style.opacity = progress > 0.4 ? Math.min((progress - 0.4) * 2.5, 0.75) : 0;
+}, { passive: true });
+
+
+/* ----- LENS WATER DROPLETS ----- */
+function _initLensDroplets() {
+  var layer = document.getElementById('lens-layer');
+  if (!layer) return;
+
+  var positions = [
+    /* top-right cluster */
+    { top: '6%',  left: '82%', w: 18, h: 22, delay: 0 },
+    { top: '11%', left: '88%', w: 12, h: 15, delay: 1.4 },
+    { top: '4%',  left: '91%', w: 8,  h: 10, delay: 2.8 },
+    /* bottom-left cluster */
+    { top: '88%', left: '5%',  w: 22, h: 28, delay: 0.7 },
+    { top: '82%', left: '9%',  w: 14, h: 18, delay: 2.1 },
+    { top: '91%', left: '3%',  w: 9,  h: 11, delay: 3.5 },
+    /* random scatters */
+    { top: '40%', left: '95%', w: 10, h: 12, delay: 1.0 },
+    { top: '70%', left: '1%',  w: 7,  h: 9,  delay: 4.2 },
+    { top: '25%', left: '97%', w: 6,  h: 8,  delay: 5.5 },
+  ];
+
+  positions.forEach(function(p) {
+    var d = document.createElement('div');
+    d.className = 'lens-drop';
+    d.style.cssText = [
+      'top:'    + p.top,
+      'left:'   + p.left,
+      'width:'  + p.w + 'px',
+      'height:' + p.h + 'px',
+      'animation-duration:' + (5 + Math.random() * 4).toFixed(1) + 's',
+      'animation-delay:'    + p.delay + 's'
+    ].join(';');
+    layer.appendChild(d);
+  });
+}
+
+
+/* ----- CAMERA SCRATCH / GRAIN IMPERFECTION ----- */
+function _initCamScratch() {
+  var sc = document.getElementById('cam-scratch');
+  if (!sc) return;
+  sc.width  = window.innerWidth;
+  sc.height = window.innerHeight;
+  window.addEventListener('resize', function() {
+    sc.width  = window.innerWidth;
+    sc.height = window.innerHeight;
+  });
+
+  var sCtx = sc.getContext('2d');
+  var _scratchPhase = 0;
+
+  function _drawScratch() {
+    sCtx.clearRect(0, 0, sc.width, sc.height);
+
+    /* very rare vertical hair scratch */
+    if (Math.random() < 0.004) {
+      sc.style.opacity = (Math.random() * 0.25).toFixed(2);
+      var sx = Math.random() * sc.width;
+      sCtx.beginPath();
+      sCtx.moveTo(sx, 0);
+      var cy2 = 0;
+      while (cy2 < sc.height) {
+        sx  += (Math.random() - 0.5) * 3;
+        cy2 += Math.random() * 40 + 10;
+        sCtx.lineTo(sx, cy2);
+      }
+      sCtx.strokeStyle = 'rgba(255,255,255,0.55)';
+      sCtx.lineWidth   = 0.5;
+      sCtx.stroke();
+    } else {
+      sc.style.opacity = '0';
+    }
+
+    /* micro-shake on high intensity */
+    if (typeof intensity !== 'undefined' && intensity > 0.75 && Math.random() < 0.03) {
+      var mainEl = document.querySelector('main');
+      if (mainEl) {
+        var shakeX = (Math.random() - 0.5) * 3;
+        var shakeY = (Math.random() - 0.5) * 2;
+        mainEl.style.transform = 'translate(' + shakeX + 'px,' + shakeY + 'px)';
+        setTimeout(function() {
+          mainEl.style.transform = '';
+        }, 80);
+      }
+    }
+
+    requestAnimationFrame(_drawScratch);
+  }
+  _drawScratch();
+}
+
+
+/* ----- DISSOLVING LETTERS ----- */
+function _initDissolveTitle() {
+  var el = document.getElementById('dissolveTitle');
+  if (!el) return;
+
+  /* Wrap each character */
+  var html = el.innerHTML;
+  var wrapped = '';
+  for (var i = 0; i < html.length; i++) {
+    var ch = html[i];
+    if (ch === '<') {
+      /* pass through tags */
+      var end = html.indexOf('>', i);
+      if (end !== -1) {
+        wrapped += html.slice(i, end + 1);
+        i = end;
+        continue;
+      }
+    }
+    if (ch === ' ') {
+      wrapped += ' ';
+    } else if (ch === '\n') {
+      wrapped += '\n';
+    } else {
+      wrapped += '<span class="char">' + ch + '</span>';
+    }
+  }
+  el.innerHTML = wrapped;
+
+  /* trigger dissolve loop when in view */
+  var _dissolveState = 'idle';
+  function _checkDissolve() {
+    var rect = el.getBoundingClientRect();
+    var inView = rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
+
+    if (inView && _dissolveState === 'idle') {
+      _dissolveState = 'dissolving';
+      el.classList.add('dissolving');
+      el.classList.remove('resolving');
+      setTimeout(function() {
+        el.classList.remove('dissolving');
+        el.classList.add('resolving');
+        _dissolveState = 'resolving';
+        setTimeout(function() {
+          el.classList.remove('resolving');
+          _dissolveState = 'idle';
+        }, 3500);
+      }, 1800);
+    }
+  }
+
+  window.addEventListener('scroll', _checkDissolve, { passive: true });
+}
+
+
+/* ----- COLLECTIBLE FRAGMENTS ----- */
+var _collFound = 0;
+var _collTotal = 4;
+var _collDismissed = {};
+
+/* Show collectibles at scroll thresholds */
+var _collThresholds = {
+  'coll-1': 0.12,
+  'coll-2': 0.35,
+  'coll-3': 0.58,
+  'coll-4': 0.78
+};
+
+window.closeCollectible = function(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('visible');
+  if (!_collDismissed[id]) {
+    _collDismissed[id] = true;
+    _collFound++;
+    _updateCollCounter();
+  }
+};
+
+function _updateCollCounter() {
+  var ctr = document.getElementById('collectible-counter');
+  if (!ctr) return;
+  ctr.textContent = _collFound + ' / ' + _collTotal + ' found';
+  ctr.classList.add('pulse');
+  setTimeout(function() { ctr.classList.remove('pulse'); }, 1200);
+}
+
+window.addEventListener('scroll', function() {
+  var progress = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  Object.keys(_collThresholds).forEach(function(id) {
+    if (_collDismissed[id]) return;
+    if (progress >= _collThresholds[id]) {
+      var el = document.getElementById(id);
+      if (el && !el.classList.contains('visible')) {
+        el.classList.add('visible');
+      }
+    }
+  });
+}, { passive: true });
+
+
+/* ----- PATCH RAIN TINT (optional colour shift per reader profile) ----- */
+window._rainTint = 'rgba(160,200,255,{a})';
+var _origDrawRain = window.drawRain;
+/* We can't monkey-patch rAF easily, but we can shift the strokeStyle
+   in the existing draw loop by overriding the colour string on drops.
+   Instead we just tint via a lightweight overlay approach. */
+var _tintOverlay = document.createElement('div');
+_tintOverlay.style.cssText = [
+  'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
+  'pointer-events:none', 'z-index:9', 'opacity:0',
+  'transition:background 4s ease, opacity 4s ease'
+].join(';');
+document.body.appendChild(_tintOverlay);
+
+setInterval(function() {
+  if (_readerProfile === 'fast') {
+    _tintOverlay.style.background = 'rgba(0,5,20,0.08)';
+    _tintOverlay.style.opacity = '1';
+  } else if (_readerProfile === 'slow') {
+    _tintOverlay.style.background = 'rgba(10,20,40,0.04)';
+    _tintOverlay.style.opacity = '1';
+  } else if (_readerProfile === 'listener') {
+    _tintOverlay.style.background = 'rgba(0,10,30,0.03)';
+    _tintOverlay.style.opacity = '1';
+  }
+}, 2000);
+
+
+/* ----- BOOT ALL NEW FEATURES ----- */
+(function _boot() {
+  _initPuddle();
+  _initLensDroplets();
+  _initCamScratch();
+  _initDissolveTitle();
+})();
+
+onScroll();
+/* ── 7. CINEMATIC VIDEO COMPOSITOR (MULTIPLE GHOST VIDEOS) ────────── */
+(function _initGhostVideos() {
+  
+  /* 🎬 YOUR VIDEO PLAYLIST 🎬 */
+  var ghostVideos = [
+    {
+      src: '12702057_2160_3840_30fps.mp4', /* Original Pedestrian */
+      css: 'bottom: 10vh; right: 5vw; height: 70vh;',
+      mask: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%)'
+    },
+    {
+      src: '8807427-uhd_1440_2560_30fps.mp4', /* Girl Running (Vertical) */
+      css: 'bottom: 5vh; left: 5vw; height: 60vh;', /* Anchored Bottom-Left */
+      mask: 'radial-gradient(ellipse 50% 70% at 50% 50%, rgba(0,0,0,1) 15%, rgba(0,0,0,0) 85%)'
+    },
+    {
+      src: '17627607-hd_1920_1080_50fps.mp4', /* Rain on Leaves (Landscape) */
+      css: 'top: 0vh; left: -5vw; width: 45vw;', /* Anchored Top-Left */
+      mask: 'radial-gradient(ellipse 70% 70% at 30% 30%, rgba(0,0,0,0.8) 10%, rgba(0,0,0,0) 90%)'
+    },
+    {
+      src: '12633847-uhd_3840_2160_30fps.mp4', /* Hummingbird (Landscape) */
+      css: 'top: 30vh; right: 2vw; width: 35vw;', /* Middle-Right */
+      mask: 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0) 70%)'
+    }
+  ];
+
+  /* Keeps track of which video to play next */
+  var _currentIndex = 0;
+  var _videoRunning = false;
+  
+  function _spawnVideo(vidData) {
+    if (_videoRunning) return;
+    _videoRunning = true;
+    
+    var vid = document.createElement('video');
+    vid.src = vidData.src;
+    vid.muted = true;
+    vid.playsInline = true;
+    
+    /* Base styles for all videos */
+    vid.style.position = 'fixed';
+    vid.style.zIndex = '14';
+    vid.style.pointerEvents = 'none';
+    vid.style.opacity = '0';
+    vid.style.transition = 'opacity 3.5s ease';
+    vid.style.filter = 'grayscale(50%) contrast(1.1) brightness(0.85)';
+    
+    /* Apply custom positioning and mask for this specific video */
+    vid.style.cssText += vidData.css;
+    vid.style.WebkitMaskImage = vidData.mask;
+    vid.style.maskImage = vidData.mask;
+    
+    document.body.appendChild(vid);
+    
+    vid.play().then(function() {
+      vid.style.opacity = '0.4'; /* Max opacity */
+      
+      /* Let it play for 6 seconds, then fade out */
+      setTimeout(function() {
+        vid.style.opacity = '0';
+        setTimeout(function() {
+          vid.remove();
+          _videoRunning = false;
+        }, 3500); /* Wait for fade transition to finish */
+      }, 6000);
+    }).catch(function(e) {
+      vid.remove();
+      _videoRunning = false;
+    });
+  }
+
+  function _playNextGhost() {
+    /* Only play if scrolled past 15% */
+    if (window.scrollY / (document.body.scrollHeight - window.innerHeight) > 0.15) {
+        _spawnVideo(ghostVideos[_currentIndex]);
+        /* Cycle to the next video for next time */
+        _currentIndex = (_currentIndex + 1) % ghostVideos.length;
+    }
+    /* Random gap between 20 and 40 seconds before the next ghost appears */
+    setTimeout(_playNextGhost, 20000 + Math.random() * 20000); 
+  }
+  
+  /* Start the loop 8 seconds after page load */
+  setTimeout(_playNextGhost, 8000);
+
+  /* 🚨 EASTER EGG: TRIPLE-TAP TO INSTANTLY SUMMON THE NEXT VIDEO 🚨 */
+  var _tapCount = 0;
+  var _tapTimer = null;
+  window.addEventListener('click', function() {
+    _tapCount++;
+    clearTimeout(_tapTimer);
+    if (_tapCount >= 3) {
+      console.log("EASTER EGG ACTIVATED!");
+      _spawnVideo(ghostVideos[_currentIndex]);
+      _currentIndex = (_currentIndex + 1) % ghostVideos.length;
+      _tapCount = 0;
+    } else {
+      _tapTimer = setTimeout(function() { _tapCount = 0; }, 600);
+    }
+  });
+
+})();
+/* ── 6. DISTANT TRAIN (UPGRADED WITH RUMBLE) ─────────────── */
+(function _initTrain() {
+  var wrap = document.createElement('div');
+  wrap.id = 'distant-train';
+  /* Upgraded SVG: Sleek dark body, blurred glowing yellow windows */
+  var svgHTML = '<svg width="800" height="30" viewBox="0 0 800 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: blur(1.5px);">' +
+    '<rect x="0" y="10" width="800" height="15" rx="2" fill="rgba(10,12,20,0.8)"/>';
+  for(var i=10; i<780; i+=35) {
+    svgHTML += '<rect x="'+i+'" y="14" width="20" height="5" rx="1" fill="rgba(255,180,80,0.65)" style="filter: drop-shadow(0 0 4px rgba(255,180,80,0.8))"/>';
+  }
+  svgHTML += '</svg>';
+  wrap.innerHTML = svgHTML;
+  document.body.appendChild(wrap);
+
+  /* Deep Bass Rumble Audio */
+  function _playTrainRumble() {
+    if(!window.soundActive) return;
+    try {
+      var actx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = actx.createOscillator();
+      var gain = actx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(45, actx.currentTime); /* Deep bass frequency */
+      gain.gain.setValueAtTime(0, actx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.4, actx.currentTime + 3); /* Fade in */
+      gain.gain.linearRampToValueAtTime(0, actx.currentTime + 10); /* Fade out */
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.start();
+      osc.stop(actx.currentTime + 10);
+    } catch(e){}
+  }
+
+  var _trainRunning = false;
+  function _runTrain() {
+    if (_trainRunning) return;
+    _trainRunning = true;
+    _playTrainRumble(); /* Trigger the audio */
+    
+    var vw = window.innerWidth;
+    wrap.style.left = '-800px';
+    wrap.style.bottom = '35vh';
+    wrap.style.transition = 'opacity 2s ease';
+    wrap.style.opacity = String(0.2 + Math.random() * 0.1);
+
+    var _x = -800, _speed = 1.2 + Math.random() * 0.5;
+    function _step() {
+      _x += _speed; wrap.style.left = _x + 'px';
+      if (_x < vw + 50) requestAnimationFrame(_step);
+      else { wrap.style.opacity = '0'; setTimeout(function() { _trainRunning = false; }, 2000); }
+    }
+    requestAnimationFrame(_step);
+  }
+
+  function _maybeTrain() {
+    if (window.scrollY / (document.body.scrollHeight - window.innerHeight) > 0.2) _runTrain();
+    setTimeout(_maybeTrain, 45000 + Math.random() * 60000);
+  }
+  setTimeout(_maybeTrain, 20000);
+})();
+</script>
+</body>
+</html>

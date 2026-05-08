@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WATER: A Calm, Living System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@100;200;300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --deep:#050d1a;--ocean:#0a1628;--water:#0d2040;--surface:#1a3a5c;
+  --foam:#c8dce8;--mist:#8aaec4;--light:#e8f4f8;--pure:#f0f8ff;
+  --ice:#d4eaf7;--ink:rgba(200,220,235,.85);
+  --serif:'Cormorant Garamond',serif;--sans:'Jost',sans-serif
+}
+html{scroll-behavior:auto;overflow-x:hidden}
+body{background:var(--deep);color:var(--foam);font-family:var(--sans);overflow-x:hidden;cursor:none}
+
+/* CURSOR */
+#cursor{position:fixed;width:8px;height:8px;border-radius:50%;background:rgba(200,220,235,.9);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen}
+#cursor-ring{position:fixed;width:32px;height:32px;border-radius:50%;border:.5px solid rgba(180,210,230,.4);pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+.ripple-div{position:fixed;border-radius:50%;border:.5px solid rgba(140,200,230,.6);pointer-events:none;z-index:9990;animation:rippleExpand 1.4s cubic-bezier(.2,.8,.3,1) forwards;transform:translate(-50%,-50%)}
+@keyframes rippleExpand{0%{width:0;height:0;opacity:.8}100%{width:200px;height:200px;opacity:0}}
+
+/* CANVASES */
+#water-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#particle-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;mix-blend-mode:screen}
+.nav-logo{font-family:var(--sans);font-weight:100;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--mist);opacity:.7}
+.nav-dots{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--mist);opacity:.3;transition:all .4s ease;cursor:pointer}
+.nav-dot.active{opacity:1;background:var(--pure);width:20px;border-radius:2px}
+
+/* PROGRESS */
+#progress-line{position:fixed;right:2.5rem;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center}
+.prog-item{display:flex;align-items:center;gap:12px;cursor:pointer;opacity:.3;transition:opacity .4s ease}
+.prog-item.active{opacity:1}.prog-item:hover{opacity:.7}
+.prog-label{font-family:var(--sans);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mist);text-align:right}
+.prog-mark{width:3px;height:3px;border-radius:50%;background:var(--foam)}
+
+/* SECTIONS */
+section{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;z-index:10;pointer-events:none;overflow:hidden}
+.section-inner{max-width:680px;padding:0 6rem;position:relative;z-index:20}
+.section-number{font-family:var(--sans);font-size:.6rem;letter-spacing:.3em;color:var(--mist);opacity:.4;margin-bottom:1.5rem}
+.section-title{font-family:var(--serif);font-size:clamp(2.2rem,5vw,4rem);font-weight:300;line-height:1.1;color:var(--pure);margin-bottom:2rem}
+.section-title em{font-style:italic;color:var(--mist)}
+.section-body{font-family:var(--sans);font-size:.85rem;font-weight:200;line-height:2.2;color:var(--mist);max-width:380px}
+.section-body strong{color:var(--foam);font-weight:300}
+.data-callout{margin-top:3rem;padding:1.5rem 2rem;border-left:.5px solid rgba(140,180,200,.2);background:rgba(10,22,40,.45);backdrop-filter:blur(12px);display:inline-block}
+.data-number{font-family:var(--serif);font-size:3rem;font-weight:300;color:var(--ice);line-height:1}
+.data-label{font-family:var(--sans);font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mist);margin-top:.5rem}
+.impact-line{width:100%;height:.5px;background:linear-gradient(90deg,transparent 0%,rgba(200,220,235,.3) 50%,transparent 100%);margin:2.5rem 0}
+.wave-sep{position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(140,180,200,.15),transparent)}
+
+/* ALIGNMENT */
+.align-right{align-items:flex-end}.align-right .section-inner{text-align:right}.align-right .section-body{margin-left:auto}.align-right .data-callout{border-left:none;border-right:.5px solid rgba(140,180,200,.2)}
+.align-center{align-items:center;text-align:center}.align-center .section-inner{padding:0 4rem;max-width:720px}.align-center .section-body{max-width:480px;margin:0 auto}
+.section-quote{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2.2rem);font-weight:300;font-style:italic;line-height:1.5;color:var(--ice);margin-bottom:2rem}
+
+/* PHOTO LAYER — beautiful open-source water imagery behind text */
+.photo-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.photo-layer img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;transform:scale(1.1);will-change:transform;transition:filter 2s ease}
+/* Dark atmospheric blend so text always reads — adjust brightness per section */
+.photo-layer::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(5,13,26,.6) 0%,rgba(5,13,26,.08) 40%,rgba(5,13,26,.08) 60%,rgba(5,13,26,.8) 100%)}
+
+/* Per-section image treatment (BRIGHTENED UP) */
+#origin  .photo-layer img{filter:saturate(.6) brightness(.65) contrast(1.15) hue-rotate(195deg)}
+#ocean   .photo-layer img{filter:saturate(.8) brightness(.75) contrast(1.18) hue-rotate(185deg)}
+#rivers  .photo-layer img{filter:saturate(.7) brightness(.8) contrast(1.1) hue-rotate(172deg)}
+#ice     .photo-layer img{filter:saturate(.6) brightness(.85) contrast(1.1) hue-rotate(200deg)}
+#cycle   .photo-layer img{filter:saturate(.7) brightness(.75) contrast(1.15)}
+#impact  .photo-layer img{filter:saturate(.8) brightness(.65) contrast(1.25) hue-rotate(15deg)}
+#future  .photo-layer img{filter:saturate(.8) brightness(.8) contrast(1.1) hue-rotate(188deg)}
+
+/* Ken-Burns subtle zoom */
+.photo-layer img{animation:kb 22s ease-in-out infinite alternate}
+@keyframes kb{0%{transform:scale(1.08) translate(0%,0%)}100%{transform:scale(1.18) translate(-1.5%,-.8%)}}
+
+/* SECTION CANVAS OVERLAYS */
+.section-canvas-overlay{position:absolute;inset:0;z-index:3;pointer-events:none}
+.section-canvas-overlay canvas{width:100%;height:100%;display:block;opacity:0;transition:opacity .8s ease}
+.section-canvas-overlay canvas.visible{opacity:1}
+
+/* ORIGIN */
+#origin{padding-top:15vh;justify-content:flex-end;padding-bottom:20vh}
+#origin .section-inner{max-width:100%;padding:0 6rem}
+.origin-eyebrow{font-family:var(--sans);font-size:.65rem;letter-spacing:.4em;text-transform:uppercase;color:var(--mist);opacity:0;margin-bottom:2.5rem}
+.origin-title{font-family:var(--serif);font-size:clamp(3.5rem,8vw,7rem);font-weight:300;line-height:.9;color:var(--pure);opacity:0;letter-spacing:-.02em}
+.origin-title em{font-style:italic;color:var(--mist)}
+.origin-subtitle{margin-top:2.5rem;font-family:var(--sans);font-size:.8rem;font-weight:200;letter-spacing:.15em;line-height:2;color:var(--mist);opacity:0;max-width:420px}
+.scroll-hint{position:absolute;bottom:3rem;left:6rem;font-family:var(--sans);font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--mist);opacity:0;display:flex;align-items:center;gap:16px}
+.scroll-line{width:40px;height:.5px;background:var(--mist);transform-origin:left;animation:scrollPulse 2.5s ease-in-out infinite}
+@keyframes scrollPulse{0%,100%{transform:scaleX(1);opacity:.5}50%{transform:scaleX(.4);opacity:1}}
+
+/* FUTURE */
+#future{overflow:hidden}
+.future-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(13,32,64,.4) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:breathe 6s ease-in-out infinite;pointer-events:none;z-index:4}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.08);opacity:1}}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--deep);z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2rem}
+.loader-text{font-family:var(--sans);font-size:.65rem;letter-spacing:.4em;text-transform:uppercase;color:var(--mist);opacity:.5}
+.loader-bar{width:120px;height:.5px;background:rgba(140,180,200,.2);position:relative;overflow:hidden}
+.loader-fill{position:absolute;height:100%;background:var(--mist);width:0;transition:width .05s linear}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px)}
+.reveal.visible{animation:revealUp 1.2s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes revealUp{to{opacity:1;transform:translateY(0)}}
+.reveal-delay-1{animation-delay:.2s!important}.reveal-delay-2{animation-delay:.4s!important}
+.reveal-delay-3{animation-delay:.6s!important}.reveal-delay-4{animation-delay:.8s!important}
+
+/* FOOTER */
+footer{position:relative;z-index:10;padding:6rem;border-top:.5px solid rgba(140,180,200,.1);display:flex;justify-content:space-between;align-items:flex-end}
+footer .foot-title{font-family:var(--serif);font-size:2rem;font-weight:300;color:var(--pure);opacity:.4}
+footer .foot-note{font-family:var(--sans);font-size:.65rem;font-weight:200;letter-spacing:.2em;color:var(--mist);opacity:.4;text-align:right;line-height:2}
+
+/* MOBILE */
+@media(max-width:768px){
+  .section-inner{padding:0 2rem}nav{padding:1.5rem 2rem}#progress-line{display:none}
+  footer{padding:3rem 2rem;flex-direction:column;gap:2rem}
+  .origin-title{font-size:clamp(2.5rem,10vw,5rem)}#origin .section-inner{padding:0 2rem}.scroll-hint{left:2rem}
+}
+/* THE FOG WINDOW */
+.fog-overlay {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(25px) brightness(1.2);
+  background: rgba(200, 220, 235, 0.05);
+  z-index: 15; /* Sits over the canvas, under the text */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* WATER FILL TEXT CONTAINER */
+.water-fill {
+  /* Creates a gradient: transparent at the top, solid white at the bottom */
+  background: linear-gradient(to top, transparent 0%, transparent 48%, var(--pure) 52%, var(--pure) 100%);
+  background-size: 100% 220%;
+  background-position: 0% 100%; /* Starts 'empty' pushed to the bottom */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  opacity: 1 !important; /* Overriding your old fade-in */
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-text">Summoning water</div>
+  <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
+</div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<canvas id="water-canvas"></canvas>
+<canvas id="particle-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo">Water · A Living System</div>
+  <div class="nav-dots" id="nav-dots"></div>
+</nav>
+<div id="progress-line"></div>
+
+<!-- ══ 1. ORIGIN ══ cosmic water nebula + drifting mist particles -->
+
+<section id="origin">
+  <div class="photo-layer">
+    <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=75&auto=format&fit=crop" alt="Mesmerizing Earth from space" loading="eager">
+  </div>
+  
+  <div class="fog-overlay" id="fog-window"></div>
+
+  <div class="section-canvas-overlay"><canvas id="origin-canvas"></canvas></div>
+  
+  <div class="section-inner">
+    <div class="origin-eyebrow water-fill">I · The Origin</div>
+    <h1 class="origin-title water-fill">In the <em>beginning</em><br>there was<br>only mist.</h1>
+    <p class="origin-subtitle water-fill">Hydrogen. Oxygen. Two atoms bonded by heat and time — forming the molecule that would birth all life on Earth.</p>
+  </div>
+  <div class="scroll-hint" id="scroll-hint"><div class="scroll-line"></div><span>Explore</span></div>
+  <div class="wave-sep"></div>
+</section>
+
+
+<!-- ══ 2. OCEAN ══ deep bioluminescent underwater + rising particles -->
+<section id="ocean" class="align-right">
+  <div class="photo-layer">
+  <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&q=75&auto=format&fit=crop" alt="Calm glowing jellyfish" loading="lazy">
+</div>
+  <div class="section-inner">
+    <div class="section-number reveal">II</div>
+    <h2 class="section-title reveal reveal-delay-1">The <em>deep</em><br>remembers.</h2>
+    <div class="impact-line"></div>
+    <p class="section-body reveal reveal-delay-2"><strong>3.8 billion years ago,</strong> water pooled in the dark. No light reached the ocean floor. Life stirred in silence — chemistry becoming biology, becoming memory.</p>
+    <div class="data-callout reveal reveal-delay-3">
+      <div class="data-number">97<span style="font-size:1.5rem">%</span></div>
+      <div class="data-label">of Earth's water is ocean</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+</section>
+
+<!-- ══ 3. RIVERS ══ aerial meander + horizontal flow lines -->
+<section id="rivers">
+
+  <div class="section-canvas-overlay"><canvas id="rivers-canvas"></canvas></div>
+  <div class="section-inner" style="padding-left:max(4rem,8vw)">
+    <div class="section-number reveal">III</div>
+    <h2 class="section-title reveal reveal-delay-1">Rivers run<br><em>like thought —</em><br>always downward.</h2>
+    <div class="impact-line"></div>
+    <p class="section-body reveal reveal-delay-2"><strong>117 major rivers</strong> carve their paths through stone. Not by force — by patience. A river does not fight the mountain; it finds every yielding crack, wearing the world away drop by drop.</p>
+    <div class="data-callout reveal reveal-delay-3">
+      <div class="data-number">0.0001<span style="font-size:1rem">%</span></div>
+      <div class="data-label">of water is in rivers — yet it feeds billions</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+</section>
+
+<!-- ══ 4. ICE ══ glacier blue cave + Voronoi fracture -->
+<section id="ice" class="align-right">
+  <div class="photo-layer">
+  <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=75&auto=format&fit=crop" alt="Smooth mesmerizing ice" loading="lazy">
+</div>
+  <div class="section-canvas-overlay"><canvas id="ice-canvas"></canvas></div>
+  <div class="section-inner">
+    <div class="section-number reveal">IV</div>
+    <h2 class="section-title reveal reveal-delay-1">Ice is water<br><em>holding still,</em><br>remembering cold.</h2>
+    <div class="impact-line"></div>
+    <p class="section-body reveal reveal-delay-2">When water freezes, it expands — unique among molecules. It <strong>cracks rock</strong>, carves valleys, and forms the great glaciers that have shaped every continent on Earth.</p>
+    <div class="data-callout reveal reveal-delay-3">
+      <div class="data-number">69<span style="font-size:1.5rem">%</span></div>
+      <div class="data-label">of freshwater locked in glaciers</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+</section>
+
+<!-- ══ 5. CYCLE ══ storm clouds + orbiting drop animation -->
+<section id="cycle" class="align-center">
+  <div class="photo-layer">
+    <!-- Storm clouds / rain -->
+    <img src="https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=1920&q=75&auto=format&fit=crop" alt="Storm clouds rain" loading="lazy">
+  </div>
+  <div class="section-canvas-overlay"><canvas id="cycle-canvas"></canvas></div>
+  <div class="section-inner">
+    <div class="section-number reveal">V</div>
+    <p class="section-quote reveal reveal-delay-1">"The water you drink today was once a glacier. Was once a cloud. Was once inside a dinosaur."</p>
+    <div class="impact-line"></div>
+    <p class="section-body reveal reveal-delay-2">The water cycle has no beginning and no end. Evaporation, condensation, precipitation — a loop running without pause for <strong>4 billion years.</strong></p>
+  </div>
+  <div class="wave-sep"></div>
+</section>
+
+<!-- ══ 6. IMPACT ══ polluted water / oil slick + corruption rings -->
+<section id="impact">
+  <div class="photo-layer">
+  <img src="https://images.unsplash.com/photo-1609924325749-085258a04b86?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Dark moody water texture" loading="lazy">
+</div>
+  <div class="section-canvas-overlay"><canvas id="impact-canvas"></canvas></div>
+  <div class="section-inner" style="padding-left:max(4rem,8vw)">
+    <div class="section-number reveal">VI</div>
+    <h2 class="section-title reveal reveal-delay-1">We turned<br>water into<br><em>a question.</em></h2>
+    <div class="impact-line"></div>
+    <p class="section-body reveal reveal-delay-2"><strong style="color:rgba(180,120,100,.9)">2.2 billion people</strong> lack access to safe water. We pollute, we dam, we overpump. The system that sustained life for eons bends under a single century of human pressure.</p>
+    <div class="data-callout reveal reveal-delay-3" style="border-color:rgba(180,120,100,.2)">
+      <div class="data-number" style="color:rgba(200,150,130,.9)">2030</div>
+      <div class="data-label">projected year of global water deficit</div>
+    </div>
+  </div>
+  <div class="wave-sep"></div>
+</section>
+
+<!-- ══ 7. FUTURE ══ pure crystal stream + light rays / caustics -->
+<section id="future" class="align-center">
+  <div class="photo-layer">
+    <!-- Crystal clear mountain stream -->
+    <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=75&auto=format&fit=crop" alt="Pure water stream future" loading="lazy">
+  </div>
+  <div class="future-glow"></div>
+  <div class="section-canvas-overlay"><canvas id="future-canvas"></canvas></div>
+  <div class="section-inner">
+    <div class="section-number reveal">VII</div>
+    <h2 class="section-title reveal reveal-delay-1" style="background:linear-gradient(180deg,var(--pure) 0%,var(--mist) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+      Water will always<br>find its way.<br><em>Will we?</em>
+    </h2>
+    <div class="impact-line"></div>
+    <p class="section-body reveal reveal-delay-2">In desalination, in atmospheric harvesting, in rewilded watersheds — the answers exist. Water teaches us: <strong>move gently, persist quietly, and you will carve stone.</strong></p>
+    <div class="data-callout reveal reveal-delay-3" style="border-color:rgba(140,200,220,.2)">
+      <div class="data-number" style="font-size:2rem">∞</div>
+      <div class="data-label">the water cycle continues</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-title">Water.</div>
+  <div class="foot-note">Photography · Unsplash open source<br>Data · WHO · UNESCO · USGS · IPCC<br>WebGL Shader · Canvas Engines · GSAP<br>Move. Touch. Breathe.</div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// LOADER
+// ═══════════════════════════════════════════
+const loaderFill = document.getElementById('loader-fill');
+let lp = 0;
+const li = setInterval(() => {
+  lp += Math.random() * 8 + 2;
+  if (lp >= 100) { lp = 100; clearInterval(li); }
+  loaderFill.style.width = lp + '%';
+}, 80);
+
+// ═══════════════════════════════════════════
+// CURSOR — spring physics ring
+// ═══════════════════════════════════════════
+const cursor = document.getElementById('cursor');
+const cRing = document.getElementById('cursor-ring');
+let mx=-100,my=-100,rx=-100,ry=-100,cvx=0,cvy=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx+'px'; cursor.style.top = my+'px';
+});
+(function ac(){
+  cvx += (mx-rx)*.12; cvy += (my-ry)*.12;
+  cvx *= .75; cvy *= .75; rx += cvx; ry += cvy;
+  cRing.style.left = rx+'px'; cRing.style.top = ry+'px';
+  requestAnimationFrame(ac);
+})();
+document.addEventListener('click', e => {
+  const r = document.createElement('div');
+  r.className = 'ripple-div';
+  r.style.left = e.clientX+'px'; r.style.top = e.clientY+'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 1400);
+});
+
+// ═══════════════════════════════════════════
+// PHOTO PARALLAX — each photo scrolls at 0.4x speed for depth
+// ═══════════════════════════════════════════
+function bindParallax() {
+  const imgs = document.querySelectorAll('.photo-layer img');
+  window.addEventListener('scroll', () => {
+    imgs.forEach(img => {
+      const sec = img.closest('section');
+      const rect = sec.getBoundingClientRect();
+      if (rect.bottom < -200 || rect.top > window.innerHeight + 200) return;
+      const prog = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+      // translateY: photo moves slower than scroll = parallax depth
+      img.style.transform = `scale(1.12) translateY(${(prog - .5) * 55}px)`;
+    });
+  }, { passive: true });
+}
+bindParallax();
+
+// ═══════════════════════════════════════════
+// WEBGL WATER ENGINE — full fragment shader preserved from v1
+// Ripples · Mouse wakes · Scroll flow · Section depth color
+// ═══════════════════════════════════════════
+const scene = new THREE.Scene();
+const cam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('water-canvas'), alpha:true, antialias:false });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+const MAX_R = 12; let rIdx = 0;
+const wu = {
+  uTime:           { value: 0 },
+  uResolution:     { value: new THREE.Vector2(innerWidth, innerHeight) },
+  uMouse:          { value: new THREE.Vector2(.5,.5) },
+  uMouseVelocity:  { value: new THREE.Vector2(0,0) },
+  uScrollY:        { value: 0 },
+  uSectionDepth:   { value: 0 },
+  uIdle:           { value: 1 },
+  uRipplePos:      { value: [] },
+  uRippleTime:     { value: [] },
+  uRippleStrength: { value: [] },
+};
+for (let i=0;i<MAX_R;i++){wu.uRipplePos.value.push(new THREE.Vector2(-1,-1));wu.uRippleTime.value.push(-100);wu.uRippleStrength.value.push(0);}
+
+const vert = `varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.);}`;
+const frag = `
+precision highp float;
+uniform float uTime;uniform vec2 uResolution;uniform vec2 uMouse;uniform vec2 uMouseVelocity;
+uniform float uScrollY;uniform float uSectionDepth;uniform float uIdle;
+uniform vec2 uRipplePos[12];uniform float uRippleTime[12];uniform float uRippleStrength[12];
+varying vec2 vUv;
+float hash(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
+float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p,int o){float v=0.,a=.5,fr=1.;for(int i=0;i<6;i++){if(i>=o)break;v+=a*noise(p*fr);a*=.5;fr*=2.1;}return v;}
+float ripple(vec2 uv,vec2 c,float t,float s){if(t<0.)return 0.;float d=length(uv-c);float ag=t*1.2;float rw=.06-ag*.03;if(rw<.002)return 0.;return smoothstep(rw,0.,abs(d-ag))*exp(-ag*1.8)*s*.8;}
+vec3 sectionColor(float d){
+  vec3 c[7];c[0]=vec3(.02,.05,.12);c[1]=vec3(.02,.08,.18);c[2]=vec3(.03,.10,.16);c[3]=vec3(.08,.14,.22);c[4]=vec3(.03,.09,.17);c[5]=vec3(.06,.08,.10);c[6]=vec3(.04,.10,.20);
+  float fi=clamp(d,0.,5.999);int i0=int(fi);int i1=min(i0+1,6);return mix(c[i0],c[i1],smoothstep(0.,1.,fi-float(i0)));
+}
+void main(){
+  vec2 uv=vUv;vec2 asp=vec2(uResolution.x/uResolution.y,1.);vec2 ua=(uv-.5)*asp;
+  float t=uTime;float sc=uScrollY*.001;
+  float w1=fbm(uv*3.+vec2(t*.06,sc*.3),4);float w2=fbm(uv*5.-vec2(t*.04,t*.02),3);float w3=fbm(uv*2.+vec2(-t*.03,sc*.5),3);
+  float bw=w1*.6+w2*.25+w3*.15;
+  vec2 md=uv-uMouse;float mi=exp(-dot(md,md)*8.)*.15;
+  float mw=sin(length(md*asp)*18.-t*3.)*mi*(0.5+.5*length(uMouseVelocity)*3.);
+  float tr=0.;for(int i=0;i<12;i++)tr+=ripple(uv*asp,uRipplePos[i]*asp,uTime-uRippleTime[i],uRippleStrength[i]);
+  float sf=sin(uv.x*8.+sc*2.-t*.5)*.04*clamp(sc,0.,1.);
+  float dist=bw+mw+tr*.6+sf;
+  vec2 duv=uv+vec2(sin(dist*6.28+t*.1)*.004,cos(dist*6.28-t*.08)*.003);
+  vec3 base=sectionColor(uSectionDepth);
+  float sh1=pow(sin(dist*12.+t*.8)*.5+.5,3.);float sh2=pow(cos(dist*9.-t*.6)*.5+.5,4.);
+  float dv=fbm(duv*4.+t*.02,3);
+  vec3 shine=vec3(.25,.45,.65);
+  vec3 wc=mix(base*.4,base*.75,dv);wc=mix(wc,base+shine*.4,sh1*.3+sh2*.15);
+  wc+=vec3(.15,.3,.4)*tr*.6;wc+=vec3(.08,.18,.28)*exp(-dot(md,md)*15.);
+  wc*=.7+.3*(1.-smoothstep(.4,1.2,length(ua)));
+  wc=mix(wc,wc*vec3(.08,.07,.05)*8.,clamp((uSectionDepth-4.5)*.8,0.,1.)*.4);
+  wc=mix(wc,wc*1.4+vec3(.02,.04,.06),clamp((uSectionDepth-5.5)*.8,0.,1.)*.4);
+  gl_FragColor=vec4(wc,.88);
+}`;
+const mat = new THREE.ShaderMaterial({ uniforms:wu, vertexShader:vert, fragmentShader:frag, transparent:true });
+scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), mat));
+
+let lmx=0,lmy=0,mvx=0,mvy=0;
+document.addEventListener('mousemove', e => {
+  const nx=e.clientX/innerWidth,ny=1-e.clientY/innerHeight;
+  wu.uMouse.value.set(nx,ny); mvx=(nx-lmx)*60; mvy=(ny-lmy)*60; lmx=nx; lmy=ny;
+});
+function addRipple(cx,cy){const i=rIdx%MAX_R;wu.uRipplePos.value[i].set(cx,cy);wu.uRippleTime.value[i]=clk.getElapsedTime();wu.uRippleStrength.value[i]=1.;rIdx++;}
+document.addEventListener('click', e => addRipple(e.clientX/innerWidth, 1-e.clientY/innerHeight));
+document.addEventListener('touchstart', e => {const t=e.touches[0];addRipple(t.clientX/innerWidth,1-t.clientY/innerHeight);});
+document.addEventListener('touchmove', e => {const t=e.touches[0];wu.uMouse.value.set(t.clientX/innerWidth,1-t.clientY/innerHeight);});
+window.addEventListener('scroll', () => wu.uScrollY.value = scrollY);
+window.addEventListener('resize', () => { renderer.setSize(innerWidth,innerHeight); wu.uResolution.value.set(innerWidth,innerHeight); });
+const clk = new THREE.Clock();
+
+// ═══════════════════════════════════════════
+// SECTION CANVAS ENGINES — each section has a unique 2D animation
+// ═══════════════════════════════════════════
+
+// ── ORIGIN: Cosmic star-mist drifting upward ──────────
+const oC = document.getElementById('origin-canvas');
+const oX = oC.getContext('2d');
+let oParticles=[], oActive=false, oTime=0;
+function initOrigin(){
+  oC.width=innerWidth; oC.height=innerHeight; oParticles=[];
+  for(let i=0;i<150;i++) oParticles.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.2+Math.random()*1.2,speed:.03+Math.random()*.2,drift:(Math.random()-.5)*.08,op:.05+Math.random()*.4,ph:Math.random()*Math.PI*2,tw:Math.random()*Math.PI*2});
+}
+function drawOrigin(t){
+  if(!oActive)return;
+  oX.clearRect(0,0,oC.width,oC.height);
+  oParticles.forEach(p=>{
+    p.y -= p.speed; p.x += p.drift + Math.sin(t*.0004+p.ph)*.12;
+    if(p.y<-5){p.y=oC.height+5;p.x=Math.random()*oC.width;}
+    const tw=.6+.4*Math.sin(t*.003+p.tw);
+    const g=oX.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*4);
+    g.addColorStop(0,`rgba(200,220,255,${p.op*tw})`);g.addColorStop(1,'rgba(5,13,26,0)');
+    oX.beginPath();oX.arc(p.x,p.y,p.r*4,0,Math.PI*2);oX.fillStyle=g;oX.fill();
+  });
+}
+initOrigin();
+
+// ── OCEAN: Bioluminescent ascending particles ──────────
+const pC=document.getElementById('particle-canvas');
+const pX=pC.getContext('2d');
+let particles=[],pActive=false;
+function initParticles(){
+  pC.width=innerWidth;pC.height=innerHeight;particles=[];
+  for(let i=0;i<180;i++) particles.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.3+Math.random()*1.5,speed:.05+Math.random()*.15,drift:(Math.random()-.5)*.1,op:.1+Math.random()*.5,ph:Math.random()*Math.PI*2});
+}
+function drawParticles(t){
+  if(!pActive)return;
+  pX.clearRect(0,0,pC.width,pC.height);
+  particles.forEach(p=>{
+    p.y-=p.speed;p.x+=p.drift+Math.sin(t*.0005+p.ph)*.15;
+    if(p.y<-5){p.y=innerHeight+5;p.x=Math.random()*innerWidth;}
+    const g=pX.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);
+    g.addColorStop(0,`rgba(160,210,240,${p.op})`);g.addColorStop(1,'rgba(10,22,40,0)');
+    pX.beginPath();pX.arc(p.x,p.y,p.r*3,0,Math.PI*2);pX.fillStyle=g;pX.fill();
+  });
+}
+initParticles();
+
+// ── RIVERS: Sinuous horizontal flow lines + travelling drops ──
+const rC=document.getElementById('rivers-canvas');
+const rX=rC.getContext('2d');
+let rStreams=[],rActive=false,rTime=0;
+function initRivers(){
+  rC.width=innerWidth;rC.height=innerHeight;rStreams=[];
+  for(let i=0;i<20;i++) rStreams.push({y:(i/19)*innerHeight,speed:.3+Math.random()*.4,amp:8+Math.random()*22,freq:.005+Math.random()*.006,ph:Math.random()*Math.PI*2,op:.04+Math.random()*.08,lw:.3+Math.random()*.7});
+}
+function drawRivers(t){
+  if(!rActive)return;
+  rX.clearRect(0,0,rC.width,rC.height);
+  rStreams.forEach((s,si)=>{
+    rX.beginPath();rX.strokeStyle=`rgba(140,200,230,${s.op})`;rX.lineWidth=s.lw;
+    for(let j=0;j<=100;j++){const x=(j/100)*rC.width;const y=s.y+Math.sin(x*s.freq+t*s.speed*.002+s.ph)*s.amp;j===0?rX.moveTo(x,y):rX.lineTo(x,y);}
+    rX.stroke();
+    // Travelling glow drop
+    const dp=((t*s.speed*.002+si*.7)%(Math.PI*2));
+    const dx=((dp/(Math.PI*2))*rC.width*1.2)%rC.width;
+    const dy=s.y+Math.sin(dx*s.freq+t*s.speed*.002+s.ph)*s.amp;
+    const g=rX.createRadialGradient(dx,dy,0,dx,dy,6);
+    g.addColorStop(0,`rgba(180,220,240,${s.op*4})`);g.addColorStop(1,'rgba(10,22,40,0)');
+    rX.beginPath();rX.arc(dx,dy,6,0,Math.PI*2);rX.fillStyle=g;rX.fill();
+  });
+}
+initRivers();
+
+// ── ICE: Voronoi fracture network cracking in ──────────
+const iC=document.getElementById('ice-canvas');
+const iX=iC.getContext('2d');
+let iPts=[],iProgress=0,iActive=false;
+function initIce(){
+  iC.width=innerWidth;iC.height=innerHeight;iPts=[];
+  for(let i=0;i<22;i++) iPts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,conn:[]});
+  iPts.forEach((p,i)=>iPts.forEach((q,j)=>{if(i!==j&&Math.hypot(p.x-q.x,p.y-q.y)<260&&p.conn.length<3)p.conn.push(j);}));
+}
+function drawIce(prog){
+  if(!iActive)return;
+  iX.clearRect(0,0,iC.width,iC.height);
+  iX.lineWidth=.5;
+  iPts.forEach((p,i)=>{
+    p.conn.forEach(j=>{
+      const q=iPts[j];const lp=Math.max(0,Math.min(1,prog*1.5-i*.06));if(lp<=0)return;
+      iX.beginPath();iX.moveTo(p.x,p.y);iX.lineTo(p.x+(q.x-p.x)*lp,p.y+(q.y-p.y)*lp);
+      iX.strokeStyle=`rgba(200,230,245,${.1*prog})`;iX.stroke();
+    });
+    iX.beginPath();iX.arc(p.x,p.y,2*prog,0,Math.PI*2);
+    iX.fillStyle=`rgba(220,240,255,${.25*prog})`;iX.fill();
+  });
+}
+initIce();
+
+// ── CYCLE: Orbiting drop on rotating pentagram ─────────
+const cyC=document.getElementById('cycle-canvas');
+const cyX=cyC.getContext('2d');
+let cyTime=0,cyActive=false;
+function initCycle(){cyC.width=innerWidth;cyC.height=innerHeight;}
+function drawCycle(t){
+  if(!cyActive)return;
+  cyX.clearRect(0,0,cyC.width,cyC.height);
+  const cx=cyC.width/2,cy=cyC.height/2,r=Math.min(cx,cy)*.38;
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2-Math.PI/2+t*.0003,na=((i+1)/5)*Math.PI*2-Math.PI/2+t*.0003;
+    const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r,nx=cx+Math.cos(na)*r,ny=cy+Math.sin(na)*r;
+    cyX.beginPath();cyX.moveTo(x,y);
+    cyX.quadraticCurveTo(cx+Math.cos(a+Math.PI/5)*(r*1.1),cy+Math.sin(a+Math.PI/5)*(r*1.1),nx,ny);
+    cyX.strokeStyle=`rgba(140,200,230,${.07+Math.sin(t*.002+i)*.03})`;cyX.lineWidth=1;cyX.stroke();
+    cyX.beginPath();cyX.arc(x,y,2.5,0,Math.PI*2);cyX.fillStyle='rgba(200,230,245,.25)';cyX.fill();
+  }
+  const da=(t*.0008)%(Math.PI*2)-Math.PI/2;
+  const dx=cx+Math.cos(da)*r,dy=cy+Math.sin(da)*r;
+  const g=cyX.createRadialGradient(dx,dy,0,dx,dy,8);
+  g.addColorStop(0,'rgba(180,220,245,.7)');g.addColorStop(1,'rgba(10,22,40,0)');
+  cyX.beginPath();cyX.arc(dx,dy,8,0,Math.PI*2);cyX.fillStyle=g;cyX.fill();
+}
+initCycle();
+
+// ── IMPACT: Corruption rings + oil-slick shimmer ───────
+const imC=document.getElementById('impact-canvas');
+const imX=imC.getContext('2d');
+let imTime=0,imActive=false;
+function initImpact(){imC.width=innerWidth;imC.height=innerHeight;}
+function drawImpact(t){
+  if(!imActive)return;
+  imX.clearRect(0,0,imC.width,imC.height);
+  const centers=[{x:imC.width*.25,y:imC.height*.4},{x:imC.width*.6,y:imC.height*.6},{x:imC.width*.8,y:imC.height*.3}];
+  centers.forEach((c,ci)=>{
+    for(let ri=0;ri<4;ri++){
+      const ph=((t*.0003+ci*.7+ri*.4)%1.);
+      imX.beginPath();imX.arc(c.x,c.y,ph*280,0,Math.PI*2);
+      imX.strokeStyle=`rgba(160,100,80,${(1-ph)*.07})`;imX.lineWidth=1;imX.stroke();
+    }
+  });
+  for(let i=0;i<6;i++){
+    const sx=imC.width*(.1+i*.16+Math.sin(t*.0004+i)*.05);
+    const sy=imC.height*(.35+Math.sin(t*.0003+i*1.3)*.12);
+    const g=imX.createRadialGradient(sx,sy,0,sx,sy,70+i*18);
+    g.addColorStop(0,`rgba(${90+i*18},${55+i*8},70,.05)`);g.addColorStop(1,'rgba(6,10,16,0)');
+    imX.beginPath();imX.arc(sx,sy,70+i*18,0,Math.PI*2);imX.fillStyle=g;imX.fill();
+  }
+}
+initImpact();
+
+// ── FUTURE: Caustic light rays + shimmer dots ──────────
+const fuC=document.getElementById('future-canvas');
+const fuX=fuC.getContext('2d');
+let fuTime=0,fuActive=false;
+function initFuture(){fuC.width=innerWidth;fuC.height=innerHeight;}
+function drawFuture(t){
+  if(!fuActive)return;
+  fuX.clearRect(0,0,fuC.width,fuC.height);
+  const cx=fuC.width/2;
+  for(let i=0;i<12;i++){
+    const a=-Math.PI/2+(i/11-.5)*.7*Math.PI+Math.sin(t*.0005+i*.8)*.04;
+    const len=fuC.height*1.1;const ex=cx+Math.cos(a)*len,ey=Math.sin(a)*len;
+    const op=.015+.01*Math.sin(t*.001+i*.6);
+    const g=fuX.createLinearGradient(cx,0,ex,ey);
+    g.addColorStop(0,`rgba(180,230,255,${op*3})`);g.addColorStop(.4,`rgba(140,200,240,${op})`);g.addColorStop(1,'rgba(10,22,40,0)');
+    const px=Math.cos(a+Math.PI/2)*28,py=Math.sin(a+Math.PI/2)*28;
+    fuX.beginPath();fuX.moveTo(cx,0);fuX.lineTo(ex+px,ey+py);fuX.lineTo(ex-px,ey-py);fuX.closePath();fuX.fillStyle=g;fuX.fill();
+  }
+  for(let i=0;i<35;i++){
+    const gx=cx+Math.sin(t*.0004+i*2.1)*fuC.width*.4;
+    const gy=fuC.height*(.2+.6*((i/35)+Math.sin(t*.0003+i)*.05));
+    const g=fuX.createRadialGradient(gx,gy,0,gx,gy,14);
+    const op=.04+.04*Math.sin(t*.002+i);
+    g.addColorStop(0,`rgba(200,240,255,${op})`);g.addColorStop(1,'rgba(5,13,26,0)');
+    fuX.beginPath();fuX.arc(gx,gy,14,0,Math.PI*2);fuX.fillStyle=g;fuX.fill();
+  }
+}
+initFuture();
+
+// ═══════════════════════════════════════════
+// SCROLL ENGINE + SECTION MANAGEMENT
+// ═══════════════════════════════════════════
+gsap.registerPlugin(ScrollTrigger);
+const sectionIds = ['origin','ocean','rivers','ice','cycle','impact','future'];
+const sectionEls = sectionIds.map(id => document.getElementById(id));
+
+const navDots = document.getElementById('nav-dots');
+const progressLine = document.getElementById('progress-line');
+sectionIds.forEach((id,i)=>{
+  const d=document.createElement('div');
+  d.className='nav-dot'+(i===0?' active':'');
+  d.addEventListener('click',()=>document.getElementById(id).scrollIntoView({behavior:'smooth'}));
+  navDots.appendChild(d);
+  const p=document.createElement('div');
+  p.className='prog-item'+(i===0?' active':'');
+  p.innerHTML=`<span class="prog-label">${id}</span><div class="prog-mark"></div>`;
+  p.addEventListener('click',()=>document.getElementById(id).scrollIntoView({behavior:'smooth'}));
+  progressLine.appendChild(p);
+});
+
+let targetDepth=0;
+sectionEls.forEach((el,i)=>{
+  ScrollTrigger.create({trigger:el,start:'top center',end:'bottom center',onEnter:()=>activateSection(i),onEnterBack:()=>activateSection(i)});
+});
+
+function activateSection(i){
+  targetDepth=i;
+  document.querySelectorAll('.nav-dot').forEach((d,j)=>d.classList.toggle('active',j===i));
+  document.querySelectorAll('.prog-item').forEach((p,j)=>p.classList.toggle('active',j===i));
+  // Show canvas for this section
+  oActive=i===0;    document.getElementById('origin-canvas').style.opacity = i===0?'1':'0';
+  pActive=i===1;    pC.style.opacity = i===1?'1':'0';
+  rActive=i===2;    document.getElementById('rivers-canvas').style.opacity = i===2?'1':'0';
+  iActive=i===3;    document.getElementById('ice-canvas').style.opacity = i===3?'1':'0';
+  cyActive=i===4;   document.getElementById('cycle-canvas').style.opacity = i===4?'1':'0';
+  imActive=i===5;   document.getElementById('impact-canvas').style.opacity = i===5?'1':'0';
+  fuActive=i===6;   document.getElementById('future-canvas').style.opacity = i===6?'1':'0';
+  if(i===3) iProgress=0;
+}
+
+// Reveal on scroll
+new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.2}).observe || document.querySelectorAll('.reveal');
+
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.2});
+document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+
+// ═══════════════════════════════════════════
+// MAIN RENDER LOOP
+// ═══════════════════════════════════════════
+let isVis=true;
+document.addEventListener('visibilitychange',()=>{isVis=!document.hidden;});
+
+function render(t){
+  requestAnimationFrame(render);
+  if(!isVis)return;
+  const el=clk.getElapsedTime();
+  wu.uTime.value=el;
+  wu.uSectionDepth.value+=(targetDepth-wu.uSectionDepth.value)*.03;
+  mvx*=.85;mvy*=.85;wu.uMouseVelocity.value.set(mvx,mvy);
+
+  // Run section animations
+  if(oActive) {oTime++;drawOrigin(oTime);}
+  if(pActive) drawParticles(t);
+  if(rActive) {rTime++;drawRivers(rTime);}
+  if(iActive) {iProgress=Math.min(1,iProgress+.008);drawIce(iProgress);} else {iProgress=Math.max(0,iProgress-.02);}
+  if(cyActive){cyTime++;drawCycle(cyTime);}
+  if(imActive){imTime++;drawImpact(imTime);}
+  if(fuActive){fuTime++;drawFuture(fuTime);}
+
+  renderer.render(scene,cam);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    const loader=document.getElementById('loader');
+    
+    // Fade out the black loading screen
+    gsap.to(loader,{opacity:0,duration:1.2,ease:'power2.inOut',onComplete:()=>{
+      loader.style.display='none';
+      
+      const tl = gsap.timeline();
+
+      // 1. THE WIPER: Sweeps the fog away from left to right
+      tl.to('#fog-window', {
+        clipPath: 'polygon(100% 0, 100% 0, 100% 100%, 100% 100%)',
+        duration: 2.2,
+        ease: 'power3.inOut'
+      }, "+=0.2");
+
+      // 2. THE WATER FILL: Rises inside the text from bottom to top
+      tl.to('.water-fill', {
+        backgroundPosition: '0% 0%', // Moves the white 'water' to the top
+        duration: 2.5,
+        stagger: 0.4, // Fills eyebrow, then title, then subtitle
+        ease: 'power2.out'
+      }, "-=1.2"); // Starts slightly before the wiper finishes
+
+      // 3. EXPLORE HINT: Fades in at the end
+      tl.to('#scroll-hint',{opacity:1,duration:1,ease:'power2.out'}, "-=1");
+    }});
+  },2200);
+  
+  render(0);
+  activateSection(0);
+});
+
+// Audio reactive (M key)
+let audioCtx,audioEnabled=false;
+async function initAudio(){if(audioEnabled)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();const s=await navigator.mediaDevices.getUserMedia({audio:true});audioCtx.createMediaStreamSource(s);audioEnabled=true;}catch(e){}}
+document.addEventListener('keydown',e=>{if(e.key==='m'||e.key==='M')initAudio();});
+
+// Resize
+window.addEventListener('resize',()=>{
+  initOrigin();initParticles();initRivers();initIce();initCycle();initImpact();initFuture();
+});
+
+// Title hover — letters soften like water
+document.querySelectorAll('.section-title,.origin-title').forEach(el=>{
+  el.style.transition='letter-spacing .8s ease';
+  el.addEventListener('mouseenter',()=>{el.style.letterSpacing='-.01em';});
+  el.addEventListener('mouseleave',()=>{el.style.letterSpacing='';});
+});
+</script>
+</body>
+</html>
