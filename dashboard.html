@@ -592,6 +592,127 @@ footer {
 .ds-vid-container { width: 100%; aspect-ratio: 16/9; background: #000; border: 2px solid #2b2b2b; position: relative; margin-bottom: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
 .ds-vid-container iframe { width: 100%; height: 100%; border: none; }
 .ds-paperclip { position: absolute; top: -10px; left: 20px; width: 15px; height: 40px; border: 2px solid silver; border-radius: 10px; z-index: 5; background: transparent; }
+/* ── HOLOGRAPHIC GLASS ARCHIVE (3D PHYSICS) ── */
+#desk-environment-minimal {
+  position: relative; width: 100%; height: 600px;
+  display: flex; align-items: center; justify-content: center;
+  perspective: 2500px;
+  /* Deep cyan glow behind the transparent book */
+  background: radial-gradient(circle at center, rgba(0, 229, 255, 0.05) 0%, transparent 60%);
+}
+
+.minimal-book {
+  position: relative; width: 640px; height: 420px;
+  transform-style: preserve-3d;
+  /* Tilts the book in 3D space */
+  transform: rotateX(25deg) rotateY(-5deg);
+}
+
+.minimal-page {
+  position: absolute; right: 0; top: 0;
+  width: 50%; height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  /* Upgraded physics: smooth, heavy deceleration mimics a real page falling */
+  transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+  cursor: pointer;
+}
+
+.minimal-page:hover {
+  /* Slight lift effect when hovering over a page */
+  transform: translateZ(5px);
+}
+
+.page-face {
+  position: absolute; width: 100%; height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  
+  /* ── THE GLASS EFFECT ── */
+  background: rgba(2, 12, 24, 0.4); /* Transparent Dark */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  box-shadow: inset 0 0 30px rgba(0, 229, 255, 0.05), 0 15px 35px rgba(0, 0, 0, 0.6);
+  
+  padding: 40px 35px;
+  display: flex; flex-direction: column; justify-content: center;
+  overflow: hidden;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* Simulated Glare/Reflection to fake curvature */
+.page-face::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.05) 15%, transparent 30%);
+  pointer-events: none;
+}
+
+.page-front {
+  background-position: right center;
+  transform: rotateY(0deg) translateZ(0);
+  border-right: 2px solid rgba(0, 229, 255, 0.6); /* Glowing outer edge */
+  border-radius: 2px 10px 10px 2px;
+}
+
+.page-back {
+  background-position: left center;
+  transform: rotateY(180deg) translateZ(0);
+  border-left: 2px solid rgba(0, 229, 255, 0.6); /* Glowing outer edge */
+  border-radius: 10px 2px 2px 10px;
+}
+
+/* ── HOLOGRAPHIC TYPOGRAPHY ── */
+.m-icon { 
+  font-size: 26px; margin-bottom: 12px; 
+  filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.8)); /* Glowing emoji */
+}
+
+.m-year { 
+  font-family: var(--font-mono); font-size: 11px; 
+  color: var(--amber); margin-bottom: 6px; 
+  letter-spacing: 3px; text-shadow: 0 0 8px rgba(255, 171, 0, 0.5);
+}
+
+.m-title { 
+  font-family: var(--font-hud); font-size: 16px; font-weight: bold; 
+  color: #fff; /* Pure white title */
+  border-bottom: 1px dashed rgba(0, 229, 255, 0.3); 
+  margin-bottom: 12px; padding-bottom: 8px; letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.m-desc { 
+  font-family: var(--font-body); font-size: 14px; line-height: 1.6; 
+  color: rgba(255, 255, 255, 0.65); /* Semi-transparent white body text */
+}
+/* ── 3D TOPOGRAPHY PANELS ── */
+.topo-panel {
+  position: relative;
+  height: 350px;
+  padding: 0; /* Remove padding to let the canvas fill the box */
+  overflow: hidden;
+  background: radial-gradient(circle at center, rgba(0,229,255,0.05) 0%, transparent 70%);
+}
+.topo-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.topo-canvas:active {
+  cursor: grabbing;
+}
+.topo-overlay {
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  pointer-events: none;
+  text-shadow: var(--glow);
+}
 </style>
 </head>
 <body>
@@ -718,10 +839,10 @@ footer {
     <!-- TIMELINE -->
     <div class="dash-section" id="timeline">
       <div class="sec-label">MODULE_TIMELINE</div>
-      <h2 class="sec-title">MISSION LOG</h2>
-      <div class="hud-panel">
-        <div class="corner-tag">MODULE//TIMELINE</div>
-        <div class="timeline" id="timeline-list"></div>
+      <h2 class="sec-title">RESEARCH NOTES</h2>
+      
+      <div id="desk-environment-minimal">
+        <div id="minimal-book-stage"></div>
       </div>
     </div>
 
@@ -773,31 +894,36 @@ footer {
     </div>
 
     <!-- CGPA CHART -->
-    <div class="dash-section" id="cgpa-chart">
+    <<div class="dash-section" id="cgpa-chart">
       <div class="sec-label">MODULE_ACADEMIC</div>
-      <h2 class="sec-title">SEMESTER PERFORMANCE</h2>
-      <div class="hud-panel"><canvas id="semChart" height="100"></canvas></div>
+      <h2 class="sec-title">SEMESTER TOPOGRAPHY</h2>
+      <div class="hud-panel topo-panel">
+        <div id="cgpa-3d-canvas" class="topo-canvas"></div>
+        <div class="topo-overlay">DATA_SOURCE // CGPA PEAKS</div>
+      </div>
     </div>
 
-    <!-- GITHUB GRAPH -->
     <div class="dash-section" id="github-graph">
       <div class="sec-label">MODULE_GITHUB</div>
-      <h2 class="sec-title">CONTRIBUTION GRAPH</h2>
-      <div class="hud-panel" style="overflow:hidden;">
-        <img src="https://github-readme-activity-graph.vercel.app/graph?username=ZG0D-FF&bg_color=020c18&color=00e5ff&line=00e5ff&point=ffffff&area=true&hide_border=true" style="width:100%;"/>
+      <h2 class="sec-title">CONTRIBUTION TOPOGRAPHY</h2>
+      <div class="hud-panel topo-panel">
+        <div id="github-3d-canvas" class="topo-canvas"></div>
+        <div class="topo-overlay">DATA_SOURCE // GITHUB ACTIVITY</div>
       </div>
     </div>
     <div class="dash-section" id="github-network-section">
-  <div class="sec-label">MODULE_NETWORK</div>
-  <h2 class="sec-title">KNOWLEDGE BASE MAP</h2>
-  <div class="hud-panel" style="position: relative; height: 420px; overflow: hidden; padding: 0;">
-    <canvas id="github-network-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair;"></canvas>
-    <div style="position: absolute; bottom: 16px; left: 24px; pointer-events: none;">
-      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--cyan); letter-spacing: 2px;">NETWORK: REPOSITORY MAPPING</div>
-      <div style="font-family: var(--font-mono); font-size: 9px; color: rgba(0,229,255,0.5); letter-spacing: 1px; margin-top: 4px;">NODES: ARCHITECTURE & COMMITS + EDGES: DEPENDENCIES</div>
+      <div class="sec-label">MODULE_NETWORK</div>
+      <h2 class="sec-title">NEURAL KNOWLEDGE CORE</h2>
+      <div class="hud-panel" style="position: relative; height: 500px; overflow: hidden; padding: 0; background: radial-gradient(circle at center, rgba(0,229,255,0.05) 0%, #020c18 70%);">
+        
+        <div id="knowledge-orb-canvas" style="position: absolute; inset: 0; cursor: grab;"></div>
+        
+        <div style="position: absolute; bottom: 16px; left: 24px; pointer-events: none; z-index: 10;">
+          <div style="font-family: var(--font-mono); font-size: 10px; color: var(--cyan); letter-spacing: 2px; text-shadow: var(--glow);">HOLOGRAPHIC NEURAL CORE</div>
+          <div style="font-family: var(--font-mono); font-size: 9px; color: rgba(0,229,255,0.6); letter-spacing: 1px; margin-top: 4px;">SYSTEM ARCHITECTURE // REPOSITORY ENERGY MATRICES</div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <!-- CURRENTLY LEARNING -->
     <div class="dash-section" id="learning">
@@ -1523,17 +1649,81 @@ function openLightbox(src, caption) {
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-/* ── BUILD TIMELINE ── */
+/* ── BUILD TIMELINE (REALISTIC MINIMALIST BOOK) ── */
 function buildTimeline() {
-  const list = document.getElementById('timeline-list');
-  TIMELINE.forEach((t, i) => {
-    const el = document.createElement('div');
-    el.className = 'tl-item';
-    el.style.transitionDelay = (i*0.1)+'s';
-    el.innerHTML = `<div class="tl-dot">${t.icon}</div><div class="tl-content"><div class="tl-date">${t.year}</div><div class="tl-title">${t.title}</div><div class="tl-desc">${t.desc}</div></div>`;
-    list.appendChild(el);
+  const stage = document.getElementById('minimal-book-stage');
+  if (!stage) return;
+
+  let pagesHTML = '';
+  
+  // Create cover
+  pagesHTML += `
+    <div class="minimal-page" onclick="flipMinimalPage(this)">
+      <div class="page-face page-front">
+        <h2 style="font-family:'Segoe Print', cursive; font-size:26px; text-align:center;">Project Notes</h2>
+        <div style="text-align:center; margin-top:20px; font-family:'Georgia'; font-style:italic;">Vol. 1</div>
+      </div>
+      <div class="page-face page-back"></div>
+    </div>
+  `;
+
+  // Inject timeline data into pages (2 entries per physical page)
+  for (let i = 0; i < TIMELINE.length; i += 2) {
+    const front = TIMELINE[i];
+    const back = TIMELINE[i+1];
+
+    const frontHTML = front ? `
+      <div class="m-icon">${front.icon}</div>
+      <div class="m-year">${front.year}</div>
+      <div class="m-title">${front.title}</div>
+      <div class="m-desc">${front.desc}</div>
+    ` : '';
+
+    const backHTML = back ? `
+      <div class="m-icon">${back.icon}</div>
+      <div class="m-year">${back.year}</div>
+      <div class="m-title">${back.title}</div>
+      <div class="m-desc">${back.desc}</div>
+    ` : '';
+
+    pagesHTML += `
+      <div class="minimal-page" onclick="flipMinimalPage(this)">
+        <div class="page-face page-front">${frontHTML}</div>
+        <div class="page-face page-back">${backHTML}</div>
+      </div>
+    `;
+  }
+
+  // Inject into DOM
+  stage.innerHTML = `<div class="minimal-book">${pagesHTML}</div>`;
+
+  // Apply Z-depth physics for smooth stacking
+  const pages = document.querySelectorAll('.minimal-page');
+  pages.forEach((page, idx) => {
+    const zDepth = (pages.length - idx) * 2;
+    page.dataset.zOffset = zDepth;
+    page.dataset.baseZ = 100 - idx;
+    page.style.zIndex = page.dataset.baseZ;
+    page.style.transform = `translateZ(${zDepth}px)`;
   });
 }
+
+// ── CUSTOM 3D PAGE FLIP PHYSICS ──
+window.flipMinimalPage = function(pageElement) {
+  const isFlipped = pageElement.classList.contains('flipped');
+  const zOffset = parseInt(pageElement.dataset.zOffset);
+  const baseZ = parseInt(pageElement.dataset.baseZ);
+
+  if (isFlipped) {
+    pageElement.classList.remove('flipped');
+    pageElement.style.transform = `rotateY(0deg) translateZ(${zOffset}px)`;
+    setTimeout(() => { pageElement.style.zIndex = baseZ; }, 600); 
+  } else {
+    pageElement.classList.add('flipped');
+    pageElement.style.transform = `rotateY(-180deg) translateZ(${zOffset}px)`;
+    pageElement.style.zIndex = 100 - baseZ; 
+  }
+};
 
 /* ── BUILD LINKS ── */
 function buildLinks() {
@@ -1558,12 +1748,164 @@ function initScrollObserver() {
 }
 
 /* ── CHARTS ── */
-const ctx2 = document.getElementById('semChart').getContext('2d');
-new Chart(ctx2, {
-  type:'bar',
-  data:{ labels:['Sem 1','Sem 2','Sem 3'], datasets:[{ label:'CGPA', data:[9.2,8.6,8.3], backgroundColor:'rgba(0,229,255,0.15)', borderColor:'rgba(0,229,255,0.8)', borderWidth:1 }] },
-  options:{ scales:{ y:{ min:0, max:10, ticks:{ color:'rgba(0,229,255,0.5)', font:{family:'Share Tech Mono'} }, grid:{ color:'rgba(0,229,255,0.08)' } }, x:{ ticks:{ color:'rgba(0,229,255,0.5)', font:{family:'Share Tech Mono'} }, grid:{ color:'rgba(0,229,255,0.08)' } } }, plugins:{ legend:{ labels:{ color:'rgba(0,229,255,0.6)', font:{family:'Orbitron'} } } } }
-});
+/* ── 3D TOPOGRAPHICAL CHARTS (THREE.JS) ── */
+/* ── 3D TOPOGRAPHICAL CHARTS (CONTOUR SHADER) ── */
+function buildTopoChart(containerId, peaksData, isGithub = false) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  
+  // Angle the camera slightly down to look at the terrain
+  camera.position.set(0, 20, 35);
+  camera.lookAt(0, -5, 0);
+  
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+  
+  // Massively increased density for buttery smooth circular contour curves
+  const segments = 150; 
+  const geoWidth = 50;
+  const geoDepth = 30;
+  const geometry = new THREE.PlaneGeometry(geoWidth, geoDepth, segments, segments);
+  
+  // Manipulate vertices to create mountains
+  const positions = geometry.attributes.position.array;
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const y = positions[i+1];
+    let z = 0;
+    
+    // Add base turbulent noise
+    z += Math.sin(x * 0.5) * Math.cos(y * 0.5) * 0.4;
+    
+    // Apply the data peaks (Gaussian falloff)
+    peaksData.forEach(peak => {
+      const dx = x - peak.x;
+      const dy = y - peak.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      // Creates a smooth mountain shape
+      z += peak.height * Math.exp(-(dist*dist) / peak.spread);
+    });
+    
+    positions[i+2] = z;
+  }
+  
+  geometry.computeVertexNormals();
+  
+  // ── THE CONTOUR SHADER ──
+  // This mathematically draws horizontal rings instead of a congested grid
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    side: THREE.DoubleSide,
+    uniforms: {
+      uColor: { value: new THREE.Color(0x00e5ff) }, // Cyan
+      uLineThickness: { value: 0.12 }, // How thick the contour rings are
+      uFrequency: { value: 1.5 } // How many rings per elevation level
+    },
+    vertexShader: `
+      varying float vElevation;
+      void main() {
+        vElevation = position.z;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uLineThickness;
+      uniform float uFrequency;
+      varying float vElevation;
+
+      void main() {
+        // Create repeating mathematical rings based on mountain height
+        float contour = fract(vElevation * uFrequency);
+        
+        // If the pixel is outside the line thickness threshold, delete it
+        if (contour > uLineThickness) {
+           discard;
+        }
+        
+        // Add a slight glowing fade to the inside of the lines
+        float alpha = 1.0 - (contour / uLineThickness);
+        gl_FragColor = vec4(uColor, alpha * 0.9);
+      }
+    `
+  });
+  
+  const terrain = new THREE.Mesh(geometry, material);
+  // Lay the plane flat on the ground
+  terrain.rotation.x = -Math.PI / 2; 
+  scene.add(terrain);
+  
+  // ── GYROSCOPIC MOUSE ROTATION ──
+  let isDragging = false;
+  let previousMouseX = 0;
+  
+  container.addEventListener('mousedown', (e) => { 
+    isDragging = true; 
+    previousMouseX = e.clientX;
+  });
+  
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      const deltaX = e.clientX - previousMouseX;
+      // Rotate around the Z axis
+      terrain.rotation.z -= deltaX * 0.01; 
+      previousMouseX = e.clientX;
+    }
+  });
+  
+  window.addEventListener('mouseup', () => { isDragging = false; });
+  window.addEventListener('mouseleave', () => { isDragging = false; });
+  
+  // Handle window resize dynamically
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+  
+  // Animation loop
+  function animate() {
+    requestAnimationFrame(animate);
+    // Auto horizontal spin when not interacting
+    if (!isDragging) {
+      terrain.rotation.z += 0.002; 
+    }
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+
+// ── INITIALIZE THE TERRAINS ──
+setTimeout(() => {
+  // 1. CGPA Terrain (3 Distinct Peaks for Sem 1, Sem 2, Sem 3)
+  const cgpaPeaks = [
+    { x: -10, y: 0, height: 9.2, spread: 15 }, // Sem 1
+    { x: 0,   y: 5, height: 8.6, spread: 15 }, // Sem 2
+    { x: 10,  y: -5, height: 8.3, spread: 15 }  // Sem 3
+  ];
+  buildTopoChart('cgpa-3d-canvas', cgpaPeaks, false);
+
+  // 2. GitHub Contribution Terrain (Procedural Mountain Range)
+  const gitPeaks = [];
+  // Generate random clusters to simulate high activity streaks
+  for(let i=0; i<15; i++) {
+    gitPeaks.push({
+      x: (Math.random() - 0.5) * 40,
+      y: (Math.random() - 0.5) * 20,
+      height: 3 + Math.random() * 8, // Random contribution heights
+      spread: 5 + Math.random() * 10
+    });
+  }
+  buildTopoChart('github-3d-canvas', gitPeaks, true);
+}, 1000); // Slight delay to ensure DOM is fully painted
 
 const radarCtx = document.getElementById('radarChart').getContext('2d');
 new Chart(radarCtx, {
