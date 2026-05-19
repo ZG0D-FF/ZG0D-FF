@@ -73,32 +73,36 @@ body {
 #topbar {
   position: sticky; top: 0; z-index: 900;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 36px;
+  padding: 10px 24px;
   background: rgba(2,12,24,0.88);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border);
+  gap: 12px;
+  overflow: hidden;
 }
-.topbar-left { display: flex; align-items: center; gap: 14px; }
+.topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .back-btn {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
   color: rgba(0,229,255,0.5); text-decoration: none;
-  border: 1px solid var(--border); padding: 6px 12px; border-radius: 3px;
-  transition: all 0.3s;
+  border: 1px solid var(--border); padding: 5px 10px; border-radius: 3px;
+  transition: all 0.3s; white-space: nowrap;
 }
 .back-btn:hover { color: var(--cyan); border-color: var(--cyan); box-shadow: var(--glow); }
 .topbar-title {
-  font-family: var(--font-hud); font-size: 15px; font-weight: 900;
-  letter-spacing: 4px; color: var(--cyan); text-shadow: var(--glow);
+  font-family: var(--font-hud); font-size: 13px; font-weight: 900;
+  letter-spacing: 3px; color: var(--cyan); text-shadow: var(--glow);
+  white-space: nowrap;
 }
 .topbar-greeting {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
-  color: rgba(0,229,255,0.5);
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+  color: rgba(0,229,255,0.5); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 180px; flex-shrink: 0;
 }
-.topbar-nav { display: flex; gap: 24px; list-style: none; }
+.topbar-nav { display: flex; gap: 14px; list-style: none; flex-shrink: 0; }
 .topbar-nav a {
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px;
   text-transform: uppercase; color: rgba(0,229,255,0.5); text-decoration: none;
-  transition: color 0.3s;
+  transition: color 0.3s; white-space: nowrap;
 }
 .topbar-nav a:hover { color: var(--cyan); text-shadow: var(--glow); }
 
@@ -425,6 +429,169 @@ footer {
   .proj-grid { grid-template-columns: 1fr; }
   .photos-grid { grid-template-columns: repeat(2, 1fr); }
 }
+/* ── 3D HOLO GALLERY ── */
+#photo-3d-scene {
+  perspective: 1000px; /* Depth of the 3D space */
+  width: 100%;
+  height: 450px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  margin: 40px 0;
+  cursor: grab;
+  mask-image: linear-gradient(90deg, transparent, black 15%, black 85%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 15%, black 85%, transparent);
+}
+#photo-3d-scene:active { cursor: grabbing; }
+
+#photo-3d-carousel {
+  width: 260px;
+  height: 180px;
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: transform 0.1s;
+}
+
+.holo-card {
+  position: absolute;
+  width: 260px;
+  height: 180px;
+  left: 0;
+  top: 0;
+  background: rgba(2, 12, 24, 0.6);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.1), inset 0 0 20px rgba(0, 229, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s;
+}
+
+.holo-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.05) 2px, rgba(0,229,255,0.05) 4px);
+}
+
+.holo-card:hover {
+  border-color: #fff;
+  box-shadow: 0 0 30px var(--cyan), inset 0 0 30px rgba(0, 229, 255, 0.4);
+}
+
+.holo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.6;
+  filter: contrast(1.2) hue-rotate(15deg) saturate(1.5); /* Techy tint */
+  transition: opacity 0.4s, filter 0.4s;
+  cursor: zoom-in;
+}
+
+.holo-card:hover img {
+  opacity: 1;
+  filter: brightness(1.1) saturate(1);
+}
+/* ── PROJECT ARCHIVE: SCI-FI ORB & DOSSIERS ── */
+#archive-stage {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1200px;
+  background: radial-gradient(circle at center, rgba(0,229,255,0.05) 0%, transparent 60%);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+/* THE SCI-FI ORB */
+#data-core-orb {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+#data-core-orb:hover { transform: scale(1.1); }
+#data-core-orb.shatter {
+  transform: scale(3) translateZ(500px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.core-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 229, 255, 0.2);
+}
+.core-ring.r1 { border-top-color: var(--cyan); border-bottom-color: var(--cyan); animation: spin 4s linear infinite; }
+.core-ring.r2 { inset: 15px; border-left-color: var(--amber); border-right-color: var(--amber); animation: spin 6s linear infinite reverse; border-style: dashed; }
+.core-ring.r3 { inset: 35px; background: radial-gradient(circle, rgba(0,229,255,0.1), transparent); border: 1px solid rgba(0,229,255,0.5); animation: pulse 2s infinite; }
+
+.core-center {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-family: var(--font-hud); font-size: 11px; letter-spacing: 3px;
+  color: var(--cyan); text-align: center; text-shadow: var(--glow);
+  pointer-events: none;
+}
+
+/* THE RETRO DOSSIER CAROUSEL */
+#dossier-carousel {
+  position: absolute;
+  display: flex;
+  gap: 30px;
+  padding: 0 40px;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(50px) scale(0.9);
+  transition: all 1s ease 0.3s;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+}
+#dossier-carousel::-webkit-scrollbar { height: 8px; }
+#dossier-carousel::-webkit-scrollbar-thumb { background: rgba(210, 180, 140, 0.5); }
+
+#dossier-carousel.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0) scale(1);
+}
+
+.dossier-file {
+  flex: 0 0 380px;
+  height: 480px;
+  background: #d2b48c; /* Retro Manila Folder Color */
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0,0,0,0.03) 20px, rgba(0,0,0,0.03) 21px);
+  border: 1px solid #a68a61;
+  border-radius: 2px 15px 2px 2px;
+  box-shadow: 10px 10px 20px rgba(0,0,0,0.5), inset -5px -5px 20px rgba(0,0,0,0.1);
+  padding: 20px;
+  color: #2b2b2b;
+  position: relative;
+  scroll-snap-align: center;
+  transition: transform 0.4s;
+}
+
+.dossier-file:hover { transform: translateY(-10px) rotateZ(-1deg); }
+
+/* Retro Styling inside the folder */
+.ds-header { display: flex; justify-content: space-between; border-bottom: 2px solid #2b2b2b; padding-bottom: 10px; margin-bottom: 15px; }
+.ds-title { font-family: 'Courier New', Courier, monospace; font-size: 18px; font-weight: bold; text-transform: uppercase; }
+.ds-stamp { color: #d32f2f; font-family: 'Courier New', Courier, monospace; font-weight: bold; border: 2px solid #d32f2f; padding: 2px 8px; transform: rotate(-5deg); font-size: 12px; }
+.ds-body { font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.5; font-weight: 600; margin-bottom: 15px; }
+.ds-vid-container { width: 100%; aspect-ratio: 16/9; background: #000; border: 2px solid #2b2b2b; position: relative; margin-bottom: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+.ds-vid-container iframe { width: 100%; height: 100%; border: none; }
+.ds-paperclip { position: absolute; top: -10px; left: 20px; width: 15px; height: 40px; border: 2px solid silver; border-radius: 10px; z-index: 5; background: transparent; }
 </style>
 </head>
 <body>
@@ -446,7 +613,7 @@ footer {
       <div class="topbar-title">D.J  PORTFOLIO</div>
     </div>
     <div class="topbar-greeting" id="topbar-greeting">WELCOME // GUEST</div>
-    <div id="live-clock" style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,229,255,0.4);min-width:120px;text-align:center;flex-shrink:0;"></div>
+    <div id="live-clock" style="font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:rgba(0,229,255,0.4);white-space:nowrap;flex-shrink:0;"></div>
     <button class="hamburger" onclick="document.getElementById('mob-nav').classList.toggle('open')" aria-label="menu">
       <span></span><span></span><span></span>
     </button>
@@ -523,15 +690,29 @@ footer {
     <!-- PROJECTS -->
     <div class="dash-section" id="projects">
       <div class="sec-label">MODULE_PROJECTS</div>
-      <h2 class="sec-title">PROJECT LOG</h2>
-      <div class="proj-grid" id="proj-grid"></div>
+      <h2 class="sec-title">CLASSIFIED ARCHIVE</h2>
+      
+      <div id="archive-stage">
+        
+        <div id="data-core-orb" onclick="decryptArchive()">
+          <div class="core-ring r1"></div>
+          <div class="core-ring r2"></div>
+          <div class="core-ring r3"></div>
+          <div class="core-center">DECRYPT<br>ARCHIVE</div>
+        </div>
+
+        <div id="dossier-carousel"></div>
+        
+      </div>
     </div>
 
     <!-- PHOTOS -->
     <div class="dash-section" id="photos">
       <div class="sec-label">MODULE_MEDIA</div>
-      <h2 class="sec-title">PHOTO ARCHIVE</h2>
-      <div class="photos-grid" id="photos-grid"></div>
+      <h2 class="sec-title">HOLO-ARCHIVE</h2>
+      <div id="photo-3d-scene">
+        <div id="photo-3d-carousel"></div>
+      </div>
     </div>
 
     <!-- TIMELINE -->
@@ -1211,37 +1392,126 @@ function typeReveal(el, text, delay) {
   const iv = setInterval(() => { el.textContent += text[i++]; if (i >= text.length) clearInterval(iv); }, delay);
 }
 
-/* ── BUILD PROJECTS ── */
+/* ── BUILD PROJECTS (SCI-FI ORB TO RETRO DOSSIERS) ── */
 function buildProjects() {
-  const grid = document.getElementById('proj-grid');
+  const carousel = document.getElementById('dossier-carousel');
+  if (!carousel) return;
+
   PROJECTS.forEach(p => {
+    // Check if video exists, otherwise show the "NO FOOTAGE" placeholder
     const videoHTML = p.youtubeId
-      ? `<div class="proj-video"><iframe src="https://www.youtube.com/embed/${p.youtubeId}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe><div class="scanlines"></div></div>`
-      : `<div class="proj-video"><div class="vid-placeholder"><div class="play-icon">▶</div><div class="vid-label">VIDEO COMING SOON</div></div><div class="scanlines"></div></div>`;
-    grid.innerHTML += `<div class="proj-card">${videoHTML}<div class="proj-body"><div class="proj-header"><div class="proj-title">${p.title}</div><div class="proj-status">${p.status}</div></div><p class="proj-desc">${p.desc}</p><div class="proj-tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div><div class="proj-links"><a href="${p.github}" target="_blank" rel="noopener" class="plink plink-outline">⬡ CODE</a><a href="${p.live}" target="_blank" rel="noopener" class="plink plink-solid">▶ LIVE</a></div></div></div>`;
-    });
+      ? `<iframe src="https://www.youtube.com/embed/${p.youtubeId}" allowfullscreen></iframe>`
+      : `<div style="color:red; font-family:'Courier New'; display:flex; height:100%; align-items:center; justify-content:center; text-align:center;">[FOOTAGE REDACTED <br> OR PENDING UPLOAD]</div>`;
+    
+    // Determine the stamp color based on status
+    const stampColor = p.status === "OPERATIONAL" ? "#388e3c" : "#d32f2f";
+
+    // Inject the retro manila folder HTML
+    carousel.innerHTML += `
+      <div class="dossier-file">
+        <div class="ds-paperclip"></div>
+        <div class="ds-header">
+          <div class="ds-title">${p.title}</div>
+          <div class="ds-stamp" style="color:${stampColor}; border-color:${stampColor};">${p.status}</div>
+        </div>
+        <div class="ds-vid-container">
+          ${videoHTML}
+        </div>
+        <div class="ds-body">
+          <strong>SUMMARY_REPORT:</strong><br>
+          ${p.desc}
+        </div>
+        <div style="display:flex; gap:10px; margin-top:auto;">
+          <a href="${p.github}" target="_blank" style="flex:1; text-align:center; padding:5px; border:1px solid #2b2b2b; color:#2b2b2b; text-decoration:none; font-family:'Courier New'; font-weight:bold; font-size:11px;">[ VIEW_CODE ]</a>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// Function to trigger the Orb shattering and revealing the files
+function decryptArchive() {
+  const orb = document.getElementById('data-core-orb');
+  const carousel = document.getElementById('dossier-carousel');
+  
+  // Shatter the orb
+  orb.classList.add('shatter');
+  
+  // Bring in the retro folders
+  carousel.classList.add('active');
+
+  // Optional: Play a sound effect if you want full immersion
+  // const audio = new Audio('path_to_decryption_sound.mp3');
+  // audio.play();
 }
 </script>
 <script>
-/* ── BUILD PHOTOS ── */
-/* ── BUILD PHOTOS (LAZY LOAD ENABLED) ── */
+/* ── BUILD PHOTOS (3D HOLO-RING) ── */
 function buildPhotos() {
-  const grid = document.getElementById('photos-grid');
-  PHOTOS.forEach(p => {
+  const carousel = document.getElementById('photo-3d-carousel');
+  if (!carousel) return;
+
+  const numPhotos = PHOTOS.length;
+  const theta = 360 / numPhotos;
+  // Dynamically calculate the radius so images never overlap regardless of array size
+  const radius = Math.round((260 / 2) / Math.tan(Math.PI / numPhotos)) + 60;
+
+  PHOTOS.forEach((p, i) => {
+    const angle = theta * i;
+    const card = document.createElement('div');
+    card.className = 'holo-card';
+    // Push the card out from the center and rotate it to form a cylinder
+    card.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`;
+
     if (p.src) {
-      grid.innerHTML += `
-        <div class="photo-card" onclick="openLightbox('${p.src}','${p.caption}')">
-          <img src="${p.src}" alt="${p.caption}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
-          <div class="photo-placeholder" style="display:none;">
-            <span style="font-size:28px;opacity:.3">🖼️</span><span>ADD IMAGE</span>
-          </div>
-          <div class="photo-overlay">🔍</div>
-          <div class="photo-caption">${p.caption}</div>
-        </div>`;
-    } else {
-      grid.innerHTML += `<div class="photo-card"><div class="photo-placeholder"><span style="font-size:28px;opacity:.3">🖼️</span><span>${p.caption}</span></div><div class="photo-caption">${p.caption}</div></div>`;
+      card.innerHTML = `
+        <img src="${p.src}" alt="${p.caption}" loading="lazy" onclick="openLightbox('${p.src}','${p.caption}')"/>
+        <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(2,12,24,0.85); color:var(--cyan); font-family:var(--font-mono); font-size:9px; padding:6px; text-align:center; border-top: 1px solid rgba(0,229,255,0.3); z-index: 2;">
+          <span style="display:inline-block; width:6px; height:6px; background:var(--cyan); border-radius:50%; margin-right:6px; box-shadow: 0 0 5px var(--cyan); animation: pulse 1.5s infinite;"></span>
+          ${p.caption.substring(0, 30)}...
+        </div>
+      `;
     }
+    carousel.appendChild(card);
   });
+
+  // ── GYROSCOPIC MOUSE TRACKING ──
+  let currentAngle = 0;
+  let targetAngle = 0;
+  let isDragging = false;
+  let startX = 0;
+
+  const scene = document.getElementById('photo-3d-scene');
+
+  scene.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.pageX - targetAngle;
+    scene.style.cursor = 'grabbing';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    targetAngle = e.pageX - startX;
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    scene.style.cursor = 'grab';
+  });
+
+  // Smooth easing animation loop (The inertia effect)
+  function renderCarousel() {
+    if (!isDragging) {
+      targetAngle -= 0.15; // Auto-spin slowly when not interacting
+    }
+    // Interpolate for buttery smooth physics
+    currentAngle += (targetAngle - currentAngle) * 0.05;
+    carousel.style.transform = `rotateY(${currentAngle}deg)`;
+    requestAnimationFrame(renderCarousel);
+  }
+  
+  renderCarousel();
 }
 
 /* ── LIGHTBOX ── */
@@ -1905,41 +2175,35 @@ function triggerKonami(){
 })();
 // ── POTATO PC OVERRIDE (IIFE) ──
 (function() {
-  const topbarNav = document.querySelector('.topbar-nav');
-  if (!topbarNav) return;
-
-  const killBtnContainer = document.createElement('li');
-  const killBtn = document.createElement('a');
-  
-  killBtn.href = "#";
-  killBtn.innerHTML = "⚠ DISABLE 3D";
-  killBtn.style.cssText = "color: var(--amber); border-bottom: 1px dashed var(--amber);";
-  
-  killBtnContainer.appendChild(killBtn);
-  // Add to the beginning of the nav list
-  topbarNav.insertBefore(killBtnContainer, topbarNav.firstChild);
+  // DISABLE 3D as a fixed bottom-right corner button — keeps navbar clean
+  const killBtn = document.createElement('button');
+  killBtn.innerHTML = "⚠ 3D";
+  killBtn.title = "Disable/Enable 3D Background";
+  killBtn.style.cssText = `
+    position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+    background: rgba(2,12,24,0.85); border: 1px dashed var(--amber);
+    color: var(--amber); font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 2px; padding: 6px 12px; cursor: pointer;
+    border-radius: 3px; transition: all 0.3s; backdrop-filter: blur(8px);
+  `;
+  document.body.appendChild(killBtn);
 
   let is3DActive = true;
-
-  killBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  killBtn.addEventListener('click', () => {
     is3DActive = !is3DActive;
-    
-    // Target your specific Three.js canvas ID
     const bgCanvas = document.getElementById('bg-canvas');
-    
     if (!is3DActive) {
-      if(bgCanvas) bgCanvas.style.display = 'none'; // Kills GPU rendering
-      killBtn.innerHTML = "↺ ENABLE 3D";
+      if (bgCanvas) bgCanvas.style.display = 'none';
+      killBtn.innerHTML = "↺ 3D";
+      killBtn.style.borderColor = "var(--cyan)";
       killBtn.style.color = "var(--cyan)";
-      killBtn.style.borderBottom = "1px dashed var(--cyan)";
-      console.log("[SYS] WebGL Rendering Terminated. Potato Mode Active.");
+      console.log("[SYS] WebGL Terminated. Potato Mode Active.");
     } else {
-      if(bgCanvas) bgCanvas.style.display = 'block'; // Restores GPU rendering
-      killBtn.innerHTML = "⚠ DISABLE 3D";
+      if (bgCanvas) bgCanvas.style.display = 'block';
+      killBtn.innerHTML = "⚠ 3D";
+      killBtn.style.borderColor = "var(--amber)";
       killBtn.style.color = "var(--amber)";
-      killBtn.style.borderBottom = "1px dashed var(--amber)";
-      console.log("[SYS] WebGL Rendering Restored.");
+      console.log("[SYS] WebGL Restored.");
     }
   });
 })();
