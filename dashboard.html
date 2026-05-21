@@ -355,21 +355,143 @@ body {
 .link-card .link-name { font-family: var(--font-hud); font-size: 13px; color: var(--cyan); letter-spacing: 1px; }
 .link-card .link-url { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; color: rgba(0,229,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ── TIMELINE ── */
-.timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
-.timeline::before { content: ''; position: absolute; left: 17px; top: 0; bottom: 0; width: 1px; background: var(--border); }
-.tl-item { display: flex; gap: 24px; padding-bottom: 32px; position: relative; opacity: 0; transform: translateX(-12px); transition: opacity 0.5s ease, transform 0.5s ease; }
-.tl-item.visible { opacity: 1; transform: translateX(0); }
-.tl-dot {
-  width: 36px; height: 36px; border: 2px solid var(--cyan); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg); flex-shrink: 0; font-size: 14px;
-  box-shadow: var(--glow); position: relative; z-index: 1;
+/* ── TIMELINE: 3D CASCADING PANELS ── */
+#timeline-cascade-stage {
+  position: relative; 
+  width: 100%; 
+  height: 600px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  perspective: 2000px; 
+  overflow: hidden;
+  background: radial-gradient(circle at center, rgba(0,229,255,0.03) 0%, transparent 60%);
 }
-.tl-content { padding-top: 4px; }
-.tl-date { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: rgba(0,229,255,0.4); margin-bottom: 4px; text-transform: uppercase; }
-.tl-title { font-family: var(--font-hud); font-size: 15px; color: var(--cyan); margin-bottom: 6px; letter-spacing: 1px; }
-.tl-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+
+.cascade-panel {
+  position: absolute;
+  width: 800px; 
+  height: 420px;
+  background: linear-gradient(135deg, rgba(2, 12, 24, 0.95), rgba(6, 22, 42, 0.95));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  transform-style: preserve-3d;
+  transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: -30px 30px 60px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,229,255,0.05);
+  cursor: pointer;
+}
+
+/* The Layout matching the Art Exhibition (Snap 2) */
+.cp-content {
+  flex: 1.2;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  z-index: 2;
+}
+
+.cp-visual {
+  flex: 0.8;
+  position: relative;
+  border-left: 1px solid rgba(0,229,255,0.1);
+  background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,229,255,0.02) 10px, rgba(0,229,255,0.02) 20px);
+}
+
+/* The Overlapping 3D Image Effect */
+.cp-visual-img {
+  position: absolute;
+  top: -20px;
+  bottom: -20px;
+  right: -30px;
+  width: 110%;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: -15px 15px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0,229,255,0.2);
+  border: 1px solid rgba(0,229,255,0.3);
+  transition: transform 0.5s ease;
+}
+
+.cascade-panel:hover .cp-visual-img {
+  transform: scale(1.03) translateZ(20px);
+}
+
+.cp-header {
+  font-family: var(--font-mono); 
+  font-size: 12px; 
+  color: var(--amber); 
+  letter-spacing: 3px; 
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cp-title {
+  font-family: var(--font-hud); 
+  font-size: 32px; 
+  font-weight: 900; 
+  color: #fff; 
+  line-height: 1.1;
+  text-shadow: 0 0 15px rgba(0,229,255,0.3);
+  margin-bottom: 20px;
+}
+
+.cp-desc {
+  font-family: var(--font-body); 
+  font-size: 15px; 
+  line-height: 1.7; 
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 30px;
+}
+
+.cp-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: rgba(0,229,255,0.1);
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  transition: all 0.3s;
+  width: max-content;
+}
+
+.cascade-panel:hover .cp-btn {
+  background: var(--cyan);
+  color: var(--bg);
+  box-shadow: var(--glow);
+}
+
+/* Navigation controls */
+.cascade-nav {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
+  z-index: 100;
+}
+
+.cascade-nav button {
+  background: rgba(2, 12, 24, 0.8);
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: all 0.3s;
+  backdrop-filter: blur(4px);
+}
+.cascade-nav button:hover {
+  background: var(--cyan); color: var(--bg); box-shadow: var(--glow);
+}
 
 /* ── RESUME BAR ── */
 .resume-bar {
@@ -838,13 +960,16 @@ footer {
 
     <!-- TIMELINE -->
     <div class="dash-section" id="timeline">
-      <div class="sec-label">MODULE_TIMELINE</div>
-      <h2 class="sec-title">RESEARCH NOTES</h2>
-      
-      <div id="desk-environment-minimal">
-        <div id="minimal-book-stage"></div>
-      </div>
+  <div class="sec-label">MODULE_TIMELINE</div>
+  <h2 class="sec-title">RESEARCH NOTES</h2>
+  
+  <div id="timeline-cascade-stage">
+    <div class="cascade-nav">
+      <button onclick="navigateCascade(-1)">←</button>
+      <button onclick="navigateCascade(1)">→</button>
     </div>
+  </div>
+</div>
 
     <!-- LINKS -->
     <div class="dash-section" id="links">
@@ -899,7 +1024,7 @@ footer {
       <h2 class="sec-title">SEMESTER TOPOGRAPHY</h2>
       <div class="hud-panel topo-panel">
         <div id="cgpa-3d-canvas" class="topo-canvas"></div>
-        <div class="topo-overlay">DATA_SOURCE // CGPA PEAKS</div>
+        <div class="topo-overlay">DATA_SOURCE  CGPA PEAKS</div>
       </div>
     </div>
 
@@ -908,7 +1033,7 @@ footer {
       <h2 class="sec-title">CONTRIBUTION TOPOGRAPHY</h2>
       <div class="hud-panel topo-panel">
         <div id="github-3d-canvas" class="topo-canvas"></div>
-        <div class="topo-overlay">DATA_SOURCE // GITHUB ACTIVITY</div>
+        <div class="topo-overlay">DATA_SOURCE  GITHUB ACTIVITY</div>
       </div>
     </div>
     <div class="dash-section" id="github-network-section">
@@ -930,7 +1055,7 @@ footer {
       <div class="sec-label">MODULE_ACTIVE</div>
       <h2 class="sec-title">CURRENTLY LEARNING</h2>
       <div style="display:flex;flex-wrap:wrap;gap:12px;">
-        <div class="stat-box" style="flex:1;min-width:200px;">🧠 DIGITAL ELECTRONICS</div>
+        <div class="stat-box" style="flex:1;min-width:200px;">🧠 AIML</div>
       </div>
     </div>
 
@@ -1649,81 +1774,95 @@ function openLightbox(src, caption) {
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-/* ── BUILD TIMELINE (REALISTIC MINIMALIST BOOK) ── */
+/* ── BUILD TIMELINE (CASCADING 3D PANELS) ── */
+let currentCascadeIndex = 0;
+
 function buildTimeline() {
-  const stage = document.getElementById('minimal-book-stage');
+  const stage = document.getElementById('timeline-cascade-stage');
   if (!stage) return;
 
-  let pagesHTML = '';
-  
-  // Create cover
-  pagesHTML += `
-    <div class="minimal-page" onclick="flipMinimalPage(this)">
-      <div class="page-face page-front">
-        <h2 style="font-family:'Segoe Print', cursive; font-size:26px; text-align:center;">Project Notes</h2>
-        <div style="text-align:center; margin-top:20px; font-family:'Georgia'; font-style:italic;">Vol. 1</div>
+  // Unsplash mapping for the visual pop-out effect
+  const timelineImages = [
+    "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=800&q=80", // Circuit/Tech
+    "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80", // Coding
+    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80", // Conference
+    "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80", // AI Node
+    "https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?w=800&q=80", // Board/Hardware
+    "https://images.unsplash.com/photo-1504610926078-a1611febcad3?w=800&q=80"  // Research/Math
+  ];
+
+  // Build the panels based on your TIMELINE array
+  TIMELINE.forEach((item, i) => {
+    const imgUrl = timelineImages[i % timelineImages.length];
+    const panel = document.createElement('div');
+    panel.className = 'cascade-panel';
+    panel.onclick = () => {
+      // If clicking a background panel, bring it to front
+      if (currentCascadeIndex !== i) {
+        currentCascadeIndex = i;
+        updateCascade();
+      }
+    };
+    
+    panel.innerHTML = `
+      <div class="cp-content">
+        <div class="cp-header">
+          <span style="font-size:18px;">${item.icon}</span>  LOG_${item.year}
+        </div>
+        <div class="cp-title">${item.title}</div>
+        <div class="cp-desc">${item.desc}</div>
       </div>
-      <div class="page-face page-back"></div>
-    </div>
-  `;
-
-  // Inject timeline data into pages (2 entries per physical page)
-  for (let i = 0; i < TIMELINE.length; i += 2) {
-    const front = TIMELINE[i];
-    const back = TIMELINE[i+1];
-
-    const frontHTML = front ? `
-      <div class="m-icon">${front.icon}</div>
-      <div class="m-year">${front.year}</div>
-      <div class="m-title">${front.title}</div>
-      <div class="m-desc">${front.desc}</div>
-    ` : '';
-
-    const backHTML = back ? `
-      <div class="m-icon">${back.icon}</div>
-      <div class="m-year">${back.year}</div>
-      <div class="m-title">${back.title}</div>
-      <div class="m-desc">${back.desc}</div>
-    ` : '';
-
-    pagesHTML += `
-      <div class="minimal-page" onclick="flipMinimalPage(this)">
-        <div class="page-face page-front">${frontHTML}</div>
-        <div class="page-face page-back">${backHTML}</div>
+      <div class="cp-visual">
+        <img class="cp-visual-img" src="${imgUrl}" alt="${item.title}">
       </div>
     `;
-  }
-
-  // Inject into DOM
-  stage.innerHTML = `<div class="minimal-book">${pagesHTML}</div>`;
-
-  // Apply Z-depth physics for smooth stacking
-  const pages = document.querySelectorAll('.minimal-page');
-  pages.forEach((page, idx) => {
-    const zDepth = (pages.length - idx) * 2;
-    page.dataset.zOffset = zDepth;
-    page.dataset.baseZ = 100 - idx;
-    page.style.zIndex = page.dataset.baseZ;
-    page.style.transform = `translateZ(${zDepth}px)`;
+    stage.appendChild(panel);
   });
+
+  updateCascade();
 }
 
-// ── CUSTOM 3D PAGE FLIP PHYSICS ──
-window.flipMinimalPage = function(pageElement) {
-  const isFlipped = pageElement.classList.contains('flipped');
-  const zOffset = parseInt(pageElement.dataset.zOffset);
-  const baseZ = parseInt(pageElement.dataset.baseZ);
-
-  if (isFlipped) {
-    pageElement.classList.remove('flipped');
-    pageElement.style.transform = `rotateY(0deg) translateZ(${zOffset}px)`;
-    setTimeout(() => { pageElement.style.zIndex = baseZ; }, 600); 
-  } else {
-    pageElement.classList.add('flipped');
-    pageElement.style.transform = `rotateY(-180deg) translateZ(${zOffset}px)`;
-    pageElement.style.zIndex = 100 - baseZ; 
-  }
+// Controls the 3D Math for the Cascading Stack
+window.navigateCascade = function(direction) {
+  const panels = document.querySelectorAll('.cascade-panel');
+  currentCascadeIndex += direction;
+  
+  if (currentCascadeIndex < 0) currentCascadeIndex = 0;
+  if (currentCascadeIndex >= panels.length) currentCascadeIndex = panels.length - 1;
+  
+  updateCascade();
 };
+
+function updateCascade() {
+  const panels = document.querySelectorAll('.cascade-panel');
+  
+  panels.forEach((panel, i) => {
+    const offset = i - currentCascadeIndex;
+    
+    if (offset === 0) {
+      // ACTIVE FRONT PANEL
+      panel.style.transform = `translateZ(100px) translateX(-15%) rotateY(18deg) rotateX(4deg)`;
+      panel.style.opacity = 1;
+      panel.style.zIndex = 50;
+      panel.style.filter = 'brightness(1)';
+      panel.style.pointerEvents = 'auto';
+    } else if (offset > 0) {
+      // PANELS STACKED BEHIND
+      // Move them back on Z, shift them right on X, keep the angle
+      panel.style.transform = `translateZ(${-150 * offset}px) translateX(${15 + (20 * offset)}%) rotateY(18deg) rotateX(4deg)`;
+      panel.style.opacity = 1 - (offset * 0.25);
+      panel.style.zIndex = 50 - offset;
+      panel.style.filter = `brightness(${1 - (offset * 0.3)})`;
+      panel.style.pointerEvents = 'auto';
+    } else {
+      // PANELS PASSED (Fade out to the left)
+      panel.style.transform = `translateZ(250px) translateX(-60%) rotateY(18deg) rotateX(4deg)`;
+      panel.style.opacity = 0;
+      panel.style.zIndex = 10;
+      panel.style.pointerEvents = 'none';
+    }
+  });
+}
 
 /* ── BUILD LINKS ── */
 function buildLinks() {
@@ -2119,74 +2258,263 @@ function triggerKonami(){
   setTimeout(establishVisitorUplink, 2500);
 })();
 
-// ── HOST POWER TELEMETRY WITH CRITICAL ALERT (IIFE) ──
+// ── HOST POWER TELEMETRY (TRUE 3D WEBGL CONTAINMENT CORE) ──
 (function() {
   const learningSec = document.getElementById('learning');
   if (!learningSec) return;
 
+  // 1. Build the DOM Structure
   const batteryWidget = document.createElement('div');
   batteryWidget.className = "stat-box";
   batteryWidget.style.flex = "1";
-  batteryWidget.style.minWidth = "200px";
+  batteryWidget.style.minWidth = "300px";
   
   batteryWidget.innerHTML = `
     <div class="stat-box-label">HOST POWER STATE</div>
-    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
-      <div style="flex-grow: 1; height: 12px; border: 1px solid var(--border); border-radius: 2px; padding: 1px; position: relative;">
-        <div id="bat-fill" style="height: 100%; width: 0%; background: var(--cyan); transition: width 1s ease, background 0.5s;"></div>
+    <div id="bat-sys-container" style="display: flex; align-items: center; gap: 24px; margin-top: 10px;">
+      
+      <div id="battery-3d-canvas" style="width: 100px; height: 160px; cursor: grab; position: relative;"></div>
+      
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div id="bat-text" style="font-family: var(--font-hud); font-size: 38px; font-weight: 900; color: var(--cyan); text-shadow: 0 0 15px var(--cyan); line-height: 1; transition: color 0.5s, text-shadow 0.5s;">--%</div>
+        <div id="bat-status" style="font-family: var(--font-mono); font-size: 11px; color: rgba(0,229,255,0.5); letter-spacing: 2px;">
+          INITIALIZING CORE...
+        </div>
       </div>
-      <div id="bat-text" style="font-family: var(--font-hud); font-size: 14px; color: var(--cyan);">--%</div>
-    </div>
-    <div id="bat-status" style="font-family: var(--font-mono); font-size: 9px; color: rgba(0,229,255,0.5); margin-top: 6px; letter-spacing: 2px;">
-      ANALYZING POWER SOURCE...
+
     </div>
   `;
 
   const flexContainer = learningSec.querySelector('div[style*="display:flex"]');
   if (flexContainer) flexContainer.appendChild(batteryWidget);
 
+  // 2. INITIALIZE THREE.JS SCENE
+  const container = document.getElementById('battery-3d-canvas');
+  if (!container) return;
+
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+  camera.position.set(0, 0, 16);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  // ── LIGHTING ──
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  
+  const spotLight = new THREE.SpotLight(0xffffff, 2);
+  spotLight.position.set(10, 20, 15);
+  spotLight.angle = Math.PI / 6;
+  scene.add(spotLight);
+
+  const backLight = new THREE.PointLight(0x00e5ff, 1.5, 50);
+  backLight.position.set(-5, -5, -10);
+  scene.add(backLight);
+
+  // ── MATERIALS ──
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, metalness: 0.1, roughness: 0.1, transmission: 0.9, ior: 1.5, transparent: true, opacity: 1, side: THREE.DoubleSide
+  });
+
+  const darkMetalMat = new THREE.MeshStandardMaterial({
+    color: 0x222222, metalness: 0.9, roughness: 0.4
+  });
+
+  const lightMetalMat = new THREE.MeshStandardMaterial({
+    color: 0x888888, metalness: 0.8, roughness: 0.3
+  });
+
+  // Dynamic Materials (Colors updated by Battery API)
+  const liquidMat = new THREE.MeshPhysicalMaterial({
+    color: 0x00e676, emissive: 0x00e676, emissiveIntensity: 0.6, transmission: 0.4, transparent: true, opacity: 0.9
+  });
+
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0x00e676 });
+
+  // ── GEOMETRY CONSTRUCTION ──
+  const masterGroup = new THREE.Group();
+  scene.add(masterGroup);
+
+  // A. OUTER CONTAINMENT CHAMBER
+  const outerRadius = 2.8;
+  const outerHeight = 10;
+  
+  // Outer Glass
+  const outerGlassGeo = new THREE.CylinderGeometry(outerRadius, outerRadius, outerHeight, 32, 1, true);
+  const outerGlass = new THREE.Mesh(outerGlassGeo, glassMat);
+  masterGroup.add(outerGlass);
+
+  // Outer Caps
+  const capGeo = new THREE.CylinderGeometry(outerRadius + 0.2, outerRadius + 0.2, 0.8, 32);
+  const topCap = new THREE.Mesh(capGeo, darkMetalMat);
+  topCap.position.y = outerHeight / 2 + 0.4;
+  masterGroup.add(topCap);
+
+  const bottomCap = new THREE.Mesh(capGeo, darkMetalMat);
+  bottomCap.position.y = -outerHeight / 2 - 0.4;
+  masterGroup.add(bottomCap);
+
+  // Outer LED Rings
+  const ringGeo = new THREE.TorusGeometry(outerRadius + 0.2, 0.15, 16, 32);
+  const topRing = new THREE.Mesh(ringGeo, ledMat);
+  topRing.position.y = outerHeight / 2 - 0.2;
+  topRing.rotation.x = Math.PI / 2;
+  masterGroup.add(topRing);
+
+  const bottomRing = new THREE.Mesh(ringGeo, ledMat);
+  bottomRing.position.y = -outerHeight / 2 + 0.2;
+  bottomRing.rotation.x = Math.PI / 2;
+  masterGroup.add(bottomRing);
+
+
+  // B. FLOATING INNER CORE
+  const coreGroup = new THREE.Group();
+  masterGroup.add(coreGroup);
+
+  const innerRadius = 1.6;
+  const innerHeight = 6.5;
+
+  // Inner Glass
+  const innerGlassGeo = new THREE.CylinderGeometry(innerRadius, innerRadius, innerHeight, 32, 1, true);
+  const innerGlass = new THREE.Mesh(innerGlassGeo, glassMat);
+  coreGroup.add(innerGlass);
+
+  // Inner Caps
+  const innerCapGeo = new THREE.CylinderGeometry(innerRadius + 0.1, innerRadius + 0.1, 0.4, 32);
+  const innerTopCap = new THREE.Mesh(innerCapGeo, lightMetalMat);
+  innerTopCap.position.y = innerHeight / 2 + 0.2;
+  coreGroup.add(innerTopCap);
+
+  const innerBottomCap = new THREE.Mesh(innerCapGeo, lightMetalMat);
+  innerBottomCap.position.y = -innerHeight / 2 - 0.2;
+  coreGroup.add(innerBottomCap);
+
+  // Inner Terminal Node (Top nub)
+  const nodeGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.6, 16);
+  const terminalNode = new THREE.Mesh(nodeGeo, lightMetalMat);
+  terminalNode.position.y = innerHeight / 2 + 0.6;
+  coreGroup.add(terminalNode);
+
+  // The 3D Liquid Fill
+  // Translate geometry so the pivot point is at the bottom, making it scale upwards
+  const liqGeo = new THREE.CylinderGeometry(innerRadius - 0.05, innerRadius - 0.05, innerHeight, 32);
+  liqGeo.translate(0, innerHeight / 2, 0); 
+  const liquidMesh = new THREE.Mesh(liqGeo, liquidMat);
+  liquidMesh.position.y = -innerHeight / 2; // Set pivot at bottom of the core
+  liquidMesh.scale.y = 0.01; // Start empty
+  coreGroup.add(liquidMesh);
+
+  // 3D Lightning Bolt Overlay
+  const boltShape = new THREE.Shape();
+  boltShape.moveTo(0, 1.2);
+  boltShape.lineTo(0.6, 0);
+  boltShape.lineTo(0.1, 0);
+  boltShape.lineTo(0, -1.2);
+  boltShape.lineTo(-0.6, 0);
+  boltShape.lineTo(-0.1, 0);
+  boltShape.lineTo(0, 1.2);
+  
+  const extrudeSettings = { depth: 0.2, bevelEnabled: false };
+  const boltGeo = new THREE.ExtrudeGeometry(boltShape, extrudeSettings);
+  boltGeo.center(); // Center the pivot
+  const boltMesh = new THREE.Mesh(boltGeo, ledMat);
+  boltMesh.position.z = 0; 
+  coreGroup.add(boltMesh);
+
+  // ── MOUSE INTERACTION ──
+  let isDragging = false;
+  let previousMouseX = 0;
+  
+  container.addEventListener('mousedown', (e) => { isDragging = true; previousMouseX = e.clientX; container.style.cursor = 'grabbing'; });
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      const deltaX = e.clientX - previousMouseX;
+      masterGroup.rotation.y += deltaX * 0.01;
+      previousMouseX = e.clientX;
+    }
+  });
+  window.addEventListener('mouseup', () => { isDragging = false; container.style.cursor = 'grab'; });
+  window.addEventListener('mouseleave', () => { isDragging = false; });
+
+  // ── ANIMATION LOOP ──
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const time = Date.now() * 0.002;
+    
+    // Auto-spin containment chamber
+    if (!isDragging) {
+      masterGroup.rotation.y += 0.005;
+    }
+
+    // Hover effect for the inner core
+    coreGroup.position.y = Math.sin(time * 1.5) * 0.4;
+
+    // Pulse the glowing elements slightly
+    const pulse = 0.8 + Math.sin(time * 3) * 0.2;
+    ledMat.color.multiplyScalar(pulse); 
+    // Reset color to base every frame to avoid compounding, then multiply
+    ledMat.color.setHex(currentHex).multiplyScalar(pulse);
+
+    renderer.render(scene, camera);
+  }
+
+  let currentHex = 0x00e676; // Track base color for the pulse animation
+
+  // ── HARDWARE API LOGIC ──
+  function updateColors(hexColor, stringColor, shadowColor) {
+    currentHex = hexColor;
+    liquidMat.color.setHex(hexColor);
+    liquidMat.emissive.setHex(hexColor);
+    ledMat.color.setHex(hexColor);
+    
+    const text = document.getElementById('bat-text');
+    text.style.color = stringColor;
+    text.style.textShadow = `0 0 15px ${shadowColor}`;
+  }
+
   if ('getBattery' in navigator) {
     navigator.getBattery().then(function(battery) {
-      let hasWarned = false; // Prevents the alert from spamming
+      let hasWarned = false; 
 
       function updateBatteryHUD() {
-        const level = Math.round(battery.level * 100);
-        const fill = document.getElementById('bat-fill');
+        const level = Math.max(0, Math.min(100, Math.round(battery.level * 100)));
         const text = document.getElementById('bat-text');
         const status = document.getElementById('bat-status');
         
-        fill.style.width = level + '%';
         text.textContent = level + '%';
         
+        // Scale the 3D liquid cylinder (0.01 to 1.0)
+        const targetScale = Math.max(0.01, level / 100);
+        liquidMesh.scale.y = targetScale;
+        
         if (battery.charging) {
-          fill.style.background = "var(--green)";
-          fill.style.boxShadow = "0 0 10px rgba(0, 230, 118, 0.4)";
-          text.style.color = "var(--green)";
-          status.textContent = "AC POWER  CHARGING";
-          hasWarned = false; // Reset warning if they plug it in
+          updateColors(0x00e676, 'var(--green)', 'rgba(0, 230, 118, 0.6)');
+          status.textContent = "AC POWER CHARGING";
+          hasWarned = false; 
         } else {
           if (level <= 20) {
-            fill.style.background = "var(--amber)";
-            fill.style.boxShadow = "0 0 10px rgba(255, 171, 0, 0.4)";
-            text.style.color = "var(--amber)";
-            status.textContent = "BATTERY // CRITICAL LEVEL";
+            updateColors(0xffab00, 'var(--amber)', 'rgba(255, 171, 0, 0.6)');
+            status.textContent = "BATTERY // CRITICAL";
             
-            // Spawn the J.A.R.V.I.S. Critical Alert Overlay
             if (!hasWarned) {
               hasWarned = true;
               const alertPanel = document.createElement('div');
               alertPanel.style.cssText = `
                 position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
-                background: rgba(10, 2, 0, 0.9); border: 1px solid var(--amber);
+                background: rgba(10, 2, 0, 0.95); border: 1px solid var(--amber);
                 color: var(--amber); padding: 12px 24px; font-family: var(--font-hud);
                 font-size: 13px; letter-spacing: 2px; z-index: 999999;
-                box-shadow: 0 0 25px rgba(255, 171, 0, 0.5); backdrop-filter: blur(8px);
+                box-shadow: 0 0 30px rgba(255, 171, 0, 0.6); backdrop-filter: blur(8px);
                 text-align: center; border-radius: 4px;
               `;
-              alertPanel.innerHTML = `⚠ CRITICAL ALERT: HOST BATTERY AT ${level}%.<br><span style="font-size:10px; font-family:var(--font-mono); color:rgba(255,171,0,0.7);">RECOMMEND CONNECTING TO AC POWER IMMEDIATELY.</span>`;
+              alertPanel.innerHTML = `⚠ CRITICAL ALERT: HOST BATTERY AT ${level}%.<br><span style="font-size:10px; font-family:var(--font-mono); color:rgba(255,171,0,0.7);">RECOMMEND AC UPLINK IMMEDIATELY.</span>`;
               document.body.appendChild(alertPanel);
-              
-              // Remove the alert after 6 seconds
               setTimeout(() => {
                 alertPanel.style.opacity = '0';
                 alertPanel.style.transition = 'opacity 0.5s';
@@ -2194,10 +2522,8 @@ function triggerKonami(){
               }, 6000);
             }
           } else {
-            fill.style.background = "var(--cyan)";
-            fill.style.boxShadow = "var(--glow)";
-            text.style.color = "var(--cyan)";
-            status.textContent = "BATTERY // DISCHARGING";
+            updateColors(0x00e5ff, 'var(--cyan)', 'rgba(0, 229, 255, 0.6)');
+            status.textContent = "BATTERY DISCHARGING";
           }
         }
       }
@@ -2207,8 +2533,13 @@ function triggerKonami(){
       battery.addEventListener('levelchange', updateBatteryHUD);
     });
   } else {
-    document.getElementById('bat-status').textContent = "POWER API RESTRICTED BY HOST OS";
+    document.getElementById('bat-status').textContent = "API RESTRICTED BY HOST OS";
+    liquidMesh.scale.y = 0.5; // Demo fill if blocked
+    updateColors(0x00e5ff, 'var(--cyan)', 'rgba(0, 229, 255, 0.6)');
   }
+
+  // Start 3D Loop
+  animate();
 })();
 // ── LIVE METEOROLOGICAL RADAR (DYNAMIC & SECURE) ──
 (function() {
@@ -2588,210 +2919,336 @@ function triggerKonami(){
 </script>
 
 <script>
-// ── OBSIDIAN-STYLE GITHUB NETWORK GRAPH (STATIC/NON-PHYSICS) ──
+// ── 3D HOLOGRAPHIC NEURAL CORE (DARK MATTER & VOID ENERGY) ──
 (function() {
-  const canvas = document.getElementById('github-network-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  
-  let w, h;
-  function resize() {
-    w = canvas.parentElement.offsetWidth;
-    h = canvas.parentElement.offsetHeight;
-    canvas.width = w * window.devicePixelRatio;
-    canvas.height = h * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    if (animProgress >= 2) drawNetwork(); // Re-render static frame if resizing after animation
-  }
-  window.addEventListener('resize', resize);
-  
-  const nodes = [];
-  const edges = [];
-  
-  function addNode(id, label, x, y, radius, color, type) {
-    const node = { id, label, x, y, radius, color, type };
-    nodes.push(node);
-    return node;
-  }
-  
-  function addEdge(sourceId, targetId) {
-    edges.push({ source: sourceId, target: targetId });
-  }
+  const container = document.getElementById('knowledge-orb-canvas');
+  if (!container) return;
 
-  // Generate a constellation mapping
-// Generate a constellation mapping from Resume Data
-  function generateData() {
-    // Root Node (User)
-    addNode('root', 'ZG0D-FF', 0, 0, 6, '#00e5ff', 'user');
-    
-    // Core Branches mapped to Resume
-    const resumeGraph = [
-      {
-        tech: 'Python',
-        repos: ['FC Manager AI', 'Scripting', 'API Integration']
-      },
-      {
-        tech: 'Raspberry Pi',
-        repos: ['PoultryHealth-AI', 'YAMNet', 'Edge Computing']
-      },
-      {
-        tech: 'Arduino',
-        repos: ['C/C++', 'Sensor Arrays', 'Circuit Design']
-      },
-      {
-        tech: 'Edge-Olfaction',
-        repos: ['Predictive Models', 'Dual-Processor', 'IoT Deployment']
-      },
-      {
-        tech: 'Cloud & Sec',
-        repos: ['AWS Cloud', 'Cyber Security']
-      },
-      {
-        tech: 'MATLAB',
-        repos: ['Data Analysis', 'Logic']
-      }
-    ];
-    
-    const stackRadius = 90;
-    
-    resumeGraph.forEach((stack, i) => {
-      const angle = (i / resumeGraph.length) * Math.PI * 2;
-      const nx = Math.cos(angle) * stackRadius;
-      const ny = Math.sin(angle) * stackRadius;
-      
-      // Give the Edge-Olfaction node a distinct warning/amber color to highlight it as a major project
-      const nodeColor = stack.tech === 'Edge-Olfaction' ? '#ffab00' : '#00e676';
-      addNode('tech_'+i, stack.tech, nx, ny, 4, nodeColor, 'lang');
-      addEdge('root', 'tech_'+i);
-      
-      // Secondary Ring: Resume Details / Repositories
-      const repoRadius = stackRadius + 65;
-      stack.repos.forEach((repoName, j) => {
-        const rAngle = angle + (j - stack.repos.length/2) * 0.35 + 0.15;
-        const rx = Math.cos(rAngle) * repoRadius;
-        const ry = Math.sin(rAngle) * repoRadius;
-        
-        // Only label the major projects to avoid UI clutter
-        const isMajor = ['FC Manager AI', 'PoultryHealth-AI', 'AWS Cloud', 'Predictive Models', 'Sensor Arrays'].includes(repoName);
-        const label = isMajor ? repoName : '';
-        
-        addNode('repo_'+i+'_'+j, label, rx, ry, 2.5, '#00bcd4', 'repo');
-        addEdge('tech_'+i, 'repo_'+i+'_'+j);
-        
-        // Tertiary Ring: "Commits" representing the granular skills (e.g., MQ-Series, OCR)
-        const numCommits = 3 + Math.floor(Math.random() * 6);
-        const commitRadius = repoRadius + 25 + Math.random() * 30;
-        for (let k = 0; k < numCommits; k++) {
-          const cAngle = rAngle + (k - numCommits/2) * 0.2 + (Math.random()*0.1);
-          const cx = Math.cos(cAngle) * commitRadius;
-          const cy = Math.sin(cAngle) * commitRadius;
-          addNode('commit_'+i+'_'+j+'_'+k, '', cx, cy, 1, 'rgba(0, 229, 255, 0.35)', 'commit');
-          addEdge('repo_'+i+'_'+j, 'commit_'+i+'_'+j+'_'+k);
-          
-          // Cross-linking to simulate complex architecture dependencies
-          if (Math.random() > 0.85 && i > 0) {
-              addEdge('commit_'+i+'_'+j+'_'+k, 'repo_'+(i-1)+'_0');
-          }
-        }
-      });
-    });
+  const width = container.clientWidth;
+  const height = container.clientHeight;
 
-    // Explicitly link the Hybrid Edge-Olfaction project to Arduino and Raspberry Pi
-    // This visually represents the dual-processor architecture
-    addEdge('tech_1', 'tech_3'); // RPi -> Edge Olfaction
-    addEdge('tech_2', 'tech_3'); // Arduino -> Edge Olfaction
-  }
-  
-  generateData();
-  
-  let animProgress = 0;
-  
-  function drawNetwork() {
-    ctx.clearRect(0, 0, w, h);
-    ctx.save();
-    ctx.translate(w / 2, h / 2); // Center 0,0 to the middle of the canvas
-    
-    // Draw edges
-    edges.forEach(edge => {
-      const source = nodes.find(n => n.id === edge.source);
-      const target = nodes.find(n => n.id === edge.target);
-      if (!source || !target) return;
-      
-      // Calculate drawing progress to animate lines growing outward
-      const dist = Math.sqrt(source.x*source.x + source.y*source.y);
-      const delay = dist / 280; 
-      
-      if (animProgress > delay) {
-        ctx.beginPath();
-        ctx.moveTo(source.x, source.y);
-        
-        const edgeProgress = Math.min(1, (animProgress - delay) * 2.5);
-        const currentX = source.x + (target.x - source.x) * edgeProgress;
-        const currentY = source.y + (target.y - source.y) * edgeProgress;
-        
-        ctx.lineTo(currentX, currentY);
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.18)';
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-      }
-    });
-    
-    // Draw nodes
-    nodes.forEach(node => {
-        const dist = Math.sqrt(node.x*node.x + node.y*node.y);
-        const delay = dist / 280; 
-        let scale = 0;
-        
-        if (animProgress > delay) {
-            scale = Math.min(1, (animProgress - delay) * 4);
-            // Quick elastic pop effect upon spawning
-            scale = scale === 1 ? 1 : scale + Math.sin(scale * Math.PI) * 0.15;
-        }
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  camera.position.set(0, 2, 18); // Angled slightly down to see the ground
 
-        if (scale > 0) {
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, node.radius * scale, 0, Math.PI * 2);
-            ctx.fillStyle = node.color;
-            if (node.type === 'user' || node.type === 'lang') {
-                ctx.shadowColor = node.color;
-                ctx.shadowBlur = 8 * scale;
-            } else {
-                ctx.shadowBlur = 0;
-            }
-            ctx.fill();
-            
-            // Draw core labels
-            if (node.label && scale >= 1) {
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-                ctx.font = '10px "Share Tech Mono"';
-                ctx.textAlign = 'center';
-                ctx.fillText(node.label, node.x, node.y - node.radius - 8);
-            }
-        }
-    });
-    
-    ctx.restore();
-    
-    // Progress the animation loop
-    if (animProgress < 2) {
-        animProgress += 0.012;
-        requestAnimationFrame(drawNetwork);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.toneMapping = THREE.ReinhardToneMapping;
+  renderer.toneMappingExposure = 2.0; 
+  container.appendChild(renderer.domElement);
+
+  // ── LIGHTING ──
+  scene.add(new THREE.AmbientLight(0x020c18, 1));
+  const corePointLight = new THREE.PointLight(0x00e5ff, 5, 20);
+  corePointLight.position.set(0, -3, 0); // Positioned between orb and ground
+  scene.add(corePointLight);
+
+  const orbGroup = new THREE.Group();
+  scene.add(orbGroup);
+
+  // ── SHADER CODE (GLSL) ──
+  // Simplex 3D Noise function injected into shaders for procedural generation
+  const noiseChunk = `
+    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+    float snoise(vec3 v) {
+      const vec2  C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i  = floor(v + dot(v, C.yyy) );
+      vec3 x0 = v - i + dot(i, C.xxx) ;
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min( g.xyz, l.zxy );
+      vec3 i2 = max( g.xyz, l.zxy );
+      vec3 x1 = x0 - i1 + C.xxx;
+      vec3 x2 = x0 - i2 + C.yyy;
+      vec3 x3 = x0 - D.yyy;
+      i = mod289(i);
+      vec4 p = permute( permute( permute( i.z + vec4(0.0, i1.z, i2.z, 1.0 )) + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+      float n_ = 0.142857142857;
+      vec3  ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_ );
+      vec4 x = x_ *ns.x + ns.yyyy;
+      vec4 y = y_ *ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4( x.xy, y.xy );
+      vec4 b1 = vec4( x.zw, y.zw );
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+      vec3 p0 = vec3(a0.xy,h.x);
+      vec3 p1 = vec3(a0.zw,h.y);
+      vec3 p2 = vec3(a1.xy,h.z);
+      vec3 p3 = vec3(a1.zw,h.w);
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+      p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
     }
+  `;
+
+  const vertexShader = `
+    varying vec2 vUv;
+    varying vec3 vPosition;
+    void main() {
+      vUv = uv;
+      vPosition = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `;
+
+  // Master Time Uniform for Animation
+  const sharedUniforms = {
+    uTime: { value: 0.0 }
+  };
+
+  // ── 1. THE DARK MATTER ORB (ULTRA-SPARSE) ──
+  const orbFragmentShader = `
+    uniform float uTime;
+    varying vec2 vUv;
+    varying vec3 vPosition;
+    ${noiseChunk}
+    void main() {
+      // Swirling deep void background
+      float baseNoise = snoise(vPosition * 1.2 + uTime * 0.15);
+      vec3 voidColor = mix(vec3(0.02, 0.03, 0.06), vec3(0.0, 0.0, 0.0), baseNoise * 0.5 + 0.5);
+
+      // Procedural lightning veins (Ultra-low frequency, extreme sharpness)
+      // Dropped the multiplier to 0.7 to spread the lines far apart
+      float vein1 = 1.0 - abs(snoise(vPosition * 0.7 + uTime * 0.2));
+      vein1 = pow(vein1, 60.0); // Cranked to 60 for razor-thin lines
+
+      // Dropped secondary noise to 1.3
+      float vein2 = 1.0 - abs(snoise(vPosition * 1.3 - uTime * 0.1));
+      vein2 = pow(vein2, 80.0); // Cranked to 80 for rare, micro-fractures
+
+      // Combined veins with a slightly lower mix ratio
+      float totalVeins = clamp(vein1 + vein2 * 0.6, 0.0, 1.0);
+      vec3 energyColor = vec3(0.0, 0.9, 1.0) * totalVeins * 4.5; // High intensity for the few lines that do appear
+
+      gl_FragColor = vec4(voidColor + energyColor, 1.0);
+    }
+  `;
+
+  const orbGeo = new THREE.SphereGeometry(3.5, 64, 64);
+  const orbMat = new THREE.ShaderMaterial({
+    vertexShader: vertexShader,
+    fragmentShader: orbFragmentShader,
+    uniforms: sharedUniforms,
+    transparent: true
+  });
+  const darkOrb = new THREE.Mesh(orbGeo, orbMat);
+  orbGroup.add(darkOrb);
+
+  // Subtle glowing halo surrounding the void
+  const haloGeo = new THREE.SphereGeometry(3.8, 32, 32);
+  const haloMat = new THREE.MeshBasicMaterial({ color: 0x0044ff, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending });
+  orbGroup.add(new THREE.Mesh(haloGeo, haloMat));
+
+  // ── 2. THE FRACTURED ENERGY GROUND ──
+  const groundFragmentShader = `
+    uniform float uTime;
+    varying vec2 vUv;
+    varying vec3 vPosition;
+    ${noiseChunk}
+    void main() {
+      // Calculate distance from center to fade out the edges seamlessly
+      float dist = distance(vUv, vec2(0.5));
+      float fade = smoothstep(0.5, 0.2, dist);
+
+      // Create jagged ground cracks (Reduced frequency from 0.3 to 0.15)
+      float crackNoise = 1.0 - abs(snoise(vec3(vPosition.x * 0.15, vPosition.y * 0.15, uTime * 0.08)));
+      crackNoise = pow(crackNoise, 25.0); 
+      
+      // Secondary minor cracks (Reduced frequency from 0.8 to 0.35)
+      float microCracks = 1.0 - abs(snoise(vec3(vPosition.x * 0.35, vPosition.y * 0.35, -uTime * 0.04)));
+      microCracks = pow(microCracks, 40.0);
+
+      float totalCracks = (crackNoise + microCracks * 0.5) * fade;
+      
+      // Base dirt/rock color
+      vec3 groundColor = vec3(0.03, 0.03, 0.04) * fade * 0.5;
+      vec3 crackColor = vec3(0.0, 0.9, 1.0) * totalCracks * 4.0;
+      
+      gl_FragColor = vec4(groundColor + crackColor, fade);
+    }
+  `;
+
+  const groundGeo = new THREE.PlaneGeometry(30, 30, 64, 64);
+  const groundMat = new THREE.ShaderMaterial({
+    vertexShader: vertexShader,
+    fragmentShader: groundFragmentShader,
+    uniforms: sharedUniforms,
+    transparent: true,
+    depthWrite: false
+  });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2; // Lay flat
+  ground.position.y = -6; // Drop below the orb
+  scene.add(ground);
+
+  // ── 3. FLOATING ENERGY PARTICLES ──
+  const pCount = 150;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  const pLife = new Float32Array(pCount); // Tracks particle lifespan
+  for(let i=0; i<pCount; i++) {
+    pPos[i*3] = (Math.random() - 0.5) * 15;
+    pPos[i*3+1] = -6 + Math.random() * 5; // Start near ground
+    pPos[i*3+2] = (Math.random() - 0.5) * 15;
+    pLife[i] = Math.random();
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  pGeo.setAttribute('life', new THREE.BufferAttribute(pLife, 1));
+  const pMat = new THREE.PointsMaterial({ 
+    color: 0x00e5ff, 
+    size: 0.08, 
+    transparent: true, 
+    opacity: 0.8, 
+    blending: THREE.AdditiveBlending 
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  // ── 4. KNOWLEDGE LABELS ──
+  const labelsData = [
+    { text: "ZG0D-FF", radius: 0, color: "#fff", isCore: true },
+    { text: "Python", radius: 4.5, color: "#00e676" },
+    { text: "FC Manager AI", radius: 4.8, color: "#00bcd4" },
+    { text: "Raspberry Pi", radius: 4.2, color: "#00e676" },
+    { text: "Edge-Olfaction", radius: 5.0, color: "#ffab00" },
+    { text: "Arduino", radius: 4.4, color: "#00bcd4" },
+    { text: "AWS Cloud", radius: 4.6, color: "#00bcd4" },
+    { text: "MATLAB", radius: 4.3, color: "#00bcd4" },
+  ];
+
+  const htmlLabels = [];
+  
+  labelsData.forEach((data, index) => {
+    const anchor = new THREE.Object3D();
+    if (!data.isCore) {
+      const phi = Math.acos( -1 + ( 2 * index ) / labelsData.length );
+      const theta = Math.sqrt( labelsData.length * Math.PI ) * phi;
+      anchor.position.setFromSphericalCoords(data.radius, phi, theta);
+    }
+    orbGroup.add(anchor);
+
+    const div = document.createElement('div');
+    div.textContent = data.text;
+    div.style.cssText = `
+      position: absolute; top: 0; left: 0;
+      font-family: var(--font-mono); font-size: ${data.isCore ? '12px' : '10px'};
+      color: ${data.color}; letter-spacing: 1px;
+      text-shadow: 0 0 8px ${data.color};
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.2s;
+    `;
+    container.appendChild(div);
+    htmlLabels.push({ anchor: anchor, el: div });
+  });
+
+  // ── GYROSCOPIC MOUSE TRACKING ──
+  let isDragging = false;
+  let previousMousePosition = { x: 0, y: 0 };
+  let targetRotation = { x: 0, y: 0 };
+  
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    container.style.cursor = 'grabbing';
+    previousMousePosition = { x: e.offsetX, y: e.offsetY };
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      const deltaMove = { x: e.offsetX - previousMousePosition.x, y: e.offsetY - previousMousePosition.y };
+      targetRotation.y += deltaMove.x * 0.005;
+      targetRotation.x += deltaMove.y * 0.005;
+      previousMousePosition = { x: e.offsetX, y: e.offsetY };
+    }
+  });
+
+  window.addEventListener('mouseup', () => { isDragging = false; container.style.cursor = 'grab'; });
+  window.addEventListener('mouseleave', () => { isDragging = false; });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+
+  // ── RENDER LOOP ──
+  const tempV = new THREE.Vector3();
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // Update GPU Shaders
+    sharedUniforms.uTime.value += 0.015;
+
+    // Smooth drag rotation for the orb
+    orbGroup.rotation.y += (targetRotation.y - orbGroup.rotation.y) * 0.1;
+    orbGroup.rotation.x += (targetRotation.x - orbGroup.rotation.x) * 0.1;
+
+    if (!isDragging) targetRotation.y += 0.002;
+
+    // Animate Particles Floating Upward
+    const posAttr = particles.geometry.attributes.position;
+    const lifeAttr = particles.geometry.attributes.life;
+    for(let i=0; i<pCount; i++) {
+      let y = posAttr.getY(i);
+      let life = lifeAttr.getX(i);
+      
+      y += 0.02 + (Math.random() * 0.02); // Float up
+      life -= 0.005; // Age particle
+      
+      // Reset particle when it dies or goes too high
+      if (life <= 0 || y > 1) {
+        y = -6 + Math.random(); 
+        posAttr.setX(i, (Math.random() - 0.5) * 15);
+        posAttr.setZ(i, (Math.random() - 0.5) * 15);
+        life = 1.0;
+      }
+      
+      posAttr.setY(i, y);
+      lifeAttr.setX(i, life);
+    }
+    posAttr.needsUpdate = true;
+    lifeAttr.needsUpdate = true;
+
+    // Map 3D Anchors to 2D HTML Labels
+    htmlLabels.forEach(label => {
+      label.anchor.getWorldPosition(tempV);
+      tempV.project(camera);
+      
+      if (tempV.z > 1) {
+        label.el.style.opacity = 0;
+      } else {
+        const x = (tempV.x * 0.5 + 0.5) * container.clientWidth;
+        const y = (tempV.y * -0.5 + 0.5) * container.clientHeight;
+        label.el.style.transform = `translate(-50%, -50%) translate(${x}px,${y}px)`;
+        
+        const distanceToCamera = camera.position.distanceTo(label.anchor.getWorldPosition(new THREE.Vector3()));
+        label.el.style.opacity = distanceToCamera > 18 ? 0.15 : 1; 
+      }
+    });
+
+    renderer.render(scene, camera);
   }
 
-  // Hook into the scroll behavior so it animates only when in view
   const obs = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
-      resize(); 
-      requestAnimationFrame(drawNetwork);
-      obs.disconnect();
-    }
-  }, { threshold: 0.3 });
-  
-  setTimeout(() => obs.observe(canvas), 150);
+    if (entries[0].isIntersecting) { animate(); obs.disconnect(); }
+  }, { threshold: 0.1 });
+  setTimeout(() => obs.observe(container), 150);
 })();
-
 </script>
 
 </body>
