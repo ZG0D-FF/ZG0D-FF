@@ -1124,23 +1124,38 @@ footer {
   const urlParams  = new URLSearchParams(window.location.search);
   const visitorName = urlParams.get('visitor') || 'GUEST';
 
-  // TELEMETRY FUNCTION
+  // TELEMETRY FUNCTION UPDATE
   async function transmitTelemetry() {
     if (sessionStorage.getItem('jarvis_session_logged')) {
       console.log('[JARVIS] Session already logged. Fetching current count...');
       fetchLiveVisitorCount();
       return;
     }
-    const { error } = await _supabase
-      .from('session_logs')
-      .insert([{ visitor_name: visitorName, page_section: 'DASHBOARD_INIT', device_info: navigator.userAgent }]);
-    if (error) {
-      console.error('[JARVIS] Telemetry Sync Failed:', error);
-      fetchLiveVisitorCount();
-    } else {
+
+    try {
+      // Call the Edge Function instead of the database directly
+      const response = await fetch(`${supabaseUrl}/functions/v1/jarvis-telemetry`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}` // Uses your standard anon key
+        },
+        body: JSON.stringify({
+          visitor_name: visitorName,
+          page_section: 'DASHBOARD_INIT',
+          device_info: navigator.userAgent
+        })
+      });
+
+      if (!response.ok) throw new Error('Network shield blocked request');
+      
       console.log('[JARVIS] Telemetry Synced Successfully.');
       sessionStorage.setItem('jarvis_session_logged', 'true');
       incrementRedisCounter();
+      
+    } catch (error) {
+      console.error('[JARVIS] Telemetry Sync Failed:', error);
+      fetchLiveVisitorCount(); // Still load the counter even if logging fails
     }
   }
 
