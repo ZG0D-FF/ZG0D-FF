@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- [SYS.ADMIN] FACE-API.JS NEURAL NETWORK -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>JARVIS — Portfolio</title>
@@ -302,6 +304,8 @@ body {
       </div>
       <div style="font-size: 8px; color: rgba(0,229,255,0.4); margin-top: 4px;">* Required for full system diagnostics. Data encrypted locally.</div>
     </div>
+    
+    <div id="status-text" style="color: var(--amber); font-family: var(--font-mono); font-size: 10px; margin-top: 15px; text-align: center; letter-spacing: 1px; min-height: 14px;">AWAITING BIOMETRICS...</div>
 
         <button id="boot-submit" type="button" onclick="startExperience()" style="display: block; margin-top: 10px;">INITIATE ACCESS →</button>
     <button id="guest-submit" type="button" onclick="startGuest()" style="display: block; background: transparent; border: 1px dashed rgba(0,229,255,0.4); color: rgba(0,229,255,0.6); font-family: var(--font-hud); font-size: 11px; letter-spacing: 2px; padding: 10px; cursor: pointer; border-radius: 3px; margin-top: 10px; transition: all 0.3s; width: 100%;">ENTER AS GUEST [>>]</button>
@@ -315,6 +319,24 @@ const MY_AGE = 21;
 let _visitorName     = '';
 let _visitorGreeting = '';
 
+  // [SYS.ADMIN] BOOT UP FACIAL BIOMETRICS
+  async function loadFacialModels() {
+    const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
+    document.getElementById('status-text').innerText = 'LOADING BIOMETRIC NEURAL NETWORKS...';
+    
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
+    
+    document.getElementById('status-text').innerText = 'BIOMETRICS ONLINE. AWAITING OPTICS...';
+    console.log('[JARVIS] 128-float Neural Networks Loaded.');
+  }
+
+  // Fire this as soon as the page loads
+  window.addEventListener('load', loadFacialModels);
+  
 /* ════════════════════════════════════════
    THREE.JS — 3D JARVIS HOLOGRAM (PERFORMANCE SCALED)
 ════════════════════════════════════════ */
@@ -540,6 +562,8 @@ function requestGPS() {
 function startGuest() {
   _visitorName = "Guest";
   _visitorGreeting = "WELCOME // GUEST";
+  sessionStorage.setItem('jarvis_name', 'Guest');
+  sessionStorage.setItem('jarvis_greeting', 'WELCOME // GUEST');
   proceedToLaunch('Initializing Guest Protocol...');
 }
 
@@ -557,13 +581,86 @@ async function requestCam() {
       video.onloadedmetadata = () => { video.play(); resolve(); };
     });
 
+    // 1. Wait a moment for the camera to auto-adjust exposure
+    await new Promise(r => setTimeout(r, 800));
+
+    // 2. Take the photo
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-
     const base64Photo = canvas.toDataURL('image/jpeg', 0.7);
     sessionStorage.setItem('jarvis_photo', base64Photo);
+
+    // 3. [SYS.ADMIN] RUN FACIAL BIOMETRICS SCAN
+    document.getElementById('status-text').innerText = 'EXTRACTING 128-FLOAT FACIAL GEOMETRY...';
+    try {
+      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                                     .withFaceLandmarks()
+                                     .withFaceDescriptor();
+      
+      if (detection) {
+        const descriptorArray = Array.from(detection.descriptor);
+        sessionStorage.setItem('jarvis_face', JSON.stringify(descriptorArray));
+        document.getElementById('status-text').innerText = 'GEOMETRY EXTRACTED. CROSS-REFERENCING DATABASE...';
+        
+        // 4. Query DB to match face
+        if (_supabaseIndex) {
+          const { data: users, error } = await _supabaseIndex.from('jarvis_known_users').select('visitor_name, visitor_name_lower, face_descriptor');
+          if (!error && users) {
+            const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
+            let matchedUser = null;
+            let bestDistance = 1.0;
+            let isCreatorMatch = false;
+            
+            for (const u of users) {
+              if (u.face_descriptor) {
+                try {
+                  const dbDescriptor = new Float32Array(u.face_descriptor);
+                  const distance = faceapi.euclideanDistance(detection.descriptor, dbDescriptor);
+                  if (distance < 0.5) { // 80% geometric match threshold
+                    const isCreator = creatorAliases.includes((u.visitor_name_lower || '').toLowerCase());
+                    
+                    // The Ultimate Linking Factor: ALWAYS prioritize Creator Aliases if they share the same face
+                    if (isCreator && !isCreatorMatch) {
+                      bestDistance = distance;
+                      matchedUser = u.visitor_name;
+                      isCreatorMatch = true;
+                    } else if (!isCreatorMatch && distance < bestDistance) {
+                      bestDistance = distance;
+                      matchedUser = u.visitor_name;
+                    }
+                  }
+                } catch(e) {}
+              }
+            }
+
+            if (matchedUser) {
+              // WE HAVE A MATCH! AUTO-LOGIN!
+              document.getElementById('status-text').innerText = `BIOMETRIC MATCH CONFIRMED. WELCOME BACK, ${matchedUser.toUpperCase()}.`;
+              document.getElementById('v-name').value = matchedUser;
+              _visitorName = matchedUser;
+              
+              // Stop camera and immediately trigger boot!
+              stream.getTracks().forEach(track => track.stop());
+              btn.classList.add('secured');
+              btn.textContent = "[X] BIOMETRICS LOCKED";
+              
+              setTimeout(startExperience, 1500);
+              return; // Exit function so they don't have to manually click
+            } else {
+               document.getElementById('status-text').innerText = 'NO MATCH FOUND. NEW PROFILE DETECTED.';
+            }
+          }
+        }
+      } else {
+        document.getElementById('status-text').innerText = 'NO FACE DETECTED. PROCEEDING NORMALLY.';
+      }
+    } catch (err) {
+      console.warn("Biometrics skip:", err);
+      alert("Biometrics Error: " + err.message);
+      document.getElementById('status-text').innerText = 'BIOMETRICS SKIPPED. PROCEEDING NORMALLY.';
+    }
 
     // Stop the webcam immediately
     stream.getTracks().forEach(track => track.stop());
@@ -572,9 +669,10 @@ async function requestCam() {
     btn.textContent = "[X] SECURED";
 
   } catch (err) {
-    console.warn("[SYS] Camera Access Denied.");
+    console.warn("[SYS] Camera Error: ", err);
     btn.classList.add('failed');
     btn.textContent = "[!] DENIED";
+    alert("Hardware Error: " + err.message + "\n\nPlease ensure your webcam is connected, not used by another app, and you clicked 'Allow' in the browser.");
   }
 }
 /* ════════════════════════════════════════
@@ -585,6 +683,9 @@ function startExperience() {
   const age   = parseInt(document.getElementById('v-age').value) || 0;
   const title = document.getElementById('v-title').value;
   if (!name) { document.getElementById('v-name').focus(); return; }
+  
+  sessionStorage.setItem('jarvis_age', age); // Save age for profile sync
+
   const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
   if (creatorAliases.includes(name.toLowerCase())) {
      triggerMakerBootAuth(name);
@@ -597,6 +698,8 @@ function startExperience() {
   else                    greeting = `Welcome, Future Innovator ${name}`;
   _visitorName     = name;
   _visitorGreeting = greeting;
+  sessionStorage.setItem('jarvis_name', name);
+  sessionStorage.setItem('jarvis_greeting', greeting);
   proceedToLaunch('Initializing Core Architecture...');
 }
 function proceedToLaunch(bootMessage) {
@@ -612,7 +715,7 @@ function triggerMakerBootAuth(name) {
   form.innerHTML = `
     <div class="form-row">
       <label style="color:#ff1744">AUTHORIZATION CODE</label>
-      // Replace the password input line inside triggerMakerBootAuth with this:
+      
 <input type="password" id="maker-pass-boot" placeholder="Enter password..." style="border-color:#ff1744; color:#ff1744; text-align:center;" autocomplete="off" onkeypress="if(event.key === 'Enter') verifyMakerBoot('${name}');" />
     </div>
     <button type="button" onclick="verifyMakerBoot('${name}')" style="margin-top:15px; background:rgba(255,23,68,0.1); border:1px solid #ff1744; color:#ff1744; padding:10px; cursor:pointer; font-family:var(--font-hud);">VERIFY UPLINK</button>
@@ -652,8 +755,9 @@ function launchDashboard() {
   
   setTimeout(() => {
     console.log("[JARVIS] Executing Redirect...");
+    sessionStorage.removeItem('jarvis_session_logged'); // FORCE fresh telemetry sync on boot
     window.location.assign(targetUrl);
-  }, 800);
+  }, 1200);
 }
 /* ════════════════════════════════════════════════════════════════
    IIFE 1 — HUD DATA RAIN  (Easter Egg: press '1' to toggle)
