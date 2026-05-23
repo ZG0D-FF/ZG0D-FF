@@ -1,11 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- [DEV MODE: AUTO-CACHE WIPE] -->
+<!-- [DEV MODE: AUTO-CACHE WIPE & NAMESPACING] -->
+<script>
+  window.ENV_PREFIX = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'jarvis_dev_' : 'jarvis_prod_';
+  
+  if (window.ENV_PREFIX === 'jarvis_dev_') {
+      console.warn("[DEV MODE] Localhost detected. Wiping session/local storage to prevent caching loops.");
+      if (!window.location.search.includes('visitor=')) {
+          sessionStorage.clear();
+          localStorage.clear();
+      }
+  }
+</script>
   <!-- [SYS.ADMIN] FACE-API.JS NEURAL NETWORK -->
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>JARVIS — Portfolio</title>
+<script type="module">import {ulid} from "https://unpkg.com/ulid?module"; window.ulid = ulid;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -236,9 +250,9 @@ body {
 .hw-btn.failed {
   border-color: #ff1744; color: #ff1744; background: rgba(255, 23, 68, 0.1);
 }
-
-
 </style>
+
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <iframe src="jarvis_ui.html" style="position: fixed; bottom: 20px; right: 20px; width: 400px; height: 620px; border: none; z-index: 105; background: transparent; pointer-events: auto;"></iframe>
@@ -535,7 +549,7 @@ function requestGPS() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-        sessionStorage.setItem('jarvis_loc', coords);
+        sessionStorage.setItem(window.ENV_PREFIX + 'loc', coords);
         btn.classList.add('secured');
         btn.textContent = "[X] SECURED";
       },
@@ -545,7 +559,7 @@ function requestGPS() {
           const geoRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
           const geoData = await geoRes.json();
           const coords = `${parseFloat(geoData.latitude).toFixed(4)}, ${parseFloat(geoData.longitude).toFixed(4)}`;
-          sessionStorage.setItem('jarvis_loc', coords);
+          sessionStorage.setItem(window.ENV_PREFIX + 'loc', coords);
           btn.classList.add('secured');
           btn.textContent = "[X] IP SECURED";
         } catch(e) {
@@ -562,8 +576,8 @@ function requestGPS() {
 function startGuest() {
   _visitorName = "Guest";
   _visitorGreeting = "WELCOME // GUEST";
-  sessionStorage.setItem('jarvis_name', 'Guest');
-  sessionStorage.setItem('jarvis_greeting', 'WELCOME // GUEST');
+  sessionStorage.setItem(window.ENV_PREFIX + 'name', 'Guest');
+  sessionStorage.setItem(window.ENV_PREFIX + 'greeting', 'WELCOME // GUEST');
   proceedToLaunch('Initializing Guest Protocol...');
 }
 
@@ -590,7 +604,7 @@ async function requestCam() {
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
     const base64Photo = canvas.toDataURL('image/jpeg', 0.7);
-    sessionStorage.setItem('jarvis_photo', base64Photo);
+    sessionStorage.setItem(window.ENV_PREFIX + 'photo', base64Photo);
 
     // 3. [SYS.ADMIN] RUN FACIAL BIOMETRICS SCAN
     document.getElementById('status-text').innerText = 'EXTRACTING 128-FLOAT FACIAL GEOMETRY...';
@@ -601,7 +615,7 @@ async function requestCam() {
       
       if (detection) {
         const descriptorArray = Array.from(detection.descriptor);
-        sessionStorage.setItem('jarvis_face', JSON.stringify(descriptorArray));
+        sessionStorage.setItem(window.ENV_PREFIX + 'face', JSON.stringify(descriptorArray));
         document.getElementById('status-text').innerText = 'GEOMETRY EXTRACTED. CROSS-REFERENCING DATABASE...';
         
         // 4. Query DB to match face
@@ -684,7 +698,7 @@ function startExperience() {
   const title = document.getElementById('v-title').value;
   if (!name) { document.getElementById('v-name').focus(); return; }
   
-  sessionStorage.setItem('jarvis_age', age); // Save age for profile sync
+  sessionStorage.setItem(window.ENV_PREFIX + 'age', age); // Save age for profile sync
 
   const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
   if (creatorAliases.includes(name.toLowerCase())) {
@@ -698,8 +712,8 @@ function startExperience() {
   else                    greeting = `Welcome, Future Innovator ${name}`;
   _visitorName     = name;
   _visitorGreeting = greeting;
-  sessionStorage.setItem('jarvis_name', name);
-  sessionStorage.setItem('jarvis_greeting', greeting);
+  sessionStorage.setItem(window.ENV_PREFIX + 'name', name);
+  sessionStorage.setItem(window.ENV_PREFIX + 'greeting', greeting);
   proceedToLaunch('Initializing Core Architecture...');
 }
 function proceedToLaunch(bootMessage) {
@@ -755,7 +769,7 @@ function launchDashboard() {
   
   setTimeout(() => {
     console.log("[JARVIS] Executing Redirect...");
-    sessionStorage.removeItem('jarvis_session_logged'); // FORCE fresh telemetry sync on boot
+    sessionStorage.removeItem(window.ENV_PREFIX + 'session_logged'); // FORCE fresh telemetry sync on boot
     window.location.assign(targetUrl);
   }, 1200);
 }
