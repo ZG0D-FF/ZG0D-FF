@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>JARVIS — Portfolio </title>
+<title>JARVIS — Portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 :root {
   --cyan:   #00e5ff;
@@ -217,6 +219,23 @@ body {
   background: var(--cyan); box-shadow: var(--glow);
   animation: pulse-dot 1.5s ease infinite;
 }
+/* HARDWARE UPLINK BUTTONS */
+.hw-btn {
+  flex: 1; background: rgba(0,229,255,0.05); border: 1px dashed var(--cyan);
+  color: var(--cyan); font-family: var(--font-mono); font-size: 10px;
+  padding: 10px; cursor: pointer; transition: all 0.3s;
+  letter-spacing: 1px; text-transform: uppercase; border-radius: 3px;
+}
+.hw-btn:hover { background: rgba(0,229,255,0.15); box-shadow: var(--glow); }
+.hw-btn.secured { 
+  border-color: #00e676; color: #00e676; background: rgba(0, 230, 118, 0.1); 
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+}
+.hw-btn.failed {
+  border-color: #ff1744; color: #ff1744; background: rgba(255, 23, 68, 0.1);
+}
+
+
 </style>
 </head>
 <body>
@@ -258,7 +277,7 @@ body {
   <div id="boot-text"></div>
   <div class="scan-bar" id="scan-bar"></div>
 
-  <form id="visitor-form" onsubmit="return false;">
+  <div id="visitor-form" onsubmit="return false;">
     <div class="form-row">
       <label>YOUR NAME</label>
       <input type="text" id="v-name" placeholder="Enter identification..." autocomplete="off" required/>
@@ -274,8 +293,19 @@ body {
         <option value="Ma'am">Ma'am</option>
       </select>
     </div>
-    <button id="boot-submit" type="button" onclick="startExperience()">INITIATE ACCESS →</button>
-  </form>
+    
+    <div class="form-row" style="margin-top: 10px;">
+      <label>HARDWARE AUTHORIZATION</label>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" id="btn-gps" class="hw-btn" onclick="requestGPS()">[ ] TELEMETRY</button>
+        <button type="button" id="btn-cam" class="hw-btn" onclick="requestCam()">[ ] OPTICS</button>
+      </div>
+      <div style="font-size: 8px; color: rgba(0,229,255,0.4); margin-top: 4px;">* Required for full system diagnostics. Data encrypted locally.</div>
+    </div>
+
+        <button id="boot-submit" type="button" onclick="startExperience()" style="display: block; margin-top: 10px;">INITIATE ACCESS →</button>
+    <button id="guest-submit" type="button" onclick="startGuest()" style="display: block; background: transparent; border: 1px dashed rgba(0,229,255,0.4); color: rgba(0,229,255,0.6); font-family: var(--font-hud); font-size: 11px; letter-spacing: 2px; padding: 10px; cursor: pointer; border-radius: 3px; margin-top: 10px; transition: all 0.3s; width: 100%;">ENTER AS GUEST [>>]</button>
+  </div>
 </div>
 
 <script>
@@ -467,43 +497,162 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ════════════════════════════════════════
-   FORM SUBMIT → scan animation — identical logic
+   BIOMETRIC & GPS ACQUISITION
+════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   EXPLICIT HARDWARE AUTHORIZATION
+════════════════════════════════════════ */
+
+// Ensure Supabase client is initialized for boot auth
+const _supabaseIndex = window.supabase ? window.supabase.createClient('https://btqzwsuuxycpgkzddure.supabase.co', 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO') : null;
+function requestGPS() {
+  const btn = document.getElementById('btn-gps');
+  btn.textContent = "SCANNING...";
+  
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+        sessionStorage.setItem('jarvis_loc', coords);
+        btn.classList.add('secured');
+        btn.textContent = "[X] SECURED";
+      },
+      async (err) => {
+        console.warn("[SYS] GPS Access Denied. Attempting IP Fallback.");
+        try {
+          const geoRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+          const geoData = await geoRes.json();
+          const coords = `${parseFloat(geoData.latitude).toFixed(4)}, ${parseFloat(geoData.longitude).toFixed(4)}`;
+          sessionStorage.setItem('jarvis_loc', coords);
+          btn.classList.add('secured');
+          btn.textContent = "[X] IP SECURED";
+        } catch(e) {
+          btn.classList.add('failed');
+          btn.textContent = "[!] DENIED";
+        }
+      }
+    );
+  } else {
+    btn.classList.add('failed');
+    btn.textContent = "[!] OFFLINE";
+  }
+}
+function startGuest() {
+  _visitorName = "Guest";
+  _visitorGreeting = "WELCOME // GUEST";
+  proceedToLaunch('Initializing Guest Protocol...');
+}
+
+// Triggered when user clicks [ ] OPTICS
+async function requestCam() {
+  const btn = document.getElementById('btn-cam');
+  btn.textContent = "UPLINKING...";
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    
+    await new Promise((resolve) => {
+      video.onloadedmetadata = () => { video.play(); resolve(); };
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const base64Photo = canvas.toDataURL('image/jpeg', 0.7);
+    sessionStorage.setItem('jarvis_photo', base64Photo);
+
+    // Stop the webcam immediately
+    stream.getTracks().forEach(track => track.stop());
+
+    btn.classList.add('secured');
+    btn.textContent = "[X] SECURED";
+
+  } catch (err) {
+    console.warn("[SYS] Camera Access Denied.");
+    btn.classList.add('failed');
+    btn.textContent = "[!] DENIED";
+  }
+}
+/* ════════════════════════════════════════
+   FORM SUBMIT → FAST BOOT
 ════════════════════════════════════════ */
 function startExperience() {
   const name  = document.getElementById('v-name').value.trim();
   const age   = parseInt(document.getElementById('v-age').value) || 0;
   const title = document.getElementById('v-title').value;
   if (!name) { document.getElementById('v-name').focus(); return; }
-
+  const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
+  if (creatorAliases.includes(name.toLowerCase())) {
+     triggerMakerBootAuth(name);
+     return;
+  }
   const diff = Math.abs(age - MY_AGE);
   let greeting;
   if (diff <= 3)          greeting = `Welcome, Fellow Engineer — ${name}`;
   else if (age > MY_AGE)  greeting = `Welcome, ${title} ${name}`;
   else                    greeting = `Welcome, Future Innovator ${name}`;
-
   _visitorName     = name;
   _visitorGreeting = greeting;
-
+  proceedToLaunch('Initializing Core Architecture...');
+}
+function proceedToLaunch(bootMessage) {
   document.getElementById('visitor-form').classList.remove('active');
   document.getElementById('scan-bar').classList.add('active');
-
-  const bt = document.getElementById('boot-text');
-  bt.innerHTML = '';
-
+  document.getElementById('boot-text').innerHTML = bootMessage;
   launchDashboard();
+}
+function triggerMakerBootAuth(name) {
+  document.getElementById('boot-text').innerHTML = '<span style="color:#ff1744">CREATOR ALIAS DETECTED. AWAITING AUTHORIZATION...</span>';
+  
+  const form = document.getElementById('visitor-form');
+  form.innerHTML = `
+    <div class="form-row">
+      <label style="color:#ff1744">AUTHORIZATION CODE</label>
+      // Replace the password input line inside triggerMakerBootAuth with this:
+<input type="password" id="maker-pass-boot" placeholder="Enter password..." style="border-color:#ff1744; color:#ff1744; text-align:center;" autocomplete="off" onkeypress="if(event.key === 'Enter') verifyMakerBoot('${name}');" />
+    </div>
+    <button type="button" onclick="verifyMakerBoot('${name}')" style="margin-top:15px; background:rgba(255,23,68,0.1); border:1px solid #ff1744; color:#ff1744; padding:10px; cursor:pointer; font-family:var(--font-hud);">VERIFY UPLINK</button>
+    <div id="auth-err-boot" style="color:#ff1744; font-size:10px; margin-top:10px;"></div>
+  `;
+}
+async function verifyMakerBoot(name) {
+  const pass = document.getElementById('maker-pass-boot').value;
+  const errDiv = document.getElementById('auth-err-boot');
+  errDiv.innerText = "AUTHENTICATING...";
+  
+  // NOTE: Replace this email with your actual Supabase login email!
+  const makerEmail = "ZGODMR@gmail.com"; 
+  const { data, error } = await _supabaseIndex.auth.signInWithPassword({
+    email: makerEmail,
+    password: pass,
+  });
+  if (error) {
+    errDiv.innerText = "ACCESS DENIED: " + error.message;
+  } else {
+    _visitorName = name;
+    _visitorGreeting = "WELCOME BACK // DJ [SYSTEM ARCHITECT]";
+    proceedToLaunch('Authentication accepted. Initializing Maker Environment...');
+  }
 }
 
 /* ════════════════════════════════════════
    LAUNCH — identical to original
 ════════════════════════════════════════ */
 function launchDashboard() {
+  console.log("[JARVIS] Launch Sequence Initiated.");
   const boot = document.getElementById('boot-screen');
-  boot.style.opacity = '0';
+  if (boot) boot.style.opacity = '0';
+  
+  const targetUrl = './dashboard.html?visitor=' + encodeURIComponent(_visitorName) + '&greeting=' + encodeURIComponent(_visitorGreeting);
+  console.log("[JARVIS] Target Dashboard URL:", targetUrl);
+  
   setTimeout(() => {
-    window.location.href =
-      'dashboard.html' +
-      '?visitor='  + encodeURIComponent(_visitorName) +
-      '&greeting=' + encodeURIComponent(_visitorGreeting);
+    console.log("[JARVIS] Executing Redirect...");
+    window.location.assign(targetUrl);
   }, 800);
 }
 /* ════════════════════════════════════════════════════════════════
@@ -1280,5 +1429,6 @@ function launchDashboard() {
     document.body.appendChild(eclipseSys);
 })();
 </script>
+
 </body>
 </html>
