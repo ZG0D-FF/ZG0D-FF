@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* KILLS THE UGLY WHITE IFRAME SCROLLBAR */
 body { margin: 0; overflow: hidden; background: transparent; }
@@ -12,6 +13,22 @@ body { margin: 0; overflow: hidden; background: transparent; }
 #response-box::-webkit-scrollbar { width: 5px; }
 #response-box::-webkit-scrollbar-track { background: rgba(0, 20, 35, 0.8); border-radius: 4px; }
 #response-box::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 4px; }
+/* HARDWARE UPLINK BUTTONS */
+.hw-btn {
+  flex: 1; background: rgba(0,229,255,0.05); border: 1px dashed var(--cyan);
+  color: var(--cyan); font-family: var(--font-mono); font-size: 10px;
+  padding: 10px; cursor: pointer; transition: all 0.3s;
+  letter-spacing: 1px; text-transform: uppercase; border-radius: 3px;
+}
+.hw-btn:hover { background: rgba(0,229,255,0.15); box-shadow: var(--glow); }
+.hw-btn.secured { 
+  border-color: #00e676; color: #00e676; background: rgba(0, 230, 118, 0.1); 
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+}
+.hw-btn.failed {
+  border-color: #ff1744; color: #ff1744; background: rgba(255, 23, 68, 0.1);
+}
+
 </style>
 
 <div id="root" style="width:100%;height:620px;background:transparent;border-radius:8px;position:relative;overflow:hidden;font-family:'Courier New',monospace;">
@@ -266,7 +283,7 @@ async function updateStats(t) {
 async function checkLatency() {
   const start = Date.now();
   try {
-    await fetch("https://soft-thunder-2965.zgodmr.workers.dev", { method: 'HEAD', mode: 'no-cors' });
+    await fetch("https://cloudflare.com/cdn-cgi/trace", { method: 'GET', mode: 'no-cors' });
     currentLatency = (Date.now() - start);
   } catch (e) {
     currentLatency = "ERR";
@@ -286,41 +303,118 @@ function loop(){
 loop();
 
 // --- JARVIS THINKING ENGINE ---
+// --- JARVIS THINKING ENGINE ---
+const _sbClient = window.supabase ? window.supabase.createClient('https://btqzwsuuxycpgkzddure.supabase.co', 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO') : null;
+const adminEmail = 'ZGODMR@gmail.com'; // CHANGE TO YOUR SUPABASE ADMIN EMAIL
+
+let currentVisitorName = new URLSearchParams(window.parent.location.search).get('visitor') || "Guest";
+let authState = "NORMAL"; 
+let tempName = "";
+
 async function query(userText) {
   const box = document.getElementById('response-text');
-  talking = true; 
-  talkLevel = 0.5;
+  talking = true; talkLevel = 0.5;
+  
+  // STATE 2: GUEST ENTERING NAME
+  if (authState === "AWAITING_NAME") {
+    tempName = userText.trim();
+    const aliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
+    if (aliases.includes(tempName.toLowerCase())) {
+      box.style.color = '#ffab00';
+      typeChat("Creator alias detected. Please enter your authorization code.", 22);
+      document.getElementById('cmd-input').type = "password";
+      document.getElementById('cmd-input').placeholder = "Enter password...";
+      authState = "AWAITING_PASSWORD";
+    } else {
+      currentVisitorName = tempName;
+      try {
+        const url = new URL(window.parent.location);
+        url.searchParams.set('visitor', currentVisitorName);
+        window.parent.history.replaceState({}, '', url);
+      } catch(e){}
+      box.style.color = '#a0e8ff';
+      typeChat(`Name accepted. Welcome, ${currentVisitorName}.`, 22);
+      authState = "NORMAL";
+    }
+    setTimeout(() => { talking = false; talkLevel = 0; }, 2000);
+    return;
+  }
+  
+  // STATE 3: MAKER ENTERING PASSWORD
+  if (authState === "AWAITING_PASSWORD") {
+    box.textContent = "Authenticating with Supabase...";
+    const { data, error } = await _sbClient.auth.signInWithPassword({
+      email: adminEmail,
+      password: userText.trim()
+    });
+    
+    document.getElementById('cmd-input').type = "text";
+    document.getElementById('cmd-input').placeholder = "Enter command...";
+    
+    if (error) {
+      box.style.color = '#ff1744';
+      typeChat("Access denied. Reverting to Guest protocol.", 22);
+      currentVisitorName = "Guest";
+      authState = "NORMAL";
+    } else {
+      box.style.color = '#00e676';
+      currentVisitorName = tempName; 
+      typeChat("Authentication successful. Welcome back, Creator. Full privileges granted.", 22);
+      authState = "NORMAL";
+      try {
+        const url = new URL(window.parent.location);
+        url.searchParams.set('visitor', currentVisitorName);
+        window.parent.history.replaceState({}, '', url);
+      } catch(e){}
+    }
+    setTimeout(() => { talking = false; talkLevel = 0; }, 3000);
+    return;
+  }
+  
+  // STATE 1: GUEST TRIES TO CHAT
+  if (authState === "NORMAL" && currentVisitorName.toLowerCase() === "guest") {
+    box.style.color = '#a0e8ff';
+    typeChat("I don't believe we've been introduced. May I have your name?", 22);
+    authState = "AWAITING_NAME";
+    setTimeout(() => { talking = false; talkLevel = 0; }, 2000);
+    return;
+  }
+
+  // --- NORMAL CHAT RELAY TO WORKER ---
   box.style.color = 'rgba(0,212,255,0.5)';
   box.textContent = 'Relaying through soft-thunder-2965...';
 
   try {
     const PROXY_URL = "https://soft-thunder-2965.zgodmr.workers.dev";
+    const locationData = sessionStorage.getItem('jarvis_loc') || "Unknown";
+    const photoData = sessionStorage.getItem('jarvis_photo');
+
     const res = await fetch(PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userText: userText })
+      body: JSON.stringify({ 
+        userText: userText,
+        visitorName: currentVisitorName, 
+        location: locationData,
+        photoBase64: photoData 
+      })
     });
 
+    sessionStorage.removeItem('jarvis_photo');
     const data = await res.json();
-    
     const reply = data.choices && data.choices[0] && data.choices[0].message.content 
                   ? data.choices[0].message.content 
                   : 'Systems report: Neural relay timeout, sir.';
 
     box.style.color = '#a0e8ff';
-    typeChat(reply, 22); // Uses isolated chat function now
+    typeChat(reply, 22); 
     talkLevel = 0.8;
 
-    setTimeout(() => { 
-      talking = false; 
-      talkLevel = 0; 
-    }, reply.length * 22 + 800);
-
+    setTimeout(() => { talking = false; talkLevel = 0; }, reply.length * 22 + 800);
   } catch(e) {
     box.style.color = 'rgba(255,100,100,0.9)';
     box.textContent = 'Comms array offline. Worker unreachable, sir.';
-    talking = false; 
-    talkLevel = 0;
+    talking = false; talkLevel = 0;
   }
 }
 
