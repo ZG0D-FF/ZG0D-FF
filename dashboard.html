@@ -69,7 +69,6 @@ body {
 }
 #page-wrapper.loaded { opacity: 1; transform: translateY(0); }
 
-/* ── TOPBAR ── */
 #topbar {
   position: sticky; top: 0; z-index: 900;
   display: flex; align-items: center; justify-content: space-between;
@@ -78,8 +77,15 @@ body {
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border);
   gap: 12px;
-  overflow: hidden;
+  flex-wrap: wrap; /* Fixes cutoff */
+  overflow: visible; /* Prevents clipping */
 }
+
+.topbar-nav { 
+  display: flex; gap: 14px; list-style: none; flex-shrink: 0; 
+  flex-wrap: wrap; justify-content: center; /* Allows menu items to flow */
+}
+
 .topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .back-btn {
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
@@ -97,6 +103,11 @@ body {
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
   color: rgba(0,229,255,0.5); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; max-width: 180px; flex-shrink: 0;
+}
+
+/* Add this right underneath it to hide it on mobile */
+@media (max-width: 768px) {
+  .topbar-greeting { display: none; }
 }
 .topbar-nav { display: flex; gap: 14px; list-style: none; flex-shrink: 0; }
 .topbar-nav a {
@@ -547,10 +558,81 @@ footer {
 }
 @media(max-width:600px){
   .page-content { padding: 0 16px 60px; }
-  #topbar { padding: 12px 16px; }
-  .proj-grid { grid-template-columns: 1fr; }
-  .photos-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ════════════════════════════════════════
+   TOPBAR LAYOUT FIX (V2)
+════════════════════════════════════════ */
+#topbar {
+    position: sticky; top: 0; z-index: 900;
+    display: flex; align-items: center; justify-content: flex-start; /* Flows naturally from the left */
+    padding: 14px 24px;
+    background: rgba(2, 12, 24, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+    gap: 20px; /* Even 20px spacing between all groups */
+    flex-wrap: wrap; /* Allows wrapping on very small screens */
+}
+
+.topbar-left { 
+    display: flex; align-items: center; gap: 15px; flex-shrink: 0; 
+}
+
+.back-btn {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+    color: rgba(0,229,255,0.5); text-decoration: none;
+    border: 1px solid var(--border); padding: 5px 10px; border-radius: 3px;
+    transition: all 0.3s; white-space: nowrap;
+}
+
+.back-btn:hover { 
+    color: var(--cyan); border-color: var(--cyan); box-shadow: var(--glow); 
+}
+
+.topbar-title {
+    font-family: var(--font-hud); font-size: 14px; font-weight: 900;
+    letter-spacing: 3px; color: var(--cyan); text-shadow: var(--glow);
+    white-space: nowrap;
+}
+
+/* Removed the cutoff restrictions so text can be fully seen! */
+.topbar-greeting {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px;
+    color: rgba(0,229,255,0.7); 
+    white-space: nowrap;
+}
+
+/* ── NAV LINKS ── */
+.topbar-nav {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 15px; list-style: none; padding: 0; margin: 0;
+}
+
+.topbar-nav a {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: rgba(0,229,255,0.6); 
+    text-decoration: none; transition: all 0.3s ease; white-space: nowrap;
+}
+
+.topbar-nav a:hover { 
+    color: var(--cyan); text-shadow: 0 0 8px var(--cyan); 
+}
+
+/* ── MOBILE SCREENS COMPACTION ── */
+@media (max-width: 1100px) {
+    #topbar {
+        justify-content: center; /* Center everything on mobile */
+    }
+    .topbar-greeting, #live-clock {
+        display: none !important; /* Hide non-essentials on mobile to save space */
+    }
+    .topbar-nav {
+        justify-content: center;
+        width: 100%; /* Force links to take their own row if cramped */
+    }
+}
+
+
 /* ── 3D HOLO GALLERY ── */
 #photo-3d-scene {
   perspective: 1000px; /* Depth of the 3D space */
@@ -841,7 +923,7 @@ footer {
 <div class="grid-overlay"></div>
 <div class="scanlines"></div>
 <canvas id="bg-canvas"></canvas>
-
+<iframe src="jarvis_ui.html" style="position: fixed; bottom: 20px; right: 20px; width: 400px; height: 620px; border: none; z-index: 105; background: transparent; pointer-events: auto;"></iframe>
 <!-- LIGHTBOX -->
 <div id="lightbox">
   <button id="lightbox-close" onclick="closeLightbox()">✕ CLOSE</button>
@@ -1019,7 +1101,7 @@ footer {
     </div>
 
     <!-- CGPA CHART -->
-    <<div class="dash-section" id="cgpa-chart">
+    <div class="dash-section" id="cgpa-chart">
       <div class="sec-label">MODULE_ACADEMIC</div>
       <h2 class="sec-title">SEMESTER TOPOGRAPHY</h2>
       <div class="hud-panel topo-panel">
@@ -1492,17 +1574,13 @@ function init3DBg() {
 ════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  // decodeURIComponent handles any %20 or other encoded chars; fallback to GUEST
   const rawVisitor = params.get('visitor');
 
-  // If no visitor param at all, user opened dashboard.html directly — redirect to index
-  if (!rawVisitor) {
-    console.log('[JARVIS] No visitor param — redirecting to index.html');
-    window.location.replace('index.html');
-    return;
+  let visitor = "guest";
+  if (rawVisitor) {
+    visitor = decodeURIComponent(rawVisitor).toLowerCase().trim();
   }
 
-  const visitor = decodeURIComponent(rawVisitor).toLowerCase().trim();
   const greetingEl = document.getElementById('topbar-greeting');
 
   console.log('[JARVIS] Visitor param received:', JSON.stringify(visitor));
@@ -2603,7 +2681,7 @@ function triggerKonami(){
     return "UNKNOWN ANOMALY";
   }
 
-  async function establishUplink() {
+    async function establishUplink() {
     try {
       // Step A: Get rough Lat/Lng from IP (Silent ping)
       const geoRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
@@ -2611,6 +2689,9 @@ function triggerKonami(){
       
       const lat = geoData.latitude;
       const lng = geoData.longitude;
+      
+      // Feed weather GPS to JARVIS memory fallback
+      sessionStorage.setItem('jarvis_loc', `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`);
       
       // OBFUSCATE LOCATION: Hide the explicit city name to protect privacy
       locEl.textContent = `LOC: [SECURE CLIENT NODE]`;
@@ -2641,7 +2722,7 @@ function triggerKonami(){
   // Initiate scan immediately on load
   establishUplink();
   
-  // CONTINUOUS LIVE UPDATE: Ping the server for fresh telemetry every 5 minutes (300,000 ms)
+  // CONTINUOUS LIVE UPDATE: Ping the server for fresh telemetry every 5 minutes
   setInterval(establishUplink, 300000);
 })();
 </script>
@@ -3265,6 +3346,103 @@ function triggerKonami(){
   setTimeout(() => obs.observe(container), 150);
 })();
 </script>
+<script>
+// ════════════════════════════════════════
+// IIFE: MOBILE PROTOCOL & JARVIS TOGGLE
+// ════════════════════════════════════════
+(function initMobileAndJarvisToggle() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* --- JARVIS TOGGLE BUTTON --- */
+        #jarvis-toggle-btn {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(2, 12, 24, 0.8);
+            border: 2px solid var(--cyan);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+            cursor: pointer;
+            z-index: 999999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        #jarvis-toggle-btn:hover {
+            background: var(--cyan);
+            box-shadow: 0 0 25px var(--cyan);
+        }
+        /* A sleek, cybernetic eye/core SVG icon */
+        #jarvis-toggle-btn svg {
+            width: 26px;
+            height: 26px;
+            fill: var(--cyan);
+            transition: fill 0.3s ease;
+        }
+        #jarvis-toggle-btn:hover svg { fill: var(--bg); }
 
+        /* --- IFRAME SLIDE-IN OVERRIDES --- */
+        iframe[src="jarvis_ui.html"] {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease !important;
+            transform: translateX(120%) scale(0.95) !important; /* Hidden off-screen to the right by default */
+            opacity: 0 !important;
+            pointer-events: none !important; /* Prevent accidental clicks when hidden */
+            z-index: 999998 !important;
+        }
+        
+        /* The class added when the button is clicked */
+        iframe[src="jarvis_ui.html"].assistant-active {
+            transform: translateX(0) scale(1) !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        /* --- MOBILE TACTICAL ADAPTATION (Screens under 768px) --- */
+        @media (max-width: 768px) {
+            /* Adjust iframe to fit perfectly above the button on mobile */
+            iframe[src="jarvis_ui.html"] {
+                width: 90vw !important;
+                height: 70vh !important;
+                top: 140px !important; 
+                right: 5vw !important; 
+                border-radius: 8px;
+                background: rgba(2, 12, 24, 0.95) !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const iframe = document.querySelector('iframe[src="jarvis_ui.html"]');
+    if (iframe) {
+        // Force scrolling for older mobile browsers
+        iframe.setAttribute('scrolling', 'yes');
+        
+        // Inject the Toggle Button
+        const btn = document.createElement('div');
+        btn.id = 'jarvis-toggle-btn';
+        // Techy SVG icon for the button
+        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" /></svg>`; 
+        document.body.appendChild(btn);
+
+        // Click Event to slide JARVIS in and out
+        btn.addEventListener('click', () => {
+            iframe.classList.toggle('assistant-active');
+            
+            // Visual feedback on the button when JARVIS is open
+            if(iframe.classList.contains('assistant-active')) {
+                btn.style.boxShadow = '0 0 25px var(--cyan)';
+                btn.style.background = 'rgba(0, 229, 255, 0.2)';
+            } else {
+                btn.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.4)';
+                btn.style.background = 'rgba(2, 12, 24, 0.8)';
+            }
+        });
+    }
+})();
+</script>
 </body>
 </html>
