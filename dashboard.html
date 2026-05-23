@@ -951,6 +951,9 @@ footer {
       <li><a href="#contact">CONTACT</a></li>
       <li><a href="#certs">CERTS</a></li>
       <li><a href="#skills">SKILLS</a></li>
+      <li id="secret-admin-btn">
+        <a href="#" onclick="openSurveillance(); return false;" style="color: var(--amber); border-bottom: 1px dashed var(--amber); margin-left: 20px;">[ ] SURVEILLANCE</a>
+      </li>
     </ul>
   </nav>
   <div class="mobile-nav" id="mob-nav">
@@ -1157,7 +1160,7 @@ footer {
 
     <!-- SKILLS RADAR -->
     <div class="dash-section" id="skills">
-      <div class="sec-label">// MODULE_SKILLS</div>
+      <div class="sec-label"> MODULE_SKILLS</div>
       <h2 class="sec-title">SKILL MATRIX</h2>
       <div class="hud-panel" style="max-width:500px;margin:0 auto;">
         <canvas id="radarChart" height="300"></canvas>
@@ -1185,6 +1188,17 @@ footer {
     <span class="pulse-dot"></span> &nbsp;
     PORTFOLIO &nbsp;|&nbsp; DJ © 2025 &nbsp;|&nbsp; ALL SYSTEMS OPERATIONAL
     &nbsp;·&nbsp; LAST UPDATED <span id="last-updated"></span>
+  <!-- [SYS.ADMIN] EMBEDDED SURVEILLANCE OVERLAY -->
+  <div id="admin-surveillance-overlay" style="display: none; position: fixed; inset: 0; background: rgba(2, 12, 24, 0.95); z-index: 99999; backdrop-filter: blur(10px); padding: 40px; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--amber); padding-bottom: 15px; margin-bottom: 20px;">
+      <h1 style="color: var(--amber); font-family: var(--font-hud); letter-spacing: 3px; font-size: 24px; text-shadow: 0 0 10px rgba(255,171,0,0.5);">[SYS.ADMIN] LIVE SURVEILLANCE</h1>
+      <button onclick="document.getElementById('admin-surveillance-overlay').style.display='none'" style="background: transparent; border: 1px solid var(--amber); color: var(--amber); padding: 5px 15px; cursor: pointer; font-family: var(--font-mono);">[X] CLOSE</button>
+    </div>
+    <div id="surveillance-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+      <!-- Logs will dynamically populate here -->
+    </div>
+  </div>
+
   </footer>
 </div>
 
@@ -1203,8 +1217,48 @@ footer {
 
   // INITIALIZE SUPABASE — must be here so _supabase is available to triggerSecurityMatrix()
   const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  
+  // [SYS.ADMIN] GLOBAL SURVEILLANCE FUNCTION
+  window.openSurveillance = async function() {
+    document.getElementById('admin-surveillance-overlay').style.display = 'block';
+    const grid = document.getElementById('surveillance-grid');
+    grid.innerHTML = '<div style="color: var(--amber); font-family: var(--font-mono); text-align: center; width: 100%;">Uplinking to Supabase...</div>';
+    
+    const { data, error } = await _supabase
+      .from('jarvis_known_users')
+      .select('*')
+      .order('last_seen', { ascending: false });
+
+    if (error) {
+      grid.innerHTML = `<div style="color: red; font-family: var(--font-mono);">ERROR: ${error.message}</div>`;
+      return;
+    }
+
+    grid.innerHTML = '';
+    const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
+    
+    data.forEach(user => {
+      const imgSrc = user.photo_base64 || 'https://via.placeholder.com/320x240/020c18/ffab00?text=NO+VISUAL';
+      const isCreator = creatorAliases.includes((user.visitor_name_lower || '').toLowerCase());
+      
+      const borderCol = isCreator ? '#ff1744' : 'var(--amber)';
+      const bgCol = isCreator ? 'rgba(255,23,68,0.05)' : 'rgba(0,0,0,0.5)';
+      const nameText = isCreator ? `<span style="color:#ff1744">[CREATOR] ${user.visitor_name.toUpperCase()}</span>` : user.visitor_name;
+      
+      grid.innerHTML += `
+        <div style="border: 1px solid ${borderCol}; background: ${bgCol}; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px ${isCreator ? 'rgba(255,23,68,0.2)' : 'rgba(255,171,0,0.1)'};">
+          <img src="${imgSrc}" style="width: 100%; border: 1px solid ${borderCol}; margin-bottom: 15px; border-radius: 2px;">
+          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>NAME:</b> ${nameText}</div>
+          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>IP:</b> ${user.client_ip}</div>
+          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>LOC:</b> ${user.location_data || 'UNKNOWN'}</div>
+          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>SEEN:</b> ${new Date(user.last_seen).toLocaleString()}</div>
+        </div>
+      `;
+    });
+  };
+
   const urlParams  = new URLSearchParams(window.location.search);
-  const visitorName = urlParams.get('visitor') || 'GUEST';
+  const visitorName = sessionStorage.getItem('jarvis_name') || urlParams.get('visitor') || 'GUEST';
 
   // TELEMETRY FUNCTION UPDATE
   async function transmitTelemetry() {
@@ -1215,14 +1269,32 @@ footer {
     }
 
     try {
-      // Call the Edge Function instead of the database directly
+      // 1. Sync the Profile (Name, Age, Photo, Location)
+      await fetch(`${supabaseUrl}/functions/v1/jarvis-telemetry`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({
+          action: 'sync_profile',
+          visitor_name: visitorName,
+          age: sessionStorage.getItem('jarvis_age') || null,
+          location_data: sessionStorage.getItem('jarvis_loc') || null,
+          photo_base64: sessionStorage.getItem('jarvis_photo') || null,
+          face_descriptor: sessionStorage.getItem('jarvis_face') || null
+        })
+      });
+
+      // 2. Call the Edge Function to log the session
       const response = await fetch(`${supabaseUrl}/functions/v1/jarvis-telemetry`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}` // Uses your standard anon key
+          'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
+          action: 'session',
           visitor_name: visitorName,
           page_section: 'DASHBOARD_INIT',
           device_info: navigator.userAgent
@@ -1574,7 +1646,7 @@ function init3DBg() {
 ════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const rawVisitor = params.get('visitor');
+  const rawVisitor = params.get('visitor') || sessionStorage.getItem('jarvis_name');
 
   let visitor = "guest";
   if (rawVisitor) {
@@ -1588,15 +1660,25 @@ window.addEventListener('DOMContentLoaded', () => {
   // The Creator Aliases (triggers the VIP lockdown)
   const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
 
-  if (creatorAliases.includes(visitor)) {
-      // Identity matched — trigger Supabase authentication
+  // Make the match completely case-insensitive
+  const isCreator = creatorAliases.includes(visitor.toLowerCase().trim());
+
+  if (isCreator) {
+      // Identity matched
+      const adminBtn = document.getElementById('secret-admin-btn');
+      if (adminBtn) adminBtn.style.display = 'block';
+
       console.log('[JARVIS] Creator alias matched. Triggering security matrix...');
       triggerSecurityMatrix();
   } else {
       // Normal guest — let them in
-      const greeting = params.get('greeting')
-        ? decodeURIComponent(params.get('greeting'))
-        : `WELCOME // ${visitor.toUpperCase()}`;
+      let greeting = sessionStorage.getItem('jarvis_greeting');
+      if (!greeting && params.get('greeting')) {
+        greeting = decodeURIComponent(params.get('greeting'));
+      }
+      if (!greeting) {
+        greeting = `WELCOME // ${visitor.toUpperCase()}`;
+      }
       greetingEl.textContent = greeting;
       loadDashboardElements();
   }
