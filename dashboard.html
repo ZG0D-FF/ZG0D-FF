@@ -1,9 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- [DEV MODE: AUTO-CACHE WIPE & NAMESPACING] -->
+<script>
+  window.ENV_PREFIX = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'jarvis_dev_' : 'jarvis_prod_';
+  
+  if (window.ENV_PREFIX === 'jarvis_dev_') {
+      console.warn("[DEV MODE] Localhost detected. Wiping session/local storage to prevent caching loops.");
+      if (!window.location.search.includes('visitor=')) {
+          sessionStorage.clear();
+          localStorage.clear();
+      }
+  }
+</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>JARVIS — Dashboard</title>
+<script type="module">import {ulid} from "https://unpkg.com/ulid?module"; window.ulid = ulid;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1258,11 +1271,11 @@ footer {
   };
 
   const urlParams  = new URLSearchParams(window.location.search);
-  const visitorName = sessionStorage.getItem('jarvis_name') || urlParams.get('visitor') || 'GUEST';
+  const visitorName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || urlParams.get('visitor') || 'GUEST';
 
   // TELEMETRY FUNCTION UPDATE
   async function transmitTelemetry() {
-    if (sessionStorage.getItem('jarvis_session_logged')) {
+    if (sessionStorage.getItem(window.ENV_PREFIX + 'session_logged')) {
       console.log('[JARVIS] Session already logged. Fetching current count...');
       fetchLiveVisitorCount();
       return;
@@ -1279,10 +1292,10 @@ footer {
         body: JSON.stringify({
           action: 'sync_profile',
           visitor_name: visitorName,
-          age: sessionStorage.getItem('jarvis_age') || null,
-          location_data: sessionStorage.getItem('jarvis_loc') || null,
-          photo_base64: sessionStorage.getItem('jarvis_photo') || null,
-          face_descriptor: sessionStorage.getItem('jarvis_face') || null
+          age: sessionStorage.getItem(window.ENV_PREFIX + 'age') || null,
+          location_data: sessionStorage.getItem(window.ENV_PREFIX + 'loc') || null,
+          photo_base64: sessionStorage.getItem(window.ENV_PREFIX + 'photo') || null,
+          face_descriptor: sessionStorage.getItem(window.ENV_PREFIX + 'face') || null
         })
       });
 
@@ -1304,7 +1317,7 @@ footer {
       if (!response.ok) throw new Error('Network shield blocked request');
       
       console.log('[JARVIS] Telemetry Synced Successfully.');
-      sessionStorage.setItem('jarvis_session_logged', 'true');
+      sessionStorage.setItem(window.ENV_PREFIX + 'session_logged', 'true');
       incrementRedisCounter();
       
     } catch (error) {
@@ -1646,7 +1659,7 @@ function init3DBg() {
 ════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const rawVisitor = params.get('visitor') || sessionStorage.getItem('jarvis_name');
+  const rawVisitor = params.get('visitor') || sessionStorage.getItem(window.ENV_PREFIX + 'name');
 
   let visitor = "guest";
   if (rawVisitor) {
@@ -1672,7 +1685,7 @@ window.addEventListener('DOMContentLoaded', () => {
       triggerSecurityMatrix();
   } else {
       // Normal guest — let them in
-      let greeting = sessionStorage.getItem('jarvis_greeting');
+      let greeting = sessionStorage.getItem(window.ENV_PREFIX + 'greeting');
       if (!greeting && params.get('greeting')) {
         greeting = decodeURIComponent(params.get('greeting'));
       }
@@ -2773,7 +2786,7 @@ function triggerKonami(){
       const lng = geoData.longitude;
       
       // Feed weather GPS to JARVIS memory fallback
-      sessionStorage.setItem('jarvis_loc', `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`);
+      sessionStorage.setItem(window.ENV_PREFIX + 'loc', `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`);
       
       // OBFUSCATE LOCATION: Hide the explicit city name to protect privacy
       locEl.textContent = `LOC: [SECURE CLIENT NODE]`;
