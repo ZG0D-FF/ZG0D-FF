@@ -105,6 +105,28 @@ body { margin: 0; overflow: hidden; background: transparent; }
 </div>
 
 <script>
+async function logJarvisError(errMessage, source) {
+    try {
+        const url = "https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_error_logs";
+        const key = "sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO";
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                "apikey": key,
+                "Authorization": `Bearer ${key}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                error_message: String(errMessage),
+                error_source: source,
+                url: window.location.href,
+                user_agent: navigator.userAgent
+            })
+        });
+    } catch (e) {
+        console.warn("Failed to log error to DB");
+    }
+}
 const bgCanvas = document.getElementById('bg');
 const bctx = bgCanvas.getContext('2d');
 const ringCanvas = document.getElementById('ring');
@@ -305,10 +327,24 @@ loop();
 // --- AUDIO QUEUE ENGINE ---
 let audioQueue = [];
 let isAudioPlaying = false;
+let currentAudioObj = null;
+
+function stopJarvisAudio() {
+    audioQueue = []; // Clear the queue so he doesn't keep talking after being interrupted
+    if (currentAudioObj) {
+        try {
+            if (currentAudioObj.pause) currentAudioObj.pause(); // Stop HTML Audio
+            if (currentAudioObj.stop) currentAudioObj.stop();   // Stop Web Audio API Buffer
+        } catch(e) {}
+    }
+    isAudioPlaying = false;
+    currentAudioObj = null;
+}
 
 async function playNextInAudioQueue() {
     if (audioQueue.length === 0) {
         isAudioPlaying = false;
+        currentAudioObj = null;
         return;
     }
     isAudioPlaying = true;
@@ -317,13 +353,23 @@ async function playNextInAudioQueue() {
     try {
         if (nextItem.type === 'cache') {
             const audioObj = new Audio(nextItem.src);
+            currentAudioObj = audioObj;
             audioObj.onended = playNextInAudioQueue;
             audioObj.play().catch(e => {
                 console.warn("[JARVIS] Cache playback blocked.", e);
                 playNextInAudioQueue();
             });
         } else if (nextItem.type === 'base64') {
-            const audioCtx = window.parent.jarvisAudioContext || window.jarvisAudioContext || new (window.AudioContext || window.webkitAudioContext)();
+            let audioCtx;
+            try {
+                // Safely try parent context (can throw CORS SecurityError if file:///)
+                audioCtx = window.parent.jarvisAudioContext || window.jarvisAudioContext;
+            } catch(e) {
+                audioCtx = window.jarvisAudioContext;
+            }
+            if (!audioCtx) {
+                audioCtx = window.jarvisAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
             if (audioCtx.state === 'suspended') await audioCtx.resume();
 
             const binaryString = atob(nextItem.src);
@@ -338,10 +384,12 @@ async function playNextInAudioQueue() {
             source.buffer = audioBuffer;
             source.connect(audioCtx.destination);
             source.onended = playNextInAudioQueue;
+            currentAudioObj = source;
             source.start(0);
         }
     } catch(err) {
         console.error("[JARVIS] Audio queue playback error:", err);
+        if (typeof logJarvisError === 'function') logJarvisError(err.message || String(err), "playNextInAudioQueue");
         playNextInAudioQueue();
     }
 }
@@ -443,6 +491,9 @@ document.getElementById('mic-btn').addEventListener('click', () => {
   const inputField = document.getElementById('cmd-input');
   const box = document.getElementById('response-text');
 
+  // INTERRUPT OVERRIDE: If the user clicks the mic, JARVIS must shut up instantly!
+  stopJarvisAudio();
+
   // 1. TOGGLE OFF: If already listening, stop it manually
   if (listening && recog) {
     recog.stop();
@@ -473,13 +524,16 @@ document.getElementById('mic-btn').addEventListener('click', () => {
   
   // 5. SUCCESSFUL CAPTURE
   recog.onresult = e => {
+    if (!listening) return; // FIX: Prevent duplicate fires from the browser engine
     listening = false;
+    try { recog.stop(); } catch(err) {}
+    
     document.getElementById('core-label').textContent = 'SPEAK';
     inputField.placeholder = "Enter command...";
     
     const transcript = e.results[0][0].transcript;
     inputField.value = transcript;
-    query(transcript); // Send to Groq
+    query(transcript); // Send to LLM
   };
   
   // 6. ERROR HANDLING (Tell DJ what broke!)
