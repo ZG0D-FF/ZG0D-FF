@@ -302,7 +302,50 @@ function loop(){
 loop();
 
 // --- JARVIS THINKING ENGINE ---
-// --- JARVIS THINKING ENGINE ---
+// --- AUDIO QUEUE ENGINE ---
+let audioQueue = [];
+let isAudioPlaying = false;
+
+async function playNextInAudioQueue() {
+    if (audioQueue.length === 0) {
+        isAudioPlaying = false;
+        return;
+    }
+    isAudioPlaying = true;
+    const nextItem = audioQueue.shift();
+
+    try {
+        if (nextItem.type === 'cache') {
+            const audioObj = new Audio(nextItem.src);
+            audioObj.onended = playNextInAudioQueue;
+            audioObj.play().catch(e => {
+                console.warn("[JARVIS] Cache playback blocked.", e);
+                playNextInAudioQueue();
+            });
+        } else if (nextItem.type === 'base64') {
+            const audioCtx = window.parent.jarvisAudioContext || window.jarvisAudioContext || new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+            const binaryString = atob(nextItem.src);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioCtx.destination);
+            source.onended = playNextInAudioQueue;
+            source.start(0);
+        }
+    } catch(err) {
+        console.error("[JARVIS] Audio queue playback error:", err);
+        playNextInAudioQueue();
+    }
+}
+// --------------------------
 async function query(userText) {
   const box = document.getElementById('response-text');
   talking = true; 
@@ -338,19 +381,21 @@ async function query(userText) {
 
     const data = await res.json();
     
-    // --- [AUDIO ENGINE: THE VOICE] ---
+    // --- [AUDIO ENGINE: THE VOICE QUEUE] ---
     try {
       if (data.play_cache) {
-        console.log("[JARVIS] Audio Engine: Routing to Local Cache ->", data.play_cache);
-        new Audio(data.play_cache).play();
+        console.log("[JARVIS] Queuing Local Cache ->", data.play_cache);
+        audioQueue.push({ type: 'cache', src: data.play_cache });
+        if (!isAudioPlaying) playNextInAudioQueue();
       } else if (data.audio_base64) {
-        console.log("[JARVIS] Audio Engine: Streaming Dynamic Synthesis from ElevenLabs");
-        new Audio("data:audio/mp3;base64," + data.audio_base64).play();
+        console.log("[JARVIS] Queuing Dynamic Synthesis ArrayBuffer");
+        audioQueue.push({ type: 'base64', src: data.audio_base64 });
+        if (!isAudioPlaying) playNextInAudioQueue();
       }
     } catch (err) {
-      console.warn("[JARVIS] Audio playback blocked. Did you click the screen first?", err);
+      console.warn("[JARVIS] Audio queue push blocked.", err);
     }
-    // ---------------------------------
+    // ---------------------------------------
 
     const reply = data.choices && data.choices[0] && data.choices[0].message.content 
                   ? data.choices[0].message.content 
