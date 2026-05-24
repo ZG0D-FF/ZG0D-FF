@@ -266,7 +266,7 @@ body {
 <link rel="manifest" href="manifest.json">
 </head>
 <body>
-<iframe src="jarvis_ui.html" style="position: fixed; bottom: 20px; right: 20px; width: 400px; height: 620px; border: none; z-index: 105; background: transparent; pointer-events: auto;"></iframe>
+<iframe src="jarvis_ui.html" allow="autoplay; microphone" style="position: fixed; bottom: 20px; right: 20px; width: 400px; height: 620px; border: none; z-index: 105; background: transparent; pointer-events: auto;"></iframe>
 
 
 
@@ -593,6 +593,20 @@ function startGuest() {
 }
 
 // Triggered when user clicks [ ] OPTICS
+async function runGeminiAuthFallback(base64) {
+  try {
+    const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: "auth_fallback", photoBase64: base64 })
+    });
+    const data = await res.json();
+    return data.match === true;
+  } catch(e) {
+    return false;
+  }
+}
+
 async function requestCam() {
   const btn = document.getElementById('btn-cam');
   btn.textContent = "UPLINKING...";
@@ -679,12 +693,37 @@ async function requestCam() {
           }
         }
       } else {
-        document.getElementById('status-text').innerText = 'NO FACE DETECTED. PROCEEDING NORMALLY.';
+        document.getElementById('status-text').innerText = 'LOCAL BIOMETRICS FAILED. INITIATING CLOUD FALLBACK...';
+        const isMatch = await runGeminiAuthFallback(base64Photo);
+        if (isMatch) {
+            document.getElementById('status-text').innerText = 'CLOUD MATCH CONFIRMED. WELCOME BACK, DJ.';
+            document.getElementById('v-name').value = 'DJ';
+            _visitorName = 'DJ';
+            stream.getTracks().forEach(track => track.stop());
+            btn.classList.add('secured');
+            btn.textContent = "[X] BIOMETRICS LOCKED";
+            setTimeout(startExperience, 1500);
+            return;
+        } else {
+            document.getElementById('status-text').innerText = 'NO MATCH FOUND. PROCEEDING NORMALLY.';
+        }
       }
     } catch (err) {
       console.warn("Biometrics skip:", err);
-      alert("Biometrics Error: " + err.message);
-      document.getElementById('status-text').innerText = 'BIOMETRICS SKIPPED. PROCEEDING NORMALLY.';
+      document.getElementById('status-text').innerText = 'LOCAL ENGINE CRASHED. INITIATING CLOUD FALLBACK...';
+      const isMatch = await runGeminiAuthFallback(base64Photo);
+      if (isMatch) {
+          document.getElementById('status-text').innerText = 'CLOUD MATCH CONFIRMED. WELCOME BACK, DJ.';
+          document.getElementById('v-name').value = 'DJ';
+          _visitorName = 'DJ';
+          stream.getTracks().forEach(track => track.stop());
+          btn.classList.add('secured');
+          btn.textContent = "[X] BIOMETRICS LOCKED";
+          setTimeout(startExperience, 1500);
+          return;
+      } else {
+          document.getElementById('status-text').innerText = 'NO MATCH FOUND. PROCEEDING NORMALLY.';
+      }
     }
 
     // Stop the webcam immediately
