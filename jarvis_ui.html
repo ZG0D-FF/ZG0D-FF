@@ -412,7 +412,20 @@ async function query(userText) {
     const locationData = sessionStorage.getItem(window.ENV_PREFIX + 'loc') || "Unknown";
     const photoData = sessionStorage.getItem(window.ENV_PREFIX + 'photo');
 
-    // 3. Beam EVERYTHING to your Cloudflare Worker
+    // 3. Dynamically scrape local sections and nav links from the parent window
+    let dynamicRoutes = [];
+    try {
+        const links = window.parent.document.querySelectorAll('a[href]');
+        links.forEach(l => {
+            if (l.innerText.trim()) {
+                dynamicRoutes.push({ text: l.innerText.trim(), url: l.href });
+            }
+        });
+    } catch (e) {
+        console.warn("CORS blocked parent window scraping.");
+    }
+
+    // 4. Beam EVERYTHING to your Cloudflare Worker
     const res = await fetch(PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -420,7 +433,8 @@ async function query(userText) {
         userText: userText,
         visitorName: visitorName,
         location: locationData,
-        photoBase64: photoData 
+        photoBase64: photoData,
+        dynamicRoutes: dynamicRoutes
       })
     });
 
@@ -444,6 +458,27 @@ async function query(userText) {
       console.warn("[JARVIS] Audio queue push blocked.", err);
     }
     // ---------------------------------------
+    
+    // --- [TELEPORT ENGINE: UI NAVIGATION] ---
+    if (data.redirect_url) {
+        console.log("[JARVIS] Executing UI Navigation Function:", data.redirect_url);
+        setTimeout(() => {
+            try {
+                const currentOrigin = window.parent.location.origin;
+                const targetUrl = new URL(data.redirect_url, currentOrigin);
+                if (targetUrl.origin !== currentOrigin) {
+                    if (confirm("JARVIS is attempting to navigate to an external site:\n" + data.redirect_url + "\n\nAre you sure you want to proceed?")) {
+                        window.parent.location.href = data.redirect_url;
+                    }
+                } else {
+                    window.parent.location.href = data.redirect_url;
+                }
+            } catch(e) {
+                window.parent.location.href = data.redirect_url; // fallback
+            }
+        }, 1500); // 1.5s delay to let Jarvis start speaking before jumping
+    }
+    // ----------------------------------------
 
     const reply = data.choices && data.choices[0] && data.choices[0].message.content 
                   ? data.choices[0].message.content 
