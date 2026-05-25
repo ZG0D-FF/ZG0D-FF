@@ -12,6 +12,90 @@
           localStorage.clear();
       }
   }
+  // --- AUDIO HELPER ---
+function playSystemAudio(filename) {
+    if (window.jarvisAudioContext && window.jarvisAudioContext.state === 'suspended') {
+        window.jarvisAudioContext.resume();
+    }
+    new Audio('audio/' + filename).play().catch(e => console.warn("Autoplay blocked:", e));
+}
+</script>
+<script>
+// --- ADVANCED AUDIO ENGINE ---
+function playSystemAudio(filename) {
+    return new Promise((resolve) => {
+        if (window.jarvisAudioContext && window.jarvisAudioContext.state === 'suspended') {
+            window.jarvisAudioContext.resume();
+        }
+        const audio = new Audio('audio/' + filename);
+        audio.onended = resolve; 
+        audio.onerror = resolve; // Continue even if file is missing
+        audio.play().catch(e => {
+            console.warn("Autoplay blocked:", e);
+            resolve();
+        });
+    });
+}
+
+// 1. Smart Arrival Sequence (Time-Based & Identity-Based)
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(async () => {
+        // Force name to lowercase to flawlessly match DJ, Dj, dj, etc.
+        const parentUrlParams = new URLSearchParams(window.location.search);
+        const rawName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || parentUrlParams.get('visitor') || "Guest";
+        const visitorName = rawName.toLowerCase().trim();
+        
+        // Define Creator Aliases
+        const isDJ = ['dj', 'dibyajyotee', 'zgod'].includes(visitorName);
+
+        if (isDJ) {
+            // Play the main boot sequence first
+            await playSystemAudio('userarrives.mp3');
+            
+            // Calculate time of day for the perfect greeting
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) {
+                await playSystemAudio('djmrninggreet.mp3');   // Morning
+            } else if (hour >= 12 && hour < 17) {
+                await playSystemAudio('djaftrnoongreet.mp3'); // Afternoon
+            } else {
+                await playSystemAudio('djnightgreet.mp3');    // Evening/Night
+            }
+        } else {
+            // GUEST / OTHER USER LOGIN
+            const guestChoices = ['otheruserback.mp3', 'otheruserback2.mp3'];
+            await playSystemAudio(guestChoices[Math.floor(Math.random() * guestChoices.length)]);
+        }
+    }, 800);
+});
+
+// 2. The Idle System Tracker
+let jarvisIdleTimer;
+function resetJarvisIdleTimer() {
+    clearTimeout(jarvisIdleTimer);
+    jarvisIdleTimer = setTimeout(() => {
+        playSystemAudio('userstaysidle.mp3');
+    }, 60000); // 60 seconds of inactivity triggers idle voice
+}
+
+// Listen for user activity
+document.addEventListener('mousemove', resetJarvisIdleTimer);
+document.addEventListener('keypress', resetJarvisIdleTimer);
+document.addEventListener('click', resetJarvisIdleTimer);
+document.addEventListener('scroll', resetJarvisIdleTimer);
+resetJarvisIdleTimer();
+
+// 3. STUDY NOTES TRIGGER (For your new Neural Architecture panel!)
+const studyTriggerBtn = document.getElementById('study-trigger');
+if (studyTriggerBtn) {
+    // Only play it once per session to avoid annoyance
+    studyTriggerBtn.addEventListener('click', function() {
+        if (!this.dataset.audioPlayed) {
+            playSystemAudio('takemetonotes.mp3'); // "Understanding arrives quietly..."
+            this.dataset.audioPlayed = "true";
+        }
+    });
+}
 </script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -1847,6 +1931,14 @@ function buildProjects() {
   if (!carousel) return;
 
   PROJECTS.forEach(p => {
+    
+    // --- YOUTUBE CLICK HIJACKER ---
+    // If this is an Edge-Olfaction project, we overlay an invisible button
+    // that plays the audio, hides itself, and autoplays the YouTube video.
+    const edgeAudioTrigger = p.title.includes("Edge-Olfaction") 
+      ? `<div onclick="playSystemAudio('openingEdgeOlfaction.mp3'); this.style.display='none'; this.previousElementSibling.src += '?autoplay=1';" style="position:absolute; inset:0; z-index:10; cursor:pointer;"></div>`
+      : ``;
+
     // Check if video exists, otherwise show the "NO FOOTAGE" placeholder
     const videoHTML = p.youtubeId
       ? `<iframe src="https://www.youtube.com/embed/${p.youtubeId}" allowfullscreen></iframe>`
