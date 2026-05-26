@@ -460,9 +460,11 @@ async function query(userText) {
     // ---------------------------------------
     
     // --- [TELEPORT ENGINE: UI NAVIGATION] ---
+        // --- [TELEPORT ENGINE: UI NAVIGATION] ---
     if (data.redirect_url) {
         console.log("[JARVIS] Executing UI Navigation Function:", data.redirect_url);
-        setTimeout(() => {
+        
+        const executeJump = () => {
             try {
                 const currentOrigin = window.parent.location.origin;
                 const targetUrl = new URL(data.redirect_url, currentOrigin);
@@ -476,14 +478,33 @@ async function query(userText) {
             } catch(e) {
                 window.parent.location.href = data.redirect_url; // fallback
             }
-        }, 1500); // 1.5s delay to let Jarvis start speaking before jumping
+        };
+
+        // If audio is currently playing or queued up, wait for it to finish completely
+        if (isAudioPlaying || audioQueue.length > 0) {
+            console.log("[JARVIS] Holding navigation until audio finishes...");
+            const checkAudioInterval = setInterval(() => {
+                if (!isAudioPlaying && audioQueue.length === 0) {
+                    clearInterval(checkAudioInterval);
+                    executeJump();
+                }
+            }, 300); // Checks every 300ms if Jarvis is done talking
+        } else {
+            // No audio playing? Just do a quick jump.
+            setTimeout(executeJump, 800);
+        }
     }
     // ----------------------------------------
 
     const reply = data.choices && data.choices[0] && data.choices[0].message.content 
                   ? data.choices[0].message.content 
                   : 'Systems report: Neural relay timeout, sir.';
-
+    // [PHASE 11] BANISHMENT TRIGGER DETECTED
+    if (reply.includes("[EXECUTE_BANISHMENT]")) {
+        executeBanishment();
+        return; // Stop execution immediately, do not type anything
+    }
+	
     box.style.color = '#a0e8ff';
     typeChat(reply, 22); 
     talkLevel = 0.8;
@@ -600,5 +621,110 @@ document.getElementById('mic-btn').addEventListener('click', () => {
     listening = false;
     document.getElementById('core-label').textContent = 'SPEAK';
   }
+});
+// --- [PHASE 11: THE BANISHMENT PROTOCOL] ---
+async function executeBanishment() {
+    console.log("[SECURITY] Initiating Banishment Protocol...");
+    
+    let evidencePhoto = null;
+
+    // 1. SILENTLY ATTEMPT PHOTO CAPTURE (Takes ~0.5 seconds)
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        await new Promise(resolve => video.onloadedmetadata = resolve);
+        video.play();
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        evidencePhoto = canvas.toDataURL('image/jpeg', 0.5);
+        
+        // Kill the stream so the webcam light turns back off immediately
+        stream.getTracks().forEach(track => track.stop());
+    } catch (err) {
+        console.warn("[SECURITY] Silent capture failed (No permissions).");
+    }
+
+    // 2. SEND EVIDENCE TO SUPABASE
+    // We send this directly to the DB to flag their IP and save the photo
+    try {
+        const parentUrlParams = new URLSearchParams(window.parent.location.search);
+        const visitorName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || parentUrlParams.get('visitor') || "Unknown";
+        
+        await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower', {
+            method: 'POST',
+            headers: {
+                'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
+                'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                visitor_name_lower: visitorName.toLowerCase(),
+                is_banned: true, // You'll need to add an 'is_banned' boolean column in Supabase!
+                ban_photo_base64: evidencePhoto // You'll need to add this column too!
+            })
+        });
+    } catch(e) {
+        console.error("Failed to upload evidence.");
+    }
+
+    // 3. DROP THE PERMANENT LOCKOUT TOKENS
+    localStorage.setItem('JARVIS_SECURITY_LOCKOUT', 'TRUE');
+    
+    // 4. NUKE THE UI AND REDIRECT TO A BLACK SCREEN
+    document.body.innerHTML = `
+        <div style="width:100vw; height:100vh; background:black; color:red; display:flex; align-items:center; justify-content:center; font-family:monospace; flex-direction:column;">
+            <h1>[SECURITY BREACH DETECTED]</h1>
+            <p>ACCESS PERMANENTLY REVOKED.</p>
+        </div>
+    `;
+    
+    // Optional: Boot them to a scary error page after 3 seconds
+    setTimeout(() => {
+        window.parent.location.href = "about:blank"; 
+    }, 3000);
+}
+// --- [DYNAMIC FRONTEND TOXICITY WARNING] ---
+let FRONTEND_BAD_WORDS = []; // Starts empty, fills from Supabase
+
+// Instantly download the live dictionary from your database
+async function loadBannedWords() {
+    try {
+        const res = await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_system_config?config_key=eq.jarvis_banned_words&select=config_value', {
+            headers: {
+                'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
+                'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO'
+            }
+        });
+        const data = await res.json();
+        if (data && data.length > 0) {
+            FRONTEND_BAD_WORDS = JSON.parse(data[0].config_value);
+            console.log("[SECURITY] Live Database Banned Words Loaded.");
+        }
+    } catch(e) { console.warn("Failed to load bad words"); }
+}
+loadBannedWords(); // Run immediately
+
+const cmdInput = document.getElementById('cmd-input');
+
+cmdInput.addEventListener('input', function(e) {
+    const text = e.target.value.toLowerCase();
+    
+    // Check against the live database array
+    const isToxic = FRONTEND_BAD_WORDS.some(word => text.includes(word));
+    
+    if (isToxic) {
+        cmdInput.style.color = "#ff1744";
+        cmdInput.style.textShadow = "0 0 10px #ff1744";
+        cmdInput.style.borderBottom = "2px solid #ff1744";
+    } else {
+        cmdInput.style.color = ""; 
+        cmdInput.style.textShadow = "";
+        cmdInput.style.borderBottom = "";
+    }
 });
 </script>
