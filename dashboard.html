@@ -1170,7 +1170,7 @@ footer {
       <div class="links-grid" id="links-grid"></div>
     </div>
 
-    <!-- CONTACT -->
+        <!-- CONTACT -->
     <div class="dash-section" id="contact">
       <div class="sec-label">MODULE_CONTACT</div>
       <h2 class="sec-title">ESTABLISH CONTACT</h2>
@@ -1187,9 +1187,13 @@ footer {
             </div>
             <div style="display:flex;flex-direction:column;gap:5px;">
               <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.4);">MESSAGE</label>
-              <textarea name="message" rows="4" placeholder="Transmit your message..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;resize:vertical;"></textarea>
+              
+              <!-- Added id="contact-message" here -->
+              <textarea id="contact-message" name="message" rows="4" placeholder="Transmit your message..." required style="background:rgba(0,229,255,0.03);border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.8);font-family:var(--font-mono);font-size:13px;padding:10px 14px;outline:none;resize:vertical;"></textarea>
             </div>
-            <button type="submit" style="background:transparent;border:2px solid var(--cyan);color:var(--cyan);font-family:var(--font-hud);font-size:12px;letter-spacing:3px;padding:12px;cursor:pointer;border-radius:4px;text-transform:uppercase;transition:all 0.3s;">TRANSMIT →</button>
+            
+            <!-- Added id="contact-submit" here -->
+            <button id="contact-submit" type="submit" style="background:transparent;border:2px solid var(--cyan);color:var(--cyan);font-family:var(--font-hud);font-size:12px;letter-spacing:3px;padding:12px;cursor:pointer;border-radius:4px;text-transform:uppercase;transition:all 0.3s;">TRANSMIT →</button>
           </div>
         </form>
       </div>
@@ -3641,6 +3645,59 @@ function triggerKonami(){
         });
     }
 })();
+</script>
+<script>
+// --- [DYNAMIC CONTACT FORM TOXICITY BLOCKER] ---
+let FRONTEND_BAD_WORDS = []; 
+
+async function loadBannedWords() {
+    try {
+        const res = await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_system_config?config_key=eq.jarvis_banned_words&select=config_value', {
+            headers: {
+                'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
+                'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO'
+            }
+        });
+        const data = await res.json();
+        if (data && data.length > 0) {
+            FRONTEND_BAD_WORDS = JSON.parse(data[0].config_value);
+        }
+    } catch(e) {}
+}
+loadBannedWords(); 
+
+const messageBox = document.getElementById('contact-message'); 
+const submitBtn = document.getElementById('contact-submit');   
+
+messageBox.addEventListener('input', function(e) {
+    const text = e.target.value.toLowerCase();
+    
+    // Check against live DB
+    const isToxic = FRONTEND_BAD_WORDS.some(word => text.includes(word));
+    
+    if (isToxic) {
+        messageBox.style.border = "2px solid #ff1744";
+        messageBox.style.backgroundColor = "rgba(255, 23, 68, 0.1)"; 
+        
+        submitBtn.disabled = true;
+        submitBtn.innerText = "[ BLOCKED: TOXICITY ]";
+        submitBtn.style.backgroundColor = "#ff1744";
+        submitBtn.style.color = "white";
+        submitBtn.style.cursor = "not-allowed";
+        submitBtn.style.pointerEvents = "none";
+    } else {
+        // Reset to normal (Add your normal button colors here)
+        messageBox.style.border = "";
+        messageBox.style.backgroundColor = "";
+        
+        submitBtn.disabled = false;
+        submitBtn.innerText = "SEND MESSAGE"; 
+        submitBtn.style.backgroundColor = "rgba(0,229,255,0.1)"; 
+        submitBtn.style.color = "#00e5ff";
+        submitBtn.style.cursor = "pointer";
+        submitBtn.style.pointerEvents = "auto";
+    }
+});
 </script>
 </body>
 </html>
