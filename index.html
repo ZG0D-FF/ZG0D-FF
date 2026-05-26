@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
+<!-- [DEV MODE: AUTO-CACHE WIPE] -->
 <!-- [DEV MODE: AUTO-CACHE WIPE & NAMESPACING] -->
 <script>
   window.ENV_PREFIX = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'jarvis_dev_' : 'jarvis_prod_';
@@ -27,6 +27,24 @@ function playSystemAudio(filename) {
     new Audio('audio/' + filename).play().catch(e => console.warn("Autoplay blocked:", e));
 }
 
+</script>
+<script>
+// --- [SECURITY PERIMETER CHECK] ---
+// If they have the ban token, instantly crash the page.
+if (localStorage.getItem('JARVIS_SECURITY_LOCKOUT') === 'TRUE') {
+    // We wipe the whole document immediately so they can't see the site
+    document.write(`
+        <body style="background:black; color:#ff1744; font-family:Courier, monospace; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
+            <div style="text-align:center;">
+                <h2>ERROR 403: SYSTEM LOCKOUT</h2>
+                <p>Your node has been blacklisted for violating communication protocols.</p>
+                <p>IP and hardware metrics logged.</p>
+            </div>
+        </body>
+    `);
+    // Stop any further scripts from executing
+    window.stop();
+}
 </script>
   <!-- [SYS.ADMIN] FACE-API.JS NEURAL NETWORK -->
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
