@@ -378,7 +378,7 @@ let _visitorGreeting = '';
 
   // [SYS.ADMIN] BOOT UP FACIAL BIOMETRICS
   async function loadFacialModels() {
-    const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
+    const MODEL_URL = './models';
     document.getElementById('status-text').innerText = 'LOADING BIOMETRIC NEURAL NETWORKS...';
     
     await Promise.all([
@@ -388,7 +388,7 @@ let _visitorGreeting = '';
     ]);
     
     document.getElementById('status-text').innerText = 'BIOMETRICS ONLINE. AWAITING OPTICS...';
-    console.log('[JARVIS] 128-float Neural Networks Loaded.');
+    console.log('[JARVIS] 128-float Neural Networks Loaded Locally.');
   }
 
   // Fire this as soon as the page loads
@@ -630,10 +630,11 @@ function startGuest() {
 // Triggered when user clicks [ ] OPTICS
 async function runGeminiAuthFallback(base64) {
   try {
+    const visitorNameInput = document.getElementById('v-name').value.trim();
     const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: "auth_fallback", photoBase64: base64 })
+      body: JSON.stringify({ action: "auth_fallback", photoBase64: base64, visitorName: visitorNameInput })
     });
     const data = await res.json();
     return data.match === true;
@@ -678,68 +679,45 @@ async function requestCam() {
         sessionStorage.setItem(window.ENV_PREFIX + 'face', JSON.stringify(descriptorArray));
         document.getElementById('status-text').innerText = 'GEOMETRY EXTRACTED. CROSS-REFERENCING DATABASE...';
         
-        // 4. Query DB to match face
-        if (_supabaseIndex) {
-          const { data: users, error } = await _supabaseIndex.from('jarvis_known_users').select('visitor_name, visitor_name_lower, face_descriptor');
-          if (!error && users) {
-            const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
-            let matchedUser = null;
-            let bestDistance = 1.0;
-            let isCreatorMatch = false;
+        // 4. Send descriptor to Worker for Secure Backend Biometric Math
+        try {
+            const visitorNameInput = document.getElementById('v-name').value.trim();
+            const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: "auth_biometric", faceDescriptor: descriptorArray, visitorName: visitorNameInput })
+            });
+            const data = await res.json();
             
-            for (const u of users) {
-              if (u.face_descriptor) {
-                try {
-                  const dbDescriptor = new Float32Array(u.face_descriptor);
-                  const distance = faceapi.euclideanDistance(detection.descriptor, dbDescriptor);
-                  if (distance < 0.5) { // 80% geometric match threshold
-                    const isCreator = creatorAliases.includes((u.visitor_name_lower || '').toLowerCase());
-                    
-                    // The Ultimate Linking Factor: ALWAYS prioritize Creator Aliases if they share the same face
-                    if (isCreator && !isCreatorMatch) {
-                      bestDistance = distance;
-                      matchedUser = u.visitor_name;
-                      isCreatorMatch = true;
-                    } else if (!isCreatorMatch && distance < bestDistance) {
-                      bestDistance = distance;
-                      matchedUser = u.visitor_name;
-                    }
-                  }
-                } catch(e) {}
-              }
-            }
-
-            if (matchedUser) {
-              // WE HAVE A MATCH! AUTO-LOGIN!
-              document.getElementById('status-text').innerText = `BIOMETRIC MATCH CONFIRMED. WELCOME BACK, ${matchedUser.toUpperCase()}.`;
-              document.getElementById('v-name').value = matchedUser;
-              _visitorName = matchedUser;
-              playSystemAudio('announcer_systemauth.mp3');
-              // Stop camera and immediately trigger boot!
-			  // SYSTEM AUTHORITY CONFIRMED
-              playSystemAudio('announcer_systemauth.mp3'); 
-              stream.getTracks().forEach(track => track.stop());
-              btn.classList.add('secured');
-              btn.textContent = "[X] BIOMETRICS LOCKED";
-              
-              setTimeout(startExperience, 1500);
-              return; // Exit function so they don't have to manually click
+            if (data.match && data.matchedUser) {
+                // WE HAVE A MATCH! AUTO-LOGIN!
+                document.getElementById('status-text').innerText = `BIOMETRIC MATCH CONFIRMED. WELCOME BACK, ${data.matchedUser.toUpperCase()}.`;
+                document.getElementById('v-name').value = data.matchedUser;
+                _visitorName = data.matchedUser;
+                playSystemAudio('announcer_systemauth.mp3');
+                
+                // Stop camera and immediately trigger boot!
+                stream.getTracks().forEach(track => track.stop());
+                btn.classList.add('secured');
+                btn.textContent = "[X] BIOMETRICS LOCKED";
+                
+                setTimeout(startExperience, 1500);
+                return; // Exit function so they don't have to manually click
             } else {
-               document.getElementById('status-text').innerText = 'NO MATCH FOUND. NEW PROFILE DETECTED.';
+                document.getElementById('status-text').innerText = 'NO MATCH FOUND. NEW PROFILE DETECTED.';
             }
-          }
+        } catch(e) {
+            console.error("Backend biometrics failed:", e);
+            document.getElementById('status-text').innerText = 'SECURE BIOMETRICS FAILED. NEW PROFILE DETECTED.';
         }
       } else {
         document.getElementById('status-text').innerText = 'LOCAL BIOMETRICS FAILED. INITIATING CLOUD FALLBACK...';
         const isMatch = await runGeminiAuthFallback(base64Photo);
         if (isMatch) {
-            document.getElementById('status-text').innerText = 'CLOUD MATCH CONFIRMED. WELCOME BACK, DJ.';
-            document.getElementById('v-name').value = 'DJ';
-            _visitorName = 'DJ';
+            document.getElementById('status-text').innerText = 'FACE DETECTED. PLEASE ENTER YOUR NAME TO CONTINUE.';
             stream.getTracks().forEach(track => track.stop());
             btn.classList.add('secured');
-            btn.textContent = "[X] BIOMETRICS LOCKED";
-            setTimeout(startExperience, 1500);
+            btn.textContent = "[X] OPTICS SECURED";
             return;
         } else {
             document.getElementById('status-text').innerText = 'NO MATCH FOUND. PROCEEDING NORMALLY.';
@@ -750,13 +728,10 @@ async function requestCam() {
       document.getElementById('status-text').innerText = 'LOCAL ENGINE CRASHED. INITIATING CLOUD FALLBACK...';
       const isMatch = await runGeminiAuthFallback(base64Photo);
       if (isMatch) {
-          document.getElementById('status-text').innerText = 'CLOUD MATCH CONFIRMED. WELCOME BACK, DJ.';
-          document.getElementById('v-name').value = 'DJ';
-          _visitorName = 'DJ';
+          document.getElementById('status-text').innerText = 'FACE DETECTED. PLEASE ENTER YOUR NAME TO CONTINUE.';
           stream.getTracks().forEach(track => track.stop());
           btn.classList.add('secured');
-          btn.textContent = "[X] BIOMETRICS LOCKED";
-          setTimeout(startExperience, 1500);
+          btn.textContent = "[X] OPTICS SECURED";
           return;
       } else {
           document.getElementById('status-text').innerText = 'NO MATCH FOUND. PROCEEDING NORMALLY.';
