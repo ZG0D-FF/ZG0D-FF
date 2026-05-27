@@ -443,55 +443,57 @@ async function query(userText) {
 
     const data = await res.json();
     
-    // --- [AUDIO ENGINE: THE VOICE QUEUE] ---
-    try {
-      if (data.play_cache) {
-        console.log("[JARVIS] Queuing Local Cache ->", data.play_cache);
-        audioQueue.push({ type: 'cache', src: data.play_cache });
-        if (!isAudioPlaying) playNextInAudioQueue();
-      } else if (data.audio_base64) {
-        console.log("[JARVIS] Queuing Dynamic Synthesis ArrayBuffer");
-        audioQueue.push({ type: 'base64', src: data.audio_base64 });
-        if (!isAudioPlaying) playNextInAudioQueue();
-      }
-    } catch (err) {
-      console.warn("[JARVIS] Audio queue push blocked.", err);
-    }
-    // ---------------------------------------
-    
-    // --- [TELEPORT ENGINE: UI NAVIGATION] ---
-        // --- [TELEPORT ENGINE: UI NAVIGATION] ---
-    if (data.redirect_url) {
-        console.log("[JARVIS] Executing UI Navigation Function:", data.redirect_url);
-        
-        const executeJump = () => {
-            try {
-                const currentOrigin = window.parent.location.origin;
-                const targetUrl = new URL(data.redirect_url, currentOrigin);
-                if (targetUrl.origin !== currentOrigin) {
-                    if (confirm("JARVIS is attempting to navigate to an external site:\n" + data.redirect_url + "\n\nAre you sure you want to proceed?")) {
-                        window.parent.location.href = data.redirect_url;
-                    }
-                } else {
-                    window.parent.location.href = data.redirect_url;
-                }
-            } catch(e) {
-                window.parent.location.href = data.redirect_url; // fallback
-            }
-        };
+    // --- [AUDIO ENGINE & TELEPORT ENGINE] ---
+    const redirectUrl = data.redirect_url;
+    const audioFile = data.play_cache;
 
-        // If audio is currently playing or queued up, wait for it to finish completely
-        if (isAudioPlaying || audioQueue.length > 0) {
-            console.log("[JARVIS] Holding navigation until audio finishes...");
-            const checkAudioInterval = setInterval(() => {
-                if (!isAudioPlaying && audioQueue.length === 0) {
-                    clearInterval(checkAudioInterval);
-                    executeJump();
+    const executeJump = () => {
+        try {
+            const currentOrigin = window.parent.location.origin;
+            const targetUrl = new URL(redirectUrl, currentOrigin);
+            if (targetUrl.origin !== currentOrigin) {
+                if (confirm("JARVIS is attempting to navigate to an external site:\n" + redirectUrl + "\n\nAre you sure you want to proceed?")) {
+                    window.parent.location.href = redirectUrl;
                 }
-            }, 300); // Checks every 300ms if Jarvis is done talking
+            } else {
+                window.parent.location.href = redirectUrl;
+            }
+        } catch(e) {
+            window.parent.location.href = redirectUrl; // fallback
+        }
+    };
+
+    if (redirectUrl) {
+        console.log("[JARVIS] Executing UI Navigation Function:", redirectUrl);
+        
+        if (audioFile) {
+            // 1. We have BOTH a redirect and audio. Skip the normal queue and handle it directly.
+            console.log("[JARVIS] Holding navigation until audio finishes...");
+            const navAudio = new Audio(audioFile);
+            navAudio.play().catch(e => executeJump()); // If autoplay blocked, jump immediately
+            
+            // Wait for the audio to finish completely before moving!
+            navAudio.onended = () => {
+                executeJump();
+            };
         } else {
-            // No audio playing? Just do a quick jump.
+            // 2. We have a redirect, but no audio. Navigate instantly (with slight delay for UI).
             setTimeout(executeJump, 800);
+        }
+    } else {
+        // 3. Normal chat mode: push to audio queue
+        try {
+            if (audioFile) {
+                console.log("[JARVIS] Queuing Local Cache ->", audioFile);
+                audioQueue.push({ type: 'cache', src: audioFile });
+                if (!isAudioPlaying) playNextInAudioQueue();
+            } else if (data.audio_base64) {
+                console.log("[JARVIS] Queuing Dynamic Synthesis ArrayBuffer");
+                audioQueue.push({ type: 'base64', src: data.audio_base64 });
+                if (!isAudioPlaying) playNextInAudioQueue();
+            }
+        } catch (err) {
+            console.warn("[JARVIS] Audio queue push blocked.", err);
         }
     }
     // ----------------------------------------
@@ -625,35 +627,16 @@ document.getElementById('mic-btn').addEventListener('click', () => {
 // --- [PHASE 11: THE BANISHMENT PROTOCOL] ---
 async function executeBanishment() {
     console.log("[SECURITY] Initiating Banishment Protocol...");
-    
-    let evidencePhoto = null;
 
-    // 1. SILENTLY ATTEMPT PHOTO CAPTURE (Takes ~0.5 seconds)
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        await new Promise(resolve => video.onloadedmetadata = resolve);
-        video.play();
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        evidencePhoto = canvas.toDataURL('image/jpeg', 0.5);
-        
-        // Kill the stream so the webcam light turns back off immediately
-        stream.getTracks().forEach(track => track.stop());
-    } catch (err) {
-        console.warn("[SECURITY] Silent capture failed (No permissions).");
-    }
-
-    // 2. SEND EVIDENCE TO SUPABASE
+    // 1. SEND EVIDENCE TO SUPABASE
     // We send this directly to the DB to flag their IP and save the photo
     try {
         const parentUrlParams = new URLSearchParams(window.parent.location.search);
         const visitorName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || parentUrlParams.get('visitor') || "Unknown";
         
+        // Use the photo captured during the initial boot sequence
+        const finalPhoto = sessionStorage.getItem(window.ENV_PREFIX + 'photo') || null;
+
         await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower', {
             method: 'POST',
             headers: {
@@ -665,7 +648,7 @@ async function executeBanishment() {
             body: JSON.stringify({
                 visitor_name_lower: visitorName.toLowerCase(),
                 is_banned: true, // You'll need to add an 'is_banned' boolean column in Supabase!
-                ban_photo_base64: evidencePhoto // You'll need to add this column too!
+                ban_photo_base64: finalPhoto // You'll need to add this column too!
             })
         });
     } catch(e) {
