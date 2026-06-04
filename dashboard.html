@@ -12,13 +12,7 @@
           localStorage.clear();
       }
   }
-  // --- AUDIO HELPER ---
-function playSystemAudio(filename) {
-    if (window.jarvisAudioContext && window.jarvisAudioContext.state === 'suspended') {
-        window.jarvisAudioContext.resume();
-    }
-    new Audio('audio/' + filename).play().catch(e => console.warn("Autoplay blocked:", e));
-}
+  // Cleaned redundant audio helper. Advanced Engine below handles promises.
 </script>
 <script>
 // --- ADVANCED AUDIO ENGINE ---
@@ -45,8 +39,8 @@ window.addEventListener('DOMContentLoaded', () => {
         const rawName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || parentUrlParams.get('visitor') || "Guest";
         const visitorName = rawName.toLowerCase().trim();
         
-        // Define Creator Aliases
-        const isDJ = ['dj', 'dibyajyotee', 'zgod'].includes(visitorName);
+        // Define Creator Aliases (Aligned with Backend Biometrics)
+        const isDJ = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'].includes(visitorName);
 
         if (isDJ) {
             // Play the main boot sequence first
@@ -1041,7 +1035,7 @@ footer {
 <div id="page-wrapper">
   <nav id="topbar">
     <div class="topbar-left">
-      <a href="index.html" class="back-btn">← BACK</a>
+      <a href="#" onclick="playSystemAudio('button_click_hologram.mp3').then(() => window.location.href='index.html'); return false;" class="back-btn">  BACK</a>
       <div class="topbar-title">D.J  PORTFOLIO</div>
     </div>
     <div class="topbar-greeting" id="topbar-greeting">WELCOME // GUEST</div>
@@ -1299,10 +1293,9 @@ footer {
     <span class="pulse-dot"></span> &nbsp;
     PORTFOLIO &nbsp;|&nbsp; DJ © 2025 &nbsp;|&nbsp; ALL SYSTEMS OPERATIONAL
     &nbsp;·&nbsp; LAST UPDATED <span id="last-updated"></span>
-  <!-- [SYS.ADMIN] EMBEDDED SURVEILLANCE OVERLAY -->
   <div id="admin-surveillance-overlay" style="display: none; position: fixed; inset: 0; background: rgba(2, 12, 24, 0.95); z-index: 99999; backdrop-filter: blur(10px); padding: 40px; overflow-y: auto;">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--amber); padding-bottom: 15px; margin-bottom: 20px;">
-      <h1 style="color: var(--amber); font-family: var(--font-hud); letter-spacing: 3px; font-size: 24px; text-shadow: 0 0 10px rgba(255,171,0,0.5);">[SYS.ADMIN] LIVE SURVEILLANCE</h1>
+      <h1 id="surveillance-title" style="color: var(--amber); font-family: var(--font-hud); letter-spacing: 3px; font-size: 24px; text-shadow: 0 0 10px rgba(255,171,0,0.5);">[SYS.ADMIN] LIVE SURVEILLANCE</h1>
       <button onclick="document.getElementById('admin-surveillance-overlay').style.display='none'" style="background: transparent; border: 1px solid var(--amber); color: var(--amber); padding: 5px 15px; cursor: pointer; font-family: var(--font-mono);">[X] CLOSE</button>
     </div>
     <div id="surveillance-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
@@ -1329,34 +1322,52 @@ footer {
   // INITIALIZE SUPABASE — must be here so _supabase is available to triggerSecurityMatrix()
   const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
   
-  // [SYS.ADMIN] GLOBAL SURVEILLANCE FUNCTION
+  // SURVEILLANCE / DOSSIER FUNCTION
   window.openSurveillance = async function() {
-    document.getElementById('admin-surveillance-overlay').style.display = 'block';
-    const grid = document.getElementById('surveillance-grid');
-    grid.innerHTML = '<div style="color: var(--amber); font-family: var(--font-mono); text-align: center; width: 100%;">Uplinking to Supabase...</div>';
-    
-    const { data, error } = await _supabase
-      .from('jarvis_known_users')
-      .select('*')
-      .order('last_seen', { ascending: false });
+    try {
+      const rawName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || new URLSearchParams(window.location.search).get('visitor') || "Guest";
+      const visitorName = rawName.toLowerCase().trim();
+      const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
+      const isDJ = creatorAliases.includes(visitorName);
+
+      const overlay = document.getElementById('admin-surveillance-overlay');
+      if (overlay) overlay.style.display = 'block';
+      
+      const overlayTitle = document.getElementById('surveillance-title');
+      if (overlayTitle) {
+        overlayTitle.innerText = isDJ ? "[SYS.ADMIN] LIVE SURVEILLANCE" : "[USER] PERSONAL DOSSIER";
+      }
+
+      const grid = document.getElementById('surveillance-grid');
+      if (grid) grid.innerHTML = '<div style="color: var(--amber); font-family: var(--font-mono); text-align: center; width: 100%;">Uplinking to Supabase...</div>';
+      
+      let query = _supabase.from('jarvis_known_users').select('*');
+      
+      if (!isDJ) {
+        query = query.eq('visitor_name_lower', visitorName);
+      }
+      
+      query = query.order('last_seen', { ascending: false });
+      
+      const { data, error } = await query;
 
     if (error) {
-      grid.innerHTML = `<div style="color: red; font-family: var(--font-mono);">ERROR: ${error.message}</div>`;
+      if (grid) grid.innerHTML = `<div style="color: red; font-family: var(--font-mono);">ERROR: ${error.message}</div>`;
       return;
     }
 
-    grid.innerHTML = '';
-    const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
+    if (grid) grid.innerHTML = '';
+    const aliasesForLoop = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
     
     data.forEach(user => {
       const imgSrc = user.photo_base64 || 'https://via.placeholder.com/320x240/020c18/ffab00?text=NO+VISUAL';
-      const isCreator = creatorAliases.includes((user.visitor_name_lower || '').toLowerCase());
+      const isCreator = aliasesForLoop.includes((user.visitor_name_lower || '').toLowerCase());
       
       const borderCol = isCreator ? '#ff1744' : 'var(--amber)';
       const bgCol = isCreator ? 'rgba(255,23,68,0.05)' : 'rgba(0,0,0,0.5)';
       const nameText = isCreator ? `<span style="color:#ff1744">[CREATOR] ${user.visitor_name.toUpperCase()}</span>` : user.visitor_name;
       
-      grid.innerHTML += `
+      if (grid) grid.innerHTML += `
         <div style="border: 1px solid ${borderCol}; background: ${bgCol}; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px ${isCreator ? 'rgba(255,23,68,0.2)' : 'rgba(255,171,0,0.1)'};">
           <img src="${imgSrc}" style="width: 100%; border: 1px solid ${borderCol}; margin-bottom: 15px; border-radius: 2px;">
           <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>NAME:</b> ${nameText}</div>
@@ -1366,6 +1377,10 @@ footer {
         </div>
       `;
     });
+    } catch (err) {
+      console.error("[JARVIS] SURVEILLANCE ERROR:", err);
+      alert("Surveillance Module Error: " + err.message);
+    }
   };
 
   const urlParams  = new URLSearchParams(window.location.search);
