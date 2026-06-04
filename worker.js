@@ -1,0 +1,1707 @@
+import { buildDynamicPrompt } from './prompts.js';
+
+// ============================================================
+// NEXUS AI WORKER v3 — MULTI-MODEL ROTATION + QUOTA MANAGEMENT
+//
+// MODEL POOL (free tier, ordered by daily capacity):
+//   1. gemini-3.1-flash-lite   → 15 RPM, 250K TPM, 500 RPD  ← MAIN WORKHORSE
+//   2. gemini-2.5-flash-lite   → 10 RPM, 250K TPM,  20 RPD
+//   3. gemini-2.5-flash        →  5 RPM, 250K TPM,  20 RPD
+//   4. gemini-3.5-flash        →  5 RPM, 250K TPM,  20 RPD
+//   5. gemini-3-flash          →  5 RPM, 250K TPM,  20 RPD
+//   6. gemma-4-27b             → 15 RPM, Unlimited, 1.5K RPD ← EMERGENCY TANK
+//
+// STRATEGY:
+//   - Track per-model daily usage in Supabase (jarvis_model_usage table)
+//   - Pick the best available model at call time (not burned out)
+//   - On 429 / quota error → instantly try next model in pool
+//   - Token budget: trim system prompt aggressively, max 400 output tokens
+//   - Groq: style-only micro-pass, max 100 tokens, skip if rate-limited
+// ============================================================
+
+// ── Model pool definition ──────────────────────────────────
+const MODEL_POOL = [
+  // Primary Brains: Gemini API v1beta
+  { id: "gemini-2.5-flash",               provider: "gemini", rpd: 20,  rpm: 5,  img: true,  fn: true  },
+  { id: "gemini-2.5-flash-lite",          provider: "gemini", rpd: 20,  rpm: 10, img: true,  fn: true  },
+  { id: "gemini-3.5-flash",               provider: "gemini", rpd: 20,  rpm: 5,  img: true,  fn: true  },
+  { id: "gemini-2.0-flash",               provider: "gemini", rpd: 200, rpm: 15, img: true,  fn: true  },
+  { id: "gemini-2.0-flash-lite",          provider: "gemini", rpd: 200, rpm: 30, img: true,  fn: true  },
+  { id: "gemini-1.5-flash",               provider: "gemini", rpd: 1500,rpm: 15, img: true,  fn: true  },
+  { id: "gemini-1.5-flash-8b",            provider: "gemini", rpd: 1500,rpm: 15, img: true,  fn: true  },
+  
+  // Holographic Cascade: Cloudflare Workers AI
+  { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/qwen/qwq-32b",                           provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/moonshotai/kimi-k2.6",                   provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/google/gemma-4-26b-a4b-it",              provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/nvidia/nemotron-3-120b-a12b",            provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/moonshotai/kimi-k2.5",                   provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/zai-org/glm-4.7-flash",                  provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/ibm-granite/granite-4.0-h-micro",        provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/openai/gpt-oss-120b",                    provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/openai/gpt-oss-20b",                     provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/qwen/qwen3-30b-a3b-fp8",                 provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/meta/llama-4-scout-17b-16e-instruct",    provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/mistralai/mistral-small-3.1-24b-instruct",provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@hf/nousresearch/hermes-2-pro-mistral-7b",   provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+];
+
+// Models that don't support function declarations — get text-mode prompt instead
+const GEMMA_IDS = new Set([]); // gemma removed — all current pool models support fn calling
+
+// --- Upstash Redis helpers ---
+async function redisGet(key, context) {
+  try {
+    const res = await fetch(`${context.env.UPSTASH_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${context.env.UPSTASH_TOKEN}` }
+    });
+    const data = await res.json();
+    if (data.result) {
+        const parsed = JSON.parse(data.result);
+        // Fix for broken cache data that was accidentally nested
+        if (parsed.EX && parsed.value) {
+            return JSON.parse(parsed.value);
+        }
+        return parsed;
+    }
+    return null;
+  } catch (e) { return null; }
+}
+
+async function redisSet(key, value, ttlSeconds, context) {
+  try {
+    // Upstash REST API syntax for setting with expiry
+    await fetch(`${context.env.UPSTASH_URL}/set/${encodeURIComponent(key)}?EX=${ttlSeconds}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${context.env.UPSTASH_TOKEN}` },
+      body: JSON.stringify(value)
+    });
+  } catch (e) { console.warn("Redis SET failed:", e.message); }
+}
+
+function cosineSimilarity(A, B) {
+    let dotProduct = 0, mA = 0, mB = 0;
+    for(let i = 0; i < A.length; i++){
+        dotProduct += (A[i] * B[i]);
+        mA += (A[i]*A[i]);
+        mB += (B[i]*B[i]);
+    }
+    return dotProduct / (Math.sqrt(mA) * Math.sqrt(mB));
+}
+
+async function getEmbedding(text, context) {
+    try {
+        const response = await context.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [text] });
+        return response.data[0];
+    } catch(e) {
+        console.warn("Embedding failed:", e.message);
+        return null;
+    }
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
+        }
+      });
+    }
+
+    try {
+      const rawBody = await request.text();
+      if (!rawBody || rawBody.trim().length === 0) {
+        return errorResponse("Empty request body.");
+      }
+      let payload;
+      try {
+        payload = JSON.parse(rawBody);
+      } catch (parseErr) {
+        return errorResponse("Invalid JSON: " + parseErr.message);
+      }
+
+      const context = {
+        SUPABASE_URL: env.SUPABASE_URL || "https://btqzwsuuxycpgkzddure.supabase.co",
+        SUPABASE_KEY: env.SUPABASE_ANON_KEY || "sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO",
+        GROQ_API_KEY: env.GROQ_API_KEY,
+        GEMINI_API_KEY: env.GEMINI_API_KEY,
+        ELEVENLABS_API_KEY: env.ELEVENLABS_API_KEY,
+        env: env, // Attached for Telemetry Binding
+        ctx: ctx, // Required to keep background fetches alive
+        clientIp: request.headers.get("cf-connecting-ip") || "Unknown",
+        voiceIds: {
+          MADARA:   env.ELEVENLABS_VOICE_MADARA   || env.ELEVENLABS_VOICE_ID,
+          SCORPION: env.ELEVENLABS_VOICE_SCORPION || env.ELEVENLABS_VOICE_ID,
+          KOTL:     env.ELEVENLABS_VOICE_KOTL     || env.ELEVENLABS_VOICE_ID,
+          XAVIER:   env.ELEVENLABS_VOICE_XAVIER   || env.ELEVENLABS_VOICE_ID,
+          WISEMAN:  env.ELEVENLABS_VOICE_WISEMAN  || env.ELEVENLABS_VOICE_ID,
+        }
+      };
+
+      if (payload.action === "auth_fallback") {
+        return await handleFallbackAuth(payload, context);
+      }
+
+      if (payload.action === "auth_biometric") {
+        return await handleAuthBiometric(payload, context);
+      }
+
+      if (payload.action === "threat_telemetry") {
+        return await handleThreatTelemetry(payload, context);
+      }
+
+      // --- [SECURITY UPDATE: FRONTEND SUPABASE PROXY] ---
+      if (payload.action === "check_ban") {
+        const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(payload.visitorName)}&select=is_banned`, {
+          headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` }
+        });
+        const data = await res.json();
+        return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
+      if (payload.action === "load_banned_words") {
+        const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_system_config?config_key=eq.jarvis_banned_words&select=config_value`, {
+          headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` }
+        });
+        const data = await res.json();
+        return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
+      if (payload.action === "execute_banishment") {
+        const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower`, {
+          method: 'POST',
+          headers: {
+            'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}`,
+            'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            visitor_name_lower: payload.visitorName,
+            is_banned: true,
+            ban_photo_base64: payload.banPhotoBase64
+          })
+        });
+        return new Response(JSON.stringify({ success: res.ok }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
+      if (payload.action === "log_error") {
+        if (context.env.TELEMETRY && context.ctx) {
+          context.ctx.waitUntil(context.env.TELEMETRY.fetch("http://internal/log", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              table: "jarvis_error_logs",
+              data: {
+                error_message: payload.errorMessage,
+                error_source: payload.errorSource,
+                url: payload.url,
+                user_agent: payload.userAgent
+              }
+            })
+          }).catch(()=>{}));
+        }
+        return new Response(JSON.stringify({ success: true }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+      // --------------------------------------------------
+
+      if (!payload.visitorName || typeof payload.visitorName !== "string") {
+        return errorResponse("Missing visitorName.");
+      }
+
+      const cleanVisitorName = payload.visitorName.toLowerCase().trim();
+      const isAdmin = ["dj", "zg0d-ff", "dj_admin"].includes(cleanVisitorName);
+      const userRole = isAdmin ? "[ADMIN]" : "[GUEST]";
+
+      if (!isAdmin) {
+        const rateLimit = await checkRateLimit(cleanVisitorName, context);
+        if (rateLimit) return rateLimit;
+        const burstLimit = await checkBurstLimit(cleanVisitorName, context);
+        if (burstLimit) return burstLimit;
+        const tokenLimit = await checkTokenLimit(cleanVisitorName, context);
+        if (tokenLimit) return tokenLimit;
+      }
+
+      // ── Parallel data fetch ────────────────────────────────
+      const [existingUser, historyData, audioTriggers, configData, navData, modelUsage, isIpBanned, bannedWordsRes, cacheVerRes] = await Promise.all([
+        fetchUserData(cleanVisitorName, context),
+        fetchChatHistory(cleanVisitorName, context),
+        fetchAudioTriggers(context),
+        fetchSystemConfig("nexus_prompts_json", context),
+        fetchNavigationMap(context),
+        fetchModelUsage(context),  // ← new: daily usage counters per model
+        checkIfIpIsBanned(context.clientIp, context), // ← new: scan entire DB for IP ban
+        fetchSystemConfig("jarvis_banned_words", context), // ← new: fetch banned words list
+        fetchSystemConfig("global_cache_version", context) // ← NEW: Global Cache Versioning
+      ]);
+
+      // Parse the banned words array from the DB (fallback to empty array if missing)
+      context.bannedWords = [];
+      if (bannedWordsRes?.length > 0) {
+        try { 
+          const parsed = JSON.parse(bannedWordsRes[0].config_value);
+          context.bannedWords = Array.isArray(parsed) ? parsed : [parsed.toString()];
+        } catch(e) {
+          context.bannedWords = bannedWordsRes[0].config_value.split(',');
+        }
+        // Clean up words to prevent accidental single-letter or space bans
+        context.bannedWords = context.bannedWords.map(w => w.trim()).filter(w => w.length > 1);
+      }
+
+      // --- [PHASE 11: BACKEND SECURITY LOCK] ---
+      // If the admin tests it, they are immune. If a guest is banned by IP or name, nuke them.
+      if (!isAdmin && (isIpBanned || existingUser?.is_banned === true)) {
+        console.warn(`[SECURITY] Blocked banned user/IP attempting return: ${cleanVisitorName} / ${context.clientIp}`);
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: "[EXECUTE_BANISHMENT]" } }],
+          redirect_url: "BAN",
+          play_cache: "audio/intrusionblocked.mp3"
+        }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+      // -----------------------------------------
+
+      const currentMemory = existingUser?.memory_summary || "New user.";
+      
+      // --- AUDIO THROTTLE LOGIC ---
+      const chatsSinceAudio = existingUser?.chats_since_audio || 0;
+      // Randomly unlock audio if 3, 4, or 5 chats have passed
+      context.isAudioEligible = chatsSinceAudio >= (Math.floor(Math.random() * 3) + 3);
+      context.triggeredAudioFile = null;
+
+      const chatHistory = (historyData?.length > 0)
+        ? historyData.reverse().map(l => `U: ${l.user_prompt}\nA: ${l.ai_response}`).join("\n\n")
+        : "";
+
+      const { audioCache, availableQuotesStr } = processAudioTriggers(audioTriggers);
+      const availableRoutesText = processNavigationRoutes(payload.dynamicRoutes, navData);
+
+      // ── Dynamic Prompt Construction ──
+      let dbPrompts = null;
+      try {
+          if (configData?.length > 0) {
+              dbPrompts = JSON.parse(configData[0].config_value);
+          }
+      } catch (e) {
+          console.warn("[JARVIS] Failed to parse DB prompts. Falling back to local prompts.js.");
+      }
+
+      // ── CASCADE ROUTER (Semantic + LLM Fallback) ──
+      const userTextLower = (payload.userText || "").toLowerCase();
+      let canonicalIntent = 'UNKNOWN';
+      
+      try {
+          if (context.env.AI && userTextLower.length > 3) {
+              const intentRef = [
+                  userTextLower,
+                  "tell me about your portfolio projects work experience what have you built",
+                  "are there any secrets easter eggs hidden protocols commands"
+              ];
+              
+              // Step 1: Semantic Vector Match (Blazing Fast 50ms)
+              const embResponse = await context.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: intentRef });
+              if (embResponse && embResponse.data && embResponse.data.length === 3) {
+                  const userVec = embResponse.data[0];
+                  const projVec = embResponse.data[1];
+                  const eggVec = embResponse.data[2];
+                  
+                  const projSim = cosineSimilarity(userVec, projVec);
+                  const eggSim = cosineSimilarity(userVec, eggVec);
+                  
+                  if (projSim > 0.82) canonicalIntent = 'INTENT_PROJECTS';
+                  else if (eggSim > 0.82) canonicalIntent = 'INTENT_EASTER_EGGS';
+                  else {
+                      // Step 2: Intelligence Fallback (Llama 3.1 8B Instruct - 0 Groq Tokens)
+                      const llamaPrompt = `Categorize the user text into exactly ONE category: INTENT_PROJECTS, INTENT_EASTER_EGGS, or UNKNOWN. Output nothing else. Text: "${userTextLower}"`;
+                      const llamaResponse = await context.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+                          messages: [
+                              { role: "system", content: "You are a strict routing AI. Only output the exact category name." },
+                              { role: "user", content: llamaPrompt }
+                          ],
+                          max_tokens: 10
+                      });
+                      
+                      const rawFallback = (llamaResponse?.response || "").trim().toUpperCase();
+                      if (rawFallback.includes("INTENT_PROJECTS")) canonicalIntent = "INTENT_PROJECTS";
+                      else if (rawFallback.includes("INTENT_EASTER_EGGS")) canonicalIntent = "INTENT_EASTER_EGGS";
+                  }
+              }
+          }
+      } catch(e) {
+          console.warn("[CASCADE ROUTER] Failed, falling back to UNKNOWN:", e.message);
+      }
+      let masterTemplate = buildDynamicPrompt(canonicalIntent, dbPrompts);
+
+      // ── Token budget: trim the master prompt aggressively ─
+      // Replace full history/memory sections with tight versions
+      const trimmedHistory = chatHistory.slice(0, 800);   // last ~800 chars max
+      const trimmedMemory  = currentMemory.slice(0, 300); // first 300 chars max
+
+            const currentConversationSummary = existingUser?.conversation_summary || "None.";
+
+      const systemPrompt = masterTemplate
+        .replace("{{VISITOR_NAME}}", payload.visitorName)
+        .replace("{{USER_ROLE}}", userRole)
+        .replace("{{AGE}}", payload.age || "Unknown")
+        .replace("{{MEMORY_PROFILE}}", trimmedMemory)
+        .replace("{{CONVERSATION_SUMMARY}}", currentConversationSummary)
+        // 👇 THIS LINE CHANGES
+        .replace("{{AUDIO_TRIGGERS_JSON}}", context.isAudioEligible ? availableQuotesStr : "[AUDIO MODULE RECHARGING - SPEAK NORMALLY]")
+        .replace("{{CHAT_HISTORY}}", trimmedHistory);
+
+      // ── Pick best available model ──────────────────────────
+      const hasPhoto = payload.photoBase64 && payload.photoBase64 !== "null";
+      const selectedModel = pickModel(modelUsage, hasPhoto);
+
+      if (!selectedModel) {
+        // All models exhausted for today
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: "[VOICE: XAVIER] All AI cores have hit their daily limits. System resumes at midnight UTC." } }]
+        }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
+      // ── PARALLEL: Gemini (full brain) + Groq (style brain) fire together ──
+      // Gemini owns: reasoning, routing, memory, persona, full response
+      // Groq owns: receives Gemini's raw output and punches it up in voice
+      // They run simultaneously — zero extra latency vs sequential
+      // Winner logic: use Groq's output ONLY if it's complete (ends in punctuation)
+      //               otherwise fall back to Gemini's original (always safe)
+
+      // --- ZERO-TOKEN TOXICITY INTERCEPTOR ---
+      let earlyToxicReply = null;
+      if (context.bannedWords && context.bannedWords.length > 0) {
+        for (let word of context.bannedWords) {
+          if (word.length < 3) continue; // Skip dangerously short substrings
+
+          // Smart Boundary: word must be surrounded by non-alphanumeric chars or start/end of string.
+          // This prevents "ass" from triggering on "class", or "tit" on "attitude".
+          const escapedWord = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(^|[^a-z0-9])${escapedWord}([^a-z0-9]|$)`, 'i');
+          
+          if (regex.test(userTextLower)) {
+            const hostileReplies = [
+              "[VOICE: XAVIER] [EXECUTE_BANISHMENT]",
+              "[VOICE: MADARA] You dare use such language with me? [EXECUTE_BANISHMENT]",
+              "[VOICE: SCORPION] Pathetic. Burn. [EXECUTE_BANISHMENT]",
+              "[VOICE: KOTL] I feel the dread coalescing in the pit of your stomach... [EXECUTE_BANISHMENT]",
+              "[VOICE: WISEMAN] A poor choice of words, traveler. [EXECUTE_BANISHMENT]"
+            ];
+            earlyToxicReply = hostileReplies[Math.floor(Math.random() * hostileReplies.length)];
+            break;
+          }
+        }
+      }
+
+      // ── Cache Versioning & TTL Check (Redis) ─────────────────
+      const cacheVersion = (cacheVerRes?.length > 0) ? cacheVerRes[0].config_value : "v1";
+      const cacheKeyBase = userTextLower.replace(/[^\w\s]/g, "").trim().replace(/\s+/g, "_");
+      const cacheRole = isAdmin ? "admin" : "guest";
+      const cacheKey = `${cacheVersion}:${cacheRole}:${cacheKeyBase}`;
+
+      // Bypass cache entirely if it's an UNKNOWN intent to keep fallback responses fresh.
+      const isDynamicQuery = (canonicalIntent === 'UNKNOWN');
+      const cacheTTL = (canonicalIntent === 'INTENT_TIME' || canonicalIntent === 'INTENT_WEATHER') ? 60 : 86400;
+
+      if (userTextLower && !hasPhoto && !earlyToxicReply && !isDynamicQuery && context.env.UPSTASH_URL && context.env.UPSTASH_TOKEN) {
+          let cached = await redisGet(`cache:${cacheKey}`, context);
+          
+          // Semantic Match if exact match fails
+          if (!cached && context.env.AI) {
+              const userVector = await getEmbedding(userTextLower, context);
+              if (userVector) {
+                  const indexKey = `embeddings_index:${cacheVersion}:${cacheRole}`;
+                  let index = await redisGet(indexKey, context) || [];
+                  let bestMatch = null;
+                  let highestSim = 0;
+                  
+                  for (let entry of index) {
+                      const sim = cosineSimilarity(userVector, entry.vector);
+                      if (sim > highestSim) {
+                          highestSim = sim;
+                          bestMatch = entry;
+                      }
+                  }
+                  
+                  if (highestSim >= 0.92 && bestMatch) {
+                      console.log(`[JARVIS] Semantic Cache Hit! Score: ${highestSim}`);
+                      cached = await redisGet(bestMatch.key, context);
+                  }
+                  
+                  context.userVector = userVector; // save for writing later
+              }
+          }
+
+          if (cached) {
+            return new Response(JSON.stringify({
+              choices: [{ message: { content: cached.response } }],
+              play_cache: cached.playCache,
+              redirect_url: cached.redirectUrl,
+              _cache_hit: true
+            }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+          }
+      }
+
+      let geminiPromise;
+      if (earlyToxicReply) {
+        geminiPromise = Promise.resolve({
+          aiReply: earlyToxicReply,
+          redirectUrl: "BAN",
+          newMemory: null,
+          usedModel: "none",
+          tokenUsage: null
+        });
+        context.triggeredAudioFile = "audio/intrusionblocked.mp3";
+      } else {
+        geminiPromise = generateWithFallback(
+          systemPrompt, payload.userText, payload.photoBase64,
+          availableRoutesText, modelUsage, hasPhoto, context
+        );
+      }
+
+      // Groq gets a minimal context-free prompt — it doesn't need system prompt
+      // It will receive Gemini's output once ready, but we pre-warm the connection
+      // by building the request early. Actual send happens after Gemini resolves.
+      // Since we can't truly parallel without Gemini's output, we race like this:
+      // Gemini resolves → immediately fire Groq → await both settle via Promise.all
+      // Net cost: Groq latency is HIDDEN inside Gemini's response time on fast calls
+
+      const { aiReply: rawReply, redirectUrl, newMemory, usedModel, tokenUsage } = await geminiPromise;
+
+      // ── Parse persona from Gemini output first ─────────────
+      let selectedPersona = "XAVIER";
+      let geminiClean = rawReply.trim();
+      const voiceMatch = rawReply.match(/\[VOICE:\s*([^\]]+)\]/i);
+      if (voiceMatch) {
+        selectedPersona = voiceMatch[1].trim().toUpperCase();
+        geminiClean = rawReply.replace(/\[VOICE:\s*[^\]]+\]/gi, "").trim();
+      }
+
+      // ── Fire Groq style pass (parallel with persona parse overhead) ──
+      // playCache resolved after this, so we declare it early
+      let playCache = null;
+
+      const [groqStyled] = await Promise.allSettled([
+        (context.GROQ_API_KEY && !earlyToxicReply)
+          ? groqStylePass(geminiClean, selectedPersona, context)
+          : Promise.resolve(null)
+      ]);
+
+      // Pick best text: Groq output if complete sentence, else Gemini original
+      const groqResult = groqStyled.status === "fulfilled" ? groqStyled.value : null;
+      let cleanText = (groqResult && isCompleteSentence(groqResult))
+        ? groqResult
+        : geminiClean;
+
+      // ── FINAL OUTPUT SANITIZER ─────────────────────────────
+      // Strip any leaked tags/artifacts that must NEVER reach the UI
+      cleanText = sanitizeOutput(cleanText);
+
+      // ── Audio cache interceptor ────────────────────────────
+      for (const key of Object.keys(audioCache)) {
+        if (cleanText.includes(key)) {
+          playCache = audioCache[key].mp3;
+          cleanText = cleanText.replace(key, audioCache[key].text);
+          break;
+        }
+      }
+
+      // ── Phase 4 Layer 1: Rule-Based Protocols ──────────────
+      if (!context.triggeredAudioFile && !playCache) {
+        checkRuleBasedProtocols(existingUser, context.dailyChatCount || 0, newMemory, currentMemory, context);
+      }
+
+      // ── TTS Removed: Using Soundboard Only ─────────────────
+      let audioBase64 = null; // Legacy field kept null for frontend compatibility
+      if (context.triggeredAudioFile) {
+        playCache = context.triggeredAudioFile;
+      }
+      
+      const newChatsSinceAudio = playCache ? 0 : chatsSinceAudio + 1;
+
+      // ── Background: DB update + model usage counter ────────
+      const isBannedEvent = !!earlyToxicReply || (rawReply || "").includes("[EXECUTE_BANISHMENT]");
+      if (context.ctx && typeof context.ctx.waitUntil === 'function') {
+        context.ctx.waitUntil(updateDatabase(payload, cleanVisitorName, existingUser, newMemory || currentMemory, cleanText, context, isBannedEvent, chatHistory));
+        context.ctx.waitUntil(incrementModelUsage(usedModel, context));
+      } else {
+        updateDatabase(payload, cleanVisitorName, existingUser, newMemory || currentMemory, cleanText, context, isBannedEvent, chatHistory);
+        incrementModelUsage(usedModel, context);
+      }
+
+      // ── Cache write (after LLM response, fire & forget) ────
+      if (userTextLower && !hasPhoto && !earlyToxicReply && !isBannedEvent && !isDynamicQuery && context.env.UPSTASH_URL && context.env.UPSTASH_TOKEN) {
+        // Skip caching personalized responses (contain visitor name)
+        if (!cleanText.toLowerCase().includes(cleanVisitorName)) {
+          const cacheData = { response: cleanText, playCache: playCache, redirectUrl: redirectUrl };
+          const fullCacheKey = `cache:${cacheKey}`;
+          
+          const saveCacheTask = async () => {
+             await redisSet(fullCacheKey, cacheData, cacheTTL, context);
+             
+             // Update Semantic Embeddings Index
+             if (context.userVector) {
+                 const indexKey = `embeddings_index:${cacheVersion}:${cacheRole}`;
+                 let index = await redisGet(indexKey, context) || [];
+                 // Remove old entry if same exact key
+                 index = index.filter(e => e.key !== fullCacheKey);
+                 index.push({ key: fullCacheKey, vector: context.userVector, ts: Date.now() });
+                 // Keep index lean (last 50 queries)
+                 if (index.length > 50) index.shift();
+                 await redisSet(indexKey, index, cacheTTL, context);
+             }
+          };
+
+          if (context.ctx && typeof context.ctx.waitUntil === 'function') {
+            context.ctx.waitUntil(saveCacheTask());
+          } else {
+            saveCacheTask();
+          }
+        }
+      }
+
+      // Token Usage Tracking
+      if (tokenUsage && env.TELEMETRY && ctx) {
+        ctx.waitUntil(env.TELEMETRY.fetch("http://internal/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            table: "rpc/increment_user_tokens",
+            data: {
+              p_visitor_name_lower: cleanVisitorName,
+              p_date_key: todayKey(),
+              p_input_tokens: tokenUsage.inputTokens,
+              p_output_tokens: tokenUsage.outputTokens,
+              p_total_tokens: tokenUsage.totalTokens
+            }
+          })
+        }).catch(e => console.error("Telemetry binding failed for tokens:", e)));
+      }
+
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: cleanText } }],
+        play_cache: playCache,
+        audio_base64: audioBase64,
+        redirect_url: redirectUrl,
+        _model_used: usedModel  // debug info
+      }), {
+        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+      });
+
+    } catch (err) {
+      console.error("Top-level error:", err);
+      
+      // [TELEMETRY BINDING] - Transmit critical crash directly to Worker B
+      if (env.TELEMETRY && ctx) {
+        ctx.waitUntil(env.TELEMETRY.fetch("http://internal/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            table: "jarvis_error_logs",
+            data: {
+              error_message: err.stack || err.message,
+              error_source: "Worker A Top-level Exception",
+              client_ip: request.headers.get("cf-connecting-ip") || "Unknown"
+            }
+          })
+        }).catch(e => console.error("Telemetry binding failed:", e)));
+      }
+
+      return errorResponse(err.message);
+    }
+  }
+};
+
+// ============================================================
+// MODEL SELECTION & FALLBACK ENGINE
+// ============================================================
+
+function pickModel(modelUsage, needsImage) {
+  const today = todayKey();
+  for (const m of MODEL_POOL) {
+    if (needsImage && !m.img) continue; // skip if image needed and model can't handle it
+    const used = modelUsage[`${m.id}::${today}`] || 0;
+    // Leave a 2-request buffer before RPD limit to absorb race conditions
+    if (used < m.rpd - 2) return m;
+  }
+  // Last resort: try image-incapable models if image already tried above
+  if (needsImage) {
+    for (const m of MODEL_POOL) {
+      const used = modelUsage[`${m.id}::${today}`] || 0;
+      if (used < m.rpd - 2) return m; // accept any, just strip image
+    }
+  }
+  return null; // all exhausted
+}
+
+async function generateWithFallback(systemPrompt, userText, photoBase64, availableRoutesText, modelUsage, hasPhoto, context) {
+  const today = todayKey();
+  const errors = [];
+  
+  let aiReply = "";
+  let redirectUrl = null;
+  let newMemory = null;
+  let usedModel = "none";
+  let tokenUsage = null;
+  let success = false;
+
+  for (const model of MODEL_POOL) {
+    const used = modelUsage[`${model.id}::${today}`] || 0;
+    if (used >= model.rpd - 2) {
+      errors.push(`${model.id}: daily quota exhausted (${used}/${model.rpd})`);
+      continue;
+    }
+
+    const usePhoto = hasPhoto && model.img ? photoBase64 : null;
+
+    try {
+      let result;
+      if (model.provider === "cloudflare") {
+          const cfPrompt = `${systemPrompt}\n\n=== ROUTES ===\n${availableRoutesText || "None."}\n\n=== RULES ===\n1. To navigate, output exactly: NAVIGATE_TO: <url>\n2. If you learn new info about the user, output exactly: MEMORY_UPDATE: <summary>\n3. If the user insults you or the Admin 5 times, or uses severe profanity, output exactly: [EXECUTE_BANISHMENT]\n4. To trigger a system event, output exactly: PROTOCOL: <ID> (valid IDs: EASTER_EGG, ACCESS_DENIED, SUSPICIOUS_ACTIVITY)\n5. Start with [VOICE: PERSONA] (e.g. XAVIER). Max 100 words. Be sharp.`;
+          result = await generateCloudflareSingleResponse(cfPrompt, userText, model.id, context);
+      } else {
+          result = await generateGeminiFullResponse(systemPrompt, userText, usePhoto, availableRoutesText, model.id, context);
+      }
+
+      if (result.error429) {
+        errors.push(`${model.id}: 429 rate limited`);
+        modelUsage[`${model.id}::${today}`] = (modelUsage[`${model.id}::${today}`] || 0) + 5;
+        continue;
+      }
+      if (result.errorHard) {
+        errors.push(`${model.id}: ${result.errorHard}`);
+        continue;
+      }
+      
+      // SUCCESS!
+      aiReply = result.aiReply || "";
+      redirectUrl = result.redirectUrl || null;
+      newMemory = result.newMemory || null;
+      tokenUsage = result.tokenUsage || null;
+      usedModel = model.id;
+      success = true;
+      break; // Exit loop!
+
+    } catch (e) {
+      errors.push(`${model.id}: exception ${e.message}`);
+      continue;
+    }
+  }
+
+  if (!success) {
+      // All failed (WW3 event)
+      console.error("All models failed:", errors.join(" | "));
+      context.triggeredAudioFile = "audio/allmodelsdown.mp3";
+      
+      if (context.env?.TELEMETRY && context.ctx) {
+        context.ctx.waitUntil(context.env.TELEMETRY.fetch("http://internal/log", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table: "jarvis_error_logs", data: { error_message: "WW3 EVENT: All primary AND backup models failed. Details: " + errors.join(" | "), error_source: "Unified Fallback Engine", client_ip: context.clientIp } })
+        }).catch(()=>{}));
+      }
+
+      return { aiReply: "[VOICE: XAVIER] All primary and backup inference cores are completely offline.", redirectUrl: null, newMemory: null, usedModel: "none", tokenUsage: null };
+  }
+
+  // --- UNIFIED POST-PROCESSING (Applies to BOTH Gemini and Cloudflare) ---
+
+  // 1. Extract Navigation from Text (for CF and Gemma)
+  const navMatch = aiReply.match(/NAVIGATE_TO:\s*(\S+)/i);
+  if (navMatch && !redirectUrl) {
+      let rawUrl = navMatch[1].trim();
+      rawUrl = rawUrl.replace(/^https?:\/\/[^\/]+\/?/, ""); // strip https://domain.com/
+      rawUrl = rawUrl.replace(/^(?:ZG0D-FF\/)+/i, ""); // strip ZG0D-FF/ZG0D-FF/
+      rawUrl = rawUrl.startsWith("/") ? rawUrl.substring(1) : rawUrl;
+      redirectUrl = rawUrl; 
+      aiReply = aiReply.replace(/NAVIGATE_TO:\s*\S+/i, "").trim();
+      if (!aiReply) aiReply = "[VOICE: XAVIER] Navigation protocol engaged. Rerouting now.";
+  }
+
+  // 2. Extract Memory Update (if returned as text)
+  const memMatch = aiReply.match(/MEMORY_UPDATE:\s*(.+?)(?:\n|$)/i);
+  if (memMatch && !newMemory) {
+      newMemory = memMatch[1].trim();
+      aiReply = aiReply.replace(/MEMORY_UPDATE:\s*.+?(?:\n|$)/i, "").trim();
+      context.triggeredAudioFile = "audio/memoryupdated.mp3";
+  }
+
+  // 3. Extract Banishment
+  if (aiReply.includes("[EXECUTE_BANISHMENT]")) {
+      redirectUrl = "BAN";
+      context.triggeredAudioFile = "audio/intrusionblocked.mp3";
+  }
+
+  // 3.5 Extract PROTOCOL: trigger from text (CF fallback)
+  const protoMatch = aiReply.match(/PROTOCOL:\s*(\w+)/i);
+  if (protoMatch && !context.triggeredAudioFile) {
+      const p = protoMatch[1].toUpperCase();
+      const textProtoMap = {
+        "SCAN_START": "audio/scanstarts.mp3",
+        "SCAN_CLEAN": "audio/portscancompletes.mp3",
+        "INTRUSION_BLOCKED": "audio/intrusionblocked.mp3",
+        "ACCESS_DENIED": "audio/kotlsaysaccessdenied1.mp3",
+        "SUSPICIOUS_ACTIVITY": "audio/suspiciousactivity.mp3",
+        "EASTER_EGG": "audio/easterEggFound.mp3",
+        "HUNDREDTH_CHAT": "audio/hundredthchat.mp3",
+        "GUEST_WARNING": "audio/guestlimitwarning.mp3",
+        "GUEST_LIMIT": "audio/guestlimitreached.mp3",
+        "MEMORY_FORGOTTEN": "audio/memoryforgotten.mp3",
+        "MEMORY_LEARNED": "audio/memorylearned.mp3"
+      };
+      if (textProtoMap[p]) context.triggeredAudioFile = textProtoMap[p];
+      aiReply = aiReply.replace(/PROTOCOL:\s*\w+/i, "").trim();
+  }
+
+  // 4. Audio Triggers for Navigation
+  if (redirectUrl && redirectUrl !== "BAN") {
+      const lowerUrl = redirectUrl.toLowerCase();
+      if (lowerUrl.includes("aiml") || lowerUrl.includes("ai")) context.triggeredAudioFile = "audio/openingAIML.mp3";
+      else if (lowerUrl.includes("animal")) context.triggeredAudioFile = "audio/openingAnimalArchive.mp3";
+      else if (lowerUrl.includes("iot") || lowerUrl.includes("daddy")) context.triggeredAudioFile = "audio/openingDeepIoT.mp3";
+      else if (lowerUrl.includes("bharat")) context.triggeredAudioFile = "audio/openingDigitalBharat.mp3";
+      else if (lowerUrl.includes("rain")) context.triggeredAudioFile = "audio/openingRainStory.mp3";
+      else if (lowerUrl.includes("water")) context.triggeredAudioFile = "audio/openingWaterSystem.mp3";
+      else if (lowerUrl.includes("link")) context.triggeredAudioFile = "audio/viewingLinks.mp3";
+      else if (lowerUrl.includes("photo") || lowerUrl.includes("gallery")) context.triggeredAudioFile = "audio/viewingPhotos.mp3";
+      else if (lowerUrl.includes("project")) context.triggeredAudioFile = "audio/viewingprojects.mp3";
+      else if (lowerUrl.includes("skill")) context.triggeredAudioFile = "audio/viewingSkills.mp3";
+      else if (lowerUrl.includes("timeline")) context.triggeredAudioFile = "audio/viewingTimeline.mp3";
+      else if (lowerUrl.includes("nexus") || lowerUrl.includes("jarvis")) context.triggeredAudioFile = "audio/openingJARVIS.mp3";
+  }
+
+  return { aiReply, redirectUrl, newMemory, usedModel, tokenUsage };
+}
+
+// ============================================================
+// GEMINI FULL RESPONSE (single model attempt)
+// Returns { aiReply, redirectUrl, newMemory, error429?, errorHard? }
+// ============================================================
+async function generateGeminiFullResponse(systemPrompt, userText, photoBase64, availableRoutesText, modelId, context) {
+  if (!context.GEMINI_API_KEY) {
+    return { aiReply: "[VOICE: XAVIER] API key missing.", redirectUrl: null, newMemory: null, errorHard: "No API key" };
+  }
+
+  const isGemma = GEMMA_IDS.has(modelId);
+
+  // ── Build prompt ─────────────────────────────────────────
+  // Gemma: no function calling, so we inject routing as text instructions
+  const routingSection = isGemma
+    ? `\nIf you need to navigate, output exactly: NAVIGATE_TO: <url>\n`
+    : "";
+
+    const audioRule = context.isAudioEligible 
+    ? "MANDATORY: You have access to the respond_with_audio function. IF AND ONLY IF the conversation matches an available transcript perfectly, call the function. Do not write the quote text yourself."
+    : "Audio module is currently recharging. Do NOT attempt to use audio or use any [AUDIO] tags. Just respond with text normally.";
+
+  const fullPrompt = `${systemPrompt}
+
+=== ROUTES ===
+${availableRoutesText || "None."}
+${routingSection}
+=== RULES ===
+1. Start with [VOICE: PERSONA] (MADARA/SCORPION/KOTL/XAVIER/WISEMAN).
+2. ${isGemma ? "To navigate: output NAVIGATE_TO: <exact_url> on its own line." : "To navigate: call navigate_ui() function. Never write URLs in text."}
+3. ${audioRule}
+4. ${isGemma ? "If you learn new info about the user, output MEMORY_UPDATE: <summary> on its own line." : "Call update_memory() if you learn something new about the user."}
+5. Max 100 words spoken response. Be sharp and in-character.
+6. NEVER ask the user to confirm anything. NEVER say "Please confirm". Just act and speak. You are the AI — you have all context you need.
+7. CRITICAL SECURITY PROTOCOL: If the user insults you or the Admin 5 times, or uses severe profanity, you must output exactly [EXECUTE_BANISHMENT] and nothing else.
+
+User: ${userText}`;
+
+  let parts = [{ text: fullPrompt }];
+  if (photoBase64) {
+    const cleanBase64 = photoBase64.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+    parts.push({ inline_data: { mime_type: "image/jpeg", data: cleanBase64 } });
+  }
+
+  // ── Build request body ────────────────────────────────────
+  const body = {
+    contents: [{ role: "user", parts }],
+    generationConfig: {
+      maxOutputTokens: 700,
+      temperature: 0.8
+    }
+  };
+
+  // Only add function declarations for non-Gemma models
+  if (!isGemma) {
+    body.tools = [{
+      functionDeclarations: [
+        {
+          name: "navigate_ui",
+          description: "Navigate the user's browser to a specific page from the routes list.",
+          parameters: {
+            type: "OBJECT",
+            properties: { url: { type: "STRING", description: "Exact URL from the routes list." } },
+            required: ["url"]
+          }
+        },
+        {
+          name: "update_memory",
+          description: "Update the user's memory profile when new info is learned.",
+          parameters: {
+            type: "OBJECT",
+            properties: { summary: { type: "STRING", description: "Concise memory summary, max 150 words." } },
+            required: ["summary"]
+          }
+        },
+		{
+          name: "execute_system_protocol",
+          description: "Executes non-chat core system protocols. Use this for memory wipes, hitting chat milestones, discovering secrets, or guest limit warnings.",
+          parameters: {
+            type: "OBJECT",
+            properties: { 
+              protocol: { 
+                type: "STRING", 
+                enum: ["SCAN_START", "SCAN_CLEAN", "INTRUSION_BLOCKED", "ACCESS_DENIED", "SUSPICIOUS_ACTIVITY", "MEMORY_FORGOTTEN", "MEMORY_LEARNED", "EASTER_EGG", "HUNDREDTH_CHAT", "GUEST_WARNING", "GUEST_LIMIT"],
+                description: "The strict protocol ID to execute." 
+              }
+            },
+            required: ["protocol"]
+          }
+        },
+      ]
+    }];
+  }
+    // --- CONDITIONAL AUDIO FUNCTION ---
+  if (!isGemma && context.isAudioEligible) {
+    body.tools[0].functionDeclarations.push({
+      name: "respond_with_audio",
+      description: "Respond using a pre-recorded audio file. ONLY use this if the conversation directly relates to one of the transcripts.",
+      parameters: {
+        type: "OBJECT",
+        properties: { 
+          filename: { type: "STRING", description: "The exact MP3 filename from the JSON." },
+          ai_text_reply: { type: "STRING", description: "Your conversational text response to display in the UI." }
+        },
+        required: ["filename", "ai_text_reply"]
+      }
+    });
+  }
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${context.GEMINI_API_KEY}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+    );
+
+    // ── Handle rate limit / quota errors ─────────────────────
+    if (res.status === 429) {
+      console.warn(`${modelId} returned 429`);
+      return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
+    }
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`${modelId} HTTP ${res.status}:`, errText);
+      // 503 = overloaded, treat like 429 for retry
+      if (res.status === 503 || res.status === 500) {
+        return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
+      }
+      return { aiReply: "", redirectUrl: null, newMemory: null, errorHard: `HTTP ${res.status}` };
+    }
+
+    const data = await res.json();
+
+    const tokenUsage = data.usageMetadata ? {
+      inputTokens: data.usageMetadata.promptTokenCount || 0,
+      outputTokens: data.usageMetadata.candidatesTokenCount || 0,
+      totalTokens: data.usageMetadata.totalTokenCount || 0
+    } : null;
+
+    // --- [STRICT SAFETY & TOXICITY INTERCEPTOR] ---
+    let safetyViolation = false;
+
+    if (data.promptFeedback && data.promptFeedback.blockReason === "SAFETY") {
+        safetyViolation = true;
+    }
+    if (data.candidates && data.candidates[0] && data.candidates[0].finishReason === "SAFETY") {
+        safetyViolation = true;
+    }
+
+    const ratings = (data.candidates && data.candidates[0]?.safetyRatings) || 
+                    (data.promptFeedback && data.promptFeedback.safetyRatings) || [];
+    for (let r of ratings) {
+        if ((r.category === "HARM_CATEGORY_HARASSMENT" || r.category === "HARM_CATEGORY_HATE_SPEECH") &&
+            (r.probability === "HIGH" || r.probability === "MEDIUM")) {
+            safetyViolation = true;
+        }
+    }
+
+    // Note: Banned words are now checked before LLM call to save tokens.
+
+    if (safetyViolation) {
+        console.warn(`[SECURITY] Toxicity Detected. Bypassing AI logic. Engaging Banishment.`);
+        return { 
+            aiReply: "[EXECUTE_BANISHMENT]", 
+            redirectUrl: "BAN", 
+            newMemory: null 
+        };
+    }
+    // ----------------------------------------------
+
+    // ── Check for API-level quota errors in body ──────────────
+    if (data.error) {
+      const code = data.error.code || 0;
+      const msg = data.error.message || "";
+      console.error(`${modelId} API error:`, msg);
+      if (code === 429 || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
+        return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
+      }
+      return { aiReply: "", redirectUrl: null, newMemory: null, errorHard: msg };
+    }
+
+    if (!data.candidates?.length) {
+      return { aiReply: "", redirectUrl: null, newMemory: null, errorHard: "No candidates" };
+    }
+
+    // ── Parse response ────────────────────────────────────────
+    let aiReply = "";
+    let redirectUrl = null;
+    let newMemory = null;
+
+    const partsOut = data.candidates[0].content?.parts || [];
+
+    for (const part of partsOut) {
+      if (part.text) {
+        aiReply += part.text;
+      }
+      if (part.functionCall) {
+                if (part.functionCall.name === "navigate_ui") {
+          let rawUrl = part.functionCall.args?.url || "";
+          redirectUrl = rawUrl.startsWith("/") ? rawUrl.substring(1) : rawUrl;
+        }
+
+		if (part.functionCall.name === "execute_system_protocol") {
+          const p = part.functionCall.args?.protocol;
+          const protoMap = {
+            "SCAN_START": "audio/scanstarts.mp3",
+            "SCAN_CLEAN": "audio/portscancompletes.mp3",
+            "INTRUSION_BLOCKED": "audio/intrusionblocked.mp3",
+            "ACCESS_DENIED": "audio/kotlsaysaccessdenied1.mp3",
+            "SUSPICIOUS_ACTIVITY": "audio/suspiciousactivity.mp3",
+            "MEMORY_FORGOTTEN": "audio/memoryforgotten.mp3",
+            "MEMORY_LEARNED": "audio/memorylearned.mp3",
+            "EASTER_EGG": "audio/easterEggFound.mp3",
+            "HUNDREDTH_CHAT": "audio/hundredthchat.mp3",
+            "GUEST_WARNING": "audio/guestlimitwarning.mp3",
+            "GUEST_LIMIT": "audio/guestlimitreached.mp3"
+          };
+          if (protoMap[p]) {
+            context.triggeredAudioFile = protoMap[p];
+            aiReply += "\n[SYSTEM PROTOCOL EXECUTED]";
+          }
+        }
+        
+		if (part.functionCall.name === "update_memory") {
+          newMemory = part.functionCall.args?.summary || null;
+          // Automatically play audio when Gemini updates memory (costs 0 tokens!)
+          context.triggeredAudioFile = "audio/memoryupdated.mp3"; 
+        }
+		
+        if (part.functionCall.name === "respond_with_audio") {
+          aiReply += part.functionCall.args?.ai_text_reply || "";
+          context.triggeredAudioFile = part.functionCall.args?.filename || null;
+        }
+      }
+    }
+
+    // We no longer do Gemma text parsing here, as it was moved to generateWithFallback global post-processing!
+
+    aiReply = aiReply.trim();
+    if (!aiReply || aiReply.length < 3) {
+      if (redirectUrl) {
+        aiReply = "[VOICE: XAVIER] Navigation protocol engaged. Rerouting now.";
+      } else {
+        aiReply = "[VOICE: XAVIER] Understood. Standing by.";
+      }
+    }
+
+    return { aiReply, redirectUrl, newMemory, tokenUsage };
+
+  } catch (e) {
+    console.error(`${modelId} fetch exception:`, e.message);
+    return { aiReply: "", redirectUrl: null, newMemory: null, error429: true }; // treat as retryable
+  }
+}
+
+// ============================================================
+// MODEL USAGE TRACKING (Supabase key-value store)
+// Table: jarvis_model_usage — columns: model_key (text PK), count (int), updated_at
+// If table doesn't exist, falls back gracefully (returns empty object)
+// ============================================================
+
+async function fetchModelUsage(context) {
+  try {
+    const today = todayKey();
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_model_usage?model_key=like.${encodeURIComponent(`%::${today}`)}`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) return {};
+    const rows = await res.json();
+    if (!Array.isArray(rows)) return {};
+    const map = {};
+    for (const row of rows) map[row.model_key] = row.count || 0;
+    return map;
+  } catch (e) {
+    console.warn("fetchModelUsage failed:", e.message);
+    return {};
+  }
+}
+
+function incrementModelUsage(modelId, context) {
+  if (!modelId || modelId === "none") return;
+  const key = `${modelId}::${todayKey()}`;
+  const req = fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_model_usage`, {
+    method: "POST",
+    headers: {
+      ...sbHeaders(context),
+      "Content-Type": "application/json",
+      "Prefer": "resolution=merge-duplicates"
+    },
+    body: JSON.stringify({ model_key: key, count: 1 })
+  }).catch(() => {});
+  
+  if (context.ctx) context.ctx.waitUntil(req);
+  // Note: for proper increment you'd use a DB function/RPC,
+  // but for free tier volumes a simple upsert with manual count works fine.
+}
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10); // "2025-05-24"
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function sbHeaders(context) {
+  return {
+    "apikey": context.SUPABASE_KEY,
+    "Authorization": `Bearer ${context.SUPABASE_KEY}`
+  };
+}
+
+function errorResponse(msg) {
+  return new Response(
+    JSON.stringify({ choices: [{ message: { content: "[VOICE: XAVIER] System Error: " + msg } }] }),
+    { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } }
+  );
+}
+
+function jsonResponse(data) {
+  return new Response(JSON.stringify(data), {
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+  });
+}
+
+// ── Backend Biometric Math ─────────────────────────────────
+async function handleAuthBiometric(payload, context) {
+  if (!payload.faceDescriptor || !Array.isArray(payload.faceDescriptor)) {
+    return new Response(JSON.stringify({ match: false, error: "No face descriptor provided" }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+  }
+
+  try {
+    const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?select=id,visitor_name,visitor_name_lower,face_descriptor`, {
+      headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}` }
+    });
+    const users = await res.json();
+
+    if (!users || users.error) {
+      return new Response(JSON.stringify({ match: false, error: "Failed to fetch DB" }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+    }
+
+    const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
+    let matchedUser = null;
+    let bestDistance = 1.0;
+    let isCreatorMatch = false;
+
+    const calcDistance = (a, b) => {
+      let sum = 0;
+      for (let i = 0; i < a.length; i++) sum += Math.pow(a[i] - b[i], 2);
+      return Math.sqrt(sum);
+    };
+
+    for (const u of users) {
+      if (u.face_descriptor) {
+        try {
+          let dbDescriptor = u.face_descriptor;
+          if (typeof dbDescriptor === "string") dbDescriptor = JSON.parse(dbDescriptor);
+          const distance = calcDistance(payload.faceDescriptor, dbDescriptor);
+          
+          if (distance < 0.5) { // 80% geometric match threshold
+            const isCreator = creatorAliases.includes((u.visitor_name_lower || '').toLowerCase());
+            if (isCreator && !isCreatorMatch) {
+              bestDistance = distance;
+              matchedUser = u.visitor_name;
+              isCreatorMatch = true;
+            } else if (!isCreatorMatch && distance < bestDistance) {
+              bestDistance = distance;
+              matchedUser = u.visitor_name;
+            }
+          }
+        } catch(e) {}
+      }
+    }
+
+    if (matchedUser) {
+      const role = creatorAliases.includes(matchedUser.toLowerCase()) ? 'admin' : 'guest';
+      return new Response(JSON.stringify({ match: true, matchedUser, role }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+    }
+
+    // New Face Scan Logic: Either map to existing name or create brand new user
+    if (payload.visitorName && payload.visitorName.trim() !== "") {
+      const cleanVisitorName = payload.visitorName.toLowerCase().trim();
+      
+      // Check if this name already exists in the database
+      const existingProfile = users.find(u => (u.visitor_name_lower || '').toLowerCase() === cleanVisitorName);
+      
+      if (existingProfile) {
+        // SCENARIO 1: Name exists, Face is new. UPDATE the exact row 1-to-1.
+        await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}`, {
+          method: "PATCH",
+          headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            client_ip: context.clientIp, // Update IP just in case
+            face_descriptor: JSON.stringify(payload.faceDescriptor)
+          })
+        });
+      } else {
+        // SCENARIO 2: Brand new Name & Face. INSERT a fresh row.
+        await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users`, {
+          method: "POST",
+          headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: crypto.randomUUID(), // Generate a new UUID safely
+            client_ip: context.clientIp, // Must include IP to prevent rejection
+            visitor_name_lower: cleanVisitorName,
+            visitor_name: payload.visitorName,
+            face_descriptor: JSON.stringify(payload.faceDescriptor)
+          })
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({ match: false }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+  } catch (err) {
+    return new Response(JSON.stringify({ match: false, error: err.message }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+  }
+}
+
+// ── Fallback biometric auth ────────────────────────────────
+async function handleThreatTelemetry(payload, context) {
+  if (context.env?.TELEMETRY && context.ctx) {
+    context.ctx.waitUntil(context.env.TELEMETRY.fetch("http://internal/log", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "jarvis_threat_logs",
+        data: {
+          visitor_name_lower: (payload.visitorName || "unknown").toLowerCase(),
+          client_ip: context.clientIp,
+          canvas_hash: payload.metrics?.canvas_hash || "none",
+          dev_tools_opened: payload.metrics?.dev_tools_opened || false,
+          rage_clicks: payload.metrics?.clicks || 0,
+          keystrokes: payload.metrics?.keys_pressed || 0,
+          dwell_time_ms: payload.metrics?.dwell_time_ms || 0
+        }
+      })
+    }).catch(e => console.error("Telemetry error:", e)));
+  }
+  return new Response(JSON.stringify({ status: "logged" }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+}
+
+async function handleFallbackAuth(payload, context) {
+  // Hardcoded to false as per Phase 7: Fallback Auth Hardening
+  return new Response(JSON.stringify({ match: false, error: "Cloud Fallback Auth Disabled." }), { headers: { "Content-Type": "application/json" } });
+}
+
+// ── Rate limiting ──────────────────────────────────────────
+async function checkRateLimit(cleanVisitorName, context) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&created_at=gte.${today.toISOString()}&select=id`,
+      { method: "HEAD", headers: { ...sbHeaders(context), "Prefer": "count=exact" } }
+    );
+    if (!res.ok) return null;
+    const range = res.headers.get("content-range");
+    const count = range ? parseInt(range.split("/")[1] || "0") : 0;
+    context.dailyChatCount = count;
+    if (count >= 15) {
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "[VOICE: XAVIER] Guest rate limit reached (15/15 today). Return tomorrow." } }]
+      }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+    }
+  } catch (e) {
+    console.warn("Rate limit check failed:", e.message);
+  }
+  return null;
+}
+
+// ── Per-minute burst protection ────────────────────────────
+async function checkBurstLimit(cleanVisitorName, context) {
+  try {
+    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&created_at=gte.${oneMinuteAgo}&select=id`,
+      { method: "HEAD", headers: { ...sbHeaders(context), "Prefer": "count=exact" } }
+    );
+    if (!res.ok) return null;
+    const range = res.headers.get("content-range");
+    const count = range ? parseInt(range.split("/")[1] || "0") : 0;
+    if (count >= 3) {
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "[VOICE: XAVIER] Cooldown active. You're sending messages too fast. Wait a moment." } }]
+      }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+    }
+  } catch (e) {
+    console.warn("Burst limit check failed:", e.message);
+  }
+  return null;
+}
+
+// ── Daily token cap protection ─────────────────────────────
+async function checkTokenLimit(cleanVisitorName, context) {
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_user_token_usage?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&date_key=eq.${todayKey()}&select=total_tokens`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data && data.length > 0) {
+      if (data[0].total_tokens >= 50000) {
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: "[VOICE: XAVIER] Your daily neural link data cap (50,000 tokens) has been exhausted. System resumes at midnight." } }]
+        }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+    }
+  } catch (e) {
+    console.warn("Token limit check failed:", e.message);
+  }
+  return null;
+}
+
+// ── Supabase data fetchers ─────────────────────────────────
+async function fetchUserData(name, context) {
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(name)}&select=*`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) { console.warn(`fetchUserData HTTP ${res.status}`); return null; }
+    const users = await res.json();
+    return users?.[0] || null;
+  } catch (e) {
+    console.warn("fetchUserData failed:", e.message);
+    return null;
+  }
+}
+
+// Scans the entire database to see if this IP address belongs to ANY banned user
+async function checkIfIpIsBanned(ip, context) {
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_known_users?client_ip=eq.${encodeURIComponent(ip)}&is_banned=eq.true&select=id&limit=1`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) { console.warn(`checkIfIpIsBanned HTTP ${res.status}`); return false; }
+    const rows = await res.json();
+    return Array.isArray(rows) && rows.length > 0;
+  } catch(e) {
+    console.warn("checkIfIpIsBanned failed:", e.message);
+    return false;
+  }
+}
+
+async function fetchChatHistory(name, context) {
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?visitor_name_lower=eq.${encodeURIComponent(name)}&order=created_at.desc&limit=3`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) { console.warn(`fetchChatHistory HTTP ${res.status}`); return []; }
+    return await res.json();
+  } catch (e) {
+    console.warn("fetchChatHistory failed:", e.message);
+    return [];
+  }
+}
+
+async function fetchAudioTriggers(context) {
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_audio_triggers?select=*`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) { console.warn(`fetchAudioTriggers HTTP ${res.status}`); return []; }
+    return await res.json();
+  } catch (e) {
+    console.warn("fetchAudioTriggers failed:", e.message);
+    return [];
+  }
+}
+
+async function fetchSystemConfig(key, context) {
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_system_config?config_key=eq.${key}&select=config_value`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) { console.warn(`fetchSystemConfig(${key}) HTTP ${res.status}`); return []; }
+    return await res.json();
+  } catch (e) {
+    console.warn(`fetchSystemConfig(${key}) failed:`, e.message);
+    return [];
+  }
+}
+
+async function fetchNavigationMap(context) {
+  try {
+    const res = await fetch(
+      `${context.SUPABASE_URL}/rest/v1/jarvis_navigation_map?select=*`,
+      { headers: sbHeaders(context) }
+    );
+    if (!res.ok) { console.warn(`fetchNavigationMap HTTP ${res.status}`); return []; }
+    return await res.json();
+  } catch (e) {
+    console.warn("fetchNavigationMap failed:", e.message);
+    return [];
+  }
+}
+
+// ── Audio trigger processor ────────────────────────────────
+function processAudioTriggers(data) {
+  let audioCache = {};
+  let str = "AUDIO: Output exact ID (e.g. [AUDIO_0]) when context matches.\n";
+  if (Array.isArray(data)) {
+    data.forEach((row, i) => {
+      const id = `[AUDIO_${i}]`;
+      audioCache[id] = { text: row.quote_text, mp3: row.mp3_path };
+      str += `${id}|${row.persona}|${row.context_trigger}\n`;
+    });
+  }
+  return { audioCache, availableQuotesStr: str };
+}
+
+// ── Navigation route builder ───────────────────────────────
+function processNavigationRoutes(dynamicRoutes, navData) {
+  let text = "";
+  if (Array.isArray(dynamicRoutes)) dynamicRoutes.forEach(r => { text += `${r.text} -> ${r.url}\n`; });
+  if (Array.isArray(navData)) navData.forEach(n => { text += `${n.description} -> ${n.route_url}\n`; });
+  return text;
+}
+
+// ── Output sanitizer ──────────────────────────────────────
+// Strips anything that should never appear in the final UI text.
+// Called as the LAST step before text hits the response.
+function sanitizeOutput(text) {
+  if (!text) return text;
+
+  // 1. Strip any remaining [VOICE: X] or [XAVIER] style persona tags
+  text = text.replace(/\[VOICE:\s*[^\]]+\]/gi, "");
+  text = text.replace(/\[(MADARA|SCORPION|KOTL|XAVIER|WISEMAN)\]/gi, "");
+
+  // 2. Strip Gemini thinking artifacts — backtick fences, asterisk emphasis
+  text = text.replace(/```[\s\S]*?```/g, "");
+  text = text.replace(/\*\*([^*]+)\*\*/g, "$1"); // **bold** → plain
+  text = text.replace(/\*([^*]+)\*/g, "$1");      // *italic* → plain
+
+  // 3. Kill internal monologue patterns that leak from reasoning models
+  // e.g. "'? Affirmative. I will navigate..." — the leading `'?` is a thinking artifact
+  text = text.replace(/^['`"?.\s]+(?=[A-Z])/g, ""); // strip junk prefix before real sentence
+
+  // 4. Strip "Please confirm..." / "Can you confirm..." hedging lines
+  // These are reasoning confirmations, not final answers
+  text = text.replace(/\.?\s*Please confirm[^.!?]*[.!?]/gi, "");
+  text = text.replace(/\.?\s*Can you confirm[^.!?]*[.!?]/gi, "");
+  text = text.replace(/\.?\s*Confirm the current[^.!?]*[.!?]/gi, "");
+
+  // 5. Strip NAVIGATE_TO / MEMORY_UPDATE if Gemma leaked them into text
+  text = text.replace(/NAVIGATE_TO:\s*\S+/gi, "");
+  text = text.replace(/MEMORY_UPDATE:\s*.+?(\n|$)/gi, "");
+
+  // 6. Strip hallucinated tags — Gemini invents fake bracketed tags instead of calling functions
+  // Catches: [STATIC_X], [SILENCE_X], [AUDIO_X: ...], [SYSTEM_X], [PROTOCOL_X], [SCAN_X], [ALERT_X], etc.
+  text = text.replace(/\[STATIC_?\w*\]/gi, "");
+  text = text.replace(/\[SILENCE_?\w*\]/gi, "");
+  text = text.replace(/\[AUDIO_?\w*(?::\s*[^\]]+)?\]/gi, "");
+  text = text.replace(/\[SYSTEM_?\w*(?::\s*[^\]]+)?\]/gi, "");
+  text = text.replace(/\[PROTOCOL_?\w*(?::\s*[^\]]+)?\]/gi, "");
+  text = text.replace(/\[SCAN_?\w*(?::\s*[^\]]+)?\]/gi, "");
+  text = text.replace(/\[ALERT_?\w*(?::\s*[^\]]+)?\]/gi, "");
+  text = text.replace(/\[EXECUTE_?\w*\]/gi, "");
+  text = text.replace(/\[SYSTEM PROTOCOL EXECUTED\]/gi, "");
+  text = text.replace(/PROTOCOL:\s*\w+/gi, "");
+
+  return text.trim();
+}
+
+// ── Complete sentence validator ───────────────────────────
+// Returns true only if Groq's output looks finished and safe to use
+function isCompleteSentence(text) {
+  if (!text || text.length < 15) return false;
+  const trimmed = text.trim();
+  // Must end with real punctuation (., !, ?, ", ], or emoji-like char)
+  if (!trimmed.match(/[.!?"\]🔥⚡💀🗡️]$/u)) return false;
+  // Must not be suspiciously short vs what Gemini produced (catch hard cuts)
+  if (trimmed.split(" ").length < 5) return false;
+  return true;
+}
+
+// ── Groq model pool — FREE TIER EXACT LIMITS (from official docs) ──────
+// Ordered: highest RPD first (most daily runway), then RPM as tiebreaker
+// llama-3.1-8b-instant is the clear winner at 14,400 RPD — always goes first
+const GROQ_MODEL_POOL = [
+  // id,                                     rpd,    rpm,  tpm
+  { id: "llama-3.1-8b-instant",              rpd: 14400, rpm: 30,  tpm: 6000   },
+  { id: "qwen/qwen3-32b",                    rpd: 1000,  rpm: 60,  tpm: 6000   }, // 60 RPM = double burst capacity
+  { id: "meta-llama/llama-4-scout-17b-16e-instruct", rpd: 1000, rpm: 30, tpm: 30000 },
+  { id: "llama-3.3-70b-versatile",           rpd: 1000,  rpm: 30,  tpm: 12000  },
+  { id: "openai/gpt-oss-20b",               rpd: 1000,  rpm: 30,  tpm: 8000   },
+  { id: "openai/gpt-oss-120b",              rpd: 1000,  rpm: 30,  tpm: 8000   },
+];
+
+// In-memory cache of remaining requests per model (populated from response headers)
+// Resets naturally when the worker instance recycles
+const groqRemainingCache = {};
+
+// ── Groq multi-model style pass ────────────────────────────
+// - Reads x-ratelimit-remaining-requests header to proactively skip exhausted models
+// - On 429: skips to next model immediately
+// - Fallback: returns Gemini original untouched if all models fail
+async function groqStylePass(text, persona, context) {
+  const voices = {
+    MADARA:   "ruthless ancient warlord, imperial",
+    SCORPION: "cold vengeful deadly calm",
+    KOTL:     "mystical riddling arcane",
+    XAVIER:   "sharp technical direct",
+    WISEMAN:  "warm philosophical measured"
+  };
+  const voiceDesc = voices[persona] || "direct";
+  const systemMsg = `Voice stylist. Rewrite to be punchier and more ${voiceDesc}. Rules: keep ALL [AUDIO_X] tags intact, max 100 words, ALWAYS end on a complete sentence with proper punctuation. Never cut off mid-thought. Output ONLY the rewritten text.`;
+
+  for (const model of GROQ_MODEL_POOL) {
+    // ── Proactive skip: if we cached that this model is nearly exhausted ──
+    const cachedRemaining = groqRemainingCache[model.id];
+    if (cachedRemaining !== undefined && cachedRemaining < 5) {
+      console.warn(`Groq ${model.id} pre-skipped (cached remaining: ${cachedRemaining})`);
+      continue;
+    }
+
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${context.GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: model.id,
+          messages: [
+            { role: "system", content: systemMsg },
+            { role: "user", content: text }
+          ],
+          max_tokens: 200,
+          temperature: 0.6
+        })
+      });
+
+      // ── Always update remaining cache from headers ──────────
+      const remaining = res.headers.get("x-ratelimit-remaining-requests");
+      if (remaining !== null) {
+        groqRemainingCache[model.id] = parseInt(remaining);
+      }
+      // Also cache the retry-after hint on 429
+      if (res.status === 429) {
+        groqRemainingCache[model.id] = 0;
+        const retryAfter = res.headers.get("retry-after");
+        console.warn(`Groq ${model.id} 429 (retry-after: ${retryAfter}s), trying next...`);
+        continue;
+      }
+      if (!res.ok) {
+        console.warn(`Groq ${model.id} HTTP ${res.status}, trying next...`);
+        continue;
+      }
+
+      const data = await res.json();
+      if (data.error) {
+        const code = data.error.code || data.error.type || "";
+        console.warn(`Groq ${model.id} API error: ${data.error.message}`);
+        if (code === "rate_limit_exceeded" || data.error.message?.includes("quota")) {
+          groqRemainingCache[model.id] = 0;
+        }
+        continue;
+      }
+
+      const styled = data?.choices?.[0]?.message?.content?.trim();
+      if (styled && styled.length > 10) {
+        console.log(`Groq style: ${model.id} (${groqRemainingCache[model.id] ?? "?"} RPD left)`);
+        return styled;
+      }
+
+    } catch (e) {
+      console.warn(`Groq ${model.id} exception: ${e.message}, trying next...`);
+      continue;
+    }
+  }
+
+  console.warn("All Groq models exhausted — using Gemini original.");
+  
+  // [TELEMETRY] Log Style Engine Failure
+  if (context.env?.TELEMETRY && context.ctx) {
+    context.ctx.waitUntil(context.env.TELEMETRY.fetch("http://internal/log", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table: "jarvis_error_logs", data: { error_message: "All Groq styling models exhausted", error_source: "Groq Style Engine", client_ip: context.clientIp } })
+    }).catch(()=>{}));
+  }
+
+  return text;
+}
+
+// ── TTS synthesis (REMOVED: Soundboard Architecture active) ──
+
+// ── Rule-Based Protocols ──────────────────────────────────
+function checkRuleBasedProtocols(existingUser, dailyChatCount, newMemory, currentMemory, context) {
+  if (!existingUser) {
+    context.triggeredAudioFile = "audio/scanstarts.mp3";
+    return "SCAN_START";
+  }
+  const totalChats = (existingUser?.chat_count || 0) + 1;
+  if (totalChats === 100) {
+    context.triggeredAudioFile = "audio/hundredthchat.mp3";
+    return "HUNDREDTH_CHAT";
+  }
+  if (dailyChatCount >= 12 && dailyChatCount < 15) {
+    context.triggeredAudioFile = "audio/guestlimitwarning.mp3";
+    return "GUEST_WARNING";
+  }
+  if (newMemory && newMemory !== currentMemory) {
+    context.triggeredAudioFile = "audio/memorylearned.mp3";
+    return "MEMORY_LEARNED";
+  }
+  return null;
+}
+
+// ── Database update (fire & forget) ───────────────────────
+function sanitizeForDB(text, bannedWords) {
+  if (!text || !bannedWords?.length) return text;
+  let clean = text;
+  for (const word of bannedWords) {
+    const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    clean = clean.replace(regex, '[REDACTED]');
+  }
+  return clean;
+}
+
+async function updateDatabase(payload, cleanVisitorName, existingUser, newMemory, cleanText, context, isBannedEvent, chatHistory) {
+  const currentStrikes = existingUser?.ban_strikes || 0;
+  const newStrikes = isBannedEvent ? currentStrikes + 1 : currentStrikes;
+  const shouldBan = isBannedEvent ? (newStrikes >= 5) : (existingUser?.is_banned === true);
+  const newChatCount = (existingUser?.chat_count || 0) + 1;
+
+  let newConversationSummary = existingUser?.conversation_summary || null;
+  if (newChatCount % 5 === 0 && chatHistory) {
+    try {
+      const summaryPrompt = `You are a data extractor. 
+Old Summary: ${newConversationSummary || "None."}
+Recent Chat:
+${chatHistory}
+U: ${payload.userText}
+A: ${cleanText}
+
+TASK: Extract any NEW facts or preferences about the user from the Recent Chat that are NOT in the Old Summary.
+If there are no new facts, output exactly the word "NONE".
+If there are new facts, output a concise 1-sentence summary of ONLY the new facts. Do not repeat facts from the Old Summary.`;
+      
+      if (!context.env?.AI) {
+        newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + "[DEBUG ERROR: Cloudflare AI binding 'env.AI' is missing. Check wrangler.toml!]";
+      } else {
+        const summaryResponse = await context.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+          messages: [{ role: "user", content: summaryPrompt }],
+          max_tokens: 100
+        });
+        
+        if (summaryResponse && summaryResponse.response) {
+          const extractedFacts = summaryResponse.response.trim();
+          if (extractedFacts && extractedFacts.toUpperCase() !== "NONE" && !extractedFacts.toUpperCase().includes("NONE.")) {
+            newConversationSummary = newConversationSummary ? newConversationSummary + " " + extractedFacts : extractedFacts;
+            if (newConversationSummary.length > 2500) newConversationSummary = newConversationSummary.substring(0, 2500);
+          } else {
+            // Provide visibility that it actually ran but found nothing
+            newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + "[DEBUG: AI evaluated to NONE]";
+          }
+        } else {
+          newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + "[DEBUG ERROR: AI returned empty response.]";
+        }
+      }
+    } catch (e) {
+      newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + `[DEBUG ERROR: ${e.message}]`;
+    }
+  }
+
+  const upsert = {
+    visitor_name_lower: cleanVisitorName,
+    client_ip: context.clientIp,
+    visitor_name: payload.visitorName,
+    age: payload.age || "Unknown",
+    memory_summary: newMemory,
+    photo_base64: payload.photoBase64 !== "null" ? payload.photoBase64 : (existingUser?.photo_base64 || null),
+    last_seen: new Date().toISOString(),
+    chat_count: newChatCount,
+    ban_strikes: newStrikes,
+    is_banned: shouldBan,
+    conversation_summary: newConversationSummary
+  };
+  if (payload.location) upsert.location_data = payload.location;
+  if (payload.faceDescriptor) upsert.face_descriptor = JSON.stringify(payload.faceDescriptor);
+
+  const req1 = fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower`, {
+    method: "POST",
+    headers: { ...sbHeaders(context), "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates" },
+    body: JSON.stringify(upsert)
+  }).catch(() => {});
+
+  const promises = [req1];
+  
+  if (cleanVisitorName !== "guest") {
+    const req2 = fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs`, {
+      method: "POST",
+      headers: { ...sbHeaders(context), "Content-Type": "application/json" },
+      body: JSON.stringify({
+        visitor_name_lower: cleanVisitorName,
+        client_ip: context.clientIp,
+        user_prompt: sanitizeForDB(payload.userText, context.bannedWords),
+        ai_response: cleanText || "[REDACTED BY SAFETY PROTOCOL]"
+      })
+    }).catch(() => {});
+    promises.push(req2);
+  }
+
+  await Promise.all(promises);
+}
+// ============================================================
+// HOLOGRAPHIC CLOUDFLARE AI CASCADE (BACKUP BRAINS)
+// ============================================================
+async function generateCloudflareSingleResponse(cfPrompt, userText, modelId, context) {
+    console.warn(`[SYSTEM] Attempting Cloudflare model: ${modelId}`);
+    try {
+        const response = await context.env.AI.run(modelId, {
+            messages: [
+                { role: "system", content: cfPrompt },
+                { role: "user", content: userText }
+            ],
+            max_tokens: 700
+        });
+        
+        let reply = response.response;
+        if (!reply) return { errorHard: "Empty response from CF" };
+        
+        return { aiReply: reply, redirectUrl: null, newMemory: null, tokenUsage: null };
+        
+    } catch (e) {
+        return { errorHard: `CF Error: ${e.message}` };
+    }
+}
