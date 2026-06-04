@@ -580,8 +580,7 @@ window.addEventListener('DOMContentLoaded', () => {
    EXPLICIT HARDWARE AUTHORIZATION
 ════════════════════════════════════════ */
 
-// Ensure Supabase client is initialized for boot auth
-const _supabaseIndex = window.supabase ? window.supabase.createClient('https://btqzwsuuxycpgkzddure.supabase.co', 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO') : null;
+// Supabase init removed for security, routing via Cloudflare now.
 function requestGPS() {
   const btn = document.getElementById('btn-gps');
   btn.textContent = "SCANNING...";
@@ -762,11 +761,10 @@ async function startExperience() {
   // --- [PHASE 11] HARD LOCKOUT DATABASE CHECK ---
   document.getElementById('boot-text').innerHTML = '<span style="color:#ffab00">VERIFYING SECURITY CLEARANCE...</span>';
   try {
-      const res = await fetch(`https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(name.toLowerCase())}&select=is_banned`, {
-          headers: {
-              'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
-              'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO'
-          }
+      const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: "check_ban", visitorName: name.toLowerCase() })
       });
       const data = await res.json();
       if (data && data.length > 0 && data[0].is_banned === true) {
