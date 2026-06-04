@@ -1033,6 +1033,96 @@ footer {
   pointer-events: none;
   text-shadow: var(--glow);
 }
+
+/* ══════════════════════════════════════════════════
+   MOBILE-FIRST RESPONSIVE SYSTEM
+══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Kill 3D background for performance */
+  #bg-canvas { display: none !important; }
+  .grid-overlay, .scanlines { opacity: 0.3; }
+
+  /* Page spacing — account for HUD bar */
+  .page-content { padding: 44px 12px 100px; }
+  .dash-section { padding: 28px 0 0; }
+
+  /* Profile: vertical stack */
+  #profile-hero {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding-top: 20px !important;
+  }
+  .photo-frame { width: 90px !important; height: 90px !important; margin: 0 auto; }
+  .profile-name { font-size: 26px !important; text-align: center; }
+  .profile-info { align-items: center; text-align: center; }
+  .profile-tagline { font-size: 13px !important; }
+  .profile-badges { justify-content: center; }
+  .profile-degree { font-size: 14px !important; }
+  .profile-university { font-size: 10px !important; }
+
+  /* Stats: 2-column dense grid */
+  .profile-stats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    flex-direction: unset !important;
+  }
+  .stat-box { min-width: unset !important; padding: 10px 12px !important; }
+  .stat-box-val { font-size: 16px !important; }
+
+  /* Dossier files */
+  .dossier-file { flex: 0 0 280px !important; height: 400px !important; padding: 14px !important; }
+  #archive-stage { height: 460px !important; }
+  #data-core-orb { width: 140px !important; height: 140px !important; }
+
+  /* Photo carousel */
+  #photo-3d-scene { height: 280px !important; }
+
+  /* Timeline cascade */
+  #timeline-cascade-stage { height: 380px !important; }
+  .cascade-panel { width: 92vw !important; min-height: 280px !important; }
+  .cp-visual { display: none !important; }
+  .cp-title { font-size: 20px !important; }
+  .cp-content { padding: 20px 16px !important; }
+  .cp-desc { font-size: 13px !important; }
+
+  /* Links / Certs: 2-column */
+  .links-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+  .link-card { padding: 10px 12px !important; gap: 8px !important; flex-direction: column; text-align: center; }
+  .link-card .link-icon { width: 28px !important; height: 28px !important; font-size: 14px !important; }
+  .link-card .link-name { font-size: 11px !important; }
+  .link-card .link-url { font-size: 8px !important; white-space: normal !important; }
+
+  /* Section headings */
+  .sec-title { font-size: 18px !important; margin-bottom: 16px !important; }
+  .sec-label { font-size: 8px !important; letter-spacing: 3px !important; }
+
+  /* Fun Facts / Skills / Contact */
+  #funfacts .stat-box { min-width: unset !important; }
+  #skills .hud-panel { max-width: 100% !important; }
+  #contact .hud-panel { max-width: 100% !important; }
+
+  /* Resume bar: stack */
+  .resume-bar { flex-direction: column; text-align: center; padding: 16px !important; gap: 12px !important; }
+  .resume-dl { width: 100%; justify-content: center; }
+
+  /* 3D chart panels */
+  .topo-panel { height: 220px !important; }
+
+  /* Topbar */
+  #topbar { padding: 8px 12px !important; gap: 8px !important; }
+  .topbar-title { font-size: 11px !important; letter-spacing: 2px !important; }
+
+  /* Hide floating HUD widgets (data piped to HUD bar) */
+  #hud-weather-widget { display: none !important; }
+}
+
+@media (max-width: 420px) {
+  .profile-stats { grid-template-columns: 1fr !important; }
+  .links-grid { grid-template-columns: 1fr !important; }
+  .dossier-file { flex: 0 0 250px !important; }
+  .cp-title { font-size: 18px !important; }
+}
 </style>
 </head>
 <body>
@@ -1837,7 +1927,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // Helper function to load the background elements only AFTER clearance
 function loadDashboardElements() {
-  init3DBg();
+  if (window.innerWidth > 768) init3DBg();
   buildProjects();
   buildPhotos();
   buildTimeline();
@@ -2450,6 +2540,7 @@ function triggerKonami(){
 }
 // ── HUD TARGET LOCK (IIFE) ──
 (function() {
+  if ('ontouchstart' in window || window.innerWidth <= 768) return;
   const targetReticle = document.createElement('div');
   targetReticle.style.cssText = `
     position: fixed;
@@ -2884,6 +2975,7 @@ function triggerKonami(){
 (function() {
   // 1. Build the HUD Element
   const weatherMeter = document.createElement('div');
+  weatherMeter.id = 'hud-weather-widget';
   weatherMeter.style.cssText = `
     position: fixed;
     top: 150px; /* Sits right below the performance telemetry */
@@ -3190,6 +3282,7 @@ function triggerKonami(){
 })();
 // ── POTATO PC OVERRIDE (IIFE) ──
 (function() {
+  if (window.innerWidth <= 768) return; // 3D is disabled on mobile
   // DISABLE 3D as a fixed bottom-right corner button — keeps navbar clean
   const killBtn = document.createElement('button');
   killBtn.innerHTML = "⚠ 3D";
@@ -3647,17 +3740,57 @@ function triggerKonami(){
             pointer-events: auto !important;
         }
 
-        /* --- MOBILE TACTICAL ADAPTATION (Screens under 768px) --- */
+        /* --- MOBILE: GLASSMORPHISM COMM-LINK --- */
         @media (max-width: 768px) {
-            /* Adjust iframe to fit perfectly above the button on mobile */
-            iframe[src="jarvis_ui.html"] {
-                width: 90vw !important;
-                height: 70vh !important;
-                top: 140px !important; 
-                right: 5vw !important; 
-                border-radius: 8px;
-                background: rgba(2, 12, 24, 0.95) !important;
+            #jarvis-toggle-btn {
+                top: unset !important;
+                right: unset !important;
+                bottom: 12px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: 56px !important;
+                height: 56px !important;
+                background: rgba(2, 12, 24, 0.5) !important;
+                backdrop-filter: blur(20px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+                border: 1.5px solid rgba(0, 229, 255, 0.5) !important;
+                box-shadow: 0 0 20px rgba(0,229,255,0.3), 0 4px 16px rgba(0,0,0,0.5) !important;
             }
+
+            iframe[src="jarvis_ui.html"] {
+                width: 100vw !important;
+                height: 44vh !important;
+                max-height: 380px !important;
+                top: unset !important;
+                bottom: 0 !important;
+                right: 0 !important;
+                left: 0 !important;
+                max-width: 100% !important;
+                border-radius: 20px 20px 0 0 !important;
+                background: rgba(2, 12, 24, 0.75) !important;
+                backdrop-filter: blur(24px) saturate(200%) !important;
+                -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+                border: none !important;
+                border-top: 1.5px solid rgba(0, 229, 255, 0.35) !important;
+                box-shadow: 0 -12px 60px rgba(0,0,0,0.6),
+                            0 -4px 20px rgba(0,229,255,0.1),
+                            inset 0 1px 0 rgba(0,229,255,0.15) !important;
+            }
+
+            #jarvis-sheet-handle {
+                display: none;
+                position: fixed;
+                bottom: min(44vh, 380px);
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                border-radius: 2px;
+                background: rgba(0,229,255,0.4);
+                z-index: 999999;
+                pointer-events: none;
+            }
+            #jarvis-sheet-handle.visible { display: block; }
         }
     `;
     document.head.appendChild(style);
@@ -3674,17 +3807,25 @@ function triggerKonami(){
         btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" /></svg>`; 
         document.body.appendChild(btn);
 
+        // Create drag handle for mobile bottom-sheet
+        const dragHandle = document.createElement('div');
+        dragHandle.id = 'jarvis-sheet-handle';
+        dragHandle.innerHTML = '<div style="width:40px;height:4px;border-radius:2px;background:rgba(0,229,255,0.4)"></div>';
+        document.body.appendChild(dragHandle);
+
         // Click Event to slide JARVIS in and out
         btn.addEventListener('click', () => {
             iframe.classList.toggle('assistant-active');
-            
-            // Visual feedback on the button when JARVIS is open
-            if(iframe.classList.contains('assistant-active')) {
-                btn.style.boxShadow = '0 0 25px var(--cyan)';
-                btn.style.background = 'rgba(0, 229, 255, 0.2)';
-            } else {
-                btn.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.4)';
-                btn.style.background = 'rgba(2, 12, 24, 0.8)';
+            const isOpen = iframe.classList.contains('assistant-active');
+
+            // Visual feedback
+            btn.style.boxShadow = isOpen ? '0 0 25px var(--cyan)' : '0 0 15px rgba(0, 229, 255, 0.4)';
+            btn.style.background = isOpen ? 'rgba(0, 229, 255, 0.2)' : 'rgba(2, 12, 24, 0.8)';
+
+            // Mobile: toggle drag handle + reposition button above sheet
+            if (window.innerWidth <= 768) {
+                dragHandle.classList.toggle('visible', isOpen);
+                btn.style.bottom = isOpen ? 'calc(min(44vh, 380px) + 8px)' : '12px';
             }
         });
     }
@@ -3741,6 +3882,113 @@ messageBox.addEventListener('input', function(e) {
         submitBtn.style.pointerEvents = "auto";
     }
 });
+</script>
+<script>
+// ── MOBILE SWIPEABLE HUD PILL BAR (IIFE) ──
+(function initMobileHudBar() {
+    if (window.innerWidth > 768) return;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        #mobile-hud-bar {
+            position: fixed;
+            top: 48px;
+            left: 0; right: 0;
+            height: 40px;
+            z-index: 898;
+            display: flex;
+            gap: 8px;
+            padding: 4px 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            background: rgba(2, 12, 24, 0.55);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.12);
+            scrollbar-width: none;
+        }
+        #mobile-hud-bar::-webkit-scrollbar { display: none; }
+        .hud-pill {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            background: rgba(0, 229, 255, 0.05);
+            border: 1px solid rgba(0, 229, 255, 0.15);
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 1px;
+            color: rgba(0, 229, 255, 0.7);
+            white-space: nowrap;
+            scroll-snap-align: start;
+        }
+        .hud-pill .pill-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 6px var(--cyan);
+            animation: pulse 1.5s ease infinite;
+        }
+        .hud-pill .pill-val {
+            color: var(--cyan);
+            font-family: var(--font-hud);
+            font-size: 10px;
+        }
+        @media (min-width: 769px) {
+            #mobile-hud-bar { display: none !important; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const bar = document.createElement('div');
+    bar.id = 'mobile-hud-bar';
+    bar.innerHTML = `
+        <div class="hud-pill"><div class="pill-dot"></div><span class="pill-val" id="hud-clock">--:--:--</span>&nbsp;IST</div>
+        <div class="hud-pill"><span>🌡</span><span class="pill-val" id="hud-temp">--°C</span></div>
+        <div class="hud-pill"><span>☁</span><span id="hud-cond">SCANNING</span></div>
+        <div class="hud-pill"><span>🔋</span><span class="pill-val" id="hud-bat">--%</span></div>
+        <div class="hud-pill"><div class="pill-dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><span style="color:var(--green)">SYS.ONLINE</span></div>
+    `;
+    document.body.appendChild(bar);
+
+    // ── Clock sync ──
+    setInterval(() => {
+        const el = document.getElementById('hud-clock');
+        if (el) el.textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Asia/Kolkata'});
+    }, 1000);
+
+    // ── Weather sync (from hidden weather widget) ──
+    function syncWeather() {
+        const temp = document.getElementById('env-temp');
+        const cond = document.getElementById('env-cond');
+        const ht = document.getElementById('hud-temp');
+        const hc = document.getElementById('hud-cond');
+        if (temp && ht) {
+            const v = temp.textContent.replace('TEMP: ', '');
+            if (v !== '--.- °C') ht.textContent = v;
+        }
+        if (cond && hc) {
+            const v = cond.textContent.replace('COND: ', '');
+            if (v !== '--') hc.textContent = v;
+        }
+    }
+    setTimeout(syncWeather, 4000);
+    setInterval(syncWeather, 30000);
+
+    // ── Battery sync (from existing battery widget) ──
+    function syncBattery() {
+        const src = document.getElementById('bat-text');
+        const dst = document.getElementById('hud-bat');
+        if (src && dst && src.textContent !== '--%') {
+            dst.textContent = src.textContent;
+        }
+    }
+    setTimeout(syncBattery, 3000);
+    setInterval(syncBattery, 10000);
+})();
 </script>
 </body>
 </html>
