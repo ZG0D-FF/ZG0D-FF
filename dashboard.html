@@ -1322,7 +1322,7 @@ footer {
   </footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase removed for security proxy -->
 
 <script>
   // ==========================================
@@ -1330,13 +1330,13 @@ footer {
   // ==========================================
 
   // API KEYS
-  const supabaseUrl  = 'https://btqzwsuuxycpgkzddure.supabase.co';
-  const supabaseKey  = 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO';
+  // supabaseUrl proxy handled by Cloudflare
+  // supabaseKey proxy handled by Cloudflare
   const upstashUrl   = 'https://lucky-mudfish-120620.upstash.io';
   const upstashToken = 'gQAAAAAAAdcsAAIgcDIzYzgxYWM0ZGFlYmM0NmNjOGYwZjc1MzU3ZDY3OTUzNA';
 
   // INITIALIZE SUPABASE — must be here so _supabase is available to triggerSecurityMatrix()
-  const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  // _supabase proxy handled by Cloudflare
   
   // SURVEILLANCE / DOSSIER FUNCTION
   window.openSurveillance = async function() {
@@ -1357,15 +1357,22 @@ footer {
       const grid = document.getElementById('surveillance-grid');
       if (grid) grid.innerHTML = '<div style="color: var(--amber); font-family: var(--font-mono); text-align: center; width: 100%;">Uplinking to Supabase...</div>';
       
-      let query = _supabase.from('jarvis_known_users').select('*');
-      
-      if (!isDJ) {
-        query = query.eq('visitor_name_lower', visitorName);
+      let data = [];
+      let error = null;
+      try {
+          const adminToken = window.store.sessionGet('adminToken');
+          const payload = { action: "get_known_users", visitorName: visitorName };
+          if (isDJ && adminToken) payload.adminToken = adminToken;
+          
+          const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
+          data = await res.json();
+      } catch (e) {
+          error = e;
       }
-      
-      query = query.order('last_seen', { ascending: false });
-      
-      const { data, error } = await query;
 
     if (error) {
       if (grid) grid.innerHTML = `<div style="color: red; font-family: var(--font-mono);">ERROR: ${error.message}</div>`;
@@ -1416,14 +1423,13 @@ footer {
 
     try {
       // 1. Sync the Profile (Name, Age, Photo, Location)
-      await fetch(`${supabaseUrl}/functions/v1/jarvis-telemetry`, {
+      await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'sync_profile',
+          action: 'jarvis_telemetry',
+          body: {
+            action: 'sync_profile',
           visitor_name: visitorName,
           age: window.store.sessionGet('age') || null,
           location_data: window.store.sessionGet('loc') || null,
@@ -1433,14 +1439,13 @@ footer {
       });
 
       // 2. Call the Edge Function to log the session
-      const response = await fetch(`${supabaseUrl}/functions/v1/jarvis-telemetry`, {
+      const response = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'session',
+          action: 'jarvis_telemetry',
+          body: {
+            action: 'session',
           visitor_name: visitorName,
           page_section: 'DASHBOARD_INIT',
           device_info: navigator.userAgent
@@ -1899,10 +1904,13 @@ function triggerSecurityMatrix() {
     status.textContent = "COMMUNICATING WITH SERVER...";
     
     // 🚀 THE REAL MAGIC: Asking Supabase if you are who you say you are
-    const { data, error } = await _supabase.auth.signInWithPassword({
-      email: emailInput.value,
-      password: passInput.value,
+    const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: "verify_admin", password: passInput.value })
     });
+    const resData = await res.json();
+    const error = resData.success ? null : { message: "Invalid Authorization Code" };
 
     if (error) {
       // Server rejected the login!
@@ -1911,6 +1919,7 @@ function triggerSecurityMatrix() {
       passInput.value = ''; // clear password field
     } else {
       // Server accepted the login!
+      window.store.sessionSet("adminToken", passInput.value);
       emailInput.style.borderColor = "#00e676";
       passInput.style.borderColor = "#00e676";
       status.style.color = "#00e676";
@@ -3687,11 +3696,10 @@ let FRONTEND_BAD_WORDS = [];
 
 async function loadBannedWords() {
     try {
-        const res = await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_system_config?config_key=eq.jarvis_banned_words&select=config_value', {
-            headers: {
-                'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
-                'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO'
-            }
+        const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: "load_banned_words" })
         });
         const data = await res.json();
         if (data && data.length > 0) {
