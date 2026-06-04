@@ -121,4 +121,11 @@ export async function drainOutboxFromClient() {
       // Still failing
     }
   }
+  updateSyncUI(); // Ensure UI clears if SW already drained it
 }
+
+// Automatically clear the amber chip and drain when internet returns
+window.addEventListener('online', () => {
+  drainOutboxFromClient();
+  setTimeout(updateSyncUI, 1000); // Give SW a second to drain, then refresh UI
+});
