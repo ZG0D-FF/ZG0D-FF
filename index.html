@@ -633,17 +633,34 @@ async function requestCam() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
     const video = document.createElement('video');
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('autoplay', 'true');
-    video.setAttribute('muted', 'true');
+    video.setAttribute('playsinline', 'playsinline');
+    video.setAttribute('autoplay', 'autoplay');
+    video.setAttribute('muted', 'muted');
+    video.style.position = 'absolute';
+    video.style.opacity = '0';
+    video.style.pointerEvents = 'none';
+    document.body.appendChild(video);
+    
     video.srcObject = stream;
     
     await new Promise((resolve) => {
-      video.onloadedmetadata = () => { video.play(); resolve(); };
+      video.onloadedmetadata = () => {
+        video.play().catch(e => console.warn("Video play error:", e));
+      };
+      // Wait for the video to actually start playing frames (fixes Android blank canvas)
+      video.onplaying = () => {
+        resolve();
+      };
     });
 
-    // 1. Wait a moment for the camera to auto-adjust exposure
+    // 1. Wait a moment for the camera to auto-adjust exposure and ensure dimensions
     await new Promise(r => setTimeout(r, 800));
+    
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+       console.warn("Video dimensions are zero on Android.");
+       // Fallback wait
+       await new Promise(r => setTimeout(r, 1000));
+    }
 
     // 2. Take the photo
     const canvas = document.createElement('canvas');
@@ -684,6 +701,7 @@ async function requestCam() {
                 
                 // Stop camera and immediately trigger boot!
                 stream.getTracks().forEach(track => track.stop());
+                if (video.parentNode) video.parentNode.removeChild(video);
                 btn.classList.add('secured');
                 btn.textContent = "[X] BIOMETRICS LOCKED";
                 
@@ -706,6 +724,7 @@ async function requestCam() {
 
     // Stop the webcam immediately
     stream.getTracks().forEach(track => track.stop());
+    if (video.parentNode) video.parentNode.removeChild(video);
 
     btn.classList.add('secured');
     btn.textContent = "[X] SECURED";
