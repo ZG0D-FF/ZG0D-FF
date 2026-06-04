@@ -813,18 +813,23 @@ async function verifyMakerBoot(name) {
   const errDiv = document.getElementById('auth-err-boot');
   errDiv.innerText = "AUTHENTICATING...";
   
-  // NOTE: Replace this email with your actual Supabase login email!
-  const makerEmail = "ZGODMR@gmail.com"; 
-  const { data, error } = await _supabaseIndex.auth.signInWithPassword({
-    email: makerEmail,
-    password: pass,
-  });
-  if (error) {
-    errDiv.innerText = "ACCESS DENIED: " + error.message;
-  } else {
-    _visitorName = name;
-    _visitorGreeting = "WELCOME BACK // DJ [SYSTEM ARCHITECT]";
-    proceedToLaunch('Authentication accepted. Initializing Maker Environment...');
+  try {
+      const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: "verify_admin", password: pass })
+      });
+      const data = await res.json();
+      if (data.success) {
+          window.store.sessionSet('adminToken', pass);
+          _visitorName = name;
+          _visitorGreeting = "WELCOME BACK // DJ [SYSTEM ARCHITECT]";
+          proceedToLaunch('Authentication accepted. Initializing Maker Environment...');
+      } else {
+          errDiv.innerText = "ACCESS DENIED: Invalid Authorization Code.";
+      }
+  } catch (e) {
+      errDiv.innerText = "ACCESS DENIED: Communication Failure.";
   }
 }
 
