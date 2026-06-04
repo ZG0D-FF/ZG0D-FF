@@ -31,19 +31,8 @@ function playSystemAudio(filename) {
 <script>
 // --- [SECURITY PERIMETER CHECK] ---
 // If they have the ban token, instantly crash the page.
-if (localStorage.getItem('JARVIS_SECURITY_LOCKOUT') === 'TRUE') {
-    // We wipe the whole document immediately so they can't see the site
-    document.write(`
-        <body style="background:black; color:#ff1744; font-family:Courier, monospace; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
-            <div style="text-align:center;">
-                <h2>ERROR 403: SYSTEM LOCKOUT</h2>
-                <p>Your node has been blacklisted for violating communication protocols.</p>
-                <p>IP and hardware metrics logged.</p>
-            </div>
-        </body>
-    `);
-    // Stop any further scripts from executing
-    window.stop();
+if (localStorage.getItem('JARVIS_SECURITY_LOCKOUT') === 'TRUE' || localStorage.getItem('jarvis_perma_ban') === 'true') {
+    window.location.replace("ban.html");
 }
 </script>
   <!-- [SYS.ADMIN] FACE-API.JS NEURAL NETWORK -->
@@ -627,24 +616,16 @@ function startGuest() {
   proceedToLaunch('Initializing Guest Protocol...');
 }
 
-// Triggered when user clicks [ ] OPTICS
-async function runGeminiAuthFallback(base64) {
-  try {
-    const visitorNameInput = document.getElementById('v-name').value.trim();
-    const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: "auth_fallback", photoBase64: base64, visitorName: visitorNameInput })
-    });
-    const data = await res.json();
-    return data.match === true;
-  } catch(e) {
-    return false;
-  }
-}
-
 async function requestCam() {
   const btn = document.getElementById('btn-cam');
+  const nameInput = document.getElementById('v-name').value.trim();
+  
+  if (!nameInput) {
+      document.getElementById('status-text').innerText = 'PLEASE ENTER YOUR NAME FIRST TO INITIATE BIOMETRIC SCAN.';
+      document.getElementById('v-name').focus();
+      return;
+  }
+  
   btn.textContent = "UPLINKING...";
 
   try {
@@ -711,31 +692,11 @@ async function requestCam() {
             document.getElementById('status-text').innerText = 'SECURE BIOMETRICS FAILED. NEW PROFILE DETECTED.';
         }
       } else {
-        document.getElementById('status-text').innerText = 'LOCAL BIOMETRICS FAILED. INITIATING CLOUD FALLBACK...';
-        const isMatch = await runGeminiAuthFallback(base64Photo);
-        if (isMatch) {
-            document.getElementById('status-text').innerText = 'FACE DETECTED. PLEASE ENTER YOUR NAME TO CONTINUE.';
-            stream.getTracks().forEach(track => track.stop());
-            btn.classList.add('secured');
-            btn.textContent = "[X] OPTICS SECURED";
-            return;
-        } else {
-            document.getElementById('status-text').innerText = 'NO MATCH FOUND. PROCEEDING NORMALLY.';
-        }
+        document.getElementById('status-text').innerText = 'LOCAL BIOMETRICS FAILED. FALLING BACK TO NAME IDENTIFICATION.';
       }
     } catch (err) {
       console.warn("Biometrics skip:", err);
-      document.getElementById('status-text').innerText = 'LOCAL ENGINE CRASHED. INITIATING CLOUD FALLBACK...';
-      const isMatch = await runGeminiAuthFallback(base64Photo);
-      if (isMatch) {
-          document.getElementById('status-text').innerText = 'FACE DETECTED. PLEASE ENTER YOUR NAME TO CONTINUE.';
-          stream.getTracks().forEach(track => track.stop());
-          btn.classList.add('secured');
-          btn.textContent = "[X] OPTICS SECURED";
-          return;
-      } else {
-          document.getElementById('status-text').innerText = 'NO MATCH FOUND. PROCEEDING NORMALLY.';
-      }
+      document.getElementById('status-text').innerText = 'BIOMETRICS UNAVAILABLE. FALLING BACK TO NAME IDENTIFICATION.';
     }
 
     // Stop the webcam immediately
@@ -754,7 +715,7 @@ async function requestCam() {
 /* ════════════════════════════════════════
    FORM SUBMIT → FAST BOOT
 ════════════════════════════════════════ */
-function startExperience() {
+async function startExperience() {
   const name  = document.getElementById('v-name').value.trim();
   const age   = parseInt(document.getElementById('v-age').value) || 0;
   const title = document.getElementById('v-title').value;
@@ -767,6 +728,27 @@ function startExperience() {
      triggerMakerBootAuth(name);
      return;
   }
+
+  // --- [PHASE 11] HARD LOCKOUT DATABASE CHECK ---
+  document.getElementById('boot-text').innerHTML = '<span style="color:#ffab00">VERIFYING SECURITY CLEARANCE...</span>';
+  try {
+      const res = await fetch(`https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(name.toLowerCase())}&select=is_banned`, {
+          headers: {
+              'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
+              'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO'
+          }
+      });
+      const data = await res.json();
+      if (data && data.length > 0 && data[0].is_banned === true) {
+          localStorage.setItem('jarvis_perma_ban', 'true');
+          window.location.replace("ban.html");
+          return;
+      }
+  } catch(e) {
+      console.warn("Security check failed, bypassing...");
+  }
+  // ----------------------------------------------
+
   const diff = Math.abs(age - MY_AGE);
   let greeting;
   if (diff <= 3)          greeting = `Welcome, Fellow Engineer — ${name}`;
