@@ -1360,7 +1360,11 @@ footer {
     const aliasesForLoop = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
     
     data.forEach(user => {
-      const imgSrc = user.photo_base64 || 'https://via.placeholder.com/320x240/020c18/ffab00?text=NO+VISUAL';
+      let imgSrc = 'https://via.placeholder.com/320x240/020c18/ffab00?text=NO+VISUAL';
+      if (user.photo_base64 && user.photo_base64 !== 'null' && user.photo_base64.startsWith('data:image')) {
+        imgSrc = user.photo_base64;
+      }
+      
       const isCreator = aliasesForLoop.includes((user.visitor_name_lower || '').toLowerCase());
       
       const borderCol = isCreator ? '#ff1744' : 'var(--amber)';
@@ -1369,7 +1373,7 @@ footer {
       
       if (grid) grid.innerHTML += `
         <div style="border: 1px solid ${borderCol}; background: ${bgCol}; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px ${isCreator ? 'rgba(255,23,68,0.2)' : 'rgba(255,171,0,0.1)'};">
-          <img src="${imgSrc}" style="width: 100%; border: 1px solid ${borderCol}; margin-bottom: 15px; border-radius: 2px;">
+          <img src="${imgSrc}" onerror="this.onerror=null; this.src='https://via.placeholder.com/320x240/020c18/ffab00?text=BROKEN+VISUAL'" style="width: 100%; border: 1px solid ${borderCol}; margin-bottom: 15px; border-radius: 2px;">
           <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>NAME:</b> ${nameText}</div>
           <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>IP:</b> ${user.client_ip}</div>
           <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>LOC:</b> ${user.location_data || 'UNKNOWN'}</div>
