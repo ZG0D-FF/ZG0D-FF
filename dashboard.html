@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script type="module">
+  import { ENV_PREFIX, store } from './js/core/env.js';
+  window.ENV_PREFIX = ENV_PREFIX;
+  window.store = store;
+</script>
 <!-- [DEV MODE: AUTO-CACHE WIPE & NAMESPACING] -->
 <script>
-  window.ENV_PREFIX = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'jarvis_dev_' : 'jarvis_prod_';
+  // ENV_PREFIX and store managed by env.js module
   
   if (window.ENV_PREFIX === 'jarvis_dev_') {
       console.warn("[DEV MODE] Localhost detected. Wiping session/local storage to prevent caching loops.");
@@ -17,7 +22,7 @@
 <script>
 // --- [SECURITY PERIMETER CHECK] ---
 // If they have the ban token, instantly crash the page.
-if (localStorage.getItem('JARVIS_SECURITY_LOCKOUT') === 'TRUE' || localStorage.getItem('jarvis_perma_ban') === 'true') {
+if (window.store.get('JARVIS_SECURITY_LOCKOUT') === 'TRUE' || window.store.get('jarvis_perma_ban') === 'true') {
     window.location.replace("ban.html");
 }
 </script>
@@ -43,7 +48,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(async () => {
         // Force name to lowercase to flawlessly match DJ, Dj, dj, etc.
         const parentUrlParams = new URLSearchParams(window.location.search);
-        const rawName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || parentUrlParams.get('visitor') || "Guest";
+        const rawName = window.store.sessionGet('name') || parentUrlParams.get('visitor') || "Guest";
         const visitorName = rawName.toLowerCase().trim();
         
         // Define Creator Aliases (Aligned with Backend Biometrics)
@@ -1336,7 +1341,7 @@ footer {
   // SURVEILLANCE / DOSSIER FUNCTION
   window.openSurveillance = async function() {
     try {
-      const rawName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || new URLSearchParams(window.location.search).get('visitor') || "Guest";
+      const rawName = window.store.sessionGet('name') || new URLSearchParams(window.location.search).get('visitor') || "Guest";
       const visitorName = rawName.toLowerCase().trim();
       const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
       const isDJ = creatorAliases.includes(visitorName);
@@ -1399,11 +1404,11 @@ footer {
   };
 
   const urlParams  = new URLSearchParams(window.location.search);
-  const visitorName = sessionStorage.getItem(window.ENV_PREFIX + 'name') || urlParams.get('visitor') || 'GUEST';
+  const visitorName = window.store.sessionGet('name') || urlParams.get('visitor') || 'GUEST';
 
   // TELEMETRY FUNCTION UPDATE
   async function transmitTelemetry() {
-    if (sessionStorage.getItem(window.ENV_PREFIX + 'session_logged')) {
+    if (window.store.sessionGet('session_logged')) {
       console.log('[JARVIS] Session already logged. Fetching current count...');
       fetchLiveVisitorCount();
       return;
@@ -1420,10 +1425,10 @@ footer {
         body: JSON.stringify({
           action: 'sync_profile',
           visitor_name: visitorName,
-          age: sessionStorage.getItem(window.ENV_PREFIX + 'age') || null,
-          location_data: sessionStorage.getItem(window.ENV_PREFIX + 'loc') || null,
-          photo_base64: sessionStorage.getItem(window.ENV_PREFIX + 'photo') || null,
-          face_descriptor: sessionStorage.getItem(window.ENV_PREFIX + 'face') || null
+          age: window.store.sessionGet('age') || null,
+          location_data: window.store.sessionGet('loc') || null,
+          photo_base64: window.store.sessionGet('photo') || null,
+          face_descriptor: window.store.sessionGet('face') || null
         })
       });
 
@@ -1445,7 +1450,7 @@ footer {
       if (!response.ok) throw new Error('Network shield blocked request');
       
       console.log('[JARVIS] Telemetry Synced Successfully.');
-      sessionStorage.setItem(window.ENV_PREFIX + 'session_logged', 'true');
+      window.store.sessionSet('session_logged', 'true');
       incrementRedisCounter();
       
     } catch (error) {
@@ -1787,7 +1792,7 @@ function init3DBg() {
 ════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const rawVisitor = params.get('visitor') || sessionStorage.getItem(window.ENV_PREFIX + 'name');
+  const rawVisitor = params.get('visitor') || window.store.sessionGet('name');
 
   let visitor = "guest";
   if (rawVisitor) {
@@ -1813,7 +1818,7 @@ window.addEventListener('DOMContentLoaded', () => {
       triggerSecurityMatrix();
   } else {
       // Normal guest — let them in
-      let greeting = sessionStorage.getItem(window.ENV_PREFIX + 'greeting');
+      let greeting = window.store.sessionGet('greeting');
       if (!greeting && params.get('greeting')) {
         greeting = decodeURIComponent(params.get('greeting'));
       }
@@ -2923,7 +2928,7 @@ function triggerKonami(){
       const lng = geoData.longitude;
       
       // Feed weather GPS to JARVIS memory fallback
-      sessionStorage.setItem(window.ENV_PREFIX + 'loc', `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`);
+      window.store.sessionSet('loc', `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`);
       
       // OBFUSCATE LOCATION: Hide the explicit city name to protect privacy
       locEl.textContent = `LOC: [SECURE CLIENT NODE]`;
