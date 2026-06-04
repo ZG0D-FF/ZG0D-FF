@@ -112,24 +112,19 @@ body { margin: 0; overflow: hidden; background: transparent; }
 <script>
 async function logJarvisError(errMessage, source) {
     try {
-        const url = "https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_error_logs";
-        const key = "sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO";
-        await fetch(url, {
+        await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
             method: 'POST',
-            headers: {
-                "apikey": key,
-                "Authorization": `Bearer ${key}`,
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                error_message: String(errMessage),
-                error_source: source,
+                action: "log_error",
+                errorMessage: String(errMessage),
+                errorSource: source,
                 url: window.location.href,
-                user_agent: navigator.userAgent
+                userAgent: navigator.userAgent
             })
         });
     } catch (e) {
-        console.warn("Failed to log error to DB");
+        console.warn("Failed to log error to backend");
     }
 }
 const bgCanvas = document.getElementById('bg');
@@ -649,27 +644,19 @@ document.getElementById('mic-btn').addEventListener('click', () => {
 async function executeBanishment() {
     console.log("[SECURITY] Initiating Banishment Protocol...");
 
-    // 1. SEND EVIDENCE TO SUPABASE
-    // We send this directly to the DB to flag their IP and save the photo
+    // 1. SEND EVIDENCE TO BACKEND
     try {
         const parentUrlParams = new URLSearchParams(window.parent.location.search);
         const visitorName = window.store.sessionGet('name') || parentUrlParams.get('visitor') || "Unknown";
-        
-        // Use the photo captured during the initial boot sequence
         const finalPhoto = window.store.sessionGet('photo') || null;
 
-        await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower', {
+        await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
             method: 'POST',
-            headers: {
-                'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
-                'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                visitor_name_lower: visitorName.toLowerCase(),
-                is_banned: true, // You'll need to add an 'is_banned' boolean column in Supabase!
-                ban_photo_base64: finalPhoto // You'll need to add this column too!
+                action: "execute_banishment",
+                visitorName: visitorName.toLowerCase(),
+                banPhotoBase64: finalPhoto
             })
         });
     } catch(e) {
@@ -698,11 +685,10 @@ let FRONTEND_BAD_WORDS = []; // Starts empty, fills from Supabase
 // Instantly download the live dictionary from your database
 async function loadBannedWords() {
     try {
-        const res = await fetch('https://btqzwsuuxycpgkzddure.supabase.co/rest/v1/jarvis_system_config?config_key=eq.jarvis_banned_words&select=config_value', {
-            headers: {
-                'apikey': 'sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO',
-                'Authorization': 'Bearer sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO'
-            }
+        const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: "load_banned_words" })
         });
         const data = await res.json();
         if (data && data.length > 0) {
