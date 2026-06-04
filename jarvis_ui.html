@@ -428,13 +428,17 @@ async function query(userText) {
     // 4. Beam EVERYTHING to your Cloudflare Worker via the Offline-Resilient Outbox!
     const { queueOrPost } = await import('./js/core/outbox.js');
     
-    const resPayload = await queueOrPost(PROXY_URL, { 
+    const adminToken = window.store.sessionGet('adminToken');
+    const payload = { 
         userText: userText,
         visitorName: visitorName,
         location: locationData,
         photoBase64: photoData,
         dynamicRoutes: dynamicRoutes
-    });
+    };
+    if (adminToken) payload.adminToken = adminToken;
+    
+    const resPayload = await queueOrPost(PROXY_URL, payload);
 
     // 4. Delete the photo from memory so we don't spam the network on the next chat message
     window.store.sessionDel('photo');
