@@ -143,6 +143,12 @@ export default {
         }
       };
 
+      // --- [PHASE 13: GITHUB WEBHOOK LISTENER] ---
+      const githubEvent = request.headers.get("x-github-event");
+      if (githubEvent === "push") {
+        return await handleGithubWebhook(request, rawBody, context);
+      }
+      
       if (payload.action === "auth_fallback") {
         return await handleFallbackAuth(payload, context);
       }
@@ -156,6 +162,38 @@ export default {
       }
 
       // --- [SECURITY UPDATE: FRONTEND SUPABASE PROXY] ---
+if (payload.action === "get_known_users") {
+          let url = `${context.SUPABASE_URL}/rest/v1/jarvis_known_users?order=last_seen.desc`;
+          if (!payload.adminToken || payload.adminToken !== (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
+              if (payload.visitorName) {
+                  url += `&visitor_name_lower=eq.${encodeURIComponent(payload.visitorName.toLowerCase())}`;
+              } else {
+                  return new Response("[]", { headers: { "Access-Control-Allow-Origin": "*" } });
+              }
+          }
+          const res = await fetch(url, { headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` } });
+          const data = await res.json();
+          return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
+      if (payload.action === "jarvis_telemetry") {
+          const res = await fetch(`${context.SUPABASE_URL}/functions/v1/jarvis-telemetry`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${context.SUPABASE_KEY}` },
+              body: JSON.stringify(payload.body)
+          });
+          const data = await res.json();
+          return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
+      if (payload.action === "verify_admin") {
+        const secret = context.env.ADMIN_SECRET || "ZGOD_ADMIN_777";
+        if (payload.password === secret) {
+          return new Response(JSON.stringify({ success: true }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+        }
+        return new Response(JSON.stringify({ success: false }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
       if (payload.action === "check_ban") {
         const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(payload.visitorName)}&select=is_banned`, {
           headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` }
@@ -212,7 +250,15 @@ export default {
       }
 
       const cleanVisitorName = payload.visitorName.toLowerCase().trim();
-      const isAdmin = ["dj", "zg0d-ff", "dj_admin"].includes(cleanVisitorName);
+      const creatorAliases = ["dj", "zg0d-ff", "dj_admin", "dibyajyotee", "zgod", "dibyajyotee ghosh"];
+      let isAdmin = false;
+      if (creatorAliases.includes(cleanVisitorName)) {
+          if (payload.adminToken && payload.adminToken === (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
+              isAdmin = true;
+          } else {
+              return errorResponse("[SECURITY ALERT] This alias is reserved for the System Architect. Invalid or missing authorization token.");
+          }
+      }
       const userRole = isAdmin ? "[ADMIN]" : "[GUEST]";
 
       if (!isAdmin) {
@@ -313,7 +359,7 @@ export default {
                   else if (eggSim > 0.82) canonicalIntent = 'INTENT_EASTER_EGGS';
                   else {
                       // Step 2: Intelligence Fallback (Llama 3.1 8B Instruct - 0 Groq Tokens)
-                      const llamaPrompt = `Categorize the user text into exactly ONE category: INTENT_PROJECTS, INTENT_EASTER_EGGS, or UNKNOWN. Output nothing else. Text: "${userTextLower}"`;
+                      const llamaPrompt = `Categorize the user text into exactly ONE category: INTENT_PROJECTS, INTENT_EASTER_EGGS, INTENT_CODEBASE, or UNKNOWN. Output nothing else. Text: "${userTextLower}"`;
                       const llamaResponse = await context.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
                           messages: [
                               { role: "system", content: "You are a strict routing AI. Only output the exact category name." },
@@ -325,18 +371,73 @@ export default {
                       const rawFallback = (llamaResponse?.response || "").trim().toUpperCase();
                       if (rawFallback.includes("INTENT_PROJECTS")) canonicalIntent = "INTENT_PROJECTS";
                       else if (rawFallback.includes("INTENT_EASTER_EGGS")) canonicalIntent = "INTENT_EASTER_EGGS";
+                      else if (rawFallback.includes("INTENT_CODEBASE")) canonicalIntent = "INTENT_CODEBASE";
                   }
               }
+          }
+          
+          // Phase 13 Keyword Fallback for Codebase Queries
+          const codeKeywords = ["code", "push", "git", "update", "commit", "github"];
+          if (codeKeywords.some(kw => userTextLower.includes(kw))) {
+              canonicalIntent = 'INTENT_CODEBASE';
           }
       } catch(e) {
           console.warn("[CASCADE ROUTER] Failed, falling back to UNKNOWN:", e.message);
       }
       let masterTemplate = buildDynamicPrompt(canonicalIntent, dbPrompts);
 
+      // --- PHASE 13: SELECTIVE GIT MEMORY INJECTION (HYBRID & TOKEN SAFE) ---
+      let gitMemoryStr = "";
+      if (canonicalIntent === 'INTENT_CODEBASE') {
+          try {
+              // 1. Semantic Search
+              let semanticCommits = [];
+              if (context.env.AI) {
+                  const queryVec = await getEmbedding(userTextLower, context);
+                  if (queryVec) {
+                      const rpcRes = await fetch(`${context.SUPABASE_URL}/rest/v1/rpc/match_git_memory`, {
+                          method: 'POST',
+                          headers: {
+                              'apikey': context.SUPABASE_KEY,
+                              'Authorization': `Bearer ${context.SUPABASE_KEY}`,
+                              'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                              query_embedding: `[${queryVec.join(',')}]`,
+                              match_threshold: 0.75,
+                              match_count: 2
+                          })
+                      });
+                      if (rpcRes.ok) semanticCommits = await rpcRes.json();
+                  }
+              }
+
+              // 2. Fetch Recent Commits (Immediate context)
+              let recentCommits = [];
+              const gitRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_git_memory?order=created_at.desc&limit=2`, { 
+                  headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` }
+              });
+              if (gitRes.ok) recentCommits = await gitRes.json();
+
+              // 3. Deduplicate and Format (Prevent Token Bleed)
+              const combined = [...recentCommits, ...semanticCommits];
+              const uniqueCommits = Array.from(new Map(combined.map(c => [c.commit_hash, c])).values());
+
+              if (uniqueCommits.length > 0) {
+                  gitMemoryStr = "\n\n[CODEBASE CONTEXT]\n" + uniqueCommits.map(c => 
+                      `Hash: ${c.commit_hash.substring(0, 7)} | Files: ${c.files_changed || "None"}\nMsg: ${c.commit_summary || c.commit_message}`
+                  ).join("\n\n");
+                  
+                  // Failsafe token limiter
+                  if (gitMemoryStr.length > 1200) gitMemoryStr = gitMemoryStr.substring(0, 1200) + "...";
+              }
+          } catch(e) { console.warn("Failed to fetch hybrid git memory:", e.message); }
+      }
+
       // ── Token budget: trim the master prompt aggressively ─
       // Replace full history/memory sections with tight versions
       const trimmedHistory = chatHistory.slice(0, 800);   // last ~800 chars max
-      const trimmedMemory  = currentMemory.slice(0, 300); // first 300 chars max
+      const trimmedMemory  = currentMemory.slice(0, 300) + gitMemoryStr; // first 300 chars max + injected Git memory
 
             const currentConversationSummary = existingUser?.conversation_summary || "None.";
 
@@ -611,6 +712,84 @@ export default {
     }
   }
 };
+
+// ============================================================
+// GITHUB WEBHOOK HANDLER
+// ============================================================
+async function handleGithubWebhook(request, rawBody, context) {
+    // 1. Verify Signature
+    const signatureHeader = request.headers.get("x-hub-signature-256");
+    if (!signatureHeader) return new Response("Missing signature", { status: 401 });
+    
+    const secret = context.env.GITHUB_WEBHOOK_SECRET;
+    if (!secret) {
+        console.warn("GITHUB_WEBHOOK_SECRET is not configured in Cloudflare.");
+        return new Response("Webhook secret not configured", { status: 500 });
+    }
+
+    try {
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify", "sign"]);
+        const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
+        const hexSignature = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const expectedSignature = `sha256=${hexSignature}`;
+
+        if (signatureHeader !== expectedSignature) {
+            console.warn("Webhook signature mismatch.");
+            return new Response("Invalid signature", { status: 401 });
+        }
+
+        // 2. Parse Payload
+        const payload = JSON.parse(rawBody);
+        const commit = payload.head_commit;
+        if (!commit) return new Response("No head commit found", { status: 200 });
+
+        const allFiles = [...(commit.added || []), ...(commit.modified || []), ...(commit.removed || [])].slice(0, 10).join(", ");
+
+        // 3. Summarize with CF LLM
+        const prompt = `Summarize this GitHub commit in 2 sentences. Focus on what was achieved architecturally.
+Commit Message: ${commit.message || "No message"}
+Files Changed: ${allFiles || "None"}`;
+
+        let summary = commit.message || "No message";
+        let vector = null;
+        if (context.env.AI) {
+            try {
+                const aiRes = await context.env.AI.run("@cf/qwen/qwen3-30b-a3b-fp8", {
+                    messages: [{ role: "user", content: prompt }]
+                });
+                if (aiRes && aiRes.response) summary = aiRes.response.trim();
+
+                const embRes = await context.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [summary] });
+                if (embRes && embRes.data && embRes.data.length > 0) vector = embRes.data[0];
+            } catch (e) {
+                console.warn("AI Summarization/Embedding failed, falling back to raw message.", e);
+            }
+        }
+
+        // 4. Update Supabase
+        await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_git_memory`, {
+            method: "POST",
+            headers: {
+                "apikey": context.SUPABASE_KEY,
+                "Authorization": `Bearer ${context.SUPABASE_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                commit_hash: commit.id,
+                author: commit.author?.name || "Unknown",
+                commit_message: commit.message || "No message",
+                files_changed: allFiles || "None",
+                commit_summary: summary,
+                summary_vector: vector ? `[${vector.join(',')}]` : null
+            })
+        });
+        return new Response("Webhook processed successfully", { status: 200 });
+    } catch (e) {
+        console.error("Webhook Error:", e);
+        return new Response("Webhook Error: " + e.message, { status: 500 });
+    }
+}
 
 // ============================================================
 // MODEL SELECTION & FALLBACK ENGINE
