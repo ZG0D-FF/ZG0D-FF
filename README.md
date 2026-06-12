@@ -1,12 +1,4 @@
-<!-- CAPSULE RENDER WAVING HEADER -->
-<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:00E5FF,100:0D1117&height=120&section=header&text=&animation=twinkling"/>
-
 <div align="center">
-
-<!-- PIXEL ART ANIMATION — free/open-source, hacker terminal aesthetic, like DIMFLIX bunny -->
-<img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcWo3d3d5aXdjbnhyMTc5dXByYm90cmY0YnBlbHhpNTdweXphdnJlbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/kH1DBkPNyZPOk0BxrM/giphy.gif" width="200" alt="ZG0D animation"/>
-
-<br/>
 
 <!-- TWO-LINE BOOT SEQUENCE (non-repeating, fires once on load) -->
 <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=13&duration=1800&pause=400&color=00E5FF&center=true&vCenter=true&multiline=true&repeat=false&width=620&height=60&lines=%5BSYS%5D+Initializing+ZG0D-FF+kernel...+%5BOK%5D;%5BSYS%5D+Hardware+online.+AI+stack+mounted.+Standing+by." alt="Boot" />
@@ -86,7 +78,7 @@ const ZG0D = {
 > Voice-activated Python assistant running **fully local** on Raspberry Pi hardware. Executes system checks, runs voice protocols, and operates without cloud dependency.
 > `Python` · `Raspberry Pi` · `Speech Recognition` · `Edge AI`
 
-> ### 🟢 `Edge-Olfaction Logistics`  ✅ *DEPLOYED*
+> ### 🟢 `Edge-Olfaction Logistics`  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-status/edge-status.svg" align="center" height="20" />
 > Adaptive hardware network for perishable goods monitoring. Integrates **MQ gas sensors + DHT environmental arrays** to detect fruit spoilage in real-time at the edge.
 > `Arduino` · `MQ Sensors` · `IoT` · `Real-time Analytics`
 
@@ -104,7 +96,7 @@ const ZG0D = {
 
 ```yaml
 # [ STATUS ] :: TASK DESCRIPTION
-- [x] [ DEPLOYED  ] :: Deploy Edge-Olfaction sensor array.
+- [x] <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-status/edge-status.svg" align="center" height="20" /> :: Deploy Edge-Olfaction sensor array.
 - [x] [ OPTIMIZED ] :: Optimize J.A.R.V.I.S. voice protocols.
 - [ ] [ PENDING   ] :: Expand neural network for Avian Disease detection.
 - [ ] [ PENDING   ] :: Upgrade homelab server architecture.
@@ -136,12 +128,6 @@ const ZG0D = {
 
 <!-- TERMINAL SYSTEM STATUS FOOTER -->
 <div align="center">
-
-<!-- Blinking terminal cursor line -->
-<img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&size=12&duration=2600&pause=1100&color=00E5FF&center=true&vCenter=true&width=580&lines=%5BSYS%5D+All+systems+nominal.+ZG0D-FF+online.+Awaiting+next+deploy..._%3B%5BSYS%5D+Edge+nodes+active.+Sensor+arrays+nominal.+AI+stack+warm._%3B%5BSYS%5D+Hardware+integrated.+Ready+for+next+mission._%3B" alt="Terminal Blink"/>
-
-</div>
-<div align="center">
   <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output/github-contribution-grid-snake-dark.svg" alt="Snake contribution graph"/>
 </div>
 <div align="center">
@@ -154,6 +140,10 @@ const ZG0D = {
 <!-- LIVE CUSTOM SENSOR HUD (Served from Vercel/Cloudflare) -->
 <div align="center">
   <br/>
+  <a href="https://zg-0-d-ff.vercel.app/dashboard.html">
+    <img src="https://img.shields.io/badge/OPEN%20LIVE%20EDGE%20DASHBOARD-0D1117?style=for-the-badge&logo=googlechrome&logoColor=00E5FF" alt="Dashboard Button"/>
+  </a>
+  <br/><br/>
   <a href="https://github.com/ZG0D-FF/Edge-Olfaction">
     <img src="https://soft-thunder-2965.zgodmr.workers.dev/sensor-hud.svg" width="600" alt="Live Sensor Telemetry"/>
   </a>
@@ -162,7 +152,7 @@ const ZG0D = {
 <!-- 3D ISOMETRIC CONTRIBUTION CITYSCAPE -->
 <div align="center">
   <br/>
-  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output/profile-3d-contrib/profile-night-rainbow.svg" width="100%" alt="3D Cityscape"/>
+  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-3d/profile-3d-contrib/profile-night-rainbow.svg" width="100%" alt="3D Cityscape"/>
 </div>
 
 <!-- CAPSULE RENDER WAVING FOOTER -->
