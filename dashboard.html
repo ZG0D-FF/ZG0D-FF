@@ -1448,7 +1448,7 @@ footer {
       if (grid) grid.innerHTML = '<div style="color: var(--amber); font-family: var(--font-mono); text-align: center; width: 100%;">Uplinking to Supabase...</div>';
       
       let data = [];
-      let error = null;
+      let fetchError = null;
       try {
           const adminToken = window.store.sessionGet('adminToken');
           const payload = { action: "get_known_users", visitorName: visitorName };
@@ -1461,47 +1461,53 @@ footer {
           });
           data = await res.json();
       } catch (e) {
-          error = e;
+          fetchError = e;
       }
 
-    if (error) {
-      if (grid) grid.innerHTML = `<div style="color: red; font-family: var(--font-mono);">ERROR: ${error.message}</div>`;
-      return;
-    }
-
-    if (grid) grid.innerHTML = '';
-    const aliasesForLoop = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
-    
-    data.forEach(user => {
-      let imgSrc = 'https://via.placeholder.com/320x240/020c18/ffab00?text=NO+VISUAL';
-      if (user.photo_base64 && user.photo_base64 !== 'null' && user.photo_base64.startsWith('data:image')) {
-        imgSrc = user.photo_base64;
+      if (fetchError) {
+        if (grid) grid.innerHTML = `<div style="color: #ff1744; font-family: var(--font-mono);">NETWORK ERROR: ${fetchError.message}</div>`;
+        return;
       }
+
+      // If the database returned an error object instead of an array
+      if (!Array.isArray(data)) {
+        if (grid) grid.innerHTML = `<div style="color: #ff1744; font-family: var(--font-mono);">DATABASE ERROR: ${data.error || "Access Denied / Not Found"}</div>`;
+        return;
+      }
+
+      if (grid) grid.innerHTML = '';
       
-      const isCreator = aliasesForLoop.includes((user.visitor_name_lower || '').toLowerCase());
-      
-      const borderCol = isCreator ? '#ff1744' : 'var(--amber)';
-      const bgCol = isCreator ? 'rgba(255,23,68,0.05)' : 'rgba(0,0,0,0.5)';
-      const nameText = isCreator ? `<span style="color:#ff1744">[CREATOR] ${user.visitor_name.toUpperCase()}</span>` : user.visitor_name;
-      
-      if (grid) grid.innerHTML += `
-        <div style="border: 1px solid ${borderCol}; background: ${bgCol}; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px ${isCreator ? 'rgba(255,23,68,0.2)' : 'rgba(255,171,0,0.1)'};">
-          <img src="${imgSrc}" onerror="this.onerror=null; this.src='https://via.placeholder.com/320x240/020c18/ffab00?text=BROKEN+VISUAL'" style="width: 100%; border: 1px solid ${borderCol}; margin-bottom: 15px; border-radius: 2px;">
-          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>NAME:</b> ${nameText}</div>
-          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>IP:</b> ${user.client_ip}</div>
-          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>LOC:</b> ${user.location_data || 'UNKNOWN'}</div>
-          <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>SEEN:</b> ${new Date(user.last_seen).toLocaleString()}</div>
-        </div>
-      `;
-    });
+      data.forEach(user => {
+        const isCreator = creatorAliases.includes((user.visitor_name_lower || '').toLowerCase());
+        const borderCol = isCreator ? '#ff1744' : 'var(--amber)';
+        const bgCol = isCreator ? 'rgba(255,23,68,0.05)' : 'rgba(0,0,0,0.5)';
+        const nameText = isCreator ? `<span style="color:#ff1744">[CREATOR] ${user.visitor_name.toUpperCase()}</span>` : user.visitor_name;
+        
+        let visualElement = `<div style="width: 100%; height: 240px; background: rgba(0,0,0,0.8); border: 1px solid ${borderCol}; margin-bottom: 15px; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: ${borderCol}; font-family: monospace; font-size: 20px;">NO VISUAL</div>`;
+        
+        if (user.photo_base64 && user.photo_base64 !== 'null' && user.photo_base64.startsWith('data:image')) {
+          visualElement = `<img src="${user.photo_base64}" style="width: 100%; border: 1px solid ${borderCol}; margin-bottom: 15px; border-radius: 2px;">`;
+        }
+        
+        if (grid) grid.innerHTML += `
+          <div style="border: 1px solid ${borderCol}; background: ${bgCol}; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px ${isCreator ? 'rgba(255,23,68,0.2)' : 'rgba(255,171,0,0.1)'};">
+            ${visualElement}
+            <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>NAME:</b> ${nameText}</div>
+            <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>IP:</b> ${user.client_ip}</div>
+            <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>LOC:</b> ${user.location_data || 'UNKNOWN'}</div>
+            <div style="font-size: 13px; color: ${borderCol}; font-family: var(--font-mono); margin-bottom: 6px;"><b>SEEN:</b> ${new Date(user.last_seen).toLocaleString()}</div>
+          </div>
+        `;
+      });
     } catch (err) {
       console.error("[JARVIS] SURVEILLANCE ERROR:", err);
-      alert("Surveillance Module Error: " + err.message);
+      const grid = document.getElementById('surveillance-grid');
+      if (grid) grid.innerHTML = `<div style="color: #ff1744; font-family: var(--font-mono);">CRITICAL SYSTEM FAILURE: ${err.message}</div>`;
     }
   };
 
   const urlParams  = new URLSearchParams(window.location.search);
-  const visitorName = window.store.sessionGet('name') || urlParams.get('visitor') || 'GUEST';
+    let visitorName = 'GUEST';
 
   // TELEMETRY FUNCTION UPDATE
   async function transmitTelemetry() {
@@ -1582,7 +1588,11 @@ footer {
   }
 
   // INITIATE BOOT SEQUENCE
-  transmitTelemetry();
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams  = new URLSearchParams(window.location.search);
+    visitorName = window.store.sessionGet('name') || urlParams.get('visitor') || 'GUEST';
+    transmitTelemetry();
+  });
 </script>
 
 <script>
