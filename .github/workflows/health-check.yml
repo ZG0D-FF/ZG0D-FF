@@ -1,0 +1,42 @@
+name: Edge Node Health Check
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Edge-Olfaction Worker
+        id: ping
+        run: |
+          if curl -s -f -o /dev/null "https://soft-thunder-2965.zgodmr.workers.dev/sensor-hud.svg"; then
+            echo "status=online" >> $GITHUB_OUTPUT
+          else
+            echo "status=offline" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Badge
+        run: |
+          mkdir -p status-badges
+          if [ "${{ steps.ping.outputs.status }}" == "online" ]; then
+            curl -s "https://img.shields.io/badge/STATUS-ONLINE-00E5FF?style=for-the-badge" > status-badges/edge-status.svg
+          else
+            curl -s "https://img.shields.io/badge/STATUS-OFFLINE-FF0000?style=for-the-badge" > status-badges/edge-status.svg
+          fi
+
+      - name: Push to Output Branch
+        run: |
+          cd status-badges
+          git init
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -b output-status
+          git add edge-status.svg
+          git commit -m "Update Edge Node Status" || exit 0
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git output-status --force
