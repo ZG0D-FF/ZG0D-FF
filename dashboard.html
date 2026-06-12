@@ -20,11 +20,11 @@
   // Cleaned redundant audio helper. Advanced Engine below handles promises.
 </script>
 <script>
-// --- [SECURITY PERIMETER CHECK] ---
-// If they have the ban token, instantly crash the page.
-if (window.store.get('JARVIS_SECURITY_LOCKOUT') === 'TRUE' || window.store.get('jarvis_perma_ban') === 'true') {
-    window.location.replace("ban.html");
-}
+window.addEventListener('DOMContentLoaded', () => {
+    if (window.store && (window.store.get('JARVIS_SECURITY_LOCKOUT') === 'TRUE' || window.store.get('jarvis_perma_ban') === 'true')) {
+        window.location.replace("ban.html");
+    }
+});
 </script>
 <script>
 // --- ADVANCED AUDIO ENGINE ---
@@ -1520,11 +1520,12 @@ footer {
           action: 'jarvis_telemetry',
           body: {
             action: 'sync_profile',
-          visitor_name: visitorName,
-          age: window.store.sessionGet('age') || null,
-          location_data: window.store.sessionGet('loc') || null,
-          photo_base64: window.store.sessionGet('photo') || null,
-          face_descriptor: window.store.sessionGet('face') || null
+            visitor_name: visitorName,
+            age: window.store.sessionGet('age') || null,
+            location_data: window.store.sessionGet('loc') || null,
+            photo_base64: window.store.sessionGet('photo') || null,
+            face_descriptor: window.store.sessionGet('face') || null
+          }
         })
       });
 
@@ -2002,30 +2003,26 @@ function triggerSecurityMatrix() {
     const resData = await res.json();
     const error = resData.success ? null : { message: "Invalid Authorization Code" };
 
-    if (error) {
-      // Server rejected the login!
-      status.style.color = "#ff1744";
-      status.textContent = "ACCESS DENIED: " + error.message.toUpperCase();
-      passInput.value = ''; // clear password field
-    } else {
-      // Server accepted the login!
-      window.store.sessionSet("adminToken", passInput.value);
-      emailInput.style.borderColor = "#00e676";
-      passInput.style.borderColor = "#00e676";
-      status.style.color = "#00e676";
-      status.textContent = "SERVER UPLINK ESTABLISHED. WELCOME MAKER.";
-      
-      setTimeout(() => {
-        overlay.style.transition = "opacity 1s";
-        overlay.style.opacity = "0";
+          setTimeout(() => {
+        // Sync to browser render cycle for the fade out
+        requestAnimationFrame(() => {
+          overlay.style.transition = "opacity 1s";
+          overlay.style.opacity = "0";
+        });
+
         setTimeout(() => {
-          overlay.remove();
-          
-          // Set the VIP Topbar
-          const greetingEl = document.getElementById('topbar-greeting');
-          greetingEl.textContent = "WELCOME BACK // DJ [SYSTEM ARCHITECT]";
-          greetingEl.style.color = "var(--amber)";
-          greetingEl.style.textShadow = "0 0 12px rgba(255, 171, 0, 0.8)";
+          // Sync to browser render cycle for the heavy DOM destruction
+          requestAnimationFrame(() => {
+            overlay.remove();
+            
+            // Set the VIP Topbar
+            const greetingEl = document.getElementById('topbar-greeting');
+            if (greetingEl) {
+              greetingEl.textContent = "WELCOME BACK // DJ [SYSTEM ARCHITECT]";
+              greetingEl.style.color = "var(--amber)";
+              greetingEl.style.textShadow = "0 0 12px rgba(255, 171, 0, 0.8)";
+            }
+          });
           
           // Boot up the 3D dashboard visuals
           loadDashboardElements(); 
