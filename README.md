@@ -218,5 +218,20 @@ const ZG0D = {
 <!-- DATA CAPSULE DIVIDER before footer wave -->
 [![](https://raw.githubusercontent.com/HiradEmami/readme-ux-kit/master/assets/dividers/animated/bars/divider_circuit_pulse_bar.svg)](https://github.com/ZG0D-FF)
 
+
+<!-- LIVE CUSTOM SENSOR HUD (Served from Vercel/Cloudflare) -->
+<div align="center">
+  <br/>
+  <a href="https://github.com/ZG0D-FF/Edge-Olfaction">
+    <img src="https://soft-thunder-2965.zgodmr.workers.dev/sensor-hud.svg" width="600" alt="Live Sensor Telemetry"/>
+  </a>
+</div>
+
+<!-- 3D ISOMETRIC CONTRIBUTION CITYSCAPE -->
+<div align="center">
+  <br/>
+  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/main/profile-3d-contrib/profile-night-rainbow.svg" width="100%" alt="3D Cityscape"/>
+</div>
+
 <!-- CAPSULE RENDER WAVING FOOTER -->
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:00E5FF,100:0D1117&height=80&section=footer"/>
