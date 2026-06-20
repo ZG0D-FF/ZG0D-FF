@@ -8,6 +8,14 @@
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <!-- KaTeX for Math Equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <!-- Quill JS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    
     <!-- Mermaid JS for Interactive Flowcharts -->
     <script type="module">
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
@@ -99,11 +107,29 @@
         .routine-item input[type="checkbox"] { margin-top: 5px; margin-right: 12px; cursor: pointer; width: 18px; height: 18px; accent-color: var(--accent-color); }
         .routine-date { font-size: 0.8rem; color: #94a3b8; display: block; }
         
-        .notes-area {
-            width: 100%; height: 200px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
-            border-radius: 8px; color: #f1f5f9; padding: 15px; font-family: monospace; resize: vertical; margin-top: 10px; margin-bottom: 10px;
-        }
-        .notes-area:focus { outline: none; border-color: var(--accent-color); }
+        /* Quill Editor overrides & Notes Panel */
+        .ql-container { background: rgba(0,0,0,0.2); border-radius: 0 0 8px 8px; color: #f1f5f9; font-family: 'Segoe UI', system-ui, sans-serif; height: 250px; font-size: 0.95rem; }
+        .ql-toolbar { background: rgba(255,255,255,0.05); border-radius: 8px 8px 0 0; border: 1px solid var(--glass-border); border-bottom: none; }
+        .ql-toolbar .ql-stroke { stroke: var(--text-color); }
+        .ql-toolbar .ql-fill { fill: var(--text-color); }
+        .ql-toolbar .ql-picker { color: var(--text-color); }
+        .ql-editor.ql-blank::before { color: #94a3b8; font-style: italic; }
+        .notes-header-flex { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+        .quick-links { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 15px; }
+        .quick-links a { flex: 1; text-align: center; padding: 8px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: bold; border: 1px solid var(--glass-border); transition: 0.3s; }
+        .link-notion { background: rgba(255,255,255,0.1); color: #fff; }
+        .link-docs { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border-color: #38bdf8; }
+        .quick-links a:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .expand-btn { background: transparent; color: var(--accent-color); border: 1px solid var(--accent-color); padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; }
+        .expand-btn:hover { background: var(--accent-color); color: #000; }
+        
+        /* Modal for Expanded Editor */
+        .expanded-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 4000; padding: 40px; }
+        .expanded-modal.open { display: flex; flex-direction: column; }
+        .expanded-header { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
+        .expanded-editor-container { flex-grow: 1; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--glass-border); }
+        .expanded-editor-container .ql-container { height: 100%; border-radius: 0; border: none; font-size: 1.1rem; }
+
         .btn { background: var(--accent-color); color: #0f172a; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
         .btn:hover { background: var(--accent-hover); }
 
@@ -542,6 +568,12 @@
                 </div>
             </div>
 
+            <!-- ANNOUNCEMENT BANNER -->
+            <div id="announcement-banner" style="display:none; margin-bottom: 20px; border: 1px solid #38bdf8; padding: 15px; border-radius: 8px; background: rgba(56, 189, 248, 0.1); box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);">
+                <h3 style="margin-bottom: 5px; font-size: 1.1rem; color:#38bdf8;">📢 Live Announcement</h3>
+                <p id="announcement-text" style="color: white; margin:0;"></p>
+            </div>
+
             <!-- SEARCH UI -->
             <div class="search-section" style="margin-bottom: 30px; border: 1px solid var(--glass-border); padding: 15px; border-radius: 8px; background: rgba(0,0,0,0.2);">
                 <h3 style="margin-bottom: 10px; font-size: 1.1rem;">🔎 Itinerary & Roommate Search</h3>
@@ -550,7 +582,7 @@
                 <div id="search-results" style="margin-top: 15px; font-size: 0.85rem; color: #cbd5e1; display: none;"></div>
             </div>
 
-            <h2 style="cursor: pointer;" ondblclick="document.getElementById('profLoginModal').style.display='flex'">📅 Bootcamp Routine</h2>
+            <h2 style="cursor: pointer;">📅 Bootcamp Routine</h2>
             <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 20px;">Check off classes as you complete them. Saved automatically.</p>
             <div id="routine-container">
                 <div class="routine-wrapper" id="wrap-d1">
@@ -610,8 +642,41 @@
                 <strong>🍛 Dinner:</strong> 19:00-20:30 (AIT Cafeteria)
             </div>
 
-            <h2 style="margin-top: 30px;">📝 My Notes</h2>
-            <textarea class="notes-area" id="user-notes" placeholder="Type your ideas, questions, or project thoughts here..."></textarea>
+            <div class="notes-header-flex">
+                <h2 style="margin-top: 0; margin-bottom: 0;">📝 My Notes</h2>
+                <button class="expand-btn" id="expand-notes-btn">🔲 Expand</button>
+            </div>
+            
+            <div id="editor-wrapper" style="margin-top: 15px;">
+                <div id="quill-editor"></div>
+            </div>
+            
+            <div class="quick-links">
+                <a href="https://notion.so" target="_blank" class="link-notion">⬛ Notion</a>
+                <a href="https://docs.google.com" target="_blank" class="link-docs">📘 Google Docs</a>
+            </div>
+            
+            <div class="accordion" id="math-accordion" style="margin-bottom: 15px;">
+                <div class="accordion-header" onclick="toggleMathAccordion()">📐 Math Cheat Sheet <span id="math-icon" style="font-size:0.8rem">▼</span></div>
+                <div class="accordion-content" id="math-content">
+                    <p style="margin-top: 10px; margin-bottom: 5px; color: #94a3b8;">1. Click the <strong><em>fx</em></strong> button.<br>2. Type LaTeX syntax.<br>3. Press <strong>Enter</strong>.</p>
+                    <ul style="padding-left: 20px; color: #cbd5e1; font-size: 0.8rem;">
+                        <li style="margin-bottom: 3px;">Fractions: <code>\frac{dy}{dx}</code></li>
+                        <li style="margin-bottom: 3px;">Exponents: <code>E = mc^2</code></li>
+                        <li style="margin-bottom: 3px;">Subscripts: <code>x_i, a_{12}</code></li>
+                        <li style="margin-bottom: 3px;">Roots: <code>\sqrt{a^2 + b^2}</code></li>
+                        <li style="margin-bottom: 3px;">Integration: <code>\int_{a}^{b} x^2 dx</code></li>
+                        <li style="margin-bottom: 3px;">Differentiation: <code>\frac{d}{dx}(x^2) = 2x</code></li>
+                        <li style="margin-bottom: 3px;">Limits: <code>\lim_{x \to \infty} f(x)</code></li>
+                        <li style="margin-bottom: 3px;">Summation: <code>\sum_{i=1}^{n} i^2</code></li>
+                        <li style="margin-bottom: 3px;">Trig: <code>\sin(\theta), \cos(\pi)</code></li>
+                        <li style="margin-bottom: 3px;">Vectors: <code>\vec{v}, \hat{i}</code></li>
+                        <li style="margin-bottom: 3px;">Matrices: <code>\begin{bmatrix} a & b \\ c & d \end{bmatrix}</code></li>
+                        <li style="margin-bottom: 3px;">Greek: <code>\alpha, \beta, \Delta, \Sigma</code></li>
+                    </ul>
+                </div>
+            </div>
+            
             <button class="btn" id="download-btn">📥 Download Notes</button>
         </aside>
         
@@ -832,6 +897,18 @@
             }
         }
 
+        function toggleMathAccordion() {
+            const content = document.getElementById('math-content');
+            const icon = document.getElementById('math-icon');
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.innerText = '▼';
+            } else {
+                content.classList.add('open');
+                icon.innerText = '▲';
+            }
+        }
+
         function toggleCard(cardElement, event) {
             if (event && event.target.closest('.step-content-inner')) return;
 
@@ -932,8 +1009,49 @@
         let currentPassenger = null;
         let globalFlights = [];
 
+        function showAnnouncement(msg) {
+            document.getElementById('announcement-text').innerText = msg;
+            document.getElementById('announcement-banner').style.display = 'block';
+        }
+
+        async function broadcastAnnouncement() {
+            const msg = document.getElementById('broadcastMsg').value;
+            const hours = parseInt(document.getElementById('broadcastDuration').value);
+            if (!msg.trim()) return alert("Message is empty!");
+            
+            const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+            const { error } = await sbClient.from('announcements').insert({
+                message: msg,
+                expires_at: expiresAt
+            });
+            if (error) {
+                alert("Failed to broadcast: " + error.message);
+            } else {
+                alert("Announcement broadcasted successfully!");
+                document.getElementById('broadcastMsg').value = '';
+            }
+        }
+
         async function fetchInitialData() {
             try {
+                // Fetch active announcement
+                const { data: activeAnnounce } = await sbClient
+                    .from('announcements')
+                    .select('*')
+                    .gt('expires_at', new Date().toISOString())
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                if (activeAnnounce && activeAnnounce.length > 0) {
+                    showAnnouncement(activeAnnounce[0].message);
+                }
+
+                // Listen for real-time announcements
+                sbClient.channel('public:announcements')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, payload => {
+                        showAnnouncement(payload.new.message);
+                    })
+                    .subscribe();
+
                 const { data: nodes, error: nErr } = await sbClient.from('roadmap_nodes').select('*');
                 if (!nErr && nodes && nodes.length > 0) {
                     nodes.forEach(n => { window.nodeData[n.id] = n; });
@@ -1031,32 +1149,93 @@
                 });
             });
 
-            const notesArea = document.getElementById('user-notes');
-            const downloadBtn = document.getElementById('download-btn');
-            const savedNotes = localStorage.getItem('bootcamp_notes');
-            if (savedNotes) notesArea.value = savedNotes;
+            // Initialize Quill Editor
+            const quill = new Quill('#quill-editor', {
+                theme: 'snow',
+                placeholder: 'Type your ideas, questions, or project thoughts here...',
+                modules: {
+                    formula: true,
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['formula', 'code-block', 'link', 'clean']
+                    ]
+                }
+            });
 
-            notesArea.addEventListener('input', () => localStorage.setItem('bootcamp_notes', notesArea.value));
+            const savedNotes = localStorage.getItem('bootcamp_notes_html');
+            if (savedNotes) quill.root.innerHTML = savedNotes;
 
-            downloadBtn.addEventListener('click', () => {
-                const textToSave = notesArea.value;
-                if (!textToSave.trim()) return alert("Your notes are empty! Write something first.");
+            // Auto-save on every change
+            quill.on('text-change', () => {
+                localStorage.setItem('bootcamp_notes_html', quill.root.innerHTML);
+            });
+
+            // Expand/Collapse logic
+            const expandBtn = document.getElementById('expand-notes-btn');
+            const closeExpandBtn = document.getElementById('close-expanded-btn');
+            const expandedModal = document.getElementById('expandedNotesModal');
+            const editorWrapper = document.getElementById('editor-wrapper');
+            const expandedWrapper = document.getElementById('expanded-quill-wrapper');
+            const quillToolbar = document.querySelector('.ql-toolbar');
+            const quillContainer = document.querySelector('.ql-container');
+
+            expandBtn.addEventListener('click', () => {
+                expandedWrapper.appendChild(quillToolbar);
+                expandedWrapper.appendChild(quillContainer);
+                expandedModal.classList.add('open');
+            });
+
+            closeExpandBtn.addEventListener('click', () => {
+                editorWrapper.appendChild(quillToolbar);
+                editorWrapper.appendChild(quillContainer);
+                expandedModal.classList.remove('open');
+            });
+
+            let lastDownloadedText = "";
+
+            function triggerNotesDownload(isAuto = false) {
+                const textToSave = quill.getText();
+                if (!textToSave.trim()) {
+                    if (!isAuto) alert("Your notes are empty! Write something first.");
+                    return;
+                }
                 
-                let completedClasses = "\\n\\n--- COMPLETED CLASSES ---\\n";
+                if (isAuto && textToSave === lastDownloadedText) {
+                    return; // Skip auto-download if no new changes
+                }
+                
+                let completedClasses = "\n\n--- COMPLETED CLASSES ---\n";
                 checkboxes.forEach(box => {
                     if(box.checked) {
-                        const label = box.parentElement.querySelector('.routine-text').innerText.replace('\\n', ': ');
-                        completedClasses += "- " + label + "\\n";
+                        const label = box.parentElement.querySelector('.routine-text').innerText.replace('\n', ': ');
+                        completedClasses += "- " + label + "\n";
                     }
                 });
 
-                const blob = new Blob(["=== BOOTCAMP NOTES ===\\n\\n" + textToSave + completedClasses], { type: 'text/plain' });
+                const blob = new Blob(["=== BOOTCAMP NOTES ===\n\n" + textToSave + completedClasses], { type: 'text/plain' });
                 const anchor = document.createElement('a');
-                anchor.download = 'Bootcamp_Notes.txt';
+                
+                let filename = 'Bootcamp_Notes';
+                if (isAuto) {
+                    const now = new Date();
+                    filename += `_AutoSave_${now.getHours()}h${now.getMinutes()}m`;
+                }
+                filename += '.txt';
+                
+                anchor.download = filename;
                 anchor.href = window.URL.createObjectURL(blob);
                 anchor.click();
                 window.URL.revokeObjectURL(anchor.href);
-            });
+                
+                lastDownloadedText = textToSave;
+            }
+
+            const downloadBtn = document.getElementById('download-btn');
+            downloadBtn.addEventListener('click', () => triggerNotesDownload(false));
+
+            // Extreme Fallback: Auto-download to hard drive every 1 hour (3600000 ms)
+            setInterval(() => triggerNotesDownload(true), 3600000);
         });
     </script>
 
@@ -1091,6 +1270,17 @@
         }
     </script>
 
+    <!-- Expanded Notes Modal -->
+    <div id="expandedNotesModal" class="expanded-modal">
+        <div class="expanded-header">
+            <h2>📝 Distraction-Free Notes</h2>
+            <button class="close-btn" style="position: static;" id="close-expanded-btn">&times;</button>
+        </div>
+        <div class="expanded-editor-container" id="expanded-quill-wrapper">
+            <!-- Quill editor will be moved here when expanded -->
+        </div>
+    </div>
+
     <!-- PIN Modal -->
     <div id="pinModal" class="modal">
         <div class="modal-content">
@@ -1117,6 +1307,20 @@
     <div id="profDashboardModal" class="modal">
         <div class="modal-content" style="width: 500px;">
             <h2 style="color:#10b981;">Attendance Dashboard</h2>
+            
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:5px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-size:1rem; margin-bottom:10px; color:#38bdf8;">📢 Broadcast Message</h3>
+                <textarea id="broadcastMsg" placeholder="Type your announcement here..." style="width:100%; height:60px; padding:5px; margin-bottom:10px; background:rgba(0,0,0,0.5); color:white; border:1px solid #333;"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <select id="broadcastDuration" style="padding:5px; background:rgba(0,0,0,0.5); color:white; border:1px solid #333;">
+                        <option value="1">1 Hour</option>
+                        <option value="24">24 Hours</option>
+                        <option value="168">7 Days</option>
+                    </select>
+                    <button class="btn" style="width:auto; padding:5px 15px; background:#38bdf8; color:#000; font-size:0.9rem;" onclick="broadcastAnnouncement()">Broadcast</button>
+                </div>
+            </div>
+
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <p style="margin:0;">All Attendance Records.</p>
                 <button class="btn" style="width:auto; padding:5px 15px; background:#38bdf8; color:#000; font-size:0.9rem;" onclick="exportCSV()">📥 Export CSV</button>
@@ -1135,6 +1339,17 @@
         let requiresNewPin = false;
 
         async function handleAttendance(dayId) {
+            const btn = document.getElementById(`btn-present-${dayId}`);
+            if (btn) {
+                btn.disabled = true;
+                const oldText = btn.innerText;
+                btn.innerText = "⏳ Wait...";
+                setTimeout(() => {
+                    btn.disabled = false;
+                    if (btn.innerText === "⏳ Wait...") btn.innerText = oldText;
+                }, 3000);
+            }
+
             if (!currentPassenger) {
                 alert("Please search and select your name first!");
                 return;
@@ -1228,20 +1443,64 @@
             }, 500);
         }
 
-        // --- PROFESSOR PORTAL ---
+        // --- PROFESSOR PORTAL TRIGGERS ---
+        let escapeCount = 0;
+        let escapeTimer;
+        const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        let konamiIndex = 0;
+
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'a') {
-                document.getElementById('profLoginModal').style.display = 'flex';
+            // Trigger 1: Escape x5
+            if (e.key === 'Escape') {
+                escapeCount++;
+                clearTimeout(escapeTimer);
+                escapeTimer = setTimeout(() => escapeCount = 0, 2000);
+                if (escapeCount >= 5) {
+                    document.getElementById('profLoginModal').style.display = 'flex';
+                    escapeCount = 0;
+                }
+            } else {
+                escapeCount = 0;
+            }
+
+            // Trigger 2: Konami Code
+            if (e.key.toLowerCase() === konamiCode[konamiIndex].toLowerCase() || e.key === konamiCode[konamiIndex]) {
+                konamiIndex++;
+                if (konamiIndex === konamiCode.length) {
+                    document.getElementById('profLoginModal').style.display = 'flex';
+                    konamiIndex = 0;
+                }
+            } else {
+                konamiIndex = 0;
             }
         });
 
+        let loginAttempts = 0;
+        let loginLockoutUntil = 0;
+
         async function profLogin() {
+            if (Date.now() < loginLockoutUntil) {
+                const remaining = Math.ceil((loginLockoutUntil - Date.now()) / 60000);
+                alert(`Security Lockout Active! Try again in ${remaining} minute(s).`);
+                return;
+            }
+
             const email = document.getElementById('profEmail').value;
             const password = document.getElementById('profPass').value;
             const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+            
             if (error) {
-                alert("Login failed: " + error.message);
+                loginAttempts++;
+                if (loginAttempts >= 3) {
+                    loginLockoutUntil = Date.now() + 5 * 60 * 1000; // 5 minutes
+                    loginAttempts = 0; // reset after lockout
+                    document.getElementById('profLoginModal').style.display = 'none';
+                    alert("🚨 BRUTE FORCE DETECTED. Portal locked for 5 minutes. The incident has been recorded.");
+                } else {
+                    alert(`Login failed: ${error.message}. (${3 - loginAttempts} attempts left)`);
+                }
             } else {
+                loginAttempts = 0; // Success resets attempts
                 document.getElementById('profLoginModal').style.display = 'none';
                 document.getElementById('profDashboardModal').style.display = 'flex';
                 loadProfDashboard();
