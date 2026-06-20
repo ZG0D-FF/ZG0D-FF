@@ -55,19 +55,6 @@ My strength is **rapid prototyping and system integration**. I build the physica
 </div>
 
 ---
-
-### ⬛ CORE.CAPABILITIES
-
-```yaml
-const ZG0D = {
-  role:     ["DJ", "Systems Architect", "Hardware Integrator"],
-  hardware: ["Raspberry Pi", "Arduino", "Edge Sensors"],
-  sensors:  ["MQ Gas Array", "DHT11/22", "PIR", "Ultrasonic"],
-  ai_stack: ["OpenCV", "TensorFlow Lite", "scikit-learn"],
-  approach: "Rapid prototype → Wire → Deploy → Iterate"
-}
-```
-
 ---
 
 ### ⬛ SYSTEMS ONLINE & IN ARCHIVE
@@ -91,20 +78,8 @@ const ZG0D = {
 > `Python` · `OCR` · `Data Analytics` · `Predictive Modelling`
 
 ---
-
-### ⬛ CURRENT.DIRECTIVES
-
-```yaml
-# [ STATUS ] :: TASK DESCRIPTION
-- [x] <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-status/edge-status.svg" align="center" height="20" /> :: Deploy Edge-Olfaction sensor array.
-- [x] [ OPTIMIZED ] :: Optimize J.A.R.V.I.S. voice protocols.
-- [ ] [ PENDING   ] :: Expand neural network for Avian Disease detection.
-- [ ] [ PENDING   ] :: Upgrade homelab server architecture.
-```
-
 ---
 
-### ⬛ SYSTEM.TELEMETRY
 <br/>
 
 <!-- ROW 1: GitHub Stats + Top Languages -->
