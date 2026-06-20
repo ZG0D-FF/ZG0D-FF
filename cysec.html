@@ -314,6 +314,41 @@
             background: var(--accent-color);
         }
 
+    
+        /* --- ATTENDANCE SYSTEM --- */
+        .routine-wrapper {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; transition: 0.3s;
+        }
+        .routine-wrapper:hover { background: rgba(255,255,255,0.05); }
+        .routine-wrapper .routine-item { margin-bottom: 0; border: none; background: transparent; flex-grow: 1; padding: 10px; }
+        .btn-present {
+            background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; border-radius: 6px;
+            padding: 5px 10px; cursor: pointer; transition: 0.3s; margin-right: 10px; font-size: 0.8rem;
+        }
+        .btn-present:hover { background: rgba(16, 185, 129, 0.4); }
+        .btn-present.pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: #f59e0b; cursor: default; }
+        .btn-present.verified { background: transparent; color: #10b981; border-color: transparent; cursor: default; font-weight: bold; }
+        
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            z-index: 9999; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #0f172a; padding: 30px; border-radius: 12px; border: 1px solid var(--accent-color);
+            width: 400px; text-align: center; max-height: 80vh; overflow-y: auto;
+        }
+        .modal-content h2 { margin-bottom: 20px; }
+        .modal-content input {
+            width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.5); color: #fff; text-align: center; letter-spacing: 5px; font-size: 1.2rem;
+        }
+        .prof-list-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;
+        }
+        .prof-list-item button { padding: 5px 10px; background: #10b981; border: none; border-radius: 4px; color: #000; cursor: pointer; }
+
     </style>
 </head>
 <body>
@@ -515,21 +550,57 @@
                 <div id="search-results" style="margin-top: 15px; font-size: 0.85rem; color: #cbd5e1; display: none;"></div>
             </div>
 
-            <h2>📅 Bootcamp Routine</h2>
+            <h2 style="cursor: pointer;" ondblclick="document.getElementById('profLoginModal').style.display='flex'">📅 Bootcamp Routine</h2>
             <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 20px;">Check off classes as you complete them. Saved automatically.</p>
             <div id="routine-container">
-                <label class="routine-item"><input type="checkbox" id="d1"><div class="routine-text"><span class="routine-date">Day 1 (22 Jun)</span>Orientation & Thai Culture</div></label>
-                <label class="routine-item"><input type="checkbox" id="d2"><div class="routine-text"><span class="routine-date">Day 2 (23 Jun)</span>Cybersecurity Foundations & Biomedical AI</div></label>
-                <label class="routine-item"><input type="checkbox" id="d3"><div class="routine-text"><span class="routine-date">Day 3 (24 Jun)</span>Threats, Exploitation & Rehab Engineering (BART LAB)</div></label>
-                <label class="routine-item"><input type="checkbox" id="d4"><div class="routine-text"><span class="routine-date">Day 4 (25 Jun)</span>Securing Communications & Medical Imaging</div></label>
-                <label class="routine-item"><input type="checkbox" id="d5"><div class="routine-text"><span class="routine-date">Day 5 (26 Jun)</span>Defensive Architecture & XR Technologies</div></label>
-                <label class="routine-item"><input type="checkbox" id="d6"><div class="routine-text"><span class="routine-date">Day 6 (27 Jun)</span>Final Examination & Free Time</div></label>
-                <label class="routine-item"><input type="checkbox" id="d7"><div class="routine-text"><span class="routine-date">Day 7 (28 Jun)</span>Data Analytics & Business Applications</div></label>
-                <label class="routine-item"><input type="checkbox" id="d8"><div class="routine-text"><span class="routine-date">Day 8 (29 Jun)</span>Understanding AI & Custom Tools</div></label>
-                <label class="routine-item"><input type="checkbox" id="d9"><div class="routine-text"><span class="routine-date">Day 9 (30 Jun)</span>Agent Memory, Routers & Sequential Agents</div></label>
-                <label class="routine-item"><input type="checkbox" id="d10"><div class="routine-text"><span class="routine-date">Day 10 (1 Jul)</span>Loop Agents & Parallel Agents</div></label>
-                <label class="routine-item"><input type="checkbox" id="d11"><div class="routine-text"><span class="routine-date">Day 11 (2 Jul)</span>EGAT Visit & Luxurious Dinner Cruise</div></label>
-                <label class="routine-item"><input type="checkbox" id="d12"><div class="routine-text"><span class="routine-date">Day 12 (3 Jul)</span>Closing, Checkout & Send-off</div></label>
+                <div class="routine-wrapper" id="wrap-d1">
+    <label class="routine-item"><input type="checkbox" id="d1"><div class="routine-text"><span class="routine-date">Day 1 (22 Jun)</span>Orientation & Thai Culture</div></label>
+    <button class="btn-present" id="btn-present-d1" onclick="handleAttendance('d1')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d2">
+    <label class="routine-item"><input type="checkbox" id="d2"><div class="routine-text"><span class="routine-date">Day 2 (23 Jun)</span>Cybersecurity Foundations & Biomedical AI</div></label>
+    <button class="btn-present" id="btn-present-d2" onclick="handleAttendance('d2')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d3">
+    <label class="routine-item"><input type="checkbox" id="d3"><div class="routine-text"><span class="routine-date">Day 3 (24 Jun)</span>Threats, Exploitation & Rehab Engineering (BART LAB)</div></label>
+    <button class="btn-present" id="btn-present-d3" onclick="handleAttendance('d3')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d4">
+    <label class="routine-item"><input type="checkbox" id="d4"><div class="routine-text"><span class="routine-date">Day 4 (25 Jun)</span>Securing Communications & Medical Imaging</div></label>
+    <button class="btn-present" id="btn-present-d4" onclick="handleAttendance('d4')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d5">
+    <label class="routine-item"><input type="checkbox" id="d5"><div class="routine-text"><span class="routine-date">Day 5 (26 Jun)</span>Defensive Architecture & XR Technologies</div></label>
+    <button class="btn-present" id="btn-present-d5" onclick="handleAttendance('d5')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d6">
+    <label class="routine-item"><input type="checkbox" id="d6"><div class="routine-text"><span class="routine-date">Day 6 (27 Jun)</span>Final Examination & Free Time</div></label>
+    <button class="btn-present" id="btn-present-d6" onclick="handleAttendance('d6')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d7">
+    <label class="routine-item"><input type="checkbox" id="d7"><div class="routine-text"><span class="routine-date">Day 7 (28 Jun)</span>Data Analytics & Business Applications</div></label>
+    <button class="btn-present" id="btn-present-d7" onclick="handleAttendance('d7')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d8">
+    <label class="routine-item"><input type="checkbox" id="d8"><div class="routine-text"><span class="routine-date">Day 8 (29 Jun)</span>Understanding AI & Custom Tools</div></label>
+    <button class="btn-present" id="btn-present-d8" onclick="handleAttendance('d8')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d9">
+    <label class="routine-item"><input type="checkbox" id="d9"><div class="routine-text"><span class="routine-date">Day 9 (30 Jun)</span>Agent Memory, Routers & Sequential Agents</div></label>
+    <button class="btn-present" id="btn-present-d9" onclick="handleAttendance('d9')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d10">
+    <label class="routine-item"><input type="checkbox" id="d10"><div class="routine-text"><span class="routine-date">Day 10 (1 Jul)</span>Loop Agents & Parallel Agents</div></label>
+    <button class="btn-present" id="btn-present-d10" onclick="handleAttendance('d10')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d11">
+    <label class="routine-item"><input type="checkbox" id="d11"><div class="routine-text"><span class="routine-date">Day 11 (2 Jul)</span>EGAT Visit & Luxurious Dinner Cruise</div></label>
+    <button class="btn-present" id="btn-present-d11" onclick="handleAttendance('d11')">🙋 Present</button>
+</div>
+                <div class="routine-wrapper" id="wrap-d12">
+    <label class="routine-item"><input type="checkbox" id="d12"><div class="routine-text"><span class="routine-date">Day 12 (3 Jul)</span>Closing, Checkout & Send-off</div></label>
+    <button class="btn-present" id="btn-present-d12" onclick="handleAttendance('d12')">🙋 Present</button>
+</div>
             </div>
             
             <div style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 10px; margin-top: 15px; font-size: 0.85rem; color: #cbd5e1;">
@@ -858,6 +929,7 @@
         const sbClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let activePassengerId = null;
+        let currentPassenger = null;
         let globalFlights = [];
 
         async function fetchInitialData() {
@@ -895,6 +967,7 @@
 
             const pass = passengers[0];
             activePassengerId = pass.id; // Log in
+            currentPassenger = pass;
             
             let roommateName = "None";
             if (pass.hotel_room_id) {
@@ -933,6 +1006,7 @@
                     ✅ <em>Cloud Progress Synced.</em>
                 </div>
             `;
+            setTimeout(refreshAttendanceUI, 500);
         });
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1016,5 +1090,264 @@
             });
         }
     </script>
+
+    <!-- PIN Modal -->
+    <div id="pinModal" class="modal">
+        <div class="modal-content">
+            <h2 id="pinTitle">Enter Secret PIN</h2>
+            <p id="pinDesc" style="margin-bottom:15px; color:#94a3b8; font-size:0.9rem;">To mark attendance, please enter your 4-digit PIN.</p>
+            <input type="password" id="pinInput" maxlength="4" placeholder="••••">
+            <button class="btn" onclick="submitPin()">Submit</button>
+            <button class="btn" style="background:transparent; border:1px solid #ef4444; color:#ef4444; margin-top:10px;" onclick="document.getElementById('pinModal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Prof Login Modal -->
+    <div id="profLoginModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color:#f59e0b;">Professor Portal</h2>
+            <input type="email" id="profEmail" placeholder="Email" style="letter-spacing:normal; text-align:left;">
+            <input type="password" id="profPass" placeholder="Password" style="letter-spacing:normal; text-align:left;">
+            <button class="btn" style="background:#f59e0b; color:#000;" onclick="profLogin()">Login</button>
+            <button class="btn" style="background:transparent; border:1px solid #ef4444; color:#ef4444; margin-top:10px;" onclick="document.getElementById('profLoginModal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Prof Dashboard Modal -->
+    <div id="profDashboardModal" class="modal">
+        <div class="modal-content" style="width: 500px;">
+            <h2 style="color:#10b981;">Attendance Dashboard</h2>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <p style="margin:0;">All Attendance Records.</p>
+                <button class="btn" style="width:auto; padding:5px 15px; background:#38bdf8; color:#000; font-size:0.9rem;" onclick="exportCSV()">📥 Export CSV</button>
+            </div>
+            <div id="profPendingList" style="max-height: 300px; overflow-y: auto; margin-bottom:15px;">
+                <!-- Filled via JS -->
+            </div>
+            <button class="btn" style="background:#ef4444;" onclick="profLogout()">Logout & Close</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- ATTENDANCE SYSTEM LOGIC ---
+        let currentTargetDay = null;
+        let requiresNewPin = false;
+
+        async function handleAttendance(dayId) {
+            if (!currentPassenger) {
+                alert("Please search and select your name first!");
+                return;
+            }
+            currentTargetDay = dayId;
+            
+            // Check if student already marked present
+            const { data: logs } = await sbClient.from('attendance_logs').select('*').eq('passenger_id', currentPassenger.id).eq('day_id', dayId);
+            if (logs && logs.length > 0) {
+                alert("You have already requested attendance for this day.");
+                return;
+            }
+
+            // Check if passenger has a PIN
+            if (!currentPassenger.pin) {
+                requiresNewPin = true;
+                document.getElementById('pinTitle').innerText = "Create Your PIN";
+                document.getElementById('pinDesc').innerText = "This is your first time. Create a secret 4-digit PIN for future attendance.";
+            } else {
+                requiresNewPin = false;
+                document.getElementById('pinTitle').innerText = "Enter Your PIN";
+                document.getElementById('pinDesc').innerText = "Enter your secret 4-digit PIN to mark attendance.";
+            }
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinModal').style.display = 'flex';
+        }
+
+        async function submitPin() {
+            const pin = document.getElementById('pinInput').value;
+            if (pin.length !== 4) {
+                alert("PIN must be exactly 4 digits.");
+                return;
+            }
+
+            if (requiresNewPin) {
+                // Update passenger with new PIN
+                const { error } = await sbClient.from('passengers').update({ pin: pin }).eq('id', currentPassenger.id);
+                if (error) { alert("Error saving PIN: " + error.message); return; }
+                currentPassenger.pin = pin; // update local
+            } else {
+                if (pin !== currentPassenger.pin) {
+                    alert("Incorrect PIN!");
+                    return;
+                }
+            }
+
+            // Insert pending attendance
+            const { error: attError } = await sbClient.from('attendance_logs').insert({
+                passenger_id: currentPassenger.id,
+                day_id: currentTargetDay,
+                status: 'pending'
+            });
+
+            if (attError) {
+                alert("Failed to record attendance: " + attError.message);
+            } else {
+                document.getElementById('pinModal').style.display = 'none';
+                alert("Attendance requested! Waiting for Professor verification.");
+                refreshAttendanceUI();
+            }
+        }
+
+        async function refreshAttendanceUI() {
+            if (!currentPassenger) return;
+            const { data: logs } = await sbClient.from('attendance_logs').select('*').eq('passenger_id', currentPassenger.id);
+            if (logs) {
+                logs.forEach(log => {
+                    const btn = document.getElementById(`btn-present-${log.day_id}`);
+                    if (btn) {
+                        if (log.status === 'verified') {
+                            btn.className = "btn-present verified";
+                            btn.innerText = "✅ Verified";
+                            btn.onclick = null;
+                        } else {
+                            btn.className = "btn-present pending";
+                            btn.innerText = "⏳ Pending";
+                            btn.onclick = null;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Hook into the existing fetchPassengerData to also refresh attendance
+        const originalFetchPassengerData = window.fetchPassengerData || function(){};
+        window.fetchPassengerData = async function() {
+            // Wait for original logic (which sets currentPassenger) to finish
+            // Since it might not be async originally, we just add a small delay
+            setTimeout(() => {
+                refreshAttendanceUI();
+            }, 500);
+        }
+
+        // --- PROFESSOR PORTAL ---
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'a') {
+                document.getElementById('profLoginModal').style.display = 'flex';
+            }
+        });
+
+        async function profLogin() {
+            const email = document.getElementById('profEmail').value;
+            const password = document.getElementById('profPass').value;
+            const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                alert("Login failed: " + error.message);
+            } else {
+                document.getElementById('profLoginModal').style.display = 'none';
+                document.getElementById('profDashboardModal').style.display = 'flex';
+                loadProfDashboard();
+            }
+        }
+
+        let profDashboardData = [];
+        async function loadProfDashboard() {
+            const listDiv = document.getElementById('profPendingList');
+            listDiv.innerHTML = "Loading...";
+            
+            const { data, error } = await sbClient
+                .from('attendance_logs')
+                .select(`id, day_id, marked_at, status, passengers(name)`)
+                .order('marked_at', { ascending: false });
+                
+            profDashboardData = data || [];
+                
+            if (error) {
+                listDiv.innerHTML = "Error loading data.";
+                return;
+            }
+            if (!data || data.length === 0) {
+                listDiv.innerHTML = "No pending requests.";
+                return;
+            }
+
+            listDiv.innerHTML = "";
+            data.forEach(log => {
+                const item = document.createElement('div');
+                item.className = "prof-list-item";
+                item.innerHTML = `
+                    <div>
+                        <strong>${log.passengers.name}</strong><br>
+                        <span style="font-size:0.8rem; color:#94a3b8;">Day: ${log.day_id} | Status: ${log.status.toUpperCase()} | Time: ${new Date(log.marked_at).toLocaleTimeString()}</span>
+                    </div>
+                    <div>
+                        ${log.status === 'pending' ? `<button onclick="profVerify('${log.id}')" style="background:#10b981; margin-right:5px;">Verify</button>` : `<span style="color:#10b981; margin-right:10px; font-size:0.9rem;">✅</span>`}
+                        <button onclick="profDelete('${log.id}')" style="background:#ef4444;">Delete</button>
+                    </div>
+                `;
+                listDiv.appendChild(item);
+            });
+        }
+
+        async function profVerify(logId) {
+            const { data: { user } } = await sbClient.auth.getUser();
+            if (!user) { alert("Session expired."); return; }
+            
+            const { error } = await sbClient.from('attendance_logs').update({
+                status: 'verified',
+                verified_by: user.id
+            }).eq('id', logId);
+            
+            if (error) {
+                alert("Verification failed: " + error.message);
+            } else {
+                loadProfDashboard(); // reload list
+            }
+        }
+
+        async function profDelete(logId) {
+            if (!confirm("Are you sure you want to permanently delete this attendance record?")) return;
+            const { data: { user } } = await sbClient.auth.getUser();
+            if (!user) { alert("Session expired."); return; }
+            
+            const { error } = await sbClient.from('attendance_logs').delete().eq('id', logId);
+            
+            if (error) {
+                alert("Deletion failed: " + error.message);
+            } else {
+                loadProfDashboard(); // reload list
+            }
+        }
+
+        function exportCSV() {
+            if (profDashboardData.length === 0) { alert("No data to export!"); return; }
+            let csvContent = "data:text/csv;charset=utf-8,Name,Day,Time,Status\\n";
+            profDashboardData.forEach(log => {
+                let name = log.passengers.name.replace(/,/g, '');
+                let time = new Date(log.marked_at).toLocaleString().replace(/,/g, '');
+                csvContent += `${name},${log.day_id},${time},${log.status}\\n`;
+            });
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Attendance_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function profLogout() {
+            await sbClient.auth.signOut();
+            document.getElementById('profDashboardModal').style.display = 'none';
+            if (currentPassenger) refreshAttendanceUI();
+        }
+
+        // We must also call refreshAttendanceUI when the search button is clicked
+        const searchBtn = document.querySelector('button[onclick="searchPassenger()"]');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                setTimeout(refreshAttendanceUI, 1000);
+            });
+        }
+    </script>
+
 </body>
 </html>
