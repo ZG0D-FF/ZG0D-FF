@@ -1,0 +1,446 @@
+<div class='tutorial-container'>\n  <h2 class='tutorial-title'>[Ying]AIT_Camp_Lab4.ipynb</h2>\n  <div class='tutorial-cell tutorial-md' data-md='# 🚀 Mastering AI Agents: Multi-Agent Orchestration with Google ADK! 🚀
+
+Welcome, Agent Architect! This notebook is your guide to giving your AI agents two essential superpowers: custom tools and conversational memory.
+
+Labs and Goals:
+- **Lab2: Build a Foundational Agent**: Create a simple but effective AI agent from scratch using the Google Agent Development Kit (ADK).
+
+- **Lab 3: Grant New Skills with Custom Tools**: Teach an agent to perform new tasks by connecting it to external APIs, like a real-time weather service.
+
+- **[HERE]&gt;&gt;&gt;Lab 4: Create a Team of Agents**: Assemble a multi-agent system where a primary agent can delegate specialized tasks to other agents.
+
+- **Demo: Master Conversational Memory**: Understand the critical role of Sessions in enabling agents to remember previous interactions, handle feedback, and carry on a coherent conversation.
+
+
+Let&#x27;s get this adventure started!
+
+Credit: Notebook content adapted from Qingyue (Annie) Wang, a developer advocate and AI engineer at **Google**, who passionate about helping developers build with AI and cloud technologies.
+'></div>\n  <div class='tutorial-cell tutorial-md' data-md='
+-------------
+### 🎁 🛑 Important Prerequisite: Setup Your Environment! 🛑 🎁
+-----------------------------------------------------------------------------
+
+👉 **Get Your API Key HERE**: [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+ -----------------------------------------------------------------------------
+'></div>\n  <div class='tutorial-cell tutorial-md' data-md='## Part 0: Setup &amp; Authentication 🔑
+
+First things first, let&#x27;s get all our tools ready. This step installs the necessary libraries and securely configures your Google API key so your agents can access the power of Gemini.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 1----#
+!pip install google-adk google-generativeai -q
+
+# --- Import all necessary libraries ---
+import os
+import sys
+import json
+import asyncio
+import random
+import string
+from uuid import uuid4
+from typing import Any, List
+
+import pandas as pd
+import plotly.graph_objects as go
+from IPython.display import HTML, Markdown, display
+
+# --- ADK, Agent, and Evaluation Components ---
+from google.adk.agents import Agent
+from google.adk.events import Event
+from google.adk.runners import Runner
+import google.adk as adk
+from google.adk.tools import google_search
+from google.adk.sessions import InMemorySessionService, Session
+from google.genai import types
+from google.genai.types import Content, Part
+
+
+print(&quot;✅ All libraries are ready to go!&quot;)
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ All libraries are ready to go!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='### Configure Your API Key
+To use Gemini models, you need an API key from [Google AI Studio](https://aistudio.google.com/app/apikey). This section securely collects your key and configures it for the ADK.
+'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 2----#
+# --- API Key Configuration ---
+from google.colab import userdata
+
+# Option 1: Use Colab Secrets (recommended)
+# Go to the 🔑 icon in the left sidebar, add a secret named GOOGLE_API_KEY
+try:
+    GOOGLE_API_KEY = userdata.get(&#x27;GOOGLE_API_KEY&#x27;)
+    print(&quot;✅ API key loaded from Colab Secrets.&quot;)
+except Exception:
+    # Option 2: Paste it directly (less secure but fine for learning)
+    import getpass
+    GOOGLE_API_KEY = getpass.getpass(&quot;🔑 Enter your Google AI Studio API key: &quot;)
+    print(&quot;✅ API key entered manually.&quot;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key loaded from Colab Secrets.
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 3----#
+# --- Set Environment Variables for ADK ---
+
+os.environ[&quot;GOOGLE_API_KEY&quot;] = GOOGLE_API_KEY
+os.environ[&quot;GOOGLE_GENAI_USE_VERTEXAI&quot;] = &quot;False&quot;
+
+print(f&quot;✅ API key configured (starts with &#x27;{GOOGLE_API_KEY[:6]}...&#x27;)&quot;)
+print(&quot;✅ Using Google AI Studio (not Vertex AI).&quot;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key configured (starts with &#x27;AQ.Ab8...&#x27;)
+✅ Using Google AI Studio (not Vertex AI).
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 6 ----#
+
+# For Part2: You also have to run This Cell together with Cell 1 and Cell 2
+
+# --- Initialize our Session Service ---
+# This one service will manage all the different sessions in our notebook.
+session_service = InMemorySessionService()
+my_user_id = &quot;adk_adventurer_001&quot;</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 5 ----# Share with Scenario 3
+
+# --- A Helper Function to Run Our Agents ---
+# We&#x27;ll use this function throughout the notebook to make running queries easy.
+
+async def run_agent_query(agent: Agent, query: str, session: Session, user_id: str, is_router: bool = False):
+    &quot;&quot;&quot;Initializes a runner and executes a query for a given agent and session.&quot;&quot;&quot;
+    print(f&quot;\n🚀 Running query for agent: &#x27;{agent.name}&#x27; in session: &#x27;{session.id}&#x27;...&quot;)
+
+    runner = Runner(
+        agent=agent,
+        session_service=session_service,
+        app_name=agent.name
+    )
+
+    final_response = &quot;&quot;
+    try:
+        async for event in runner.run_async(
+            user_id=user_id,
+            session_id=session.id,
+            new_message=Content(parts=[Part(text=query)], role=&quot;user&quot;)
+        ):
+            if not is_router:
+                # Let&#x27;s see what the agent is thinking!
+                print(f&quot;EVENT: {event}&quot;)
+            if event.is_final_response():
+                final_response = event.content.parts[0].text
+    except Exception as e:
+        final_response = f&quot;An error occurred: {e}&quot;
+
+    if not is_router:
+     print(&quot;\n&quot; + &quot;-&quot;*50)
+     print(&quot;✅ Final Response:&quot;)
+     display(Markdown(final_response))
+     print(&quot;-&quot;*50 + &quot;\n&quot;)
+
+    return final_response
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='## 2.2 The Agent-as-a-Tool: Consulting a Specialist 🧑‍🍳
+
+Why build one agent that does everything when you can build a **team of specialist agents?** The **Agent-as-a-Tool** pattern allows one agent to delegate a task to another agent.
+
+**Key Concept:** This is different from a sub-agent. When Agent A calls Agent B as a tool, Agent B&#x27;s response is passed **back to Agent A**. Agent A then uses that information to form its own final response to the user. It&#x27;s a powerful way to compose complex behaviors from simpler, focused, and reusable agents.'></div>\n  <div class='tutorial-cell tutorial-md' data-md='### How It Works
+
+Our top-level agent, the `trip_data_concierge_agent`, acts as the **Orchestrator**. It has two tools at its disposal:
+
+1.  `call_db_agent`: A function that internally calls our `db_agent` to fetch raw data.
+2.  `call_concierge_agent`: A function that calls the `concierge_agent`.
+
+The `concierge_agent` itself has a tool: the `food_critic_agent`.
+
+The flow for a complex query is:
+
+1.  **User** asks the `trip_data_concierge_agent` for a hotel and a nearby restaurant.
+2.  The **Orchestrator** first calls `call_db_agent` to get hotel data.
+3.  The data is saved in `tool_context.state`.
+4.  The **Orchestrator** then calls `call_concierge_agent`, which retrieves the hotel data from the context.
+5.  The `concierge_agent` receives the request and decides it needs to use its own tool, the `food_critic_agent`.
+6.  The `food_critic_agent` provides a witty recommendation.
+7.  The `concierge_agent` gets the critic&#x27;s response and politely formats it.
+8.  This final, polished response is returned to the **Orchestrator**, which presents it to the user.'></div>\n  <div class='tutorial-cell tutorial-md' data-md='                         +-----------------------------------------------------------+
+                         |              🧭 Trip Data Concierge Agent                 |
+                         |-----------------------------------------------------------|
+                         |  Model: gemini-2.5-flash                                  |
+                         |  Description:                                             |
+                         |   Orchestrates database query and travel recommendation  |
+                         |-----------------------------------------------------------|
+                         |  🔧 Tools:                                                |
+                         |   1. call_db_agent                                        |
+                         |   2. call_concierge_agent                                 |
+                         +-----------------------------------------------------------+
+                                      /                                \
+                                     /                                  \
+                                    ▼                                    ▼
+        +-------------------------------------------+    +---------------------------------------------+
+        |            🔧 Tool: call_db_agent         |    |         🔧 Tool: call_concierge_agent        |
+        |-------------------------------------------|    |---------------------------------------------|
+        | Calls: db_agent                           |    | Calls: concierge_agent                       |
+        |                                           |    | Uses data from db_agent for recommendations |
+        +-------------------------------------------+    +---------------------------------------------+
+                                |                                          |
+                                ▼                                          ▼
+       +--------------------------------------------+   +------------------------------------------------+
+       |              📦 db_agent                   |   |             🤵 concierge_agent                  |
+       |--------------------------------------------|   |------------------------------------------------|
+       | Model: gemini-2.5-flash                    |   | Model: gemini-2.5-flash                         |
+       | Role: Return mock JSON hotel data          |   | Role: Hotel staff that handles user Q&amp;A        |
+       +--------------------------------------------+   | Tools:                                          |
+                                                         |  - food_critic_agent                           |
+                                                         +------------------------------------------------+
+                                                                                 |
+                                                                                 ▼
+                                                       +------------------------------------------------+
+                                                       |          🍽️ food_critic_agent                  |
+                                                       |------------------------------------------------|
+                                                       | Model: gemini-2.5-flash                         |
+                                                       | Role: Gives a witty restaurant recommendation   |
+                                                       +------------------------------------------------+
+'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 10 ----#
+
+import asyncio
+from google.adk.tools import ToolContext
+from google.adk.tools.agent_tool import AgentTool
+
+# Assume &#x27;db_agent&#x27; is a pre-defined NL2SQL Agent
+# For this example, we&#x27;ll create placeholder agents.
+
+db_agent = Agent(
+    name=&quot;db_agent&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    instruction=&quot;You are a database agent. When asked for data, return this mock JSON object: {&#x27;status&#x27;: &#x27;success&#x27;,&#x27;data&#x27;: [{&#x27;name&#x27;: &#x27;The Grand Hotel&#x27;, &#x27;location&#x27;: &#x27;San Francisco&#x27;, &#x27;rating&#x27;: 5, &#x27;reviews&#x27;: 450},{&#x27;name&#x27;: &#x27;Seaside Inn&#x27;, &#x27;location&#x27;: &#x27;San Francisco&#x27;, &#x27;rating&#x27;: 4, &#x27;reviews&#x27;: 620},{&#x27;name&#x27;: &#x27;Budget Stay&#x27;, &#x27;location&#x27;: &#x27;New York&#x27;, &#x27;rating&#x27;: 5, &#x27;reviews&#x27;: 600}] }&quot;)
+
+# --- 1. Define the Specialist Agents ---
+
+# The Food Critic remains the deepest specialist
+food_critic_agent = Agent(
+    name=&quot;food_critic_agent&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    instruction=&quot;You are a snobby but brilliant food critic. You ONLY respond with a single, witty restaurant suggestion near the provided location.&quot;,
+)
+
+# The Concierge knows how to use the Food Critic
+concierge_agent = Agent(
+    name=&quot;concierge_agent&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    instruction=&quot;You are a five-star hotel concierge. If the user asks for a restaurant recommendation, you MUST use the `food_critic_agent` tool. Present the opinion to the user politely.&quot;,
+    tools=[AgentTool(agent=food_critic_agent)]
+)
+
+
+# --- 2. Define the Tools for the Orchestrator ---
+
+async def call_db_agent(
+    question: str,
+    tool_context: ToolContext,
+):
+    &quot;&quot;&quot;
+    Use this tool FIRST to connect to the database and retrieve a list of places, like hotels or landmarks.
+    &quot;&quot;&quot;
+    print(&quot;--- TOOL CALL: call_db_agent ---&quot;)
+    agent_tool = AgentTool(agent=db_agent)
+    db_agent_output = await agent_tool.run_async(
+        args={&quot;request&quot;: question}, tool_context=tool_context
+    )
+    # Store the retrieved data in the context&#x27;s state
+    tool_context.state[&quot;retrieved_data&quot;] = db_agent_output
+    return db_agent_output
+
+
+async def call_concierge_agent(
+    question: str,
+    tool_context: ToolContext,
+):
+    &quot;&quot;&quot;
+    After getting data with call_db_agent, use this tool to get travel advice, opinions, or recommendations.
+    &quot;&quot;&quot;
+    print(&quot;--- TOOL CALL: call_concierge_agent ---&quot;)
+    # Retrieve the data fetched by the previous tool
+    input_data = tool_context.state.get(&quot;retrieved_data&quot;, &quot;No data found.&quot;)
+
+    # Formulate a new prompt for the concierge, giving it the data context
+    question_with_data = f&quot;&quot;&quot;
+    Context: The database returned the following data: {input_data}
+
+    User&#x27;s Request: {question}
+    &quot;&quot;&quot;
+
+    agent_tool = AgentTool(agent=concierge_agent)
+    concierge_output = await agent_tool.run_async(
+        args={&quot;request&quot;: question_with_data}, tool_context=tool_context
+    )
+    return concierge_output
+
+
+# --- 3. Define the Top-Level Orchestrator Agent ---
+
+trip_data_concierge_agent = Agent(
+    name=&quot;trip_data_concierge&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    description=&quot;Top-level agent that queries a database for travel data, then calls a concierge agent for recommendations.&quot;,
+    tools=[call_db_agent, call_concierge_agent],
+    instruction=&quot;&quot;&quot;
+    You are a master travel planner who uses data to make recommendations.
+
+    1.  **ALWAYS start with the `call_db_agent` tool** to fetch a list of places (like hotels) that match the user&#x27;s criteria.
+
+    2.  After you have the data, **use the `call_concierge_agent` tool** to answer any follow-up questions for recommendations, opinions, or advice related to the data you just found.
+    &quot;&quot;&quot;,
+)
+
+print(f&quot;✅ Orchestrator Agent &#x27;{trip_data_concierge_agent.name}&#x27; is defined and ready.&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ Orchestrator Agent &#x27;trip_data_concierge&#x27; is defined and ready.
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 11 ----#
+
+# --- Let&#x27;s test the Trip Data Concierge Agent ---
+
+async def run_trip_data_concierge():
+    &quot;&quot;&quot;
+    Sets up a session and runs a query against the top-level
+    trip_data_concierge_agent.
+    &quot;&quot;&quot;
+    # Create a new, single-use session for this query
+    concierge_session = await session_service.create_session(
+        app_name=trip_data_concierge_agent.name,
+        user_id=my_user_id
+    )
+
+    # This query is specifically designed to trigger the full two-step process:
+    # 1. Get data from the db_agent.
+    # 2. Get a recommendation from the concierge_agent based on that data.
+    query = &quot;Find the top-rated hotels in San Francisco from the database, then suggest a dinner spot near the one with the most reviews.&quot;
+    print(f&quot;🗣️ User Query: &#x27;{query}&#x27;&quot;)
+
+    # We call our existing helper function with the top-level orchestrator agent
+    await run_agent_query(trip_data_concierge_agent, query, concierge_session, my_user_id)
+
+# Run the test
+await run_trip_data_concierge()</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>🗣️ User Query: &#x27;Find the top-rated hotels in San Francisco from the database, then suggest a dinner spot near the one with the most reviews.&#x27;
+
+🚀 Running query for agent: &#x27;trip_data_concierge&#x27; in session: &#x27;d28b7e5b-d1be-412c-ba49-e3d751130105&#x27;...
+WARNING:google_genai.types:Warning: there are non-text parts in the response: [&#x27;function_call&#x27;], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      function_call=FunctionCall(
+        args={
+          &#x27;question&#x27;: &#x27;Top-rated hotels in San Francisco&#x27;
+        },
+        id=&#x27;adk-2eaf7b0a-9842-4bcc-8c86-deed2beec08b&#x27;,
+        name=&#x27;call_db_agent&#x27;
+      ),
+      thought_signature=b&#x27;\n\xc7\x08\x01\x0c9\xd6\xc7\x91/a\x8f\xcb\xc0\xedjtc\xdd\x1b.\x88f\x9d5\x83\xe7C\x0fo\x10\xab\xea}\xe3iu\xf1\xa1\xad\x87\xebD^\xae\x92\\}` a;2\xf1\xb75\x9c\xff\x05\xcd%\xa5\xed|]\xc6\xb6Z\x81\x16\xcb\xeb\xfd\x89\xd6\xee\xb5\xd4\x9f\x80\xe4c\x98:\x06\xaeg\xa6Z\xcb&amp;i\xbe\xf8OB\x03...&#x27;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=23,
+  prompt_token_count=293,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=293
+    ),
+  ],
+  thoughts_token_count=256,
+  total_token_count=572
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-17413160-fc43-4fdc-ad0c-41ea7f638374&#x27; author=&#x27;trip_data_concierge&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=set() branch=None id=&#x27;a07f9f37-dade-4e90-9a03-6d453b47c741&#x27; timestamp=1780740748.8016424
+--- TOOL CALL: call_db_agent ---
+EVENT: model_version=None content=Content(
+  parts=[
+    Part(
+      function_response=FunctionResponse(
+        id=&#x27;adk-2eaf7b0a-9842-4bcc-8c86-deed2beec08b&#x27;,
+        name=&#x27;call_db_agent&#x27;,
+        response={
+          &#x27;result&#x27;: &quot;&quot;&quot;```json
+{
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;data&quot;: [
+    {
+      &quot;name&quot;: &quot;The Grand Hotel&quot;,
+      &quot;location&quot;: &quot;San Francisco&quot;,
+      &quot;rating&quot;: 5,
+      &quot;reviews&quot;: 450
+    }
+  ]
+}
+```&quot;&quot;&quot;
+        }
+      )
+    ),
+  ],
+  role=&#x27;user&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=None error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=None live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-17413160-fc43-4fdc-ad0c-41ea7f638374&#x27; author=&#x27;trip_data_concierge&#x27; actions=EventActions(skip_summarization=None, state_delta={&#x27;retrieved_data&#x27;: &#x27;```json\n{\n  &quot;status&quot;: &quot;success&quot;,\n  &quot;data&quot;: [\n    {\n      &quot;name&quot;: &quot;The Grand Hotel&quot;,\n      &quot;location&quot;: &quot;San Francisco&quot;,\n      &quot;rating&quot;: 5,\n      &quot;reviews&quot;: 450\n    }\n  ]\n}\n```&#x27;}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;2c690a44-ac7c-4460-9b56-b6f07bdc916c&#x27; timestamp=1780740753.2169998
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      function_call=FunctionCall(
+        args={
+          &#x27;question&#x27;: &#x27;Suggest a dinner spot near The Grand Hotel in San Francisco, which has 450 reviews.&#x27;
+        },
+        id=&#x27;adk-310b47d3-3223-4a7d-8b4e-211a87454f56&#x27;,
+        name=&#x27;call_concierge_agent&#x27;
+      ),
+      thought_signature=b&#x27;\n\x84\x03\x01\x0c9\xd6\xc7\x97/x\xe6\xf7\xf3\x0b\x86\x82\x8bg?^`Bu\x97\x8a\xc7\x8dW\xce\xe0\xbd\x8c&quot;\x04\xb4\xc9\xeda*\x0f]\xf0\x9dm\x96\x11\x90I\x10\x8f\xc8\xd4\xdcq\xac\\\xd1\xbdl\x0f\xe7O\&#x27;\x82\xf9l\xde\x8aHS\&#x27;\xfe\xdcP|\x95\xaf\xba\xb6\xa1w\xcd\xf5#\xf7\x0b\xeb\x97*\xf8\x0fl\x01\x9e_=...&#x27;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=36,
+  prompt_token_count=404,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=404
+    ),
+  ],
+  thoughts_token_count=90,
+  total_token_count=530
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-17413160-fc43-4fdc-ad0c-41ea7f638374&#x27; author=&#x27;trip_data_concierge&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=set() branch=None id=&#x27;43e67a3c-e56d-4259-be42-0fae4243f9d3&#x27; timestamp=1780740753.222365
+--- TOOL CALL: call_concierge_agent ---
+EVENT: model_version=None content=Content(
+  parts=[
+    Part(
+      function_response=FunctionResponse(
+        id=&#x27;adk-310b47d3-3223-4a7d-8b4e-211a87454f56&#x27;,
+        name=&#x27;call_concierge_agent&#x27;,
+        response={
+          &#x27;result&#x27;: &#x27;Certainly, I recommend State Bird Provisions for your dinner. Just remember to make a reservation, darling.&#x27;
+        }
+      )
+    ),
+  ],
+  role=&#x27;user&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=None error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=None live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-17413160-fc43-4fdc-ad0c-41ea7f638374&#x27; author=&#x27;trip_data_concierge&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;68f5b8d7-8872-4eed-a667-1a0f66743be6&#x27; timestamp=1780740767.3497477
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      text=&#x27;Certainly, I recommend State Bird Provisions for your dinner. Just remember to make a reservation, darling.&#x27;,
+      thought_signature=b&#x27;\n\xf1\x01\x01\x0c9\xd6\xc7B\n\x0e\xf2p\x86)i\xbf\x1d{z$pz\xde\xe5\x8d\xbd\x9bW\xbe_\xd4|\xa9\xb1\x91\xac(HX\xc0\x96\x8cHANgu\x99\x01l\xfa\xc3\xc5\x96\xb1\xa8\x97\xdbR\x0c\nv\xb8rX\x9eI\x02\x18l \x11\x90\xdca\x1e\x8b\xe8\xddx\xab\xd4.\x11!\x0c\x82d\xd3\x05\xa4\x0cN8\x0cN...&#x27;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  cache_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=384
+    ),
+  ],
+  cached_content_token_count=384,
+  candidates_token_count=20,
+  prompt_token_count=477,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=477
+    ),
+  ],
+  thoughts_token_count=53,
+  total_token_count=550
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-17413160-fc43-4fdc-ad0c-41ea7f638374&#x27; author=&#x27;trip_data_concierge&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;51c12645-6c50-489b-bd9c-b7e5f1b17462&#x27; timestamp=1780740767.3512852
+
+--------------------------------------------------
+✅ Final Response:
+&lt;IPython.core.display.Markdown object&gt;--------------------------------------------------
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='```
+   __            /\_/\         /\_/\        /\_/\         __             (\__/)
+o-&#x27;&#x27;|\_____/).  ( o.o )       ( -.- )      ( ^_^ )     o-&#x27;&#x27;|\_____/).    ( ^_^ )
+ \_/|_)     )    &gt; ^ &lt;         &gt; * &lt;        &gt;💖&lt;         \_/|_)     )     / &gt;🌸&lt; \
+    \  __  /                                              \  __  /         /   \
+    (_/ (_/                                               (_/ (_/        (___|___)
+```
+'></div>\n</div>\n

@@ -1,0 +1,693 @@
+<div class='tutorial-container'>\n  <h2 class='tutorial-title'>Dibyajyotee_Ghosh_[Student]Parallel_agent_exercise.ipynb</h2>\n  <div class='tutorial-cell tutorial-md' data-md='## 👥 Team Members
+
+| Name | Student ID |
+|------|------------|
+| [Member 1 Full Name] | [ID] |
+| [Member 2 Full Name] | [ID] |'></div>\n  <div class='tutorial-cell tutorial-md' data-md='# ⚡ Exercise: Parallel Agent
+## What Should I Do With 2 Hours? — A Multi-Agent Activity Finder
+
+---
+
+## 🎯 Learning Objectives
+
+In this exercise you will build a **parallel multi-agent workflow** using Google ADK&#x27;s `ParallelAgent`.  
+Given a location and a **2-hour time budget**, the system searches for four types of activities **simultaneously**, then a synthesis agent analyses the results and recommends what fits within the available time.
+
+By the end of this exercise, you will be able to:
+- ✅ Create a new specialist agent from scratch (`nature_agent`)
+- ✅ Reuse and adapt existing agents (`museum_finder_agent`, `concert_finder_agent`, `restaurant_finder_agent`)
+- ✅ Assemble multiple agents into a `ParallelAgent` so they run concurrently
+- ✅ Build a `synthesis_agent` that combines all results and reasons about time constraints
+- ✅ Wrap everything in a `SequentialAgent` to produce the full pipeline
+
+---
+
+## 🏗️ Workflow Overview
+
+```
+User Query  (location + &quot;I have 2 hours&quot;)
+    |
+    v
++------------------------------------------------------------------+
+|  activity_planner_agent  (SequentialAgent)  ⚡                   |
+|                                                                  |
+|  Step 1: parallel_research_agent  (ParallelAgent)               |
+|    ┌──────────────────────────────────────────────────────┐      |
+|    │  All 4 agents run AT THE SAME TIME                   │      |
+|    │                                                      │      |
+|    │  nature_agent        → nature_result                 │      |
+|    │  museum_finder_agent → museum_result                 │      |
+|    │  concert_finder_agent→ concert_result                │      |
+|    │  restaurant_finder_agent → restaurant_result         │      |
+|    └──────────────────────────────────────────────────────┘      |
+|                                                                  |
+|  Step 2: synthesis_agent                                         |
+|    → Reads all 4 results from shared state                       |
+|    → Analyses which activities fit within 2 hours                |
+|    → Recommends the best combination for the user               |
++------------------------------------------------------------------+
+    |
+    v
+📄 Final recommendation: &quot;With 2 hours, you can...&quot;
+```
+
+**Shared-state keys produced by each parallel agent:**
+
+| output_key | Written by |
+|------------|-----------|
+| `nature_result` | `nature_agent` *(you build this)* |
+| `museum_result` | `museum_finder_agent` |
+| `concert_result` | `concert_finder_agent` |
+| `restaurant_result` | `restaurant_finder_agent` |
+
+---'></div>\n  <div class='tutorial-cell tutorial-md' data-md='## ⚙️ Part 0: Setup &amp; Authentication
+
+Run these cells first every time you open this notebook.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>!pip install google-adk google-generativeai -q
+
+import os
+import asyncio
+from IPython.display import Markdown, display
+import traceback
+from google.adk.agents import Agent, SequentialAgent, ParallelAgent
+from google.adk.runners import Runner
+from google.adk.tools import google_search
+from google.adk.sessions import InMemorySessionService
+from google.genai.types import Content, Part
+
+print(&quot;✅ Libraries ready!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ Libraries ready!
+/usr/local/lib/python3.12/dist-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>from google.colab import userdata
+
+try:
+    GOOGLE_API_KEY = userdata.get(&#x27;GOOGLE_API_KEY&#x27;)
+    print(&quot;✅ API key loaded from Colab Secrets&quot;)
+except Exception:
+    import getpass
+    GOOGLE_API_KEY = getpass.getpass(&quot;🔑 Enter your Google AI Studio API Key: &quot;)
+
+os.environ[&quot;GOOGLE_API_KEY&quot;] = GOOGLE_API_KEY
+os.environ[&quot;GOOGLE_GENAI_USE_VERTEXAI&quot;] = &quot;False&quot;
+print(f&quot;✅ API key configured (starts with &#x27;{GOOGLE_API_KEY[:6]}...&#x27;)&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key loaded from Colab Secrets
+✅ API key configured (starts with &#x27;AQ.Ab8...&#x27;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>session_service = InMemorySessionService()
+MY_USER_ID = &quot;student_001&quot;
+
+# async def run_agent(agent, query: str):
+async def run_agent(agent, query: str, time_budget: str = &quot;2 hours&quot;):
+    &quot;&quot;&quot;Run an agent and display the final response.&quot;&quot;&quot;
+    session = await session_service.create_session(
+        app_name=agent.name,
+        user_id=MY_USER_ID,
+        state={
+            &quot;query&quot;: query,
+            &quot;time_budget&quot;: time_budget,
+        }
+    )
+    runner = Runner(agent=agent, session_service=session_service, app_name=agent.name)
+    final_response = &quot;&quot;
+    async for event in runner.run_async(
+        user_id=MY_USER_ID,
+        session_id=session.id,
+        new_message=Content(parts=[Part(text=query)], role=&quot;user&quot;)
+    ):
+        if event.is_final_response():
+            final_response = event.content.parts[0].text
+
+    print(&quot;\n&quot; + &quot;=&quot;*60)
+    print(f&quot;Result from: {agent.name}&quot;)
+    print(&quot;=&quot;*60)
+    display(Markdown(final_response))
+    return final_response
+
+print(&quot;✅ Helper function ready!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ Helper function ready!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 📚 Key Concepts Before You Start
+
+### What is a ParallelAgent?
+
+A `ParallelAgent` runs all its `sub_agents` **at the same time** (concurrently), then waits for all of them to finish before the next step begins.
+
+```
+ParallelAgent
+  ├── agent_A  ─┐
+  ├── agent_B  ─┼──► all run simultaneously
+  ├── agent_C  ─┘
+  └── agent_D  
+       ↓ (wait for all to finish)
+  All results available in shared state
+```
+
+**Why use it?**  
+When tasks are **independent** of each other, running them in parallel saves time.  
+Searching for a museum, a concert, a restaurant, and a nature spot can all happen at once — they do not depend on each other&#x27;s results.
+
+### Parallel vs Sequential
+
+| | SequentialAgent | ParallelAgent |
+|---|---|---|
+| Execution | One after another | All at the same time |
+| Use when | Task B needs Task A&#x27;s result | Tasks are independent |
+| Speed | Slower | Faster |
+| Example | Find attraction → then find nearby restaurant | Find museum + concert + food + nature simultaneously |
+
+### How results are shared
+
+Each parallel agent saves its result using `output_key`.  
+The `synthesis_agent` (running after the parallel step) can read all of them:
+
+```python
+# Each parallel agent saves to its own key
+nature_agent         → output_key=&quot;nature_result&quot;
+museum_finder_agent  → output_key=&quot;museum_result&quot;
+...
+
+# synthesis_agent reads all keys in its instruction
+instruction = &quot;&quot;&quot;
+  Nature: {nature_result}
+  Museum: {museum_result}
+  ...
+&quot;&quot;&quot;
+```
+
+---'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🛠️ Part 1: Build the Specialist Agents
+
+You will build or adapt **4 specialist agents** that run in parallel:
+
+| Agent | Status | Your task |
+|-------|--------|-----------|
+| `nature_agent` | 🆕 New | Build from scratch |
+| `museum_finder_agent` | ♻️ Adapted | Fill in `instruction` |
+| `concert_finder_agent` | ♻️ Adapted | Fill in `instruction` |
+| `restaurant_finder_agent` | ♻️ Adapted | Fill in `instruction` |
+
+&gt; 💡 Each agent must save its result with the correct `output_key` so the `synthesis_agent` can read it later.
+
+---
+
+### 🌿 Agent 1: Nature Agent *(Build from scratch)*
+
+**Your task:** Design and build a brand-new agent that finds **natural attractions** (parks, gardens, waterfalls, viewpoints, nature trails) near the user&#x27;s location.
+
+A good instruction covers these **6 principles**:
+
+| # | Principle | What to write |
+|---|-----------|---------------|
+| 1 | **Persona** | Who is this agent? |
+| 2 | **Steps** | Numbered steps to follow |
+| 3 | **Output Format** | Exactly what the result should look like |
+| 4 | **Constraints** | Rules for filtering results |
+| 5 | **Language** | Respond in English |
+
+**Requirements:**
+- Name: `nature_agent` | Uses: `google_search` | Output key: `nature_result`
+- Finds **one well-known natural attraction** near the user&#x27;s location
+- Output must include: attraction name, estimated visit duration (in minutes), brief description
+- Duration is important — `synthesis_agent` will use it to decide what fits in 2 hours
+
+&gt; ✏️ **Write your instruction in the TODO sections below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — build nature_agent from scratch
+
+nature_agent = Agent(
+    name=&quot;nature_agent&quot;,
+    model=&quot;gemini-2.5-pro&quot;,
+    tools=[google_search],
+    description=&quot;Finds a well-known natural attraction near a specified location.&quot;,
+    instruction=&quot;&quot;&quot;
+    # TODO 1 — Persona
+    # Write one sentence describing who this agent is.
+    # Example: &quot;You are an eco-tourism expert who knows natural attractions across Thailand.&quot;
+    YOUR PERSONA HERE
+
+    # TODO 2 — Steps
+    # Write numbered steps telling the agent what to do.
+    # Remember: search → filter to one well-known natural place → output name, duration, description.
+    Based on the user&#x27;s location:
+    1.
+    2.
+    3.
+
+    # TODO 3 — Output Format
+    # Specify the exact output structure. Example:
+    # Nature Attraction: [name]
+    # Visit Duration: [X] minutes
+    # Description: [1-2 sentences]
+    YOUR FORMAT HERE
+
+    # TODO 4 — Constraints
+    # Add rules (e.g. natural places only, no commercial attractions).
+    Rules:
+    - Include a realistic duration estimate
+    -
+
+    # TODO 5 — Language
+    Respond in English.
+    &quot;&quot;&quot;,
+    output_key=&quot;nature_result&quot;
+)
+
+print(&quot;✅ nature_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+**Persona:** `You are an eco-tourism expert who knows natural attractions across Thailand.`
+
+**Steps example:**
+```
+1. Use google_search to find one well-known natural attraction near the location the user mentions
+   (parks, gardens, waterfalls, viewpoints, or nature trails)
+2. Select the single best result
+3. Output: attraction name, estimated visit duration in minutes, brief description
+```
+
+**Output Format example:**
+```
+Nature Attraction: [name]
+Visit Duration: [X] minutes
+Description: [1-2 sentences on why it is worth visiting]
+```
+
+**Key tip:** Duration is critical — the synthesis agent uses it to calculate whether the activity fits in 2 hours.
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+
+### 🏛️ Agent 2: Museum Finder Agent *(adapted)*
+
+**Your task:** Write the `instruction` so this agent finds **one museum** near the user&#x27;s location and includes an estimated visit duration.
+
+**Requirements:**
+- Output: museum name, estimated visit duration (in minutes), one key highlight
+- `output_key=&quot;museum_result&quot;`
+- Duration must be realistic — `synthesis_agent` uses it for time planning
+
+&gt; ✏️ **Write your instruction in the TODO sections below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — write the instruction for museum_finder_agent
+
+museum_finder_agent = Agent(
+    name=&quot;museum_finder_agent&quot;,
+    model=&quot;gemini-2.5-pro&quot;,
+    tools=[google_search],
+    description=&quot;Finds a well-known museum near a specified location.&quot;,
+    instruction=&quot;&quot;&quot;
+    # TODO 1 — Persona
+    YOUR PERSONA HERE
+
+    # TODO 2 — Steps
+    Based on the user&#x27;s location:
+    1.
+    2.
+    3.
+
+    # TODO 3 — Output Format
+    # Must include: Museum name, Visit Duration (minutes), Highlight
+    YOUR FORMAT HERE
+
+    # TODO 4 — Constraints (e.g. Museums and cultural institutions only)
+    Rules:
+    - Provide a realistic visit duration
+
+
+    # TODO 5 — Language
+    Respond in English.
+    &quot;&quot;&quot;,
+    output_key=&quot;museum_result&quot;
+)
+
+print(&quot;✅ museum_finder_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ museum_finder_agent created!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+**Persona:** `You are a museum expert who knows cultural institutions across Thailand.`
+
+**Steps example:**
+```
+    1. Use google_search to find one well-known museum nearby
+    2. Select the single best result
+    3. Output the following information
+```
+
+**Output Format example:**
+```
+Museum: [name]
+Visit Duration: [X] minutes
+Highlight: [what makes it worth visiting]
+```
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+
+### 🎵 Agent 3: Concert / Event Agent *(adapted)*
+
+**Your task:** Write the `instruction` so this agent finds **one upcoming concert or live event** near the user&#x27;s location.
+
+**Requirements:**
+- Output: event name, venue, estimated duration (in minutes), brief description
+- `output_key=&quot;concert_result&quot;`
+
+&gt; ✏️ **Write your instruction in the TODO sections below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — write the instruction for concert_finder_agent
+
+concert_finder_agent = Agent(
+    name=&quot;concert_finder_agent&quot;,
+    model=&quot;gemini-2.5-pro&quot;,
+    tools=[google_search],
+    description=&quot;Finds an upcoming concert or live event near a specified location.&quot;,
+    instruction=&quot;&quot;&quot;
+    # TODO 1 — Persona
+    YOUR PERSONA HERE
+
+    # TODO 2 — Steps
+    Based on the user&#x27;s location:
+    1.
+    2.
+    3.
+
+    # TODO 3 — Output Format
+    # Must include: Event name &amp; artist, Venue, Duration (minutes), Description
+    YOUR FORMAT HERE
+
+    # TODO 4 — Constraints (e.g. Live events only)
+    Rules:
+    - Provide a realistic visit duration
+    -
+
+    # TODO 5 — Language
+    Respond in English.
+    &quot;&quot;&quot;,
+    output_key=&quot;concert_result&quot;
+)
+
+print(&quot;✅ concert_finder_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+**Persona:** `You are a local events guide who tracks concerts and live performances.`
+
+**Steps example:**
+```
+1. Use google_search to find one upcoming concert, live music event, or performance nearby
+2. Select the single best result
+3. Output the following information
+```
+
+**Output Format example:**
+```
+Event: [name and artist/performer]
+Venue: [venue name]
+Duration: [X] minutes
+Description: [brief description]
+```
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+
+### 🍽️ Agent 4: Restaurant Finder Agent *(adapted)*
+
+**Your task:** Write the `instruction` so this agent finds **one well-rated restaurant** near the user&#x27;s location.
+
+**Requirements:**
+- Google rating ≥ 4.0
+- Output: restaurant name, cuisine type, estimated dining duration (in minutes), signature dish
+- `output_key=&quot;restaurant_result&quot;`
+
+&gt; ✏️ **Write your instruction in the TODO sections below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — write the instruction for restaurant_finder_agent
+
+restaurant_finder_agent = Agent(
+    name=&quot;restaurant_finder_agent&quot;,
+    model=&quot;gemini-2.5-pro&quot;,
+    tools=[google_search],
+    description=&quot;Finds a well-rated restaurant near a specified location.&quot;,
+    instruction=&quot;&quot;&quot;
+    # TODO 1 — Persona
+    YOUR PERSONA HERE
+
+    # TODO 2 — Steps
+    Based on the user&#x27;s location:
+    1.
+    2.
+    3.
+
+    # TODO 3 — Output Format
+    # Must include: Restaurant name (cuisine), Dining Duration (minutes), Signature Dish
+    YOUR FORMAT HERE
+
+    # TODO 4 — Constraints (e.g. Only restaurants with Google rating 4.0 or above)
+    Rules:
+    - Include a realistic dining duration (ordering + eating)
+    -
+
+    # TODO 5 — Language
+    Respond in English.
+    &quot;&quot;&quot;,
+    output_key=&quot;restaurant_result&quot;
+)
+
+print(&quot;✅ restaurant_finder_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ restaurant_finder_agent created!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+**Persona:** `You are a professional food critic who knows the best dining spots across Thailand.`
+
+**Steps example:**
+```
+1. Use google_search to find one well-rated restaurant nearby (Google rating 4.0 or above)
+2. Select the single best result
+3. Output the following information
+```
+
+**Output Format example:**
+```
+Restaurant: [name] ([cuisine type])
+Dining Duration: [X] minutes
+Signature Dish: [dish name]
+```
+
+**Key constraint:** Only include restaurants with Google rating 4.0 or above.
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🧠 Part 2: Build the Synthesis Agent
+
+The `synthesis_agent` runs **after** all 4 parallel agents have finished.
+It reads all 4 results from shared state and answers:
+
+&gt; *&quot;I have 2 hours — what should I do?&quot;*
+
+**How shared state works here:**
+
+| Placeholder | Filled with |
+|-------------|-------------|
+| `{nature_result}` | Output from `nature_agent` |
+| `{museum_result}` | Output from `museum_finder_agent` |
+| `{concert_result}` | Output from `concert_finder_agent` |
+| `{restaurant_result}` | Output from `restaurant_finder_agent` |
+
+**Steps the agent must follow:**
+1. List all 4 activities with their estimated durations
+2. Calculate total time if all were done together
+3. Identify which combination fits within 120 minutes
+4. Recommend the best 1–3 activities with a suggested time schedule
+5. Briefly explain the choice
+
+&gt; ✏️ **Write your instruction in the TODO sections below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — write the synthesis_agent instruction
+
+synthesis_agent = Agent(
+    name=&quot;synthesis_agent&quot;,
+    model=&quot;gemini-2.5-pro&quot;,
+    description=&quot;Combines all activity results and recommends what to do within the user&#x27;s time budget.&quot;,
+    instruction=&quot;&quot;&quot;
+    # TODO 1 — Persona
+    YOUR PERSONA HERE
+
+    # The next block is provided — do NOT remove or modify any {placeholders}
+    Here are the activity options found for the user:
+    - Nature attraction: {nature_result}
+    - Museum: {museum_result}
+    - Concert / Event: {concert_result}
+    - Restaurant: {restaurant_result}
+
+    The user has **{time_budget}** available. If this is empty, assume 2 hours.
+
+    # TODO 2 — Steps
+    # Tell the agent how to reason about time and make a recommendation.
+    # Remember: list durations → calculate total → pick what fits in 120 min → schedule → explain.
+    Follow these steps:
+    1.
+    2.
+    3.
+    4.
+    5.
+
+    # TODO 3 — Output Format
+    # Ask for a clear Markdown schedule (e.g. &quot;10:00 – 11:00: [activity] (60 min)&quot;)
+    YOUR FORMAT HERE
+
+    # TODO 4 — Language
+    Respond in English.
+    &quot;&quot;&quot;
+    # No output_key needed — this is the last step
+)
+
+print(&quot;✅ synthesis_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ synthesis_agent created!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+**Persona:** `You are a travel time-management expert who helps users make the most of their limited time.`
+
+**Steps example:**
+```
+1. List all 4 activities and their durations
+2. Calculate total time if all were done together
+3. If total &gt; 120 minutes, select the best combination that fits within 120 minutes
+4. Present a suggested schedule with start/end times
+5. Briefly explain why you chose this combination
+```
+
+**Output Format example:**
+```
+| Time | Activity | Duration |
+|------|----------|----------|
+| HH:MM – HH:MM | [activity name] | X min |
+
+## My 2-Hour Plan
+
+| Time | Activity | Duration |
+|------|----------|----------|
+| 10:00 – 11:00 | [activity name] | 60 min |
+| 11:00 – 11:45 | [activity name] | 45 min |
+
+**Why this combination:** ...
+```
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🔗 Part 3: Assemble the Full Pipeline
+
+Now wire everything together:
+
+1. **`parallel_research_agent`** — a `ParallelAgent` running all 4 specialist agents **simultaneously**
+2. **`activity_planner_agent`** — a `SequentialAgent` running the parallel step first, then `synthesis_agent`
+
+```
+activity_planner_agent  (SequentialAgent)
+  ├── parallel_research_agent  (ParallelAgent)   ← Step 1: all 4 run at once
+  │     ├── nature_agent
+  │     ├── museum_finder_agent
+  │     ├── concert_finder_agent
+  │     └── restaurant_finder_agent
+  └── synthesis_agent                             ← Step 2: combine &amp; recommend
+```
+
+**Key rule for `ParallelAgent`:** All agents in `sub_agents` run **at the same time** — so none of them can depend on another&#x27;s result.
+
+&gt; ✏️ **Fill in the `sub_agents` lists in the correct order in the code cells below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — Step 1: Assemble the ParallelAgent
+#
+# All 4 agents below are INDEPENDENT — they do not need each other&#x27;s output.
+# They can all run at the same time.
+#
+# TODO: Add all 4 specialist agents to sub_agents (order does not matter for ParallelAgent).
+
+parallel_research_agent = ParallelAgent(
+    name=&quot;parallel_research_agent&quot;,
+    sub_agents=[
+        # TODO: Add the 4 specialist agents here
+        ???,
+        ???,
+        ???,
+        ???,
+    ]
+)
+
+print(&quot;✅ parallel_research_agent assembled!&quot;)
+print(f&quot;  Sub-agents (run simultaneously): {[a.name for a in parallel_research_agent.sub_agents]}&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+All 4 agents are independent — none reads another&#x27;s output. The order inside `sub_agents` does not affect the result, but a logical order is:
+
+```python
+sub_agents=[
+    nature_agent,
+    museum_finder_agent,
+    concert_finder_agent,
+    restaurant_finder_agent,
+]
+```
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — Step 2: Wrap in a SequentialAgent
+#
+# Think about the order:
+# - parallel_research_agent must run FIRST so results are available in shared state
+# - synthesis_agent reads all 4 results → it must run AFTER the parallel step
+#
+# TODO: Put the two components in the correct order in sub_agents.
+
+activity_planner_agent = SequentialAgent(
+    name=&quot;activity_planner_agent&quot;,
+    description=&quot;Finds 4 types of activities in parallel, then recommends the best combination for a 2-hour window.&quot;,
+    sub_agents=[
+        # Step 1: TODO — which runs first?
+        ???,
+        # Step 2: TODO — which runs second?
+        ???,
+    ]
+)
+
+print(&quot;✅ activity_planner_agent assembled!&quot;)
+print(&quot;Execution flow:&quot;)
+print(f&quot;  Step 1: {activity_planner_agent.sub_agents[0].name}  (ParallelAgent)&quot;)
+for a in activity_planner_agent.sub_agents[0].sub_agents:
+    print(f&quot;    ├── {a.name}&quot;)
+print(f&quot;  Step 2: {activity_planner_agent.sub_agents[1].name}&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+`synthesis_agent` reads `{nature_result}`, `{museum_result}`, `{concert_result}`, and `{restaurant_result}` — all four are produced by `parallel_research_agent`. So the parallel step must come first.
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🚀 Part 4: Run the Workflow
+
+Run the full pipeline.  
+Notice how all 4 specialist agents run **at the same time** before the synthesis step begins.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>query = &quot;I am near Chatuchak Park, Bangkok. I have 2 hours — what should I do?&quot;
+
+print(&quot;Starting parallel activity planner...&quot;)
+print(f&quot;Query: {query}&quot;)
+print(&quot;(All 4 specialist agents will search simultaneously)\n&quot;)
+
+await run_agent(activity_planner_agent, query)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🔄 Part 5: Try a Different Location
+
+Change the location and time budget and observe how the recommendations change.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># TODO: Change the location and time to something you are curious about
+new_query = &quot;I am near Thammasat University, Pathum thani. I have 2 hours — what should I do?&quot;
+
+print(&quot;Starting parallel activity planner...&quot;)
+print(f&quot;Query: {new_query}&quot;)
+print(&quot;(All 4 specialist agents will search simultaneously)\n&quot;)
+
+await run_agent(activity_planner_agent, new_query)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🤔 Review Questions
+
+Discuss these with your group:
+
+1. All 4 specialist agents run at the same time. What would happen if `museum_finder_agent` needed the output of `nature_agent` to work? Could they still run in parallel?
+
+2. If you added a 5th agent (e.g. a `shopping_agent`) to `parallel_research_agent`, would you also need to change `synthesis_agent`? Why?
+
+3. Compare the two pipeline structures below. When would you choose each one?
+   - `SequentialAgent([A, B, C, D])` — run agents one by one
+   - `SequentialAgent([ParallelAgent([A, B, C, D]), synthesis])` — run all at once then synthesise
+
+4. The synthesis agent receives 4 results but the user only has 2 hours. How does the agent decide which activities to include? What could go wrong if the duration estimates are inaccurate?
+
+5. *(Bonus)* How would you modify this workflow to also ask the user for their **interests** (e.g. &quot;I prefer outdoor activities&quot;) and pass that preference to each specialist agent?
+
+---
+## 🎉 Summary
+
+| Concept | How you used it |
+|---------|-----------------|
+| `ParallelAgent` | Ran 4 specialist agents simultaneously to save time |
+| `output_key` | Each parallel agent saved its result to a unique key in shared state |
+| `{key_name}` in instruction | `synthesis_agent` read all 4 results at once |
+| `SequentialAgent` | Ordered the parallel search before the synthesis step |
+| `google_search` tool | Gave each specialist agent real-time search capability |
+| Time reasoning | `synthesis_agent` added up durations and recommended the best fit for 2 hours |
+
+```
+   /\_/\
+  ( ^_^ )   Congratulations — you built a Parallel Agent pipeline!
+  / &gt;⚡&lt;\
+```
+
+**Next up:** Combine all three patterns — `SequentialAgent`, `LoopAgent`, and `ParallelAgent` — into one powerful workflow that searches in parallel, then iteratively refines the result!'></div>\n</div>\n

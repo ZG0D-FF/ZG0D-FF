@@ -1,0 +1,347 @@
+<div class='tutorial-container'>\n  <h2 class='tutorial-title'>[Ying]AIT_Camp_Lab3.ipynb</h2>\n  <div class='tutorial-cell tutorial-md' data-md='# 🚀 Mastering AI Agents: Multi-Agent Orchestration with Google ADK! 🚀
+
+Welcome, Agent Architect! This notebook is your guide to giving your AI agents two essential superpowers: custom tools and conversational memory.
+
+Labs and Goals:
+- **Lab2: Build a Foundational Agent**: Create a simple but effective AI agent from scratch using the Google Agent Development Kit (ADK).
+
+- **[HERE]&gt;&gt;&gt; Lab 3: Grant New Skills with Custom Tools**: Teach an agent to perform new tasks by connecting it to external APIs, like a real-time weather service.
+
+- **Lab 4: Create a Team of Agents**: Assemble a multi-agent system where a primary agent can delegate specialized tasks to other agents.
+
+- **Demo: Master Conversational Memory**: Understand the critical role of Sessions in enabling agents to remember previous interactions, handle feedback, and carry on a coherent conversation.
+
+
+Let&#x27;s get this adventure started!
+
+Credit: Notebook content adapted from Qingyue (Annie) Wang, a developer advocate and AI engineer at **Google**, who passionate about helping developers build with AI and cloud technologies.
+'></div>\n  <div class='tutorial-cell tutorial-md' data-md='
+-------------
+### 🎁 🛑 Important Prerequisite: Setup Your Environment! 🛑 🎁
+-----------------------------------------------------------------------------
+
+👉 **Get Your API Key HERE**: [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+ -----------------------------------------------------------------------------
+'></div>\n  <div class='tutorial-cell tutorial-md' data-md='## Part 0: Setup &amp; Authentication 🔑
+
+First things first, let&#x27;s get all our tools ready. This step installs the necessary libraries and securely configures your Google API key so your agents can access the power of Gemini.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 1----#
+!pip install google-adk google-generativeai -q
+
+# --- Import all necessary libraries ---
+import os
+import sys
+import json
+import asyncio
+import random
+import string
+from uuid import uuid4
+from typing import Any, List
+
+import pandas as pd
+import plotly.graph_objects as go
+from IPython.display import HTML, Markdown, display
+
+# --- ADK, Agent, and Evaluation Components ---
+from google.adk.agents import Agent
+from google.adk.events import Event
+from google.adk.runners import Runner
+import google.adk as adk
+from google.adk.tools import google_search
+from google.adk.sessions import InMemorySessionService, Session
+from google.genai import types
+from google.genai.types import Content, Part
+
+
+print(&quot;✅ All libraries are ready to go!&quot;)
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ All libraries are ready to go!
+/usr/local/lib/python3.12/dist-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='### Configure Your API Key
+To use Gemini models, you need an API key from [Google AI Studio](https://aistudio.google.com/app/apikey). This section securely collects your key and configures it for the ADK.
+'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 2----#
+# --- API Key Configuration ---
+from google.colab import userdata
+
+# Option 1: Use Colab Secrets (recommended)
+# Go to the 🔑 icon in the left sidebar, add a secret named GOOGLE_API_KEY
+try:
+    GOOGLE_API_KEY = userdata.get(&#x27;GOOGLE_API_KEY&#x27;)
+    print(&quot;✅ API key loaded from Colab Secrets.&quot;)
+except Exception:
+    # Option 2: Paste it directly (less secure but fine for learning)
+    import getpass
+    GOOGLE_API_KEY = getpass.getpass(&quot;🔑 Enter your Google AI Studio API key: &quot;)
+    print(&quot;✅ API key entered manually.&quot;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key loaded from Colab Secrets.
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 3----#
+# --- Set Environment Variables for ADK ---
+
+os.environ[&quot;GOOGLE_API_KEY&quot;] = GOOGLE_API_KEY
+os.environ[&quot;GOOGLE_GENAI_USE_VERTEXAI&quot;] = &quot;False&quot;
+
+print(f&quot;✅ API key configured (starts with &#x27;{GOOGLE_API_KEY[:6]}...&#x27;)&quot;)
+print(&quot;✅ Using Google AI Studio (not Vertex AI).&quot;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key configured (starts with &#x27;AQ.Ab8...&#x27;)
+✅ Using Google AI Studio (not Vertex AI).
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 6 ----#
+
+# For Part2: You also have to run This Cell together with Cell 1 and Cell 2
+
+# --- Initialize our Session Service ---
+# This one service will manage all the different sessions in our notebook.
+session_service = InMemorySessionService()
+my_user_id = &quot;adk_adventurer_001&quot;</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## Part 2: Supercharging Agents with Custom Tools 🛠️
+
+So far, we&#x27;ve used the powerful built-in `GoogleSearch` tool. But the true power of agents comes from connecting them to your own logic and data sources.
+
+This is where **custom tools** come in. Let&#x27;s explore three patterns for giving your agent new skills, using real-world, practical examples.'></div>\n  <div class='tutorial-cell tutorial-md' data-md='### 2.1 The Simple `FunctionTool`: Calling a Real-Time Weather API
+
+The most direct way to create a tool is by writing a Python function. This is perfect for synchronous tasks like fetching data from an API.
+
+**Key Concept:** The function&#x27;s **docstring** is critical. The ADK uses it as the tool&#x27;s official description, which the LLM reads to understand its purpose, parameters, and when to use it.
+
+In this example, we&#x27;ll create a tool that calls the **free, public U.S. National Weather Service API** to get a real-time forecast. No API key needed!'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 8 ----#
+
+# --- Tool Definition: A function that calls a live public API ---
+import requests
+
+# A simple lookup to avoid needing a separate geocoding API for this example
+LOCATION_COORDINATES = {
+    &quot;sunnyvale&quot;: &quot;37.3688,-122.0363&quot;,
+    &quot;san francisco&quot;: &quot;37.7749,-122.4194&quot;,
+    &quot;lake tahoe&quot;: &quot;39.0968,-120.0324&quot;
+}
+
+def get_live_weather_forecast(location: str) -&gt; dict:
+    &quot;&quot;&quot;Gets the current, real-time weather forecast for a specified location in the US.
+
+    Args:
+        location: The city name, e.g., &quot;San Francisco&quot;.
+
+    Returns:
+        A dictionary containing the temperature and a detailed forecast.
+    &quot;&quot;&quot;
+    print(f&quot;🛠️ TOOL CALLED: get_live_weather_forecast(location=&#x27;{location}&#x27;)&quot;)
+
+    # Find coordinates for the location
+    normalized_location = location.lower()
+    coords_str = None
+    for key, val in LOCATION_COORDINATES.items():
+        if key in normalized_location:
+            coords_str = val
+            break
+    if not coords_str:
+        return {&quot;status&quot;: &quot;error&quot;, &quot;message&quot;: f&quot;I don&#x27;t have coordinates for {location}.&quot;}
+
+    try:
+        # NWS API requires 2 steps: 1. Get the forecast URL from the coordinates.
+        points_url = f&quot;https://api.weather.gov/points/{coords_str}&quot;
+        headers = {&quot;User-Agent&quot;: &quot;ADK Example Notebook&quot;}
+        points_response = requests.get(points_url, headers=headers)
+        points_response.raise_for_status() # Raise an exception for bad status codes
+        forecast_url = points_response.json()[&#x27;properties&#x27;][&#x27;forecast&#x27;]
+
+        # 2. Get the actual forecast from the URL.
+        forecast_response = requests.get(forecast_url, headers=headers)
+        forecast_response.raise_for_status()
+
+        # Extract the relevant forecast details
+        current_period = forecast_response.json()[&#x27;properties&#x27;][&#x27;periods&#x27;][0]
+        return {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;temperature&quot;: f&quot;{current_period[&#x27;temperature&#x27;]}°{current_period[&#x27;temperatureUnit&#x27;]}&quot;,
+            &quot;forecast&quot;: current_period[&#x27;detailedForecast&#x27;]
+        }
+    except requests.exceptions.RequestException as e:
+        return {&quot;status&quot;: &quot;error&quot;, &quot;message&quot;: f&quot;API request failed: {e}&quot;}
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 9 ----#
+# --- Agent Definition: An agent that USES the new tool ---
+
+weather_agent = Agent(
+    name=&quot;weather_aware_planner&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    description=&quot;A trip planner that checks the real-time weather before making suggestions.&quot;,
+    instruction=&quot;You are a cautious trip planner. Before suggesting any outdoor activities, you MUST use the `get_live_weather_forecast` tool to check conditions. Incorporate the live weather details into your recommendation.&quot;,
+    tools=[get_live_weather_forecast,]
+)
+
+print(f&quot;🌦️ Agent &#x27;{weather_agent.name}&#x27; is created and can now call a live weather API!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>🌦️ Agent &#x27;weather_aware_planner&#x27; is created and can now call a live weather API!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 5 ----
+# --- A Helper Function to Run Our Agents ---
+# We&#x27;ll use this function throughout the notebook to make running queries easy.
+
+async def run_agent_query(agent: Agent, query: str, session: Session, user_id: str, is_router: bool = False):
+    &quot;&quot;&quot;Initializes a runner and executes a query for a given agent and session.&quot;&quot;&quot;
+    print(f&quot;\n🚀 Running query for agent: &#x27;{agent.name}&#x27; in session: &#x27;{session.id}&#x27;...&quot;)
+
+    runner = Runner(
+        agent=agent,
+        session_service=session_service,
+        app_name=agent.name
+    )
+
+    final_response = &quot;&quot;
+    try:
+        async for event in runner.run_async(
+            user_id=user_id,
+            session_id=session.id,
+            new_message=Content(parts=[Part(text=query)], role=&quot;user&quot;)
+        ):
+            if not is_router:
+                # Let&#x27;s see what the agent is thinking!
+                print(f&quot;EVENT: {event}&quot;)
+            if event.is_final_response():
+                final_response = event.content.parts[0].text
+    except Exception as e:
+        final_response = f&quot;An error occurred: {e}&quot;
+
+    if not is_router:
+     print(&quot;\n&quot; + &quot;-&quot;*50)
+     print(&quot;✅ Final Response:&quot;)
+     display(Markdown(final_response))
+     print(&quot;-&quot;*50 + &quot;\n&quot;)
+
+    return final_response
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell ID 10 ----#
+
+# --- Let&#x27;s test the Weather-Aware Planner ---
+
+async def run_weather_planner_test():
+    weather_session = await session_service.create_session(app_name=weather_agent.name, user_id=my_user_id)
+    query = &quot;I want to go hiking near Lake Tahoe, what&#x27;s the weather like?&quot;
+    print(f&quot;🗣️ User Query: &#x27;{query}&#x27;&quot;)
+    await run_agent_query(weather_agent, query, weather_session, my_user_id)
+
+await run_weather_planner_test()</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>🗣️ User Query: &#x27;I want to go hiking near Lake Tahoe, what&#x27;s the weather like?&#x27;
+
+🚀 Running query for agent: &#x27;weather_aware_planner&#x27; in session: &#x27;d40383a3-5df3-49d8-8ab4-0fd51ed3ffb1&#x27;...
+WARNING:google_genai.types:Warning: there are non-text parts in the response: [&#x27;function_call&#x27;], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      function_call=FunctionCall(
+        args={
+          &#x27;location&#x27;: &#x27;Lake Tahoe&#x27;
+        },
+        id=&#x27;adk-406648d3-fde3-47f4-b49f-dbbeb59d64a7&#x27;,
+        name=&#x27;get_live_weather_forecast&#x27;
+      ),
+      thought_signature=b&#x27;\n\xde\x02\x01\x0c9\xd6\xc7\xf2\xe5\xa1\xd7\xa4\xc97T\x01\x1cg\x03\x1dV\xf9^Id (X&lt;J-)\x03\x89\xac\xad+\xc51\xe3i\x00w\xdcP\xcby+\xdf\xc8\xd4\xf05\xe8H\x16\x94\xe0\x02\xdd\x06\x9a1u\xfd\xd7\x911\r\xb7e\xe4W\x11z0\xda\x1e\xf6V\xf5\xe1\x8frl\x0e-\x93.\x0b\x82\xbe\x9d-^N...&#x27;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=20,
+  prompt_token_count=187,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=187
+    ),
+  ],
+  thoughts_token_count=64,
+  total_token_count=271
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-8f90eec5-8fc9-42a0-8d49-08c74afedf9c&#x27; author=&#x27;weather_aware_planner&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=set() branch=None id=&#x27;2016cfc9-1b76-470c-8444-7233cceb7045&#x27; timestamp=1782789435.2543585
+🛠️ TOOL CALLED: get_live_weather_forecast(location=&#x27;Lake Tahoe&#x27;)
+EVENT: model_version=None content=Content(
+  parts=[
+    Part(
+      function_response=FunctionResponse(
+        id=&#x27;adk-406648d3-fde3-47f4-b49f-dbbeb59d64a7&#x27;,
+        name=&#x27;get_live_weather_forecast&#x27;,
+        response={
+          &#x27;forecast&#x27;: &#x27;Mostly clear, with a low around 47. West wind 0 to 5 mph.&#x27;,
+          &#x27;status&#x27;: &#x27;success&#x27;,
+          &#x27;temperature&#x27;: &#x27;47°F&#x27;
+        }
+      )
+    ),
+  ],
+  role=&#x27;user&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=None error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=None live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-8f90eec5-8fc9-42a0-8d49-08c74afedf9c&#x27; author=&#x27;weather_aware_planner&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;6749aa75-7284-4131-b74f-1b2a4db39af4&#x27; timestamp=1782789436.9380596
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      text=&#x27;The weather near Lake Tahoe is mostly clear with a low around 47°F, and a west wind of 0 to 5 mph. It sounds like good weather for hiking! Enjoy your hike!&#x27;,
+      thought_signature=b&#x27;\n\xf8\x02\x01\x0c9\xd6\xc7/f\xb3*`[\xde\xf7\x19\xd7{R\xb5\x9b\x9c\xe0|\xaa\xc8!I\x9c6\\\x11\x8b\xa4s\x1f\x1e\x85\xbf\xf3\x16\xf3\xdf\xc0\x81\xe2\xb7%\xd7\xd7\xe5\xfe\xe6@1\xf8\xf1/\xc2\x16\x17\xd2^\xb8h\x9e\x9bP\x86\xc3h b\x8a\xd9\x8c\xeb;`[\xbc8z:G\x89\x885\xa3W!i-\xe3\xbc\xf0...&#x27;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=None partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=42,
+  prompt_token_count=259,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=259
+    ),
+  ],
+  thoughts_token_count=81,
+  total_token_count=382
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-8f90eec5-8fc9-42a0-8d49-08c74afedf9c&#x27; author=&#x27;weather_aware_planner&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;745d9bcb-8af5-4ec7-a67c-4d68bc8a21bf&#x27; timestamp=1782789436.9395807
+
+--------------------------------------------------
+✅ Final Response:
+&lt;IPython.core.display.Markdown object&gt;--------------------------------------------------
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='## Assignment : Adding Environmental Awareness 🍃
+
+Now that your agent can check the weather, let&#x27;s give it another vital skill: **Air Quality Monitoring**. Many outdoor activities depend not just on the forecast, but on the air quality index.
+
+#### The Objective
+Create a new tool that fetches real-time **PM2.5** levels for a given location using the [Open-Meteo Air Quality API](https://air-quality-api.open-meteo.com/en/docs/air-quality-api).
+
+#### Steps to Complete
+1.  **Review the API:** Visit the [Open-Meteo Air Quality API documentation](https://air-quality-api.open-meteo.com/en/docs/air-quality-api). Note that this API requires `latitude` and `longitude` parameters rather than city names.
+2.  **Define the Tool:** Implement a function `get_pm25_level(lat: float, lon: float)` that queries the API and parses the PM2.5 data.
+3.  **Refine the Agent:** Add this new tool to your `weather_aware_planner` agent&#x27;s `tools` list.
+4.  **Chain the Logic:** Update your agent&#x27;s `instruction` prompt to define its goals as a health-conscious planner. Instruct the agent to autonomously evaluate whether it needs to call `get_live_weather_forecast` **OR** `get_pm25_level` (or both) to provide informed safety advice, specifically warning the user if PM2.5 levels exceed 35 µg/m³.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Lab Cell: PM2.5 Tool Definition ---
+def get_pm25_level(lat: float, lon: float) -&gt; dict:
+    &quot;&quot;&quot;
+    Gets the current PM2.5 concentration for a specific latitude and longitude.
+
+    Fetches the current PM2.5 air quality level for a specific geographic coordinate.
+    Use this tool whenever the user asks about air safety, pollution levels,
+    or the suitability of outdoor environments.
+
+    &quot;&quot;&quot;
+    # Open-Meteo Air Quality API endpoint
+    url = f&quot;https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&amp;longitude={lon}&amp;current=pm2_5&quot;
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        # Extract the current PM2.5 value
+        pm2_5 = data.get(&#x27;current&#x27;, {}).get(&#x27;pm2_5&#x27;)
+        return {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;pm2_5&quot;: pm2_5,
+            &quot;unit&quot;: data.get(&#x27;current_units&#x27;, {}).get(&#x27;pm2_5&#x27;)
+        }
+    except Exception as e:
+        return {&quot;status&quot;: &quot;error&quot;, &quot;message&quot;: f&quot;Failed to fetch air quality: {e}&quot;}
+
+# HINT--- Lab Cell: Update the Agent ---
+# 1. Update the instruction to focus on autonomous tool selection
+new_instruction = &quot;&quot;&quot;
+You are a helpful and health-conscious trip planner assistant.
+Your goal is to provide comprehensive advice for outdoor activities.
+
+- Use `get_live_weather_forecast` when the user asks about weather conditions.
+- Use `get_pm25_level` when the user asks about air safety or pollution levels.
+
+When a user asks about outdoor activities, autonomously evaluate which information is relevant. If you check air quality and find PM2.5 levels &gt; 35 µg/m³, clearly advise the user to exercise caution due to unhealthy air quality.
+&quot;&quot;&quot;
+
+# 2. Re-define the agent with the updated instructions
+weather_agent.instruction = new_instruction
+weather_agent.tools = [get_live_weather_forecast, get_pm25_level]
+
+print(f&quot;✅ Agent &#x27;{weather_agent.name}&#x27; updated with flexible tool selection!&quot;)</code></pre>\n  </div>\n</div>\n

@@ -1,0 +1,476 @@
+<div class='tutorial-container'>\n  <h2 class='tutorial-title'>Dibyajyotee_Ghosh_[Student]Sequential_agent_exercise.ipynb</h2>\n  <div class='tutorial-cell tutorial-md' data-md='## 👥 Team Members
+
+| Name | Student ID |
+|------|------------|
+| [Member 1 Full Name] | [ID] |
+| [Member 2 Full Name] | [ID] |'></div>\n  <div class='tutorial-cell tutorial-md' data-md='# 🗺️ Exercise: Sequential Agent
+## Finding Tourist Attractions &amp; Nearby Restaurants
+
+---
+
+## 🎯 Learning Objectives
+
+In this exercise, you will build a **Sequential Agent** pipeline from scratch using Google ADK to find **tourist attractions** and **restaurants** near a given location.
+
+By the end of this exercise, you will be able to:
+- ✅ Create individual `Agent` objects with appropriate instructions and tools
+- ✅ Use `output_key` to pass data between agents via shared state
+- ✅ Assemble multiple agents into a `SequentialAgent` pipeline
+- ✅ Run the workflow and interpret the final output
+
+---
+
+## 🏗️ Workflow Overview
+
+```
+User Query
+    |
+    v
++------------------------------------------+
+| attraction_finder_agent  🏛️               |  &lt;- Agent 1: Find tourist attractions
+| output_key = &quot;attraction_result&quot;         |     Saves result to shared state
++--------------------+---------------------+
+                     |
+                     v
++------------------------------------------+
+| restaurant_finder_agent  🍽️               |  &lt;- Agent 2: Find restaurants nearby
+| reads {attraction_result}                |     Saves result to shared state
+| output_key = &quot;restaurant_result&quot;         |
++--------------------+---------------------+
+                     |
+                     v
++------------------------------------------+
+| summary_agent  📋                         |  &lt;- Agent 3: Combine into a travel plan
+| reads {attraction_result}                |     (No output_key — last step)
+|   and {restaurant_result}               |
++------------------------------------------+
+                     |
+                     v
+           📄 Final Travel Plan
+```
+
+---'></div>\n  <div class='tutorial-cell tutorial-md' data-md='## ⚙️ Part 0: Setup &amp; Authentication
+
+Run these cells first. They install the required libraries and configure your API key.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>!pip install google-adk google-generativeai -q
+
+import os
+import asyncio
+from IPython.display import Markdown, display
+
+from google.adk.agents import Agent, SequentialAgent
+from google.adk.runners import Runner
+from google.adk.tools import google_search
+from google.adk.sessions import InMemorySessionService
+from google.genai.types import Content, Part
+
+print(&quot;✅ Libraries ready!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ Libraries ready!
+/usr/local/lib/python3.12/dist-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>from google.colab import userdata
+
+try:
+    GOOGLE_API_KEY = userdata.get(&#x27;GOOGLE_API_KEY&#x27;)
+    print(&quot;✅ API key loaded from Colab Secrets&quot;)
+except Exception:
+    import getpass
+    GOOGLE_API_KEY = getpass.getpass(&quot;🔑 Enter your Google AI Studio API Key: &quot;)
+
+os.environ[&quot;GOOGLE_API_KEY&quot;] = GOOGLE_API_KEY
+os.environ[&quot;GOOGLE_GENAI_USE_VERTEXAI&quot;] = &quot;False&quot;
+print(f&quot;✅ API key configured (starts with &#x27;{GOOGLE_API_KEY[:6]}...&#x27;)&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key loaded from Colab Secrets
+✅ API key configured (starts with &#x27;AQ.Ab8...&#x27;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># Helper function used throughout this notebook
+session_service = InMemorySessionService()
+MY_USER_ID = &quot;student_001&quot;
+
+async def run_agent(agent, query: str):
+    session = await session_service.create_session(
+        app_name=agent.name, user_id=MY_USER_ID
+    )
+    runner = Runner(agent=agent, session_service=session_service, app_name=agent.name)
+    final_response = &quot;&quot;
+    async for event in runner.run_async(
+        user_id=MY_USER_ID,
+        session_id=session.id,
+        new_message=Content(parts=[Part(text=query)], role=&quot;user&quot;)
+    ):
+        if event.is_final_response():
+            final_response = event.content.parts[0].text
+
+    print(&quot;\n&quot; + &quot;=&quot;*60)
+    print(f&quot;Result from: {agent.name}&quot;)
+    print(&quot;=&quot;*60)
+    display(Markdown(final_response))
+    return final_response
+
+print(&quot;✅ Helper function ready!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ Helper function ready!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🛠️ Part 1: Create Each Agent
+
+We will build **3 Agents** that work together in sequence:
+
+| # | Agent | Role | output_key |
+|---|-------|------|------------|
+| 1 | `attraction_finder_agent` | Find well-known attractions within 20 km of AIT | `attraction_result` |
+| 2 | `restaurant_finder_agent` | Find restaurants within 3 km, rated 3.0+ | `restaurant_result` |
+| 3 | `summary_agent` | Summarize everything into a travel plan | *(not needed)* |
+
+&gt; 💡 **Key concept — shared state:**
+&gt; - `output_key=&quot;attraction_result&quot;` → Agent saves its answer under that name
+&gt; - `{attraction_result}` inside the next agent&#x27;s instruction → Agent reads that saved value
+
+---
+
+### 🏛️ Agent 1: Attraction Finder
+
+**Your task:** Write the `instruction` string inside the code cell below.
+
+A good instruction covers these **6 principles**:
+
+| # | Principle | What to write |
+|---|-----------|---------------|
+| 1 | **Persona** | Who is this agent? (e.g. *&quot;You are a Thailand tourism expert.&quot;*) |
+| 2 | **Input** | Where does the location come from? (e.g. *&quot;The user&#x27;s location is mentioned in their message.&quot;*) |
+| 3 | **Steps** | Numbered steps the agent must follow |
+| 4 | **Output Format** | Exactly what each result should look like |
+| 5 | **Constraints** | Rules to filter out bad results (e.g. distance limit, type of place) |
+| 6 | **Language** | Respond in English |
+
+**Steps the agent must follow:**
+1. Use `google_search` to find tourist attractions near the user&#x27;s location
+2. Keep only places that are **well-known** (landmarks, temples, museums, parks, or cultural sites) and **within 20 km**
+3. Recommend the **TOP 3**, each with: name (Thai &amp; English), distance (km), opening hours, one reason to visit
+4. If fewer than 3 places qualify, search again with broader keywords
+5. End with exactly: `**TOP PICK:** [name of the most recommended place]`
+
+**Constraints:**
+- Only include places within 20 km
+- Skip commercial malls unless they are iconic landmarks
+- Do not invent distances — use `google_search` to verify
+
+&gt; ✏️ **Write your instruction in the TODO sections below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — write the instruction for Agent 1
+
+attraction_finder_agent = Agent(
+    name=&quot;attraction_finder_agent&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    tools=[google_search],
+    description=&quot;Finds well-known tourist attractions within 20 km of a specified location.&quot;,
+    instruction=&quot;&quot;&quot;
+    # TODO 1 — Persona
+    # Write one sentence describing who this agent is.
+    # Example: &quot;You are a ...&quot;
+    YOUR PERSONA HERE
+
+    # TODO 2 — Input
+    # Write one sentence explaining where the user&#x27;s location comes from.
+    YOUR INPUT DESCRIPTION HERE
+
+    # TODO 3 — Steps
+    # Write numbered steps (1, 2, 3 ...) telling the agent exactly what to do.
+    # Remember to include: search, filter by distance, pick TOP 3, and end with TOP PICK.
+    When the user asks for tourist attractions, do the following:
+    1.
+    2.
+    3.
+    4.
+    5.
+
+    # TODO 4 — Output Format
+    # Describe the format for each attraction result (name, distance, hours, reason).
+    For each attraction, present the information in this format:
+    YOUR FORMAT HERE
+
+    # TODO 5 — Constraints
+    # Add rules the agent must follow (distance limit, type of place, no invented data).
+    Rules:
+    -
+    -
+
+    # TODO 6 — Language
+    # State the response language.
+    YOUR LANGUAGE INSTRUCTION HERE
+    &quot;&quot;&quot;,
+    output_key=&quot;attraction_result&quot;
+)
+
+print(&quot;✅ attraction_finder_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>attraction_finder_agent created!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+**Persona:** Start with something like `You are a Thailand tourism expert.`
+
+**Steps example structure:**
+```
+1. Use google_search to find tourist attractions near [location]
+2. Keep only attractions that are within 20 km and well-known
+3. Recommend the TOP 3, each with: name (Thai and English), distance, hours, reason
+4. If fewer than 3 qualify, search again with broader terms
+5. End with: **TOP PICK:** [name]
+```
+
+**Output Format example:**
+```
+### 1. [Attraction Name (English) / ชื่อภาษาไทย]
+- Distance: X km
+- Opening hours: ...
+- Why visit: ...
+```
+
+**Constraints example:**
+- Only include places within 20 km
+- Only well-known landmarks, temples, museums, parks, or cultural sites
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='#### 🧪 Test Agent 1
+
+Run Agent 1 on its own before building the pipeline. Fix any issues here first.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>test_query = &quot;I am at AIT (Asian Institute of Technology) Bangkok. I want to find nearby tourist attractions.&quot;
+await run_agent(attraction_finder_agent, test_query)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+
+### 🍽️ Agent 2: Restaurant Finder
+
+**Your task:** Write the `instruction` string inside the code cell below.
+
+This agent reads the result from Agent 1 using **shared state** — the placeholder `{attraction_result}` in the instruction is automatically replaced with Agent 1&#x27;s output at runtime.
+
+**Steps the agent must follow:**
+1. Read `{attraction_result}` and find the attraction marked as **TOP PICK**
+2. Use `google_search` to find restaurants **within 3 km** of that attraction
+3. Only include restaurants with a **Google rating of 3.0 or above**
+4. Recommend the **TOP 3**, each with: name, cuisine type, rating ⭐, price per person, signature dishes, opening hours, distance from the attraction
+5. Exclude any restaurant that fails the distance **or** rating filter
+6. End with exactly: `**BEST RESTAURANT:** [restaurant name]`
+
+&gt; 💡 **How shared state works:**
+&gt; - `{attraction_result}` is NOT something you type — it is a placeholder already in the template
+&gt; - ADK replaces it automatically with Agent 1&#x27;s output before sending the instruction to the model
+&gt; - You only need to write the steps **around** it
+
+&gt; ✏️ **Write your instruction in the TODO sections below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — write the instruction for Agent 2
+
+restaurant_finder_agent = Agent(
+    name=&quot;restaurant_finder_agent&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    tools=[google_search],
+    description=&quot;Finds well-rated restaurants within 3 km of the recommended attraction.&quot;,
+    instruction=&quot;&quot;&quot;
+    # TODO 1 — Persona
+    # Write one sentence describing who this agent is.
+    # Example: &quot;You are a professional food critic who knows restaurants across Bangkok.&quot;
+    YOUR PERSONA HERE
+
+    # The next block is provided — do NOT remove or modify {attraction_result}
+    The tourist attraction recommended by the previous agent:
+    {attraction_result}
+
+    # TODO 2 — Steps
+    # Write numbered steps (1, 2, 3 ...) telling the agent exactly what to do.
+    # Remember: find TOP PICK, search restaurants, filter by distance AND rating, pick TOP 3, end with BEST RESTAURANT.
+    Based on the above, do the following:
+    1.
+    2.
+    3.
+    4.
+    5.
+
+    # TODO 3 — Output Format
+    # Describe the format for each restaurant result.
+    For each restaurant, present the information in this format:
+    YOUR FORMAT HERE
+
+    # TODO 4 — Constraints
+    # Add the rules the agent must follow.
+    Rules:
+    -
+    -
+
+    # TODO 5 — Language
+    YOUR LANGUAGE INSTRUCTION HERE
+    &quot;&quot;&quot;,
+    output_key=&quot;restaurant_result&quot;
+)
+
+print(&quot;✅ restaurant_finder_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>restaurant_finder_agent created!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+**Persona:** `You are a professional food critic who knows restaurants across Bangkok.`
+
+**Steps example structure:**
+```
+1. Find the attraction name marked as TOP PICK in {attraction_result}
+2. Use google_search to find restaurants near that attraction
+3. Only include restaurants within 3 km AND with a Google rating of 3.0 or above
+4. Recommend the TOP 3 qualifying restaurants, each with: name, cuisine, rating, price, highlights, hours, distance
+5. If a restaurant fails either filter, exclude it and find another
+```
+
+**Output Format example:**
+```
+### 1. [Restaurant Name]
+- Cuisine: ...
+- Rating: ⭐ 4.2
+- Price: ~฿XXX per person
+- Highlights: ...
+- Hours: ...
+- Distance: X km from [attraction]
+```
+**Constraints example:**
+```
+- Only restaurants within 3 km
+- Only restaurants with Google rating 3.0 or above
+- Do not include estimated ratings — search to verify
+```
+
+**Key tip:** The `{attraction_result}` placeholder is already in the template — do not remove it. It will be filled automatically by ADK.
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+
+### 📋 Agent 3: Summary Agent
+
+This agent is already written for you. Read through it carefully and notice:
+- It reads **both** `{attraction_result}` and `{restaurant_result}` from shared state
+- It has **no** `output_key` because it is the last step in the pipeline'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># Agent 3 is provided — read and run it as-is
+
+summary_agent = Agent(
+    name=&quot;summary_agent&quot;,
+    model=&quot;gemini-2.5-flash&quot;,
+    description=&quot;Summarizes attraction and restaurant information into a complete travel plan&quot;,
+    instruction=&quot;&quot;&quot;
+    You are a professional travel planner.
+
+    Tourist attraction information:
+    {attraction_result}
+
+    Restaurant information:
+    {restaurant_result}
+
+    Using all the information above, create a complete travel plan summary in Markdown:
+
+    ## Travel Plan
+
+    ### Tourist Attraction
+    [Short summary with key highlights]
+
+    ### Recommended Restaurant
+    [Short summary with key highlights]
+
+    ### Suggested Itinerary
+    | Time | Activity |
+    |------|----------|
+    | Morning | ... |
+    | Noon | ... |
+    | Afternoon | ... |
+
+    ### Tips for Visitors
+    - [3 useful tips]
+
+    Respond in English. Make it readable and useful.
+    &quot;&quot;&quot;
+    # No output_key needed for the last agent
+)
+
+print(&quot;summary_agent created!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🔗 Part 2: Assemble the SequentialAgent
+
+Now that all 3 agents are ready, you will combine them into a single `SequentialAgent`.
+
+**Key rules for `sub_agents`:**
+- The list must contain **all 3 agents** created in Part 1
+- ADK runs them **in the order you list them** — from index 0 to the last
+- Each agent&#x27;s `output_key` result is automatically passed to the next agent via shared state
+
+**Think before you code:**
+&gt; In what order must the agents run so that each agent has the data it needs?
+&gt;
+&gt; - Agent 2 reads `{attraction_result}` — so which agent must run first?
+&gt; - Agent 3 reads both `{attraction_result}` and `{restaurant_result}` — when can it run?
+
+```
+SequentialAgent(sub_agents=[  ???  ,  ???  ,  ???  ])
+                                ↓        ↓        ↓
+                             Step 1   Step 2   Step 3
+```
+
+&gt; ✏️ **Fill in the `sub_agents` list in the correct order in the code cell below.**'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># ✏️ YOUR TURN — assemble the SequentialAgent in the correct order
+
+# The 3 agents you created:
+#   attraction_finder_agent  →  output_key = &quot;attraction_result&quot;
+#   restaurant_finder_agent  →  reads {attraction_result}, output_key = &quot;restaurant_result&quot;
+#   summary_agent            →  reads {attraction_result} AND {restaurant_result}, no output_key
+
+# TODO: Fill in the sub_agents list below.
+#       Put the agents in the order they must run.
+#       Agent that produces data must come BEFORE the agent that reads it.
+
+travel_planner_agent = SequentialAgent(
+    name=&quot;travel_planner_agent&quot;,
+    description=&quot;Sequential workflow: find attractions → find restaurants → summarize&quot;,
+    sub_agents=[
+        # Step 1: TODO — which agent goes first?
+        ???,
+        # Step 2: TODO — which agent goes second?
+        ???,
+        # Step 3: TODO — which agent goes last?
+        ???,
+    ]
+)
+
+print(&quot;✅ SequentialAgent assembled!&quot;)
+print(&quot;Execution order:&quot;)
+for i, a in enumerate(travel_planner_agent.sub_agents, 1):
+    print(f&quot;  Step {i}: {a.name}&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='&lt;details&gt;
+&lt;summary&gt;💡 &lt;b&gt;Hint — click to expand&lt;/b&gt;&lt;/summary&gt;
+
+Ask yourself:
+- `restaurant_finder_agent` needs `{attraction_result}` → so `attraction_finder_agent` must run **before** it
+- `summary_agent` needs both `{attraction_result}` and `{restaurant_result}` → it must run **last**
+
+So the correct order is: **Attraction → Restaurant → Summary**
+
+&lt;/details&gt;'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🚀 Part 3: Run the Sequential Workflow
+
+Run the full pipeline with the query below.
+Watch each agent complete its step before the next one begins.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'>query = &quot;I am at AIT (Asian Institute of Technology) Bangkok. Please find nearby tourist attractions and restaurants.&quot;
+
+print(&quot;Starting Sequential Workflow...&quot;)
+print(f&quot;Query: {query}\n&quot;)
+
+await run_agent(travel_planner_agent, query)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🔄 Part 4: Try a Different Location
+
+Change the query to a different starting point and observe how the pipeline adapts.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># TODO: Change this to any Bangkok location you are curious about
+new_query = &quot;I am at Siam Paragon Bangkok. Please find nearby cultural attractions and traditional Thai restaurants.&quot;
+
+print(&quot;Starting Sequential Workflow with new query...&quot;)
+print(f&quot;Query: {new_query}\n&quot;)
+
+await run_agent(travel_planner_agent, new_query)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🤔 Review Questions
+
+Discuss these with your group:
+
+1. Why does each agent need an `output_key`? What happens to an agent that has none?
+
+2. If we swap the order and put `restaurant_finder_agent` **before** `attraction_finder_agent`, what would happen and why?
+
+3. How is `SequentialAgent` different from calling `run_agent()` on each agent manually one by one?
+
+
+---
+## 🎉 Summary
+
+| Concept | How you used it |
+|---------|-----------------|
+| `Agent` | Created each agent with a persona, instruction, and tools |
+| `output_key` | Saved each agent&#x27;s result to a named slot in shared state |
+| `{key_name}` in instruction | Injected a previous agent&#x27;s output into the current prompt |
+| `SequentialAgent` | Chained agents to run one after another automatically |
+| `google_search` | Gave agents the ability to retrieve real-time information |
+
+```
+   /\_/\
+  ( ^_^ )   Congratulations — you built a Sequential Agent pipeline!
+  / &gt;🗺️&lt;\
+```
+
+**Next up:** Combine `SequentialAgent` with `LoopAgent` to build a workflow that searches, critiques, and refines its plan until it meets a quality threshold.'></div>\n</div>\n
