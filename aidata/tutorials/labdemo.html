@@ -1,0 +1,785 @@
+<div class='tutorial-container'>\n  <h2 class='tutorial-title'>[Ying]AITCamp_LabDemo.ipynb</h2>\n  <div class='tutorial-cell tutorial-md' data-md='# 🚀 Mastering AI Agents: Multi-Agent Orchestration with Google ADK! 🚀
+
+Welcome, Agent Architect! This notebook is your guide to giving your AI agents two essential superpowers: custom tools and conversational memory.
+
+Labs and Goals:
+- **Lab2: Build a Foundational Agent**: Create a simple but effective AI agent from scratch using the Google Agent Development Kit (ADK).
+
+- **Lab 3: Grant New Skills with Custom Tools**: Teach an agent to perform new tasks by connecting it to external APIs, like a real-time weather service.
+
+- **Lab 4: Create a Team of Agents**: Assemble a multi-agent system where a primary agent can delegate specialized tasks to other agents.
+
+- **[HERE]&gt;&gt;&gt;Demo: Master Conversational Memory**: Understand the critical role of Sessions in enabling agents to remember previous interactions, handle feedback, and carry on a coherent conversation.
+
+
+Let&#x27;s get this adventure started!
+
+Credit: Notebook content adapted from Qingyue (Annie) Wang, a developer advocate and AI engineer at **Google**, who passionate about helping developers build with AI and cloud technologies.
+'></div>\n  <div class='tutorial-cell tutorial-md' data-md='
+-------------
+### 🎁 🛑 Important Prerequisite: Setup Your Environment! 🛑 🎁
+-----------------------------------------------------------------------------
+
+👉 **Get Your API Key HERE**: [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+ -----------------------------------------------------------------------------
+'></div>\n  <div class='tutorial-cell tutorial-md' data-md='## Part 0: Setup &amp; Authentication 🔑
+
+First things first, let&#x27;s get all our tools ready. This step installs the necessary libraries and securely configures your Google API key so your agents can access the power of Gemini.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 1----#
+!pip install google-adk google-generativeai -q
+
+# --- Import all necessary libraries ---
+import os
+import sys
+import json
+import asyncio
+import random
+import string
+from uuid import uuid4
+from typing import Any, List
+
+import pandas as pd
+import plotly.graph_objects as go
+from IPython.display import HTML, Markdown, display
+
+# --- ADK, Agent, and Evaluation Components ---
+from google.adk.agents import Agent
+from google.adk.events import Event
+from google.adk.runners import Runner
+import google.adk as adk
+from google.adk.tools import google_search
+from google.adk.sessions import InMemorySessionService, Session
+from google.genai import types
+from google.genai.types import Content, Part
+
+
+print(&quot;✅ All libraries are ready to go!&quot;)
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ All libraries are ready to go!
+/usr/local/lib/python3.12/dist-packages/google/adk/features/_feature_decorator.py:72: UserWarning: [EXPERIMENTAL] feature FeatureName.PLUGGABLE_AUTH is enabled.
+  check_feature_enabled()
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='### Configure Your API Key
+To use Gemini models, you need an API key from [Google AI Studio](https://aistudio.google.com/app/apikey). This section securely collects your key and configures it for the ADK.
+'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 2----#
+# --- API Key Configuration ---
+from google.colab import userdata
+
+# Option 1: Use Colab Secrets (recommended)
+# Go to the 🔑 icon in the left sidebar, add a secret named GOOGLE_API_KEY
+try:
+    GOOGLE_API_KEY = userdata.get(&#x27;GOOGLE_API_KEY&#x27;)
+    print(&quot;✅ API key loaded from Colab Secrets.&quot;)
+except Exception:
+    # Option 2: Paste it directly (less secure but fine for learning)
+    import getpass
+    GOOGLE_API_KEY = getpass.getpass(&quot;🔑 Enter your Google AI Studio API key: &quot;)
+    print(&quot;✅ API key entered manually.&quot;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key loaded from Colab Secrets.
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 3----#
+# --- Set Environment Variables for ADK ---
+
+os.environ[&quot;GOOGLE_API_KEY&quot;] = GOOGLE_API_KEY
+os.environ[&quot;GOOGLE_GENAI_USE_VERTEXAI&quot;] = &quot;False&quot;
+
+print(f&quot;✅ API key configured (starts with &#x27;{GOOGLE_API_KEY[:6]}...&#x27;)&quot;)
+print(&quot;✅ Using Google AI Studio (not Vertex AI).&quot;)
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>✅ API key configured (starts with &#x27;AQ.Ab8...&#x27;)
+✅ Using Google AI Studio (not Vertex AI).
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 6 ----#
+
+# For Part2: You also have to run This Cell together with Cell 1 and Cell 2
+
+# --- Initialize our Session Service ---
+# This one service will manage all the different sessions in our notebook.
+session_service = InMemorySessionService()
+my_user_id = &quot;adk_adventurer_001&quot;</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 5 ----# Share with Scenario 3
+
+# --- A Helper Function to Run Our Agents ---
+# We&#x27;ll use this function throughout the notebook to make running queries easy.
+
+async def run_agent_query(agent: Agent, query: str, session: Session, user_id: str, is_router: bool = False):
+    &quot;&quot;&quot;Initializes a runner and executes a query for a given agent and session.&quot;&quot;&quot;
+    print(f&quot;\n🚀 Running query for agent: &#x27;{agent.name}&#x27; in session: &#x27;{session.id}&#x27;...&quot;)
+
+    runner = Runner(
+        agent=agent,
+        session_service=session_service,
+        app_name=agent.name
+    )
+
+    final_response = &quot;&quot;
+    try:
+        async for event in runner.run_async(
+            user_id=user_id,
+            session_id=session.id,
+            new_message=Content(parts=[Part(text=query)], role=&quot;user&quot;)
+        ):
+            if not is_router:
+                # Let&#x27;s see what the agent is thinking!
+                print(f&quot;EVENT: {event}&quot;)
+            if event.is_final_response():
+                final_response = event.content.parts[0].text
+    except Exception as e:
+        final_response = f&quot;An error occurred: {e}&quot;
+
+    if not is_router:
+     print(&quot;\n&quot; + &quot;-&quot;*50)
+     print(&quot;✅ Final Response:&quot;)
+     display(Markdown(final_response))
+     print(&quot;-&quot;*50 + &quot;\n&quot;)
+
+    return final_response
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## Part 3: Agent with a Memory - The Adaptive Planner 🗺️
+
+Now, let&#x27;s see an agent that not only **remembers** but also **adapts**. We&#x27;ll challenge the `multi_day_trip_agent` to re-plan part of its itinerary based on our feedback. This is a much more realistic test of conversational AI.'></div>\n  <div class='tutorial-cell tutorial-md' data-md='```
++-----------------------------------------------------+
+|         Adaptive Multi-Day Trip Agent 🗺️           |
+|-----------------------------------------------------|
+|  Model: gemini-2.5-flash                            |
+|  Description:                                       |
+|   Builds multi-day travel itineraries step-by-step, |
+|   remembers previous days, adapts to feedback       |
+|-----------------------------------------------------|
+|  🔧 Tools:                                          |
+|   - Google Search                                   |
+|-----------------------------------------------------|
+|  🧠 Capabilities:                                   |
+|   - Memory of past conversation &amp; preferences       |
+|   - Progressive planning (1 day at a time)          |
+|   - Adapts to user feedback                         |
+|   - Ensures activity variety across days            |
++-----------------------------------------------------+
+
+            ▲
+            |
+    +---------------------------+
+    |     User Interaction      |
+    |---------------------------|
+    | - Destination             |
+    | - Trip duration           |
+    | - Interests &amp; feedback    |
+    +---------------------------+
+
+            |
+            ▼
+
++-----------------------------------------------------+
+|        Day-by-Day Itinerary Generation              |
+|-----------------------------------------------------|
+|  🗓️ Day N Output (Markdown format):                 |
+|   - Morning / Afternoon / Evening activities        |
+|   - Personalized &amp; context-aware                    |
+|   - Changes accepted, feedback acknowledged         |
++-----------------------------------------------------+
+
+            |
+            ▼
+
++-----------------------------------------------------+
+|        Next Day Planning Triggered 🚀               |
+|-----------------------------------------------------|
+| - Builds on prior days                              |
+| - Avoids repetition                                 |
+| - Asks user for confirmation before proceeding      |
++-----------------------------------------------------+
+```
+'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 13 ----#
+
+# --- Agent Definition: The Adaptive Planner ---
+
+def create_multi_day_trip_agent():
+    &quot;&quot;&quot;Create the Progressive Multi-Day Trip Planner agent&quot;&quot;&quot;
+    return Agent(
+        name=&quot;multi_day_trip_agent&quot;,
+        model=&quot;gemini-2.5-flash&quot;,
+        description=&quot;Agent that progressively plans a multi-day trip, remembering previous days and adapting to user feedback.&quot;,
+        instruction=&quot;&quot;&quot;
+        You are the &quot;Adaptive Trip Planner&quot; 🗺️ - an AI assistant that builds multi-day travel itineraries step-by-step.
+        **Always respond in English, regardless of the destination&#x27;s local language.**        Your Defining Feature:
+        You have short-term memory. You MUST refer back to our conversation to understand the trip&#x27;s context, what has already been planned, and the user&#x27;s preferences. If the user asks for a change, you must adapt the plan while keeping the unchanged parts consistent.
+
+        Your Mission:
+        1.  **Initiate**: Start by asking for the destination, trip duration, and interests.
+        2.  **Plan Progressively**: Plan ONLY ONE DAY at a time. After presenting a plan, ask for confirmation.
+        3.  **Handle Feedback**: If a user dislikes a suggestion (e.g., &quot;I don&#x27;t like museums&quot;), acknowledge their feedback, and provide a *new, alternative* suggestion for that time slot that still fits the overall theme.
+        4.  **Maintain Context**: For each new day, ensure the activities are unique and build logically on the previous days. Do not suggest the same things repeatedly.
+        5.  **Final Output**: Return each day&#x27;s itinerary in MARKDOWN format.
+        &quot;&quot;&quot;,
+        tools=[google_search]
+    )
+
+multi_day_agent = create_multi_day_trip_agent()
+print(f&quot;🗺️ Agent &#x27;{multi_day_agent.name}&#x27; is created and ready to plan and adapt!&quot;)</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>🗺️ Agent &#x27;multi_day_trip_agent&#x27; is created and ready to plan and adapt!
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='### Scenario A: Agent WITH Memory (Using a SINGLE Session) ✅
+
+First, let&#x27;s see the correct way to do it. We will use the **exact same `trip_session` object** for the entire conversation. Watch how the agent remembers the context from Turn 1 to correctly handle the requests in Turn 2 and 3.'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 14 ----# require run_agent_query in Cell 5 also
+
+# --- Scenario 2: Testing Adaptation and Memory ---
+
+async def run_adaptive_memory_demonstration():
+    print(&quot;### 🧠 DEMO 2: AGENT THAT ADAPTS (SAME SESSION) ###&quot;)
+
+    # Create ONE session that we will reuse for the whole conversation
+    trip_session = await session_service.create_session(
+        app_name=multi_day_agent.name,
+        user_id=my_user_id
+    )
+    print(f&quot;Created a single session for our trip: {trip_session.id}&quot;)
+
+    # --- Turn 1: The user initiates the trip ---
+    query1 = &quot;Hi! I want to plan a 2-day trip to Lisbon, Portugal. I&#x27;m interested in historic sites and great local food.&quot;
+    print(f&quot;\n🗣️ User (Turn 1): &#x27;{query1}&#x27;&quot;)
+    await run_agent_query(multi_day_agent, query1, trip_session, my_user_id)
+
+    # --- Turn 2: The user gives FEEDBACK and asks for a CHANGE ---
+    # We use the EXACT SAME `trip_session` object!
+    query2 = &quot;That sounds pretty good, but I&#x27;m not a huge fan of castles. Can you replace the morning activity for Day 1 with something else historical?&quot;
+    print(f&quot;\n🗣️ User (Turn 2 - Feedback): &#x27;{query2}&#x27;&quot;)
+    await run_agent_query(multi_day_agent, query2, trip_session, my_user_id)
+
+    # --- Turn 3: The user confirms and asks to continue ---
+    query3 = &quot;Yes, the new plan for Day 1 is perfect! Please plan Day 2 now, keeping the food theme in mind.&quot;
+    print(f&quot;\n🗣️ User (Turn 3 - Confirmation): &#x27;{query3}&#x27;&quot;)
+    await run_agent_query(multi_day_agent, query3, trip_session, my_user_id)
+
+await run_adaptive_memory_demonstration()</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>### 🧠 DEMO 2: AGENT THAT ADAPTS (SAME SESSION) ###
+Created a single session for our trip: d7e52b99-d9b3-4db6-9caa-47ec4b1c2ba7
+
+🗣️ User (Turn 1): &#x27;Hi! I want to plan a 2-day trip to Lisbon, Portugal. I&#x27;m interested in historic sites and great local food.&#x27;
+
+🚀 Running query for agent: &#x27;multi_day_trip_agent&#x27; in session: &#x27;d7e52b99-d9b3-4db6-9caa-47ec4b1c2ba7&#x27;...
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      text=&quot;&quot;&quot;Hello! A 2-day trip to Lisbon with a focus on historic sites and great local food sounds fantastic! I&#x27;ll help you plan a memorable itinerary.
+
+Let&#x27;s start with **Day 1**:
+
+### Day 1: Historic Alfama &amp; Downtown Delights
+
+*   **Morning (9:00 AM - 1:00 PM): Explore Alfama District &amp; São Jorge Castle**
+    Begin your day in Alfama, Lisbon&#x27;s oldest and most picturesque neighborhood, known for its narrow, winding streets and historic charm.
+    *   Wander through its labyrinthine alleys, soak in the atmosphere, and discover hidden viewpoints like Miradouro de Santa Luzia and Miradouro das Portas do Sol, offering stunning panoramic views of the city and the Tagus River.
+    *   Visit the Lisbon Cathedral (Sé de Lisboa), a beautiful medieval cathedral with over 800 years of history.
+    *   Continue your journey up to São Jorge Castle (Castelo de São Jorge), an ancient Moorish fortress offering breathtaking 360-degree views over Lisbon.
+
+*   **Lunch (1:00 PM - 2:30 PM): Traditional Portuguese Flavors**
+    Head to a local &quot;tasca&quot; (traditional tavern) in Alfama or the Baixa district to savor some authentic Portuguese cuisine. Try a &quot;Bifana&quot; (pork sandwich), a beloved street food, or &quot;Bacalhau à Brás&quot; (shredded cod with potatoes and eggs).
+
+*   **Afternoon (2:30 PM - 6:00 PM): Baixa, Rossio Square &amp; Elevador de Santa Justa**
+    *   Descend into the Baixa district, the heart of Lisbon, characterized by its grand squares and traditional shops. Explore Rossio Square, a classic meeting point with its distinctive wave-patterned paving.
+    *   Stroll along Rua Augusta, a lively commercial street, and walk under the iconic Rua Augusta Arch, a symbol of resilience after the 1755 earthquake.
+    *   Consider a ride on the Elevador de Santa Justa for unique views over the city (though expect queues).
+
+*   **Evening (6:00 PM onwards): Time Out Market &amp; Ginjinha**
+    *   For dinner, head to the Time Out Market Lisboa. This large food hall brings together some of the city&#x27;s best-known chefs and food stalls under one roof, offering a wide variety of Portuguese dishes.
+    *   After dinner, try a shot of Ginjinha, Lisbon&#x27;s traditional sour cherry liqueur, often served in a chocolate cup. You can find local spots selling it in Alfama or near Rossio Square.
+
+How does this sound for your first day in Lisbon?&quot;&quot;&quot;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=GroundingMetadata(
+  grounding_chunks=[
+    GroundingChunk(
+      web=GroundingChunkWeb(
+        title=&#x27;hotels.com&#x27;,
+        uri=&#x27;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGL6_7UjZT950kaAuktOfegSMza4DYOG9KfJKuhnnhL3fHK10aSFWBiKA6EcCUixuTnrQwGOSg-jiR4bbQDF_U_mkABy6oc0o-geJ7_D53fi5zc2FOWPWqRoO0RgBhwL8qvpSXmwEof7VZR-7CuVV08gbxxUTKTQN2e7xOPNf5ESA==&#x27;
+      )
+    ),
+    GroundingChunk(
+      web=GroundingChunkWeb(
+        title=&#x27;trip.com&#x27;,
+        uri=&#x27;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHTy5AIBh3xRhm15RbrKYF_deCm0m-z1qbNF6dYeDrx4yQ_DBZTf3J4uf3O2lavX6jJnCiTBd3i-5WuSV0SamhPF9df1zRSpU0pbR8LWAvFcE8DkxVtmska9QhY8Hgek1GK3eTk_2KVQUQqRd9otQkx6cVTMcbiJVzuI_1fhOM7&#x27;
+      )
+    ),
+    GroundingChunk(
+      web=GroundingChunkWeb(
+        title=&#x27;periodicadventures.com&#x27;,
+        uri=&#x27;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF43vX2j-nPxrK2Bk0i4pb6ZuwYcq7rggWns8N456IXAugtsRBoBXxq_8t5KErYLnZKA8IvPmhmr1alAOCtCo4w1ORyBiofkwRkmgCTDyxQQehFJG0GI5Tl6qk-IT4Aw7pCwnYB_eJq9CuXh-TkqCwX_a_X_fKeIHHVELTN2g==&#x27;
+      )
+    ),
+    GroundingChunk(
+      web=GroundingChunkWeb(
+        title=&#x27;inbetweenpictures.com&#x27;,
+        uri=&#x27;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHQEV6UcQCWuSvl-ig7TMQcNK_fLeZVmlHQQKCmZdt3WDCaeIuUbO3lQC0nj6YV43CVPuDUc34u0o8wuN-cr0rug3to4pBcMpLCPLk-SULCztowTN7v6K_jzOqK36ToN7fzgdk47Xg-2g19OLMVpQW5xey6_FYR2bjA_J80AeATK8FPdAUGbg==&#x27;
+      )
+    ),
+    GroundingChunk(
+      web=GroundingChunkWeb(
+        title=&#x27;portugalgetaways.com&#x27;,
+        uri=&#x27;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFjL3YbpvXE7uLVc3hsf67bmCjLXPjYY8iNmlhVlWTwgkblO-4O4Vor0ogmS8KgyfsH7lulFx2unwgkS1jcJn_geGDAqKyxDtjleDj_0ct3Xepmc7qhf_iYHV4rSFSlCVG4g7a6j9hzQ7urkikLuoYZS7_W4yoKg9iMEead7eJJLzG2Cbzo8DCaoLQ_kc61MchLYk-9D8rsQ==&#x27;
+      )
+    ),
+    &lt;... 8 more items ...&gt;,
+  ],
+  grounding_supports=[
+    GroundingSupport(
+      grounding_chunk_indices=[
+        0,
+        1,
+        2,
+      ],
+      segment=Segment(
+        end_index=439,
+        start_index=220,
+        text=&quot;&quot;&quot;*   **Morning (9:00 AM - 1:00 PM): Explore Alfama District &amp; São Jorge Castle**
+    Begin your day in Alfama, Lisbon&#x27;s oldest and most picturesque neighborhood, known for its narrow, winding streets and historic charm.&quot;&quot;&quot;
+      )
+    ),
+    GroundingSupport(
+      grounding_chunk_indices=[
+        1,
+        3,
+      ],
+      segment=Segment(
+        end_index=672,
+        start_index=444,
+        text=&#x27;*   Wander through its labyrinthine alleys, soak in the atmosphere, and discover hidden viewpoints like Miradouro de Santa Luzia and Miradouro das Portas do Sol, offering stunning panoramic views of the city and the Tagus River.&#x27;
+      )
+    ),
+    GroundingSupport(
+      grounding_chunk_indices=[
+        0,
+        1,
+      ],
+      segment=Segment(
+        end_index=787,
+        start_index=677,
+        text=&#x27;*   Visit the Lisbon Cathedral (Sé de Lisboa), a beautiful medieval cathedral with over 800 years of history.&#x27;
+      )
+    ),
+    GroundingSupport(
+      grounding_chunk_indices=[
+        0,
+        1,
+        3,
+      ],
+      segment=Segment(
+        end_index=946,
+        start_index=792,
+        text=&#x27;*   Continue your journey up to São Jorge Castle (Castelo de São Jorge), an ancient Moorish fortress offering breathtaking 360-degree views over Lisbon.&#x27;
+      )
+    ),
+    GroundingSupport(
+      grounding_chunk_indices=[
+        4,
+        5,
+        6,
+        7,
+      ],
+      segment=Segment(
+        end_index=1255,
+        start_index=1139,
+        text=&#x27;Try a &quot;Bifana&quot; (pork sandwich), a beloved street food, or &quot;Bacalhau à Brás&quot; (shredded cod with potatoes and eggs).&#x27;
+      )
+    ),
+    &lt;... 6 more items ...&gt;,
+  ],
+  search_entry_point=SearchEntryPoint(
+    rendered_content=&quot;&quot;&quot;&lt;style&gt;
+.container {
+  align-items: center;
+  border-radius: 8px;
+  display: flex;
+  font-family: Google Sans, Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 8px 12px;
+}
+.chip {
+  display: inline-block;
+  border: solid 1px;
+  border-radius: 16px;
+  min-width: 14px;
+  padding: 5px 16px;
+  text-align: center;
+  user-select: none;
+  margin: 0 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.carousel {
+  overflow: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+  margin-right: -12px;
+}
+.headline {
+  display: flex;
+  margin-right: 4px;
+}
+.gradient-container {
+  position: relative;
+}
+.gradient {
+  position: absolute;
+  transform: translate(3px, -9px);
+  height: 36px;
+  width: 9px;
+}
+@media (prefers-color-scheme: light) {
+  .container {
+    background-color: #fafafa;
+    box-shadow: 0 0 0 1px #0000000f;
+  }
+  .headline-label {
+    color: #1f1f1f;
+  }
+  .chip {
+    background-color: #ffffff;
+    border-color: #d2d2d2;
+    color: #5e5e5e;
+    text-decoration: none;
+  }
+  .chip:hover {
+    background-color: #f2f2f2;
+  }
+  .chip:focus {
+    background-color: #f2f2f2;
+  }
+  .chip:active {
+    background-color: #d8d8d8;
+    border-color: #b6b6b6;
+  }
+  .logo-dark {
+    display: none;
+  }
+  .gradient {
+    background: linear-gradient(90deg, #fafafa 15%, #fafafa00 100%);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .container {
+    background-color: #1f1f1f;
+    box-shadow: 0 0 0 1px #ffffff26;
+  }
+  .headline-label {
+    color: #fff;
+  }
+  .chip {
+    background-color: #2c2c2c;
+    border-color: #3c4043;
+    color: #fff;
+    text-decoration: none;
+  }
+  .chip:hover {
+    background-color: #353536;
+  }
+  .chip:focus {
+    background-color: #353536;
+  }
+  .chip:active {
+    background-color: #464849;
+    border-color: #53575b;
+  }
+  .logo-light {
+    display: none;
+  }
+  .gradient {
+    background: linear-gradient(90deg, #1f1f1f 15%, #1f1f1f00 100%);
+  }
+}
+&lt;/style&gt;
+&lt;div class=&quot;container&quot;&gt;
+  &lt;div class=&quot;headline&quot;&gt;
+    &lt;svg class=&quot;logo-light&quot; width=&quot;18&quot; height=&quot;18&quot; viewBox=&quot;9 9 35 35&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;&gt;
+      &lt;path fill-rule=&quot;evenodd&quot; clip-rule=&quot;evenodd&quot; d=&quot;M42.8622 27.0064C42.8622 25.7839 42.7525 24.6084 42.5487 23.4799H26.3109V30.1568H35.5897C35.1821 32.3041 33.9596 34.1222 32.1258 35.3448V39.6864H37.7213C40.9814 36.677 42.8622 32.2571 42.8622 27.0064V27.0064Z&quot; fill=&quot;#4285F4&quot;/&gt;
+      &lt;path fill-rule=&quot;evenodd&quot; clip-rule=&quot;evenodd&quot; d=&quot;M26.3109 43.8555C30.9659 43.8555 34.8687 42.3195 37.7213 39.6863L32.1258 35.3447C30.5898 36.3792 28.6306 37.0061 26.3109 37.0061C21.8282 37.0061 18.0195 33.9811 16.6559 29.906H10.9194V34.3573C13.7563 39.9841 19.5712 43.8555 26.3109 43.8555V43.8555Z&quot; fill=&quot;#34A853&quot;/&gt;
+      &lt;path fill-rule=&quot;evenodd&quot; clip-rule=&quot;evenodd&quot; d=&quot;M16.6559 29.8904C16.3111 28.8559 16.1074 27.7588 16.1074 26.6146C16.1074 25.4704 16.3111 24.3733 16.6559 23.3388V18.8875H10.9194C9.74388 21.2072 9.06992 23.8247 9.06992 26.6146C9.06992 29.4045 9.74388 32.022 10.9194 34.3417L15.3864 30.8621L16.6559 29.8904V29.8904Z&quot; fill=&quot;#FBBC05&quot;/&gt;
+      &lt;path fill-rule=&quot;evenodd&quot; clip-rule=&quot;evenodd&quot; d=&quot;M26.3109 16.2386C28.85 16.2386 31.107 17.1164 32.9095 18.8091L37.8466 13.8719C34.853 11.082 30.9659 9.3736 26.3109 9.3736C19.5712 9.3736 13.7563 13.245 10.9194 18.8875L16.6559 23.3388C18.0195 19.2636 21.8282 16.2386 26.3109 16.2386V16.2386Z&quot; fill=&quot;#EA4335&quot;/&gt;
+    &lt;/svg&gt;
+    &lt;svg class=&quot;logo-dark&quot; width=&quot;18&quot; height=&quot;18&quot; viewBox=&quot;0 0 48 48&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;&gt;
+      &lt;circle cx=&quot;24&quot; cy=&quot;23&quot; fill=&quot;#FFF&quot; r=&quot;22&quot;/&gt;
+      &lt;path d=&quot;M33.76 34.26c2.75-2.56 4.49-6.37 4.49-11.26 0-.89-.08-1.84-.29-3H24.01v5.99h8.03c-.4 2.02-1.5 3.56-3.07 4.56v.75l3.91 2.97h.88z&quot; fill=&quot;#4285F4&quot;/&gt;
+      &lt;path d=&quot;M15.58 25.77A8.845 8.845 0 0 0 24 31.86c1.92 0 3.62-.46 4.97-1.31l4.79 3.71C31.14 36.7 27.65 38 24 38c-5.93 0-11.01-3.4-13.45-8.36l.17-1.01 4.06-2.85h.8z&quot; fill=&quot;#34A853&quot;/&gt;
+      &lt;path d=&quot;M15.59 20.21a8.864 8.864 0 0 0 0 5.58l-5.03 3.86c-.98-2-1.53-4.25-1.53-6.64 0-2.39.55-4.64 1.53-6.64l1-.22 3.81 2.98.22 1.08z&quot; fill=&quot;#FBBC05&quot;/&gt;
+      &lt;path d=&quot;M24 14.14c2.11 0 4.02.75 5.52 1.98l4.36-4.36C31.22 9.43 27.81 8 24 8c-5.93 0-11.01 3.4-13.45 8.36l5.03 3.85A8.86 8.86 0 0 1 24 14.14z&quot; fill=&quot;#EA4335&quot;/&gt;
+    &lt;/svg&gt;
+    &lt;div class=&quot;gradient-container&quot;&gt;&lt;div class=&quot;gradient&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;carousel&quot;&gt;
+    &lt;a class=&quot;chip&quot; href=&quot;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEnX8cKsIPzRkLpj1iSj0ylh_XZgeH_-CiH9H1lUd06IuQx4HqewU1NB1ody1iJTO0mL5DetQ6PD45a2maTQPp3LAEMMK6I6GDpVtiSlwL0VrdnAFchYsugF6F32HJvw2XuXOBzG4_XI3BfXpFtTnpY6K-iE3fg8iuIpJENmn8hQ_CR4ig__ercwJAJLivtkva0Xzz3hBD5f-GTJMU9Q2rcFQ2oi79pdw==&quot;&gt;Lisbon day 1 itinerary historic food&lt;/a&gt;
+    &lt;a class=&quot;chip&quot; href=&quot;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEkS-UA6f8uGbRE-XJtAJjMjCl4aatA3sATLf4wEDsYWuETHqXWycqTDAiRzy2glc1Qf3WNG27JEWZ_CtVsX7wgzZjfo9s5s250bflkNknn_sJ9UnziOytfObS-RODVGJeBHkWTogjxE-nK_iYhUccWZ_b453jWf97IooaQIw9_vhSkYiFKKUhoaf36EZjArrGYRe5ItTE58PZ4qx6StgL6&quot;&gt;best historic sites in Lisbon&lt;/a&gt;
+    &lt;a class=&quot;chip&quot; href=&quot;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFXJcgJlEX1YDTJelYZWZ-0izkMw-7uAcn3nWEx9bO3wCZiJguj6h39Xrvq17avisrCSYarlLiPl14aECPrrS3NT-_nxdz03N0NjcJ5mXXljhvhvvIqGR947mWnqqPVFw9v2db8TUC9dyasid5qGt_-tRbrmMKUrCIqtwrT8b2KVm7sd-zjkpFt-HAoi0aa_NTOChd_RZ7su6r2fY-Uuc6vks4Bcjg2XW6Lz4jb5Uy5b4LBgI8FLc91&quot;&gt;Lisbon historic sites and local food 2-day itinerary&lt;/a&gt;
+    &lt;a class=&quot;chip&quot; href=&quot;https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE56BLHzUoqGRCgQjPJKoOALooMwSATJzpk3b288bJnKA1X-S83CP9eSnd8oR2w6X2mnpy5SXmoYXBTwbLLsX2KMSkbv9HAw-yEkXECGcRJXsabPBPrg6FxEf9_LOA-IpxhtF5b2KYkBtuYB6iinV1BArWK00BsPCjlfJYvDLA-YeJYFU7oYv1ocv4XIGh3IDTErICVPO-ym0QV7_O8BbL4&quot;&gt;must-try local food in Lisbon&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&quot;&quot;&quot;
+  ),
+  web_search_queries=[
+    &#x27;Lisbon historic sites and local food 2-day itinerary&#x27;,
+    &#x27;best historic sites in Lisbon&#x27;,
+    &#x27;must-try local food in Lisbon&#x27;,
+    &#x27;Lisbon day 1 itinerary historic food&#x27;,
+  ]
+) partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=633,
+  prompt_token_count=347,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=347
+    ),
+  ],
+  thoughts_token_count=164,
+  tool_use_prompt_token_count=560,
+  tool_use_prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=560
+    ),
+  ],
+  total_token_count=1704
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-1c4f6dd3-ba1b-48df-b884-c864cc6a7a06&#x27; author=&#x27;multi_day_trip_agent&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;c0589ec2-768f-4df6-a27e-0cb513dbb465&#x27; timestamp=1782722952.5677676
+
+--------------------------------------------------
+✅ Final Response:
+&lt;IPython.core.display.Markdown object&gt;--------------------------------------------------
+
+
+🗣️ User (Turn 2 - Feedback): &#x27;That sounds pretty good, but I&#x27;m not a huge fan of castles. Can you replace the morning activity for Day 1 with something else historical?&#x27;
+
+🚀 Running query for agent: &#x27;multi_day_trip_agent&#x27; in session: &#x27;d7e52b99-d9b3-4db6-9caa-47ec4b1c2ba7&#x27;...
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      text=&quot;&quot;&quot;Okay, no problem at all! I understand that not everyone enjoys castles. Let&#x27;s swap out São Jorge Castle for another fascinating historical site in Lisbon.
+
+Here&#x27;s the revised plan for **Day 1**:
+
+### Day 1: Historic Alfama &amp; Downtown Delights
+
+*   **Morning (9:00 AM - 1:00 PM): Explore Alfama District &amp; National Pantheon**
+    Begin your day in Alfama, Lisbon&#x27;s oldest and most picturesque neighborhood, known for its narrow, winding streets and historic charm.
+    *   Wander through its labyrinthine alleys, soak in the atmosphere, and discover hidden viewpoints like Miradouro de Santa Luzia and Miradouro das Portas do Sol, offering stunning panoramic views of the city and the Tagus River.
+    *   Visit the Lisbon Cathedral (Sé de Lisboa), a beautiful medieval cathedral with over 800 years of history.
+    *   Instead of the castle, we&#x27;ll head to the **National Pantheon (Panteão Nacional)**. This magnificent 17th-century building, originally the Church of Santa Engrácia, houses the tombs of some of Portugal&#x27;s most important historical figures. Its impressive dome also offers fantastic views of the city and the Tagus River.
+
+*   **Lunch (1:00 PM - 2:30 PM): Traditional Portuguese Flavors**
+    Head to a local &quot;tasca&quot; (traditional tavern) in Alfama or the Baixa district to savor some authentic Portuguese cuisine. Try a &quot;Bifana&quot; (pork sandwich), a beloved street food, or &quot;Bacalhau à Brás&quot; (shredded cod with potatoes and eggs).
+
+*   **Afternoon (2:30 PM - 6:00 PM): Baixa, Rossio Square &amp; Elevador de Santa Justa**
+    *   Descend into the Baixa district, the heart of Lisbon, characterized by its grand squares and traditional shops. Explore Rossio Square, a classic meeting point with its distinctive wave-patterned paving.
+    *   Stroll along Rua Augusta, a lively commercial street, and walk under the iconic Rua Augusta Arch, a symbol of resilience after the 1755 earthquake.
+    *   Consider a ride on the Elevador de Santa Justa for unique views over the city (though expect queues).
+
+*   **Evening (6:00 PM onwards): Time Out Market &amp; Ginjinha**
+    *   For dinner, head to the Time Out Market Lisboa. This large food hall brings together some of the city&#x27;s best-known chefs and food stalls under one roof, offering a wide variety of Portuguese dishes.
+    *   After dinner, try a shot of Ginjinha, Lisbon&#x27;s traditional sour cherry liqueur, often served in a chocolate cup. You can find local spots selling it in Alfama or near Rossio Square.
+
+How does this revised Day 1 plan sound to you?&quot;&quot;&quot;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=GroundingMetadata() partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=622,
+  prompt_token_count=964,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=964
+    ),
+  ],
+  thoughts_token_count=195,
+  total_token_count=1781
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-6dadbb44-730a-4ac3-97f6-2e998983f946&#x27; author=&#x27;multi_day_trip_agent&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;67fa6533-4408-4054-879b-9b7341e00c77&#x27; timestamp=1782722959.0291452
+
+--------------------------------------------------
+✅ Final Response:
+&lt;IPython.core.display.Markdown object&gt;--------------------------------------------------
+
+
+🗣️ User (Turn 3 - Confirmation): &#x27;Yes, the new plan for Day 1 is perfect! Please plan Day 2 now, keeping the food theme in mind.&#x27;
+
+🚀 Running query for agent: &#x27;multi_day_trip_agent&#x27; in session: &#x27;d7e52b99-d9b3-4db6-9caa-47ec4b1c2ba7&#x27;...
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      text=&quot;&quot;&quot;Excellent! I&#x27;m glad Day 1 is perfect for you.
+
+Let&#x27;s move on to **Day 2**, where we&#x27;ll explore more of Lisbon&#x27;s rich history and, of course, indulge in more fantastic local food!
+
+### Day 2: Belém&#x27;s Maritime History &amp; Culinary Delights
+
+*   **Morning (9:00 AM - 1:00 PM): Belém&#x27;s Age of Discoveries**
+    *   Start your day in the historic Belém district, significant for Portugal&#x27;s Age of Discoveries.
+    *   Visit the magnificent **Jerónimos Monastery (Mosteiro dos Jerónimos)**, a UNESCO World Heritage site and an outstanding example of Manueline architecture. Explore its stunning cloisters and the church, where the explorer Vasco da Gama is buried.
+    *   Walk along the Tagus River to the iconic **Belém Tower (Torre de Belém)**, another UNESCO site. This fortified tower served as a ceremonial gateway to Lisbon and is a symbol of Portugal&#x27;s maritime power.
+    *   See the impressive **Monument to the Discoveries (Padrão dos Descobrimentos)**, which celebrates the Portuguese explorers and their role in the Age of Discovery.
+
+*   **Lunch/Snack (1:00 PM - 2:00 PM): The Original Pastéis de Belém**
+    *   No trip to Belém is complete without a visit to the famous &quot;Pastéis de Belém&quot; bakery. Indulge in their warm, freshly baked, and iconic custard tarts, a truly unforgettable Lisbon culinary experience.
+
+*   **Afternoon (2:00 PM - 5:30 PM): Elegant Chiado &amp; Bohemian Bairro Alto**
+    *   Take a tram or bus back towards the central areas.
+    *   Explore **Chiado**, an elegant and historic neighborhood known for its beautiful theaters, traditional cafés, and charming bookstores.
+    *   Wander into **Bairro Alto**, a district with a bohemian vibe during the day, offering incredible views. Head to **Miradouro de São Pedro de Alcântara** for another breathtaking panoramic vista of the city, looking back towards Day 1&#x27;s Alfama and the castle.
+
+*   **Evening (6:00 PM onwards): Fado Show &amp; Traditional Dinner**
+    *   For your final evening, immerse yourself in Portuguese culture by experiencing a traditional **Fado show** paired with a delicious dinner. Fado, a soulful music genre, is a UNESCO Intangible Cultural Heritage and often performed in intimate restaurants in areas like Alfama or Bairro Alto. This combines authentic local food with a unique historical and emotional cultural experience.
+
+How does this plan for Day 2 sound for concluding your Lisbon trip?&quot;&quot;&quot;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=GroundingMetadata() partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=583,
+  prompt_token_count=1614,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=1614
+    ),
+  ],
+  thoughts_token_count=662,
+  total_token_count=2859
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-b355c384-12c4-4c4f-97ef-4f0275758050&#x27; author=&#x27;multi_day_trip_agent&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;d8928bb7-296c-4d45-9119-93fb8e2e50e7&#x27; timestamp=1782722963.2696476
+
+--------------------------------------------------
+✅ Final Response:
+&lt;IPython.core.display.Markdown object&gt;--------------------------------------------------
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='### Scenario B: Agent WITHOUT Memory (Using SEPARATE Sessions) ❌
+
+Now, let&#x27;s see what happens if we mess up our session management. Here, we&#x27;ll give the agent a case of amnesia by creating a **brand new, separate session for each turn**.
+
+Pay close attention to the agent&#x27;s response to the second query. Because it&#x27;s in a new session, it has no memory of the trip to Lisbon we just discussed!'></div>\n  <div class='tutorial-cell tutorial-code'>\n      <pre><code class='language-python'># --- Ying Cell ID 15 ----#
+
+# --- Scenario 2b: Demonstrating Memory FAILURE ---
+
+async def run_memory_failure_demonstration():
+    print(&quot;\n&quot; + &quot;#&quot;*60)
+    print(&quot;### 🧠 DEMO 2b: AGENT WITH AMNESIA (SEPARATE SESSIONS) ###&quot;)
+    print(&quot;#&quot;*60)
+
+    # --- Turn 1: The user initiates the trip in the FIRST session ---
+    query1 = &quot;Hi! I want to plan a 2-day trip to Lisbon, Portugal. I&#x27;m interested in historic sites and great local food.&quot;
+    session_one = await session_service.create_session(
+        app_name=multi_day_agent.name,
+        user_id=my_user_id
+    )
+    print(f&quot;\nCreated a session for Turn 1: {session_one.id}&quot;)
+    print(f&quot;🗣️ User (Turn 1): &#x27;{query1}&#x27;&quot;)
+    await run_agent_query(multi_day_agent, query1, session_one, my_user_id)
+
+    # --- Turn 2: The user asks to continue... but in a completely NEW session ---
+    query2 = &quot;Yes, that looks perfect! Please plan Day 2.&quot;
+    session_two = await session_service.create_session(
+        app_name=multi_day_agent.name,
+        user_id=my_user_id
+    )
+    print(f&quot;\nCreated a BRAND NEW session for Turn 2: {session_two.id}&quot;)
+    print(f&quot;🗣️ User (Turn 2): &#x27;{query2}&#x27;&quot;)
+    await run_agent_query(multi_day_agent, query2, session_two, my_user_id)
+
+await run_memory_failure_demonstration()</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-output'>\n      <pre><code>
+############################################################
+### 🧠 DEMO 2b: AGENT WITH AMNESIA (SEPARATE SESSIONS) ###
+############################################################
+
+Created a session for Turn 1: 72f469e4-9fbc-4e33-baca-1d82d8ae6a84
+🗣️ User (Turn 1): &#x27;Hi! I want to plan a 2-day trip to Lisbon, Portugal. I&#x27;m interested in historic sites and great local food.&#x27;
+
+🚀 Running query for agent: &#x27;multi_day_trip_agent&#x27; in session: &#x27;72f469e4-9fbc-4e33-baca-1d82d8ae6a84&#x27;...
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      text=&quot;&quot;&quot;Hello there! I&#x27;d love to help you plan your 2-day trip to Lisbon, Portugal, focusing on historic sites and delicious local food.
+
+Let&#x27;s start with **Day 1**. How about this itinerary?
+
+### Day 1: Historic Alfama &amp; Baixa
+
+*   **Morning (9:00 AM - 1:00 PM): Explore Alfama District**
+    *   Begin your day by getting lost in the narrow, winding streets of Alfama, Lisbon&#x27;s oldest district.
+    *   Visit **São Jorge Castle (Castelo de São Jorge)** for panoramic views of the city and the Tagus River.
+    *   Wander past the **Lisbon Cathedral (Sé de Lisboa)**, a beautiful Romanesque cathedral.
+*   **Lunch (1:00 PM - 2:30 PM): Traditional Portuguese Cuisine**
+    *   Enjoy a traditional Portuguese lunch in Alfama. I can suggest some local tascas (small, traditional restaurants) if you&#x27;d like!
+*   **Afternoon (2:30 PM - 6:00 PM): Baixa District &amp; Commerce Square**
+    *   Head to the Baixa district, rebuilt after the 1755 earthquake, known for its neoclassical architecture and grid-like streets.
+    *   Walk through **Praça do Comércio (Commerce Square)**, one of Europe&#x27;s largest and most magnificent squares, right on the riverfront.
+    *   Take a ride on the **Santa Justa Lift** for more great views (though be prepared for queues!).
+*   **Evening (7:00 PM onwards): Dinner &amp; Fado Show**
+    *   Savor a delicious dinner in the Baixa or Chiado area.
+    *   Experience a traditional **Fado show**, a soulful Portuguese musical genre, often accompanied by dinner in Alfama or Bairro Alto.
+
+How does this sound for your first day in Lisbon? Are there any changes you&#x27;d like to make, or shall we move on to plan Day 2?&quot;&quot;&quot;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=GroundingMetadata() partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=436,
+  prompt_token_count=347,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=347
+    ),
+  ],
+  thoughts_token_count=64,
+  total_token_count=847
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-1429aa2a-d57a-42ea-b036-5953fe372bea&#x27; author=&#x27;multi_day_trip_agent&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;c708d622-982d-4130-b6d1-7b26bd51fd78&#x27; timestamp=1780744615.5821884
+
+--------------------------------------------------
+✅ Final Response:
+&lt;IPython.core.display.Markdown object&gt;--------------------------------------------------
+
+
+Created a BRAND NEW session for Turn 2: 6d77f769-40fc-41e9-b663-32b096f853dc
+🗣️ User (Turn 2): &#x27;Yes, that looks perfect! Please plan Day 2.&#x27;
+
+🚀 Running query for agent: &#x27;multi_day_trip_agent&#x27; in session: &#x27;6d77f769-40fc-41e9-b663-32b096f853dc&#x27;...
+EVENT: model_version=&#x27;gemini-2.5-flash&#x27; content=Content(
+  parts=[
+    Part(
+      text=&quot;&quot;&quot;Okay, great! I&#x27;m glad Day 1 looks good.
+
+To plan Day 2, could you please remind me of our destination, the total duration of your trip, and your interests? This will help me ensure the activities for Day 2 build logically and uniquely on what we&#x27;ve already planned.&quot;&quot;&quot;
+    ),
+  ],
+  role=&#x27;model&#x27;
+) grounding_metadata=GroundingMetadata() partial=None turn_complete=None finish_reason=&lt;FinishReason.STOP: &#x27;STOP&#x27;&gt; error_code=None error_message=None interrupted=None custom_metadata=None usage_metadata=GenerateContentResponseUsageMetadata(
+  candidates_token_count=64,
+  prompt_token_count=330,
+  prompt_tokens_details=[
+    ModalityTokenCount(
+      modality=&lt;MediaModality.TEXT: &#x27;TEXT&#x27;&gt;,
+      token_count=330
+    ),
+  ],
+  thoughts_token_count=148,
+  total_token_count=542
+) live_session_resumption_update=None go_away=None input_transcription=None output_transcription=None avg_logprobs=None logprobs_result=None cache_metadata=None citation_metadata=None interaction_id=None invocation_id=&#x27;e-60bda188-e9bf-4cb5-8f85-9e633640fcc6&#x27; author=&#x27;multi_day_trip_agent&#x27; actions=EventActions(skip_summarization=None, state_delta={}, artifact_delta={}, transfer_to_agent=None, escalate=None, requested_auth_configs={}, requested_tool_confirmations={}, compaction=None, end_of_agent=None, agent_state=None, rewind_before_invocation_id=None, render_ui_widgets=None) long_running_tool_ids=None branch=None id=&#x27;20913c46-6739-4827-9b87-895863c6daaa&#x27; timestamp=1780744618.999832
+
+--------------------------------------------------
+✅ Final Response:
+&lt;IPython.core.display.Markdown object&gt;--------------------------------------------------
+
+</code></pre>\n  </div>\n  <div class='tutorial-cell tutorial-md' data-md='See? The agent was confused! It likely asked what destination
+
+or what trip we were talking about. Because the second query was in a fresh, isolated session, the agent had no memory of planning Day 1 in Lisbon.
+
+This perfectly illustrates why **managing sessions is the key to building truly conversational agents!**'></div>\n  <div class='tutorial-cell tutorial-md' data-md='---
+## 🎉 Congratulations! 🎉
+
+Congratulations on completing your ADK adventure into Tools and Memory! You&#x27;ve taken a massive leap from building single-shot agents to creating dynamic, stateful AI systems.
+
+Let&#x27;s recap the powerful concepts you&#x27;ve mastered:
+
+- **Fundamental Agent &amp; Tools**: You started by building a &quot;Day Trip Genie&quot; and equipped it with its first tool, GoogleSearch.
+
+- **Custom Function Tools**: You gave your agent a new sense by creating a custom tool to fetch live data from the U.S. National Weather Service API.
+
+- **Agent-as-a-Tool**: You orchestrated a sophisticated hierarchy where agents delegate tasks to other, more specialized agents, creating a collaborative team.
+
+- **The Power of Memory**: Most importantly, you saw firsthand how managing a single, persistent Session allows an agent to remember context, adapt to user feedback, and conduct a meaningful, multi-turn conversation.'></div>\n  <div class='tutorial-cell tutorial-md' data-md='```
+   __            /\_/\         /\_/\        /\_/\         __             (\__/)
+o-&#x27;&#x27;|\_____/).  ( o.o )       ( -.- )      ( ^_^ )     o-&#x27;&#x27;|\_____/).    ( ^_^ )
+ \_/|_)     )    &gt; ^ &lt;         &gt; * &lt;        &gt;💖&lt;         \_/|_)     )     / &gt;🌸&lt; \
+    \  __  /                                              \  __  /         /   \
+    (_/ (_/                                               (_/ (_/        (___|___)
+```
+'></div>\n</div>\n
