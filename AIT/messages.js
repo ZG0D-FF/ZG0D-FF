@@ -1,0 +1,1110 @@
+const waMessages = [
+  {
+    "sender": "Me",
+    "text": "In headphones 🎧"
+  },
+  {
+    "sender": "Dada",
+    "text": "Okay ashchi"
+  },
+  {
+    "sender": "Me",
+    "text": "Hye eseche"
+  },
+  {
+    "sender": "Me",
+    "text": "site:www.uniqlo.com&gt; ext:xml OR ext:conf OR ext:env OR ext:ini"
+  },
+  {
+    "sender": "Me",
+    "text": "acha acha"
+  },
+  {
+    "sender": "Me",
+    "text": "https://drive.google.com/file/d/1F4ZUqptk6CI_KbTGoWkEJlKELP81MMwA/view?usp=sharing"
+  },
+  {
+    "sender": "Dada",
+    "text": "Guess the action e monitor Lizard crawling"
+  },
+  {
+    "sender": "Dada",
+    "text": "Wahii"
+  },
+  {
+    "sender": "Dada",
+    "text": "Amio otai enechi"
+  },
+  {
+    "sender": "Dada",
+    "text": "Pork khas?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Don't worry bro u are gonna achieve things\nI believe in u\nU are one of the best students in the class and that's why u were chosen for this trip\nAnd u are gonna prove it\nUr CV is much better because of this certification and u are gonna kill it"
+  },
+  {
+    "sender": "Me",
+    "text": "2 lagega bas kal aur plain meh agar lage toh"
+  },
+  {
+    "sender": "Me",
+    "text": "setatei vot debo"
+  },
+  {
+    "sender": "Didi",
+    "text": "ki bolis"
+  },
+  {
+    "sender": "Me",
+    "text": "dedo hum hi toh dekhnege"
+  },
+  {
+    "sender": "Dada",
+    "text": "That's a sweet dream and I hope u get more than that"
+  },
+  {
+    "sender": "Dada",
+    "text": "🥹\nAnd I wish u win that way as well as in many ways that u have so much money that u can buy all the action figures u want"
+  },
+  {
+    "sender": "Me",
+    "text": "that was World Cup croatia ig"
+  },
+  {
+    "sender": "Me",
+    "text": "i want a family and someone to die with last breath"
+  },
+  {
+    "sender": "Me",
+    "text": "site:www.uniqlo.com intitle:&quot;index of&quot; &quot;parent directory&quot;"
+  },
+  {
+    "sender": "Me",
+    "text": "ekdom"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tor DK dada bolche ki next mas o rent er flat e shift korbe"
+  },
+  {
+    "sender": "Me",
+    "text": "Wuske bad baki batein karenge rula na tha na mereko?\nDekho kitna bora message likhta hu"
+  },
+  {
+    "sender": "Didi",
+    "text": "He was like ....maja aarha h😅😅"
+  },
+  {
+    "sender": "Dada",
+    "text": "Peak acting"
+  },
+  {
+    "sender": "Dada",
+    "text": "Ekhono?"
+  },
+  {
+    "sender": "Me",
+    "text": "https://youtube.com/shorts/l4zuzyqJ2YQ?si=vqzxndEU4BRf1yj7"
+  },
+  {
+    "sender": "Me",
+    "text": "dhra pre gecho dekhle"
+  },
+  {
+    "sender": "Dada",
+    "text": "Sab se zyada kisko?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Bro send the deleted pic plsssss"
+  },
+  {
+    "sender": "Dada",
+    "text": "Bhai ek folder chobi ache amar kache halka kore chepe ja"
+  },
+  {
+    "sender": "Me",
+    "text": "# A Records (IPv4 addresses)\ndig wikipedia.org A\n# MX Records (Mail servers)\ndig wikipedia.org MX\n# TXT Records (SPF, DKIM, verification tokens)\ndig wikipedia.org TXT\n# NS Records (Name servers)\ndig wikipedia.org NS\n\nCybersecurity Workshop: Reconnaissance &amp; OSINT Laboratory Lab I\n\n3\n\n# ANY query (all records - may be blocked)\ndig wikipedia.org ANY"
+  },
+  {
+    "sender": "Didi",
+    "text": "Mera bahr h hand tmhra andr tha 😂😂"
+  },
+  {
+    "sender": "Me",
+    "text": "kindly foloo whtis smoll me in git and lindkedin"
+  },
+  {
+    "sender": "Me",
+    "text": "site:www.uniqlo.com filetype:pdf"
+  },
+  {
+    "sender": "Me",
+    "text": "ha same hi hain bas mainse ss video ka thori bad liya"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tahole yes bolli keno"
+  },
+  {
+    "sender": "Me",
+    "text": "B2. Banner Grabbing & Service Analysis\nTarget: 192.168.1.91\nMethod 1 — Netcat:\nnc -v 192.168.1.91 443\n\n\n\nMethod 2 — Telnet:\ntelnet 192.168.1.91 443\n\nMethod 3 — Nmap Scripts:\nnmap --script=banner 192.168.1.91 -p 443"
+  },
+  {
+    "sender": "Didi",
+    "text": "Bilcul same nhi h"
+  },
+  {
+    "sender": "Me",
+    "text": "Huh kom dam ka action figure mela toh call korna meh apko gpay kol dunga\nAur ab se toh almost roj shorts bhejunga\nYt wala insta nai korta meh"
+  },
+  {
+    "sender": "Me",
+    "text": "@⁨all⁩"
+  },
+  {
+    "sender": "Dada",
+    "text": "Haa mereko coffee peena h🙋🏻‍♂️"
+  },
+  {
+    "sender": "Dada",
+    "text": "19th September\nTumhara?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Hum cycle se jayega"
+  },
+  {
+    "sender": "Me",
+    "text": "abr jigges krchis?"
+  },
+  {
+    "sender": "Dada",
+    "text": "At miniso gate"
+  },
+  {
+    "sender": "Me",
+    "text": "mera scooty scan kr liya apka unlock hua?"
+  },
+  {
+    "sender": "Dada",
+    "text": "7-11\nAnd DK ka room wala bakchodi"
+  },
+  {
+    "sender": "Didi",
+    "text": "tor table e kojon ache\n26/06/26, 2:19 pm - You changed the group description"
+  },
+  {
+    "sender": "Dada",
+    "text": "Hello everyone,\nall 60 members are now part of the unofficial group.\n\nWhen the poll was shared previously, many of you had not yet joined the group. Therefore, we have decided to share the poll again so that everyone gets a chance to cast their votes with ease.\n\nPlease keep the following two rules in mind while voting:\n\n1. If you are a candidate, you *cannot* vote in your own category. However, you may vote for candidates of the opposite gender. For example, a male candidate cannot vote for another male candidate (or for himself), but he may vote for a female candidate. The same applies to female candidates.\n\n2. If you are not a candidate, you may cast up to 2 votes in each category - 2 votes for female candidates and 2 votes for male candidates.\n\n3. The poll will be closed by 7 PM tonight so cast your votes at the earliest.\n\nIf you have any further questions or doubts, feel free to send a message in the group. Thank you!"
+  },
+  {
+    "sender": "Me",
+    "text": "then 7 eleven jbo"
+  },
+  {
+    "sender": "Dada",
+    "text": "hashcat --potfile-disable -m 0 -a 0 test5.txt /usr/share/wordlists/rockyou.txt"
+  },
+  {
+    "sender": "Didi",
+    "text": "bhalo lagena"
+  },
+  {
+    "sender": "Dada",
+    "text": "Aayein?👀\nKaisa pic?"
+  },
+  {
+    "sender": "Didi",
+    "text": "kothay tora"
+  },
+  {
+    "sender": "Dada",
+    "text": "60 jon 💀"
+  },
+  {
+    "sender": "Dada",
+    "text": "Patha bhai tora sob pics and all"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tora sobai eksathe?"
+  },
+  {
+    "sender": "Me",
+    "text": "amake janabe ar noy kole kore niye jabe jekhanei jao ami janina kichu"
+  },
+  {
+    "sender": "Dada",
+    "text": "Ota punishment 200 baht ta share na korar"
+  },
+  {
+    "sender": "Me",
+    "text": "ASO NICHE TAHOLE TOH BUJHTE PARBE"
+  },
+  {
+    "sender": "Me",
+    "text": "2 pair toh boleche"
+  },
+  {
+    "sender": "Me",
+    "text": "randheer sir"
+  },
+  {
+    "sender": "Dada",
+    "text": "Ohh moniter lizards ke liye 🤣"
+  },
+  {
+    "sender": "Me",
+    "text": "You deleted this message"
+  },
+  {
+    "sender": "Dada",
+    "text": "Shoes"
+  },
+  {
+    "sender": "Dada",
+    "text": "What?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Abhi waha pe hote toh dinner ke baad 7-11 jaa rahe hote"
+  },
+  {
+    "sender": "Dada",
+    "text": "And sab logo ko bhi😂"
+  },
+  {
+    "sender": "Me",
+    "text": "11 30 hbe"
+  },
+  {
+    "sender": "Me",
+    "text": "Le lena merese"
+  },
+  {
+    "sender": "Dada",
+    "text": "Your happiest memories - lo hint diya"
+  },
+  {
+    "sender": "Dada",
+    "text": "What is the souvenir?😂"
+  },
+  {
+    "sender": "Dada",
+    "text": "U are not ugly and not short heighted\nTui onek sweet and the people who get to see this side of u are lucky\nAnd we are lucky we brought that side of urs"
+  },
+  {
+    "sender": "Me",
+    "text": "Huh 4 back laga hua hain"
+  },
+  {
+    "sender": "Dada",
+    "text": "@⁨Kausal Dada MCA⁩ bole de"
+  },
+  {
+    "sender": "Me",
+    "text": "jeno kheye nebe kauke"
+  },
+  {
+    "sender": "Me",
+    "text": "I intend to create a code for exam next day as well as today to crack the code first.\nNeed a bit help.\nWhat do my dada and didi s say?"
+  },
+  {
+    "sender": "Me",
+    "text": "60 JON MILE PARADE KRTE KRTE JABO"
+  },
+  {
+    "sender": "Dada",
+    "text": "Amar pashei boshe chilo TAs ra"
+  },
+  {
+    "sender": "Dada",
+    "text": "And we will be finally meeting the people we saw on the trip but in a totally different environment 😢"
+  },
+  {
+    "sender": "Dada",
+    "text": "Aree🥲"
+  },
+  {
+    "sender": "Me",
+    "text": "people bring memory u left one there as mark"
+  },
+  {
+    "sender": "Me",
+    "text": "DADA AMR 500 BAHT ER BHARA TA"
+  },
+  {
+    "sender": "Dada",
+    "text": "Maggie"
+  },
+  {
+    "sender": "Dada",
+    "text": "Gelei taka khorcha"
+  },
+  {
+    "sender": "Dada",
+    "text": "Memories of love"
+  },
+  {
+    "sender": "Me",
+    "text": "1/180 odds"
+  },
+  {
+    "sender": "Didi",
+    "text": "ami toh ghumiye gechilam"
+  },
+  {
+    "sender": "Me",
+    "text": "Bhetore sob"
+  },
+  {
+    "sender": "Dada",
+    "text": "Ota Dibya DADA"
+  },
+  {
+    "sender": "Me",
+    "text": "@⁨all⁩ ki krbe bolo"
+  },
+  {
+    "sender": "Dada",
+    "text": "Kausal 🍑"
+  },
+  {
+    "sender": "Me",
+    "text": "### Risky variables\n\n| **Variable** | **Why it looks risky** | **Indicator to monitor** |\n|---|---:|---|\n| **Payment delay days** | Signals financial stress or disengagement; often a sharp churn inflection after a small threshold | Rising proportion of customers with >X days late |\n| **Service calls** | Frequent contacts usually mean unresolved problems and dissatisfaction | High call counts and repeat tickets per customer |\n| **Tenure and contract length** | Short tenure and short contracts lower switching costs and commitment | High churn in early months or at contract end |\n| **Plan price and monthly fee** | Perceived poor value increases price‑sensitive churn | Churn spikes after price increases or for low‑value plans |\n| **Complaint severity and resolution time** | Slow or poor resolutions convert complaints into defections | Long average time to close and low first‑call resolution |\n| **Usage decline** | Falling usage often precedes cancellation as customers disengage | Month‑over‑month drop in minutes/data/feature use |\n\n---\n\n### Patterns to expect\n- **Threshold effects**: small increases in payment delay often have little effect until a threshold (e.g., 3–5 days) after which churn rises steeply.\n- **Monotonic relationships**: more service calls and longer resolution times generally correlate with higher churn.\n- **Protective tenure effect**: churn probability declines with tenure but jumps near contract renewal or early months.\n- **Interaction effects**: combinations matter — e.g., a late payer who also has many unresolved service calls is far more likely to churn than either signal alone.\n- **Segment differences**: price sensitivity, age, and plan type create distinct churn behaviors across segments.\n\n---\n\n### Business hypotheses to form and test\n1. **Late payments cause churn rather than just correlate with it**\n- *Test:* Control for tenure and plan; run logistic regression with payment delay as categorical and continuous; check causal direction with time‑lagged analysis.\n2. **Unresolved service calls drive churn more than call volume alone**\n- *Test:* Compare churn for customers with many calls but fast resolution vs many calls with slow/no resolution.\n3. **New customers have higher short‑term churn that can be reduced with onboarding**\n- *Test:* Cohort analysis for first 3 months; pilot enhanced onboarding for a random subset.\n4. **Targeted retention offers to model‑identified high‑risk customers are profitable**\n- *Test:* A/B test incentives for top decile risk group; measure retention lift and incremental lifetime value vs campaign cost.\n5. **Operational fixes (faster SLA, proactive outreach) reduce churn among complaint‑heavy customers**\n- *Test:* Implement faster resolution for a test group and compare churn and NPS against control.\n\n---\n\n### How to validate and measure success\n- **Model metrics:** AUC, precision at top decile, lift for flagged customers.\n- **Experiment metrics:** retention lift, incremental revenue, cost per retained customer, ROI of offers.\n- **Operational metrics:** average time to resolution, first‑call resolution rate, complaint recurrence.\n- **Monitoring:** track model performance and key metrics by segment and over time to detect drift.\n\n---\n\n### Quick next steps\n1. **Confirm data quality** for payment dates, call logs, resolution outcomes, and tenure.\n2. **Run exploratory analysis** to validate the payment‑delay threshold and interaction effects.\n3. **Prioritize two experiments**: a retention offer A/B test for high‑risk customers and an SLA improvement pilot for high‑call customers.\n\nIf you want, I will draft the two experiment plans now with sample sizes, success criteria, and expected ROI."
+  },
+  {
+    "sender": "Didi",
+    "text": "ha boshai jaye"
+  },
+  {
+    "sender": "Me",
+    "text": "https://youtube.com/shorts/0_yMzjwP6qo?si=zoCYqoFxlQXFbMeM"
+  },
+  {
+    "sender": "Me",
+    "text": "i dont want fame"
+  },
+  {
+    "sender": "Me",
+    "text": "me okay me in jor"
+  },
+  {
+    "sender": "Me",
+    "text": "kho gaya woh kal dhundke dunga"
+  },
+  {
+    "sender": "Dada",
+    "text": "https://imposter.app/online/304138?sid=iv_7brg8qf0\n\nJoin fast.\n@⁨DibyaKanti Laha MCA⁩ @⁨Kausal Dada MCA⁩ @⁨Shagufta Iem 🌸💐 DIDI⁩"
+  },
+  {
+    "sender": "Dada",
+    "text": "Whiskey"
+  },
+  {
+    "sender": "Me",
+    "text": "Jama machin er bhetore"
+  },
+  {
+    "sender": "Me",
+    "text": "site:www.uniqlo.com &quot;@securetech-labs.com&quot; OR &quot;employee&quot; OR &quot;staff&quot;"
+  },
+  {
+    "sender": "Me",
+    "text": "Uske bad woh scooty wala\nHar Khana ka share dena\nPehli bar diya koi mujhe"
+  },
+  {
+    "sender": "Me",
+    "text": "https://youtu.be/gyZLBDbR10g?si=qdOY0AycN0csBVl4"
+  },
+  {
+    "sender": "Dada",
+    "text": "Ofc tum humara chota bhai h😉"
+  },
+  {
+    "sender": "Dada",
+    "text": "Koto temperature?"
+  },
+  {
+    "sender": "Me",
+    "text": "dunga dunga"
+  },
+  {
+    "sender": "Dada",
+    "text": "Dekh na earphone ar phone o ache tokhon"
+  },
+  {
+    "sender": "Me",
+    "text": "taki didi ko bura na lage"
+  },
+  {
+    "sender": "Me",
+    "text": "i got suited to pollution free as due to allergy"
+  },
+  {
+    "sender": "Dada",
+    "text": "Kothay shobai"
+  },
+  {
+    "sender": "Dada",
+    "text": "Kothay ache"
+  },
+  {
+    "sender": "Dada",
+    "text": "Wahiii"
+  },
+  {
+    "sender": "Me",
+    "text": "i needa stay there"
+  },
+  {
+    "sender": "Me",
+    "text": "7-Eleven, Scooty, aur Ek Dada\nThailand ki un sarakon par ek karwa shuru hua,\nJo roommate ka ek saathi tha, woh dil ke behad paas hua.\nTao Bin ki coffee, 7-Eleven ke chakkar, aur scooty ka woh shor,\nHum dhoondh rahe the raste, par dil khinch raha tha kisi aur dor.\nSchool, college, har jagah laga, hum toh bas ek 'tool' hain,\nLog aate hain, badal jaate hain, shayad hum hi fizool hain.\nHeight choti, baten ajeeb, sabne hamesha dur kiya,\nPar is safar ne pehli baar, mujhko khud se qubool kiya.\n\"Tui onek sweet,\" unhone kaha, jab aankhein thodi nam hui,\nHar khane ka hissa milna, toh lagne laga ki har kami kam hui.\nPehli baar kisi ne apna kaha, chota bhai banakar saath rakha,\nGirte-sambhalte is dil par, bade bhai ka ek haath rakha.\nAction figures dekhenge jab bhi, dada ko meri yaad aayegi,\nWoh cute tarike ki baatein, shayad unhe thoda ruyegi.\n19th September ko unka bday, aur unki fav place wahi,\nJahan dil khol ke bakchodi ho, aur dukh ka koi naam nahi.\nFuture Park ka woh din ho, ya January ka woh thanda saal,\nAb fark nahi padta, dada ne badal diya hai mera haal.\nWahi rahenge Kausal Dada, jab bhi zor se aawaaz doge,\n\"Chota bhai hai mera,\" keh kar, har darr tumhara mita denge.\nSafar toh khatam ho gaya par ek silsila baaki hai,\nDada-bhai ka yeh rishta, jeene ke liye kaafi hai.\n03/07/26, 10:49 pm - You pinned a message\n03/07/26, 10:49 pm - You pinned a message"
+  },
+  {
+    "sender": "Me",
+    "text": "*On The Fourteenth*\nJanuary held its breath,\nFourteen dawns deep into the year,\nWhen winter was still learning\nHow to turn frost into promise.\n\nThe calendar did not shout,\nIt only whispered: _today_.\nAnd today was enough\nTo mark a beginning,\nTo light a fire in quiet,\nTo call a moment ours.\n\nFourteen days brave,\nThe new year finally exhaled —\nAnd the world felt softer\nOn the fourteenth of January."
+  },
+  {
+    "sender": "Dada",
+    "text": "Konsa sir?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Please cast your vote, if you haven't already because both the polls close at 7 PM tonight."
+  },
+  {
+    "sender": "Me",
+    "text": "PANT DONT WANNA COME BACK"
+  },
+  {
+    "sender": "Me",
+    "text": "Bas projects karne ko icha hota hain parne ko nahi"
+  },
+  {
+    "sender": "Didi",
+    "text": "sob gochalam"
+  },
+  {
+    "sender": "Dada",
+    "text": "Feels like i am going super Saiyan🤣💀"
+  },
+  {
+    "sender": "Dada",
+    "text": "Oder moo ping er stock ses korar reason e tui😂"
+  },
+  {
+    "sender": "Me",
+    "text": "Me tired"
+  },
+  {
+    "sender": "Dada",
+    "text": "Na na night market"
+  },
+  {
+    "sender": "Dada",
+    "text": "Lojja pacche"
+  },
+  {
+    "sender": "Me",
+    "text": "Sath leke ghumna sab humko chor jatein hain\nMera dept ka khud logo ko sabke samne na kar diya tha maine isliye future park din"
+  },
+  {
+    "sender": "Me",
+    "text": "i pray u win like this"
+  },
+  {
+    "sender": "Me",
+    "text": "https://zg0d-ff.github.io/ZG0D-FF/index.html"
+  },
+  {
+    "sender": "Dada",
+    "text": "Sabko equally 😂"
+  },
+  {
+    "sender": "Dada",
+    "text": "Yesssss bhaiii😂"
+  },
+  {
+    "sender": "Dada",
+    "text": "Sob theke best souvenir toh @⁨Kausal Dada MCA⁩ niye esheche"
+  },
+  {
+    "sender": "Me",
+    "text": "whois wikipedia.org\nor\nuse online: https://whois.domaintools.com/"
+  },
+  {
+    "sender": "Me",
+    "text": "https://www.linkedin.com/in/dibyajyotee-ghosh-06a24631a/"
+  },
+  {
+    "sender": "Me",
+    "text": "Doctor"
+  },
+  {
+    "sender": "Me",
+    "text": "naito apko bura lagta"
+  },
+  {
+    "sender": "Me",
+    "text": "### Quick summary of the case study\nThe dataset and slides identify **payment delay days**, **service calls**, and **tenure/contract length** as the strongest predictors of telecom churn. The analysis shows a sharp churn increase for customers with payment delays greater than about 4 days.\n\n---\n\n### Which variables look risky\n| **Variable** | **Why it looks risky** | **Evidence from the case** |\n|---|---:|---|\n| **Payment Delay Days** | Indicates financial stress or disengagement; large delays map to much higher churn. | Customers with >4 days delay show near‑100% churn in the provided quartile analysis.  |\n| **Service Calls** | Frequent calls imply unresolved problems and dissatisfaction, increasing exit likelihood. | Feature‑importance notes and slide text call out many service calls as linked to higher churn.  |\n| **Tenure / Contract Length** | Short tenure or short contracts reduce switching costs and commitment. | Slides report longer tenure and longer contracts reduce churn probability.  |\n| **Monthly Fee** | Can affect perceived value; mid effect on churn—sensitive for price‑conscious segments. | Model output lists monthly fee as having a moderate effect.  |\n| **Age** | Small influence but may interact with other variables (e.g., tech adoption). | Slides indicate age has a small influence on churn behavior.  |\n\n---\n\n### Patterns you should expect\n- **Nonlinear threshold effect for payment delays** — churn is low up to a small delay window (0–4 days) then rises sharply beyond that threshold.\n- **Positive correlation between service calls and churn** — more calls → higher churn probability, especially when calls are unresolved.\n- **Protective effect of tenure and contract length** — longer-tenured customers and those on longer contracts show lower churn.\n- **Interactions** — high service calls combined with payment delays likely produce multiplicative risk (e.g., a late payer who also calls frequently is especially at risk).\n\n---\n\n### Business hypotheses to test\n1. **Late payers are more likely to churn**\n*Test:* Compare churn rates by payment delay buckets and control for tenure and plan type.\n\n2. **Frequent support contacts predict churn because issues remain unresolved**\n*Test:* Segment customers by number of service calls and measure churn after call resolution time and call outcome.\n\n3. **New customers (low tenure) have higher short‑term churn**\n*Test:* Cohort analysis of churn within first 3–6 months vs later periods.\n\n4. **Targeted retention offers to high‑risk customers are cost‑effective**\n*Test:* Run an A/B test: offer retention incentive to model‑identified high‑risk group vs control; measure net customer lifetime value vs campaign cost. Use the provided campaign cost and customer value assumptions to model ROI.\n\n5. **Operational fixes reduce churn for complaint‑heavy customers**\n*Test:* Implement faster resolution SLAs for customers with many service calls and measure subsequent churn change.\n\n---\n\n### Recommended next steps and metrics\n- **Validate the payment‑delay threshold** with larger sample and statistical tests (chi‑square or logistic regression with delay as categorical and continuous). **Metric:** change in AUC and lift for models including delay.\n- **Build a multivariate churn model** (logistic regression + tree‑based models) to quantify feature importance and interactions. **Metric:** precision at top decile, recall for flagged high‑risk customers.\n- **Run targeted experiments**: retention offers for top 200 high‑risk customers and operational improvements for high‑call customers. **Metric:** retention lift, campaign ROI, cost per retained customer.\n- **Monitor fairness and data quality** to avoid biased interventions and overfitting. **Metric:** model performance by demographic segments and out‑of‑sample validation.\n\n---\n\nIf you want, I can convert these hypotheses into a short experiment plan with sample sizes, success metrics, and a prioritized action list."
+  },
+  {
+    "sender": "Didi",
+    "text": "Astagfirullah 🫪"
+  },
+  {
+    "sender": "Me",
+    "text": "IEM(Soudamini).vcf (file attached)"
+  },
+  {
+    "sender": "Dada",
+    "text": "Konsa floor?"
+  },
+  {
+    "sender": "Me",
+    "text": "Woh nai mani toh koina\nHum roj jalaenge apko"
+  },
+  {
+    "sender": "Me",
+    "text": "Apko apka bhabhi mile woh jo bhi woh\nHumko invitation mile\nAur apko santi ka jiwan aur pariwar mile jo apke sath har pal rahe.\nMeh hamesha kharab hi tha sabke nazar me aur nai toh use karne ka tool.(School primary school\nHigh school college also)\nIt's the first time I didn't feel alone.\nI didn't feel ugly short heightened poor.\nI have 2 bonus whom I trust with my heart now I have 2 heartfull dada's one u.\nHum bhi miss karenge cllg meh idk mulakat hoga ki nai meh nai jata zyada cllg.\nMujhe acha nai lagta hain.\nPar apka bday kab hain?\nApka fav chese to coffee hain.\nFav place kya hain?\nAction figure dekha kom dam me (me and mah parents lower middle class idk what I will do they all sick nvm 😂😂)\n7 eleven journey nai tha woh toh guzra hua pal tha hum ek gane bhejenge woh headphone lagake sunna"
+  },
+  {
+    "sender": "Didi",
+    "text": "do it do it...sinchan <This message was edited>"
+  },
+  {
+    "sender": "Me",
+    "text": "airport e esei welcome e seta bujhiye diyechilo"
+  },
+  {
+    "sender": "Dada",
+    "text": "Mtlb?"
+  },
+  {
+    "sender": "Me",
+    "text": "A gaye hum"
+  },
+  {
+    "sender": "Me",
+    "text": "but khub gola byatha"
+  },
+  {
+    "sender": "Me",
+    "text": "woh toh metamorph tha"
+  },
+  {
+    "sender": "Dada",
+    "text": "Hey,\nSo our trip ended....\nI have been on trips with my family and also once with friends\nBut this is by far the best trip ever\nNot just because it was Thailand and my first international trip and also the facilities we had, like, tao bin, 7-11, cafeteria, cycling, scooty, such good faculties, but also because of the people\nAnd especially because of u\nIn the beginning of this trip u were just a roommate to my batchmate\nAnd by the end of this trip I got a little brother who is like my very own kid and the cutest wingman\nThank you so much bro for the love, care, and respect u gave me the entire trip\nI am always gonna miss u and my entire life every time I see an action figure I am gonna miss u\nThank you so much for everything u did for me and us and having fun with us,\nI am always gonna miss u, especially ur cute way of talking and our notes manager and also our little adopted kid\nKabhi bhi koi bhi zarurat ho call karna tumhara kausal da yahi rahega\nHopefully we meet more in college\n-your dada,\nKausal"
+  },
+  {
+    "sender": "Dada",
+    "text": "@⁨DibyaKanti Laha MCA⁩ send my photos from yesterday, personally."
+  },
+  {
+    "sender": "Didi",
+    "text": "This message was deleted"
+  },
+  {
+    "sender": "Dada",
+    "text": "Mee too"
+  },
+  {
+    "sender": "Me",
+    "text": "Ekhon berochi boslei phone krbo"
+  },
+  {
+    "sender": "Me",
+    "text": "amar 14 baht er jol nite hbe jol sesh <This message was edited>"
+  },
+  {
+    "sender": "Dada",
+    "text": "Jiske liye shagufta astagfirullah likhi"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tui kore bolishna rege jabe"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tora ki sobai eksathe porchis"
+  },
+  {
+    "sender": "Dada",
+    "text": "Yeahhh and it got me relaxed after the jet lag"
+  },
+  {
+    "sender": "Dada",
+    "text": "Hum night market kiya h"
+  },
+  {
+    "sender": "Didi",
+    "text": "Mtt raho inlog k sath"
+  },
+  {
+    "sender": "Dada",
+    "text": "Ghumiye por"
+  },
+  {
+    "sender": "Me",
+    "text": "Wahi toh India knows but u still wanna know"
+  },
+  {
+    "sender": "Didi",
+    "text": "dhur baba"
+  },
+  {
+    "sender": "Me",
+    "text": "Step 1 — Quick Scan (Top 1000 ports):\nnmap -sV 192.168.1.91\n\nStep 2 — Full Port Scan (All 65535 ports):\nsudo nmap -p- 192.168.1.91\n\nStep 3 — Comprehensive Scan (Version + Scripts + OS Detection):\nsudo nmap -sV -sC -O -p <OPEN_PORTS> 192.168.1.91"
+  },
+  {
+    "sender": "Me",
+    "text": "helicopter helicopter"
+  },
+  {
+    "sender": "Me",
+    "text": "i dont want money i dont want axn figure"
+  },
+  {
+    "sender": "Dada",
+    "text": "Shitt"
+  },
+  {
+    "sender": "Dada",
+    "text": "He was also searching for how to become gay even after having a girlfriend with Dibyakanti"
+  },
+  {
+    "sender": "Me",
+    "text": "Food court area mike Mall something"
+  },
+  {
+    "sender": "Me",
+    "text": "Second"
+  },
+  {
+    "sender": "Dada",
+    "text": "Premik"
+  },
+  {
+    "sender": "Me",
+    "text": "Money becomes money\nWhen hearts don't touch\nIt becomes a tool of revealing heart when trust comes in path\nIt can heal for a short time\nHurt a good rln\nOr make a new one\nOne for the sake one for the keep\nIt's at last both sides of a same thing."
+  },
+  {
+    "sender": "Dada",
+    "text": "Wtf?!"
+  },
+  {
+    "sender": "Me",
+    "text": "me misssing dada s"
+  },
+  {
+    "sender": "Dada",
+    "text": "Rest kemon holo?"
+  },
+  {
+    "sender": "Me",
+    "text": "Second half e eksathe bosle bhalo hoy then"
+  },
+  {
+    "sender": "Dada",
+    "text": "No Shyama 🙅🏻‍♂️"
+  },
+  {
+    "sender": "Dada",
+    "text": "Joldi bol bhai please"
+  },
+  {
+    "sender": "Me",
+    "text": "keu brkfast area r photo dena"
+  },
+  {
+    "sender": "Dada",
+    "text": "Okay🤣"
+  },
+  {
+    "sender": "Dada",
+    "text": "Bhabchi jabona"
+  },
+  {
+    "sender": "Dada",
+    "text": "Show up fast"
+  },
+  {
+    "sender": "Didi",
+    "text": "Maine tmhe pehle bola tha"
+  },
+  {
+    "sender": "Me",
+    "text": "site:www.uniqlo.com inurl:api OR inurl:swagger OR inurl:graphql"
+  },
+  {
+    "sender": "Dada",
+    "text": "Aree eta exam start er aage porchilam chatGPT theke"
+  },
+  {
+    "sender": "Dada",
+    "text": "Eta ki sob pics gulo?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tum bhi happy hi hoge😂"
+  },
+  {
+    "sender": "Dada",
+    "text": "Na na bahut sweet h😂🥹"
+  },
+  {
+    "sender": "Me",
+    "text": "https://github.com/ZG0D-FF"
+  },
+  {
+    "sender": "Me",
+    "text": "u heard tihis?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Pads or action of whispering in ears?"
+  },
+  {
+    "sender": "Me",
+    "text": "Sharma gayi dada"
+  },
+  {
+    "sender": "Me",
+    "text": "https://imposter.app/online/304138"
+  },
+  {
+    "sender": "Dada",
+    "text": "Raat ko sunega😌"
+  },
+  {
+    "sender": "Dada",
+    "text": "He is searching for ways to ragebait Shyama"
+  },
+  {
+    "sender": "Me",
+    "text": "Hiya meh DJ"
+  },
+  {
+    "sender": "Dada",
+    "text": "Toh cheating korle ora dekhtei peto"
+  },
+  {
+    "sender": "Dada",
+    "text": "POLL:\n*Male Candidates:*\nOPTION: Kausal Sikaria (10 votes)\nOPTION: Pritam Paul (21 votes)\nOPTION: Arkadeb Chakrabarti (24 votes)\nOPTION: Sparsho Sengupta (6 votes)\nOPTION: Krishnendu Mukherjee (20 votes)"
+  },
+  {
+    "sender": "Dada",
+    "text": "Favourite place jaha bakchodi ho"
+  },
+  {
+    "sender": "Dada",
+    "text": "Then Cycling korbo"
+  },
+  {
+    "sender": "Dada",
+    "text": "Top 5 roommates of all time"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tum sirf Tao Bin miss kar raha hai ya phir kuch aur bhi?"
+  },
+  {
+    "sender": "Me",
+    "text": "Nai shadi dilane ka taki hum adopted baha ho sake"
+  },
+  {
+    "sender": "Me",
+    "text": "site:www.uniqlo.com ext:sql OR ext:dump OR ext:db"
+  },
+  {
+    "sender": "Me",
+    "text": "i will chnage room with kausal da next time"
+  },
+  {
+    "sender": "Me",
+    "text": "https://zg0d-ff.github.io/ZG0D-FF/cysec.html"
+  },
+  {
+    "sender": "Me",
+    "text": "Movie"
+  },
+  {
+    "sender": "Didi",
+    "text": "ashchis?"
+  },
+  {
+    "sender": "Me",
+    "text": "Dp nai hain kya?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Bola toh😂"
+  },
+  {
+    "sender": "Me",
+    "text": "WAIT DADAS TOO"
+  },
+  {
+    "sender": "Dada",
+    "text": "14th January"
+  },
+  {
+    "sender": "Didi",
+    "text": "Kaushal and stalker kya?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Slippers"
+  },
+  {
+    "sender": "Me",
+    "text": "Gas ka tablet hain?"
+  },
+  {
+    "sender": "Me",
+    "text": "site:www.uniqlo.com inurl:admin OR inurl:login OR inurl:wp-admin"
+  },
+  {
+    "sender": "Dada",
+    "text": "POLL:\nFemale Candidates:\nOPTION: Mouli Mukherjee (21 votes)\nOPTION: Diptimayee Patra (21 votes)\nOPTION: Siddhi Bathwal (21 votes)\nOPTION: Ashna Islam (12 votes)\nOPTION: Shyama Barman (3 votes)\nOPTION: Arista Seth (10 votes)\nOPTION: Tanisha Bagchi (5 votes)"
+  },
+  {
+    "sender": "Dada",
+    "text": "Nahi nahi kuch aur bhi hai socho thoda"
+  },
+  {
+    "sender": "Dada",
+    "text": "U, me, sparsho, DK, shagufta"
+  },
+  {
+    "sender": "Me",
+    "text": "I have been blamed worse and faced worse\nSo chill 😎"
+  },
+  {
+    "sender": "Dada",
+    "text": "We missing u as well"
+  },
+  {
+    "sender": "Me",
+    "text": "ar cafeteria r"
+  },
+  {
+    "sender": "Dada",
+    "text": "Same question 🤔"
+  },
+  {
+    "sender": "Me",
+    "text": "no temp due to osudh"
+  },
+  {
+    "sender": "Dada",
+    "text": "Pls yaad se de dena"
+  },
+  {
+    "sender": "Me",
+    "text": "i can stay well in a poor village with a good family"
+  },
+  {
+    "sender": "Me",
+    "text": "9 toh jiwan meh nai dikha"
+  },
+  {
+    "sender": "Me",
+    "text": "i saved those thai pepsi fifa one"
+  },
+  {
+    "sender": "Me",
+    "text": "Continent"
+  },
+  {
+    "sender": "Dada",
+    "text": "Real🤤"
+  },
+  {
+    "sender": "Me",
+    "text": "pollution air makes me sick"
+  },
+  {
+    "sender": "Dada",
+    "text": "Egulo ki bhai"
+  },
+  {
+    "sender": "Dada",
+    "text": "Ei pic tar porei close kore form ta khulechilan"
+  },
+  {
+    "sender": "Me",
+    "text": "Comet"
+  },
+  {
+    "sender": "Dada",
+    "text": "Aree airport ka dirtiness se hi lag raha tha india aa gaya"
+  },
+  {
+    "sender": "Didi",
+    "text": "kal jas chole ay"
+  },
+  {
+    "sender": "Dada",
+    "text": "Then toh tui and sparsho eksathe ses kor oder stock"
+  },
+  {
+    "sender": "Dada",
+    "text": "Mast h"
+  },
+  {
+    "sender": "Dada",
+    "text": "Sunglasses"
+  },
+  {
+    "sender": "Me",
+    "text": "remixed by dj"
+  },
+  {
+    "sender": "Me",
+    "text": "Ik moja krchilam dadar sathe 🤭🤭🫢"
+  },
+  {
+    "sender": "Me",
+    "text": "pilizu"
+  },
+  {
+    "sender": "Me",
+    "text": "didi kya kr rahi thi"
+  },
+  {
+    "sender": "Dada",
+    "text": "Bhai sahab broooooo\nMereko rulane ka plan h?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Na na moments are the best souvenir 😌"
+  },
+  {
+    "sender": "Didi",
+    "text": "holo?"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tum 16 pe full fan kyu chala rakha h?!🤣"
+  },
+  {
+    "sender": "Dada",
+    "text": "Which floor which shop?"
+  },
+  {
+    "sender": "Me",
+    "text": "Leopard"
+  },
+  {
+    "sender": "Dada",
+    "text": "LinkedIn masterclass incoming"
+  },
+  {
+    "sender": "Me",
+    "text": "ha montage"
+  },
+  {
+    "sender": "Dada",
+    "text": "Pandan custard filled bread kha raha hu abhi"
+  },
+  {
+    "sender": "Me",
+    "text": "https://zg0d-ff.github.io/ZG0D-FF/aidata/aidata.html"
+  },
+  {
+    "sender": "Dada",
+    "text": "Oi bottle takeo miss korbo amaye hydrated rakhto etodin"
+  },
+  {
+    "sender": "Didi",
+    "text": "ay ay"
+  },
+  {
+    "sender": "Me",
+    "text": "Amra 6 jon"
+  },
+  {
+    "sender": "Me",
+    "text": "u r lucky it didnt get leaked"
+  },
+  {
+    "sender": "Me",
+    "text": "location: https://maps.google.com/?q=12.9316137,100.880965"
+  },
+  {
+    "sender": "Me",
+    "text": "baggage claim e"
+  },
+  {
+    "sender": "Dada",
+    "text": "They are dumb to leave u"
+  },
+  {
+    "sender": "Dada",
+    "text": "Oder bol \"get better\""
+  },
+  {
+    "sender": "Me",
+    "text": "i dont want world tour"
+  },
+  {
+    "sender": "Me",
+    "text": "Headphones 🎧🎧"
+  },
+  {
+    "sender": "Me",
+    "text": "i am feeling nervous now"
+  },
+  {
+    "sender": "Me",
+    "text": "ekdom bhai haina"
+  },
+  {
+    "sender": "Dada",
+    "text": "Bhai amar moo ping chai"
+  },
+  {
+    "sender": "Me",
+    "text": "sparsho da er mukher exp dekho"
+  },
+  {
+    "sender": "Dada",
+    "text": "Tao Bin"
+  },
+  {
+    "sender": "Me",
+    "text": "Whisper"
+  },
+  {
+    "sender": "Dada",
+    "text": "U like the gay bottle?😨"
+  },
+  {
+    "sender": "Dada",
+    "text": "Okay bro thanks"
+  },
+  {
+    "sender": "Me",
+    "text": "DATA ANALYTICS"
+  },
+  {
+    "sender": "Dada",
+    "text": "Voter names have been hidden so cast your votes freely, promptly and responsibly!"
+  },
+  {
+    "sender": "Dada",
+    "text": "Amra sobai okhane meet korbo"
+  },
+  {
+    "sender": "Me",
+    "text": "DIDI LOOKIN HAPPY"
+  },
+  {
+    "sender": "Me",
+    "text": "gola byatha"
+  }
+];
