@@ -3,13 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="description" content="A stunning visual journal of our unforgettable Thailand trip — Dada, Didi &amp; Me at AIT.">
   <title>Thailand Trip Journal — Dada, Didi & Me</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
   <script src="data.js?v=2"></script>
   <script src="messages.js?v=1"></script>
+  <!-- Lenis Smooth Scroll CDN -->
+  <script src="https://unpkg.com/lenis@1.1.2/dist/lenis.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -736,6 +742,64 @@
       .layout-masonry { columns: 1; }
       .diagonal-inner { grid-template-columns: 1fr; }
       .polaroid-item { width: 140px; }
+      .mag-item { flex-direction: column !important; }
+      .stack-card { height: 50vh; }
+    }
+    /* ========== BENTO-SCROLLY LAYOUT ========== */
+    .layout-bento-scrolly { position: relative; width: 100%; margin-top: 4rem; }
+    .bento-bg-container { position: sticky; top: 0; width: 100%; height: 100vh; z-index: 0; overflow: hidden; }
+    .bento-bg-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1); filter: brightness(0.6) blur(2px); }
+    .bento-bg-img.active { opacity: 1; }
+    .bento-grid-container { position: relative; z-index: 1; padding: 5rem 2rem; max-width: 1200px; margin: -50vh auto 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); grid-auto-rows: 250px; gap: 1.5rem; }
+    .bento-card { position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); transform: translateY(30px); opacity: 0.9; transition: transform 0.6s ease, opacity 0.6s ease, box-shadow 0.3s; cursor: pointer; }
+    .bento-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 25px 45px rgba(0,0,0,0.6); opacity: 1; z-index: 10; }
+    .bento-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .bento-card:hover img { transform: scale(1.05); }
+    .bento-card .bento-caption { position: absolute; bottom: 0; left: 0; width: 100%; padding: 1.5rem 1rem 1rem 1rem; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); color: #fff; font-size: 0.9rem; font-weight: 500; transform: translateY(10px); opacity: 0; transition: all 0.4s; }
+    .bento-card:hover .bento-caption { transform: translateY(0); opacity: 1; }
+    .bento-card.tall { grid-row: span 2; }
+    .bento-card.wide { grid-column: span 2; }
+    .bento-card.large { grid-column: span 2; grid-row: span 2; }
+
+    /* ========== BONUS MIX LAYOUT ========== */
+    .layout-bonus-mix { position: relative; width: 100%; padding: 8rem 0; background: #0f1016; overflow: hidden; margin-top: 4rem; border-radius: 30px; box-shadow: inset 0 0 100px rgba(0,0,0,0.8); }
+    .bonus-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4rem 50vw; gap: 6rem; scrollbar-width: none; -ms-overflow-style: none; align-items: center; }
+    .bonus-track::-webkit-scrollbar { display: none; }
+    .bonus-polaroid { flex: 0 0 auto; width: 340px; height: 420px; background: #fff; padding: 15px 15px 80px 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); scroll-snap-align: center; position: relative; transform: scale(0.8) rotate(-10deg); filter: blur(5px) brightness(0.4); transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.8s ease, box-shadow 0.8s ease; cursor: pointer; }
+    .bonus-polaroid:nth-child(even) { transform: scale(0.75) rotate(15deg) translateY(30px); }
+    .bonus-polaroid:nth-child(3n) { transform: scale(0.85) rotate(-5deg) translateY(-20px); }
+    .bonus-polaroid.spotlight-active { transform: scale(1.15) rotate(0deg) !important; filter: blur(0) brightness(1.1); box-shadow: 0 30px 80px rgba(0,0,0,1), 0 0 50px rgba(255,255,255,0.15); z-index: 10; }
+    .bonus-polaroid img { width: 100%; height: 100%; object-fit: cover; background: #222; }
+    .bonus-caption { position: absolute; bottom: 20px; left: 20px; right: 20px; text-align: center; font-family: 'Caveat', cursive; font-size: 1.6rem; font-weight: 700; color: #111; opacity: 0; transition: opacity 0.4s ease 0.3s; line-height: 1.2; }
+    .bonus-polaroid.spotlight-active .bonus-caption { opacity: 1; }
+    .bonus-hint { position: absolute; top: 2rem; width: 100%; text-align: center; color: rgba(255,255,255,0.4); font-size: 1rem; letter-spacing: 4px; text-transform: uppercase; font-weight: 600; }
+
+    /* ========== MAGAZINE & STACK LAYOUT ========== */
+    .layout-magazine-stack { position: relative; width: 100%; padding: 4rem 2rem; }
+    .mag-section { display: flex; flex-direction: column; gap: 6rem; max-width: 1000px; margin: 0 auto 8rem auto; }
+    .mag-item { display: flex; gap: 3rem; align-items: center; }
+    .mag-item:nth-child(even) { flex-direction: row-reverse; }
+    .mag-img-container { flex: 1.2; position: relative; }
+    .mag-img { border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); width: 100%; height: 450px; object-fit: cover; transition: transform 0.4s; cursor: pointer; }
+    .mag-img:hover { transform: scale(1.03); }
+    .mag-text { flex: 1; font-family: 'Inter', sans-serif; font-size: 1.2rem; line-height: 1.8; color: #fff; padding: 2.5rem; background: rgba(0,0,0,0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 15px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+    .stack-section { position: relative; max-width: 800px; margin: 0 auto; padding-bottom: 20vh; }
+    .stack-card { position: sticky; top: 15vh; height: 60vh; margin-bottom: 40vh; border-radius: 20px; box-shadow: 0 -15px 50px rgba(0,0,0,0.8); overflow: hidden; transform-origin: top center; transition: transform 0.3s; cursor: pointer; }
+    .stack-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .stack-card:hover img { transform: scale(1.05); }
+    .stack-caption { position: absolute; bottom: 0; left: 0; width: 100%; padding: 5rem 2rem 2rem 2rem; background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.5), transparent); color: #fff; font-size: 1.3rem; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.6); }
+
+    @media(max-width: 768px) {
+      .bento-grid-container { grid-template-columns: 1fr; margin-top: -80vh; padding: 2rem 1rem; }
+      .bento-card.wide, .bento-card.large { grid-column: span 1; }
+      .bento-card { transform: translateY(15px); }
+    }
+    /* ========== GLOBAL AUTOFIT OVERRIDE ========== */
+    /* Ensure absolutely no images are cropped anywhere per user request */
+    img:not(.bento-bg-img) {
+      object-fit: contain !important;
+      background: rgba(10, 12, 18, 0.95) !important;
     }
   </style>
 </head>
@@ -807,9 +871,10 @@
       { layout: 'masonry', label: 'The Bootcamp Begins', gradient: ['#8ECAE6','#2EC4B6'] },
       { layout: 'cinematic', label: 'Quiet Moments', gradient: ['#2D3047','#1B2838'] },
       { layout: 'mixed', label: 'The Grand Finale', gradient: ['#E8998D','#C4A8D0'] },
-      { layout: 'timeline', label: 'The Final Tech Grind', gradient: ['#FF8A65','#AD1457'] },
-      { layout: 'masonry', label: 'Bonus Round', gradient: ['#7986CB','#3949AB'] },
-      { layout: 'cinematic', label: 'One More Day', gradient: ['#4DB6AC','#00695C'] },
+      { layout: 'magazine-stack', label: 'The Final Tech Grind', gradient: ['#FF8A65','#AD1457'] },
+      { layout: 'bonus-mix', label: 'Bonus Round', gradient: ['#7986CB','#3949AB'] },
+      { layout: 'bento-scrolly', label: 'BKK City & ICONSIAM', gradient: ['#F9A826','#3F51B5'] },
+      { layout: 'cinematic', label: 'One More Day', gradient: ['#4DB6AC','#00695C'] }
     ];
 
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -854,6 +919,18 @@
         </div>`;
       return div;
     }
+
+    /* ========== GLOBAL IMAGE ERROR HANDLER ========== */
+    // If the network is slow or an image fails to load, gracefully show a message without breaking the layout
+    document.addEventListener('error', function(e) {
+      if (e.target.tagName && e.target.tagName.toLowerCase() === 'img') {
+        if (!e.target.dataset.fallbackApplied) {
+          e.target.dataset.fallbackApplied = 'true';
+          const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='#1a1a24'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='35' fill='#888'>Photo is safely saved!</text><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='25' fill='#666'>Network is just slow 📶</text></svg>`;
+          e.target.src = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+        }
+      }
+    }, true);
 
     /* ========== LIGHTBOX ========== */
     function openLightbox(src) { lightboxImg.src = src; lightbox.classList.add('active'); document.body.style.overflow = 'hidden'; }
@@ -905,7 +982,6 @@
     const bubbleSenders = ['Me','Dada','Didi'];
     let bIdx = 0;
     function createBubble() {
-      // Check if waMessages is loaded
       if (typeof waMessages === 'undefined' || waMessages.length === 0) {
         const sender = bubbleSenders[bIdx % 3]; bIdx++;
         const el = document.createElement('div'); el.className = 'wa-bubble-standalone';
@@ -933,7 +1009,6 @@
 
     /* ========== LAYOUT BUILDERS ========== */
 
-    // 1. Timeline
     function buildTimeline(events, container) {
       const wrap = document.createElement('div'); wrap.className = 'layout-timeline';
       const line = document.createElement('div'); line.className = 'timeline-line';
@@ -959,7 +1034,6 @@
       container.appendChild(wrap);
     }
 
-    // 2. Masonry
     function buildMasonry(events, container) {
       const wrap = document.createElement('div'); wrap.className = 'layout-masonry';
       let photoCount = 0;
@@ -980,13 +1054,13 @@
       container.appendChild(wrap);
     }
 
-    // 3. Cinematic
     function buildCinematic(events, container) {
       const wrap = document.createElement('div'); wrap.className = 'layout-cinematic';
       events.forEach(ev => {
         ev.photos.forEach(p => {
           const block = document.createElement('div'); block.className = 'cinema-block';
-          const img = document.createElement('img'); img.src = p.src; img.alt = p.caption; img.loading = 'lazy';
+          const img = document.createElement('img'); img.className = 'parallax-img'; img.src = p.src; img.alt = p.caption; img.loading = 'lazy';
+          img.style.cursor = 'pointer';
           img.addEventListener('click', () => openLightbox(p.src));
           block.appendChild(img);
           const overlay = document.createElement('div'); overlay.className = 'cinema-overlay'; block.appendChild(overlay);
@@ -997,7 +1071,6 @@
       container.appendChild(wrap);
     }
 
-    // 4. Mixed (Day 4) — cycle through diagonal, hscroll, stacked, polaroid
     function buildMixed(events, container) {
       const chunkSize = Math.ceil(events.length / 4);
       const chunks = [];
@@ -1081,6 +1154,170 @@
       container.appendChild(wrap);
     }
 
+    function buildBentoScrolly(events, container) {
+      const wrap = document.createElement('div'); wrap.className = 'layout-bento-scrolly';
+      const bgContainer = document.createElement('div'); bgContainer.className = 'bento-bg-container';
+      const gridContainer = document.createElement('div'); gridContainer.className = 'bento-grid-container';
+
+      const bgImages = [];
+      let i = 0;
+
+      events.forEach(ev => {
+        ev.photos.forEach(p => {
+          let bgImg = null;
+          if (i < 20) {
+            bgImg = document.createElement('img');
+            bgImg.className = 'bento-bg-img';
+            bgImg.src = p.src;
+            bgImg.loading = 'lazy';
+            bgContainer.appendChild(bgImg);
+            bgImages.push(bgImg);
+          }
+
+          const card = document.createElement('div');
+          const r = Math.random();
+          if (r > 0.85) card.className = 'bento-card large';
+          else if (r > 0.65) card.className = 'bento-card wide';
+          else if (r > 0.45) card.className = 'bento-card tall';
+          else card.className = 'bento-card';
+
+          card.innerHTML = `<img src="${p.src}" alt="photo" loading="lazy">
+                            <div class="bento-caption">${p.caption}</div>`;
+          card.addEventListener('click', () => openLightbox(p.src));
+          
+          if (bgImg) {
+            card.dataset.bgIndex = bgImages.length - 1;
+          }
+          gridContainer.appendChild(card);
+          i++;
+        });
+      });
+
+      wrap.appendChild(bgContainer);
+      wrap.appendChild(gridContainer);
+      container.appendChild(wrap);
+
+      setTimeout(() => {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const idx = entry.target.dataset.bgIndex;
+              if (idx !== undefined) {
+                bgImages.forEach(img => img.classList.remove('active'));
+                bgImages[idx].classList.add('active');
+              }
+            }
+          });
+        }, { threshold: 0.5 });
+
+        gridContainer.querySelectorAll('.bento-card').forEach(card => {
+          if (card.dataset.bgIndex !== undefined) observer.observe(card);
+        });
+        if (bgImages.length > 0) bgImages[0].classList.add('active');
+      }, 500);
+    }
+
+    // 6. Bonus Mix (Polaroid Scatter + Film Reel + Spotlight)
+    function buildBonusMix(events, container) {
+      const wrap = document.createElement('div'); wrap.className = 'layout-bonus-mix';
+      const hint = document.createElement('div'); hint.className = 'bonus-hint'; hint.textContent = '← Scroll Horizontally →';
+      const track = document.createElement('div'); track.className = 'bonus-track';
+      
+      // Horizontal Scroll Hijack Logic (Reverts to vertical when at ends)
+      track.addEventListener('wheel', (evt) => {
+        const atLeft = track.scrollLeft === 0;
+        const atRight = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+
+        if (evt.deltaY > 0 && !atRight) {
+          evt.preventDefault();
+          track.scrollLeft += evt.deltaY * 2.5;
+        } else if (evt.deltaY < 0 && !atLeft) {
+          evt.preventDefault();
+          track.scrollLeft += evt.deltaY * 2.5;
+        }
+      }, { passive: false });
+
+      events.forEach(ev => {
+        ev.photos.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'bonus-polaroid';
+          
+          card.innerHTML = `<img src="${p.src}" alt="photo" loading="lazy">
+                            <div class="bonus-caption">${p.caption.substring(0, 45)}${p.caption.length > 45 ? '...' : ''}</div>`;
+                            
+          card.addEventListener('click', () => openLightbox(p.src));
+          track.appendChild(card);
+        });
+      });
+
+      wrap.appendChild(hint);
+      wrap.appendChild(track);
+      container.appendChild(wrap);
+
+      // Intersection Observer horizontally for the Spotlight effect
+      setTimeout(() => {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('spotlight-active');
+            } else {
+              entry.target.classList.remove('spotlight-active');
+            }
+          });
+        }, { 
+          root: track, 
+          threshold: 0.8 // Card must be 80% visible inside the track to snap
+        });
+
+        track.querySelectorAll('.bonus-polaroid').forEach(card => observer.observe(card));
+      }, 500);
+    }
+
+    // 7. Magazine & Sticky Stack Hybrid
+    function buildMagazineStack(events, container) {
+      const wrap = document.createElement('div'); wrap.className = 'layout-magazine-stack';
+      
+      let allPhotos = [];
+      events.forEach(ev => { allPhotos = allPhotos.concat(ev.photos); });
+      
+      const half = Math.floor(allPhotos.length / 2);
+      const magPhotos = allPhotos.slice(0, half);
+      const stackPhotos = allPhotos.slice(half);
+
+      // Part 1: Magazine Spread
+      if (magPhotos.length > 0) {
+        const magSection = document.createElement('div'); magSection.className = 'mag-section';
+        magPhotos.forEach(p => {
+          const item = document.createElement('div'); item.className = 'mag-item';
+          item.innerHTML = `
+            <div class="mag-img-container">
+              <img src="${p.src}" class="mag-img" loading="lazy" onclick="openLightbox('${p.src}')">
+            </div>
+            <div class="mag-text">${p.caption}</div>
+          `;
+          magSection.appendChild(item);
+        });
+        wrap.appendChild(magSection);
+      }
+
+      // Part 2: Sticky Stack
+      if (stackPhotos.length > 0) {
+        const stackSection = document.createElement('div'); stackSection.className = 'stack-section';
+        stackPhotos.forEach((p, idx) => {
+          const card = document.createElement('div'); card.className = 'stack-card';
+          // All cards stick to the exact same top position to perfectly wipe over each other (no barcode!)
+          card.innerHTML = `
+            <img src="${p.src}" loading="lazy" onclick="openLightbox('${p.src}')">
+            <div class="stack-caption">${p.caption}</div>
+          `;
+          stackSection.appendChild(card);
+        });
+        wrap.appendChild(stackSection);
+      }
+      
+      container.appendChild(wrap);
+    }
+
     /* ========== MAIN BUILD ========== */
     function build() {
       if (typeof tripData === 'undefined') {
@@ -1128,6 +1365,9 @@
         else if (cfg.layout === 'masonry') buildMasonry(events, section);
         else if (cfg.layout === 'cinematic') buildCinematic(events, section);
         else if (cfg.layout === 'mixed') buildMixed(events, section);
+        else if (cfg.layout === 'bento-scrolly') buildBentoScrolly(events, section);
+        else if (cfg.layout === 'bonus-mix') buildBonusMix(events, section);
+        else if (cfg.layout === 'magazine-stack') buildMagazineStack(events, section);
 
         root.appendChild(section);
       });
@@ -1148,8 +1388,32 @@
     }
 
     /* ========== INIT ========== */
+    // Pre-cache first 10 images for instant zero-latency loading
+    function preloadImages() {
+      if (typeof tripData !== 'undefined') {
+        let loaded = 0;
+        for (const ev of tripData) {
+          for (const p of ev.photos) {
+            if (loaded >= 10) return;
+            const img = new Image();
+            img.src = p.src;
+            loaded++;
+          }
+        }
+      }
+    }
+    preloadImages();
+
     build();
     observe();
+
+    // Initialize Lenis Smooth Scroll
+    const lenis = new Lenis();
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
 
     // Populate Story Hints with unique punchy quotes
     if (typeof waMessages !== 'undefined' && waMessages.length > 0) {
