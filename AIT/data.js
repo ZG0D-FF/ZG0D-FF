@@ -1304,5 +1304,250 @@ const tripData = [
         "caption": "The airport arrival crew looking strong! Can't wait to ditch these heavy bags and finally track down some authentic street food."
       }
     ]
+  },
+  {
+    "time": "2026-07-05 at 10.48.23 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.23 AM.jpeg",
+        "caption": "Early morning airport run! Catching that stunning, fiery Thailand sunrise before we even had our coffee."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.48.24 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.24 AM (1).jpeg",
+        "caption": "The sky is putting on a show for us! Honestly, waking up at this ungodly hour was almost worth it just for this view."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.24 AM (2).jpeg",
+        "caption": "Final group photo before departure! Everyone looks equally exhausted and excited. Didi and Dada actually managed to stand still for a second."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.24 AM (3).jpeg",
+        "caption": "Let the journey begin! Navigating the massive airport terminal with the whole squad. So many bags, so little time!"
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.24 AM.jpeg",
+        "caption": "That red sky is just unreal. Thailand is definitely giving us a dramatic send-off today!"
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.48.25 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.25 AM (1).jpeg",
+        "caption": "Breakfast with a view! Sneaking in one last peaceful moment by the fountain before the travel chaos fully begins."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.25 AM (2).jpeg",
+        "caption": "Another angle of this amazing fountain view. Definitely going to miss this tranquil tropical vibe!"
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.48.25 AM.jpeg",
+        "caption": "The absolute chaos of getting everyone organized for the big group shot. Dada trying to wrangle us while Didi is probably already checking out the duty-free shops."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.13 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.13 AM.jpeg",
+        "caption": "Hitting the road! Leaving the city behind and taking in the sprawling skyline from the highway."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.14 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.14 AM (1).jpeg",
+        "caption": "Ominous clouds rolling in as we wait by the fountain. Hoping the rain holds off just a little bit longer! Ready for Batch 1!"
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.14 AM (2).jpeg",
+        "caption": "Gorgeous temple gates right in the middle of the bustling streets! The architecture here never stops amazing us."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.14 AM (3).jpeg",
+        "caption": "Taking in the views along the Chao Phraya River. Bangkok's skyline mixing with traditional structures is a vibe you just can't beat."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.14 AM.jpeg",
+        "caption": "Epic mirror selfie check! Trying to wrangle Dada and Didi and the whole squad for this futuristic shot was a total mission."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.15 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.15 AM (1).jpeg",
+        "caption": "Found our way to ICS for some treats! Didi is already speed-walking to figure out which food stall to hit first."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.15 AM (2).jpeg",
+        "caption": "Spotting some serious luxury outside ICONLUXE. Pretty sure Dada is ready to trade his walking shoes for this ride!"
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.15 AM.jpeg",
+        "caption": "Classic Chinatown energy! The massive signs, the gold shops, and the iconic web of street wires—exactly what we came to see."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.16 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.16 AM (1).jpeg",
+        "caption": "Caught a mesmerizing sun halo today! Even the sky in Thailand is putting on a spectacular show for us."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.16 AM (2).jpeg",
+        "caption": "Bangkok by night just hits different. Strolling along the pier with the city lights reflecting on the water. Perfect evening!"
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.16 AM.jpeg",
+        "caption": "Plushie heaven! Had to physically drag Didi away before she bought every single one of these adorable souvenirs."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.17 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.17 AM (1).jpeg",
+        "caption": "Views stretching out for miles. Taking a moment to breathe in the sprawling cityscape under these gorgeous clouds before our next adventure!"
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.17 AM (2).jpeg",
+        "caption": "Admiring the wild architecture in Bangkok! This building under construction looks like a massive spaceship crash-landed in the city. Dada is definitely taking notes for his dream house."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.17 AM.jpeg",
+        "caption": "Stumbled upon a massive collection of football figures! Had to physically restrain Dada from buying the entire Real Madrid shelf."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.18 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.18 AM (1).jpeg",
+        "caption": "Another stunning view of the Chao Phraya River! Didi and I are just soaking in the breeze while Dada takes a hundred panoramic shots of the skyline."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.18 AM (2).jpeg",
+        "caption": "Navigating the Bangkok transit system like absolute pros! Waiting under the skytrain tracks and marveling at how this city blends the concrete jungle with perfectly blue skies."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.18 AM (3).jpeg",
+        "caption": "Made it to the legendary ICONSIAM! Time for some serious shopping and much-needed AC breaks. Didi is already plotting our route straight to the food court."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.18 AM.jpeg",
+        "caption": "Found this super cool indoor garden setup with futuristic grow lights. Didi is getting major inspiration to upgrade her houseplant collection back home!"
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.19 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.19 AM (1).jpeg",
+        "caption": "Geek out moment! Found an epic Iron Man display and Dada is officially in Marvel heaven. He claims it's just \"window shopping,\" but we'll see!"
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.19 AM.jpeg",
+        "caption": "The view from inside ICONSIAM is just as spectacular as the outside. Loving how they integrate these beautiful art pieces right into the massive floor-to-ceiling windows!"
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.21 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.21 AM (1).jpeg",
+        "caption": "Obsessed with the cozy aesthetic of these traditional woven bamboo lamps! The warm lighting is everything, and Didi is currently trying to figure out how to fit one in her suitcase."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.21 AM (2).jpeg",
+        "caption": "Absolutely captivated by this display of traditional Thai Khon masks. The intricate details and vibrant gold are just stunning! Taking a little cultural detour on our shopping spree."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.22 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.22 AM.jpeg",
+        "caption": "Beautiful festive lights framing the riverfront at ICONSIAM. The night energy here in Bangkok is just electric!"
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.23 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.23 AM.jpeg",
+        "caption": "Another angle of this gorgeous night skyline. Dada tried to get a solo shot here, but the photobombing crowd had other plans!"
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.32 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.32 AM.jpeg",
+        "caption": "Taking a quick break from tourist mode for a session in this massive auditorium. Still finding time to goof around before the event starts!"
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.33 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.33 AM (1).jpeg",
+        "caption": "Stumbled upon this beautifully decorated Thai restaurant inside the mall. Didi is already inspecting the menu from a distance to plan our next meal."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.33 AM (2).jpeg",
+        "caption": "Mall architecture but make it high art! Looking up at these incredible golden leaves suspended from the ceiling. ICONSIAM is basically a museum."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.33 AM (3).jpeg",
+        "caption": "Spotted this magnificent multi-headed Erawan elephant statue on our explorations today. The details carved into the white stone are breathtaking under the cloudy sky."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.33 AM.jpeg",
+        "caption": "ICONSIAM in all its glittering glory! This place looks like a glowing golden fortress at night, luxury shopping at its finest."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.34 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.34 AM.jpeg",
+        "caption": "The ultimate Thai feast! We definitely went overboard at the buffet. Dada and Didi are strategically planning their dessert round while I conquer the seafood plate."
+      }
+    ]
+  },
+  {
+    "time": "2026-07-05 at 10.50.46 AM",
+    "photos": [
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.46 AM (1).jpeg",
+        "caption": "Group shot outside the Asian Institute of Technology! Channeling our inner academics for the day before getting back to full vacation mode."
+      },
+      {
+        "src": "./MISC/WhatsApp Image 2026-07-05 at 10.50.46 AM.jpeg",
+        "caption": "The whole squad together at AIT! So grateful to share these awesome experiences and soak in all the different sides of Thailand."
+      }
+    ]
   }
 ];
