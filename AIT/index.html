@@ -11,7 +11,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap">
+  
+  <!-- CesiumJS 3D Engine -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
   <script src="data.js?v=2"></script>
   <script src="messages.js?v=1"></script>
   <!-- Lenis Smooth Scroll CDN -->
@@ -801,6 +806,15 @@
       object-fit: contain !important;
       background: rgba(10, 12, 18, 0.95) !important;
     }
+    /* ========== MAP SECTION ========== */
+    .map-header { text-align: center; font-size: 2.5rem; font-weight: 700; margin-top: 5rem; margin-bottom: 2rem; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+    #cesiumContainer { width: 100%; height: 60vh; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); filter: drop-shadow(0 0 30px rgba(0,0,0,0.8)); z-index: 10; overflow: hidden; position: relative; }
+    /* Hide annoying Cesium credits for clean UI */
+    .cesium-viewer-bottom { display: none !important; }
+    /* Custom Zoom Controls */
+    .cesium-zoom-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 5px; z-index: 100; }
+    .cesium-zoom-btn { width: 40px; height: 40px; background: rgba(0,0,0,0.7); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-size: 24px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); transition: 0.2s; }
+    .cesium-zoom-btn:hover { background: rgba(255,255,255,0.2); }
   </style>
 </head>
 <body>
@@ -832,7 +846,16 @@
   </section>
 
   <!-- ===== DYNAMIC CONTENT ===== -->
-  <div id="app-root"></div>
+  <div id="gallery-root"></div>
+
+  <!-- AIT Map Section -->
+  <div class="map-header">The AIT Campus</div>
+  <div id="cesiumContainer">
+    <div class="cesium-zoom-controls">
+      <button class="cesium-zoom-btn" id="zoomInBtn">+</button>
+      <button class="cesium-zoom-btn" id="zoomOutBtn">-</button>
+    </div>
+  </div>
 
   <!-- ===== LIGHTBOX ===== -->
   <div id="lightbox">
@@ -849,7 +872,7 @@
   (function () {
     'use strict';
 
-    const root = document.getElementById('app-root');
+    const root = document.getElementById('gallery-root');
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     const lightboxClose = document.getElementById('lightbox-close');
@@ -921,7 +944,6 @@
     }
 
     /* ========== GLOBAL IMAGE ERROR HANDLER ========== */
-    // If the network is slow or an image fails to load, gracefully show a message without breaking the layout
     document.addEventListener('error', function(e) {
       if (e.target.tagName && e.target.tagName.toLowerCase() === 'img') {
         if (!e.target.dataset.fallbackApplied) {
@@ -1217,13 +1239,11 @@
       }, 500);
     }
 
-    // 6. Bonus Mix (Polaroid Scatter + Film Reel + Spotlight)
     function buildBonusMix(events, container) {
       const wrap = document.createElement('div'); wrap.className = 'layout-bonus-mix';
       const hint = document.createElement('div'); hint.className = 'bonus-hint'; hint.textContent = '← Scroll Horizontally →';
       const track = document.createElement('div'); track.className = 'bonus-track';
       
-      // Horizontal Scroll Hijack Logic (Reverts to vertical when at ends)
       track.addEventListener('wheel', (evt) => {
         const atLeft = track.scrollLeft === 0;
         const atRight = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
@@ -1254,7 +1274,6 @@
       wrap.appendChild(track);
       container.appendChild(wrap);
 
-      // Intersection Observer horizontally for the Spotlight effect
       setTimeout(() => {
         const observer = new IntersectionObserver((entries) => {
           entries.forEach(entry => {
@@ -1266,14 +1285,13 @@
           });
         }, { 
           root: track, 
-          threshold: 0.8 // Card must be 80% visible inside the track to snap
+          threshold: 0.8 
         });
 
         track.querySelectorAll('.bonus-polaroid').forEach(card => observer.observe(card));
       }, 500);
     }
 
-    // 7. Magazine & Sticky Stack Hybrid
     function buildMagazineStack(events, container) {
       const wrap = document.createElement('div'); wrap.className = 'layout-magazine-stack';
       
@@ -1284,7 +1302,6 @@
       const magPhotos = allPhotos.slice(0, half);
       const stackPhotos = allPhotos.slice(half);
 
-      // Part 1: Magazine Spread
       if (magPhotos.length > 0) {
         const magSection = document.createElement('div'); magSection.className = 'mag-section';
         magPhotos.forEach(p => {
@@ -1300,12 +1317,10 @@
         wrap.appendChild(magSection);
       }
 
-      // Part 2: Sticky Stack
       if (stackPhotos.length > 0) {
         const stackSection = document.createElement('div'); stackSection.className = 'stack-section';
         stackPhotos.forEach((p, idx) => {
           const card = document.createElement('div'); card.className = 'stack-card';
-          // All cards stick to the exact same top position to perfectly wipe over each other (no barcode!)
           card.innerHTML = `
             <img src="${p.src}" loading="lazy" onclick="openLightbox('${p.src}')">
             <div class="stack-caption">${p.caption}</div>
@@ -1327,15 +1342,14 @@
       const grouped = groupByDate(tripData);
       const dayDates = Array.from(grouped.keys());
 
-      // Color pairs for wave transitions
       const wavePairs = [
-        ['#FFF8EE', '#FDDCB5'],    // before Day 1
-        ['#FFE8CC', '#E0F0EA'],     // Day 1 → Day 2
-        ['#8ECAE6', '#2D3047'],     // Day 2 → Day 3
-        ['#1B2838', '#F9D5C2'],     // Day 3 → Day 4
-        ['#1A936F', '#FFE0B2'],     // Day 4 → Day 5
-        ['#AD1457', '#E8EAF6'],     // Day 5 → Day 6
-        ['#3949AB', '#E0F2F1'],     // Day 6 → Day 7
+        ['#FFF8EE', '#FDDCB5'],
+        ['#FFE8CC', '#E0F0EA'],
+        ['#8ECAE6', '#2D3047'],
+        ['#1B2838', '#F9D5C2'],
+        ['#1A936F', '#FFE0B2'],
+        ['#AD1457', '#E8EAF6'],
+        ['#3949AB', '#E0F2F1'],
       ];
 
       const firstDate = new Date(dayDates[0] + 'T00:00:00');
@@ -1347,20 +1361,16 @@
         const events = grouped.get(dateKey);
         const cfg = dayConfig[i] || dayConfig[0];
 
-        // Wave top
         if (i > 0) {
           root.appendChild(createWave(wavePairs[i][0], wavePairs[i][1], false));
         }
 
-        // Day divider
         root.appendChild(createDayDivider(dayNum, cfg.label, formatDateFull(dateKey), cfg.gradient));
 
-        // Day section wrapper
         const section = document.createElement('div');
         section.className = 'day-section';
         section.setAttribute('data-day', String(dayNum));
 
-        // Build the right layout
         if (cfg.layout === 'timeline') buildTimeline(events, section);
         else if (cfg.layout === 'masonry') buildMasonry(events, section);
         else if (cfg.layout === 'cinematic') buildCinematic(events, section);
@@ -1371,6 +1381,87 @@
 
         root.appendChild(section);
       });
+      
+      initCesium3D();
+    }
+
+    // 8. Initialize Cesium 3D Globe
+    async function initCesium3D() {
+      // Authenticate with the user's token
+      Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhODBhNWM1Zi0yZDUxLTQ3YmUtYWYxYy1jZmYzNmMxMjA3MjIiLCJpZCI6NDUyNTkwLCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODMyMzU3NzV9.hP9BvxQDOUvSMWxTqe_2QJEFyEdjzhkAau3J7bmfRlg';
+
+      try {
+        // Create Viewer and disable annoying UI elements for a clean look
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+          terrain: Cesium.Terrain.fromWorldTerrain(),
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          infoBox: false,
+          navigationHelpButton: false,
+          sceneModePicker: false,
+          fullscreenButton: false,
+          vrButton: false
+        });
+
+        // Add Global 3D Buildings
+        const buildingTileset = await Cesium.createOsmBuildingsAsync();
+        viewer.scene.primitives.add(buildingTileset);
+
+        // Add Custom Pins
+        const pins = [
+          { name: "AIT Conference Center", lon: 100.6145, lat: 14.0790 },
+          { name: "AIT Library", lon: 100.6098, lat: 14.0799 },
+          { name: "AIT Cafeteria", lon: 100.6120, lat: 14.0795 }
+        ];
+
+        pins.forEach(pin => {
+          viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(pin.lon, pin.lat, 10), // slight height so it sits above ground
+            point: { pixelSize: 12, color: Cesium.Color.fromCssColorString('#f39c12'), outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
+            label: { 
+              text: pin.name, 
+              font: '14px Inter', 
+              fillColor: Cesium.Color.WHITE,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE, 
+              outlineWidth: 3, 
+              outlineColor: Cesium.Color.BLACK,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM, 
+              pixelOffset: new Cesium.Cartesian2(0, -15) 
+            }
+          });
+        });
+
+        // Fly the camera directly to AIT Campus in 3D
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(100.614, 14.072, 900), // A bit south and up in the sky
+          orientation: {
+            heading: Cesium.Math.toRadians(0.0), // Looking straight North
+            pitch: Cesium.Math.toRadians(-35.0), // Tilted down at a 35 degree angle
+            roll: 0.0
+          },
+          duration: 3 // 3 second cinematic fly-in
+        });
+
+        // Disable mouse-wheel zoom so the user doesn't get stuck scrolling down the page
+        viewer.scene.screenSpaceCameraController.zoomEventTypes = [
+          Cesium.CameraEventType.PINCH,
+          Cesium.CameraEventType.RIGHT_DRAG
+        ];
+
+        // Wire up custom zoom buttons
+        document.getElementById('zoomInBtn').addEventListener('click', () => {
+          viewer.camera.zoomIn(300);
+        });
+        document.getElementById('zoomOutBtn').addEventListener('click', () => {
+          viewer.camera.zoomOut(300);
+        });
+
+      } catch (error) {
+        console.error("Cesium 3D Map Failed to load:", error);
+      }
     }
 
     /* ========== INTERSECTION OBSERVER ========== */

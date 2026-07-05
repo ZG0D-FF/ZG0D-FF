@@ -1105,7 +1105,7 @@ const tripData = [
     "photos": [
       {
         "src": "./ME AND DADADIDI/WhatsApp Image 2026-07-04 at 9.59.22 PM.jpeg",
-        "caption": "Breaking down the system architecture for Dada. Sometimes you just have to point directly at the screen until the logic finally clicks!"
+        "caption": "Breaking down the system architecture for Debopam. Sometimes you just have to point directly at the screen until the logic finally clicks!"
       }
     ]
   },
@@ -1145,7 +1145,7 @@ const tripData = [
     "photos": [
       {
         "src": "./ME AND DADADIDI/WhatsApp Image 2026-07-04 at 10.10.19 PM.jpeg",
-        "caption": "Stepping away from the screens for some old-school brainstorming. Didi taking charge of the notes while we map out our next strategic move!"
+        "caption": "Stepping away from the screens for some old-school brainstorming. Upasana taking charge of the notes while we map out our next strategic move!"
       }
     ]
   },
@@ -1154,7 +1154,7 @@ const tripData = [
     "photos": [
       {
         "src": "./ME AND DADADIDI/WhatsApp Image 2026-07-04 at 10.10.25 PM.jpeg",
-        "caption": "Finalizing the ultimate project plan! The absolute best bootcamp ideas always happen when Dada, Didi, and the crew crowd around a single piece of paper."
+        "caption": "Finalizing the ultimate project plan! The absolute best bootcamp ideas always happen when Upasana Sneha Me Debo Rupsa Mayukh and crew crowd around a single piece of paper."
       }
     ]
   },
