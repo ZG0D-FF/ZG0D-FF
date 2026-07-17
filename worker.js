@@ -112,7 +112,77 @@ export default {
         }
       });
     }
+    const url = new URL(request.url);
+    if (request.method === "GET" && url.pathname.endsWith("sensor-hud.svg")) {
+      const timeStr = new Date().toISOString().substring(11, 19) + " UTC";
+      const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="250">
+  <style>
+    .bg { fill: #1c1917; stroke: #292524; stroke-width: 2; }
+    .title { font-family: 'Courier New', monospace; font-size: 16px; fill: #34d399; font-weight: bold; }
+    .label { font-family: 'Courier New', monospace; font-size: 12px; fill: #a8a29e; }
+    .val-blue { font-family: 'Courier New', monospace; font-size: 14px; fill: #60a5fa; font-weight: bold; }
+    .val-purple { font-family: 'Courier New', monospace; font-size: 14px; fill: #a78bfa; font-weight: bold; }
+    .val-teal { font-family: 'Courier New', monospace; font-size: 14px; fill: #2dd4bf; font-weight: bold; }
+    .val-pink { font-family: 'Courier New', monospace; font-size: 14px; fill: #f472b6; font-weight: bold; }
+    .val-orange { font-family: 'Courier New', monospace; font-size: 14px; fill: #fb923c; font-weight: bold; }
+    .val-red { font-family: 'Courier New', monospace; font-size: 24px; fill: #ef4444; font-weight: bold; }
+    @keyframes pulse { 0% { opacity: 0.9; } 50% { opacity: 0.2; } 100% { opacity: 0.9; } }
+    .dot { fill: #34d399; animation: pulse 2s infinite; }
+  </style>
+  <rect width="100%" height="100%" rx="8" class="bg" />
+  
+  <text x="20" y="30" class="title">▶ VIEW 1: LEGACY TERMINAL (RAW ADC)</text>
+  <circle cx="560" cy="24" r="5" class="dot" />
+  <line x1="20" y1="45" x2="580" y2="45" stroke="#444" stroke-width="1" />
 
+  <!-- COLUMN 1: SENSORS -->
+  <text x="20" y="70" class="label" style="font-weight:bold;">RAW SENSORS (10-BIT ADC)</text>
+  
+  <text x="20" y="100" class="label">MQ-135 (Air):</text>
+  <text x="130" y="100" class="val-blue">154</text>
+  
+  <text x="20" y="125" class="label">MQ-3 (Alc):</text>
+  <text x="130" y="125" class="val-purple">112</text>
+  
+  <text x="20" y="150" class="label">MQ-4 (Meth):</text>
+  <text x="130" y="150" class="val-teal">89</text>
+
+  <text x="20" y="175" class="label">MQ-2 (Smk):</text>
+  <text x="130" y="175" class="val-pink">105</text>
+
+  <!-- COLUMN 2: CLIMATE -->
+  <text x="230" y="70" class="label" style="font-weight:bold;">LOGISTICS CLIMATE</text>
+  
+  <text x="230" y="100" class="label">TEMP:</text>
+  <text x="280" y="100" class="val-orange">22.4°C</text>
+
+  <text x="230" y="125" class="label">HUMIDITY:</text>
+  <text x="310" y="125" class="val-blue">68%</text>
+  
+  <text x="230" y="155" class="label" style="font-weight:bold;">VIBRATION / CARGO</text>
+
+  <text x="230" y="180" class="label">PIEZO:</text>
+  <text x="290" y="180" class="label" style="fill:#fff; border: 1px solid #555;">STABLE</text>
+
+  <!-- COLUMN 3: RISK -->
+  <rect x="420" y="80" width="160" height="90" fill="#450a0a" stroke="#7f1d1d" rx="4" />
+  <text x="430" y="105" class="label" style="fill:#f87171; font-size:10px; font-weight:bold;">SPOILAGE RISK LEVEL</text>
+  <text x="430" y="125" class="label" style="font-size:10px;">[|||||.....] ASCII GRAPH</text>
+  <text x="430" y="155" class="val-red">14.2%</text>
+
+  <line x1="20" y1="210" x2="580" y2="210" stroke="#444" stroke-width="1" stroke-dasharray="4" />
+  <text x="20" y="230" class="label" style="font-size: 10px;">LAST SYNC: ${timeStr} | IEEE MATHEMATICAL PIPELINE | RASPBERRY PI 4B</text>
+</svg>`;
+      
+      return new Response(svg.trim(), {
+        headers: {
+          "Content-Type": "image/svg+xml; charset=utf-8",
+          "Cache-Control": "no-cache, max-age=0, must-revalidate",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
     try {
       const rawBody = await request.text();
       if (!rawBody || rawBody.trim().length === 0) {
@@ -162,7 +232,17 @@ export default {
       }
 
       // --- [SECURITY UPDATE: FRONTEND SUPABASE PROXY] ---
-if (payload.action === "get_known_users") {
+      if (payload.action === "execute_midnight_protocol") {
+          // Verify security
+          if (payload.cron_secret !== context.env.CRON_SECRET) {
+              return new Response(JSON.stringify({ error: "Unauthorized cron" }), { status: 401 });
+          }
+          // The magic of Cloudflare Workers: run it in the background while instantly returning OK to Vercel
+          context.ctx.waitUntil(executeMidnightProtocol(context));
+          return new Response(JSON.stringify({ status: "Midnight Protocol Initiated" }), { headers: { "Content-Type": "application/json" } });
+      }
+
+      if (payload.action === "get_known_users") {
           let url = `${context.SUPABASE_URL}/rest/v1/jarvis_known_users?order=last_seen.desc`;
           if (!payload.adminToken || payload.adminToken !== (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
               if (payload.visitorName) {
@@ -250,9 +330,9 @@ if (payload.action === "get_known_users") {
       }
 
       const cleanVisitorName = payload.visitorName.toLowerCase().trim();
-      const creatorAliases = ["dj", "zg0d-ff", "dj_admin", "dibyajyotee", "zgod", "dibyajyotee ghosh"];
+      const creatorAliases = new Set(["dj", "zg0d-ff", "dj_admin", "dibyajyotee", "zgod", "dibyajyotee ghosh"]);
       let isAdmin = false;
-      if (creatorAliases.includes(cleanVisitorName)) {
+      if (creatorAliases.has(cleanVisitorName)) {
           if (payload.adminToken && payload.adminToken === (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
               isAdmin = true;
           } else {
@@ -1232,19 +1312,19 @@ async function fetchModelUsage(context) {
 function incrementModelUsage(modelId, context) {
   if (!modelId || modelId === "none") return;
   const key = `${modelId}::${todayKey()}`;
-  const req = fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_model_usage`, {
-    method: "POST",
-    headers: {
-      ...sbHeaders(context),
-      "Content-Type": "application/json",
-      "Prefer": "resolution=merge-duplicates"
-    },
-    body: JSON.stringify({ model_key: key, count: 1 })
-  }).catch(() => {});
   
-  if (context.ctx) context.ctx.waitUntil(req);
-  // Note: for proper increment you'd use a DB function/RPC,
-  // but for free tier volumes a simple upsert with manual count works fine.
+  if (context.env?.TELEMETRY && context.ctx) {
+    const req = context.env.TELEMETRY.fetch("http://internal/log", {
+      method: "POST", 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "jarvis_model_usage",
+        data: { model_key: key, count: 1 }
+      })
+    }).catch(e => console.warn("Model usage telemetry failed:", e.message));
+    
+    context.ctx.waitUntil(req);
+  }
 }
 
 function todayKey() {
@@ -1282,78 +1362,50 @@ async function handleAuthBiometric(payload, context) {
   }
 
   try {
-    const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?select=id,visitor_name,visitor_name_lower,face_descriptor`, {
-      headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}` }
+    const res = await fetch(`${context.SUPABASE_URL}/rest/v1/rpc/match_face`, {
+      method: "POST",
+      headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        query_descriptor: JSON.stringify(payload.faceDescriptor), 
+        match_threshold: 0.5 
+      })
     });
-    const users = await res.json();
-
-    if (!users || users.error) {
-      return new Response(JSON.stringify({ match: false, error: "Failed to fetch DB" }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+    
+    if (res.ok) {
+        const matchData = await res.json();
+        if (matchData && matchData.length > 0) {
+          const matchedUser = matchData[0].matched_user;
+          const creatorAliases = new Set(['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod']);
+          const role = creatorAliases.has((matchedUser || '').toLowerCase()) ? 'admin' : 'guest';
+          return new Response(JSON.stringify({ match: true, matchedUser, role }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+        }
     }
 
-    const creatorAliases = ['dj', 'dibyajyotee', 'dibyajyotee ghosh', 'zgod'];
-    let matchedUser = null;
-    let bestDistance = 1.0;
-    let isCreatorMatch = false;
-
-    const calcDistance = (a, b) => {
-      let sum = 0;
-      for (let i = 0; i < a.length; i++) sum += Math.pow(a[i] - b[i], 2);
-      return Math.sqrt(sum);
-    };
-
-    for (const u of users) {
-      if (u.face_descriptor) {
-        try {
-          let dbDescriptor = u.face_descriptor;
-          if (typeof dbDescriptor === "string") dbDescriptor = JSON.parse(dbDescriptor);
-          const distance = calcDistance(payload.faceDescriptor, dbDescriptor);
-          
-          if (distance < 0.5) { // 80% geometric match threshold
-            const isCreator = creatorAliases.includes((u.visitor_name_lower || '').toLowerCase());
-            if (isCreator && !isCreatorMatch) {
-              bestDistance = distance;
-              matchedUser = u.visitor_name;
-              isCreatorMatch = true;
-            } else if (!isCreatorMatch && distance < bestDistance) {
-              bestDistance = distance;
-              matchedUser = u.visitor_name;
-            }
-          }
-        } catch(e) {}
-      }
-    }
-
-    if (matchedUser) {
-      const role = creatorAliases.includes(matchedUser.toLowerCase()) ? 'admin' : 'guest';
-      return new Response(JSON.stringify({ match: true, matchedUser, role }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
-    }
-
-    // New Face Scan Logic: Either map to existing name or create brand new user
     if (payload.visitorName && payload.visitorName.trim() !== "") {
       const cleanVisitorName = payload.visitorName.toLowerCase().trim();
       
-      // Check if this name already exists in the database
-      const existingProfile = users.find(u => (u.visitor_name_lower || '').toLowerCase() === cleanVisitorName);
+      const nameCheckRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&select=id`, {
+          headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}` }
+      });
+      const existingProfiles = await nameCheckRes.json();
+      const existingProfile = existingProfiles && existingProfiles.length > 0;
       
       if (existingProfile) {
-        // SCENARIO 1: Name exists, Face is new. UPDATE the exact row 1-to-1.
         await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}`, {
           method: "PATCH",
           headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            client_ip: context.clientIp, // Update IP just in case
+            client_ip: context.clientIp,
             face_descriptor: JSON.stringify(payload.faceDescriptor)
           })
         });
       } else {
-        // SCENARIO 2: Brand new Name & Face. INSERT a fresh row.
         await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users`, {
           method: "POST",
           headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            id: crypto.randomUUID(), // Generate a new UUID safely
-            client_ip: context.clientIp, // Must include IP to prevent rejection
+            id: crypto.randomUUID(), 
+            client_ip: context.clientIp,
             visitor_name_lower: cleanVisitorName,
             visitor_name: payload.visitorName,
             face_descriptor: JSON.stringify(payload.faceDescriptor)
@@ -1397,17 +1449,30 @@ async function handleFallbackAuth(payload, context) {
 
 // ── Rate limiting ──────────────────────────────────────────
 async function checkRateLimit(cleanVisitorName, context) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const redisKey = `ratelimit:${cleanVisitorName}:${todayStr}`;
+  let count = 0;
+  
   try {
-    const res = await fetch(
-      `${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&created_at=gte.${today.toISOString()}&select=id`,
-      { method: "HEAD", headers: { ...sbHeaders(context), "Prefer": "count=exact" } }
-    );
-    if (!res.ok) return null;
-    const range = res.headers.get("content-range");
-    const count = range ? parseInt(range.split("/")[1] || "0") : 0;
-    context.dailyChatCount = count;
+    const cachedCount = await redisGet(redisKey, context);
+    if (cachedCount !== null) {
+      count = parseInt(cachedCount) || 0;
+    } else {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const res = await fetch(
+        `${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&created_at=gte.${today.toISOString()}&select=id`,
+        { method: "HEAD", headers: { ...sbHeaders(context), "Prefer": "count=exact" } }
+      );
+      if (res.ok) {
+        const range = res.headers.get("content-range");
+        count = range ? parseInt(range.split("/")[1] || "0") : 0;
+      }
+    }
+    
+    if (context.ctx) context.ctx.waitUntil(redisSet(redisKey, count + 1, 86400, context));
+    context.dailyChatCount = count + 1;
+    
     if (count >= 15) {
       return new Response(JSON.stringify({
         choices: [{ message: { content: "[VOICE: XAVIER] Guest rate limit reached (15/15 today). Return tomorrow." } }]
@@ -1421,15 +1486,28 @@ async function checkRateLimit(cleanVisitorName, context) {
 
 // ── Per-minute burst protection ────────────────────────────
 async function checkBurstLimit(cleanVisitorName, context) {
+  const currentMinute = Math.floor(Date.now() / 60000);
+  const redisKey = `burstlimit:${cleanVisitorName}:${currentMinute}`;
+  let count = 0;
+  
   try {
-    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
-    const res = await fetch(
-      `${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&created_at=gte.${oneMinuteAgo}&select=id`,
-      { method: "HEAD", headers: { ...sbHeaders(context), "Prefer": "count=exact" } }
-    );
-    if (!res.ok) return null;
-    const range = res.headers.get("content-range");
-    const count = range ? parseInt(range.split("/")[1] || "0") : 0;
+    const cachedCount = await redisGet(redisKey, context);
+    if (cachedCount !== null) {
+      count = parseInt(cachedCount) || 0;
+    } else {
+      const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+      const res = await fetch(
+        `${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&created_at=gte.${oneMinuteAgo}&select=id`,
+        { method: "HEAD", headers: { ...sbHeaders(context), "Prefer": "count=exact" } }
+      );
+      if (res.ok) {
+        const range = res.headers.get("content-range");
+        count = range ? parseInt(range.split("/")[1] || "0") : 0;
+      }
+    }
+    
+    if (context.ctx) context.ctx.waitUntil(redisSet(redisKey, count + 1, 60, context));
+    
     if (count >= 3) {
       return new Response(JSON.stringify({
         choices: [{ message: { content: "[VOICE: XAVIER] Cooldown active. You're sending messages too fast. Wait a moment." } }]
@@ -1882,5 +1960,83 @@ async function generateCloudflareSingleResponse(cfPrompt, userText, modelId, con
         
     } catch (e) {
         return { errorHard: `CF Error: ${e.message}` };
+    }
+}
+// --- [ JARVIS MIDNIGHT PROTOCOL ] ---
+async function executeMidnightProtocol(context) {
+    try {
+        console.log("Jarvis Midnight Protocol Initiated");
+        const headers = { 'apikey': context.SUPABASE_KEY, 'Authorization': \Bearer \\, 'Content-Type': 'application/json' };
+
+        // TASK 1: Janitor (Delete imposter_rooms older than 24h)
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        await fetch(\\/rest/v1/imposter_rooms?created_at=lt.\\, { method: 'DELETE', headers });
+
+        // TASK 2: Model Pre-Warming
+        const dummyVector = new Array(128).fill(0);
+        await fetch(\\/rest/v1/rpc/match_face\, {
+            method: 'POST', headers, body: JSON.stringify({ query_embedding: \[\]\, match_threshold: 0.99, match_count: 1 })
+        });
+
+        // TASK 3: Daily Security Briefing
+        const today = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const sessionsRes = await fetch(\\/rest/v1/session_logs?created_at=gte.\&select=id\, { headers });
+        const errorsRes = await fetch(\\/rest/v1/jarvis_error_logs?created_at=gte.\&select=id\, { headers });
+        const sessionsCount = sessionsRes.ok ? (await sessionsRes.json()).length : 0;
+        const errorsCount = errorsRes.ok ? (await errorsRes.json()).length : 0;
+
+        const briefingPrompt = \You are Jarvis, Tony Stark's AI assistant. Give a very short 2-sentence morning briefing. Stats for today: \ new visitors, \ errors. Keep it professional, witty, and concise.\;
+        
+        let aiBriefing = "Sir, all systems are nominal. The database is clean.";
+        try {
+             const aiResp = await generateWithCloudflareAI(context.env, briefingPrompt, "You are Jarvis.");
+             if (aiResp && aiResp.aiReply) {
+                 aiBriefing = aiResp.aiReply;
+             }
+        } catch(e) {}
+        
+        await fetch(\\/rest/v1/jarvis_daily_briefings\, {
+            method: 'POST', headers, body: JSON.stringify({ briefing_text: aiBriefing, metrics: { visitors: sessionsCount, errors: errorsCount } })
+        });
+
+        // TASK 4: Memory Consolidation (Dreaming)
+        const chatsRes = await fetch(\\/rest/v1/jarvis_chat_logs?created_at=gte.\&select=client_ip,user_prompt,ai_response\, { headers });
+        if (chatsRes.ok) {
+            const chats = await chatsRes.json();
+            const ipMap = {};
+            for (const chat of chats) {
+                if (!ipMap[chat.client_ip]) ipMap[chat.client_ip] = [];
+                ipMap[chat.client_ip].push(\User: \ | Jarvis: \\);
+            }
+
+            const promises = Object.entries(ipMap).map(async ([ip, logs]) => {
+                if (logs.length < 2) return;
+                const memoryPrompt = \Analyze these chat logs and extract 1 short sentence summarizing the user's interests, mood, or key topics discussed today. Logs: \n\\;
+                
+                let summary = "";
+                try {
+                    const sumResp = await generateWithCloudflareAI(context.env, memoryPrompt, "You summarize user profiles.");
+                    if (sumResp && sumResp.aiReply) summary = sumResp.aiReply;
+                } catch(e) {}
+
+                if (summary) {
+                    const userRes = await fetch(\\/rest/v1/jarvis_known_users?client_ip=eq.\&select=visitor_name_lower,memory_summary\, { headers });
+                    if (userRes.ok) {
+                        const users = await userRes.json();
+                        if (users.length > 0) {
+                            const user = users[0];
+                            const newMemory = (user.memory_summary ? user.memory_summary + " " : "") + \[Auto-Memory]: \\;
+                            await fetch(\\/rest/v1/jarvis_known_users?visitor_name_lower=eq.\\, {
+                                method: 'PATCH', headers, body: JSON.stringify({ memory_summary: newMemory.substring(0, 1000) })
+                            });
+                        }
+                    }
+                }
+            });
+            await Promise.allSettled(promises);
+        }
+
+    } catch(e) {
+        console.error("Midnight Protocol Failed:", e);
     }
 }
