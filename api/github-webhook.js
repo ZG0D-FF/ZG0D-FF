@@ -1,17 +1,18 @@
-import { getToken } from '@vercel/connect';
-import { Redis } from '@upstash/redis';
 import crypto from 'crypto';
-
-// Initialize Redis client using existing Vercel env vars
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+
+  // Dynamically import ESM modules to bypass Vercel CommonJS restrictions
+  const { getToken } = await import('@vercel/connect');
+  const { Redis } = await import('@upstash/redis');
+
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
 
   try {
     // 1. (Optional) Verify Webhook Signature here if you added GITHUB_WEBHOOK_SECRET_VERCEL
