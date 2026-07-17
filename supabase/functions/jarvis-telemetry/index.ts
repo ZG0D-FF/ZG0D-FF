@@ -104,9 +104,7 @@ serve(async (req) => {
 
         // Store or protect face_descriptor
         if (body.face_descriptor) {
-          try {
-            updatePayload.face_descriptor = JSON.parse(body.face_descriptor);
-          } catch(e) {}
+          updatePayload.face_descriptor = body.face_descriptor;
         } else if (existingProfile && existingProfile.face_descriptor) {
           updatePayload.face_descriptor = existingProfile.face_descriptor;
         }
