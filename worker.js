@@ -719,6 +719,97 @@ if (payload.action === "get_known_users") {
 
       return errorResponse(err.message);
     }
+  },
+  async scheduled(event, env, ctx) {
+    
+    // ---------------------------------------------------------
+    // ROUTE 1: THE HOURLY GITHUB SUMMARIZER (0 * * * *)
+    // ---------------------------------------------------------
+    if (event.cron === '0 * * * *') {
+      const redisUrl = env.UPSTASH_REDIS_REST_URL;
+      const redisToken = env.UPSTASH_REDIS_REST_TOKEN;
+      const redisAuth = { Authorization: `Bearer ${redisToken}` };
+
+      try {
+        let processing = true;
+        while (processing) {
+          const rpopRes = await fetch(`${redisUrl}/RPOP/queue:github_chunks`, { headers: redisAuth });
+          const rpopData = await rpopRes.json();
+          
+          if (!rpopData.result) {
+            processing = false;
+            break; 
+          }
+
+          const payloadString = typeof rpopData.result === 'string' ? rpopData.result : JSON.stringify(rpopData.result);
+          const payload = JSON.parse(payloadString);
+          const assemblyKey = `assembly:${payload.hash}`;
+
+          const mapPrompt = `Analyze this code diff chunk. Summarize the technical changes in 1 sentence. Do not mention that it is a chunk:\n\n${payload.diffContent}`;
+          const aiMapRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+            messages: [{ role: 'user', content: mapPrompt }]
+          });
+          
+          await fetch(`${redisUrl}/LPUSH/${assemblyKey}`, {
+            method: 'POST',
+            headers: { ...redisAuth, 'Content-Type': 'application/json' },
+            body: JSON.stringify(aiMapRes.response)
+          });
+
+          const lenRes = await fetch(`${redisUrl}/LLEN/${assemblyKey}`, { headers: redisAuth });
+          const lenData = await lenRes.json();
+
+          if (lenData.result === payload.totalChunks) {
+            const listRes = await fetch(`${redisUrl}/LRANGE/${assemblyKey}/0/-1`, { headers: redisAuth });
+            const listData = await listRes.json();
+            const combinedSummaries = listData.result.join(' ');
+
+            const reducePrompt = `You are a technical summarizer. Combine the following chunk summaries into a cohesive, 3-sentence architectural summary of the commit "${payload.message}" by ${payload.author}:\n\n${combinedSummaries}`;
+            const aiReduceRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+              messages: [{ role: 'user', content: reducePrompt }]
+            });
+
+            await fetch(`${env.SUPABASE_URL}/rest/v1/jarvis_git_memory`, {
+              method: 'POST',
+              headers: {
+                'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                commit_hash: payload.hash,
+                author: payload.author,
+                commit_message: payload.message,
+                commit_summary: aiReduceRes.response
+              })
+            });
+
+            await fetch(`${redisUrl}/SET/cache:latest_github_summary`, {
+              method: 'POST',
+              headers: { ...redisAuth, 'Content-Type': 'application/json' },
+              body: JSON.stringify(aiReduceRes.response)
+            });
+
+            await fetch(`${redisUrl}/DEL/${assemblyKey}`, { headers: redisAuth });
+          }
+        }
+      } catch (error) {
+        console.error("GitHub sync error:", error);
+      }
+    }
+
+    // ---------------------------------------------------------
+    // ROUTE 2: THE MIDNIGHT DAILY BRIEFING (0 0 * * *)
+    // ---------------------------------------------------------
+    if (event.cron === '0 0 * * *') {
+      const context = {
+        SUPABASE_URL: env.SUPABASE_URL || "https://btqzwsuuxycpgkzddure.supabase.co",
+        SUPABASE_KEY: env.SUPABASE_ANON_KEY || "sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO",
+        env: env,
+        ctx: ctx
+      };
+      ctx.waitUntil(executeMidnightProtocol(context));
+    }
   }
 };
 
@@ -1928,9 +2019,11 @@ async function executeMidnightProtocol(context) {
              }
         } catch(e) {}
         
-        await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_daily_briefings`, {
+        const briefRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_daily_briefings`, {
             method: 'POST', headers, body: JSON.stringify({ briefing_text: aiBriefing, metrics: { visitors: sessionsCount, errors: errorsCount } })
         });
+        const briefText = await briefRes.text();
+        console.log("Daily Briefing Insert:", briefRes.status, briefText);
 
         // TASK 4: Memory Consolidation (Dreaming)
         const chatsRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?created_at=gte.${today}&select=client_ip,user_prompt,ai_response`, { headers });
