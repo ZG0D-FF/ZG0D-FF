@@ -90,12 +90,9 @@ export default async function handler(req, res) {
     }
 
     for (const commit of commits) {
-      // commit.url from the webhook payload is the GitHub *API* commit URL,
-      // e.g. https://api.github.com/repos/owner/repo/commits/<sha>
-      // Appending ".diff" only works on the HTML URL (github.com/.../commit/sha.diff),
-      // NOT the API URL. To get a diff from the API URL, request it with the
-      // diff media type via the Accept header instead.
-      const diffUrl = commit.url;
+      // Build the API URL manually to ensure it is always the API endpoint
+      // and never the HTML endpoint (which causes 406 errors).
+      const diffUrl = `https://api.github.com/repos/${repoFullName}/commits/${commit.id}`;
 
       const headers = {
         'User-Agent': 'Vercel-JARVIS-Neural-Sync',
