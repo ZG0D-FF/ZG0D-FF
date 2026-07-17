@@ -47,16 +47,20 @@ export default async function handler(req, res) {
     for (const commit of commits) {
       const commitUrl = commit.url; // e.g. https://api.github.com/repos/.../commits/hash
       
-      const diffResponse = await fetch(commitUrl, {
-        headers: {
-          'Authorization': `Bearer ${githubToken}`,
-          'Accept': 'application/vnd.github.v3.diff',
-          'User-Agent': 'Vercel-JARVIS-Neural-Sync'
-        }
-      });
+      const headers = {
+        'Accept': 'application/vnd.github.v3.diff',
+        'User-Agent': 'Vercel-JARVIS-Neural-Sync'
+      };
+      
+      if (githubToken) {
+        headers['Authorization'] = `Bearer ${githubToken}`;
+      }
+
+      const diffResponse = await fetch(commitUrl, { headers });
 
       if (!diffResponse.ok) {
-        console.error(`Failed to fetch diff for ${commit.id}`);
+        const errText = await diffResponse.text();
+        console.error(`Failed to fetch diff for ${commit.id}. Status: ${diffResponse.status}, Error: ${errText}`);
         continue;
       }
 
