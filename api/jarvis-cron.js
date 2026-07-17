@@ -1,38 +1,41 @@
 export default async function handler(req, res) {
-  // 1. Verify Vercel Cron Secret (to prevent manual triggers)
-  const authHeader = req.headers.authorization;
   const cronSecret = process.env.CRON_SECRET;
-  
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return res.status(401).json({ error: 'Unauthorized. Invalid CRON_SECRET.' });
+  if (!cronSecret || req.headers.authorization !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized.' });
   }
 
   try {
-    // 2. Fire the POST request to Cloudflare Worker to wake it up
-    // We do NOT await the response because we want Vercel to exit instantly
-    // Cloudflare will catch it and run via ctx.waitUntil()
-    const workerUrl = "https://soft-thunder-2965.zg0d-ff.workers.dev/"; 
+    // 1. Check Supabase: Did Cloudflare natively succeed today?
+    const sbUrl = process.env.VITE_SUPABASE_URL || "https://btqzwsuuxycpgkzddure.supabase.co";
+    const sbKey = process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO";
     
-    // Using fetch but only waiting for the network send, not the full execution.
-    // Cloudflare will return a 200 OK instantly and process in the background.
+    const today = new Date().toISOString().split('T')[0];
+    const checkRes = await fetch(`${sbUrl}/rest/v1/jarvis_daily_briefings?date_summary=eq.${today}&select=id`, {
+      headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+    });
+    
+    if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData && checkData.length > 0) {
+            return res.status(200).json({ success: true, message: 'Cloudflare natively succeeded. Vercel aborting.' });
+        }
+    }
+
+    // 2. Cloudflare failed. Ping it forcefully.
+    // CRITICAL: Replace this with your REAL Cloudflare Worker URL from the Dashboard!
+       const workerUrl = "https://soft-thunder-2965.zgodmr.workers.dev/";
+    
     const triggerRes = await fetch(workerUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        action: "execute_midnight_protocol",
-        cron_secret: cronSecret // Pass it along for secondary verification if needed
-      })
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "execute_midnight_protocol", cron_secret: cronSecret })
     });
 
     if (triggerRes.ok) {
-      return res.status(200).json({ success: true, message: 'Cloudflare Worker protocol triggered successfully in the background.' });
+      return res.status(200).json({ success: true, message: 'Cloudflare was down. Vercel forcefully woke it up.' });
     } else {
-      return res.status(500).json({ success: false, message: 'Failed to trigger worker.' });
+      return res.status(500).json({ success: false, message: 'Cloudflare failed to respond.' });
     }
   } catch (error) {
-    console.error("Vercel Cron Error:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 }
