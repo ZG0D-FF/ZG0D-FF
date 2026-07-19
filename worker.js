@@ -280,7 +280,7 @@ if (payload.action === "get_known_users") {
       }
 
       // ── Parallel data fetch ────────────────────────────────
-      const [existingUser, historyData, audioTriggers, configData, navData, modelUsage, isIpBanned, bannedWordsRes, cacheVerRes] = await Promise.all([
+      const [existingUser, historyData, audioTriggers, configData, navData, modelUsage, isIpBanned, bannedWordsRes, cacheVerRes, techBriefing] = await Promise.all([
         fetchUserData(cleanVisitorName, context),
         fetchChatHistory(cleanVisitorName, context),
         fetchAudioTriggers(context),
@@ -289,7 +289,8 @@ if (payload.action === "get_known_users") {
         fetchModelUsage(context),  // ← new: daily usage counters per model
         checkIfIpIsBanned(context.clientIp, context), // ← new: scan entire DB for IP ban
         fetchSystemConfig("jarvis_banned_words", context), // ← new: fetch banned words list
-        fetchSystemConfig("global_cache_version", context) // ← NEW: Global Cache Versioning
+        fetchSystemConfig("global_cache_version", context), // ← NEW: Global Cache Versioning
+        redisGet("cache:daily_tech_scraper", context) // ← NEW: Fetch Daily GitHub Tech Briefing
       ]);
 
       // Parse the banned words array from the DB (fallback to empty array if missing)
@@ -446,7 +447,10 @@ if (payload.action === "get_known_users") {
       // ── Token budget: trim the master prompt aggressively ─
       // Replace full history/memory sections with tight versions
       const trimmedHistory = chatHistory.slice(0, 800);   // last ~800 chars max
-      const trimmedMemory  = currentMemory.slice(0, 300) + gitMemoryStr; // first 300 chars max + injected Git memory
+      let trimmedMemory  = currentMemory.slice(0, 300) + gitMemoryStr; // first 300 chars max + injected Git memory
+      if (techBriefing) {
+          trimmedMemory += "\n\n[LATEST TECH NEWS]\n" + techBriefing;
+      }
 
             const currentConversationSummary = existingUser?.conversation_summary || "None.";
 
@@ -810,6 +814,55 @@ if (payload.action === "get_known_users") {
       };
       ctx.waitUntil(executeMidnightProtocol(context));
     }
+
+    // ---------------------------------------------------------
+    // ROUTE 3: GITHUB TECH SCRAPER (0 8 * * *)
+    // ---------------------------------------------------------
+    if (event.cron === '0 8 * * *') {
+        const orgs = ['nvidia', 'python', 'github', 'anthropic'];
+        let rawMarkdown = "";
+        
+        try {
+            for (const org of orgs) {
+                const res = await fetch(`https://api.github.com/users/${org}/repos?sort=updated&per_page=2`, {
+                    headers: {
+                        'User-Agent': 'Vercel-JARVIS-Neural-Sync',
+                        ...(env.GITHUB_TOKEN ? { 'Authorization': `Bearer ${env.GITHUB_TOKEN}` } : {})
+                    }
+                });
+                
+                if (res.ok) {
+                    const repos = await res.json();
+                    rawMarkdown += `\n**${org.toUpperCase()}**\n`;
+                    for (const repo of repos) {
+                        // Defeating Token Bloat: Only keep essentials
+                        rawMarkdown += `- ${repo.name}: ${repo.description || 'No description'} (Stars: ${repo.stargazers_count})\n`;
+                    }
+                }
+            }
+
+            // Summarize using LLM to pack it down further
+            if (rawMarkdown.trim().length > 0 && env.AI) {
+                const reducePrompt = `You are a technical summarizer. Convert this raw repository data into a concise, 3-sentence daily tech briefing. Focus on the most important updates:\n${rawMarkdown}`;
+                const aiRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+                    messages: [{ role: 'user', content: reducePrompt }]
+                });
+                
+                if (aiRes && aiRes.response) {
+                    const redisUrl = env.UPSTASH_REDIS_REST_URL;
+                    const redisToken = env.UPSTASH_REDIS_REST_TOKEN;
+                    // Save with 24 hr TTL (EX=86400)
+                    await fetch(`${redisUrl}/SET/cache:daily_tech_scraper?EX=86400`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${redisToken}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(aiRes.response)
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Tech Scraper Cron failed:", error);
+        }
+    }
   }
 };
 
@@ -1140,6 +1193,15 @@ User: ${userText}`;
             required: ["protocol"]
           }
         },
+        {
+          name: "scrape_github_org",
+          description: "Scrape the latest public GitHub activity for an organization (e.g. nvidia, python, github, anthropic). Use this on-demand when the user asks for the absolute latest news.",
+          parameters: {
+            type: "OBJECT",
+            properties: { org_name: { type: "STRING", description: "The organization name (e.g. 'nvidia', 'python', 'anthropic')" } },
+            required: ["org_name"]
+          }
+        },
       ]
     }];
   }
@@ -1281,6 +1343,33 @@ User: ${userText}`;
         if (part.functionCall.name === "respond_with_audio") {
           aiReply += part.functionCall.args?.ai_text_reply || "";
           context.triggeredAudioFile = part.functionCall.args?.filename || null;
+        }
+
+        if (part.functionCall.name === "scrape_github_org") {
+          const org = part.functionCall.args?.org_name;
+          if (org) {
+              try {
+                  const res = await fetch(`https://api.github.com/users/${org}/repos?sort=updated&per_page=3`, {
+                      headers: {
+                          'User-Agent': 'Vercel-JARVIS-Neural-Sync',
+                          ...(context.env.GITHUB_TOKEN ? { 'Authorization': `Bearer ${context.env.GITHUB_TOKEN}` } : {})
+                      }
+                  });
+                  if (res.ok) {
+                      const repos = await res.json();
+                      let dataStr = `\n\n[LIVE GITHUB SCAN: ${org.toUpperCase()}]\n`;
+                      for (const repo of repos) {
+                          dataStr += `- **${repo.name}**: ${repo.description || 'No description'} (Stars: ${repo.stargazers_count})\n`;
+                      }
+                      aiReply += dataStr;
+                      context.triggeredAudioFile = "audio/scanstarts.mp3"; // Add some flair
+                  } else {
+                      aiReply += `\n\n[SYSTEM] Failed to scan GitHub for ${org}. Rate limit or invalid org.`;
+                  }
+              } catch (e) {
+                  aiReply += `\n\n[SYSTEM] Network error scanning GitHub for ${org}.`;
+              }
+          }
         }
       }
     }
