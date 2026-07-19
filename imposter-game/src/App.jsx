@@ -270,6 +270,7 @@ function App() {
           
           <div className="space-y-4">
             <input 
+              name="playerName"
               type="text" 
               placeholder="YOUR NAME" 
               className="jarvis-input w-full text-base md:text-lg"
@@ -295,8 +296,9 @@ function App() {
             <div className="text-cyan/50 font-mono text-xs md:text-sm uppercase tracking-widest pt-2">- OR -</div>
             <form onSubmit={joinRoom} className="flex gap-2 pt-2">
               <input 
+                name="roomCode"
                 type="text" 
-                placeholder="CODE" 
+                placeholder="CODE"
                 className="jarvis-input !text-left w-full text-base md:text-lg"
                 maxLength={4}
                 value={roomCode}
