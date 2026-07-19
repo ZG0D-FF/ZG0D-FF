@@ -45,15 +45,18 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'Room deleted' });
     } else {
       // Just end the round, reset to lobby
-      await fetch(`${SUPABASE_URL}/rest/v1/imposter_rooms?id=eq.${roomId}`, {
+      const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/imposter_rooms?id=eq.${roomId}`, {
         method: 'PATCH',
         headers: { 
           'apikey': SUPABASE_KEY, 
           'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
         },
-        body: JSON.stringify({ status: 'lobby', category: null, word: null })
+        body: JSON.stringify({ status: 'lobby', category: null })
       });
+      
+      if (!updateRes.ok) throw new Error('Failed to reset room: ' + await updateRes.text());
       return res.status(200).json({ message: 'Round ended' });
     }
 
