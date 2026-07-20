@@ -2,11 +2,22 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabase';
 
 const IMAGES = [
+  // Original Cinematic Landscapes
   'https://images.unsplash.com/photo-1506744626753-dba37c254551?w=1280&q=40',
   'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1280&q=40',
   'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1280&q=40',
   'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1280&q=40',
-  'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1280&q=40'
+  'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1280&q=40',
+  
+  // New High-Quality Unsplash Landscapes
+  'https://images.unsplash.com/photo-1574071216925-911b63088da0?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  'https://plus.unsplash.com/premium_photo-1669748161444-953a1fcf8ceb?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  'https://images.unsplash.com/photo-1496361751588-bdd9a3fcdd6f?q=80&w=1167&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  'https://images.unsplash.com/photo-1695298233687-95a9ed6ce3c1?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  
+  // New Minimalist Vector Art
+  'https://imgs.search.brave.com/lczesr8Wc6km_IPsOaxUWYEQg1tnV_KPVQMomCfF-HQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9iYWNr/aWVlLmNvbS9zdGF0/aWMvd2FsbHBhcGVy/cy80NTZ4MjU3LzIx/OTk4MC5qcGc',
+  'https://imgs.search.brave.com/6i5b4gDUPGY0roUZTpIf31R_WvD9iBNUUvMMjXgRP28/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM0/MTY4ODI0My92ZWN0/b3IvbGFuZHNjYXBl/LmpwZz9zPTYxMng2/MTImdz0wJms9MjAm/Yz12dXVhSU5jcmdm/QzFSVUNiSlBXWGxR/MkV2Q2dHU1JYU1Y0/ZlpzbHYyMXFrPQ'
 ];
 
 function SlideshowBackground() {
@@ -450,14 +461,14 @@ function App() {
       {/* FATAL ERROR POP-UP */}
       {connectionError && (
         <div className="fixed inset-0 bg-black/95 z-[999] flex flex-col items-center justify-center p-4 backdrop-blur-md">
-          <div className="jarvis-panel p-8 text-center max-w-md w-full border-red/50 shadow-[0_0_40px_rgba(255,0,0,0.4)]">
+          <div className="soft-panel p-8 text-center max-w-md w-full border-red/50 shadow-[0_0_40px_rgba(255,0,0,0.4)]">
             <h2 className="font-orbitron text-red text-2xl md:text-3xl font-bold mb-4 blink tracking-widest">CONNECTION LOST</h2>
             <p className="font-mono text-gray-300 text-sm md:text-base mb-8 leading-relaxed">
               Your device disconnected from the central mainframe. The UI is out of sync with the game.
             </p>
             <button 
               onClick={() => window.location.reload()} 
-              className="jarvis-button w-full !border-red !text-red hover:!bg-red/20 py-4 text-sm md:text-base"
+              className="soft-button w-full !border-red !text-red hover:!bg-red/20 py-4 text-sm md:text-base"
             >
               REBOOT SYSTEM (RELOAD)
             </button>
@@ -465,7 +476,7 @@ function App() {
         </div>
       )}
         <div className="scanlines"></div>
-        <div className="jarvis-panel p-6 md:p-8 w-full max-w-md text-center space-y-6 md:space-y-8 z-10 transition-all">
+        <div className="soft-panel p-6 md:p-8 w-full max-w-md text-center space-y-6 md:space-y-8 z-10 transition-all">
           <h1 className="font-orbitron text-2xl md:text-3xl font-bold tracking-[0.2em] text-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.8)]">WORD IMPOSTER</h1>
           
           {recentRoomCode && (
@@ -474,7 +485,7 @@ function App() {
               <button 
                 onClick={rejoinRecentRoom} 
                 disabled={loading}
-                className="jarvis-button w-full !border-cyan !text-cyan hover:!bg-cyan/20 text-xs md:text-sm py-4"
+                className="soft-button w-full !border-cyan !text-cyan hover:!bg-cyan/20 text-xs md:text-sm py-4"
               >
                 1-CLICK REJOIN [{recentRoomCode}] AS {recentPlayerName || "PLAYER"}
               </button>
@@ -486,14 +497,14 @@ function App() {
               name="playerName"
               type="text" 
               placeholder="YOUR NAME" 
-              className="jarvis-input w-full text-base md:text-lg"
+              className="soft-input w-full text-base md:text-lg"
               maxLength={15}
               value={playerName}
               onChange={e => setPlayerName(e.target.value.toUpperCase())}
             />
             
             <div className="flex gap-2">
-              <button onClick={createRoom} disabled={loading} className="jarvis-button w-full text-sm md:text-base">CREATE ROOM</button>
+              <button onClick={createRoom} disabled={loading} className="soft-button w-full text-sm md:text-base">CREATE ROOM</button>
               <select 
                 value={maxPlayers}
                 onChange={e => setMaxPlayers(e.target.value)}
@@ -512,12 +523,12 @@ function App() {
                 name="roomCode"
                 type="text" 
                 placeholder="CODE"
-                className="jarvis-input !text-left w-full text-base md:text-lg"
+                className="soft-input !text-left w-full text-base md:text-lg"
                 maxLength={4}
                 value={roomCode}
                 onChange={e => setRoomCode(e.target.value.toUpperCase())}
               />
-              <button type="submit" disabled={loading} className="jarvis-button px-6 text-sm md:text-base">JOIN</button>
+              <button type="submit" disabled={loading} className="soft-button px-6 text-sm md:text-base">JOIN</button>
             </form>
           </div>
         </div>
@@ -530,7 +541,7 @@ function App() {
       <SlideshowBackground />
       <div className="scanlines"></div>
       
-      <div className="jarvis-panel p-4 md:p-6 w-full max-w-lg z-10 flex flex-col gap-4 md:gap-6 transition-all">
+      <div className="soft-panel p-4 md:p-6 w-full max-w-lg z-10 flex flex-col gap-4 md:gap-6 transition-all">
         <div className="flex justify-between items-center border-b border-cyan/30 pb-4">
           <div>
             <div className="font-mono text-cyan/60 text-[10px] md:text-xs uppercase tracking-[0.2em]">Room Code</div>
@@ -574,16 +585,16 @@ function App() {
                   <span className="text-cyan/70 font-mono text-xs md:text-sm tracking-widest uppercase">Your Role:</span>
                   <button 
                     onClick={() => setIsObserver(!isObserver)}
-                    className={`jarvis-button px-4 py-1 text-xs md:text-sm font-bold transition-all ${isObserver ? '!border-purple-500 !text-purple-500 bg-purple-500/10 shadow-[0_0_10px_rgba(168,85,247,0.3)]' : ''}`}
+                    className={`soft-button px-4 py-1 text-xs md:text-sm font-bold transition-all ${isObserver ? '!border-purple-500 !text-purple-500 bg-purple-500/10 shadow-[0_0_10px_rgba(168,85,247,0.3)]' : ''}`}
                   >
                     {isObserver ? 'OBSERVER' : 'PLAYER'}
                   </button>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={startGame} disabled={loading} className="jarvis-button flex-1 !border-cyan !text-cyan hover:!bg-cyan/10 text-sm md:text-base py-3">
+                  <button onClick={startGame} disabled={loading} className="soft-button flex-1 !border-cyan !text-cyan hover:!bg-cyan/10 text-sm md:text-base py-3">
                     INITIATE PROTOCOL
                   </button>
-                  <button onClick={() => endRound('delete-room')} disabled={loading} className="jarvis-button flex-1 !border-red/50 !text-red/50 hover:!bg-red/10 text-sm md:text-base py-3">
+                  <button onClick={() => endRound('delete-room')} disabled={loading} className="soft-button flex-1 !border-red/50 !text-red/50 hover:!bg-red/10 text-sm md:text-base py-3">
                     END ROOM
                   </button>
                 </div>
@@ -633,7 +644,7 @@ function App() {
                      <button 
                        onClick={submitVote}
                        disabled={!selectedVote || loading}
-                       className="jarvis-button w-full mt-6 !border-purple-500 !text-purple-500 hover:!bg-purple-500/10 py-4"
+                       className="soft-button w-full mt-6 !border-purple-500 !text-purple-500 hover:!bg-purple-500/10 py-4"
                      >
                        LOCK VOTE
                      </button>
@@ -643,7 +654,7 @@ function App() {
 
                    {isHost && (
                      <div className="mt-8 pt-4 border-t border-purple-500/30">
-                       <button onClick={tallyVotes} disabled={loading} className="jarvis-button w-full !border-red/50 !text-red/50 hover:!bg-red/10 py-3 text-xs md:text-sm">
+                       <button onClick={tallyVotes} disabled={loading} className="soft-button w-full !border-red/50 !text-red/50 hover:!bg-red/10 py-3 text-xs md:text-sm">
                          FORCE END VOTING
                        </button>
                      </div>
@@ -656,7 +667,7 @@ function App() {
                     onMouseUp={() => setShowRole(false)}
                     onTouchStart={() => setShowRole(true)}
                     onTouchEnd={() => setShowRole(false)}
-                    className="jarvis-button w-full py-4 md:py-6 relative overflow-hidden group select-none"
+                    className="soft-button w-full py-4 md:py-6 relative overflow-hidden group select-none"
                   >
                     <span className="relative z-10 text-sm md:text-base">{showRole ? "RELEASE TO HIDE" : "HOLD TO REVEAL ROLE"}</span>
                     <div className="absolute inset-0 bg-cyan/20 translate-y-[100%] group-active:translate-y-0 transition-transform duration-100"></div>
@@ -667,7 +678,7 @@ function App() {
              <div className={`mt-6 md:mt-8 transition-opacity duration-300 ${showRole ? 'opacity-100' : 'opacity-0'}`}>
                 {isImposter ? (
                   <div className="flex flex-col items-center gap-2">
-                    <div className="font-orbitron text-xl md:text-3xl font-bold text-red tracking-widest drop-shadow-[0_0_15px_rgba(255,23,68,0.8)] mb-2">
+                    <div className="font-orbitron text-xl md:text-3xl font-bold text-red tracking-widest imposter-glow mb-4">
                       YOU ARE THE IMPOSTER
                     </div>
                     <div className="font-mono uppercase tracking-[0.2em] text-cyan/60 text-xs md:text-sm">Your Secret Word</div>
@@ -676,7 +687,7 @@ function App() {
                     </div>
                   </div>
                 ) : (
-                  <div>
+                  <div className="flex flex-col items-center gap-2">
                     <div className="font-mono uppercase tracking-[0.2em] text-cyan/60 mb-2 text-xs md:text-sm">Secret Word</div>
                     <div className="font-orbitron text-2xl md:text-4xl font-bold text-cyan tracking-widest drop-shadow-[0_0_15px_rgba(0,229,255,0.8)]">
                       {secretWord}
@@ -690,14 +701,14 @@ function App() {
                  <button 
                    onClick={startVotingPhase} 
                    disabled={loading} 
-                   className="jarvis-button flex-1 !border-purple-500 !text-purple-500 hover:!bg-purple-500/10 text-xs md:text-sm py-3"
+                   className="soft-button flex-1 !border-purple-500 !text-purple-500 hover:!bg-purple-500/10 text-xs md:text-sm py-3"
                  >
                    START VOTING
                  </button>
                  <button 
                    onClick={() => endRound('end-round')} 
                    disabled={loading} 
-                   className="jarvis-button flex-1 !border-orange-500 !text-orange-500 hover:!bg-orange-500/10 text-xs md:text-sm py-3"
+                   className="soft-button flex-1 !border-orange-500 !text-orange-500 hover:!bg-orange-500/10 text-xs md:text-sm py-3"
                  >
                    ABORT TO LOBBY
                  </button>
@@ -709,7 +720,7 @@ function App() {
             {/* HOST VETO MODAL (EDITABLE) */}
       {previewWord && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="jarvis-panel p-6 md:p-8 w-full max-w-lg relative border-purple-500/50 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
+          <div className="soft-panel p-6 md:p-8 w-full max-w-lg relative border-purple-500/50 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
             <div className="font-mono text-purple-400 text-xs md:text-sm uppercase tracking-widest mb-6 blink text-center border-b border-purple-500/30 pb-4 flex justify-between items-center">
               <span>HOST APPROVAL</span>
               <button onClick={() => setPreviewWord(null)} className="text-red hover:text-red/70">✕</button>
@@ -751,14 +762,14 @@ function App() {
               <button 
                 onClick={approveWord} 
                 disabled={loading} 
-                className="jarvis-button flex-1 !border-green-500 !text-green-500 hover:!bg-green-500/10 py-3"
+                className="soft-button flex-1 !border-green-500 !text-green-500 hover:!bg-green-500/10 py-3"
               >
                 APPROVE
               </button>
               <button 
                 onClick={startGame} 
                 disabled={loading} 
-                className="jarvis-button flex-1 !border-orange-500 !text-orange-500 hover:!bg-orange-500/10 py-3"
+                className="soft-button flex-1 !border-orange-500 !text-orange-500 hover:!bg-orange-500/10 py-3"
               >
                 RE-ROLL
               </button>
@@ -817,11 +828,11 @@ function App() {
           <input 
             value={chatInput} 
             onChange={e => setChatInput(e.target.value)} 
-            className="jarvis-input w-full text-sm !text-left" 
+            className="soft-input w-full text-sm !text-left" 
             placeholder="TRANSMIT MESSAGE..." 
             maxLength={100}
           />
-          <button type="submit" className="jarvis-button text-sm px-4">SEND</button>
+          <button type="submit" className="soft-button text-sm px-4">SEND</button>
         </form>
       </div>
       {/* FLOATING GUIDE BUTTON */}
@@ -835,7 +846,7 @@ function App() {
       {/* GUIDE CAROUSEL MODAL */}
       {isGuideOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="jarvis-panel p-6 md:p-8 w-full max-w-md relative shadow-[0_0_40px_rgba(0,255,255,0.15)] border border-cyan/40 bg-black/90">
+          <div className="soft-panel p-6 md:p-8 w-full max-w-md relative shadow-[0_0_40px_rgba(0,255,255,0.15)] border border-cyan/40 bg-black/90">
             {/* Close Button */}
             <button onClick={() => setIsGuideOpen(false)} className="absolute top-4 right-4 text-cyan/50 hover:text-red font-mono text-xl leading-none">✕</button>
             
@@ -854,7 +865,7 @@ function App() {
               <button 
                 onClick={() => setGuideStep(prev => Math.max(0, prev - 1))}
                 disabled={guideStep === 0}
-                className="jarvis-button px-4 py-2 text-xs opacity-80 hover:opacity-100 disabled:opacity-30 disabled:border-gray-600 disabled:text-gray-600"
+                className="soft-button px-4 py-2 text-xs opacity-80 hover:opacity-100 disabled:opacity-30 disabled:border-gray-600 disabled:text-gray-600"
               >
                 PREV
               </button>
@@ -868,14 +879,14 @@ function App() {
               {guideStep < guideSlides.length - 1 ? (
                 <button 
                   onClick={() => setGuideStep(prev => Math.min(guideSlides.length - 1, prev + 1))}
-                  className="jarvis-button px-4 py-2 text-xs"
+                  className="soft-button px-4 py-2 text-xs"
                 >
                   NEXT
                 </button>
               ) : (
                 <button 
                   onClick={() => setIsGuideOpen(false)}
-                  className="jarvis-button !border-purple-500 !text-purple-500 hover:!bg-purple-500/10 px-4 py-2 text-xs"
+                  className="soft-button !border-purple-500 !text-purple-500 hover:!bg-purple-500/10 px-4 py-2 text-xs"
                 >
                   START
                 </button>
