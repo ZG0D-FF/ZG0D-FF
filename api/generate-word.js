@@ -75,17 +75,29 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Not enough players to start' });
     }
 
-    // 2. Select an imposter
+    // 2. NEW LOGIC: Fetch the last 30 days of global words (Limit 150 to save Gemini Tokens)
+    const historyRes = await fetch(`${SUPABASE_URL}/rest/v1/imposter_global_word_history?select=crew_word,imposter_word&order=created_at.desc&limit=150`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const historyData = await historyRes.json();
+    const bannedWordsList = historyData ? historyData.flatMap(row => [row.crew_word, row.imposter_word]).join(', ') : '';
+
+    // 3. Select an imposter
     const imposterIndex = Math.floor(Math.random() * players.length);
     const imposterId = players[imposterIndex].id;
 
-    // 3. Generate category, normal word, and imposter word via Gemini
+    // 4. Generate category, normal word, and imposter word via Gemini
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    const prompt = `Generate a random category, a 'normal_word' belonging to that category, and an 'imposter_word' belonging to that same category. The 'imposter_word' MUST be very closely related to the 'normal_word' so that vague hints apply to both (e.g., Comet and Meteor). CRITICAL RULE: The 'imposter_word' CANNOT be a subset, parent, or type of the 'normal_word' (e.g., if normal is Doctor, imposter cannot be Surgeon. Doctor and Nurse is acceptable). Return ONLY a JSON object: {"category": "Space", "normal_word": "Comet", "imposter_word": "Meteor"}`;
+    let prompt = `Generate a random category, a 'normal_word' belonging to that category, and an 'imposter_word' belonging to that same category. The 'imposter_word' MUST be very closely related to the 'normal_word' so that vague hints apply to both (e.g., Comet and Meteor). CRITICAL RULE: The 'imposter_word' CANNOT be a subset, parent, or type of the 'normal_word' (e.g., if normal is Doctor, imposter cannot be Surgeon. Doctor and Nurse is acceptable).`;
     
-    const geminiBody = {
-      contents: [{ parts: [{ text: prompt }] }]
-    };
+    // INJECT THE BANNED WORDS INTO THE BRAIN
+    if (bannedWordsList.length > 0) {
+      prompt += `\n\nABSOLUTELY DO NOT USE ANY OF THESE RECENTLY PLAYED WORDS: ${bannedWordsList}`;
+    }
+    
+    prompt += `\n\nReturn ONLY a JSON object: {"category": "Space", "normal_word": "Comet", "imposter_word": "Meteor"}`;
+    
+    const geminiBody = { contents: [{ parts: [{ text: prompt }] }] };
 
     const geminiRes = await fetch(geminiUrl, {
       method: 'POST',
@@ -102,19 +114,27 @@ export default async function handler(req, res) {
     const cleanJsonString = textOutput.replace(/```json/g, '').replace(/```/g, '').trim();
     const generated = JSON.parse(cleanJsonString);
 
-    // 4. Store the secret words in Upstash Redis (Expires in 24 hours)
+    // 5. Store the secret words in Upstash Redis (Expires in 24 hours)
     const redisRes = await fetch(REDIS_URL, {
       method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${REDIS_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(["SET", `imposter_game_${roomId}`, JSON.stringify({ ...generated, imposter_id: imposterId }), "EX", 86400])
     });
 
     if (!redisRes.ok) throw new Error('Failed to save to Redis: ' + await redisRes.text());
 
-    // 5. Update the room in Supabase (Notice: we no longer save the secret word here!)
+    // 6. NEW LOGIC: Save this fresh word to the Global Word History so it gets banned for 30 days!
+    await fetch(`${SUPABASE_URL}/rest/v1/imposter_global_word_history`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category: generated.category,
+        crew_word: generated.normal_word,
+        imposter_word: generated.imposter_word
+      })
+    });
+
+    // 7. Update the room in Supabase (Notice: we no longer save the secret word here!)
     const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/imposter_rooms?id=eq.${roomId}`, {
       method: 'PATCH',
       headers: {
@@ -131,7 +151,7 @@ export default async function handler(req, res) {
 
     if (!updateRes.ok) throw new Error('Failed to update room: ' + await updateRes.text());
 
-    // 6. Send the token usage back to the frontend to log in the console
+    // 8. Send the token usage back to the frontend to log in the console
     return res.status(200).json({ success: true, tokenUsage });
   } catch (err) {
     console.error('Error generating game state:', err);
