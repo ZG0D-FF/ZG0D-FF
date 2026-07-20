@@ -87,7 +87,9 @@ function App() {
   ];
     const [connectionError, setConnectionError] = useState(false);
     const [recentPlayerName, setRecentPlayerName] = useState(localStorage.getItem('imposter_recent_name') || '');
-	
+  const [isObserver, setIsObserver] = useState(false);
+  const [previewWord, setPreviewWord] = useState(null);
+  
   useEffect(() => {
     let pid = localStorage.getItem('imposter_pid');
     let secret = localStorage.getItem('imposter_secret');
@@ -192,6 +194,13 @@ function App() {
       hasRetrievedWord.current = false;
     }
   }, [currentRoom?.status, players, playerId]);
+    // Fix: Instantly clear local vote locks when the Host clicks 'START VOTING' again
+  useEffect(() => {
+    if (currentRoom?.status === 'voting') {
+      setSelectedVote(null);
+      setHasVoted(false);
+    }
+  }, [currentRoom?.status]);
 
   const fetchPlayers = async (roomId) => {
     const { data } = await supabase.from('imposter_players').select('*').eq('room_id', roomId);
@@ -325,15 +334,28 @@ function App() {
     }
     setLoading(false);
   };
-    const submitVote = async () => {
+  const submitVote = async () => {
     if (!selectedVote) return;
     setLoading(true);
-    // (In the next task, we will connect this to the actual backend!)
-    console.log("Voted for:", selectedVote);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/submit-vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+           roomId: currentRoom.id, 
+           voterId: playerId, // Your unique machine ID
+           targetId: selectedVote // The ID of the player you clicked on
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit vote");
+      
       setHasVoted(true);
-      setLoading(false);
-    }, 500);
+    } catch (err) {
+      alert("Error voting: " + err.message);
+    }
+    setLoading(false);
   };
   
     const tallyVotes = async () => {
@@ -369,26 +391,54 @@ function App() {
   };
   
   const startGame = async () => {
-    if (players.length < 3) {
+    if (isObserver && players.length < 4) {
+      alert("Observer mode requires at least 4 players in the lobby (1 Observer Host, 3 Active Players).");
+      return;
+    }
+    if (!isObserver && players.length < 3) {
       if(!confirm("Game usually needs 3+ players. Start anyway?")) return;
     }
     setLoading(true);
-    console.log("Initiating protocol via Vercel Function...");
     try {
-      const res = await fetch('/api/generate-word', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: currentRoom.id, secretToken: localStorage.getItem('imposter_secret') })
-      });
-      if (!res.ok) throw new Error("Failed to start game");
-      const data = await res.json();
-      console.log("Protocol initiated!");
-      if (data.tokenUsage) {
-        console.log(`[Token Usage] Input Tokens: ${data.tokenUsage.promptTokenCount} | Output Tokens: ${data.tokenUsage.candidatesTokenCount} | Total Khorcha: ${data.tokenUsage.totalTokenCount}`);
+      if (isObserver) {
+         // Preview Mode - Show the Veto Modal
+         const res = await fetch('/api/preview-word', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ roomId: currentRoom.id, secretToken: localStorage.getItem('imposter_secret') })
+         });
+         const data = await res.json();
+         if (!res.ok) throw new Error(data.error);
+         setPreviewWord(data.wordPair); 
+      } else {
+         // Standard Player Mode - Just start the game
+         const res = await fetch('/api/generate-word', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ roomId: currentRoom.id, secretToken: localStorage.getItem('imposter_secret') })
+         });
+         if (!res.ok) throw new Error("Failed to start game");
       }
     } catch(err) {
-      console.error("Error:", err.message);
       alert("Error starting game: " + err.message);
+    }
+    setLoading(false);
+  };
+
+  const approveWord = async () => {
+    if (!previewWord.normal_word || !previewWord.imposter_word) return alert("Fill out the words!");
+    setLoading(true);
+    try {
+      const res = await fetch('/api/start-approved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: currentRoom.id, secretToken: localStorage.getItem('imposter_secret'), approvedWord: previewWord })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setPreviewWord(null); 
+    } catch(err) {
+      alert(err.message);
     }
     setLoading(false);
   };
@@ -519,13 +569,24 @@ function App() {
             </div>
             
             {isHost && (
-              <div className="flex gap-2 mt-6">
-                <button onClick={startGame} disabled={loading} className="jarvis-button flex-1 !border-cyan !text-cyan hover:!bg-cyan/10 text-sm md:text-base py-3">
-                  INITIATE PROTOCOL
-                </button>
-                <button onClick={() => endRound('delete-room')} disabled={loading} className="jarvis-button flex-1 !border-red/50 !text-red/50 hover:!bg-red/10 text-sm md:text-base py-3">
-                  END ROOM
-                </button>
+              <div className="flex flex-col gap-3 mt-6">
+                <div className="flex justify-between items-center bg-cyan/5 border border-cyan/20 p-2 md:p-3 rounded-md">
+                  <span className="text-cyan/70 font-mono text-xs md:text-sm tracking-widest uppercase">Your Role:</span>
+                  <button 
+                    onClick={() => setIsObserver(!isObserver)}
+                    className={`jarvis-button px-4 py-1 text-xs md:text-sm font-bold transition-all ${isObserver ? '!border-purple-500 !text-purple-500 bg-purple-500/10 shadow-[0_0_10px_rgba(168,85,247,0.3)]' : ''}`}
+                  >
+                    {isObserver ? 'OBSERVER' : 'PLAYER'}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={startGame} disabled={loading} className="jarvis-button flex-1 !border-cyan !text-cyan hover:!bg-cyan/10 text-sm md:text-base py-3">
+                    INITIATE PROTOCOL
+                  </button>
+                  <button onClick={() => endRound('delete-room')} disabled={loading} className="jarvis-button flex-1 !border-red/50 !text-red/50 hover:!bg-red/10 text-sm md:text-base py-3">
+                    END ROOM
+                  </button>
+                </div>
               </div>
             )}
             {!isHost && (
@@ -541,12 +602,24 @@ function App() {
                 <div className="mt-8 border border-purple-500/30 bg-purple-500/5 p-4 md:p-6 rounded-md shadow-[0_0_20px_rgba(168,85,247,0.1)]">
                    <h3 className="font-orbitron text-xl md:text-2xl text-purple-400 tracking-widest mb-6 blink uppercase">VOTING PHASE</h3>
                    <div className="space-y-3 text-left">
-                     {players.map(p => (
-                       <label key={p.id} className={`flex items-center p-3 md:p-4 border cursor-pointer transition-colors ${selectedVote === p.id ? 'border-purple-500 bg-purple-500/20' : 'border-cyan/20 hover:border-purple-500/50'}`}>
-                         <input type="radio" name="vote" className="hidden" checked={selectedVote === p.id} onChange={() => !hasVoted && setSelectedVote(p.id)} disabled={hasVoted} />
-                         <span className={`font-mono text-sm md:text-base uppercase ${selectedVote === p.id ? 'text-purple-400' : 'text-cyan/70'}`}>{p.name} {p.player_id === playerId ? '(YOU)' : ''}</span>
-                       </label>
-                     ))}
+                     {players.map(p => {
+                       const isDead = p.is_alive === false;
+                       return (
+                         <label key={p.id} className={`flex items-center p-3 md:p-4 border transition-colors ${isDead ? 'opacity-40 cursor-not-allowed border-gray-600 bg-gray-900/50' : selectedVote === p.id ? 'border-purple-500 bg-purple-500/20 cursor-pointer' : 'border-cyan/20 hover:border-purple-500/50 cursor-pointer'}`}>
+                           <input 
+                             type="radio" 
+                             name="vote" 
+                             className="hidden" 
+                             checked={selectedVote === p.id} 
+                             onChange={() => !hasVoted && !isDead && setSelectedVote(p.id)} 
+                             disabled={hasVoted || isDead} 
+                           />
+                           <span className={`font-mono text-sm md:text-base uppercase ${isDead ? 'text-gray-500 line-through' : selectedVote === p.id ? 'text-purple-400' : 'text-cyan/70'}`}>
+                             {p.name} {p.player_id === playerId ? '(YOU)' : ''} {isDead ? '💀 [GHOST]' : ''}
+                           </span>
+                         </label>
+                       );
+                     })}
                      
                      <div className="pt-2">
                        <label className={`flex items-center p-3 md:p-4 border cursor-pointer transition-colors ${selectedVote === 'SKIP' ? 'border-orange-500 bg-orange-500/20' : 'border-cyan/20 hover:border-orange-500/50'}`}>
@@ -633,6 +706,72 @@ function App() {
           </div>
         )}
       </div>
+            {/* HOST VETO MODAL (EDITABLE) */}
+      {previewWord && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="jarvis-panel p-6 md:p-8 w-full max-w-lg relative border-purple-500/50 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
+            <div className="font-mono text-purple-400 text-xs md:text-sm uppercase tracking-widest mb-6 blink text-center border-b border-purple-500/30 pb-4 flex justify-between items-center">
+              <span>HOST APPROVAL</span>
+              <button onClick={() => setPreviewWord(null)} className="text-red hover:text-red/70">✕</button>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+              <div className="bg-cyan/5 border border-cyan/20 p-4 rounded text-center">
+                <div className="text-cyan/50 font-mono text-xs uppercase mb-1">Category</div>
+                <input 
+                  className="bg-transparent text-cyan font-orbitron text-lg md:text-xl tracking-widest text-center w-full outline-none border-b border-cyan/30 focus:border-cyan" 
+                  value={previewWord.category}
+                  onChange={e => setPreviewWord({...previewWord, category: e.target.value})}
+                  placeholder="e.g. SPACE"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-green-500/5 border border-green-500/20 p-4 rounded text-center">
+                  <div className="text-green-500/50 font-mono text-xs uppercase mb-1">Crew Word</div>
+                  <input 
+                    className="bg-transparent text-green-400 font-orbitron text-lg md:text-xl text-center w-full outline-none border-b border-green-500/30 focus:border-green-500" 
+                    value={previewWord.normal_word}
+                    onChange={e => setPreviewWord({...previewWord, normal_word: e.target.value})}
+                    placeholder="e.g. COMET"
+                  />
+                </div>
+                <div className="bg-red/5 border border-red/20 p-4 rounded text-center">
+                  <div className="text-red/50 font-mono text-xs uppercase mb-1">Imposter Word</div>
+                  <input 
+                    className="bg-transparent text-red font-orbitron text-lg md:text-xl text-center w-full outline-none border-b border-red/30 focus:border-red" 
+                    value={previewWord.imposter_word}
+                    onChange={e => setPreviewWord({...previewWord, imposter_word: e.target.value})}
+                    placeholder="e.g. METEOR"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button 
+                onClick={approveWord} 
+                disabled={loading} 
+                className="jarvis-button flex-1 !border-green-500 !text-green-500 hover:!bg-green-500/10 py-3"
+              >
+                APPROVE
+              </button>
+              <button 
+                onClick={startGame} 
+                disabled={loading} 
+                className="jarvis-button flex-1 !border-orange-500 !text-orange-500 hover:!bg-orange-500/10 py-3"
+              >
+                RE-ROLL
+              </button>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-purple-500/30 text-center">
+               <button onClick={() => setPreviewWord({category: '', normal_word: '', imposter_word: ''})} className="text-xs font-mono text-purple-400 hover:text-white transition-colors tracking-widest uppercase">
+                  CLEAR FIELDS (MANUAL ENTRY)
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
 	        {/* CHAT TOGGLE BUTTON */}
       {currentRoom && (
         <button 
