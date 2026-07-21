@@ -49,10 +49,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <!-- FAVICON & ICONS -->
-<link rel="icon" type="image/x-icon" href="assets/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
 <meta name="theme-color" content="#020c18">
 <title>JARVIS — Portfolio</title>
 <script type="module">import {ulid} from "https://esm.sh/ulid@2.3.0"; window.ulid = ulid;</script>
@@ -384,7 +381,8 @@ let _visitorGreeting = '';
   async function loadFacialModels() {
     const MODEL_URL = './models';
     document.getElementById('status-text').innerText = 'LOADING BIOMETRIC NEURAL NETWORKS...';
-    
+    try { await faceapi.tf.setBackend('webgl'); } catch (e) { await faceapi.tf.setBackend('cpu'); }
+    await faceapi.tf.ready();    
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
@@ -1531,9 +1529,8 @@ function launchDashboard() {
                 <div class="holo-crosshair"></div>
                 
                 <div class="holo-avatar">
-                    <img src="assets/profile.jpeg" alt="[AVATAR_STREAM_FAILED]">
+                    <img src="favicon.png" alt="[AVATAR_STREAM_FAILED]">
                 </div>
-
                 <div class="holo-data-panel">
                     <div class="data-row">
                         <span class="data-label">TRUE.NAME</span>
