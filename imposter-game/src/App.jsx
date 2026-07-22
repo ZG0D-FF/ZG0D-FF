@@ -206,8 +206,9 @@ function App() {
     }
   }, [currentRoom?.status, players, playerId]);
     // Fix: Instantly clear local vote locks when the Host clicks 'START VOTING' again
+  // Fix: Clear local vote locks silently in the background between rounds
   useEffect(() => {
-    if (currentRoom?.status === 'voting') {
+    if (currentRoom?.status !== 'voting') {
       setSelectedVote(null);
       setHasVoted(false);
     }
@@ -242,6 +243,7 @@ function App() {
 
       setIsHost(data.isHost);
       setCurrentRoom(data.room);
+      setPlayerName(recentPlayerName);
       localStorage.setItem('imposter_recent_room', data.room.room_code);
       localStorage.setItem('imposter_recent_name', playerName);
       setRecentPlayerName(playerName);
