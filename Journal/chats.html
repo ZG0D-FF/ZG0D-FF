@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dibyajyotee's Journal — Chats</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f5f0e8;--warm:#c9a96e;--deep:#1a1410;--muted:#8a7a6a;--rose:#d4a0a0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cormorant Garamond',serif;background:var(--deep);color:var(--cream);min-height:100vh;overflow-x:hidden}
+
+/* ── AUTH OVERLAY ── */
+#auth-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(26,20,16,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);transition:opacity .8s,visibility .8s}
+#auth-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.auth-box{text-align:center;max-width:340px;width:90%}
+.auth-box h2{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:1.8rem;letter-spacing:.15em;color:var(--warm);margin-bottom:.3em}
+.auth-box p{font-size:.95rem;color:var(--muted);margin-bottom:2em;font-style:italic}
+.auth-box input{width:100%;padding:.85em 1em;background:rgba(245,240,232,.06);border:1px solid rgba(201,169,110,.25);border-radius:4px;color:var(--cream);font-family:'Josefin Sans',sans-serif;font-size:.9rem;letter-spacing:.08em;outline:none;transition:border-color .3s}
+.auth-box input:focus{border-color:var(--warm)}
+.auth-box input::placeholder{color:var(--muted);opacity:.6}
+.auth-box button{margin-top:1.2em;padding:.7em 2.8em;background:transparent;border:1px solid var(--warm);color:var(--warm);font-family:'Josefin Sans',sans-serif;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:background .3s,color .3s}
+.auth-box button:hover{background:var(--warm);color:var(--deep)}
+#auth-error{color:var(--rose);font-size:.82rem;margin-top:.8em;min-height:1.2em;font-family:'Josefin Sans',sans-serif}
+
+/* ── MAIN CONTENT ── */
+#app{opacity:0;transition:opacity .8s;padding:3em 1.5em 4em}
+#app.visible{opacity:1}
+.page-title{text-align:center;font-weight:300;font-size:2.4rem;letter-spacing:.18em;color:var(--warm);margin-bottom:.15em}
+.page-subtitle{text-align:center;font-style:italic;color:var(--muted);font-size:1rem;margin-bottom:2.5em;letter-spacing:.06em}
+
+/* ── TABS ── */
+.tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:.6em;margin-bottom:2.5em}
+.tab-btn{padding:.5em 1.4em;background:transparent;border:1px solid rgba(201,169,110,.2);color:var(--muted);font-family:'Josefin Sans',sans-serif;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:all .3s}
+.tab-btn:hover,.tab-btn.active{border-color:var(--warm);color:var(--warm)}
+.tab-btn.active{background:rgba(201,169,110,.1)}
+
+/* ── GRID ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.8em;max-width:1100px;margin:0 auto}
+
+/* ── MEMORY CARD ── */
+.memory-card{background:rgba(245,240,232,.03);border:1px solid rgba(201,169,110,.12);border-radius:6px;padding:1.6em 1.8em;transition:border-color .3s,transform .3s}
+.memory-card:hover{border-color:rgba(201,169,110,.35);transform:translateY(-3px)}
+.card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2em;padding-bottom:.8em;border-bottom:1px solid rgba(201,169,110,.08)}
+.card-category{font-family:'Josefin Sans',sans-serif;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--warm);opacity:.8}
+.card-date{font-family:'Josefin Sans',sans-serif;font-size:.62rem;letter-spacing:.1em;color:var(--muted)}
+.card-participants{font-family:'Josefin Sans',sans-serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1em;opacity:.7}
+
+/* ── CHAT FLOW ── */
+.chat-line{margin-bottom:.9em;padding:.55em .9em;border-radius:4px;position:relative}
+.chat-line.speaker-a{background:rgba(201,169,110,.06);margin-right:12%;border-left:2px solid rgba(201,169,110,.25)}
+.chat-line.speaker-b{background:rgba(212,160,160,.05);margin-left:12%;border-right:2px solid rgba(212,160,160,.2);text-align:right}
+.chat-speaker{font-family:'Josefin Sans',sans-serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3em;display:block}
+.speaker-a .chat-speaker{color:var(--warm)}
+.speaker-b .chat-speaker{color:var(--rose)}
+.chat-text{font-size:.92rem;line-height:1.55;color:rgba(245,240,232,.85);font-style:italic}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:4em;color:var(--muted);font-style:italic;letter-spacing:.1em}
+
+/* ── BACK LINK ── */
+.back-link{position:fixed;top:1.2em;left:1.5em;font-family:'Josefin Sans',sans-serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s;z-index:10}
+.back-link:hover{color:var(--warm)}
+
+@media(max-width:480px){
+  .cards-grid{grid-template-columns:1fr}
+  .chat-line.speaker-a{margin-right:5%}
+  .chat-line.speaker-b{margin-left:5%}
+  .page-title{font-size:1.6rem}
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← Journal</a>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <h2>Private</h2>
+    <p>these memories are kept under lock</p>
+    <input type="email" id="auth-email" placeholder="email">
+    <input type="password" id="auth-pass" placeholder="password" style="margin-top:.7em">
+    <button id="auth-btn" onclick="handleLogin()">Unlock</button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="app">
+  <h1 class="page-title">Conversations</h1>
+  <p class="page-subtitle">fragments worth keeping</p>
+  <div class="tabs" id="tabs"></div>
+  <div class="cards-grid" id="cards-grid">
+    <div class="loading">authenticating…</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let allChats = [];
+const CATEGORIES = ['All','Poems & Deep Thoughts','Funny Banter','Food Debates','Wholesome','Shared Memories','Motivational'];
+
+async function handleLogin() {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  if (!email || !pass) { errEl.textContent = 'enter credentials'; return; }
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = error.message; return; }
+  document.getElementById('auth-overlay').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  fetchChats();
+}
+
+// auto-check existing session
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('auth-overlay').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    fetchChats();
+  }
+})();
+
+async function fetchChats() {
+  const { data, error } = await sb.from('chat_highlights').select('*').order('created_at',{ascending:true});
+  if (error) { document.getElementById('cards-grid').innerHTML = '<div class="loading">failed to load</div>'; return; }
+  allChats = data;
+  buildTabs();
+  renderCards('All');
+}
+
+function buildTabs() {
+  const cont = document.getElementById('tabs');
+  cont.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (cat === 'All' ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = () => {
+      cont.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCards(cat);
+    };
+    cont.appendChild(btn);
+  });
+}
+
+function renderCards(cat) {
+  const grid = document.getElementById('cards-grid');
+  const filtered = cat === 'All' ? allChats : allChats.filter(c => c.category === cat);
+  if (!filtered.length) { grid.innerHTML = '<div class="loading">no memories here yet</div>'; return; }
+  grid.innerHTML = '';
+  filtered.forEach(chat => {
+    const card = document.createElement('div');
+    card.className = 'memory-card';
+    const msgs = (typeof chat.content_json === 'string' ? JSON.parse(chat.content_json) : chat.content_json) || [];
+    const speakers = [...new Set(msgs.map(m => m.speaker))];
+    let linesHTML = '';
+    msgs.forEach(m => {
+      const cls = speakers.indexOf(m.speaker) === 0 ? 'speaker-a' : 'speaker-b';
+      linesHTML += `<div class="chat-line ${cls}"><span class="chat-speaker">${esc(m.speaker)}</span><span class="chat-text">${esc(m.text)}</span></div>`;
+    });
+    card.innerHTML = `
+      <div class="card-meta"><span class="card-category">${esc(chat.category)}</span><span class="card-date">${esc(chat.date)}</span></div>
+      <div class="card-participants">${esc(chat.participants)}</div>
+      ${linesHTML}`;
+    grid.appendChild(card);
+  });
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// enter key triggers login
+document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+</script>
+</body>
+</html>
