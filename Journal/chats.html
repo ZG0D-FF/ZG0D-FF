@@ -21,13 +21,15 @@ body{font-family:'Cormorant Garamond',serif;background:var(--deep);color:var(--c
 .auth-box input::placeholder{color:var(--muted);opacity:.6}
 .auth-box button{margin-top:1.2em;padding:.7em 2.8em;background:transparent;border:1px solid var(--warm);color:var(--warm);font-family:'Josefin Sans',sans-serif;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:background .3s,color .3s}
 .auth-box button:hover{background:var(--warm);color:var(--deep)}
+.auth-box button:disabled{opacity:.4;cursor:not-allowed}
 #auth-error{color:var(--rose);font-size:.82rem;margin-top:.8em;min-height:1.2em;font-family:'Josefin Sans',sans-serif}
 
 /* ── MAIN CONTENT ── */
 #app{opacity:0;transition:opacity .8s;padding:3em 1.5em 4em}
 #app.visible{opacity:1}
 .page-title{text-align:center;font-weight:300;font-size:2.4rem;letter-spacing:.18em;color:var(--warm);margin-bottom:.15em}
-.page-subtitle{text-align:center;font-style:italic;color:var(--muted);font-size:1rem;margin-bottom:2.5em;letter-spacing:.06em}
+.page-subtitle{text-align:center;font-style:italic;color:var(--muted);font-size:1rem;margin-bottom:.6em;letter-spacing:.06em}
+.viewer-badge{text-align:center;font-family:'Josefin Sans',sans-serif;font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--warm);opacity:.75;margin-bottom:2.2em}
 
 /* ── TABS ── */
 .tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:.6em;margin-bottom:2.5em}
@@ -90,6 +92,7 @@ body{font-family:'Cormorant Garamond',serif;background:var(--deep);color:var(--c
 <div id="app">
   <h1 class="page-title">Conversations</h1>
   <p class="page-subtitle">fragments worth keeping</p>
+  <p class="viewer-badge" id="viewer-badge"></p>
   <div class="tabs" id="tabs"></div>
   <div class="cards-grid" id="cards-grid">
     <div class="loading">authenticating…</div>
@@ -99,22 +102,155 @@ body{font-family:'Cormorant Garamond',serif;background:var(--deep);color:var(--c
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="module">
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
+/* ============================================================
+   1) SUPABASE CONFIG
+   ------------------------------------------------------------
+   `import.meta.env.VITE_*` ONLY works when a bundler (Vite,
+   Next.js, etc.) processes this file at build time and swaps
+   those tokens for real values. A plain static .html file
+   deployed to Vercel is served as-is — nothing rewrites that
+   line — so `import.meta.env` is literally `undefined` in the
+   browser, and `.VITE_SUPABASE_URL` on `undefined` throws
+   exactly the TypeError you saw.
+
+   Fix: hardcode the values here instead. This is safe for
+   Supabase specifically — the "anon" key is a PUBLIC key that
+   is meant to be shipped to the browser. Your actual security
+   boundary is Row Level Security (RLS) policies on the
+   `chat_highlights` table in Supabase, not hiding this key.
+   Go to Supabase → Project Settings → API and paste the
+   values below.
+   ============================================================ */
+const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+const SUPABASE_ANON = "YOUR-PUBLIC-ANON-KEY";
+
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* ============================================================
+   2) WHO'S WHO
+   ------------------------------------------------------------
+   No hardcoded email list. The owner is identified by exact
+   email match (change OWNER_EMAIL below). Everyone else is
+   resolved dynamically from their Supabase auth session:
+     1. `user_metadata.display_name`, if set (checked first)
+     2. otherwise the email prefix (the part before "@")
+   ...matched against the nickname/codename lists in
+   `prefixAliases`. Same alias list is reused to recognize
+   names inside a chat's `participants` text field.
+   ============================================================ */
+const OWNER_EMAIL = "zgodmr@gmail.com";
+
+const prefixAliases = {
+  adrija:    ["adrija", "evie"],
+  shreyoshi: ["shreyoshi", "shreoyshi"],
+  prisha:    ["prisha", "horneett", "hornet"],
+};
+
+// Resolves the logged-in Supabase user to a canonical identity.
+function resolveIdentity(user) {
+  const email = (user.email || "").toLowerCase();
+  if (email === OWNER_EMAIL) return "owner";
+
+  const displayName = ((user.user_metadata && user.user_metadata.display_name) || "").toLowerCase();
+  const prefix = email.split("@")[0];
+
+  for (const [canon, aliases] of Object.entries(prefixAliases)) {
+    if (displayName && aliases.some(a => displayName.includes(a))) return canon;
+  }
+  for (const [canon, aliases] of Object.entries(prefixAliases)) {
+    if (aliases.some(a => prefix.includes(a))) return canon;
+  }
+  return null;
+}
+
+/* SECURITY NOTE — this file only controls what renders in the browser.
+   Anyone with your anon key can call the Supabase REST API directly
+   and skip this JS entirely. To make the restriction real, add an
+   RLS policy in Supabase SQL editor, e.g.:
+
+   alter table chat_highlights enable row level security;
+
+   create policy "owner sees all"
+   on chat_highlights for select
+   using (auth.jwt() ->> 'email' = 'zgodmr@gmail.com');
+
+   create policy "sister sees own chats"
+   on chat_highlights for select
+   using (
+     participants ilike '%dibyajyotee%' and (
+       (auth.jwt() ->> 'email' ilike '%adrija%'    and participants ilike '%adrija%')
+       or (auth.jwt() ->> 'email' ilike '%evie%'      and participants ilike '%adrija%')
+       or (auth.jwt() ->> 'email' ilike '%shreyoshi%' and participants ilike '%shreyoshi%')
+       or (auth.jwt() ->> 'email' ilike '%shreoyshi%' and participants ilike '%shreyoshi%')
+       or (auth.jwt() ->> 'email' ilike '%prisha%'    and participants ilike '%prisha%')
+       or (auth.jwt() ->> 'email' ilike '%hornet%'    and participants ilike '%prisha%')
+     )
+   );
+
+   Once RLS is on, the client-side filter below is a nice-to-have
+   (avoids a flash of the wrong data / cleaner UI), not the real gate.
+*/
+const ALL_CANON = ["owner", ...Object.keys(prefixAliases)];
+const OWNER_ALIASES = ["dibyajyotee", "dibs", "dj"];
+
+function canonicalOf(token) {
+  const t = token.trim().toLowerCase();
+  if (OWNER_ALIASES.some(a => t.includes(a))) return "owner";
+  for (const [canon, aliases] of Object.entries(prefixAliases)) {
+    if (aliases.some(a => t.includes(a))) return canon;
+  }
+  return null;
+}
+
+// "Dibyajyotee & Adrija" / "Dibyajyotee, Evie" / "Shreoyshi and Dibyajyotee" -> ["owner","adrija"]
+function canonicalParticipants(participantsStr) {
+  const tokens = (participantsStr || "").split(/,|&|\band\b/i);
+  const set = new Set();
+  tokens.forEach(t => { const c = canonicalOf(t); if (c) set.add(c); });
+  return set;
+}
+
+let currentIdentity = null; // set on login
+
+// A chat is visible to the logged-in person if:
+//  - they are the owner (sees all chats), OR
+//  - the chat is between the owner and exactly this person
+//    (never shows a chat that also involves a different sister)
+function canViewChat(chat, identity) {
+  if (identity === "owner") return true;
+  const people = canonicalParticipants(chat.participants);
+  if (!people.has("owner") || !people.has(identity)) return false;
+  const otherSisters = Object.keys(prefixAliases).filter(k => k !== identity);
+  return !otherSisters.some(s => people.has(s));
+}
+
+/* ============================================================ */
 
 let allChats = [];
 const CATEGORIES = ['All','Poems & Deep Thoughts','Funny Banter','Food Debates','Wholesome','Shared Memories','Motivational'];
 
-// Attach to window so the HTML onclick="" can find it
 window.handleLogin = async function() {
   const email = document.getElementById('auth-email').value.trim();
   const pass = document.getElementById('auth-pass').value;
+  const btn = document.getElementById('auth-btn');
   const errEl = document.getElementById('auth-error');
   errEl.textContent = '';
+
   if (!email || !pass) { errEl.textContent = 'enter credentials'; return; }
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+  btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false;
+
   if (error) { errEl.textContent = error.message; return; }
+
+  currentIdentity = resolveIdentity(data.user);
+  if (!currentIdentity) {
+    errEl.textContent = "couldn't match this account to a known person";
+    await sb.auth.signOut();
+    return;
+  }
+
   document.getElementById('auth-overlay').classList.add('hidden');
   document.getElementById('app').classList.add('visible');
   fetchChats();
@@ -124,16 +260,25 @@ window.handleLogin = async function() {
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
-    document.getElementById('auth-overlay').classList.add('hidden');
-    document.getElementById('app').classList.add('visible');
-    fetchChats();
+    currentIdentity = resolveIdentity(session.user);
+    if (currentIdentity) {
+      document.getElementById('auth-overlay').classList.add('hidden');
+      document.getElementById('app').classList.add('visible');
+      fetchChats();
+    }
   }
 })();
 
 async function fetchChats() {
   const { data, error } = await sb.from('chat_highlights').select('*').order('created_at',{ascending:true});
   if (error) { document.getElementById('cards-grid').innerHTML = '<div class="loading">failed to load</div>'; return; }
-  allChats = data;
+  allChats = data.filter(chat => canViewChat(chat, currentIdentity));
+
+  const badge = document.getElementById('viewer-badge');
+  badge.textContent = currentIdentity === 'owner'
+    ? 'viewing as dibyajyotee — all chats'
+    : `viewing as ${currentIdentity} — your chats only`;
+
   buildTabs();
   renderCards('All');
 }
@@ -179,7 +324,6 @@ function renderCards(cat) {
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-// enter key triggers login
 document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') window.handleLogin(); });
 </script>
 </body>
