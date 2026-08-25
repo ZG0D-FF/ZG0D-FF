@@ -184,15 +184,35 @@ body::after {
   .cards-track { gap: 6vw; }
   .modal-content-box { padding: 2em; width: 95%; height: 85vh; }
 }
+
+/* Mac OS Window Dots */
+.mac-dots { position: absolute; top: 18px; left: 20px; display: flex; gap: 8px; z-index: 10; }
+.mac-dots div { width: 12px; height: 12px; border-radius: 50%; }
+.mac-dots .close { background: #ff5f56; }
+.mac-dots .min { background: #ffbd2e; }
+.mac-dots .max { background: #27c93f; }
+
+/* Mobile View & Auto Fit Refinements */
+html, body { overscroll-behavior-x: none; }
+@media(max-width: 768px) {
+  .canvas-wrapper { padding: 0 5vw; scroll-snap-type: x mandatory; }
+  .card-wrapper { scroll-snap-align: center; }
+  .memory-card { width: 88vw; height: 65vh; min-height: unset; padding: 2.5em 1.5em; }
+  .modal-content-box { width: 95%; height: 85vh; padding: 3em 1.5em; }
+}
 </style>
 </head>
 <body>
 
-<a href="index.html" class="back-link">← Journal</a>
+<a href="https://zg-0-d-ff.vercel.app/Journal/Journal2.html" class="back-link">← Journal</a>
+<button id="logout-btn" onclick="handleLogout()" style="display:none; position:fixed; top:1.5em; right:2em; background:rgba(212,160,160,0.1); border:1px solid rgba(212,160,160,0.4); color:var(--rose); padding:0.5em 1.5em; border-radius:30px; cursor:pointer; z-index:100; font-family:'Josefin Sans'; font-size:0.7rem; text-transform:uppercase; transition:all 0.3s;">Logout</button>
 
 <!-- AUTH OVERLAY -->
 <div id="auth-overlay">
   <div class="auth-box">
+    <!-- MAC DOTS HERE -->
+    <div class="mac-dots"><div class="close"></div><div class="min"></div><div class="max"></div></div>
+    
     <h2>Private</h2>
     <p>these memories are kept under lock</p>
     <input type="email" id="auth-email" placeholder="email" autocomplete="email">
@@ -201,7 +221,6 @@ body::after {
     <div id="auth-error"></div>
   </div>
 </div>
-
 <!-- MAIN -->
 <div id="app">
   <div class="header-area">
@@ -221,7 +240,13 @@ body::after {
 <!-- MODAL -->
 <div id="card-modal" onclick="closeModal(event)">
   <div class="close-modal">Close ✕</div>
-  <div class="modal-content-box" id="modal-content" onclick="event.stopPropagation()"></div>
+  <div class="modal-content-box" onclick="event.stopPropagation()">
+    <!-- MAC DOTS HERE -->
+    <div class="mac-dots"><div class="close"></div><div class="min"></div><div class="max"></div></div>
+    
+    <!-- JS injects the chat text into this empty div below so it doesn't overwrite the dots -->
+    <div id="modal-content"></div> 
+  </div>
 </div>
 
 
@@ -329,6 +354,12 @@ window.handleLogin = async function() {
   document.getElementById('auth-overlay').classList.add('hidden');
   document.getElementById('app').classList.add('visible');
   fetchChats();
+  document.getElementById('logout-btn').style.display = 'block';
+};
+
+window.handleLogout = async function() {
+  if (sb) await sb.auth.signOut();
+  location.reload(); // refreshes the page to lock it again
 };
 
 // Bootstrap
@@ -347,6 +378,7 @@ window.handleLogin = async function() {
       document.getElementById('auth-overlay').classList.add('hidden');
       document.getElementById('app').classList.add('visible');
       fetchChats();
+	  document.getElementById('logout-btn').style.display = 'block';
     }
   }
 })();
