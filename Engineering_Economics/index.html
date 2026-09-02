@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Economic Analysis</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --sidebar-bg: #1e1e1e;
+            --sidebar-text: #b0b0b0;
+            --sidebar-active: #ffffff;
+            
+            --color-sec1: #ff6b6b;
+            --color-sec2: #4ecdc4;
+            --color-sec3: #ffe66d;
+            --color-sec4: #c7f464;
+            --color-sec5: #ff847c;
+            
+            --def-bg: rgba(255, 255, 255, 0.05);
+            --def-border: #4ecdc4;
+            
+            --card-bg: #2a2a2a;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Merriweather', 'Georgia', serif;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        /* Sidebar Navigation */
+        #sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            border-right: 1px solid #333;
+        }
+        
+        .sidebar-title {
+            font-family: 'Merriweather', 'Georgia', serif;
+            padding: 0 20px 20px;
+            margin: 0;
+            font-size: 1.5em;
+            border-bottom: 1px solid #333;
+            color: #fff;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--sidebar-text);
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--sidebar-active);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--sidebar-active);
+        }
+        
+        .nav-item[data-target="sec-intro"].active { border-left-color: var(--color-sec1); }
+        .nav-item[data-target="sec-decision"].active { border-left-color: var(--color-sec2); }
+        .nav-item[data-target="sec-prob"].active { border-left-color: var(--color-sec3); }
+        .nav-item[data-target="sec-costs1"].active { border-left-color: var(--color-sec4); }
+        .nav-item[data-target="sec-costs2"].active { border-left-color: var(--color-sec5); }
+
+        /* Main Content */
+        #content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 40px 10%;
+            scroll-behavior: smooth;
+        }
+
+        .section-container {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            max-width: 900px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+
+        .section-container.active {
+            display: block;
+        }
+        
+        #sec-intro h1, #sec-intro h2 { color: var(--color-sec1); }
+        #sec-decision h1, #sec-decision h2 { color: var(--color-sec2); }
+        #sec-prob h1, #sec-prob h2 { color: var(--color-sec3); }
+        #sec-costs1 h1, #sec-costs1 h2 { color: var(--color-sec4); }
+        #sec-costs2 h1, #sec-costs2 h2 { color: var(--color-sec5); }
+
+        /* Definitions & Key Terms */
+        .definition {
+            background-color: var(--def-bg);
+            border-left: 4px solid var(--def-border);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .definition strong {
+            color: #fff;
+            font-size: 1.1em;
+        }
+
+        /* Flowchart Styles */
+        .fc-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 50px 0;
+        }
+        
+        .fc-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .fc-row.reverse {
+            flex-direction: row-reverse;
+        }
+        
+        .fc-node {
+            width: 180px;
+            height: 120px;
+            background: var(--card-bg);
+            border: 2px solid var(--color-sec2);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+            position: relative;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .fc-node:hover {
+            transform: translateY(-5px);
+            background: rgba(78, 205, 196, 0.1);
+            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.2);
+        }
+        
+        .fc-num {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            background: var(--bg-color);
+            border: 2px solid var(--color-sec2);
+            color: var(--color-sec2);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .fc-title {
+            font-family: 'Merriweather', serif;
+            font-size: 1em;
+            color: #e0e0e0;
+        }
+        
+        .fc-click-hint {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .fc-arrow {
+            font-size: 2em;
+            color: #555;
+            font-weight: bold;
+        }
+        
+        .fc-row-connect {
+            font-size: 2em;
+            color: #555;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            margin-left: 200px; /* offset to align with end nodes */
+        }
+        
+        .fc-row-connect.left-side {
+            margin-left: -200px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: var(--bg-color);
+            width: 80%;
+            max-width: 800px;
+            max-height: 85vh;
+            border-radius: 12px;
+            border: 1px solid #444;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 2em;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s;
+        }
+        
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        /* Example Problem Cards (Interactive) */
+        .example-card {
+            background-color: var(--card-bg);
+            border: 1px solid #444;
+            border-radius: 10px;
+            margin: 30px 0;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        
+        .example-header {
+            padding: 15px 20px;
+            background-color: rgba(255,255,255,0.05);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Merriweather', serif;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--color-sec3);
+        }
+        
+        .example-header::after {
+            content: '+';
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+        
+        .example-card.open .example-header::after {
+            transform: rotate(45deg);
+        }
+
+        .example-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease;
+        }
+        
+        .example-card.open .example-content {
+            padding: 20px;
+            max-height: 2000px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        
+        th {
+            background-color: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .nav-btn {
+            background-color: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+        
+        .nav-btn:hover:not(:disabled) {
+            background-color: #444;
+            border-color: #666;
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Image Integration */
+        .img-container {
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .img-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            cursor: zoom-in;
+            transition: transform 0.2s;
+            border: 1px solid #333;
+        }
+        
+        .img-container img:hover {
+            transform: scale(1.02);
+        }
+        
+        .img-caption {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        /* Fullscreen Image Overlay */
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+        
+        .fullscreen-overlay img {
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 5px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <h2 class="sidebar-title">Engineering Economics</h2>
+        <div class="nav-item active" data-target="sec-intro">1. Introduction & Scope</div>
+        <div class="nav-item" data-target="sec-decision">2. Rational Decision-Making</div>
+        <div class="nav-item" data-target="sec-prob">3. Decision-Making Problems</div>
+        <div class="nav-item" data-target="sec-costs1">4. Cost Estimating (Part 1)</div>
+        <div class="nav-item" data-target="sec-costs2">5. Cost Estimating (Part 2)</div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="content-area">
+        
+        <!-- SECTION 1 -->
+        <div id="sec-intro" class="section-container active">
+            <h1>Scope of Module 1</h1>
+            <ol>
+                <li>Distinguish between simple and complex problems</li>
+                <li>Discuss the role and purpose of engineering economic analysis</li>
+                <li>Describe and give examples of the nine steps in the economic decision making process</li>
+                <li>Select appropriate economic criteria for use with different type of economic problems</li>
+                <li>Solve simple problems associated with engineering decision-making.</li>
+            </ol>
+
+            <h2>Questions to consider</h2>
+            <ol>
+                <li>How did the cost and weight of fireproofing material affect the engineers' decision making when the twin towers were being constructed?</li>
+                <li>How much should a builder be expected to spend on improved fireproofing, given the unlikelihood of an attack on the scale of 9/11?</li>
+                <li>How have the perception of risk changed since the 9/11 attacks, how might this affect future building design decision?</li>
+            </ol>
+
+            <h2>Role of engineering economic analysis</h2>
+            <p>Engineering economic analysis is most suitable if the problem is:</p>
+            <ol>
+                <li>Enough important to give it a serious thought and effort</li>
+                <li>Cannot be solved in head and a careful analysis requires that the problem should be organized along with various consequences.</li>
+                <li>Having an economic aspect so decision – making is important.</li>
+            </ol>
+
+            <h2>Economic Decision Making</h2>
+            <p>Decision-making is the broad topic because it deals with aspect of everyday human existence. The main focus is to develop the tools to properly analyze and solve the economic problems that are commonly faced by engineers. Even complex situations can be broken down into components to form a sensible solution. The understanding of decision – making process is important because the tools of decision – making is useful for obtaining realistic comparisons between alternatives so that I can make better decision.</p>
+            
+            <p>Engineering economic analysis focuses on cost, revenues and benefits that occur at different times. Most of the things that engineers design calls for spending money in the design and building stages and after completion revenues or benefits occur – usually for years. Thus the economic analysis of cost, benefits and revenues occurring over time is called engineering economics.</p>
+            
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                <strong>Example:</strong> A civil engineer designs a road or a dam, the construction costs occurs in near future but the benefits to users begin when construction is finished and continue for a long period of time.
+            </div>
+
+            <h2>Element in decision – making</h2>
+            <ol>
+                <li>To have a decision – making situation there must be at-least two alternatives available. If only one course of action is available, there can be no decision – making because there is nothing to decide.</li>
+                <li>The decision should be rational. (Out of five horses running on a race track if someone chooses its betting horse by closing eyes and pointing finger on a number then it is not rational)</li>
+            </ol>
+            
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn" disabled>Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION 2: NEW FLOWCHART UI -->
+        <div id="sec-decision" class="section-container">
+            <h1>Rational decision – making</h1>
+            <p>Rational decision making contains nine essential elements. Although the sequence can vary and can be repeated, but all the elements are present in all rational decision. The elements are:</p>
+            
+            <div class="fc-container">
+                <!-- Row 1 -->
+                <div class="fc-row">
+                    <div class="fc-node" onclick="openStep(1)">
+                        <div class="fc-num">1</div>
+                        <div class="fc-title">Recognize problem</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                    <div class="fc-arrow">➔</div>
+                    <div class="fc-node" onclick="openStep(2)">
+                        <div class="fc-num">2</div>
+                        <div class="fc-title">Define goal/objective</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                    <div class="fc-arrow">➔</div>
+                    <div class="fc-node" onclick="openStep(3)">
+                        <div class="fc-num">3</div>
+                        <div class="fc-title">Assemble data</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                </div>
+                
+                <div class="fc-row-connect">⬇</div>
+                
+                <!-- Row 2 (Reversed) -->
+                <div class="fc-row reverse">
+                    <div class="fc-node" onclick="openStep(6)">
+                        <div class="fc-num">6</div>
+                        <div class="fc-title">Construct model</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                    <div class="fc-arrow">⬅</div>
+                    <div class="fc-node" onclick="openStep(5)">
+                        <div class="fc-num">5</div>
+                        <div class="fc-title">Select criteria</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                    <div class="fc-arrow">⬅</div>
+                    <div class="fc-node" onclick="openStep(4)">
+                        <div class="fc-num">4</div>
+                        <div class="fc-title">Identify alternatives</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                </div>
+                
+                <div class="fc-row-connect left-side">⬇</div>
+                
+                <!-- Row 3 -->
+                <div class="fc-row">
+                    <div class="fc-node" onclick="openStep(7)">
+                        <div class="fc-num">7</div>
+                        <div class="fc-title">Predict outcomes</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                    <div class="fc-arrow">➔</div>
+                    <div class="fc-node" onclick="openStep(8)">
+                        <div class="fc-num">8</div>
+                        <div class="fc-title">Choose best alternative</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                    <div class="fc-arrow">➔</div>
+                    <div class="fc-node" onclick="openStep(9)">
+                        <div class="fc-num">9</div>
+                        <div class="fc-title">Audit results</div>
+                        <div class="fc-click-hint">Click to read</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+        
+        <!-- SECTION 3 -->
+        <div id="sec-prob" class="section-container">
+            <h1>Problems on Decision-making</h1>
+            
+            <div class="example-card">
+                <div class="example-header">Problem 1: Concrete aggregate mix</div>
+                <div class="example-content">
+                    <p>A concrete aggregate mix is required to contain 31% sand by volume for proper batching. One source of material, which has 25% sand and 75% coarse aggregate and sells for Rs. 270/m³. Another source which has 40% sand and 60% course aggregates, sells for Rs. 396/m³. Determine the least cost per cubic meter of blended aggregates.</p>
+                </div>
+            </div>
+
+            <div class="example-card">
+                <div class="example-header">Problem 2: Machine part manufacturing</div>
+                <div class="example-content">
+                    <p>A machine part is manufactured at a unit cost of Rs. 40 for material and Rs 15 for direct labor. An investment of Rs. 500,000 in tooling is required. The order requires 3 million pieces. Halfway through the order, a new method of manufacture can be put into effect that will reduce the unit cost to Rs. 34 for material and Rs. 10 for direct labor – but it will require Rs. 100,000 for additional tooling. This tooling will not be useful for fortune orders. Once costs are allocated at 2.5 times the direct labor cost. What if anything, should be done?</p>
+                </div>
+            </div>
+
+            <div class="example-card">
+                <div class="example-header">Problem 3: Cold-storage warehouse</div>
+                <div class="example-content">
+                    <p>In the design of a cold-storage warehouse, the specification call for a minimum heat transfer through the warehouse walls of 30,000 joules/m³, when there us a 30 ºC temperature between the inside and the outside surface of the insulation. The two insulation materials considered as follows:</p>
+                    <table>
+                        <tr>
+                            <th>Insulation Material</th>
+                            <th>Cost per cubic meter</th>
+                            <th>Conductivity (J-m/m² – C - hr)</th>
+                        </tr>
+                        <tr>
+                            <td>Rock wool</td>
+                            <td>$12.50</td>
+                            <td>140</td>
+                        </tr>
+                        <tr>
+                            <td>Foamed insulation</td>
+                            <td>$14.00</td>
+                            <td>110</td>
+                        </tr>
+                    </table>
+                    <p>The basic equation for heat conduction through a wall is</p>
+                    <div class="img-container">
+                        <img src="assets/heat_conduction_formula.png" alt="Basic equation for heat conduction through a wall" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBIZWF0IENvbmR1Y3Rpb24gRm9ybXVsYV08L3RleHQ+PC9zdmc+'">
+                        <div class="img-caption">Click to expand</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION 4 -->
+        <div id="sec-costs1" class="section-container">
+            <h1>Part 2: Engineering Costs and Cost Estimating</h1>
+            <p>This part defines fundamental cost concepts. The costs includes fixed and variable costs, marginal and average costs, sunk and opportunity costs, recurring and non-recurring costs, incremental cash cost, book costs and life-cycle costs. It part covers the various types of estimates and difficulties sometimes encountered. The models include unit factor, segmenting, cost indexes, power sizing, triangulation and learning curves. This part discusses estimating benefits and developing cash flow diagrams.</p>
+
+            <h2>Engineering Costs</h2>
+            
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>Fixed cost:</strong> Constant or unchanging regardless of the level of output or activity. This includes the cost of building, the machinery, the land which does not change with change in production level.
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>Variable cost:</strong> Depend upon the level of output or activity, this includes the electricity bill, labor cost, raw materials, shipping fees which changes as the production level changes. These are generally linear (y equals a constant times x); however, the variable cost can also be nonlinear. For example, employees are often paid at 150% of their hourly rate for overtime hours.
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>Total cost:</strong> It is the summation of fixed cost and variable cost.
+            </div>
+            
+            <p>The total cost can be graphically represented as below if the variable cost is nonlinear:</p>
+            <div class="img-container">
+                <img src="assets/total_cost_graph.png" alt="Total Cost Graph" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBUb3RhbCBDb3N0IEdyYXBoXTwvdGV4dD48L3N2Zz4='">
+                <div class="img-caption">Click to expand</div>
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>Marginal Cost:</strong> It is the addition to total cost for one additional unit of output production. This explains by how much the cost increases if the output production increases from 55 units to 56 units. It is the ratio of change in total cost to change in output. This is used to decide whether it is rational to produce the additional unit of output.
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>Average cost:</strong> It is the total cost divided by the number of units of output produced. If the total cost of producing 100 pens is Rs. 400 then the average cost of producing the pen is Rs. 400/100 = Rs. 4.
+            </div>
+
+            <div class="example-card">
+                <div class="example-header">Example Problem 3: Chartered Bus Trip</div>
+                <div class="example-content">
+                    <p>An entrepreneur named Sheetal was considering the money making potential of chartering a bus to take people from his home-town to an event in a larger city. Sheetal planned to provide transportation tickets to the event, and refreshments on the bus for his customers. She gathered data and categorized the predicted expenses as either fixed or variable.</p>
+                    
+                    <table>
+                        <tr>
+                            <th>Item</th>
+                            <th>Fixed Cost (in Rs)</th>
+                            <th>Item</th>
+                            <th>Variable cost(in Rs)</th>
+                        </tr>
+                        <tr>
+                            <td>Bus rental</td>
+                            <td>7200</td>
+                            <td>Event ticket</td>
+                            <td>1125/person</td>
+                        </tr>
+                        <tr>
+                            <td>Gas expense</td>
+                            <td>6750</td>
+                            <td>Refreshment</td>
+                            <td>675/person</td>
+                        </tr>
+                        <tr>
+                            <td>Other fuels</td>
+                            <td>1800</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Bus driver</td>
+                            <td>4500</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    
+                    <p>Develop an expression of Sheetal’s total fixed and total variable cost for chartering this trip.</p>
+                    <p>Sheetal developed an overall total cost equation for his business expenses. Now, she wants to evaluate the potential to make money from this chartered bus trip if she sets the price of each ticket at Rs. 2500</p>
+                    <p>From this the above exercise we can derive the total cost and total revenue equations and these will be used to calculate the profit – loss breakeven chart.</p>
+                    
+                    <div class="definition" style="--def-border: var(--color-sec4);">
+                        <strong>Breakeven point:</strong> The level of business activity at which the total cost to provide the product (goods or service) are equal to the revenue generated by providing the service. This is the point at which one just break even.
+                    </div>
+                    
+                    <div class="definition" style="--def-border: var(--color-sec4);">
+                        <strong>Profit region:</strong> The output level that is greater than breakeven point, the total revenue is greater than total costs.
+                    </div>
+                    
+                    <div class="definition" style="--def-border: var(--color-sec4);">
+                        <strong>Loss region:</strong> The output level is less than the breakeven point, where total costs are greater than total revenue.
+                    </div>
+                    
+                    <p>This can be graphically represented as:</p>
+                    <div class="img-container">
+                        <img src="assets/breakeven_chart.png" alt="Breakeven Chart" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBCcmVha2V2ZW4gQ2hhcnRdPC90ZXh0Pjwvc3ZnPg=='">
+                        <div class="img-caption">Click to expand</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <div id="sec-costs2" class="section-container">
+            <h1>Cost Estimating (Continued)</h1>
+
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Sunk Cost:</strong> Money spent as a result of past decision. Example: dollars spent last year to purchase new production machinery is money that is sunk because it has already be spent and there is nothing that can be at present to change that action. Engineering economists deal with present and future opportunities so this sunk cost should be disregarded in engineering economics as current decision cannot change the past.
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Opportunity Cost:</strong> An opportunity cost is the benefit that is forgone by engaging a business resource in a chosen activity instead of engaging the same resource in the forgone activity. When a resource is used in one activity instead of another an opportunity cost is incurred. Every time a business resource (equipment, money, man-power, time, etc.) is used in one activity, the opportunity to use the same resource at that time in some other activity is lost. Each resource that a firm owns can feasibly be used in several alternative ways. The benefit that would be derived by using the resource in an alternative activity is the opportunity cost for using it in the chosen activity. It is the forgone opportunity because we are forgoing the benefit that could have been realized.
+            </div>
+
+            <div class="example-card">
+                <div class="example-header">Example Problem 4: Old Electric Pumps</div>
+                <div class="example-content">
+                    <p>A distributor of electric pump must decide what to do with a “lot” of old lecetric pumps purchased three years ago. Soon after the distributor purchased the lot, technology advances made the old pumps less desirable to customers. The pumps are becoming more obsolescent as they sit in inventory. The pricing manager has the following information:</p>
+                    
+                    <table>
+                        <tr><td>Distributor purchase price 3 years ago</td><td>Rs. 6,30,000</td></tr>
+                        <tr><td>Distributor storage cost to date</td><td>Rs. 90,000</td></tr>
+                        <tr><td>Distributor’s list price 3 years ago</td><td>Rs. 8,55,000</td></tr>
+                        <tr><td>Current list price of the same number of new pumps</td><td>Rs. 1,080,000</td></tr>
+                        <tr><td>Amount offered for the old pumps from a buyer 2 years ago</td><td>Rs. 4,50,000</td></tr>
+                        <tr><td>Current price the lot of old pumps would bring</td><td>Rs. 2,70,000</td></tr>
+                    </table>
+                    
+                    <p>Looking at this, the pricing manager has concluded that the price should be set at Rs. 7,20,000. This is the money that the firm has “tied-up” in the lot of old pumps (6,30,000+90,000), and it was reasoned that the company should at least recover this cost. Furthermore, the pricing manager has argued that an Rs. 720000 price would be Rs. 1,35,000 less than the list price from 3 years ago, and it would be Rs.3,60,000 less than what a lot of new pumps would cost (Rs. 1,080,000 – Rs. 7,20,000). What would be your advice on price?</p>
+                </div>
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Recurring and nonrecurring costs:</strong> Recurring costs are anticipated and occurs at regular intervals. It includes resurfacing a highway or re-shingling a roof, so annual expenses for maintenance and operation are examples of recurring costs.<br><br>
+                Nonrecurring costs occurs at irregular intervals and hence, it is difficult to plan for or anticipate. It includes emergency maintenance expenses, installing new machines, disposal or close-down cost.<br><br>
+                In engineering economic analysis recurring costs are modeled as cash flows that occur at regular intervals (such as every year or every 5 year). Their magnitude can be estimated, and they can be estimated in the overall analysis. Nonrecurring cost can be handled easily if anticipation of timing and size can be predicted.
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Incremental cost:</strong> Fundamental principles in engineering economic analysis is that in making a choice among a set of competing alternatives, focus should be placed on the differences between those alternatives. It is the extra cost associated with choosing an alternative over another. Positive incremental cost means something is more costly than another, while negative incremental cost indicates there would be a savings.
+            </div>
+
+            <div class="example-card">
+                <div class="example-header">Example problem 5: Model A vs Model B</div>
+                <div class="example-content">
+                    <p>Philips is choosing between model A (a budget model) and model B (with more features and a higher purchase price). What incremental costs would Philip incur if he chose model B instead of less expensive model A?</p>
+                    
+                    <table>
+                        <tr>
+                            <th>Cost Items</th>
+                            <th>Model A (in $)</th>
+                            <th>Model B (in $)</th>
+                        </tr>
+                        <tr>
+                            <td>Purchase price</td>
+                            <td>10,000</td>
+                            <td>17,500</td>
+                        </tr>
+                        <tr>
+                            <td>Installation cost</td>
+                            <td>3500</td>
+                            <td>5000</td>
+                        </tr>
+                        <tr>
+                            <td>Annual maintenance cost</td>
+                            <td>2500</td>
+                            <td>750</td>
+                        </tr>
+                        <tr>
+                            <td>Annual utility expenses</td>
+                            <td>1200</td>
+                            <td>2000</td>
+                        </tr>
+                        <tr>
+                            <td>Disposal cost after useful life</td>
+                            <td>700</td>
+                            <td>500</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Cash cost vs Book cost:</strong> A cash-cost requires the cash transaction of money “out of one person’s pocket into the pocket of someone else.” This is a cash flow from someone to someone. Book cost do not require transaction of money, these are cost effects from past decisions that are recorded “in the books” (accounting books) of a firm. One exception to this is the impact of asset depreciation on tax payments – which are cash flows and are included in after-tax analysis.
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Life cycle cost:</strong> The products, goods and services designed by engineers all progress through a life cycle.
+            </div>
+            
+            <p>The typical life cycle of the product can be tabulated as:</p>
+            <div class="img-container">
+                <img src="assets/life_cycle_table.png" alt="Life cycle of the product" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBMaWZlIEN5Y2xlIFRhYmxlXTwvdGV4dD48L3N2Zz4='">
+                <div class="img-caption">Click to expand</div>
+            </div>
+
+            <p>Life cycle costing refers to the concept of designing products, goods and services with a full and explicit recognition of the associated costs over the various phrases of their life cycles. Two key concept in life-cycle costing are that ‘the later design changes are made, the higher the cost’, and that decisions made early in the life cycle tend to “lock in” cost that are incurred later. The downstream product (products created using raw materials from earlier production stages) changes are more costly and upstream changes (focus on raw material, design, foundational development) are easier (and less costly) to make.</p>
+            
+            <p>When planner try to save money at an early design stage, the result is often a poor design, calling for change orders during construction and prototype development. These changes, in turn, are more costly than working out a better design would have been. The life cycle effects that engineers should consider at the design time include product costs for liability, production, material, testing and quality assurance and maintenance and warranty. Other life-cycle effects include product features based on customer input and product disposal effects on the environment. The engineers should consider all life cycle cost..</p>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn" disabled>Finish</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals and Templates for Flowchart -->
+    <div class="modal-overlay" id="fc-modal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal()">×</div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Templates for the 9 steps -->
+    <template id="tpl-step1">
+        <h2>1. Recognize the problem:</h2>
+        <p>The decision-making process began with this recognition of a problem. Many firms establish programs for total quality management (TQM) or continuous improvement (CI) that are designed to identify problems, so that they can be solved.</p>
+    </template>
+    
+    <template id="tpl-step2">
+        <h2>2. Define the goal/objective:</h2>
+        <p>The goal or the objective can be grand or overall goal. The presence of multiple, conflicting goals is often the foundation of complex problems. But the objective can be narrow and specific. Thus, defining the objective is the act of exactly describing the task or goal.</p>
+    </template>
+    
+    <template id="tpl-step3">
+        <h2>3. Assemble relevant data:</h2>
+        <p>One must first assemble good information to make a good decision. There is vast quantity of information that is not written down anywhere but is stored in individual’s memory from knowledge and experience. Some data are available at little or no cost and other data are gathered by consulting people having specific knowledge. Some data are of high – quality (precise and accurate) while, other rely on individual judgement for an estimate. In engineering decision – making, an important source of data is a firm’s own accounting system. Accounting data focuses on past information, and engineering judgement must be applied to estimate current and future values. Financial and cost accounting are designed to show accounting values and the flow of money – specifically costs and benefits in a company’s operations. Where the cost are directly related to specific operation is called direct cost and there is no difficulty but, if the cost are not directly related to a specific operation then it is indirect cost or overhead which are usually allocated to a company’s operations and products by some arbitrary method. Gathering cost data presents difficulties. One way to look at the financial consequences – cost and benefits – of various alternatives is as follows:</p>
+        <ol>
+            <li><strong>Market consequences:</strong> Established price in market place. The pruce of raw materials, machinery cost, labor cost are market determined</li>
+            <li><strong>Extra-market consequences:</strong> Items which are not directly priced in market these are called shadow prices. Example: the cost of an employee injury or the value to employees of going from a 5-day to a 4-day, 40-hour week.</li>
+            <li><strong>Intangible Consequences:</strong> Numerical economic analysis probably never fully describes the real differences between alternatives. The tendency to leave out consequences that do not have a significant impact on the analysis itself, or on the conversion of the final decision into actual money, is difficult to resolve or eliminate. Example: How does one evaluate the potential loss of a workers’ job due to automation?</li>
+        </ol>
+        <p>To create a meaningful economic analysis, the true differences between alternatives must be determined, which might require some adjustment of cost accounting data.</p>
+        
+        <div class="example-card">
+            <div class="example-header">Problem Example 1: Printing Department</div>
+            <div class="example-content">
+                <p>The cost-accounting records of a large company show the average monthly costs for a three person printing department. The wages of the department members and benefits, such as vacation and sick-leave make up the first category of direct labor. The company’s indirect or overhead cost – such as heat, electricity and employee insurance – must be distributed to its various departments in some manner and, like many other firms this one uses floor space as the basis for its allocation:</p>
+                <table>
+                    <tr><th>Type of cost</th><th>Cost</th></tr>
+                    <tr><td>Direct labor (including employee benefit)</td><td>Rs. 5,40,000</td></tr>
+                    <tr><td>Materials and supplies consumed</td><td>Rs. 6,30,000</td></tr>
+                    <tr><td>Allocated overhead cost (200 m² of floor area at Rs. 25/m²)</td><td>Rs. 4,50,000</td></tr>
+                    <tr><td><strong>Total Cost</strong></td><td><strong>Rs. 1,620,000</strong></td></tr>
+                </table>
+                <p>The printing department charges the other departments for its services to recover its Rs. 18,000 monthly cost. For example, the charge to run 1000 copies of an announcement is:</p>
+                <table>
+                    <tr><th>Type of cost</th><th>Cost</th></tr>
+                    <tr><td>Direct labor (including employee benefit)</td><td>Rs. 684</td></tr>
+                    <tr><td>Materials and supplies consumed</td><td>Rs. 882</td></tr>
+                    <tr><td>Allocated overhead cost (200 m² of floor area at Rs. 25/m²)</td><td>Rs. 815</td></tr>
+                    <tr><td><strong>Total Cost</strong></td><td><strong>Rs. 2,381</strong></td></tr>
+                </table>
+                <p>The shipping department checks with a commercial printer which would print the same 1000 copies for Rs. 2,066. Although the shipping department needs only about 30,000 copies printed a month, its foreman decides to stop using the printing department and have the work done by the outside printer. The in-house department object to this. As a result, the general manager gave the responsibility to you to study the situation and recommend what should be done.</p>
+            </div>
+        </div>
+    </template>
+    
+    <template id="tpl-step4">
+        <h2>4. Identify Feasible Alternatives:</h2>
+        <p>Unless the best alternative is considered the result will always be sub-optimal. Two types of alternatives are sometimes ignored. First, a do-nothing alternative and second, a feasible but unglamorous alternative (patch a cloth or keep the motor running manually for another year before replacing it). Sometimes a group of people considering alternatives in an innovative atmosphere (brainstorming) can be helpful. The payoff from a new, innovative alternative can far exceed the value of carefully selecting between the existing alternative. Any good listing of alternatives will produce both practical and impractical alternatives, but only the feasible alternatives are retained for further analysis.</p>
+    </template>
+    
+    <template id="tpl-step5">
+        <h2>5. Select the Criterion to determine the best alternative:</h2>
+        <p>Logically choose the best alternative (what does best mean?). There must be a criterion, or a set of criteria, to judge the alternatives. The term ‘best’ is a relative adjective, rather than absolute values, this means the selection will be the alternative that is relatively most desirable. Several criteria based on which the ‘best alternative’ can be selected:</p>
+        <ul>
+            <li>Create the least disturbance in the environment</li>
+            <li>Improve the distribution of wealth among the people</li>
+            <li>Minimize the expenditure of money</li>
+            <li>Ensure that the benefits to those who gain from the decision are greater than the losses of those who are harmed by the decision</li>
+            <li>Minimize the time to accomplish the goal or objective</li>
+            <li>Minimize unemployment</li>
+            <li>Maximize profit.</li>
+        </ul>
+        <p>Selecting criterion for choosing the best alternative is not easy, it is different for different groups. The disagreement between management and labor is collective bargaining (concerning wages and employment conditions) reflects disagreement over the objective and the criterion for selecting the best alternative.</p>
+        <p>The last – criterion: Maximize profit is normally selected in engineering decision – making. When this criterion is used, all problems falls into one of three categories:</p>
+        <ul>
+            <li><strong>Fixed input:</strong> The amount of money and other input resources are fixed, objective is to effectively utilize them. For economic efficiency, the appropriate criterion is to maximize the benefits or other outputs.</li>
+            <li><strong>Fixed output:</strong> There is a fixed task to be accomplished. The economically efficient criterion for a situation of fixed output is to minimize the cost or other inputs.</li>
+            <li><strong>Neither input nor output fixed:</strong> Amount of money and other inputs is not fixed, nor is the amount of benefits or other output is fixed. The economically efficient criterion in this case is to maximize the difference between benefits and costs.</li>
+        </ul>
+    </template>
+    
+    <template id="tpl-step6">
+        <h2>6. Constructing the Model:</h2>
+        <p>At some point in decision making, various elements must be bought together. The objective, relevant data, feasible alternatives and selection criterion must be merged. Constructing the relationship between the decision – making elements is frequently called model-building or constructing the model. To an engineer, modelling may be a scaled physical representation of the real thing or system or mathematical equation or asset of equations, describing the desired inter-relationships. In laboratory there may be a physical model, but in economic decision making, the model is usually mathematical.</p>
+        <div class="definition" style="--def-border: var(--color-sec2);">
+            Thus, the mathematical model of the student capacity of a classroom might be:<br>
+            <strong>Capacity = LW/K</strong><br>
+            Where, L = length of classroom, in meters; W = width of classroom, in meters, K = classroom arrangement factor.
+        </div>
+    </template>
+    
+    <template id="tpl-step7">
+        <h2>7. Predicting the outcomes of each alternatives:</h2>
+        <p>The model and the data are used to predict the outcomes for each feasible alternatives. To choose the best alternative, the outcomes for each alternative must be stated in a comparable way. Usually the consequences of each alternative are stated in terms of money, that is, in form of cost and benefits. The resolution of consequences is done with all monetary and non-monetary consequences which includes market, extra market and intangible consequences.</p>
+        <p>The most common error in long-term problems is assuming that the situation will not change for the do-nothing alternative. Example: Current profit will shrink or vanish as a result of actions of competitors and the expectation of the customers; traffic congestion increases over the years as the number of vehicles increases – doing nothing does not imply that situation will not change.</p>
+    </template>
+    
+    <template id="tpl-step8">
+        <h2>8. Choosing the best alternative:</h2>
+        <p>Choosing the best alternative is determining the alternative which best meets the selection criterion. Since, the intangible consequences are left out of the numerical calculations, they should be introduced to the decision – making process at this point. During the decision – making process certain feasible alternatives are eliminated because they are dominated by others – better alternatives. Example: Walking to your campus which is 10 km away from your house is a feasible alternative, but it is dominated by the better alternative of taking a bus.</p>
+        <p>After examining the structure of decision – making process, it is appropriate to ask, when is a decision made and who makes it? If one person performs all the steps in decision – making, then the person is the decision – maker. The selection of the feasible alternatives may be the key item, the rest of the analysis is a methodical process leading to the inevitable decision. The decision may be drastically affected, or even pre-determined, by the way in which the decision-making process is performed.</p>
+        
+        <div class="example-card">
+            <div class="example-header">Example Problem 2: Drilling Machine</div>
+            <div class="example-content">
+                <p>Liz, a young engineer, was assigned to make an analysis of additional equipment needed for the machine shop. The single criterion for selection should be economical, considering both initial costs and future operating costs. Investigation revealed three practical alternatives:</p>
+                <ol>
+                    <li>A new-specialized drilling machine</li>
+                    <li>A new general purpose drilling machine</li>
+                    <li>A rebuilt drilling machine available from a used-equipment dealer</li>
+                </ol>
+                <p>The preliminary analysis indicated that 3rd is most economical but Liz did not like the idea, so she choose between two and showed that general purpose drilling machine is most economical. The manager assumed that the two alternatives presented were the best of all feasible alternatives, and he approves Liz’s recommendation. Who is the decision – maker?</p>
+            </div>
+        </div>
+    </template>
+    
+    <template id="tpl-step9">
+        <h2>9. Audit the results:</h2>
+        <p>Audit compares the results with the predictions. Do the results of a decision analysis reasonably agree with its projections? If a new machine tool was purchased to save labour and improve quality, did it? The audit may help ensure that projected operating advantages are ultimately obtained.</p>
+    </template>
+
+    <!-- Fullscreen Image Viewer -->
+    <div class="fullscreen-overlay" id="image-viewer">
+        <img src="" id="fullscreen-img" alt="Fullscreen View">
+    </div>
+
+    <script>
+        // Modal functions
+        function openStep(stepNum) {
+            const template = document.getElementById('tpl-step' + stepNum);
+            const body = document.getElementById('modal-body');
+            body.innerHTML = ''; // clear old
+            body.appendChild(template.content.cloneNode(true));
+            document.getElementById('fc-modal').style.display = 'flex';
+            
+            // Re-bind accordion events for dynamically loaded content
+            const exampleHeaders = body.querySelectorAll('.example-header');
+            exampleHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const card = header.parentElement;
+                    card.classList.toggle('open');
+                });
+            });
+        }
+        
+        function closeModal() {
+            document.getElementById('fc-modal').style.display = 'none';
+        }
+        
+        // Close modal on outside click
+        document.getElementById('fc-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('.section-container');
+            const prevBtns = document.querySelectorAll('.prev-btn');
+            const nextBtns = document.querySelectorAll('.next-btn');
+            const exampleHeaders = document.querySelectorAll('.example-header');
+            
+            // Image viewer logic
+            const imgContainers = document.querySelectorAll('.img-container img');
+            const viewer = document.getElementById('image-viewer');
+            const viewerImg = document.getElementById('fullscreen-img');
+            
+            imgContainers.forEach(img => {
+                img.addEventListener('click', () => {
+                    viewerImg.src = img.src;
+                    viewer.style.display = 'flex';
+                });
+            });
+            
+            viewer.addEventListener('click', () => {
+                viewer.style.display = 'none';
+            });
+            
+            let currentIndex = 0;
+
+            function showSection(index) {
+                navItems.forEach(item => item.classList.remove('active'));
+                sections.forEach(sec => sec.classList.remove('active'));
+                
+                navItems[index].classList.add('active');
+                sections[index].classList.add('active');
+                
+                // Scroll to top
+                document.getElementById('content-area').scrollTop = 0;
+                currentIndex = index;
+            }
+
+            // Sidebar clicks
+            navItems.forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    showSection(index);
+                });
+            });
+
+            // Prev/Next buttons
+            prevBtns.forEach((btn, index) => {
+                btn.addEventListener('click', () => {
+                    if (currentIndex > 0) showSection(currentIndex - 1);
+                });
+            });
+
+            nextBtns.forEach((btn, index) => {
+                btn.addEventListener('click', () => {
+                    if (currentIndex < sections.length - 1) showSection(currentIndex + 1);
+                });
+            });
+
+            // Static Example problem accordions
+            exampleHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const card = header.parentElement;
+                    card.classList.toggle('open');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
