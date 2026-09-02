@@ -823,10 +823,94 @@
       opacity: 0; 
     }
   }
+  /* ── AUTH OVERLAY & BNU GALLERY ── */
+  body.locked { overflow: hidden; }
+  
+  #auth-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(10,6,3,0.95);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+  #auth-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .auth-box { text-align: center; max-width: 340px; width: 90%; position: relative; }
+  .auth-box h2 { font-weight: 300; font-size: 2rem; letter-spacing: 0.15em; color: var(--warm); margin-bottom: 0.2em; }
+  .auth-box p { font-size: 1rem; color: var(--muted); margin-bottom: 2.5em; font-style: italic; }
+  .auth-box input {
+    width: 100%; padding: 1em; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,169,110,0.2); border-radius: 6px;
+    color: var(--cream); font-family: 'Josefin Sans', sans-serif; font-size: 0.9rem;
+    letter-spacing: 0.08em; outline: none; transition: all 0.4s ease;
+    margin-bottom: 0.7em;
+  }
+  .auth-box input:focus { border-color: var(--warm); box-shadow: 0 0 15px rgba(201,169,110,0.15); background: rgba(255,255,255,0.06); }
+  .auth-box button {
+    margin-top: 1.5em; padding: 0.8em 3em; background: transparent;
+    border: 1px solid var(--warm); color: var(--warm);
+    font-family: 'Josefin Sans', sans-serif; font-size: 0.85rem; letter-spacing: 0.2em;
+    text-transform: uppercase; cursor: pointer; border-radius: 4px;
+    transition: all 0.4s ease;
+  }
+  .auth-box button:hover { background: var(--warm); color: var(--deep); box-shadow: 0 0 20px rgba(201,169,110,0.15); }
+  #auth-error { color: var(--rose); font-size: 0.85rem; margin-top: 1em; min-height: 1.2em; font-family: 'Josefin Sans', sans-serif; }
+  
+  #main-app {
+    opacity: 0; pointer-events: none; transition: opacity 1.2s ease;
+  }
+  #main-app.visible {
+    opacity: 1; pointer-events: auto;
+  }
+
+  /* BNU GALLERY MODAL */
+  #bnu-gallery {
+    position: fixed; inset: 0; z-index: 8000;
+    background: rgba(10,6,3,0.95); backdrop-filter: blur(25px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: all 0.6s ease;
+  }
+  #bnu-gallery.active { opacity: 1; visibility: visible; }
+  .gallery-close {
+    position: absolute; top: 2rem; right: 3rem; color: var(--muted);
+    font-family: 'Josefin Sans', sans-serif; font-size: 0.8rem; letter-spacing: 0.2em;
+    text-transform: uppercase; cursor: pointer; transition: color 0.3s; z-index: 10;
+  }
+  .gallery-close:hover { color: var(--warm); }
+  .gallery-track {
+    display: flex; gap: 2rem; overflow-x: auto; padding: 2rem 5vw; width: 100vw;
+    align-items: center; scrollbar-width: none;
+  }
+  .gallery-track::-webkit-scrollbar { display: none; }
+  .gallery-img-wrap {
+    flex: 0 0 auto; height: 70vh; max-width: 80vw;
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 4px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    transition: transform 0.4s;
+  }
+  .gallery-img-wrap:hover { transform: scale(1.02); border-color: rgba(201,169,110,0.5); }
+  .gallery-img-wrap img {
+    height: 100%; width: auto; object-fit: contain;
+    filter: saturate(0.9) brightness(0.95);
+  }
+
 </style>
 </head>
-<body>
+<body class="locked">
 
+<!-- ── AUTH OVERLAY ── -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <h2>Private</h2>
+    <p>this journal is kept under lock</p>
+    <input type="email" id="journal-email" placeholder="email" autocomplete="email">
+    <input type="password" id="journal-pass" placeholder="password">
+    <button id="journal-auth-btn">Unlock</button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+<div id="main-app">
 <!-- Parallax BG -->
 <div class="parallax-bg" id="parallaxBg">
   <img id="bgImg" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80" alt="">
@@ -1274,6 +1358,20 @@
         </div>
         <p class="person-quote">You find your sanctuary in the warmth of home and the steady presence of friends. Like the color blue, your energy brings a deep, calming reliability to those lucky enough to share a plate of biriyani and a good conversation with you.</p>
       </div>
+	  
+      <div class="person-card" id="bnu-card" style="cursor: pointer;">
+        <div class="person-img-wrap">
+          <img src="WhatsApp Image 2026-08-16 at 6.05.42 PM.jpeg" alt="Bnu">
+        </div>
+        <h3 class="person-name">Bnu</h3>
+        <span class="person-note">The Unfiltered Connection</span>
+        <div class="person-detail">
+          📷 Endless memories captured in frames<br>
+          ✨ Raw, genuine, and always real<br>
+          (Click to open gallery)
+        </div>
+        <p class="person-quote">"Some bonds don't need a filter. They are just a beautiful chaotic collection of moments that speak for themselves."</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1328,6 +1426,25 @@
     </div>
   </div>
 </div>
+
+<!-- ── BNU CINEMATIC GALLERY ── -->
+<div id="bnu-gallery">
+  <div class="gallery-close" id="close-bnu-gallery">Close ✕</div>
+  <div class="gallery-track">
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-16 at 6.05.42 PM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-16 at 6.09.42 PM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-16 at 6.11.44 PM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-16 at 6.15.54 PM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-23 at 10.14.12 AM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-27 at 11.46.32 PM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-27 at 11.46.41 PM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-27 at 11.47.15 PM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-28 at 10.23.24 AM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-28 at 10.26.24 AM.jpeg" alt="Bnu"></div>
+    <div class="gallery-img-wrap"><img src="WhatsApp Image 2026-08-29 at 9.19.03 AM.jpeg" alt="Bnu"></div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
   // ── PAGE SWITCHING ──
@@ -1878,6 +1995,81 @@ const greens = [
 
   // Fire a new leaf into the wind every 1.5 seconds
   setInterval(spawnCanopyLeaf, 1500);
+  // ── AUTH & GALLERY IIFE ──
+  (async function() {
+    const emailInput = document.getElementById('journal-email');
+    const passInput = document.getElementById('journal-pass');
+    const btn = document.getElementById('journal-auth-btn');
+    const errEl = document.getElementById('auth-error');
+    const overlay = document.getElementById('auth-overlay');
+    const app = document.getElementById('main-app');
+    let sb;
+
+    async function unlockJournal() {
+      overlay.classList.add('hidden');
+      app.classList.add('visible');
+      document.body.classList.remove('locked');
+      if (typeof resizeCanvas === 'function') setTimeout(resizeCanvas, 300);
+    }
+
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const { supabaseUrl, supabaseAnonKey } = await res.json();
+        sb = supabase.createClient(supabaseUrl, supabaseAnonKey);
+        
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) unlockJournal();
+      }
+    } catch (e) {
+      console.warn("Supabase init failed.", e);
+    }
+
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        if (!sb) { errEl.textContent = 'Auth service offline.'; return; }
+        const email = emailInput.value.trim();
+        const pass = passInput.value;
+        if (!email || !pass) { errEl.textContent = 'Enter credentials'; return; }
+        
+        btn.disabled = true;
+        const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+        btn.disabled = false;
+        
+        if (error) {
+          errEl.textContent = error.message;
+        } else {
+          unlockJournal();
+        }
+      });
+    }
+    
+    if (passInput) {
+      passInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') btn.click();
+      });
+    }
+
+    // Gallery Events
+    const bnuCard = document.getElementById('bnu-card');
+    const bnuGallery = document.getElementById('bnu-gallery');
+    const closeGallery = document.getElementById('close-bnu-gallery');
+
+    if (bnuCard && bnuGallery) {
+      bnuCard.addEventListener('click', () => bnuGallery.classList.add('active'));
+    }
+    if (closeGallery && bnuGallery) {
+      closeGallery.addEventListener('click', () => bnuGallery.classList.remove('active'));
+      bnuGallery.addEventListener('click', (e) => {
+        if (e.target === bnuGallery) bnuGallery.classList.remove('active');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && bnuGallery.classList.contains('active')) {
+          bnuGallery.classList.remove('active');
+        }
+      });
+    }
+  })();
 </script>
 </body>
 </html>
