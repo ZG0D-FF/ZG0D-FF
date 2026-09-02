@@ -893,7 +893,23 @@
     height: 100%; width: auto; object-fit: contain;
     filter: saturate(0.9) brightness(0.95);
   }
-
+  /* ── MOBILE AUTOFIT & SCROLL SNAPPING ── */
+  .gallery-track {
+    scroll-snap-type: x mandatory; /* Makes swiping snap smoothly on phones */
+  }
+  .gallery-img-wrap {
+    scroll-snap-align: center; 
+  }
+  #journal-logout-btn:hover {
+    background: rgba(212,160,160,0.15) !important;
+    box-shadow: 0 0 15px rgba(212,160,160,0.2);
+  }
+  
+  @media(max-width: 768px) {
+    .gallery-img-wrap { height: auto; max-height: 70vh; width: 90vw; max-width: 90vw; }
+    .gallery-track { padding: 2rem 5vw; gap: 1rem; }
+    #journal-logout-btn { top: 0.8rem; right: 0.8rem; font-size: 0.5rem; padding: 0.3rem 0.8rem; }
+  }
 </style>
 </head>
 <body class="locked">
@@ -911,6 +927,10 @@
 </div>
 
 <div id="main-app">
+<div id="main-app">
+  <!-- ── LOGOUT BUTTON ── -->
+  <button id="journal-logout-btn" style="position:fixed; top:1.5rem; right:1.5rem; background:rgba(212,160,160,0.05); border:1px solid rgba(212,160,160,0.3); color:var(--rose); padding:0.4rem 1rem; border-radius:30px; cursor:pointer; z-index:9000; font-family:'Josefin Sans', sans-serif; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; transition:all 0.3s;">LOGOUT</button>
+  
 <!-- Parallax BG -->
 <div class="parallax-bg" id="parallaxBg">
   <img id="bgImg" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80" alt="">
@@ -2012,6 +2032,23 @@ const greens = [
       app.classList.add('visible');
       document.body.classList.remove('locked');
       if (typeof resizeCanvas === 'function') setTimeout(resizeCanvas, 300);
+
+      // ── THIS IS THE MISSING MAGIC! ──
+      // Fetch secure signed URLs ONLY for Bnu's private photos
+      const bnuImages = document.querySelectorAll('.secure-bnu-img');
+      for (let img of bnuImages) {
+        const filename = img.getAttribute('data-filename');
+        if (!filename) continue; // safety check
+        
+        // Ask Supabase for a temporary link valid for 1 hour (3600 seconds)
+        const { data, error } = await sb.storage.from('journal-photos').createSignedUrl(filename, 3600);
+        
+        if (data) {
+          img.src = data.signedUrl;
+        } else {
+          console.error("Failed to load secure image:", filename, error);
+        }
+      }
     }
 
     try {
