@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BASIC VLSI DESIGN</title>
+    
+    <!-- MathJax for rendering equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="assets/tex-svg.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --sidebar-bg: #1e1e1e;
+            --sidebar-text: #b0b0b0;
+            --sidebar-active: #ffffff;
+            
+            --color-sec1: #ff6b6b;
+            --color-sec2: #4ecdc4;
+            --color-sec3: #ffe66d;
+            --color-sec4: #c7f464;
+            --color-sec5: #ff847c;
+            
+            --def-bg: rgba(255, 255, 255, 0.05);
+            --def-border: #4ecdc4;
+            --highlight-color: #ffe66d;
+            
+            --card-bg: #2a2a2a;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Merriweather', 'Georgia', serif;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        /* Sidebar Navigation */
+        #sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            border-right: 1px solid #333;
+        }
+        
+        .sidebar-title {
+            font-family: 'Merriweather', 'Georgia', serif;
+            padding: 0 20px 20px;
+            margin: 0;
+            font-size: 1.5em;
+            border-bottom: 1px solid #333;
+            color: #fff;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--sidebar-text);
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--sidebar-active);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--sidebar-active);
+        }
+        
+        .nav-item[data-target="sec-syllabus"].active { border-left-color: var(--color-sec1); }
+        .nav-item[data-target="sec-intro"].active { border-left-color: var(--color-sec2); }
+
+        /* Main Content */
+        #content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 40px 10%;
+            scroll-behavior: smooth;
+        }
+
+        .section-container {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            max-width: 900px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+
+        .section-container.active {
+            display: block;
+        }
+        
+        #sec-syllabus h1, #sec-syllabus h2 { color: var(--color-sec1); }
+        #sec-intro h1, #sec-intro h2 { color: var(--color-sec2); }
+
+        /* Text Enhancements */
+        .definition {
+            background-color: var(--def-bg);
+            border-left: 4px solid var(--def-border);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .definition strong {
+            color: #fff;
+            font-size: 1.1em;
+        }
+
+        .highlight {
+            color: var(--highlight-color);
+            font-weight: 600;
+        }
+
+        /* Math formula containment */
+        .math-display {
+            background-color: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        /* Image Integration */
+        .img-container {
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .img-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            cursor: zoom-in;
+            transition: transform 0.2s;
+            border: 1px solid #333;
+        }
+        
+        .img-container img:hover {
+            transform: scale(1.02);
+        }
+        
+        .img-caption {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+        
+        .fullscreen-overlay img {
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 5px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .nav-btn {
+            background-color: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+        
+        .nav-btn:hover:not(:disabled) {
+            background-color: #444;
+            border-color: #666;
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Tab UI Styles */
+        .tab-container {
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+        
+        .tab-header {
+            display: flex;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.1em;
+            font-family: 'Merriweather', serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: var(--color-sec2); border-bottom-color: var(--color-sec2); background: rgba(255,255,255,0.02); font-weight: bold; }
+        
+        .tab-content { display: none; padding: 25px; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        /* Media Grid Styles */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .media-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .media-card h3 { 
+            margin-top: 0; 
+            color: var(--color-sec2); 
+            font-size: 1.2em; 
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #000;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        /* IEEE-Style CSS Transistor Diagrams */
+        .ieee-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #0a0a0a;
+            padding: 30px 120px 30px 30px; /* Extra right padding for labels */
+            border-radius: 8px;
+            border: 1px solid #333;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        .ieee-gate {
+            width: 160px;
+            height: 30px;
+            background: #555;
+            border: 2px solid #777;
+            text-align: center;
+            color: #fff;
+            font-weight: bold;
+            line-height: 26px;
+            border-bottom: none;
+            z-index: 2;
+        }
+        .ieee-oxide {
+            width: 200px;
+            height: 20px;
+            background: #175d9c; /* Blue oxide */
+            border: 2px solid #2980b9;
+            text-align: center;
+            color: #fff;
+            font-size: 0.85em;
+            line-height: 16px;
+            z-index: 2;
+        }
+        .ieee-channel {
+            width: 200px;
+            height: 15px;
+            background: #f1c40f; /* Yellow inversion layer */
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.1em;
+            z-index: 2;
+            opacity: 0; /* Invisible by default (cutoff) */
+        }
+        .ieee-channel.active { opacity: 1; }
+        .ieee-sub {
+            width: 100%;
+            max-width: 400px;
+            height: 100px;
+            background: #2c3e50; /* Dark gray-blue P-sub */
+            border: 2px solid #34495e;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 10px;
+            color: #bdc3c7;
+            font-weight: bold;
+            margin-top: -2px; /* Connects smoothly to channel */
+            z-index: 1;
+        }
+        .ieee-sd {
+            position: absolute;
+            top: 0;
+            width: 80px;
+            height: 40px;
+            background: #27ae60; /* Green N+ */
+            border: 2px solid #2ecc71;
+            color: #fff;
+            text-align: center;
+            line-height: 36px;
+            font-weight: bold;
+            border-top: none;
+        }
+        .ieee-sd.left { left: 0; border-left: none; }
+        .ieee-sd.right { right: 0; border-right: none; }
+        .ieee-annotation {
+            position: absolute;
+            font-size: 0.9em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        /* CMOS Fabrication Layout Diagrams */
+        .fab-box {
+            border-radius: 8px;
+            padding: 40px 20px 20px 20px;
+            position: relative;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            margin: 30px 0;
+            border: 2px solid;
+        }
+        .fab-label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            padding: 0 10px;
+            background: #0a0a0a;
+            font-size: 0.9em;
+        }
+        .n-type { background: #111a22; border-color: #3498db; }
+        .p-type { background: #1e1122; border-color: #9b59b6; }
+        .mos-device {
+            background: #27ae60;
+            border: 1px solid #2ecc71;
+            padding: 8px 20px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 10px;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+        /* Mobile & Autofit Upgrades */
+        img, video, iframe { max-width: 100%; height: auto; }
+        .math-display { overflow-x: auto; }
+        
+        #mobile-header {
+            display: none;
+            background: var(--sidebar-bg);
+            padding: 15px 20px;
+            color: #fff;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        #hamburger { font-size: 24px; cursor: pointer; margin-right: 15px; }
+        
+        /* Auto-Subsections */
+        .sub-nav { display: none; padding-left: 20px; font-size: 0.9em; margin-top: 10px; }
+        .nav-item.active .sub-nav { display: block; }
+        .sub-nav-item { padding: 5px 0; color: #888; cursor: pointer; }
+        .sub-nav-item:hover { color: #fff; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #sidebar { 
+                width: 100%; height: auto; max-height: 0; overflow: hidden; 
+                padding: 0; transition: max-height 0.3s ease-in-out; 
+            }
+            #sidebar.open { max-height: 600px; padding: 10px 0; overflow-y: auto; }
+            #mobile-header { display: flex; }
+            #content-area { padding: 20px 5%; }
+        }
+        /* Active Sub-section Highlight */
+        .sub-nav-item.active-sub {
+            color: #ffffff;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding-left: 8px;
+            margin-left: -5px;
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Header -->
+    <div id="mobile-header">
+        <div id="hamburger">☰</div>
+        <div class="mobile-title" style="font-family: 'Merriweather', 'Georgia', serif; font-size: 1.2em;">VLSI Design</div>
+    </div>
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <h2 class="sidebar-title">VLSI Design</h2>
+        <div class="nav-item active" data-target="sec-syllabus">Syllabus & Objectives</div>
+        <div class="nav-item" data-target="sec-intro">Introduction to VLSI</div>
+        <div class="nav-item" data-target="sec-mos-tech">MOS Technology</div>
+        <div class="nav-item" data-target="sec-deep-dive">Deep Dive: MOSFET Physics</div>
+        <div class="nav-item" data-target="sec-cmos-fab">CMOS Fabrication</div>
+        <div class="nav-item" data-target="sec-deep-dive-cmos">Deep Dive: CMOS Fabrication</div>
+        <div class="nav-item" data-target="sec-mos-chars">MOS Characteristics</div>
+        <div class="nav-item" data-target="sec-current-voltage">Current vs Voltage Relationships</div>
+        <div class="nav-item" data-target="sec-threshold-body">Threshold Voltage & Body Effect</div>
+        <div class="nav-item" data-target="sec-media">Lectures & Mind Maps</div>
+        <!-- NEW_NAV_ITEM_INSERTION_POINT -->
+    </div>
+
+    <!-- Main Content -->
+    <div id="content-area">
+        
+        <!-- SECTION: SYLLABUS -->
+        <div id="sec-syllabus" class="section-container active">
+            <h1>BASIC VLSI DESIGN</h1>
+            
+            <h2>Course Objectives:</h2>
+            <ul>
+                <li>Understand the fundamental aspects of circuits in silicon</li>
+                <li>Relate to VLSI design processes and design rules</li>
+            </ul>
+
+            <h2>Course Outcomes:</h2>
+            <ul>
+                <li>Identify the CMOS layout levels, and the design layers used in the process sequence.</li>
+                <li>Describe the general steps required for processing of CMOS integrated circuits.</li>
+                <li>Design static CMOS combinational and sequential logic at the transistor level.</li>
+                <li>Demonstrate different logic styles such as complementary CMOS logic, pass-transistor Logic, dynamic logic, etc.</li>
+                <li>Interpret the need for testability and testing methods in VLSI.</li>
+            </ul>
+
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                <strong>UNIT I:</strong> Moore’s law, speed power performance, nMOS fabrication, CMOS fabrication: n-well, pwell processes, BiCMOS, Comparison of bipolar and CMOS. Basic Electrical Properties of MOS And BiCMOS Circuits: Drain to source current versus voltage characteristics, threshold voltage, trans conductance.
+            </div>
+            
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                <strong>UNIT II:</strong> Basic Electrical Properties of MOS And BiCMOS Circuits: nMOS inverter, Determination of pull up to pull down ratio: nMOS inverter driven through one or more pass transistors, alternative forms of pull up, CMOS inverter, BiCMOS inverters, latch up. Basic Circuit Concepts: Sheet resistance, area capacitance calculation, Delay unit, inverter delay, estimation of CMOS inverter delay, super buffers, BiCMOS drivers.
+            </div>
+            
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                <strong>UNIT III:</strong> MOS and BiCMOS Circuit Design Processes: MOS layers, stick diagrams, nMOS design style, CMOS design style Design rules and layout & Scaling of MOS Circuits: λ - based design rules, scaling factors for device parameters
+            </div>
+            
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                <strong>UNIT IV:</strong> Subsystem Design and Layout-1: Switch logic pass transistor, Gate logic inverter, NAND gates, NOR gates, pseudo nMOS, Dynamic CMOS Examples of structured design: Parity generator, Bus arbitration, multiplexers, logic function block, code converter.
+            </div>
+            
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                <strong>UNIT V:</strong> Subsystem Design and Layout-2: Clocked sequential circuits, dynamic shift registers, bus lines, General considerations, 4-bit arithmetic processes, 4-bit shifter, RegularityDefinition & Computation Practical aspects and testability: Some thoughts of performance, optimization and CAD tools for design and simulation.
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn" disabled>Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION: INTRODUCTION -->
+        <div id="sec-intro" class="section-container">
+            <h1>UNIT-I: Introduction to VLSI Technology</h1>
+            
+            <h2>Introduction:</h2>
+            <p>The invention of the transistor by William B. Shockley, Walter H. Brattain and John Bardeen of Bell Telephone Laboratories drastically changed the electronics industry and paved the way for the development of the Integrated Circuit (IC) technology. The first IC was designed by Jack Kilby at Texas Instruments at the beginning of 1960 and since that time there have already been four generations of ICs .Viz SSI (small scale integration), MSI (medium scale integration), LSI (large scale integration), and VLSI (very large scale integration). Now we are ready to see the emergence of the fifth generation, ULSI (ultra large scale integration) which is characterized by complexities in excess of 3 million devices on a single IC chip. Further miniaturization is still to come and more revolutionary advances in the application of this technology must inevitably occur.</p>
+            
+            <p>Over the past several years, Silicon CMOS technology has become the dominant fabrication process for relatively high performance and cost effective VLSI circuits. The revolutionary nature of this development is understood by the rapid growth in which the number of transistors integrated in circuits on a single chip.</p>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn" disabled>Finish</button>
+            </div>
+        </div>
+
+        <!-- SECTION: BASIC MOS TRANSISTORS -->
+        <div id="sec-basic-mos" class="section-container">
+            <p>The graph shows a significant decrease in the size of the chip in recent years which implicitly indicates the advancements in the VLSI technology.</p>
+
+            <h1>BASIC MOS TRANSISTORS:</h1>
+            
+            <p>The <span class="highlight">MOS Transistor</span> means, Metal-Oxide-Semiconductor Field Effect Transistor which is the most basic element in the design of a large scale integrated circuits(IC).</p>
+            
+            <p>These transistors are formed as a ``sandwich'' consisting of a semiconductor layer, usually a slice, or wafer, from a single crystal of silicon; a layer of silicon dioxide (the oxide) and a layer of metal. These layers are patterned in a manner which permits transistors to be formed in the semiconductor material (the ``substrate''); a diagram showing a MOSFET is shown below in Figure</p>
+
+            <div class="img-container">
+                <img src="assets/mosfet_diagram.png" alt="MOSFET Diagram">
+                <div class="img-caption">Click to expand diagram</div>
+            </div>
+
+            <p>Silicon dioxide is a very good insulator, so a very thin layer, typically only a few hundred molecules thick, is used. In fact , the transistors which are used do not use metal for their gate regions, but instead use polycrystalline silicon (poly). Polysilicon gate FET's have replaced virtually all of the older devices using metal gates in large scale integrated circuits. (Both metal and polysilicon FET's are sometimes referred to as <span class="highlight">IGFET's</span> (insulated gate field effect transistors), since the silicon dioxide under the gate is an insulator.</p>
+            
+            <p>MOS Transistors are classified as <span class="highlight">n-MOS, p-MOS and c-MOS</span> Transistors based on the fabrication .</p>
+
+            <!-- TABBED INTERFACE STARTS HERE -->
+            <div class="tab-container">
+                <div class="tab-header">
+                    <button class="tab-btn active" onclick="switchTab(this, 'tab-original')">Original Text</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'tab-compare')">Comparison Table</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'tab-glossary')">Glossary</button>
+                    <button class="tab-btn" onclick="switchTab(this, 'tab-analogy')">Analogy</button>
+                </div>
+
+                <!-- TAB 1: ORIGINAL TEXT -->
+                <div id="tab-original" class="tab-content active">
+                    <div class="definition" style="--def-border: var(--color-sec3);">
+                        <strong>NMOS devices</strong> are formed in a p-type substrate of moderate doping level. The source and drain regions are formed by diffusing n- type impurities through suitable masks into these areas to give the desired n-impurity concentration and give rise to depletion regions which extend mainly in the more lightly doped p-region . Thus, source and drain are isolated from one another by two diodes. Connections to the source and drain are made by a deposited metal layer. In order to make a useful device, there must be the capability for establishing and controlling a current between source and drain, and .this is commonly achieved in one of two ways, giving rise to the <span class="highlight">enhancement mode</span> and <span class="highlight">depletion mode</span> transistors.
+                    </div>
+
+                    <h2>Enhancement Mode Transistors:</h2>
+                    <p>In an enhancement mode device a polysilicon gate is deposited on a layer of insulation over the region between source and drain. In the diagram below channel is not established and the device is in a non-conducting condition, i.e <span class="highlight">\( V_D = V_S = V_{gs} = 0 \)</span>. If this gate is connected to a suitable positive voltage with respect to the source, then the electric field established between the gate and the substrate gives rise to a charge inversion region in the substrate under the gate insulation and a conducting path or channel is formed between source and drain.</p>
+
+                    <h2>ENHANCEMENT MODE TRANSISTOR ACTION :</h2>
+                    <p>To understand the enhancement mechanism, let us consider the enhancement mode device. In order to establish the channel, a minimum voltage level called <span class="highlight">threshold voltage \( (V_t) \)</span> must be established between gate and source. Fig. (a) Shows the existing situation where a channel is established but no current flowing between source and drain \( (V_{ds} = 0) \).</p>
+                    
+                    <p>Let us now consider the conditions when current flows in the channel by applying a voltage \( V_{ds} \) between drain and source. The \( \text{IR drop} = V_{ds} \) along the channel. This develops a voltage between gate and channel varying with distance along the channel with the voltage being a maximum of \( V_{gs} \) at the source end. Since the effective gate voltage is \( V_g = V_{gs} - V_t \), (no current flows when \( V_{gs} < V_t \)) there will be voltage available to invert the channel at the drain end so long as \( V_{gs} - V_t \sim V_{ds} \). The limiting condition comes when \( V_{ds} = V_{gs} - V_t \). For all voltages \( V_{ds} < V_{gs} - V_t \), the device is in the <span class="highlight">non-saturated region</span> of operation which is the condition shown in Fig. (b) below.</p>
+
+                    <p>Let us now consider the situation when <span class="highlight">\( V_{ds} \)</span> is increased to a level greater than <span class="highlight">\( V_{gs} - V_t \)</span>. In this case, an IR drop equal to \( V_{gs} - V_t \) occurs over less than the whole length of the channel such that, near the drain, there is insufficient electric field available to give rise to an inversion layer to create the channel. The .channel is, therefore, 'pinched off as shown in Fig. (c). Diffusion current completes the path from source to drain in this case, causing the channel to exhibit a high resistance and behave as a constant current source. This region, known as <span class="highlight">saturation</span>, is .characterized by almost constant current for increase of \( V_{ds} \) above \( V_{ds} = V_{gs} - V_t \). In all cases, the channel will cease to exist and no current will flow when \( V_{gs} < V_t \). Typically, for enhancement mode devices, \( V_t = 1 \text{ volt} \) for \( V_{DD} = 5 \text{ V} \) or, in general terms, <span class="math-display">\( V_t = 0.2 V_{DD} \)</span>.</p>
+
+                    <div class="img-container">
+                        <img src="assets/pinch_off.png" alt="Channel Pinch-off Diagram (Fig. a, b, c)">
+                        <div class="img-caption">Click to expand diagram (Fig. a, b, c)</div>
+                    </div>
+
+                    <h2>DEPLETION MODE TSANSISTOR ACTION</h2>
+                    <p><span class="highlight">N-MOS Depletion mode mosfets</span> are built with P-type silicon substrates, and P-channel versions are built on N-type substrates. In both cases they include a thin gate oxide formed between the source and drain regions. A conductive channel is deliberately formed below the gate oxide layer and between the source and drain by using <span class="highlight">ion-implantation</span>. By implanting the correct ion polarity in the channel region during fabrication determines the polarity of the threshold voltage (i.e. \( -V_t \) for an N channel transistor, or \( +V_t \) for an P-channel transistor). The actual concentration of ions in the substrate-to-channel region is used to adjust the threshold voltage \( (V_t) \) to the desired value.</p>
+                    
+                    <div class="definition" style="--def-border: var(--color-sec4);">
+                        Depletion-mode devices are a little more difficult to manufacture and their characteristics harder to control than enhancement types, which do not require ion implantation. In depletion mode devices the channel is established, due to the implant, even when \( V_{gs} = 0 \), and to cause the channel to cease a negative voltage \( V_{td} \) must be applied between gate and source.
+                    </div>
+                    
+                    <p><span class="highlight">\( V_{td} \)</span> is typically \( < - 0.8 V_{DD} \), depending on the implant and substrate bias, but, threshold voltage differences apart, the action is similar to that of the enhancement mode transistor.</p>
+
+                    <div class="img-container">
+                        <img src="assets/nmos_depletion.png" alt="nMOS depletion mode transistor">
+                        <div class="img-caption">Click to expand diagram: nMOS depletion mode transistor</div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: COMPARISON TABLE -->
+                <div id="tab-compare" class="tab-content">
+                    <h2>Enhancement vs. Depletion Mode</h2>
+                    <table>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Enhancement Mode</th>
+                            <th>Depletion Mode</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Channel Status at \( V_{gs} = 0 \)</strong></td>
+                            <td>Not established (Non-conducting)</td>
+                            <td>Deliberately formed (Conducting)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fabrication Complexity</strong></td>
+                            <td>Simpler (No ion implant needed)</td>
+                            <td>Harder (Requires precise ion implantation)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Threshold Voltage (\( V_t \))</strong></td>
+                            <td>Positive (e.g., \( V_t = 0.2 V_{DD} \))</td>
+                            <td>Negative (e.g., \( V_{td} < -0.8 V_{DD} \))</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Action to Turn OFF</strong></td>
+                            <td>Remove gate voltage (\( V_{gs} < V_t \))</td>
+                            <td>Apply negative gate voltage (\( V_{td} \))</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- TAB 3: GLOSSARY -->
+                <div id="tab-glossary" class="tab-content">
+                    <h2>Lucidifying the Tech Terms</h2>
+                    
+                    <div class="definition" style="--def-border: #4ecdc4;">
+                        <strong>Threshold Voltage \( (V_t) \):</strong> The minimum gate-to-source voltage strictly required to invert the substrate surface and spontaneously create a conducting path between the source and drain.
+                    </div>
+                    <div class="definition" style="--def-border: #4ecdc4;">
+                        <strong>Charge Inversion Region:</strong> A thin layer at the semiconductor surface where the majority carrier type is forcefully inverted (e.g., a p-type substrate inverted to act as n-type) due to the intense electric field from the gate.
+                    </div>
+                    <div class="definition" style="--def-border: #4ecdc4;">
+                        <strong>Pinch-off:</strong> The localized point near the drain where the channel depth geometrically reduces to zero, because the local potential difference between the gate and channel has dropped below \( V_t \).
+                    </div>
+                    <div class="definition" style="--def-border: #4ecdc4;">
+                        <strong>Saturation Region:</strong> The operating state where \( V_{ds} \ge V_{gs} - V_t \). The channel is pinched off, and the drain current becomes almost independent of \( V_{ds} \), causing the transistor to act as a constant current source.
+                    </div>
+                </div>
+
+                <!-- TAB 4: ANALOGY -->
+                <div id="tab-analogy" class="tab-content">
+                    <h2>The Garden Hose Analogy</h2>
+                    <p>Think of a MOS Transistor as a <strong>garden hose</strong> carrying water (current) from the faucet (Source) to the sprinkler (Drain), with your hand acting as the Gate.</p>
+                    
+                    <ul>
+                        <li><span class="highlight">Enhancement Mode:</span> The hose is naturally <strong>kinked and closed</strong>. Water cannot flow. You must actively squeeze the handle (apply positive voltage) to un-kink it and let water flow.</li>
+                        <br>
+                        <li><span class="highlight">Depletion Mode:</span> The hose is naturally <strong>wide open</strong>. Water flows freely by default. To stop the water, you must actively pinch the hose completely shut (apply negative voltage).</li>
+                        <br>
+                        <li><span class="highlight">Pinch-off & Saturation:</span> Imagine turning the water pressure up so high at the exit that the hose slightly collapses near the end. The water still shoots out at a constant maximum speed, but turning up the pressure even more won't push any extra water through.</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- TABBED INTERFACE ENDS HERE -->
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+
+        <!-- SECTION: DEEP DIVE -->
+        <div id="sec-deep-dive" class="section-container">
+            <h1>Deep Dive: MOSFET Physics & Fabrication Intuition</h1>
+            
+            <p>This section breaks down <strong>how chip fabrication engineers “set” the threshold voltage \(V_T\)</strong> of a MOSFET by controlling the <strong>dopant ions near the channel</strong>. Let’s build it from zero.</p>
+
+            <h2>1. First: what is the channel?</h2>
+            <p>For a MOSFET, the <strong>channel</strong> is the conducting path that forms between <strong>Source and Drain</strong> when the Gate voltage is sufficient.</p>
+            <ul>
+                <li><strong>For an NMOS:</strong> Substrate/body → usually <strong>P-type</strong>. Source/Drain → <strong>N+</strong>. Gate voltage attracts <strong>electrons</strong> toward the surface. Enough electrons accumulate → an <strong>N-type channel forms</strong>. Current can flow from Drain to Source.</li>
+                <br>
+                <li><strong>For a PMOS:</strong> Substrate/body → usually <strong>N-type</strong>. Source/Drain → <strong>P+</strong>. Gate voltage creates a channel of <strong>holes</strong>.</li>
+            </ul>
+            <p>So the channel's carrier type determines whether the transistor is N-channel or P-channel.</p>
+
+            <h2>2. What does "implanting ions" mean?</h2>
+            <p>During fabrication, engineers physically put <strong>dopant atoms</strong> into the silicon. This is called <span class="highlight">ion implantation</span>. Think of silicon as a huge grid of silicon atoms. Engineers shoot selected impurity ions into a very specific region.</p>
+            
+            <table>
+                <tr><th>Dopant</th><th>Creates</th><th>Effect</th></tr>
+                <tr><td>Boron</td><td>P-type</td><td>Adds holes</td></tr>
+                <tr><td>Phosphorus/Arsenic</td><td>N-type</td><td>Adds electrons</td></tr>
+            </table>
+
+            <div class="definition" style="--def-border: var(--color-sec2);">
+                <strong>Key Takeaway:</strong> They don't randomly dope the whole chip. They control exactly where and how much doping is introduced. The region immediately underneath the gate is particularly important because that's where the channel forms.
+            </div>
+
+            <h2>3. Why does the ion polarity matter for \(V_T\)?</h2>
+            <p><strong>\(V_T\) = Threshold Voltage.</strong> It's approximately the minimum Gate-to-Source voltage needed to create a strong conducting channel.</p>
+            <p>For example, suppose an NMOS has \( V_T = 0.7V \):</p>
+            <ul>
+                <li>If \( V_{GS} = 0.3V \) → not enough channel formation → transistor mostly OFF.</li>
+                <li>If \( V_{GS} = 1.0V \) → enough channel formation → transistor ON.</li>
+            </ul>
+            <div class="definition" style="--def-border: var(--color-sec3);">
+                Fabrication engineers need to control: <strong>How much gate voltage should be required before the transistor turns ON?</strong> That's where channel doping comes in.
+            </div>
+
+            <h2>4. Imagine an NMOS</h2>
+            <p>Start with a <strong>P-type substrate</strong>. So near the surface we already have lots of holes (+). Now apply a <strong>positive gate voltage</strong>. The positive gate repels holes and attracts electrons toward the surface. Eventually, enough electrons gather there to create an <strong>inversion layer</strong>:</p>
+
+            <!-- IEEE Diagram: Channel Formation (Replaces ASCII in Section 4) -->
+            <div class="ieee-diagram">
+                <div class="ieee-gate">Gate (+)</div>
+                <div class="ieee-oxide">SiO₂ Oxide</div>
+                <div class="ieee-channel active" style="position: relative;">
+                    e⁻ e⁻ e⁻ e⁻ e⁻ e⁻
+                    <div class="ieee-annotation" style="right: -150px; color:#f1c40f;">← electron channel</div>
+                </div>
+                <div class="ieee-sub">
+                    P-type Substrate
+                    <div style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); color: #e74c3c; font-size: 1.2em; letter-spacing: 15px;">
+                        + + + + +
+                    </div>
+                    <div class="ieee-annotation" style="right: -80px; top: 15px; color:#e74c3c;">← holes</div>
+                </div>
+            </div>
+            <p>That electron layer is the <strong>N-channel</strong>.</p>
+
+            <h2>5. Now comes the clever fabrication trick 🧠</h2>
+            <p>Suppose engineers increase the <strong>P-type doping concentration</strong> underneath the gate. That means there are more acceptor ions/holes that must be overcome. The positive gate now has a harder job. It needs a <strong>higher voltage</strong> to attract enough electrons to create the inversion channel.</p>
+            
+            <div class="math-display">
+                $$ \boxed{\text{More substrate doping} \rightarrow \text{higher }V_T} $$
+            </div>
+            <p>Conversely:</p>
+            <div class="math-display">
+                $$ \boxed{\text{Less substrate doping} \rightarrow \text{lower }V_T} $$
+            </div>
+            <p>That's the basic reason doping is used to tune threshold voltage.</p>
+
+            <h2>6. What does "correct ion polarity" actually mean?</h2>
+            <p>The sentence you're studying says: <em>"Implanting the correct ion polarity in the channel region determines the polarity of the threshold voltage."</em></p>
+            <p>Be careful here. It <strong>doesn't simply mean</strong>: "Put positive ions → positive \(V_T\)". It's more subtle. The device structure and body/channel doping determine whether you're making NMOS or PMOS, and the implanted dopants modify the electrostatics and therefore the <strong>magnitude and sometimes effective polarity/sign of \(V_T\)</strong>.</p>
+            
+            <p>For normal enhancement-mode MOSFETs:</p>
+            <ul>
+                <li><strong>NMOS:</strong> \( \boxed{V_T > 0} \) A positive gate voltage is required to turn it ON.</li>
+                <li><strong>PMOS:</strong> \( \boxed{V_T < 0} \) A negative gate voltage is required to turn it ON.</li>
+            </ul>
+
+            <!-- REPLACEMENT FOR SECTION 6 -->
+            <div style="display:flex; justify-content:space-around; background:#0a0a0a; border:1px solid #333; padding:25px; border-radius:8px; margin: 20px 0;">
+                <div style="text-align:center; width: 40%;">
+                    <strong style="color:var(--color-sec2); font-size: 1.2em;">NMOS (V<sub>T</sub> > 0)</strong>
+                    <div style="margin-top:15px; padding:10px; border-bottom:3px solid #555; position:relative; width:100%;">
+                        <div style="position:absolute; bottom:-7px; left:50%; width:12px; height:12px; background:#f1c40f; border-radius:50%; transform:translateX(-50%);"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:8px; font-weight:bold; font-size:0.95em;">
+                        <span style="color:#e74c3c;">OFF (0V)</span>
+                        <span style="color:#f1c40f;">+V<sub>T</sub></span>
+                        <span style="color:#2ecc71;">ON (+V)</span>
+                    </div>
+                </div>
+                <div style="text-align:center; width: 40%;">
+                    <strong style="color:var(--color-sec4); font-size: 1.2em;">PMOS (V<sub>T</sub> < 0)</strong>
+                    <div style="margin-top:15px; padding:10px; border-bottom:3px solid #555; position:relative; width:100%;">
+                        <div style="position:absolute; bottom:-7px; left:50%; width:12px; height:12px; background:#f1c40f; border-radius:50%; transform:translateX(-50%);"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:8px; font-weight:bold; font-size:0.95em;">
+                        <span style="color:#2ecc71;">ON (-V)</span>
+                        <span style="color:#f1c40f;">-V<sub>T</sub></span>
+                        <span style="color:#e74c3c;">OFF (0V)</span>
+                    </div>
+                </div>
+            </div>
+			            <!-- REPLACEMENT FOR SECTION 7 -->
+            <div style="display: flex; gap: 30px; justify-content: center; margin: 30px 0;">
+                <!-- Low Dopant Card -->
+                <div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px; text-align: center; width: 250px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                    <div style="color: #3498db; font-weight: bold; margin-bottom: 12px; font-size: 1.1em;">Low dopant concentration</div>
+                    <div style="color: #555; margin-bottom: 12px;">▼</div>
+                    <div style="color: #ccc; margin-bottom: 12px;">easier channel formation</div>
+                    <div style="color: #555; margin-bottom: 12px;">▼</div>
+                    <div style="color: #2ecc71; font-weight: bold; font-size: 1.2em;">lower |V<sub>T</sub>|</div>
+                </div>
+                <!-- High Dopant Card -->
+                <div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px; text-align: center; width: 250px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                    <div style="color: #e67e22; font-weight: bold; margin-bottom: 12px; font-size: 1.1em;">High dopant concentration</div>
+                    <div style="color: #555; margin-bottom: 12px;">▼</div>
+                    <div style="color: #ccc; margin-bottom: 12px;">harder channel formation</div>
+                    <div style="color: #555; margin-bottom: 12px;">▼</div>
+                    <div style="color: #e74c3c; font-weight: bold; font-size: 1.2em;">higher |V<sub>T</sub>|</div>
+                </div>
+            </div>
+            <p>So the <strong>dose/concentration of implanted dopants</strong> is one of the fabrication knobs used to obtain the desired threshold voltage.</p>
+
+            <h2>8. A simple analogy</h2>
+            <p>Imagine the Gate is trying to open a door. The <strong>channel</strong> is the door. The substrate doping determines how strongly the door is being held shut.</p>
+            <ul>
+                <li><strong>Light doping:</strong> Gate → PUSH → 🚪 (opens easily). Small gate voltage is enough. \(V_T \downarrow\)</li>
+                <li><strong>Heavy doping:</strong> Gate → PUSH → 🔒🚪 (harder to open). More gate voltage is needed. \(V_T \uparrow\)</li>
+            </ul>
+
+            <h2>9. Technically, what is happening?</h2>
+            <p>For an NMOS, threshold voltage can be represented approximately as:</p>
+            <div class="math-display">
+                $$ V_T = V_{FB}+2\phi_F+\frac{\sqrt{2q\epsilon_{Si}N_A(2\phi_F)}}{C_{ox}} $$
+            </div>
+            <p>Don't panic about the equation. 😄 The important part is \( N_A \), which represents the <strong>acceptor concentration in the P-type body</strong>. As \(N_A\) changes, the threshold voltage changes. So fabrication engineers can control \(N_A\) through <strong>ion implantation</strong>.</p>
+            <p>There are also other parameters affecting \(V_T\), such as Gate work function, Oxide thickness, Fixed oxide/interface charge, Body doping, Temperature, and Short-channel effects. So channel doping is important, but it isn't the only \(V_T\) control mechanism.</p>
+
+            <h2>10. Your textbook sentence, translated</h2>
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>Original:</strong> "By implanting the correct ion polarity in the channel region during fabrication, the polarity of the threshold voltage can be determined. The actual concentration of ions is used to adjust the threshold voltage to the desired value."
+            </div>
+            <p><strong>In normal human language:</strong> During MOSFET manufacturing, engineers deliberately add specific dopant atoms near the channel. The type of dopant establishes the required transistor behavior, while the amount of dopant changes how difficult it is for the gate to form the channel. Therefore, by controlling the dopant type and concentration, engineers can manufacture a MOSFET with the desired threshold voltage.</p>
+            
+            <p><strong>One-line exam version:</strong></p>
+            <div class="math-display">
+                $$ \boxed{\text{Ion type sets the device/body doping condition, while ion concentration tunes }V_T.} $$
+            </div>
+            <p>And the mental picture to remember is: <strong>Doping → changes charge in channel/body region → changes gate voltage required for inversion → changes \(V_T\).</strong></p>
+
+            <hr style="border: 0; height: 1px; background: #333; margin: 40px 0;">
+
+            <h2>11. What is an enhancement-mode NMOS?</h2>
+            <p>An enhancement MOSFET starts with NO conducting channel between Source and Drain.</p>
+
+            <!-- IEEE Diagram: Cutoff / No Channel (Replaces ASCII in Section 11) -->
+            <div class="ieee-diagram">
+                <div class="ieee-gate">GATE</div>
+                <div class="ieee-oxide">SiO₂ oxide</div>
+                <div class="ieee-channel"></div> <!-- Note: No 'active' class, so it's invisible! -->
+                <div class="ieee-sub">
+                    <div class="ieee-sd left">N+ Source</div>
+                    <div class="ieee-sd right">N+ Drain</div>
+                    P-type body
+                    <div style="position: absolute; top: 15px; color: #95a5a6; font-style: italic;">(no channel)</div>
+                </div>
+            </div>
+            <p>At \( V_{GS}=0 \), there is no N-channel, so \( I_D \approx 0 \). That's why it's called enhancement mode. The gate voltage has to create/enhance the channel.</p>
+
+            <h2>12. What does the gate actually do?</h2>
+            <p>For NMOS, apply a positive voltage to the gate. The positive gate attracts electrons toward the silicon surface underneath the oxide. As \(V_{GS}\) increases, more electrons gather near the surface. Eventually there are enough electrons to form an inversion layer.</p>
+
+            <!-- IEEE Diagram: Strong Inversion (Replaces ASCII in Section 12) -->
+            <div class="ieee-diagram">
+                <div class="ieee-gate" style="background:#c0392b;">GATE (+++++)</div>
+                <div class="ieee-oxide">SiO₂ oxide</div>
+                <div class="ieee-channel active" style="position: relative;">
+                    e⁻ e⁻ e⁻ e⁻ e⁻ e⁻
+                    <div class="ieee-annotation" style="right: -120px; color:#f1c40f;">← N-channel</div>
+                </div>
+                <div class="ieee-sub">
+                    <div class="ieee-sd left">N+ Source</div>
+                    <div class="ieee-sd right">N+ Drain</div>
+                    P-type substrate
+                </div>
+            </div>
+            <p>The voltage at which this channel becomes sufficiently formed is called \( \boxed{V_T=\text{threshold voltage}} \).</p>
+
+            <h2>13. What does \(V_{GS} > V_T\) mean?</h2>
+            <p>If \( V_{GS} < V_T \), no proper channel. \( \boxed{I_D \approx 0} \)<br>
+            If \( V_{GS} > V_T \), a channel exists. \( \boxed{I_D \text{ can flow}} \)</p>
+            <p>The amount of gate voltage above threshold is often called the effective or overdrive voltage: \( \boxed{V_{OV} = V_{GS} - V_T} \)</p>
+
+            <h2>14. Now introduce \(V_{DS}\)</h2>
+            <p>So far, we've created a channel, but suppose \( V_{DS}=0 \). There is no voltage pushing electrons from Source to Drain. Therefore \( \boxed{I_D=0} \) even though the channel exists. Think: <strong>Gate creates the road. \(V_{DS}\) provides the push along the road.</strong></p>
+            <p>Now apply \( V_{DS} \). Current starts flowing from Drain to Source through the channel. But something interesting happens. The channel does not experience the same gate-to-channel voltage everywhere.</p>
+
+            <h2>15. The Voltage Drop Along the Channel 🔥</h2>
+            <p>At the source end, the channel is approximately at \( V_S=0 \). If the gate is at \( V_G=3V \), then \( V_G - V_{channel} = 3V \). So the channel is strongly formed.</p>
+            <p>But as we move toward the drain, the channel voltage rises. Because the channel has resistance, whenever current flows through resistance, voltage drops (\(V=IR\)). The voltage gradually drops along the channel.</p>
+
+            <!-- REPLACEMENT FOR SECTION 15 -->
+            <div style="background: #0a0a0a; border: 1px solid #333; border-radius: 8px; padding: 30px; margin: 25px 0; text-align: center;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 15px; color: #ccc;">
+                    <span>Source (0V)</span>
+                    <span>Middle (0.5V)</span>
+                    <span>Drain (1V)</span>
+                </div>
+                <!-- The Gradient Bar -->
+                <div style="height: 25px; background: linear-gradient(90deg, #f1c40f 0%, #e67e22 50%, #e74c3c 100%); border-radius: 12px; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">
+                    <div style="position: absolute; left: 0; top: -5px; bottom: -5px; width: 3px; background: #fff;"></div>
+                    <div style="position: absolute; left: 50%; top: -5px; bottom: -5px; width: 3px; background: #fff;"></div>
+                    <div style="position: absolute; right: 0; top: -5px; bottom: -5px; width: 3px; background: #fff;"></div>
+                </div>
+                <div style="margin-top: 20px; color: #888; font-style: italic;">As you move right, voltage drops across the channel resistance.</div>
+            </div>
+            <p>Therefore the gate-to-channel voltage gets smaller as you approach the drain.</p>
+
+            <h2>16. Why does the channel eventually disappear at the drain? (Saturation)</h2>
+            <p>The channel disappears at the drain when \( V_{GD} = V_T \). Since \( V_{GD} = V_{GS} - V_{DS} \), we get \( V_{GS} - V_{DS} = V_T \). Rearrange:</p>
+            <div class="math-display">
+                $$ \boxed{V_{DS} = V_{GS} - V_T} $$
+            </div>
+            <p>This is the boundary between the linear/non-saturated region and saturation.</p>
+
+            <!-- INFOGRAPHIC INSERTED HERE -->
+            <div class="img-container">
+                <img src="assets/MOSFET.png" alt="Why does the channel disappear at the drain? Infographic">
+                <div class="img-caption">Click to expand diagram: Visual breakdown of pinch-off and saturation</div>
+            </div>
+
+            <!-- REPLACEMENT FOR SECTION 16 -->
+            <div style="display: flex; flex-direction: column; gap: 20px; margin: 30px 0;">
+                <!-- Case 1 -->
+                <div style="background: #111; border: 1px solid #333; padding: 20px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #2ecc71;">Case 1: V<sub>DS</sub> < V<sub>GS</sub> - V<sub>T</sub> (Linear)</h4>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <strong style="color: #fff; font-size: 1.2em;">S</strong>
+                        <div style="height: 20px; flex-grow: 1; background: #f1c40f; border-radius: 6px;"></div>
+                        <strong style="color: #fff; font-size: 1.2em;">D</strong>
+                    </div>
+                    <div style="text-align: center; color: #aaa; font-size: 0.9em; margin-top: 10px; font-weight: bold;">FULL CHANNEL</div>
+                </div>
+
+                <!-- Case 2 -->
+                <div style="background: #111; border: 1px solid #333; padding: 20px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #f1c40f;">Case 2: V<sub>DS</sub> = V<sub>GS</sub> - V<sub>T</sub> (Boundary)</h4>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <strong style="color: #fff; font-size: 1.2em;">S</strong>
+                        <div style="height: 20px; width: 95%; background: linear-gradient(90deg, #f1c40f 0%, #f1c40f 85%, transparent 100%); border-radius: 6px 0 0 6px;"></div>
+                        <strong style="color: #fff; font-size: 1.2em;">D</strong>
+                    </div>
+                    <div style="text-align: right; color: #aaa; font-size: 0.9em; margin-top: 10px; padding-right: 30px; font-weight: bold;">PINCH-OFF POINT</div>
+                </div>
+
+                <!-- Case 3 -->
+                <div style="background: #111; border: 1px solid #333; padding: 20px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #e74c3c;">Case 3: V<sub>DS</sub> > V<sub>GS</sub> - V<sub>T</sub> (Saturation)</h4>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <strong style="color: #fff; font-size: 1.2em;">S</strong>
+                        <div style="height: 20px; width: 70%; background: linear-gradient(90deg, #f1c40f 0%, #f1c40f 85%, transparent 100%); border-radius: 6px 0 0 6px;"></div>
+                        <div style="flex-grow: 1; border-bottom: 2px dashed #e74c3c; position: relative;">
+                            <span style="position: absolute; top: -20px; right: 20px; color: #e74c3c; font-size: 0.85em; font-weight: bold;">DEPLETION</span>
+                        </div>
+                        <strong style="color: #fff; font-size: 1.2em;">D</strong>
+                    </div>
+                </div>
+            </div>
+			            <!-- REPLACEMENT FOR SECTION 17 -->
+            <div class="ieee-diagram">
+                <div class="ieee-gate" style="background:#c0392b;">GATE (+++++)</div>
+                <div class="ieee-oxide">SiO₂ oxide</div>
+                
+                <!-- Pinched channel visual -->
+                <div style="width: 200px; height: 15px; display: flex; z-index: 2;">
+                    <div style="width: 75%; height: 100%; background: #f1c40f; border-radius: 0 15px 15px 0;"></div>
+                    <div style="width: 25%; position: relative;">
+                         <div class="ieee-annotation" style="right: -130px; top: -10px; color:#e74c3c;">← pinch-off region</div>
+                    </div>
+                </div>
+
+                <div class="ieee-sub">
+                    <div class="ieee-sd left">N+ Source</div>
+                    <div class="ieee-sd right">N+ Drain</div>
+                    P-type substrate
+                </div>
+            </div>
+            <p>Electrons travel through the channel and are swept across the pinch-off/depletion region by the strong electric field toward the drain. So current continues.</p>
+            <p>Once \( V_{DS} \ge V_{GS} - V_T \), increasing \( V_{DS} \) further mostly increases the voltage across the pinch-off region rather than substantially increasing the channel charge. Therefore the drain current becomes approximately constant (\( I_D \approx \text{constant} \)).</p>
+
+            <h2>18. The Three Situations Summarized</h2>
+            <table>
+                <tr><th>Condition</th><th>Channel</th><th>Region</th></tr>
+                <tr><td>\(V_{GS} < V_T\)</td><td>❌ No channel</td><td>Cutoff</td></tr>
+                <tr><td>\(V_{GS} > V_T,\ V_{DS} < V_{GS}-V_T\)</td><td>✅ Full channel</td><td>Linear / non-saturated</td></tr>
+                <tr><td>\(V_{GS} > V_T,\ V_{DS} \ge V_{GS}-V_T\)</td><td>⚠️ Pinched near drain</td><td>Saturation</td></tr>
+            </table>
+
+            <h2>19. Depletion-mode MOSFETs</h2>
+            <p>The channel is deliberately created during fabrication using ion implantation. Therefore even when \( V_{GS}=0 \), the channel exists (\( I_D \neq 0 \)). To turn it OFF, for an NMOS, you apply a negative gate voltage to repel electrons from the channel. Therefore \( \boxed{V_T < 0} \) for an N-channel depletion MOSFET.</p>
+
+            <h2>20. Enhancement vs Depletion: THE BIG PICTURE</h2>
+            <table>
+                <tr><th>Feature</th><th>Enhancement NMOS</th><th>Depletion NMOS</th></tr>
+                <tr><td>Channel at \(V_{GS}=0\)?</td><td>❌ No</td><td>✅ Yes</td></tr>
+                <tr><td>Normally</td><td>OFF</td><td>ON</td></tr>
+                <tr><td>Channel created by</td><td>Gate voltage</td><td>Fabrication/implantation</td></tr>
+                <tr><td>\(V_T\)</td><td>Positive</td><td>Negative</td></tr>
+                <tr><td>To turn ON</td><td>\(+V_{GS}\)</td><td>Already ON at 0 V</td></tr>
+                <tr><td>To turn OFF</td><td>Remove gate voltage</td><td>Apply sufficiently negative \(V_{GS}\)</td></tr>
+            </table>
+
+            <h2>21. One correction to your textbook wording ⚠️</h2>
+            <p>The sentence <em>"Diffusion current completes the path from source to drain in this case..."</em> is an older/less clear description of saturation. For the usual long-channel MOSFET explanation, the important picture is: The inversion channel pinches off near the drain, and carriers are swept through the high-field pinch-off region into the drain.</p>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn" disabled>Finish</button>
+            </div>
+        </div>
+
+        <!-- NEW_CONTENT_INSERTION_POINT -->
+
+        <!-- SECTION: CMOS FABRICATION -->
+        <div id="sec-cmos-fab" class="section-container">
+            <h1>CMOS FABRICATION :</h1>
+            
+            <p>CMOS fabrication is performed based on various methods , including the <span class="highlight">p-well, the n-well, the twin-tub, and the silicon-on-insulator processes</span> .Among these methods the p-well process is widely used in practice and the n-well process is also popular, particularly as it is an easy retrofit to existing NMOS lines.</p>
+            
+            <h2>(i) The p-well Process:</h2>
+            
+            <p>The <span class="highlight">p-well structure</span> consists of an n-type substrate in which p-devices may be formed by suitable masking and diffusion and, in order to accommodate n-type devices, a deep p-well is diffused into the n-type substrate as shown in the Fig.below.</p>
+
+            <div class="img-container">
+                <img src="assets/p_well_process.png" alt="p-well Process Diagram">
+                <div class="img-caption">Click to expand diagram: p-well structure</div>
+            </div>
+
+            <p>This diffusion should be carried out with special care since the p-well doping concentration and depth will affect the threshold voltages as well as the breakdown voltages of the n-transistors. To achieve low threshold voltages (0.6 to 1.0 V) either deep-well diffusion or high-well resistivity is required. However, deep wells require larger spacing between the n- and p-type transistors and wires due to lateral diffusion and therefore a larger chip area. The p-wells Act as substrates for the n-devices within the parent n-substrate, and, the two areas are electrically isolated.</p>
+            
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/p_well_steps.png" alt="P-well fabrication process">
+                <div class="img-caption">Click to expand diagram: P-well fabrication process(Figs 1,2,3 & 4)</div>
+            </div>
+
+            <p>Except this in all other respects- like masking, patterning, and diffusion-the process is similar to NMOS fabrication.</p>
+
+            <p>The diagram below shows the CMOS p-well inverter showing \( V_{DD} \) and \( V_{ss} \) substrate connections</p>
+            
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/p_well_inverter.png" alt="CMOS p-well inverter">
+                <div class="img-caption">Click to expand diagram: CMOS p-well inverter</div>
+            </div>
+
+            <h2>The n-well Process :</h2>
+            
+            <p>Though the p-well process is widely used in C-MOS fabrication the <span class="highlight">n-well fabrication</span> is also very popular because of the lower substrate bias effects on transistor threshold voltage and also lower parasitic capacitances associated with source and drain regions.</p>
+            
+            <p>The typical n-well fabrication steps are shown in the diagram below.</p>
+            
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/n_well_flowchart.png" alt="n-well fabrication steps flowchart">
+                <div class="img-caption">Click to expand diagram: Fig. n-well fabrication steps</div>
+            </div>
+
+            <p>The first mask defines the n-well regions. This is followed by a low dose phosphorus implant driven in by a high temperature diffusion step to form the n-wells. The well depth is optimized to ensure against-substrate top+ diffusion breakdown without compromising then-well to n+ mask separation. The next steps are to define the devices and diffusion paths, grow field oxide, deposit and pattern the poly silicon, carry out the diffusions, make contact cuts, and finally metalize as before. Lt will be seen that an n+ mask and its complement may be used to define the n- and pdiffusion regions respectively. These same masks also include the \( V_{DD} \) and \( V_{ss} \) contacts (respectively). It should be noted that, alternatively, we could have used a p+ mask and its complement since the n + and p + masks are generally complementary.</p>
+            
+            <p>The diagram below shows the Cross-sectional view of n-well CMOS Inverter</p>
+            
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/n_well_inverter.png" alt="Cross-sectional view of n-well CMOS Inverter">
+                <div class="img-caption">Click to expand diagram: Cross-sectional view of n-well CMOS Inverter</div>
+            </div>
+
+            <p>Due to the differences in charge carrier mobilities, the n-well process creates non-optimum pchannel characteristics. However, in many CMOS designs (such as domino-logic and dynamic logic structures), this is relatively unimportant since they contain a preponderance of n-channel devices. Thus then-channel transistors are mainly those used to form1ogic elements, providing speed and high density of elements.</p>
+            
+            <p>However, a factor of the n-well process is that the performance of the already poorly performing p-transistor is even further degraded. Modern process lines have come to grips with these problems, and good device performance may be achieved for both p-well and n-well fabrication.</p>
+
+            <h2>BICMOS Technology:</h2>
+            
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Bi-CMOS:</strong> A Bi-CMOS circuit of both bipolar junction transistors and MOS transistors on a single substrate.
+            </div>
+            
+            <p>The driving capability of MOS transistors is less because of limited current sourcing and sinking capabilities of the transistors. To drive large capacitive loads <span class="highlight">Bi-CMOS technology</span> is used. As this technology combines Bipolar and CMOS transistors in a single integrated circuit, it has the advantages of both bipolar and CMOS transistors. Bi-CMOS is able to achieve VLSI circuits with speed-power-density performance previously not possible with either technology individually. The diagram given below shows the cross section of the Bi-CMOS process which uses an NPN transistor</p>
+
+            <!-- Images for BiCMOS inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/bicmos_layout.png" alt="Cross section of Bi-CMOS process">
+                <div class="img-caption">Click to expand diagram: Fig.Cross section of Bi-CMOS process</div>
+            </div>
+
+            <p>The lay-out view of Bic-MOS transistor is shown in the figure below. The fabrication of BiCMOS is similar to CMOS but with certain additional process steps and additional masks are considered. They are (i) the p+ base region; (ii) n+ collector area; and (iii) the buried sub collector (BCCD)</p>
+            
+            <div class="img-container">
+                <img src="assets/bicmos_cross_section.png" alt="Layout view of Bic-MOS transistor">
+                <div class="img-caption">Click to expand diagram: Layout view of Bic-MOS transistor</div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+        <!-- SECTION: DEEP DIVE CMOS FABRICATION -->
+        <div id="sec-deep-dive-cmos" class="section-container">
+            <h1>Deep Dive: CMOS Fabrication (P-Well & N-Well)</h1>
+            <p>Let’s strip the textbook language down to <strong>semiconductor basics</strong>, then rebuild the logic. The key is understanding <strong>why a well is needed at all</strong>.</p>
+
+            <!-- INFOGRAPHIC INSERTED HERE -->
+            <div class="img-container">
+                <img src="assets/cmos_processes.png" alt="CMOS Processes Infographic">
+                <div class="img-caption">Click to expand diagram: Visual breakdown of all 4 CMOS fabrication processes</div>
+            </div>
+
+            <hr style="border: 0; height: 1px; background: #333; margin: 40px 0;">
+
+            <h1 style="color: var(--color-sec2);">PART 1: THE P-WELL PROCESS</h1>
+
+            <h2>1. What are we trying to manufacture?</h2>
+            <p>A <strong>CMOS inverter</strong> contains <strong>two MOSFETs</strong>:</p>
+            <ul>
+                <li><strong>PMOS</strong> → needs an <strong>n-type body/substrate</strong></li>
+                <li><strong>NMOS</strong> → needs a <strong>p-type body/substrate</strong></li>
+            </ul>
+
+            <!-- REPLACEMENT FOR PART 1, SECTION 1 (Inverter Logic) -->
+            <div style="display:flex; flex-direction:column; align-items:center; background:#0a0a0a; padding:25px; border-radius:8px; border:1px solid #333; margin:20px 0;">
+                <div style="color:#e74c3c; font-weight:bold;">VDD</div>
+                <div style="width:2px; height:20px; background:#555;"></div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span style="color:#aaa; font-size:0.9em;">Input ──►</span>
+                    <div style="border:2px solid #34495e; background:#2c3e50; padding:10px 25px; border-radius:4px; color:#fff; font-weight:bold;">PMOS</div>
+                </div>
+                <div style="width:2px; height:15px; background:#555;"></div>
+                <div style="color:#2ecc71; font-weight:bold; letter-spacing:2px;">OUTPUT ──►</div>
+                <div style="width:2px; height:15px; background:#555;"></div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span style="color:#aaa; font-size:0.9em;">Input ──►</span>
+                    <div style="border:2px solid #9b59b6; background:#8e44ad; padding:10px 25px; border-radius:4px; color:#fff; font-weight:bold;">NMOS</div>
+                </div>
+                <div style="width:2px; height:20px; background:#555;"></div>
+                <div style="color:#3498db; font-weight:bold;">VSS</div>
+            </div>
+            <div class="definition" style="--def-border: var(--color-sec3);">
+                The core problem: <strong>How do we physically put both a PMOS and an NMOS on the same silicon chip?</strong> That's what CMOS fabrication processes solve.
+            </div>
+
+            <h2>2. What exactly is a P-well?</h2>
+            <p>Start with an <strong>n-type silicon substrate</strong>. It has lots of <strong>electrons</strong> as majority carriers. An NMOS needs a <strong>P-type body</strong> (holes as majority carriers). But our entire starting substrate is N-type.</p>
+            
+            <p><strong>Solution:</strong> Create a <strong>P-type region inside the N-type substrate</strong>. That region is called a <strong>P-well</strong>.</p>
+
+            <!-- REPLACEMENT FOR PART 1, SECTION 2 (P-well Concept) -->
+            <div class="fab-box n-type">
+                <div class="fab-label" style="color:#3498db;">N-TYPE SUBSTRATE</div>
+                <div class="fab-box p-type" style="margin: 10px auto 0 auto; width: 60%; background:#1e1122;">
+                    <div class="fab-label" style="background:#111a22; color:#9b59b6;">P-WELL</div>
+                    P-type body
+                </div>
+            </div>
+
+            <h2>3. Where do the PMOS and NMOS go?</h2>
+            <p>This is the most important picture to understand:</p>
+
+            <!-- REPLACEMENT FOR PART 1, SECTION 3 (Device Placement) -->
+            <div class="fab-box n-type">
+                <div class="fab-label" style="color:#3498db;">N-TYPE SUBSTRATE</div>
+                <div style="text-align: left; padding-left: 20px;">
+                    <div class="mos-device">PMOS</div>
+                </div>
+                <div class="fab-box p-type" style="margin: 20px 0 0 20px; width: 60%; background:#1e1122;">
+                    <div class="fab-label" style="background:#111a22; color:#9b59b6;">P-WELL</div>
+                    <div class="mos-device">NMOS</div>
+                </div>
+            </div>
+            <ul>
+                <li><strong>N-substrate</strong> → naturally accommodates PMOS (since it needs an n-type body).</li>
+                <li><strong>P-well</strong> → provides the P-body needed for NMOS.</li>
+            </ul>
+
+            <h2>4. Why does the textbook worry about P-well doping?</h2>
+            <p>The electrical properties of the P-well directly affect how difficult it is to create the NMOS channel (Threshold Voltage, \(V_T\)). The two major properties are <strong>Doping concentration</strong> and <strong>Well depth</strong>.</p>
+            <p>When the textbook says <strong>high-well resistivity</strong>, it's talking about a relatively lightly doped P-well (fewer charge carriers = higher resistivity).</p>
+
+            <h2>5. Why not simply make the well very deep?</h2>
+            <p>When dopants are introduced, they don't remain perfectly vertical. They spread <strong>sideways as well as downward</strong> (Lateral Diffusion).</p>
+            <p>If the P-well is made deeper, lateral diffusion becomes more significant. You need more spacing between structures to prevent unwanted interaction. More spacing = larger chip = higher fabrication cost.</p>
+
+            <h2>6. VDD and VSS substrate connections</h2>
+            <p>The bodies must be connected to appropriate fixed potentials to prevent unwanted forward biasing. For the <strong>PMOS in N-type substrate</strong>, it connects to VDD. For the <strong>NMOS in P-well</strong>, it connects to VSS.</p>
+
+            <!-- REPLACEMENT FOR PART 1, SECTION 6 (Contacts) -->
+            <div class="fab-box n-type" style="margin-bottom: 60px;">
+                <div class="fab-label" style="color:#3498db;">N-TYPE SUBSTRATE</div>
+                <div style="text-align: left; padding-left: 20px;">
+                    <div class="mos-device">PMOS</div>
+                </div>
+                <div class="fab-box p-type" style="margin: 20px 0 0 20px; width: 60%; background:#1e1122;">
+                    <div class="fab-label" style="background:#111a22; color:#9b59b6;">P-WELL</div>
+                    <div class="mos-device">NMOS</div>
+                    <!-- VSS Contact -->
+                    <div style="position:absolute; bottom:-45px; left:50%; transform:translateX(-50%); color:#9b59b6; line-height: 1.2;">
+                        ↑<br>VSS<br><span style="font-size:0.8em; font-weight:normal;">(Well Contact)</span>
+                    </div>
+                </div>
+                <!-- VDD Contact -->
+                <div style="position:absolute; bottom:-45px; left:50px; color:#3498db; line-height: 1.2;">
+                    ↑<br>VDD<br><span style="font-size:0.8em; font-weight:normal;">(Substrate Contact)</span>
+                </div>
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                <strong>5 Things to Remember:</strong><br>
+                1. <strong>Why N-type substrate?</strong> It provides the body for PMOS.<br>
+                2. <strong>Why P-well?</strong> NMOS needs a P-type body.<br>
+                3. <strong>Where is NMOS made?</strong> Inside the P-well.<br>
+                4. <strong>What does well doping/depth affect?</strong> NMOS \(V_T\) and breakdown behavior.<br>
+                5. <strong>Main disadvantage of deep well?</strong> Lateral diffusion → more spacing → larger chip.
+            </div>
+
+            <hr style="border: 0; height: 1px; background: #333; margin: 40px 0;">
+
+            <h1 style="color: var(--color-sec2);">PART 2: THE N-WELL PROCESS</h1>
+
+            <h2>1. First, what is the N-well process?</h2>
+            <p>In the <strong>N-well process</strong>, we basically flip the arrangement. We start with a <strong>P-type substrate</strong> (for the NMOS), and we create an <strong>N-well</strong> to put the PMOS inside.</p>
+
+            <!-- REPLACEMENT FOR PART 2, SECTION 1 (N-Well Process) -->
+            <div class="fab-box p-type">
+                <div class="fab-label" style="color:#9b59b6;">P-TYPE SUBSTRATE</div>
+                <div class="fab-box n-type" style="margin: 0 0 20px 20px; width: 60%; background:#111a22;">
+                    <div class="fab-label" style="background:#1e1122; color:#3498db;">N-WELL</div>
+                    <div class="mos-device">PMOS</div>
+                </div>
+                <div style="text-align: left; padding-left: 40px;">
+                    <div class="mos-device">NMOS</div>
+                </div>
+            </div>
+
+            <h2>2. Why is N-well popular?</h2>
+            <p>Your textbook gives two reasons: <strong>lower substrate bias effects</strong> on threshold voltage, and <strong>lower parasitic capacitances</strong>.</p>
+            <ul>
+                <li><strong>Substrate Bias Effect:</strong> The body voltage affects \(V_T\). We want this disturbance to be minimal. The N-well process controls this better.</li>
+                <li><strong>Parasitic Capacitance:</strong> PN junctions naturally have capacitance. More capacitance = more time to charge/discharge = slower circuit. N-well reduces this for faster switching.</li>
+            </ul>
+
+            <h2>3. Fabrication Steps</h2>
+            <p><strong>Step 1:</strong> Start with P-type substrate.<br>
+            <strong>Step 2:</strong> Use a mask to define the N-well region.<br>
+            <strong>Step 3:</strong> Implant Phosphorus (N-type dopant).<br>
+            <strong>Step 4:</strong> High-temperature diffusion to drive the dopants to the desired depth.</p>
+
+            <h2>4. "n+ mask and its complement"</h2>
+            <p>The textbook says complementary masks can define opposite diffusion regions. It's just a layout convenience: the mask defining where n+ goes can be inverted to define where p+ goes.</p>
+
+            <!-- REPLACEMENT FOR PART 2, SECTION 4 (Mask Complements) -->
+            <div style="display:flex; justify-content:space-around; background:#0a0a0a; padding:30px; border-radius:8px; border:1px solid #333; margin:20px 0;">
+                <div style="text-align:center;">
+                    <strong style="color:#2ecc71;">n+ mask regions</strong>
+                    <div style="display:flex; gap:25px; margin-top:20px; background: #111; padding: 10px; border: 1px dashed #333;">
+                        <div style="width:45px; height:20px; background:#2ecc71; border-radius: 2px;"></div>
+                        <div style="width:45px; height:20px; background:transparent;"></div>
+                        <div style="width:45px; height:20px; background:#2ecc71; border-radius: 2px;"></div>
+                    </div>
+                </div>
+                <div style="text-align:center;">
+                    <strong style="color:#9b59b6;">complement (p+ regions)</strong>
+                    <div style="display:flex; gap:25px; margin-top:20px; background: #111; padding: 10px; border: 1px dashed #333;">
+                        <div style="width:45px; height:20px; background:transparent;"></div>
+                        <div style="width:45px; height:20px; background:#9b59b6; border-radius: 2px;"></div>
+                        <div style="width:45px; height:20px; background:transparent;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h2>5. The BIG disadvantage: Non-optimum p-channel characteristics</h2>
+            <p>Electrons move through silicon faster than holes (\( \mu_n \approx 2\text{–}3 \mu_p \)). Therefore, <strong>NMOS is naturally stronger/faster</strong>, and <strong>PMOS is naturally weaker/slower</strong>.</p>
+            <p>The N-well process historically worsened PMOS characteristics even further. However, it was still heavily used because in circuits like <strong>dynamic/domino logic</strong>, there is a large majority (preponderance) of NMOS devices, so optimizing NMOS performance was more important than saving the PMOS.</p>
+
+            <h2>6. P-WELL vs N-WELL: THE CHEAT SHEET</h2>
+            <table>
+                <tr><th>Feature</th><th>P-well</th><th>N-well</th></tr>
+                <tr><td><strong>Starting substrate</strong></td><td>N-type</td><td>P-type</td></tr>
+                <tr><td><strong>Special well</strong></td><td>P-well</td><td>N-well</td></tr>
+                <tr><td><strong>NMOS location</strong></td><td>P-well</td><td>P-substrate</td></tr>
+                <tr><td><strong>PMOS location</strong></td><td>N-substrate</td><td>N-well</td></tr>
+                <tr><td><strong>NMOS body contact</strong></td><td>VSS</td><td>VSS</td></tr>
+                <tr><td><strong>PMOS body contact</strong></td><td>VDD</td><td>VDD</td></tr>
+            </table>
+
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>The killer memory trick:</strong><br>
+                P-well → make a P pocket for NMOS.<br>
+                N-well → make an N pocket for PMOS.
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn" disabled>Finish</button>
+            </div>
+        </div>
+	
+
+        <!-- SECTION: MOS CHARACTERISTICS -->
+        <div id="sec-mos-chars" class="section-container">
+            <h1>\( I_{DS}-V_{DS} \) characteristics of MOS Transistor:</h1>
+            
+            <p>The graph below shows the \( I_D \) Vs \( V_{DS} \) characteristics of an n- MOS transistor for several values of \( V_{GS} \) .It is clear that there are two conduction states when the device is ON. The <span class="highlight">saturated state</span> and the <span class="highlight">non-saturated state</span>. The saturated curve is the flat portion and defines the saturation region. For \( V_{gs} < V_{DS} + V_{th} \), the NMOS device is conducting and \( I_D \) is independent of \( V_{DS} \). For \( V_{gs} > V_{DS} + V_{th} \), the transistor is in the non-saturation region and the curve is a half parabola. When the transistor is OFF (\( V_{gs} < V_{th} \)), then \( I_D \) is zero for any \( V_{DS} \) value.</p>
+            
+            <div class="img-container">
+                <img src="assets/id_vds_depletion.png" alt="ID vs VDS characteristics of depletion mode device">
+                <div class="img-caption">Click to expand diagram: (a) Depletion mode device</div>
+            </div>
+            
+            <div class="img-container">
+                <img src="assets/id_vds_enhancement.png" alt="ID vs VDS characteristics of enhancement mode device">
+                <div class="img-caption">Click to expand diagram: (b) Enhance mode device</div>
+            </div>
+
+            <p>The boundary of the saturation/non-saturation bias states is a point seen for each curve in the graph as the intersection of the straight line of the saturated region with the quadratic curve of the nonsaturated region. This intersection point occurs at the channel pinch off voltage called <span class="highlight">\( V_{DSAT} \)</span>. The diamond symbol marks the pinch-off voltage \( V_{DSAT} \) for each value of \( V_{GS} \). \( V_{DSAT} \) is defined as the minimum drain-source voltage that is required to keep the transistor in saturation for a given \( V_{GS} \).In the non-saturated state, the drain current initially increases almost linearly from the origin before bending in a parabolic response. Thus the name ohmic or linear for the non- saturated region.</p>
+            
+            <p>The drain current in saturation is virtually independent of \( V_{DS} \) and the transistor acts as a current Source. This is because there is no carrier inversion at the drain region of the channel. Carriers are pulled into the high electric field of the drain/substrate pn junction and ejected out of the drain terminal.</p>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION: CURRENT VS VOLTAGE -->
+        <div id="sec-current-voltage" class="section-container">
+            <h1>Drain-to-Source Current <span class="highlight">\( I_{DS} \)</span> versus Voltage <span class="highlight">\( V_{DS} \)</span> Relationships:</h1>
+            
+            <p>The working of a MOS transistor is based on the principle that the use of a voltage on the gate induce a charge in the channel between source and drain, which may then be caused to move from source to drain under the influence of an electric field created by voltage \( V_{ds} \) applied between drain and source. Since the charge induced is dependent on the gate to source voltage \( V_{gs} \) then \( I_{ds} \) is dependent on both \( V_{gs} \) and \( V_{ds} \).</p>
+            
+            <p>Let us consider the diagram below in which electrons will flow source to drain .So, the drain current is given by</p>
+
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/channel_diagram.png" alt="Channel 3D Diagram">
+                <div class="img-caption">Click to expand diagram: Channel with L, W, D</div>
+            </div>
+
+            <div class="math-display">
+                \[ I_{ds} = -I_{sd} = \frac{\text{Charge induced in channel } (Q_c)}{\text{Electron transit time } (\tau)} \]
+            </div>
+
+            <p>Where the transit time is given by</p>
+            <div class="math-display">
+                \[ \tau_{sd} = \frac{\text{Length of the channel}}{\text{Velocity } (v)} \]
+            </div>
+
+            <p>14</p>
+            <p>But velocity \( v= \mu e_{ds} \)</p>
+            <p>Where \( \mu = \) electron or hole mobility and \( E_{ds} = \) Electric field</p>
+            <p>Also , \( E_{ds} = V_{ds}/L \)</p>
+            <p>So, \( v = \mu . V_{ds}/L \)</p>
+            <p>And \( \tau_{ds} = L^2 / \mu . V_{ds} \)</p>
+            
+            <p>The typical values of \( \mu \) at room temperature are given below</p>
+
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/mobility_values.png" alt="Typical mobility values">
+                <div class="img-caption">Click to expand diagram: Mobility values</div>
+            </div>
+
+            <h2>The Non-saturated Region:</h2>
+            <p>Let us consider the \( I_d \) vs \( V_d \) relationships in the <span class="highlight">non-saturated region</span> .The charge induced in the channel due to due to the voltage difference between the gate and the channel, \( V_{gs} \) (assuming substrate connected to source). The voltage along the channel varies linearly with distance X from the source due to the IR drop in the channel .In the non-saturated state the average value is \( V_{ds}/2 \). Also the effective gate voltage \( V_g = V_{gs} – V_t \) where \( V_t \), is the threshold voltage needed to invert the charge under the gate and establish the channel.</p>
+            
+            <p>Hence the induced charge is \( Q_c = E_g \varepsilon_{ins} \varepsilon_o W . L \)</p>
+            <p>15</p>
+            <p>Where<br>
+            \( E_g = \) average electric field gate to channel<br>
+            \( \varepsilon_{ins} \) – relative permittivity of insulation between gate and channel<br>
+            \( \varepsilon_o \) = permittivity of free space.</p>
+            
+            <p>So, we can write that</p>
+            
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/equations_1.png" alt="Equations Block 1">
+                <div class="img-caption">Click to expand diagram: Equations Block 1</div>
+            </div>
+
+            <div class="math-display">
+                $$E_g = \frac{(V_{gs} - V_t) - \frac{V_{ds}}{2}}{D}$$
+            </div>
+
+            <p>Here D is the thickness of the oxide layer. Thus</p>
+
+            <div class="math-display">
+                $$Q_c = \frac{WL\varepsilon_{ins}\varepsilon_o}{D} \left((V_{gs} - V_t) - \frac{V_{ds}}{2}\right)$$
+            </div>
+
+            <p>So, by combining the above two equations ,we get</p>
+
+            <div class="math-display">
+                $$I_{ds} = \frac{\varepsilon_{ins}\varepsilon_o\mu}{D} \frac{W}{L} \left((V_{gs} - V_t) - \frac{V_{ds}}{2}\right)V_{ds}$$
+            </div>
+
+            <p>Or the above equation can be written as</p>
+
+            <div class="math-display">
+                $$I_{ds} = K\frac{W}{L}\left((V_{gs} - V_t)V_{ds} - \frac{V_{ds}^2}{2}\right)$$
+            </div>
+
+            <p>In the non-saturated or resistive region where Vds < Vgs – Vt  and</p>
+
+            <div class="math-display">
+                $$K = \frac{\varepsilon_{ins}\varepsilon_o\mu}{D}$$
+            </div>
+
+            <p>Generally ,a constant \(\beta\) is defined as</p>
+
+            <div class="math-display">
+                $$\beta = K\frac{W}{L}$$
+            </div>
+
+            <p>So that ,the expression for drain –source current will become</p>
+
+            <div class="math-display">
+                $$I_{ds} = \beta\left((V_{gs} - V_t)V_{ds} - \frac{V_{ds}^2}{2}\right)$$
+            </div>
+
+            <p>The gate /channel capacitance is</p>
+
+            <!-- Image inserted from your upload -->
+            <div class="img-container">
+                <img src="assets/equations_2.png" alt="Equations Block 2">
+                <div class="img-caption">Click to expand diagram: Equations Block 2</div>
+            </div>
+
+            <div class="math-display">
+                $$C_g = \frac{\varepsilon_{ins}\varepsilon_o WL}{D} \text{ (parallel plate)}$$
+            </div>
+
+            <p>Hence we can write another alternative form forthe drain current as</p>
+
+            <div class="math-display">
+                $$I_{ds} = \frac{C_g\mu}{L^2} \left((V_{gs} - V_t)V_{ds} - \frac{V_{ds}^2}{2}\right)$$
+            </div>
+
+            <p>Some time it is also convenient to use gate –capacitance per unit area ,\( C_g \)</p>
+            <p>So,the drain current is</p>
+
+            <div class="math-display">
+                $$I_{ds} = C_o\mu\frac{W}{L} \left((V_{gs} - V_t)V_{ds} - \frac{V_{ds}^2}{2}\right)$$
+            </div>
+            
+            <div class="definition" style="--def-border: var(--color-sec1);">
+                This is the relation between drain current and drain-source voltage in non-saturated region.
+            </div>
+
+            <h2>The Saturated Region</h2>
+
+            <p>Saturation begins when \( V_{ds} = V_{gs} - V_t \), since at this point the IR drop in the channel equals the effective gate to channel voltage at the drain and we may assume that the current remains fairly constant as \( V_{ds} \) increases further. Thus</p>
+
+            <div class="math-display">
+                $$I_{ds} = K\frac{W}{L} \frac{(V_{gs} - V_t)^2}{2}$$
+            </div>
+
+            <p>Or we can also write that</p>
+
+            <div class="math-display">
+                $$I_{ds} = \frac{\beta}{2}(V_{gs} - V_t)^2$$
+            </div>
+
+            <p>Or it can also be written as</p>
+
+            <div class="math-display">
+                $$I_{ds} = \frac{C_g\mu}{2L^2}(V_{gs} - V_t)^2$$
+            </div>
+
+            <p>Or</p>
+
+            <div class="math-display">
+                $$I_{ds} = C_o\mu\frac{W}{2L}(V_{gs} - V_t)^2$$
+            </div>
+
+            <p>The expressions derived above for \( I_{ds} \) hold for both enhancement and depletion mode devices. Here the threshold voltage for the NMOS depletion mode device (denoted as \( V_{td} \)) is negative.</p>
+
+            <p>16</p>
+<p><strong>BRO, the paragraph is <span class="highlight">mixing up the inequalities</span> in the textbook.</strong> Let's rebuild the whole \(I_D\)-\(V_{DS}\) characteristic from absolute basics, then the graph becomes almost obvious.</p>
+
+<h2>1. First, what are we actually plotting?</h2>
+<p>For an <strong>NMOS</strong>, we control two voltages:</p>
+<ul>
+    <li>\(V_{GS}\): gate-to-source voltage &rarr; <strong>controls whether/how strongly the channel exists</strong></li>
+    <li>\(V_{DS}\): drain-to-source voltage &rarr; <strong>pushes electrons from source toward drain</strong></li>
+</ul>
+<p>And we observe:</p>
+<ul>
+    <li>\(I_D\): drain current</li>
+</ul>
+<p>So the graph is:</p>
+<div class="math-display">
+$$ \boxed{I_D\text{ vs }V_{DS}} $$
+</div>
+<p>for several fixed values of \(V_{GS}\).</p>
+<div class="definition" style="--def-border: var(--color-sec1);">
+    <strong>Think:</strong> Gate voltage decides how much channel is available. Drain voltage decides how hard we push current through it.
+</div>
+
+<hr>
+
+<h2>2. Start with the easiest case: NMOS OFF</h2>
+<p>Suppose:</p>
+<div class="math-display">$$ V_{GS} < V_{TH} $$</div>
+<p>Here, the gate voltage isn't high enough to create an inversion channel. So:</p>
+<div class="math-display">$$ \boxed{I_D \approx 0} $$</div>
+<p>even if you increase \(V_{DS}\).</p>
+<p>Visually:</p>
+
+<!-- SVG Graph: OFF -->
+<div style="text-align: center; margin: 20px 0;">
+    <svg width="320" height="220" viewBox="0 0 320 220" style="background:#1e1e1e; border-radius:8px; padding:10px;">
+        <defs>
+            <marker id="arrow1" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#fff" />
+            </marker>
+        </defs>
+        <line x1="40" y1="180" x2="300" y2="180" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <line x1="40" y1="180" x2="40" y2="20" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <text x="15" y="30" fill="#fff" font-family="monospace">ID</text>
+        <text x="280" y="200" fill="#fff" font-family="monospace">VDS</text>
+        <line x1="40" y1="178" x2="280" y2="178" stroke="#e74c3c" stroke-width="4" />
+    </svg>
+</div>
+
+<h3>Why?</h3>
+<p>The gate hasn't created the conducting path between source and drain. <br><strong>No channel &rarr; no significant drain current.</strong></p>
+
+<hr>
+
+<h2>3. Now turn the transistor ON</h2>
+<p>Increase the gate voltage:</p>
+<div class="math-display">$$ V_{GS} > V_{TH} $$</div>
+<p>Now an inversion channel forms between source and drain.</p>
+
+<!-- Device Diagram: Channel ON -->
+<div class="ieee-diagram">
+    <div class="ieee-gate">GATE</div>
+    <div class="ieee-oxide">oxide</div>
+    <div class="ieee-channel active" style="position: relative;">
+        e⁻ e⁻ e⁻ e⁻ e⁻ e⁻ e⁻
+        <div class="ieee-annotation" style="right: -120px; color:#f1c40f;">&larr; channel</div>
+    </div>
+    <div class="ieee-sub">
+        <div class="ieee-sd left">S</div>
+        <div class="ieee-sd right">D</div>
+        P-type substrate
+    </div>
+</div>
+
+<p>Now current can flow. But here's the important part:</p>
+<h3>Increasing \(V_{DS}\) doesn't always behave the same way.</h3>
+<p>There are <strong>two major operating regions</strong> (with the transition called <strong>pinch-off</strong>):</p>
+<ol>
+    <li><strong>Linear / Ohmic / Non-saturation region</strong></li>
+    <li><strong>Saturation region</strong></li>
+</ol>
+
+<hr>
+
+<h2>4. Region 1: Small \(V_{DS}\) &rarr; Linear/Ohmic region</h2>
+<p>Suppose \(V_{GS}\) is fixed above threshold. Start increasing \(V_{DS}\) from zero.</p>
+<p>At first, \(I_D\) increases approximately linearly with \(V_{DS}\).</p>
+
+<!-- SVG Graph: Linear Region -->
+<div style="text-align: center; margin: 20px 0;">
+    <svg width="320" height="220" viewBox="0 0 320 220" style="background:#1e1e1e; border-radius:8px; padding:10px;">
+        <line x1="40" y1="180" x2="300" y2="180" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <line x1="40" y1="180" x2="40" y2="20" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <text x="15" y="30" fill="#fff" font-family="monospace">ID</text>
+        <text x="280" y="200" fill="#fff" font-family="monospace">VDS</text>
+        <path d="M 40 180 Q 100 130 160 50" fill="none" stroke="#3498db" stroke-width="4" />
+    </svg>
+</div>
+
+<h3>Why?</h3>
+<p>Because the MOSFET is behaving somewhat like a <strong>voltage-controlled resistor</strong>. The channel exists from source to drain, and increasing \(V_{DS}\) increases the electric field along the channel. So:</p>
+<div class="math-display">$$ V_{DS}\uparrow \quad\Rightarrow\quad I_D\uparrow $$</div>
+
+<hr>
+
+<h2>5. But something interesting happens as \(V_{DS}\) keeps increasing</h2>
+<p>Remember: \(V_{GS} > V_{TH}\) creates the channel, but voltage inside the channel isn't the same everywhere.</p>
+<ul>
+    <li>At the source: \(V(x) \approx 0 \implies V_{GC} \approx V_{GS}\)</li>
+    <li>At the drain: \(V(x) \approx V_{DS} \implies V_{GC} \approx V_{GS} - V_{DS}\)</li>
+</ul>
+<p>The effective gate-to-channel voltage gets smaller as we move toward the drain. This is the key to understanding <strong>pinch-off</strong>.</p>
+
+<hr>
+
+<h2>6. When does pinch-off happen?</h2>
+<p>The channel disappears at the drain end when the local gate-to-channel voltage reaches threshold:</p>
+<div class="math-display">$$ V_{GS} - V_{DS} = V_{TH} $$</div>
+<p>Rearranging this gives us the boundary voltage:</p>
+<div class="math-display">$$ \boxed{V_{DSAT} = V_{GS} - V_{TH}} $$</div>
+
+<div class="definition" style="--def-border: #e74c3c;">
+    <h3>🚨 Important correction to your textbook</h3>
+    <p>Your paragraph says: <em>"For \(V_{GS} < V_{DS} + V_{TH}\), the NMOS device is conducting and \(I_D\) is independent of \(V_{DS}\)."</em></p>
+    <p>That is <strong>not consistent with standard equations</strong>. The standard conditions are:</p>
+    <ul>
+        <li><strong>OFF:</strong> \(\boxed{V_{GS} < V_{TH}}\)</li>
+        <li><strong>Linear / Ohmic:</strong> \(\boxed{V_{GS} > V_{TH}}\) AND \(\boxed{V_{DS} < V_{GS} - V_{TH}}\)</li>
+        <li><strong>Saturation:</strong> \(\boxed{V_{GS} > V_{TH}}\) AND \(\boxed{V_{DS} \ge V_{GS} - V_{TH}}\)</li>
+    </ul>
+</div>
+
+<hr>
+
+<h2>7. What exactly is "pinch-off"?</h2>
+<p>Pinch-off <strong>does NOT mean current suddenly becomes zero</strong>.</p>
+<div class="definition" style="--def-border: var(--color-sec1);">
+    It means: The inversion channel becomes zero-width at the drain end.
+</div>
+
+<p>Before pinch-off:</p>
+<div class="ieee-diagram">
+    <div class="ieee-gate">GATE</div>
+    <div class="ieee-oxide">oxide</div>
+    <div class="ieee-channel active" style="position: relative;">
+        e⁻ e⁻ e⁻ e⁻ e⁻ e⁻ e⁻
+        <div class="ieee-annotation" style="right: -120px; color:#f1c40f;">&larr; CHANNEL</div>
+    </div>
+    <div class="ieee-sub">
+        <div class="ieee-sd left">Source</div>
+        <div class="ieee-sd right">Drain</div>
+        P-type substrate
+    </div>
+</div>
+
+<p>At pinch-off:</p>
+<div class="ieee-diagram">
+    <div class="ieee-gate">GATE</div>
+    <div class="ieee-oxide">oxide</div>
+    <div style="width: 200px; height: 15px; display: flex; z-index: 2;">
+        <div style="width: 75%; height: 100%; background: #f1c40f; border-radius: 0 15px 15px 0;"></div>
+        <div style="width: 25%; position: relative;">
+            <div class="ieee-annotation" style="right: -140px; top: -10px; color:#e74c3c;">&larr; channel pinches here</div>
+        </div>
+    </div>
+    <div class="ieee-sub">
+        <div class="ieee-sd left">Source</div>
+        <div class="ieee-sd right">Drain</div>
+        P-type substrate
+    </div>
+</div>
+
+<hr>
+
+<h2>8. Then why does current still flow after pinch-off?</h2>
+<p>Once pinch-off occurs, the electric field near the drain becomes very strong. Electrons traveling through the channel reach the pinch-off region and are swept toward the drain by this strong electric field.</p>
+<div class="math-display">$$ \boxed{\text{pinch-off} \neq \text{current stops}} \quad \rightarrow \quad \boxed{\text{pinch-off} \rightarrow \text{saturation}} $$</div>
+
+<hr>
+
+<h2>9. Why does \(I_D\) become almost independent of \(V_{DS}\)?</h2>
+<p>Once \(V_{DS} \ge V_{DSAT}\), the channel is pinched off near the drain. Increasing \(V_{DS}\) further doesn't significantly increase the amount of channel charge controlled by the gate.</p>
+<p>Therefore: \(V_{DS}\uparrow\) but approximately \(I_D \approx \text{constant}\). That's the <strong>saturation region</strong>.</p>
+
+<!-- SVG Graph: Saturation Region -->
+<div style="text-align: center; margin: 20px 0;">
+    <svg width="320" height="220" viewBox="0 0 320 220" style="background:#1e1e1e; border-radius:8px; padding:10px;">
+        <line x1="40" y1="180" x2="300" y2="180" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <line x1="40" y1="180" x2="40" y2="20" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <text x="15" y="30" fill="#fff" font-family="monospace">ID</text>
+        <text x="280" y="200" fill="#fff" font-family="monospace">VDS</text>
+        <path d="M 40 180 Q 80 120 120 60 L 280 60" fill="none" stroke="#3498db" stroke-width="4" />
+        <line x1="120" y1="60" x2="120" y2="180" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5" />
+        <text x="110" y="200" fill="#e74c3c" font-family="monospace">VDSAT</text>
+    </svg>
+</div>
+
+<hr>
+
+<h2>10. Why does the transistor act like a current source?</h2>
+<p>In saturation, \(I_D \approx \text{constant}\) while \(V_{DS}\) changes. Therefore the MOSFET behaves approximately like a <strong>controlled current source</strong>, controlled by \(V_{GS}\).</p>
+<p>Conceptually: \(\boxed{V_{GS} \rightarrow I_D}\), while in saturation \(\boxed{V_{DS}\text{ has relatively little effect on }I_D}\).</p>
+
+<hr>
+
+<h2>11. The saturation current equation & \(V_{DSAT}\)</h2>
+<p>For an ideal long-channel NMOS:</p>
+<div class="math-display">$$ \boxed{I_D = \frac{1}{2}k_n(V_{GS}-V_{TH})^2} \quad \text{where} \quad k_n = \mu_n C_{ox} \frac{W}{L} $$</div>
+<p>Notice there is <strong>no \(V_{DS}\)</strong> in this equation. \(V_{DSAT} = V_{GS} - V_{TH}\) is the minimum \(V_{DS}\) needed to put the NMOS into saturation for a particular \(V_{GS}\).</p>
+
+<hr>
+
+<h2>12. Here's the entire thing in one picture</h2>
+
+<!-- SVG Graph: Entire Curve -->
+<div style="text-align: center; margin: 20px 0;">
+    <svg width="400" height="260" viewBox="0 0 400 260" style="background:#1e1e1e; border-radius:8px; padding:10px;">
+        <line x1="40" y1="220" x2="380" y2="220" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <line x1="40" y1="220" x2="40" y2="20" stroke="#fff" stroke-width="2" marker-end="url(#arrow1)" />
+        <text x="15" y="30" fill="#fff" font-family="monospace">ID</text>
+        <text x="360" y="240" fill="#fff" font-family="monospace">VDS</text>
+        
+        <path d="M 40 220 Q 80 180 120 160 L 360 160" fill="none" stroke="#2ecc71" stroke-width="3" />
+        <path d="M 40 220 Q 100 130 160 100 L 360 100" fill="none" stroke="#f1c40f" stroke-width="3" />
+        <path d="M 40 220 Q 120 80 200 40 L 360 40" fill="none" stroke="#3498db" stroke-width="3" />
+        
+        <path d="M 40 220 Q 120 180 200 40" fill="none" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5" />
+        
+        <text x="240" y="80" fill="#fff" font-size="12" font-family="sans-serif">SATURATION</text>
+        <text x="80" y="210" fill="#fff" font-size="12" font-family="sans-serif">LINEAR</text>
+        <text x="140" y="240" fill="#e74c3c" font-size="12" font-family="monospace">VDSAT = VGS - VTH</text>
+    </svg>
+</div>
+
+<hr>
+
+<h2>13. Important correction about the textbook wording</h2>
+<p>Your text says: <em>"This is because there is no carrier inversion at the drain region of the channel."</em></p>
+<p>Don't interpret this as: <em>"There are no electrons near the drain."</em> More accurately: <strong>The inversion layer no longer extends continuously right up to the drain terminal.</strong> The channel terminates at a pinch-off region, and carriers are swept through this high-field region into the drain.</p>
+
+<!-- Device Diagram: High Electric Field Pinch-off -->
+<div class="ieee-diagram">
+    <div class="ieee-gate">GATE</div>
+    <div class="ieee-oxide">oxide</div>
+    <div style="width: 200px; height: 15px; display: flex; z-index: 2;">
+        <div style="width: 75%; height: 100%; background: #f1c40f; border-radius: 0 15px 15px 0;">
+            <div class="ieee-annotation" style="left: 10px; color:#333; font-weight:bold; font-size:12px; margin-top:2px;">inversion channel</div>
+        </div>
+        <div style="width: 25%; position: relative;">
+            <div style="position:absolute; top:2px; left:10px; color:#e74c3c; font-weight:bold;">&rarr; &rarr;</div>
+            <div class="ieee-annotation" style="right: -130px; top: -15px; color:#e74c3c;">&larr; PINCH-OFF</div>
+            <div class="ieee-annotation" style="right: -130px; top: 15px; color:#e74c3c; font-style:italic;">(high electric field)</div>
+        </div>
+    </div>
+    <div class="ieee-sub">
+        <div class="ieee-sd left">SOURCE</div>
+        <div class="ieee-sd right">DRAIN</div>
+        P-type substrate
+    </div>
+</div>
+
+<hr>
+
+<h2>🧠 The exam-memory version</h2>
+<p>Memorize <strong>this</strong>, not the confusing paragraph:</p>
+
+<table style="width:100%; border-collapse: collapse; margin-top: 15px; background: rgba(255,255,255,0.05); color: #ecf0f1; border-radius: 8px; overflow: hidden; font-size: 15px;">
+    <thead>
+        <tr style="background: rgba(255,255,255,0.1); text-align: left;">
+            <th style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.2);">Condition</th>
+            <th style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.2);">Region</th>
+            <th style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.2);">What happens</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">\(V_{GS} < V_{TH}\)</td>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);"><strong>Cutoff</strong></td>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">\(I_D \approx 0\)</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">\(V_{GS} > V_{TH}\), \(V_{DS} < V_{GS} - V_{TH}\)</td>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);"><strong>Linear/Ohmic</strong></td>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">\(I_D\) increases with \(V_{DS}\)</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">\(V_{GS} > V_{TH}\), \(V_{DS} \ge V_{GS} - V_{TH}\)</td>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);"><strong>Saturation</strong></td>
+            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">\(I_D\) roughly independent of \(V_{DS}\)</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px;">\(V_{DSAT} = V_{GS} - V_{TH}\)</td>
+            <td style="padding: 12px;"><strong>Boundary</strong></td>
+            <td style="padding: 12px;">Pinch-off begins</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="definition" style="--def-border: var(--color-sec1); margin-top: 20px;">
+    <h3>The one-line mental model:</h3>
+    <div class="math-display">
+    $$ \boxed{\text{Gate creates channel} \rightarrow V_{DS}\text{ pushes carriers} \rightarrow \text{drain end pinches off} \rightarrow I_D\text{ saturates}} $$
+    </div>
+    <p>And the <strong>golden equation</strong>:</p>
+    <div class="math-display">$$ \boxed{V_{DSAT} = V_{GS} - V_{TH}} $$</div>
+</div>
+<hr>
+
+<p>This part is actually the <strong>physical foundation</strong> behind the \(I_D\)-\(V_{DS}\) equations we just discussed. The textbook throws several equations at you at once, so let's unpack the chain slowly.</p>
+
+<h2>1. First: what is physically happening inside an NMOS?</h2>
+<p>An NMOS has:</p>
+
+<!-- Device Diagram: Basic NMOS Structure -->
+<div class="ieee-diagram">
+    <div class="ieee-gate">GATE</div>
+    <div class="ieee-oxide">oxide</div>
+    <div class="ieee-channel active" style="position: relative;">
+        e⁻ e⁻ e⁻ e⁻ e⁻ e⁻ e⁻
+        <div class="ieee-annotation" style="right: -120px; color:#f1c40f;">&larr; electrons</div>
+    </div>
+    <div class="ieee-sub">
+        <div class="ieee-sd left">n+ Source</div>
+        <div class="ieee-sd right">n+ Drain</div>
+        P-type substrate
+    </div>
+</div>
+
+<p>When we apply:</p>
+<div class="math-display">$$ \boxed{V_{GS} > V_{TH}} $$</div>
+<p>the gate creates an <strong>inversion channel</strong> between source and drain. That channel contains mobile electrons.</p>
+
+<p>Now apply:</p>
+<div class="math-display">$$ \boxed{V_{DS} > 0} $$</div>
+<p>This creates an electric field along the channel. That electric field makes the electrons move from <strong>source &rarr; drain</strong>.</p>
+
+<p>So the basic story is:</p>
+<div class="math-display">$$ \boxed{V_{GS} \rightarrow \text{creates electrons/channel}} $$</div>
+<div class="math-display">$$ \boxed{V_{DS} \rightarrow \text{makes those electrons move}} $$</div>
+
+<p>Therefore:</p>
+<div class="math-display">$$ \boxed{I_D = f(V_{GS}, V_{DS})} $$</div>
+
+<hr>
+
+<h2>2. Why does \(V_{GS}\) affect \(I_D\)?</h2>
+<p>The gate is insulated from the channel by oxide. So the gate doesn't directly inject current into the channel.</p>
+<p>Instead, its electric field attracts electrons toward the surface and creates the inversion layer.</p>
+
+<ul>
+    <li>Higher \(V_{GS}\): \(\boxed{\text{more channel charge}}\)</li>
+    <li>Lower \(V_{GS}\): \(\boxed{\text{less channel charge}}\)</li>
+</ul>
+
+<p>So:</p>
+<div class="math-display">$$ V_{GS}\uparrow \Rightarrow Q_C\uparrow \Rightarrow I_D\uparrow $$</div>
+<p>where \(Q_C\) is the charge stored in the channel.</p>
+
+<hr>
+
+<h2>3. Why does \(V_{DS}\) affect \(I_D\)?</h2>
+<p>Imagine the channel as a road:</p>
+
+<!-- Road Diagram -->
+<div class="ieee-diagram" style="padding: 30px;">
+    <div class="ieee-sub" style="background: transparent; border: none;">
+        <div class="ieee-sd left">SOURCE</div>
+        <div class="ieee-sd right">DRAIN</div>
+        <!-- Electron road -->
+        <div style="height: 15px; width: 100%; background: #f1c40f; border-radius: 8px; position: relative; margin-top: 10px;">
+            <div style="position:absolute; top:-20px; left:50%; transform:translateX(-50%); color:#f1c40f; font-weight:bold; width: 100%; text-align: center;">electron road</div>
+            <div style="position:absolute; top:1px; left:50%; transform:translateX(-50%); color:#333; font-weight:bold;">&rarr; &rarr; &rarr;</div>
+        </div>
+    </div>
+</div>
+
+<p>\(V_{DS}\) creates an electric field along this road. Electric field:</p>
+<div class="math-display">$$ \boxed{E_{DS} = \frac{V_{DS}}{L}} $$</div>
+<p>where:</p>
+<ul>
+    <li>\(E_{DS}\) = electric field along the channel</li>
+    <li>\(V_{DS}\) = drain-source voltage</li>
+    <li>\(L\) = channel length</li>
+</ul>
+<p>So if \(V_{DS}\) increases:</p>
+<div class="math-display">$$ E_{DS}\uparrow $$</div>
+<p>and the electrons are driven harder along the channel.</p>
+
+<hr>
+
+<h2>4. Now comes the textbook's main idea</h2>
+<p>The textbook says:</p>
+<div class="definition" style="--def-border: var(--color-sec1);">
+    Drain current = charge in channel / time required for that charge to travel from source to drain
+</div>
+<p>That is fundamentally just:</p>
+<div class="math-display">$$ \boxed{I = \frac{Q}{t}} $$</div>
+<p>So:</p>
+<div class="math-display">$$ \boxed{I_{DS} = \frac{Q_C}{\tau_{DS}}} $$</div>
+<p>where:</p>
+<ul>
+    <li>\(Q_C\) = channel charge</li>
+    <li>\(\tau_{DS}\) = electron transit time from source to drain</li>
+</ul>
+<p>This is a very useful physical picture.</p>
+
+<hr>
+
+<h2>5. What is "transit time"?</h2>
+<p>Transit time simply means: <strong>How long does an electron take to travel from source to drain?</strong></p>
+<p>If the channel is length \(L\), and electron velocity is \(v\):</p>
+<div class="math-display">$$ \boxed{\tau_{DS} = \frac{L}{v}} $$</div>
+<p>That's just: \(\text{time} = \frac{\text{distance}}{\text{velocity}}\). Nothing mysterious.</p>
+
+<p>For example, if \(L = 10\text{ units}\) and \(v = 2\text{ units/s}\), then \(\tau = 5s\).</p>
+<p>Same idea inside the MOSFET, except the dimensions are tiny and velocities are enormous.</p>
+
+<hr>
+
+<h2>6. Now where does electron velocity come from?</h2>
+<p>The textbook gives:</p>
+<div class="math-display">$$ \boxed{v = \mu E_{DS}} $$</div>
+<p>This is the <strong>drift velocity</strong> relation. Here:</p>
+<ul>
+    <li>\(v\) = average electron drift velocity</li>
+    <li>\(\mu\) = carrier mobility</li>
+    <li>\(E_{DS}\) = electric field</li>
+</ul>
+
+<h3>What is mobility?</h3>
+<div class="definition" style="--def-border: var(--color-sec1);">
+    Mobility tells us: <strong>How easily carriers move through the semiconductor when an electric field is applied.</strong>
+</div>
+<p>Higher mobility: \(\mu\uparrow \Rightarrow v\uparrow\)</p>
+<p>For electrons, we usually use \(\mu_n\). For holes, \(\mu_p\).</p>
+<p>So for an NMOS:</p>
+<div class="math-display">$$ \boxed{v_n = \mu_n E_{DS}} $$</div>
+
+<hr>
+
+<h2>7. Substitute the electric field</h2>
+<p>We already have: \(E_{DS} = \frac{V_{DS}}{L}\)</p>
+<p>Therefore: \(v = \mu \frac{V_{DS}}{L}\) or:</p>
+<div class="math-display">$$ \boxed{v = \frac{\mu V_{DS}}{L}} $$</div>
+<p>This is exactly what your textbook says.</p>
+
+<hr>
+
+<h2>8. Now calculate transit time</h2>
+<p>We had: \(\tau_{DS} = \frac{L}{v}\) and \(v = \frac{\mu V_{DS}}{L}\)</p>
+<p>Substitute:</p>
+<div class="math-display">$$ \tau_{DS} = \frac{L}{\mu V_{DS} / L} $$</div>
+<p>Dividing by a fraction means multiplying by its reciprocal:</p>
+<div class="math-display">$$ \tau_{DS} = L \times \frac{L}{\mu V_{DS}} $$</div>
+<p>Therefore:</p>
+<div class="math-display">$$ \boxed{\tau_{DS} = \frac{L^2}{\mu V_{DS}}} $$</div>
+<p>And that's the equation appearing in your notes.</p>
+
+<hr>
+
+<h2>9. Now notice something VERY important</h2>
+<p>Look at:</p>
+<div class="math-display">$$ \boxed{\tau_{DS} = \frac{L^2}{\mu V_{DS}}} $$</div>
+<p>What happens when \(V_{DS}\) increases? The denominator increases.</p>
+<p>Therefore:</p>
+<div class="math-display">$$ \boxed{V_{DS}\uparrow \Rightarrow \tau_{DS}\downarrow} $$</div>
+<p>Meaning: <strong>Higher \(V_{DS}\) makes the electrons cross the channel faster.</strong></p>
+
+<p>And since \(I = \frac{Q}{t}\), smaller transit time means larger current:</p>
+<div class="math-display">$$ \tau\downarrow \Rightarrow I_D\uparrow $$</div>
+<p>That's why \(I_D\) initially increases as \(V_{DS}\) increases.</p>
+
+<hr>
+
+<h2>10. Put the entire chain together 🔥</h2>
+<p>This is the part I want you to actually understand:</p>
+
+<div class="math-display">$$ \boxed{V_{DS}\uparrow} $$</div>
+<div style="text-align: center; color: #f1c40f; margin: 5px 0;">&darr;<br><small>Electric field increases</small></div>
+<div class="math-display">$$ \boxed{E_{DS} = \frac{V_{DS}}{L}} $$</div>
+<div style="text-align: center; color: #f1c40f; margin: 5px 0;">&darr;<br><small>Carrier velocity increases</small></div>
+<div class="math-display">$$ \boxed{v = \mu E_{DS}} $$</div>
+<div style="text-align: center; color: #f1c40f; margin: 5px 0;">&darr;<br><small>Transit time decreases</small></div>
+<div class="math-display">$$ \boxed{\tau_{DS} = \frac{L}{v}} $$</div>
+<div style="text-align: center; color: #f1c40f; margin: 5px 0;">&darr;<br><small>More charge passes drain per sec</small></div>
+<div class="math-display">$$ \boxed{I_D = \frac{Q_C}{\tau_{DS}}} $$</div>
+<div style="text-align: center; color: #f1c40f; margin: 5px 0;">&darr;<br><small>Therefore</small></div>
+<div class="math-display">$$ \boxed{V_{DS}\uparrow \Rightarrow I_D\uparrow} $$</div>
+
+<p><strong>That is the physical reason for the rising part of the \(I_D\)-\(V_{DS}\) curve.</strong></p>
+
+<hr>
+
+<h2>11. But wait... this seems to predict \(I_D \propto V_{DS}\)</h2>
+<p>Exactly! And this is where the <strong>linear/ohmic region</strong> comes from.</p>
+<p>If channel charge \(Q_C\) were approximately constant:</p>
+<div class="math-display">$$ I_D = \frac{Q_C}{\tau} \quad \text{and} \quad \tau = \frac{L^2}{\mu V_{DS}} $$</div>
+<p>then:</p>
+<div class="math-display">$$ I_D = Q_C \frac{\mu V_{DS}}{L^2} $$</div>
+<p>Therefore:</p>
+<div class="math-display">$$ \boxed{I_D \propto V_{DS}} $$</div>
+<p>That gives the approximately straight portion of the curve.</p>
+
+<!-- SVG Graph: Linear Region -->
+<div style="text-align: center; margin: 20px 0;">
+    <svg width="320" height="220" viewBox="0 0 320 220" style="background:#1e1e1e; border-radius:8px; padding:10px;">
+        <defs>
+            <marker id="arrow2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#fff" />
+            </marker>
+        </defs>
+        <line x1="40" y1="180" x2="300" y2="180" stroke="#fff" stroke-width="2" marker-end="url(#arrow2)" />
+        <line x1="40" y1="180" x2="40" y2="20" stroke="#fff" stroke-width="2" marker-end="url(#arrow2)" />
+        <text x="15" y="30" fill="#fff" font-family="monospace">ID</text>
+        <text x="280" y="200" fill="#fff" font-family="monospace">VDS</text>
+        <line x1="40" y1="180" x2="200" y2="60" stroke="#3498db" stroke-width="4" />
+    </svg>
+</div>
+
+<p>But there is one giant catch: <strong>\(Q_C\) is NOT actually constant along the channel when \(V_{DS}\) becomes significant.</strong></p>
+<p>And that's why the curve eventually bends.</p>
+
+<hr>
+
+<h2>12. Why does the curve bend?</h2>
+<p>This connects directly to what we discussed previously. The gate creates the channel, but the channel voltage isn't the same everywhere.</p>
+<ul>
+    <li>At the source: \(V(x) = 0\)</li>
+    <li>At the drain: \(V(x) = V_{DS}\)</li>
+</ul>
+<p>Therefore, the effective gate-to-channel voltage near the drain becomes: \(V_{GS} - V_{DS}\)</p>
+<p>As \(V_{DS}\) increases: \(V_{GS} - V_{DS}\downarrow\). So the channel becomes thinner toward the drain.</p>
+
+<!-- Device Diagram: Thinning channel -->
+<div class="ieee-diagram">
+    <div class="ieee-gate">GATE</div>
+    <div class="ieee-oxide">oxide</div>
+    <!-- Narrowing channel visual -->
+    <div style="width: 200px; height: 20px; z-index: 2; position: relative;">
+        <svg width="100%" height="100%" viewBox="0 0 200 20">
+            <!-- Drawn trapezoid to represent narrowing channel -->
+            <polygon points="0,0 200,10 200,20 0,20" fill="#f1c40f" />
+        </svg>
+        <div class="ieee-annotation" style="right: -150px; top: -5px; color:#f1c40f;">&larr; channel gets narrower</div>
+    </div>
+    <div class="ieee-sub">
+        <div class="ieee-sd left">SOURCE</div>
+        <div class="ieee-sd right">DRAIN</div>
+        P-type substrate
+    </div>
+</div>
+
+<p>Therefore the available channel charge \(Q_C\) is no longer constant. That causes the \(I_D\)-\(V_{DS}\) curve to bend.</p>
+
+<hr>
+
+<h2>13. Eventually: pinch-off</h2>
+<p>When: \(V_{DS} = V_{GS} - V_{TH}\), we reach:</p>
+<div class="math-display">$$ \boxed{V_{DSAT} = V_{GS} - V_{TH}} $$</div>
+<p>The channel pinches off at the drain end. After that, we're in saturation.</p>
+
+<!-- SVG Graph: Saturation Region -->
+<div style="text-align: center; margin: 20px 0;">
+    <svg width="320" height="220" viewBox="0 0 320 220" style="background:#1e1e1e; border-radius:8px; padding:10px;">
+        <line x1="40" y1="180" x2="300" y2="180" stroke="#fff" stroke-width="2" marker-end="url(#arrow2)" />
+        <line x1="40" y1="180" x2="40" y2="20" stroke="#fff" stroke-width="2" marker-end="url(#arrow2)" />
+        <text x="15" y="30" fill="#fff" font-family="monospace">ID</text>
+        <text x="280" y="200" fill="#fff" font-family="monospace">VDS</text>
+        <path d="M 40 180 Q 80 120 120 60 L 280 60" fill="none" stroke="#3498db" stroke-width="4" />
+        <line x1="120" y1="60" x2="120" y2="180" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5" />
+        <text x="110" y="200" fill="#e74c3c" font-family="monospace">VDSAT</text>
+    </svg>
+</div>
+
+<p>So our simple "higher \(V_{DS}\) &rarr; faster electrons &rarr; higher current" story <strong>stops being sufficient</strong> because the channel itself is changing.</p>
+
+<hr>
+
+<h2>14. One subtle point: \(I_{DS} = -I_{SD}\)</h2>
+<p>Your textbook writes:</p>
+<div class="math-display">$$ \boxed{I_{DS} = -I_{SD}} $$</div>
+<p>This is just a <strong>sign convention</strong>.</p>
+<p>For an NMOS, electron movement is: \(\boxed{\text{Source} \rightarrow \text{Drain}}\) because electrons are negatively charged.</p>
+<p>But conventional current is defined opposite to electron movement: \(\boxed{\text{Drain} \rightarrow \text{Source}}\)</p>
+<p>So don't let the negative sign scare you. It is mostly bookkeeping about current direction.</p>
+
+<hr>
+
+<h2>15. The entire derivation as a chain</h2>
+<p>Your textbook is basically doing this:</p>
+<ul>
+    <li><strong>Start:</strong> \(\boxed{I_D = \frac{Q_C}{\tau_{DS}}}\)</li>
+    <li><strong>Transit time:</strong> \(\boxed{\tau_{DS} = \frac{L}{v}}\)</li>
+    <li><strong>Carrier velocity:</strong> \(\boxed{v = \mu E_{DS}}\)</li>
+    <li><strong>Electric field:</strong> \(\boxed{E_{DS} = \frac{V_{DS}}{L}}\)</li>
+</ul>
+
+<p>Therefore: \(v = \mu \frac{V_{DS}}{L}\)</p>
+<p>Then: \(\tau_{DS} = \frac{L}{\mu V_{DS}/L}\) giving: \(\boxed{\tau_{DS} = \frac{L^2}{\mu V_{DS}}}\)</p>
+<p>And therefore, <strong>in the simplified constant-charge picture</strong>:</p>
+<div class="math-display">$$ I_D = \frac{Q_C \mu V_{DS}}{L^2} $$</div>
+<p>which explains why current initially increases with \(V_{DS}\).</p>
+
+<hr>
+
+<h2>🧠 The BIG picture</h2>
+<p>Don't memorize these as disconnected equations. Think of the MOSFET as:</p>
+
+<!-- Complex Flowchart mapped into HTML/CSS Box diagram -->
+<div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 8px; text-align: center; color: #ecf0f1; font-family: sans-serif; margin: 20px 0;">
+    <div style="border: 2px solid #3498db; padding: 10px; border-radius: 5px; display: inline-block; background: rgba(52, 152, 219, 0.2);">
+        <strong>GATE</strong><br>
+        <small>\( V_{GS} \)</small>
+    </div>
+    <div style="margin: 10px 0; color: #f1c40f; font-weight: bold;">&darr; controls CHANNEL</div>
+    <div style="border: 1px dashed #f1c40f; padding: 10px; border-radius: 5px; display: inline-block; background: rgba(241, 196, 15, 0.1);">
+        \( Q_c \) = charge
+    </div>
+    
+    <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
+        <div style="border: 2px solid #e74c3c; padding: 10px; border-radius: 5px; background: rgba(231, 76, 60, 0.2); width: 80px;"><strong>SOURCE</strong></div>
+        <div style="height: 6px; width: 150px; background: #f1c40f; position: relative;">
+             <div style="position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #f1c40f; white-space: nowrap;">&rarr; electrons &rarr;</div>
+             <div style="position: absolute; top: -35px; left: 50%; transform: translateX(-50%); color: #f1c40f;">&darr;</div>
+        </div>
+        <div style="border: 2px solid #e74c3c; padding: 10px; border-radius: 5px; background: rgba(231, 76, 60, 0.2); width: 80px;"><strong>DRAIN</strong></div>
+    </div>
+    
+    <div style="border: 2px solid #2ecc71; padding: 10px; border-radius: 5px; display: inline-block; background: rgba(46, 204, 113, 0.2); margin-top: 10px;">
+        <strong>DRAIN-SOURCE VOLTAGE</strong><br>
+        <small>\( V_{DS} \)</small>
+    </div>
+    <div style="margin: 5px 0; font-size: 14px; color: #2ecc71;">creates electric field</div>
+    <div style="margin: 5px 0; color: #2ecc71;">&darr;</div>
+    <div style="border: 1px solid #bdc3c7; padding: 8px 15px; border-radius: 4px; display: inline-block; background: rgba(255,255,255,0.05);">\( E_{DS} = V_{DS} / L \)</div>
+    <div style="margin: 5px 0; color: #bdc3c7;">&darr;</div>
+    <div style="border: 1px solid #bdc3c7; padding: 8px 15px; border-radius: 4px; display: inline-block; background: rgba(255,255,255,0.05);">\( v = \mu E_{DS} \)</div>
+    <div style="margin: 5px 0; color: #bdc3c7;">&darr;</div>
+    <div style="border: 1px solid #bdc3c7; padding: 8px 15px; border-radius: 4px; display: inline-block; background: rgba(255,255,255,0.05);">\( \tau = L / v \)</div>
+    
+    <div style="margin: 15px 0; font-size: 24px; color: #e67e22;">&darr;</div>
+    <div style="border: 2px solid #e67e22; padding: 15px 30px; border-radius: 5px; display: inline-block; background: rgba(230, 126, 34, 0.2); font-size: 1.3em;">
+        <strong>\( I_D = Q_C / \tau \)</strong>
+    </div>
+</div>
+
+<p>So there are <strong>two controls</strong>:</p>
+
+<h3>Gate:</h3>
+<div class="math-display">$$ \boxed{V_{GS} \rightarrow \text{how much charge is in the channel}} $$</div>
+
+<h3>Drain-source voltage:</h3>
+<div class="math-display">$$ \boxed{V_{DS} \rightarrow \text{how quickly that charge moves}} $$</div>
+
+<p>And together:</p>
+<div class="definition" style="--def-border: var(--color-sec1); text-align: center; padding: 20px;">
+    <div class="math-display" style="margin: 0;">
+    $$ \boxed{V_{GS}\text{ controls the channel} \quad+\quad V_{DS}\text{ drives the carriers} \quad\rightarrow\quad I_D} $$
+    </div>
+</div>
+<p>That's the physical intuition sitting underneath the MOSFET \(I_D\)-\(V_{DS}\) characteristics.</p>
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn" disabled>Finish</button>
+            </div>
+        </div>
+
+        <!-- SECTION: THRESHOLD & BODY EFFECT -->
+        <div id="sec-threshold-body" class="section-container">
+            <h1>Threshold Voltage & Body Effect</h1>
+            
+            <h2>MOS Transistor Threshold Voltage \(V_t\)</h2>
+            <p>
+                The gate structure of a MOS transistor consists, of charges stored in the dielectric layers and in the surface to surface interfaces as well as in the substrate itself. Switching an <span class="highlight">enhancement mode</span> MOS transistor from the off to the on state consists in applying sufficient gate voltage to neutralize these charges and enable the underlying silicon to undergo an inversion due to the electric field from the gate. Switching a <span class="highlight">depletion mode</span> NMOS transistor from the on to the off state consists in applying enough voltage to the gate to add to the stored charge and invert the 'n' implant region to 'p'.
+            </p>
+            
+            <p>The threshold voltage \(V_t\) may be expressed as:</p>
+            
+            <div class="math-display">
+                $$V_t = -\Phi_{ms} \frac{Q_B - Q_{SS}}{C_o} + 2\Phi_{fN}$$
+            </div>
+            
+            <div class="definition" style="--def-border: var(--color-sec4);">
+                <strong>Where:</strong><br>
+                <ul>
+                    <li>\(Q_B\) = the charge per unit area in the depletion layer below the oxide</li>
+                    <li>\(Q_{SS}\) = charge density at Si: SiO₂ interface</li>
+                    <li>\(C_o\) = Capacitance per unit area</li>
+                    <li>\(\Phi_{ms}\) = work function difference between gate and Si</li>
+                    <li>\(\Phi_{fN}\) = Fermi level potential between inverted surface and bulk Si</li>
+                </ul>
+            </div>
+            
+            <p>
+                For polynomial [polysilicon] gate and silicon substrate, the value of \(\Phi_{ms}\) is negative but negligible and the magnitude and sign of \(V_t\) are thus determined by balancing the other terms in the equation.
+            </p>
+            
+            <p>To evaluate the \(V_t\) the other terms are determined as below.</p>
+            
+            <div class="math-display">
+                $$Q_B = \sqrt{2\varepsilon_0\varepsilon_{Si}qN(2\Phi_{fN} + V_{SB})} \text{ coulomb/m}^2$$
+                $$\Phi_{fN} = \frac{kT}{q} \ln \frac{N}{n_i} \text{ volts}$$
+                $$Q_{SS} = (1.5 \text{ to } 8) \times 10^{-8} \text{ coulomb/m}^2$$
+            </div>
+
+            <hr style="border: 0; height: 1px; background: #333; margin: 40px 0;">
+
+            <h2>Body Effect</h2>
+            <p>
+                Generally while studying the MOS transistors it is treated as a three terminal device. But, the body of the transistor is also an implicit terminal which helps to understand the characteristics of the transistor. Considering the body of the MOS transistor as a terminal is known as the <span class="highlight">body effect</span>.
+            </p>
+            <p>
+                18 
+            </p>
+            <p>
+                The potential difference between the source and the body (\(V_{sb}\)) affects the threshold voltage of the transistor. In many situations, this Body Effect is relatively insignificant, so we can (unless otherwise stated) ignore the Body Effect. But it is not always insignificant, in some cases it can have a tremendous impact on MOSFET circuit performance.
+            </p>
+
+            <h3>Body effect - NMOS device</h3>
+            <p>
+                Increasing \(V_{sb}\) causes the channel to be depleted of charge carriers and thus the threshold voltage is raised. Change in \(V_t\) is given by \(\delta V_t = \gamma \cdot (V_{sb})^{1/2}\) where \(\gamma\) is a constant which depends on substrate doping so that the more lightly doped the substrate, the smaller will be the body effect.
+            </p>
+            
+            <p>The threshold voltage can be written as:</p>
+            
+            <div class="math-display">
+                $$V_t = V_t(0) + \left(\frac{D}{\varepsilon_{ins}\varepsilon_0}\right) \sqrt{2\varepsilon_0\varepsilon_{Si}QN} \cdot (V_{SB})^{1/2}$$
+            </div>
+            
+            <p>Where \(V_t(0)\) is the threshold voltage for \(V_{sd} = 0\).</p>
+            
+            <div class="definition" style="--def-border: var(--color-sec2);">
+                For n-MOS depletion mode transistors, the body voltage values at different \(V_{DD}\) voltages are given below:<br>
+                <ul>
+                    <li>\(V_{SB} = 0 \text{ V} ; V_{sd} = -0.7 V_{DD} \text{ (= -3.5 V for } V_{DD} = +5\text{V)}\)</li>
+                    <li>\(V_{SB} = 5 \text{ V} ; V_{sd} = -0.6 V_{DD} \text{ (= -3.0 V for } V_{DD} = +5\text{V)}\) to 'p'.</li>
+                </ul>
+            </div>
+            
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+		
+        <!-- SECTION: LECTURES AND MIND MAPS -->
+        <div id="sec-media" class="section-container">
+            <h1>Video Lectures & Mind Maps</h1>
+            <p>A collection of AI-generated study notes, deep-dive lectures, and visual maps.</p>
+
+            <h2>Video Lectures</h2>
+            <div class="media-grid">
+                <!-- Video 1 -->
+                <div class="media-card">
+                    <h3>Basic VLSI Design - Unit I (Part 1)</h3>
+                    <div class="video-container">
+                        <iframe src="https://www.youtube.com/embed/BzJDbA3P8x0" allowfullscreen></iframe>
+                    </div>
+                </div>
+
+                <!-- Video 2 -->
+                <div class="media-card">
+                    <h3>Basic VLSI Design - Unit I (Part 2)</h3>
+                    <div class="video-container">
+                        <iframe src="https://www.youtube.com/embed/XE4mNb_i4DU" allowfullscreen></iframe>
+                    </div>
+                </div>
+
+                <!-- Video 3 -->
+                <div class="media-card">
+                    <h3>Master Unit II: Inverters</h3>
+                    <div class="video-container">
+                        <iframe src="https://www.youtube.com/embed/lyIIqafqzeM" allowfullscreen></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <h2 style="margin-top: 50px;">Mind Maps & Infographics</h2>
+            <div class="media-grid">
+                <!-- Image 1 -->
+                <div class="media-card">
+                    <h3 style="color: var(--color-sec4);">NotebookLM Mind Map</h3>
+                    <div class="img-container" style="margin: 0;">
+                        <img src="assets/notebooklm_mindmap.png" alt="NotebookLM Mind Map">
+                        <div class="img-caption">Click to expand</div>
+                    </div>
+                </div>
+
+                <!-- Image 2 -->
+                <div class="media-card">
+                    <h3 style="color: var(--color-sec4);">Study Series Infographic</h3>
+                    <div class="img-container" style="margin: 0;">
+                        <img src="assets/VLSI_Design_Study_Series_Infographic.png" alt="Study Series Infographic">
+                        <div class="img-caption">Click to expand</div>
+                    </div>
+                </div>
+
+                <!-- Image 3 -->
+                <div class="media-card">
+                    <h3 style="color: var(--color-sec4);">MOSFET Cross Section</h3>
+                    <div class="img-container" style="margin: 0;">
+                        <img src="assets/MOSFET.png" alt="MOSFET Diagram">
+                        <div class="img-caption">Click to expand</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn" disabled>Finish</button>
+            </div>
+        </div>
+
+
+
+        <!-- NEW_CONTENT_INSERTION_POINT -->
+        <!-- NEW_CONTENT_INSERTION_POINT -->
+
+
+    </div>
+
+    <!-- Fullscreen Image Viewer -->
+    <div class="fullscreen-overlay" id="image-viewer">
+        <img src="" id="fullscreen-img" alt="Fullscreen View">
+    </div>
+
+    <!-- Scripts for Navigation and Interactivity -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Image Viewer
+            const viewer = document.getElementById('image-viewer');
+            const viewerImg = document.getElementById('fullscreen-img');
+            
+            if(viewer) {
+                viewer.addEventListener('click', () => viewer.style.display = 'none');
+                document.querySelectorAll('.img-container img').forEach(img => {
+                    img.addEventListener('click', () => {
+                        viewerImg.src = img.src;
+                        viewer.style.display = 'flex';
+                    });
+                });
+            }
+
+            // 2. Navigation Logic
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('.section-container');
+            const prevBtns = document.querySelectorAll('.prev-btn');
+            const nextBtns = document.querySelectorAll('.next-btn');
+            
+            let currentIndex = 0;
+            navItems.forEach((item, index) => {
+                if(item.classList.contains('active')) currentIndex = index;
+            });
+
+            function showSection(index) {
+                if(index < 0 || index >= sections.length) return;
+                
+                navItems.forEach(item => item.classList.remove('active'));
+                sections.forEach(sec => sec.classList.remove('active'));
+                
+                navItems[index].classList.add('active');
+                sections[index].classList.add('active');
+                
+                document.getElementById('content-area').scrollTop = 0;
+                currentIndex = index;
+                
+                prevBtns.forEach(btn => btn.disabled = (currentIndex === 0));
+                nextBtns.forEach(btn => {
+                    if(currentIndex === sections.length - 1) {
+                        btn.disabled = true;
+                        btn.innerText = "Finish";
+                    } else {
+                        btn.disabled = false;
+                        btn.innerText = "Next Section";
+                    }
+                });
+            }
+
+            navItems.forEach((item, index) => {
+                item.addEventListener('click', () => showSection(index));
+            });
+
+            prevBtns.forEach(btn => btn.addEventListener('click', () => showSection(currentIndex - 1)));
+            nextBtns.forEach(btn => btn.addEventListener('click', () => showSection(currentIndex + 1)));
+
+            // 3. Mobile Sidebar Toggle
+            const hamburger = document.getElementById('hamburger');
+            const sidebar = document.getElementById('sidebar');
+            if(hamburger && sidebar) {
+                hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
+            }
+
+            // 4. Auto-generate Sub-sections with Scroll Spy
+            function generateSubNav() {
+                // Setup the Scroll Spy Observer
+                const observerOptions = {
+                    root: document.getElementById('content-area'),
+                    rootMargin: '0px 0px -75% 0px', // Triggers when heading hits top 25% of screen
+                    threshold: 0
+                };
+                
+                const headingObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const activeId = entry.target.id;
+                            document.querySelectorAll('.sub-nav-item').forEach(item => {
+                                item.classList.remove('active-sub');
+                                if (item.dataset.targetId === activeId) {
+                                    item.classList.add('active-sub');
+                                    // Auto-scroll the sidebar so the active item stays in view
+                                    const sidebar = document.getElementById('sidebar');
+                                    const itemTop = item.offsetTop;
+                                    if(itemTop < sidebar.scrollTop || itemTop > sidebar.scrollTop + sidebar.clientHeight - 50) {
+                                        sidebar.scrollTo({top: itemTop - 100, behavior: 'smooth'});
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }, observerOptions);
+
+                // Build the sub-navs
+                sections.forEach((sec, index) => {
+                    const headings = sec.querySelectorAll('h2, h3');
+                    if(headings.length === 0) return;
+                    
+                    const subNavContainer = document.createElement('div');
+                    subNavContainer.className = 'sub-nav';
+                    
+                    headings.forEach((heading, hIndex) => {
+                        if(!heading.id) heading.id = sec.id + '-h-' + hIndex;
+                        
+                        const subItem = document.createElement('div');
+                        subItem.className = 'sub-nav-item';
+                        subItem.innerText = '↳ ' + heading.innerText;
+                        subItem.dataset.targetId = heading.id; // Store ID for the observer
+                        
+                        // Tell observer to track this heading
+                        headingObserver.observe(heading);
+                        
+                        subItem.addEventListener('click', (e) => {
+                            e.stopPropagation(); 
+                            showSection(index); 
+                            setTimeout(() => {
+                                document.getElementById(heading.id).scrollIntoView({behavior: 'smooth'});
+                            }, 50);
+                            if(window.innerWidth <= 768) sidebar.classList.remove('open');
+                        });
+                        
+                        subNavContainer.appendChild(subItem);
+                    });
+                    
+                    if(navItems[index]) navItems[index].appendChild(subNavContainer);
+                });
+            }
+            generateSubNav();
+        });
+
+        // Interactive Tabs Logic
+        function switchTab(btn, tabId) {
+            const container = btn.closest('.tab-container');
+            container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
