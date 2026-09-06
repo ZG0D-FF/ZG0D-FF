@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8051 Experiments</title>
+<style>
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+        max-width: 900px;
+        margin: auto;
+    }
+    h1, h2, h3, h4 {
+        color: #bb86fc; /* Purple headers */
+    }
+    .note-box {
+        background-color: #1e1e1e;
+        border-left: 5px solid #03dac6; /* Cyan accent */
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .kw {
+        color: #fdd835; /* Yellow/Gold for keywords */
+        font-weight: bold;
+    }
+    .term {
+        font-weight: bold;
+        text-decoration: underline;
+        color: #81d4fa; /* Light blue for defined terms/subheadings */
+    }
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin: 20px 0;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
+    .caption {
+        text-align: center;
+        font-style: italic;
+        color: #aaa;
+        margin-bottom: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background-color: #1e1e1e;
+    }
+    th, td {
+        border: 1px solid #03dac6;
+        padding: 12px;
+        text-align: left;
+    }
+    th {
+        background-color: #bb86fc;
+        color: #121212;
+        font-weight: bold;
+    }
+    /* Nav Button */
+    .nav-item {
+        background-color: #1e1e1e;
+        border-left: 5px solid #ff5252;
+        color: #e0e0e0;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.2s ease-in-out;
+        font-weight: bold;
+    }
+    .nav-item:hover {
+        background-color: #2c2c2c;
+        transform: translateX(-5px);
+    }
+</style>
+</head>
+<body>
+    <div class="nav-item" onclick="window.location.href='../8085_Notes/index.html'">
+        <span style="margin-right:10px;">⬅️</span> Back to 8085 Notes
+    </div>
+
+    <h1>8051 Microcontroller Experiments</h1>
+
+    <div class="note-box">
+        <h3><span class="term">8051 Microcontroller Specifications</span></h3>
+        
+        <ul>
+            <li><strong>Memory Capacity:</strong> <span class="kw">64KB</span> RAM/ROM (maximum external memory).</li>
+            <li><strong>Data Bus:</strong> <span class="kw">8-bit</span>.</li>
+            <li><strong>Address Bus:</strong> <span class="kw">16-bit</span> (16 address lines).</li>
+            <li><strong>Addressing Range:</strong> 2<sup>16</sup> = 64KB = 65536 bytes (Ranges from <span class="kw">0000H</span> to <span class="kw">FFFFH</span>).</li>
+            <li><strong>I/O Ports:</strong> <span class="kw">4 I/O ports</span> providing a total of 32 I/O lines (1 port = 8 bits).</li>
+            <li><strong>Clock Frequency:</strong> <span class="kw">12 MHz</span>.</li>
+            <li><strong>Machine Cycle:</strong> Takes <span class="kw">12 T-states</span> within a machine cycle.</li>
+            <li><strong>ALE:</strong> <span class="kw">Address Latch Enable</span>.</li>
+            <li><strong><span style="text-decoration: overline;">PSEN</span>:</strong> <span class="kw">Program Store Enable</span>.</li>
+            <li><strong>Multiplexing:</strong> Lower order address and data lines (<span class="kw">AD0 - AD7</span>) are time-division multiplexed.</li>
+        </ul>
+    </div>
+
+    <div class="note-box">
+        <h3><span class="term">GENERAL THEORY: Instruction Sizes & Logical Clearance</span></h3>
+        <p>Every instruction executed by the microcontroller consists of two parts: the <strong>Opcode</strong> (Operation Code - <em>what to do</em>) and the <strong>Operand</strong> (<em>what data to do it on</em>). The total byte size of an instruction depends entirely on the size of its operand.</p>
+        
+        <ul>
+            <li><strong>Opcode:</strong> Always takes exactly <strong>1 byte</strong> of memory.</li>
+            <li><strong>Operand:</strong> Can take <strong>0, 1, or 2 bytes</strong> depending on if it's internal, an 8-bit value, or a 16-bit value/address.</li>
+        </ul>
+
+        <h4>1-Byte Instructions (Opcode Only)</h4>
+        <p>These instructions require no extra memory for the operand because the operand is either implicit (like the Accumulator) or refers to internal registers (R0-R7). The single byte specifies both the operation and the target.</p>
+        <ul>
+            <li><span class="kw">CPL A</span>: Opcode only. The target (Accumulator) is implied. (1 byte)</li>
+            <li><span class="kw">INC R1</span> / <span class="kw">ADD A, R0</span>: Registers are internal, no external data bytes needed. (1 byte)</li>
+            <li><span class="kw">MOVX @DPTR, A</span>: Moves data between Accumulator and external memory pointed to by DPTR. (1 byte)</li>
+        </ul>
+
+        <h4>2-Byte Instructions (Opcode + 8-bit Data/Address)</h4>
+        <p>These instructions take 1 byte for the opcode, plus 1 extra byte to store an 8-bit immediate value or an 8-bit relative address.</p>
+        <ul>
+            <li><span class="kw">MOV A, #55H</span>: Byte 1 = MOV A opcode, Byte 2 = 55H (8-bit data).</li>
+            <li><span class="kw">MOV R1, #10H</span>: Byte 1 = MOV R1 opcode, Byte 2 = 10H (8-bit data).</li>
+            <li><span class="kw">DJNZ R2, 8006H</span>: Byte 1 = DJNZ opcode, Byte 2 = Relative jump offset (the distance to jump back to 8006H).</li>
+        </ul>
+
+        <h4>3-Byte Instructions (Opcode + 16-bit Data/Address)</h4>
+        <p>These instructions take 1 byte for the opcode, plus 2 extra bytes to store a full 16-bit immediate value or a full 16-bit memory address.</p>
+        <ul>
+            <li><span class="kw">MOV DPTR, #8020H</span>: Byte 1 = MOV DPTR opcode, Byte 2 = 80H (High byte), Byte 3 = 20H (Low byte).</li>
+            <li><span class="kw">LJMP 03</span> (Long Jump): Byte 1 = LJMP opcode, Byte 2 & 3 = The 16-bit target address to jump to.</li>
+        </ul>
+    </div>
+
+    <div class="note-box">
+        <img src="images/instruction_sets.jpg" alt="Instruction Sets Source Image">
+        <div class="caption">Hand-written Notes: Instruction Sets Overview</div>
+        
+        <h3><span class="term">8051 Instruction Set Overview</span></h3>
+        <p>The 8051 instruction set is divided into 4 main categories:</p>
+        <ol>
+            <li>Data transfer</li>
+            <li>Arithmetic Logic (A.L.)</li>
+            <li>Bit manipulation</li>
+            <li>Branch instructions</li>
+        </ol>
+
+        <h4>1. Data Transfer Instructions</h4>
+        <p>Moves 8-bit data at a time. Format: <span class="kw">MOV Dest, Source</span>.</p>
+        <ul>
+            <li><strong>Addressing Distinction:</strong> <span class="kw">#45H</span> indicates a literal value (hexadecimal 8-bit data), whereas <span class="kw">45H</span> without the '#' indicates a memory address location.</li>
+            <li><strong>Immediate Data to Register/Memory:</strong>
+                <ul>
+                    <li><span class="kw">MOV A, #45H</span></li>
+                    <li><span class="kw">MOV R2, #45H</span></li>
+                    <li><span class="kw">MOV 30H, #45H</span></li>
+                    <li><span class="kw">MOV @R1, #45H</span> (The '@' indicates the address location held by the R1 register)</li>
+                </ul>
+            </li>
+            <li><strong>Memory to Accumulator (or reverse):</strong>
+                <ul>
+                    <li><span class="kw">MOV A, 65H</span></li>
+                    <li><span class="kw">MOV A, @R1</span></li>
+                </ul>
+            </li>
+            <li><strong>Memory to Register (or reverse):</strong>
+                <ul>
+                    <li><span class="kw">MOV R1, 45H</span></li>
+                </ul>
+            </li>
+            <li><strong>Memory to Memory (direct & indirect):</strong>
+                <ul>
+                    <li><span class="kw">MOV 31H, 30H</span> (Direct)</li>
+                    <li><span class="kw">MOV @R1, 31H</span> (Indirect)</li>
+                </ul>
+            </li>
+            <li><strong>External Memory to Accumulator (or reverse):</strong>
+                <ul>
+                    <li><span class="kw">MOVX A, @R0</span></li>
+                    <li><span class="kw">MOVX A, @DPTR</span> (DPTR is the Data Pointer, a 16-bit special purpose register for 16-bit address locations)</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h4>2. Exchange Instructions</h4>
+        <p>Content of a source (Register, direct, or indirect memory) can be exchanged with the destination content (Accumulator).</p>
+        <ul>
+            <li><span class="kw">XCH A, R1</span></li>
+            <li><span class="kw">XCH A, 45H</span></li>
+            <li><span class="kw">XCH A, @R0</span></li>
+            <li><strong>Exchange Digit (<span class="kw">XCHD</span>):</strong> Exchanges the lower order nibble (4 bits) of the Accumulator with the lower order nibble of the internal RAM location which is indirectly addressed by the register. (Note: 1 byte = 2 nibbles).
+                <ul>
+                    <li><span class="kw">XCHD A, @R0</span></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="note-box">
+        <img src="images/experiment_1.png" alt="Experiment 1 Source Image">
+        <div class="caption">Original Hand-written Notes</div>
+        
+        <h3 align="center"><span class="term">EXPERIMENT 1</span></h3>
+        <h4 align="center">(A) LOAD THE ACCUMULATOR WITH THE VALUE 55H<br>(B) COMPLEMENT THE ACC 700 TIMES</h4>
+
+        <p><span class="term">AIM:</span> Write a program to (a) load the accumulator with the value <span class="kw">55H</span>, and (b) complement the ACC 700 times.</p>
+        
+        <p><span class="term">HARDWARE REQUIRED:</span> <span class="kw">8051 microcontroller kit</span>.</p>
+
+        <p><span class="term">ALGORITHM:</span></p>
+        <ol>
+            <li>Initialise accumulator</li>
+            <li>Set outer counter</li>
+            <li>Set Inner counter</li>
+            <li>Execute complement core operation</li>
+            <li>Manage inner loop</li>
+            <li>Manage outer loop</li>
+            <li>terminate program.</li>
+        </ol>
+
+        <p><span class="term">SOURCE CODE:</span></p>
+        <table>
+            <tr>
+                <th>MEMORY ADDRESS</th>
+                <th>MNEMONICS</th>
+                <th>COMMENTS</th>
+            </tr>
+            <tr>
+                <td>8000</td>
+                <td><span class="kw">MOV A, #55H</span></td>
+                <td>Copied 55H to accumulator.</td>
+            </tr>
+            <tr>
+                <td>8002</td>
+                <td><span class="kw">MOV R1, #10H</span></td>
+                <td>Copied 10H to register R1.</td>
+            </tr>
+            <tr>
+                <td>8004</td>
+                <td><span class="kw">MOV R2, #70H</span></td>
+                <td>Copied 70H to register R2.</td>
+            </tr>
+            <tr>
+                <td>8006</td>
+                <td><span class="kw">CPL A</span></td>
+                <td>Complements Accumulator's data (logical NOT).</td>
+            </tr>
+            <tr>
+                <td>8007</td>
+                <td><span class="kw">DJNZ R2, 8006H</span></td>
+                <td>Decrement and jump if not zero for loop 1.</td>
+            </tr>
+            <tr>
+                <td>800A</td>
+                <td><span class="kw">DJNZ R1, 8004H</span></td>
+                <td>Decrement and jump if not zero for loop 2.</td>
+            </tr>
+            <tr>
+                <td>800D</td>
+                <td><span class="kw">LJMP 03</span></td>
+                <td>Long jump used to end the program.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="note-box">
+        <img src="images/experiment_1_annotated.jpg" alt="Experiment 1 Annotated">
+        <div class="caption">Detailed Annotated Breakdown (Experiment 1)</div>
+        
+        <h4><span class="term">Detailed Byte Analysis & Logic (Experiment 1)</span></h4>
+        <p>This section provides a line-by-line logical clearance of the bytes and operations used in Experiment 1, without breaking the main table.</p>
+        
+        <ul>
+            <li><strong><span class="kw">8000H: MOV A, #55H</span> (2 Bytes)</strong>
+                <br><em>Mnemonics = Opcode + Operand.</em> This is the starting address location. Takes 2 bytes, so the next instruction is at 8002H.</li>
+            <li><strong><span class="kw">8006H: CPL A</span> (1 Byte)</strong>
+                <br><em>Complement:</em> Flips the bits of the value currently in the accumulator. Takes 1 byte, so the next instruction is at 8007H.</li>
+            <li><strong><span class="kw">8007H: DJNZ R2, 8006H</span> (3 Bytes)</strong>
+                <br><em>Decrement Jump not 0:</em> Decrements the counter by 1. If it is not zero, it jumps back to the label (address 8006H). Annotated as taking 3 bytes in this specific lab kit, putting the next address at 800AH.</li>
+            <li><strong><span class="kw">800AH: DJNZ R1, 8004H</span> (3 Bytes)</strong>
+                <br>Outer loop decrement. Jumps back to 8004H until R1 reaches zero. Also annotated as taking 3 bytes, putting the next address at 800DH.</li>
+            <li><strong><span class="kw">800DH: LJMP 03</span> (3 Bytes)</strong>
+                <br>End of program.</li>
+        </ul>
+        
+        <p><strong>Loop Calculation Note:</strong> To loop 500 times, the nested counters are set up as factors (e.g., <span class="kw">50 &times; 10 = 500</span>). <em>Counter 1</em> handles the inner loop, and <em>Counter 2</em> handles the outer loop.</p>
+        
+        <p><strong>Kit Execution:</strong> <span class="kw">G 8000</span> (Go to 8000) is used to execute the program directly on the hardware kit.</p>
+    </div>
+
+    <div class="note-box">
+        <img src="images/experiment_2.png" alt="Experiment 2 Source Image">
+        <div class="caption">Original Hand-written Notes (Experiment 2)</div>
+        
+        <h3 align="center"><span class="term">EXPERIMENT 2</span></h3>
+        <h4 align="center">ADDITION OF TWO 8 BIT NUMBERS IN 8051 (WITHOUT CARRY)</h4>
+
+        <p><span class="term">AIM:</span> Write a program to add two numbers using 8051 microcontroller and store the sum in register.</p>
+        
+        <p><span class="term">HARDWARE REQUIRED:</span> <span class="kw">8051 microcontroller kit</span>.</p>
+
+        <p><span class="term">ALGORITHM:</span> Addition of two 8-bit numbers:</p>
+        <ol>
+            <li>Load first 8 bit number into accumulator</li>
+            <li>Load second 8 bit number into temporary register</li>
+            <li>Add the contents.</li>
+            <li>Store final sum from accumulator to another register</li>
+            <li>Terminate the program.</li>
+        </ol>
+
+        <p><span class="term">SOURCE CODE:</span></p>
+        <table>
+            <tr>
+                <th>MEMORY ADDRESS</th>
+                <th>MNEMONICS</th>
+                <th>COMMENTS</th>
+            </tr>
+            <tr>
+                <td>8000</td>
+                <td><span class="kw">MOV A, #01H</span></td>
+                <td>Copied 01H to accumulator.</td>
+            </tr>
+            <tr>
+                <td>8002</td>
+                <td><span class="kw">MOV R1, #02H</span></td>
+                <td>Copied 02H to register R1.</td>
+            </tr>
+            <tr>
+                <td>8004</td>
+                <td><span class="kw">ADD A, R1</span></td>
+                <td>Addition of contents of accumulator and register and sum is stored in accumulator.</td>
+            </tr>
+            <tr>
+                <td>8005</td>
+                <td><span class="kw">MOV R2, A</span></td>
+                <td>Copied contents of the accumulator to register R2.</td>
+            </tr>
+            <tr>
+                <td>8006</td>
+                <td><span class="kw">LJMP 03</span></td>
+                <td>Long jump used to end the program.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="note-box">
+        <img src="images/experiment_3_p1.jpg" alt="Experiment 3 Source Image Page 1">
+        <img src="images/experiment_3_p2.png" alt="Experiment 3 Source Image Page 2">
+        <div class="caption">Original Hand-written Notes (Experiment 3)</div>
+        
+        <h3 align="center"><span class="term">EXPERIMENT 3</span></h3>
+        <h4 align="center">ADDITION OF TWO 8 BIT NUMBERS IN 8051 (WITH CARRY)</h4>
+
+        <p><span class="term">AIM:</span> Write a program to add two numbers using 8051 microcontroller and store the sum and carry in the two separate memory locations.</p>
+        
+        <p><span class="term">HARDWARE REQUIRED:</span> <span class="kw">8051 microcontroller kit</span>.</p>
+
+        <p><span class="term">ALGORITHM:</span> Addition of two 8-bit numbers:</p>
+        <ol>
+            <li>Load 2 8 bit numbers (A, R0).</li>
+            <li>Keep carry counter (R1).</li>
+            <li>Add them (A + R0).</li>
+            <li>Check the CY flag.</li>
+            <li>Increment counter by 1 if cy is high.</li>
+            <li>Store sum and carry at 8020H, 8021H external memory.</li>
+            <li>Check response.</li>
+        </ol>
+
+        <p><span class="term">SOURCE CODE:</span></p>
+        <table>
+            <tr>
+                <th>MEMORY ADDRESS</th>
+                <th>MNEMONICS</th>
+                <th>COMMENTS</th>
+            </tr>
+            <tr>
+                <td>8000</td>
+                <td><span class="kw">MOV A, #F1H</span></td>
+                <td>Copied F1H to accumulator.</td>
+            </tr>
+            <tr>
+                <td>8002</td>
+                <td><span class="kw">MOV R0, #30H</span></td>
+                <td>Copied 30H to register R0.</td>
+            </tr>
+            <tr>
+                <td>8004</td>
+                <td><span class="kw">MOV R1, #00H</span></td>
+                <td>Copied 00H to register R1.</td>
+            </tr>
+            <tr>
+                <td>8006</td>
+                <td><span class="kw">ADD A, R0</span></td>
+                <td>Addition of contents of register R0 to accumulator.</td>
+            </tr>
+            <tr>
+                <td>8007</td>
+                <td><span class="kw">JNC 800A</span></td>
+                <td>Jump if no carry to loop 1.</td>
+            </tr>
+            <tr>
+                <td>8009</td>
+                <td><span class="kw">INC R1</span></td>
+                <td>Increment register R1's content by 1.</td>
+            </tr>
+            <tr>
+                <td>800A</td>
+                <td><span class="kw">MOV DPTR, #8020H</span></td>
+                <td>Data pointer used to hold memory addresses for external memory RAM.</td>
+            </tr>
+            <tr>
+                <td>800D</td>
+                <td><span class="kw">MOVX @DPTR, A</span></td>
+                <td>External data transfer between accumulator and external memory.</td>
+            </tr>
+            <tr>
+                <td>800E</td>
+                <td><span class="kw">MOV A, R1</span></td>
+                <td>Copied data from R1 to A.</td>
+            </tr>
+            <tr>
+                <td>800F</td>
+                <td><span class="kw">INC DPTR</span></td>
+                <td>Increments the content of data pointer by 1.</td>
+            </tr>
+            <tr>
+                <td>8010</td>
+                <td><span class="kw">MOVX @DPTR, A</span></td>
+                <td>External data transfer between accumulator and external memory.</td>
+            </tr>
+            <tr>
+                <td>8011</td>
+                <td><span class="kw">LJMP 03</span></td>
+                <td>Long jump to end the program.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="note-box">
+        <img src="images/experiment_3_annotated.png" alt="Experiment 3 Annotated">
+        <div class="caption">Detailed Annotated Breakdown (Experiment 3)</div>
+        
+        <h4><span class="term">Detailed Byte Analysis, Binary Math & Logic (Experiment 3)</span></h4>
+        <p>This section provides a line-by-line logical clearance of the bytes and operations used in Experiment 3, based on the annotated rough draft.</p>
+        
+        <ul>
+            <li><strong><span class="term">Binary Arithmetic & Carry Flag Logic:</span></strong>
+                <br>The experiment adds <span class="kw">F1H</span> and <span class="kw">30H</span>. The bitwise addition forces a carry:
+                <pre style="background: #2c2c2c; padding: 10px; border-radius: 4px; border-left: 3px solid #03dac6;">
+  A  (F1H) =   1111 0001
++ R0 (30H) =   0011 0000
+-------------------------
+       Sum = <span style="color: #ff5252; font-weight: bold;">[1]</span> 0010 0001</pre>
+                The extra <span style="color: #ff5252; font-weight: bold;">[1]</span> generated at the 9th bit sets the <strong>CY (Carry) FLAG</strong> high.
+            </li>
+            <li><strong><span class="kw">8007H: JNC 800A</span> (Jump if No Carry)</strong>
+                <br><em>Jump Condition:</em> Evaluates the CY flag. If the CY flag is NOT set, it jumps to 800A. In our binary example above, the carry IS set, so it ignores the jump and proceeds to <span class="kw">INC R1</span> (incrementing the carry counter).</li>
+            <li><strong><span class="kw">800AH: MOV DPTR, #8020H</span> (3 Bytes)</strong>
+                <br>Annotated as taking 3 bytes. DPTR is a 16-bit special purpose register used to point to an external memory location.</li>
+            <li><strong><span class="kw">800DH: MOVX @DPTR, A</span></strong>
+                <br>Moves the data from the Accumulator to the <em>external memory location</em> currently pointed to by the Data Pointer (DPTR).</li>
+        </ul>
+        
+        <p><strong>Kit Verification:</strong> To check the results on the hardware kit, use the memory display commands <span class="kw">MD 8020H</span> and <span class="kw">MD 8021H</span> to view the stored sum and carry responses respectively.</p>
+    </div>
+
+    <div class="note-box" style="border-left-color: #ff9800;">
+        <img src="images/experiment_4_rough.jpg" alt="Experiment 4 Rough Draft">
+        <div class="caption">Rough Draft Notes (Experiment 4)</div>
+        
+        <h3 align="center"><span class="term" style="color: #ffb74d;">EXPERIMENT 4 (ROUGH DRAFT)</span></h3>
+        <h4 align="center">ADD TWO 16-BIT NUMBERS WITHOUT CARRY (8051)</h4>
+
+        <p><em>Note: This is an annotated rough draft. The formal lab manual format (Aim, Algorithm) is not yet available.</em></p>
+        
+        <p><span class="term">MEMORY MAP (Little Endian approach):</span><br>
+        The 16-bit numbers are split. "Keep lower first then higher".<br>
+        Number 1: <span class="kw">1208H</span> &rarr; Lower byte 08H at 40H, Higher byte 12H at 41H.<br>
+        Number 2: <span class="kw">A55DH</span> &rarr; Lower byte 5DH at 42H, Higher byte A5H at 43H.</p>
+
+        <p><span class="term">DRAFT SOURCE CODE:</span></p>
+        <table>
+            <tr>
+                <th>MEMORY ADDRESS</th>
+                <th>MNEMONICS</th>
+                <th>COMMENTS</th>
+            </tr>
+            <tr>
+                <td>8000H</td>
+                <td><span class="kw">MOV 40H, #08H</span></td>
+                <td>08H data copy to 40H memory loc.</td>
+            </tr>
+            <tr>
+                <td>8003H</td>
+                <td><span class="kw">MOV 41H, #12H</span></td>
+                <td>Load higher byte of 1st number.</td>
+            </tr>
+            <tr>
+                <td>8006H</td>
+                <td><span class="kw">MOV 42H, #5DH</span></td>
+                <td>Load lower byte of 2nd number.</td>
+            </tr>
+            <tr>
+                <td>8009H</td>
+                <td><span class="kw">MOV 43H, #A5H</span></td>
+                <td>Load higher byte of 2nd number.</td>
+            </tr>
+            <tr>
+                <td>800CH</td>
+                <td><span class="kw">MOV A, 40H</span></td>
+                <td>Move lower byte of 1st number to Accumulator.</td>
+            </tr>
+            <tr>
+                <td>800EH</td>
+                <td><span class="kw">ADD A, 42H</span></td>
+                <td>Add lower byte of 2nd number.</td>
+            </tr>
+            <tr>
+                <td>8010H</td>
+                <td><span class="kw">MOV 44H, A</span></td>
+                <td>Store lower byte result in 44H.</td>
+            </tr>
+            <tr>
+                <td>8012H</td>
+                <td><span class="kw">MOV A, 41H</span></td>
+                <td>Move higher byte of 1st number to Accumulator.</td>
+            </tr>
+            <tr>
+                <td>8014H</td>
+                <td><span class="kw">ADD A, 43H</span></td>
+                <td>Add higher byte of 2nd number.</td>
+            </tr>
+            <tr>
+                <td>8016H</td>
+                <td><span class="kw">MOV 45H, A</span></td>
+                <td>Store higher byte result in 45H.</td>
+            </tr>
+            <tr>
+                <td>8018H</td>
+                <td><span class="kw">LJMP 03</span></td>
+                <td>End of program.</td>
+            </tr>
+        </table>
+        
+        <h4><span class="term">Detailed Byte Analysis & Logical Annotations</span></h4>
+        <ul>
+            <li><strong><span class="kw">3-Byte Instructions (Direct Memory Initialization):</span></strong>
+                <br>Instructions like <span class="kw">MOV 40H, #08H</span> take 3 bytes (Opcode + Direct Address + Immediate Data). This is why the memory addresses jump by 3 (from 8000H &rarr; 8003H &rarr; 8006H). Annotated in the draft as <em>"mem - mem 3 byte"</em>.</li>
+            <li><strong><span class="kw">2-Byte Instructions (Accumulator/Register Data Transfer):</span></strong>
+                <br>Instructions like <span class="kw">MOV A, 40H</span> and <span class="kw">ADD A, 42H</span> take 2 bytes (Opcode + Direct Address). This is why the memory addresses jump by 2 (from 800CH &rarr; 800EH &rarr; 8010H). Annotated in the draft as <em>"accum/reg. data transfer 2 byte"</em>.</li>
+            <li><strong><span class="kw">Accumulator Dependency:</span></strong>
+                <br>Annotated with <em>"By default result store in accum."</em> and <em>"addn to be done on any accum + gen purp register."</em> This highlights the 8051 architectural rule that arithmetic operations like ADD must involve the Accumulator, and the result is inherently stored there.</li>
+        </ul>
+    </div>
+
+</body>
+</html>
