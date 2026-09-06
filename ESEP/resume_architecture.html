@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Architecture Blueprint — ESEP-V</title>
+    <style>
+        :root[data-theme="dark"] {
+            --bg:#0f1419; --sidebar:#161b22; --card:#1c2128; --text:#c9d1d9;
+            --heading:#f0f6fc; --accent:#58a6ff; --accent2:#f0c040;
+            --accent-glow:rgba(88,166,255,0.12); --link:#58a6ff; --border:#30363d;
+            --tip-bg:rgba(88,166,255,0.08); --tip-border:#58a6ff;
+            --warn-bg:rgba(240,192,64,0.08); --warn-border:#f0c040;
+            --green-bg:rgba(63,185,80,0.08); --green-border:#3fb950;
+            --red-bg:rgba(248,81,73,0.08); --red-border:#f85149;
+            --shadow:0 2px 12px rgba(0,0,0,0.5); --toggle-bg:#30363d;
+        }
+        :root[data-theme="light"] {
+            --bg:#f6f8fa; --sidebar:#fff; --card:#fff; --text:#24292f;
+            --heading:#1b1f24; --accent:#0969da; --accent2:#9a6700;
+            --accent-glow:rgba(9,105,218,0.08); --link:#0550ae; --border:#d0d7de;
+            --tip-bg:rgba(9,105,218,0.05); --tip-border:#0969da;
+            --warn-bg:rgba(154,103,0,0.06); --warn-border:#9a6700;
+            --green-bg:rgba(26,127,55,0.06); --green-border:#1a7f37;
+            --red-bg:rgba(207,34,46,0.06); --red-border:#cf222e;
+            --shadow:0 2px 8px rgba(0,0,0,0.06); --toggle-bg:#d0d7de;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;line-height:1.7;transition:background .3s,color .3s;}
+        nav{width:260px;min-width:260px;background:var(--sidebar);height:100vh;position:sticky;top:0;padding:22px 16px;overflow-y:auto;border-right:1px solid var(--border);transition:background .3s;}
+        nav .nav-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+        nav h2{color:var(--heading);font-size:1.05rem;}
+        .theme-toggle{background:var(--toggle-bg);border:1px solid var(--border);border-radius:20px;width:44px;height:24px;cursor:pointer;position:relative;transition:background .3s;}
+        .theme-toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:var(--accent);top:2px;left:2px;transition:transform .3s;}
+        [data-theme="light"] .theme-toggle::after{transform:translateX(20px);}
+        .nav-tag{font-size:.78rem;color:var(--accent);padding:5px 9px;background:var(--tip-bg);border-radius:5px;border:1px solid var(--border);margin-bottom:14px;}
+        nav ul{list-style:none;} nav li{margin-bottom:2px;}
+        nav a{color:var(--link);text-decoration:none;font-size:.84rem;display:block;padding:5px 9px;border-radius:5px;transition:background .2s;}
+        nav a:hover{background:var(--accent-glow);color:var(--accent);}
+        nav .sep{margin:10px 0;border-top:1px solid var(--border);padding-top:10px;}
+        nav .sep a{color:var(--accent2);}
+        main{flex:1;padding:36px;max-width:980px;}
+        h1{color:var(--heading);font-size:1.85rem;border-bottom:2px solid var(--accent);padding-bottom:10px;margin-bottom:6px;}
+        .subtitle{color:var(--accent);font-size:.88rem;margin-bottom:34px;font-style:italic;}
+        /* Slide cards */
+        .slide-section{margin-bottom:44px;}
+        .slide-label{display:inline-block;background:var(--accent);color:#fff;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:4px 4px 0 0;text-transform:uppercase;letter-spacing:.5px;}
+        .slide-card{background:var(--card);border:1px solid var(--border);border-radius:0 8px 8px 8px;overflow:hidden;box-shadow:var(--shadow);transition:background .3s;}
+        .slide-card img{width:100%;display:block;border-bottom:1px solid var(--border);}
+        .slide-title{color:var(--heading);font-size:1.1rem;padding:14px 18px 0;font-weight:600;}
+        details.exam-tips{margin:10px 14px;}
+        details.exam-tips summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.87rem;padding:8px 12px;background:var(--tip-bg);border:1px solid var(--tip-border);border-radius:6px;list-style:none;display:flex;align-items:center;gap:7px;user-select:none;}
+        details.exam-tips summary::before{content:'▶';font-size:.65rem;transition:transform .2s;}
+        details.exam-tips[open] summary::before{transform:rotate(90deg);}
+        details.exam-tips .tips-content{padding:12px 14px;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;background:var(--card);font-size:.87rem;min-height:50px;}
+        details.my-notes{margin:0 14px 14px;}
+        details.my-notes summary{cursor:pointer;color:var(--green-border);font-weight:600;font-size:.87rem;padding:8px 12px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:6px;list-style:none;display:flex;align-items:center;gap:7px;user-select:none;}
+        details.my-notes summary::before{content:'▶';font-size:.65rem;transition:transform .2s;}
+        details.my-notes[open] summary::before{transform:rotate(90deg);}
+        details.my-notes .notes-content{padding:12px 14px;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;background:var(--card);font-size:.87rem;min-height:50px;}
+        .placeholder{color:var(--border);font-style:italic;}
+        /* Module notes */
+        .module-notes{margin-top:56px;padding-top:36px;border-top:2px solid var(--accent);}
+        .module-notes h2{color:var(--heading);font-size:1.5rem;margin-bottom:6px;}
+        .module-notes .mod-sub{color:var(--accent);font-size:.82rem;margin-bottom:28px;font-style:italic;}
+        .module-notes h3{color:var(--accent);font-size:1.2rem;margin:30px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+        .module-notes h4{color:var(--heading);font-size:1.02rem;margin:20px 0 6px;}
+        .module-notes p{margin-bottom:10px;}
+        .module-notes ul,.module-notes ol{margin:6px 0 14px 20px;}
+        .module-notes li{margin-bottom:5px;line-height:1.65;}
+        .callout{background:var(--tip-bg);border-left:3px solid var(--tip-border);padding:13px 16px;border-radius:0 6px 6px 0;margin:12px 0;}
+        .callout-warn{background:var(--warn-bg);border-left:3px solid var(--warn-border);padding:13px 16px;border-radius:0 6px 6px 0;margin:12px 0;}
+        .callout-green{background:var(--green-bg);border-left:3px solid var(--green-border);padding:13px 16px;border-radius:0 6px 6px 0;margin:12px 0;}
+        .callout-red{background:var(--red-bg);border-left:3px solid var(--red-border);padding:13px 16px;border-radius:0 6px 6px 0;margin:12px 0;}
+        .do-dont{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+        .do-box{background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:14px;}
+        .dont-box{background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:14px;}
+        .do-box h4{color:var(--green-border);margin-bottom:6px;}
+        .dont-box h4{color:var(--red-border);margin-bottom:6px;}
+        .formula{background:var(--card);border:2px dashed var(--accent);padding:14px 18px;border-radius:8px;margin:12px 0;text-align:center;font-size:.98rem;}
+        table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--card);border-radius:8px;overflow:hidden;}
+        th,td{padding:9px 13px;text-align:left;border:1px solid var(--border);font-size:.88rem;}
+        th{background:var(--sidebar);color:var(--heading);font-weight:600;}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin:12px 0;box-shadow:var(--shadow);}
+        /* MCQ */
+        .mcq-section{margin-top:36px;padding-top:20px;border-top:1px dashed var(--border);}
+        .mcq-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow);}
+        .mcq-item .q-label{color:var(--accent);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+        .mcq-item .q-text{color:var(--heading);font-weight:600;margin-bottom:8px;font-size:.93rem;}
+        .mcq-item .options{list-style:none;padding:0;margin:0 0 8px;}
+        .mcq-item .options li{padding:5px 10px;margin-bottom:3px;border-radius:4px;font-size:.88rem;}
+        .mcq-item details.answer-reveal summary{cursor:pointer;color:var(--link);font-size:.83rem;font-weight:600;list-style:none;display:flex;align-items:center;gap:5px;user-select:none;}
+        .mcq-item details.answer-reveal summary::before{content:'▶';font-size:.6rem;transition:transform .2s;}
+        .mcq-item details.answer-reveal[open] summary::before{transform:rotate(90deg);}
+        .mcq-item .answer-text{margin-top:6px;padding:9px 12px;background:var(--tip-bg);border-left:3px solid var(--accent);border-radius:0 4px 4px 0;font-size:.86rem;line-height:1.6;}
+        .mcq-item .answer-text strong{color:var(--accent);}
+        @media(max-width:768px){body{flex-direction:column;}nav{width:100%;min-width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border);padding:12px;}main{padding:18px;}.do-dont{grid-template-columns:1fr;}}
+        ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-header"><h2>Slides</h2><button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"></button></div>
+    <div class="nav-tag">Resume Architecture &bull; 15 slides loaded</div>
+    <ul>
+        <li><a href="#slide-1">01 — Title</a></li>
+        <li><a href="#slide-2">02 — Two-Way Interface</a></li>
+        <li><a href="#slide-3">03 — 80% ATS Myth</a></li>
+        <li><a href="#slide-4">04 — Parsing Pipeline</a></li>
+        <li><a href="#slide-5">05 — Info Hierarchy</a></li>
+        <li><a href="#slide-6">06 — Safe vs Hostile</a></li>
+        <li><a href="#slide-7">07 — ATS ≠ Ugly</a></li>
+        <li><a href="#slide-8">08 — Keyword Architecture</a></li>
+        <li><a href="#slide-9">09 — Keyword Taxonomy</a></li>
+        <li><a href="#slide-10">10 — Evolving Statements</a></li>
+        <li><a href="#slide-11">11 — Bullet Formula</a></li>
+        <li><a href="#slide-12">12 — Project Section</a></li>
+        <li><a href="#slide-13">13 — Quantified Evidence</a></li>
+        <li><a href="#slide-14">14 — Credibility Triangle</a></li>
+        <li><a href="#slide-15">15 — Ten Operating Rules</a></li>
+    </ul>
+    <div class="sep">
+        <li><a href="#mod3t1">📖 Module 3.1 — ATS Resume</a></li>
+        <li><a href="#resume-template">📄 ATS Resume Template</a></li>
+        <li><a href="#mcq-ats">✅ MCQs — ATS Resume</a></li>
+    </div>
+</nav>
+<main>
+    <h1>The Application Architecture Blueprint</h1>
+    <p class="subtitle">A structural methodology for designing resumes that navigate ATS, persuade recruiters, and secure interviews &bull; ESEP-V</p>
+
+    <!-- SLIDE 1 -->
+    <section class="slide-section" id="slide-1">
+        <span class="slide-label">Slide 1</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_01_title.png" alt="Title — The Application Architecture Blueprint" loading="lazy">
+            <p class="slide-title">Title — The Application Architecture Blueprint</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 2 -->
+    <section class="slide-section" id="slide-2">
+        <span class="slide-label">Slide 2</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_02_two_way_interface.png" alt="A resume is a two-way interface — Three Audiences: ATS, Recruiter, Interviewer" loading="lazy">
+            <p class="slide-title">A Resume is a Two-Way Interface</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 3 -->
+    <section class="slide-section" id="slide-3">
+        <span class="slide-label">Slide 3</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_03_ats_myth.jpg" alt="Dismantling the myth of the 80% ATS score — Four pillars" loading="lazy">
+            <p class="slide-title">Dismantling the 80% ATS Score Myth</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 4 -->
+    <section class="slide-section" id="slide-4">
+        <span class="slide-label">Slide 4</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_04_parsing_pipeline.png" alt="The document parsing pipeline — 5 steps: Upload, Parse, Match, Screen, Review" loading="lazy">
+            <p class="slide-title">The Document Parsing Pipeline</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 5 -->
+    <section class="slide-section" id="slide-5">
+        <span class="slide-label">Slide 5</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_05_info_hierarchy.png" alt="Structuring your information hierarchy — Header through Leadership" loading="lazy">
+            <p class="slide-title">Structuring Your Information Hierarchy</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 6 -->
+    <section class="slide-section" id="slide-6">
+        <span class="slide-label">Slide 6</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_06_safe_vs_hostile.png" alt="Formatting Diagnostic: Safe vs Hostile for parsers" loading="lazy">
+            <p class="slide-title">The Formatting Diagnostic: Safe vs. Hostile</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 7 -->
+    <section class="slide-section" id="slide-7">
+        <span class="slide-label">Slide 7</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_07_ats_not_ugly.png" alt="ATS-compatibility does not require ugly design — Approved vs Avoid header examples" loading="lazy">
+            <p class="slide-title">ATS-Compatibility ≠ Ugly Design</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 8 -->
+    <section class="slide-section" id="slide-8">
+        <span class="slide-label">Slide 8</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_08_keyword_architecture.png" alt="The job description writes your keyword architecture — Weak vs Strong skills listing" loading="lazy">
+            <p class="slide-title">Job Description → Keyword Architecture</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 9 -->
+    <section class="slide-section" id="slide-9">
+        <span class="slide-label">Slide 9</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_09_keyword_taxonomy.png" alt="Four dimensions of keyword taxonomy — Technical Skills, Tools, Methodologies, Role-Specific Terms" loading="lazy">
+            <p class="slide-title">Four Dimensions of Keyword Taxonomy</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 10 -->
+    <section class="slide-section" id="slide-10">
+        <span class="slide-label">Slide 10</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_10_evolving_statements.png" alt="Evolving statements through scale and outcome — Weak → Better → Stronger" loading="lazy">
+            <p class="slide-title">Evolving Statements Through Scale & Outcome</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 11 -->
+    <section class="slide-section" id="slide-11">
+        <span class="slide-label">Slide 11</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_11_bullet_formula.png" alt="The anatomical formula for a resume bullet point: ACTION + TASK + TECHNOLOGY + RESULT" loading="lazy">
+            <p class="slide-title">Anatomical Formula for a Bullet Point</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 12 -->
+    <section class="slide-section" id="slide-12">
+        <span class="slide-label">Slide 12</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_12_project_section.png" alt="Project section architecture for early-career candidates — Template + Smart Attendance System example" loading="lazy">
+            <p class="slide-title">Project Section Architecture</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 13 -->
+    <section class="slide-section" id="slide-13">
+        <span class="slide-label">Slide 13</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_13_quantified_evidence.png" alt="Defending keywords with quantified evidence — Golden Rule, Keyword Stuffing, Before & After" loading="lazy">
+            <p class="slide-title">Defending Keywords with Quantified Evidence</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 14 -->
+    <section class="slide-section" id="slide-14">
+        <span class="slide-label">Slide 14</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_14_credibility_triangle.png" alt="The credibility triangle: Claim → Evidence → Explanation — from parser to human" loading="lazy">
+            <p class="slide-title">The Credibility Triangle: Parser → Human</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- SLIDE 15 -->
+    <section class="slide-section" id="slide-15">
+        <span class="slide-label">Slide 15</span>
+        <div class="slide-card">
+            <img src="slides/resume/slide_15_ten_rules.png" alt="Ten operating rules for application architecture" loading="lazy">
+            <p class="slide-title">Ten Operating Rules for Application Architecture</p>
+            <details class="exam-tips"><summary>📝 Exam Tips</summary><div class="tips-content"><p class="placeholder">Add your exam tips here...</p></div></details>
+            <details class="my-notes"><summary>📌 My Notes</summary><div class="notes-content"><p class="placeholder">Add your personal notes here...</p></div></details>
+        </div>
+    </section>
+
+    <!-- ===== MODULE 3 TOPIC 1 NOTES ===== -->
+    <section class="module-notes" id="mod3t1">
+        <h2>Module 3, Topic 1 — ATS-Friendly Resume Building</h2>
+        <p class="mod-sub">Application Architecture &bull; UEM Kolkata &bull; ESEP-V</p>
+
+        <p>An <strong style="color:var(--accent)">Applicant Tracking System (ATS)</strong> is enterprise recruitment software — such as <span style="text-decoration:underline">Workday, Taleo, Greenhouse, or Lever</span> — that acts as a <strong>digital gatekeeper</strong> for job applications. It automatically ingests, parses, organizes, and ranks incoming resumes before a human recruiter ever sees them.</p>
+
+        <div class="callout-warn"><strong>Think of an ATS as a database compiler:</strong> your PDF is converted into a plain text string by an ATS parser. Non-standard tables, graphics, or unusual fonts can cause the parser to return errors or <strong>drop fields silently</strong>.</div>
+
+        <h3>1. Why Weak Bullets Fail</h3>
+        <div class="do-dont">
+            <div class="dont-box"><h4>❌ Weak Bullet</h4><p>"Made an Android App for college event management using Java."</p></div>
+            <div class="do-box"><h4>✅ Strong Bullet</h4><p>"Developed a Java-based Android app that handled registrations for <strong>1,200+ students</strong>, reducing check-in time by <strong>40%</strong>."</p></div>
+        </div>
+        <p>A recruiter wants: <strong style="color:var(--accent)">Scale</strong> (how many?), <strong style="color:var(--accent)">Tech stack</strong> (which specific tools?), <strong style="color:var(--accent)">Results</strong> (what changed?).</p>
+
+        <h4>The Action-Metric Framework</h4>
+        <div class="formula"><strong>Strong Action Verb</strong> + <strong>Technical Tool/Method</strong> + <strong>Quantified Impact</strong></div>
+
+        <h3>2. How ATS Engines Parse Resumes</h3>
+        <ul>
+            <li><strong style="color:var(--accent)">Linear text extraction</strong> — ATS converts PDF/Word into unformatted plain text before applying keyword algorithms.</li>
+            <li><strong style="color:var(--accent)">Multi-column failure</strong> — graphic-heavy or two-column layouts cause text blocks to merge into unreadable jargon.</li>
+            <li><strong style="color:var(--accent)">Keyword tokenization</strong> — systems scan for exact tech-stack terms ("React.js", "Docker", "PostgreSQL") mapped against job descriptions.</li>
+            <li><strong style="color:var(--accent)">Standardized headers</strong> — custom names like "My Journey" fail; standard terms like "Experience" and "Skills" are required.</li>
+        </ul>
+
+        <h3>3. Engineering Action Verb Taxonomy</h3>
+        <table>
+            <tr><th>Category</th><th>Verbs</th></tr>
+            <tr><td><strong>Architect & Build</strong></td><td>Architected, Engineered, Implemented, Designed, Formulated, Provisioned</td></tr>
+            <tr><td><strong>Optimize & Scale</strong></td><td>Accelerated, Streamlined, Refactored, Scaled, Benchmark-tested, Automated, Reduced</td></tr>
+            <tr><td><strong>Deploy & Maintain</strong></td><td>Containerized, Orchestrated, Integrated, Debugged, Migrated, Hardened, Monitored</td></tr>
+        </table>
+
+        <h3>4. Anatomy of an ATS-Friendly Resume</h3>
+        <div class="card">
+            <h4>Header & Skills Matrix</h4>
+            <ul>
+                <li><strong>Header</strong> — Name, Email, Phone, LinkedIn URL, GitHub URL on a single line — <strong style="color:var(--red-border)">no photos, no age or address</strong>.</li>
+                <li><strong>Skills Matrix</strong> — categorized: Languages (C++, Java, Python), Frameworks (Node.js, React), Databases, Developer Tools.</li>
+            </ul>
+            <h4>Projects & Experience</h4>
+            <ul>
+                <li><strong>Projects</strong> — 2–3 high-impact technical projects with GitHub links and detailed engineering bullets.</li>
+                <li><strong>Education & Experience</strong> — B.Tech degree, CGPA, Class 12/10, internships in <strong>reverse-chronological order</strong>.</li>
+            </ul>
+        </div>
+
+        <h3>5. The Initial Screening Bottleneck</h3>
+        <div class="callout-red"><strong>Over 75%</strong> of engineering applications in campus drives are rejected by automated ATS filters due to formatting errors or missing keywords. Surviving resumes are scanned by human recruiters for an average of just <strong>6 seconds</strong>.</div>
+
+        <h3>6. The Google XYZ Formula</h3>
+        <div class="formula"><strong>Accomplished [X]</strong> + <strong>Measured By [Y]</strong> + <strong>By Doing [Z]</strong></div>
+        <ul>
+            <li><strong style="color:var(--accent)">[X]</strong> — strong action verb defining outcome (e.g. "Reduced API response latency")</li>
+            <li><strong style="color:var(--accent2)">[Y]</strong> — quantitative proof: percentages, throughput, scale (e.g. "by 45% across 10k daily requests")</li>
+            <li><strong style="color:var(--green-border)">[Z]</strong> — specific technical methodology (e.g. "by implementing Redis caching and indexing")</li>
+        </ul>
+        <div class="callout"><strong>Why recruiters love XYZ:</strong> Context & scale, action-oriented, naturally integrates keywords without reading like a skill list.</div>
+
+        <h3>7. Engineering Metrics Cheat Sheet</h3>
+        <table>
+            <tr><th>Category</th><th>Metrics</th></tr>
+            <tr><td><strong>Performance</strong></td><td>Latency reduction (p95/p99), page-load speed, memory footprint, API response time</td></tr>
+            <tr><td><strong>Scale & Volume</strong></td><td>RPS, total records, dataset size (GB/TB), concurrent active users</td></tr>
+            <tr><td><strong>Quality & Reliability</strong></td><td>Unit-test coverage %, bug reduction rate, uptime %, build failure rate</td></tr>
+            <tr><td><strong>Productivity & Scope</strong></td><td>CI/CD deployment time cut, manual hours saved/week, team size coordinated</td></tr>
+        </table>
+
+        <h3>8. Before & After</h3>
+        <div class="do-dont">
+            <div class="dont-box"><h4>❌ Before</h4><p>"Built a chat app using React and Node.js for college project."</p></div>
+            <div class="do-box"><h4>✅ After</h4><p>"Engineered a real-time messaging app handling <strong>200+ concurrent</strong> socket connections [X] with under <strong>100ms</strong> message latency [Y], utilizing React, Node.js, and WebSockets with JWT authentication [Z]."</p></div>
+        </div>
+
+        <!-- ATS RESUME TEMPLATE -->
+        <h3 id="resume-template">📄 ATS-Friendly Resume Template (B.Tech 3rd Year)</h3>
+        <div class="card" style="font-size:.88rem">
+            <p><strong style="color:var(--heading)">Full Name</strong> | +91 XXXXXXXXXX | your.email@email.com | linkedin.com/in/profile | github.com/username</p>
+            <h4>Professional Summary</h4>
+            <p>Motivated third-year B.Tech student with foundation in [Specialisation]. Knowledge of engineering concepts, programming, problem-solving and technical tools. Seeking opportunities to gain industry exposure.</p>
+            <h4>Education</h4>
+            <p><strong>B.Tech – [Specialisation]</strong> | [College], [Year–Year] | CGPA: X.X/10<br>
+            <strong>Class XII</strong> | [School, Board] | [Year] | X%<br>
+            <strong>Class X</strong> | [School, Board] | [Year] | X%</p>
+            <h4>Technical Skills</h4>
+            <ul>
+                <li><strong>Languages:</strong> C / C++ / Java / Python / JavaScript</li>
+                <li><strong>Core Concepts:</strong> DSA / OOP / DBMS / OS / CN</li>
+                <li><strong>Frameworks:</strong> HTML / CSS / React / Node.js / Django</li>
+                <li><strong>Databases:</strong> MySQL / MongoDB / PostgreSQL</li>
+                <li><strong>Tools:</strong> Git / GitHub / VS Code / Linux / MATLAB</li>
+            </ul>
+            <h4>Projects</h4>
+            <p><strong>[Project Name]</strong> | [Tech Stack] | [Duration]<br>• Developed [what] to address [problem]. • Applied [method]. • Key features: [1], [2], [3].</p>
+            <h4>Internships</h4>
+            <p><strong>Intern – [Org]</strong> | [Location] | [Duration]<br>• Assisted in [area]. • Worked with [tools]. • Documented findings.</p>
+            <h4>Certifications</h4>
+            <ul><li>[Course] – [Platform, Year]</li></ul>
+            <h4>Achievements</h4>
+            <ul><li>Participated in [event], [Year]. • Achieved [recognition].</li></ul>
+            <h4>Soft Skills</h4>
+            <p>Problem Solving • Communication • Team Collaboration • Adaptability • Time Management</p>
+        </div>
+        <div class="callout-warn"><strong>ATS Guidelines:</strong> Standard headings • Job-description keywords • No tables/graphics/icons • Simple fonts • Action verbs (Developed, Implemented, Designed, Analysed) • Keep concise and accurate.</div>
+
+        <!-- MCQs -->
+        <div class="mcq-section" id="mcq-ats">
+            <h3>Self-Check: ATS Resume Building — 10 MCQs</h3>
+
+            <div class="mcq-item"><p class="q-label">Q1</p><p class="q-text">What is an ATS?</p><ul class="options"><li>A. A résumé design template</li><li>B. Enterprise recruitment software that parses, organizes, and ranks resumes before human review</li><li>C. A LinkedIn feature</li><li>D. A grammar-checking tool</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>B</strong> — An ATS such as Workday, Taleo, Greenhouse, or Lever acts as a digital gatekeeper, parsing resumes before a recruiter sees them.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q2</p><p class="q-text">The three parts of the Action-Metric Framework are:</p><ul class="options"><li>A. Name, Skills, Education</li><li>B. Strong Action Verb + Technical Tool/Method + Quantified Impact</li><li>C. Header, Body, Footer</li><li>D. Objective, Experience, References</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>B</strong> — Every strong bullet combines an action verb, a technical tool/method, and a quantified impact.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q3</p><p class="q-text">Why do multi-column layouts fail with ATS parsers?</p><ul class="options"><li>A. They look unprofessional</li><li>B. Text blocks merge horizontally into unreadable jargon during linear text extraction</li><li>C. They take too long to print</li><li>D. ATS cannot open PDFs at all</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>B</strong> — ATS parsers extract text linearly; multi-column layouts cause text to merge incorrectly.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q4</p><p class="q-text">Which section header is more likely to parse correctly?</p><ul class="options"><li>A. "My Journey"</li><li>B. "Experience"</li><li>C. "Life So Far"</li><li>D. "What I've Done"</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>B</strong> — Standardized headers like "Experience" and "Skills" are required; custom headers fail.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q5</p><p class="q-text">"Containerized" and "Orchestrated" belong to which verb category?</p><ul class="options"><li>A. Architect & Build</li><li>B. Optimize & Scale</li><li>C. Deploy & Maintain</li><li>D. Analyze & Report</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>C</strong> — Deploy & Maintain: Containerized, Orchestrated, Integrated, Debugged, Migrated, Hardened, Monitored.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q6</p><p class="q-text">What percentage of campus drive applications are rejected by ATS filters?</p><ul class="options"><li>A. 25%</li><li>B. 50%</li><li>C. Over 75%</li><li>D. 10%</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>C</strong> — Over 75% are filtered out before human review due to formatting errors or missing keywords.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q7</p><p class="q-text">How long does a human recruiter scan a surviving resume?</p><ul class="options"><li>A. 6 seconds</li><li>B. 2 minutes</li><li>C. 30 seconds</li><li>D. 10 minutes</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>A</strong> — Surviving resumes are scanned for an average of just 6 seconds.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q8</p><p class="q-text">In the Google XYZ Formula, what does [Y] represent?</p><ul class="options"><li>A. The technical tool used</li><li>B. The opening action verb</li><li>C. Quantitative proof (percentages, throughput, time saved)</li><li>D. The job title</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>C</strong> — "Measured By [Y]" is quantitative proof — e.g. "by 45% across 10k daily requests".</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q9</p><p class="q-text">What should a resume header include per ATS guidance?</p><ul class="options"><li>A. Photo and age</li><li>B. Name, Email, Phone, LinkedIn URL, GitHub URL on a single line</li><li>C. Home address and marital status</li><li>D. A personal quote</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>B</strong> — Clean single-line header: Name, Email, Phone, LinkedIn URL, GitHub URL — no photos or address.</div></details></div>
+
+            <div class="mcq-item"><p class="q-label">Q10</p><p class="q-text">"Unit-test code coverage %" and "uptime %" fall under which metric category?</p><ul class="options"><li>A. Performance</li><li>B. Scale & Volume</li><li>C. Quality & Reliability</li><li>D. Productivity & Scope</li></ul><details class="answer-reveal"><summary>Show Answer</summary><div class="answer-text"><strong>C</strong> — Quality & reliability metrics include code coverage, bug reduction rate, uptime %, and build failure rate.</div></details></div>
+        </div>
+    </section>
+
+</main>
+<script>
+function toggleTheme(){const h=document.documentElement,c=h.getAttribute('data-theme'),n=c==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('resume-theme',n);}
+const s=localStorage.getItem('resume-theme');if(s)document.documentElement.setAttribute('data-theme',s);
+</script>
+</body>
+</html>
