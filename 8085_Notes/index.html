@@ -119,8 +119,39 @@
         text-decoration: underline;
         color: #81d4fa; /* Light blue for defined terms/subheadings */
     }
-    .bar {
-        text-decoration: overline;
+    /* Tooltip CSS */
+    #global-tooltip {
+        position: fixed;
+        background-color: #2c2c2c;
+        color: #fff;
+        padding: 12px 18px;
+        border-left: 4px solid #03dac6;
+        border-radius: 6px;
+        font-size: 0.95em;
+        max-width: 350px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 9999;
+        transform: translateY(10px);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #global-tooltip.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    .kw, .term {
+        cursor: help;
+        position: relative;
+        transition: background-color 0.2s;
+        padding: 0 2px;
+        border-radius: 3px;
+    }
+    .kw:hover, .term:hover {
+        background-color: rgba(3, 218, 198, 0.15);
     }
 </style>
 </head>
@@ -790,5 +821,102 @@ The signals of 8085 can be classified into seven groups according to their funct
             <li><strong>The individual masks</strong> for RST 5.5, RST 6.5 and RST 7.5 are manipulated using the <span class="kw">SIM</span> instruction. This instruction takes the bit pattern in the Accumulator and applies it to the interrupt mask enabling and disabling the specific interrupts</li>
         </ul>
     </div>
+    <div id="global-tooltip"></div>
+    <script>
+        const tooltip = document.getElementById('global-tooltip');
+        const keywords = document.querySelectorAll('.kw, .term');
+
+        function getDefinition(rawText) {
+            let text = rawText.toUpperCase().trim();
+            if (/\bALU\b/.test(text)) return "Arithmetic Logic Unit: Performs math and logic operations.";
+            if (/\b(CY|CARRY)\b/.test(text)) return "Carry Flag: Set if sum > 8 bits.";
+            if (/\b(Z|ZERO)\b/.test(text)) return "Zero Flag: Set if operation results in zero.";
+            if (/\b(AC|AUXILLARY)\b/.test(text)) return "Auxiliary Carry Flag: Set if carry generates from D3 to D4.";
+            if (/\b(P|PARITY)\b/.test(text)) return "Parity Flag: Set based on number of 1s in result.";
+            if (/\b(S|SIGN)\b/.test(text)) return "Sign Flag: Set if D7 bit is 1 (negative).";
+            if (/\bPSW\b/.test(text)) return "Program Status Word: 16-bit combo of Accumulator and Flags.";
+            if (/\b(ACCUMULATOR|REGISTER A)\b/.test(text)) return "8-bit register part of ALU used for arithmetic/logic operations. Stores results.";
+            
+            if (text.includes("PROGRAM COUNTER")) return "16-bit register holding address of next instruction.";
+            if (text.includes("STACK POINTER")) return "16-bit register pointing to top of stack.";
+            if (text.includes("INSTRUCTION REGISTER")) return "8-bit register storing current instruction opcode.";
+            if (text.includes("FLAG REGISTER")) return "5 flip-flops storing status of ALU operations.";
+            if (text.includes("MULTIPLEXED")) return "AD0-AD7: Time-shared bus for lower address and data.";
+            if (text.includes("ADDRESS BUS") || text.includes("A8")) return "16-bit unidirectional bus to identify memory/IO locations.";
+            if (text.includes("DATA BUS")) return "8-bit bidirectional bus for data transfer.";
+            if (text.includes("CONTROL BUS")) return "Lines carrying timing and control signals (RD, WR, IO/M).";
+            
+            if (text.includes("TRAP")) return "Highest priority, non-maskable hardware interrupt.";
+            if (text.includes("RST 7.5")) return "2nd priority, maskable, edge-triggered interrupt.";
+            if (text.includes("RST 6.5")) return "3rd priority, maskable, level-triggered interrupt.";
+            if (text.includes("RST 5.5")) return "4th priority, maskable, level-triggered interrupt.";
+            if (text.includes("INTR")) return "Lowest priority, maskable, non-vectored interrupt.";
+            if (/\bINTA\b/.test(text)) return "Interrupt Acknowledge (Active Low) sent by CPU.";
+            
+            if (/\bSID\b/.test(text)) return "Serial Input Data line.";
+            if (/\bSOD\b/.test(text)) return "Serial Output Data line.";
+            if (/\bRD\b/.test(text)) return "Read signal (Active Low): Memory/IO read operation.";
+            if (/\bWR\b/.test(text)) return "Write signal (Active Low): Memory/IO write operation.";
+            if (/\bALE\b/.test(text)) return "Address Latch Enable: High pulse indicating valid address on AD0-AD7.";
+            if (text.includes("IO/M") || text.includes("IO M")) return "IO/Memory signal: High for I/O, Low for Memory.";
+            if (/\b(S0|S1)\b/.test(text)) return "Status signals indicating current machine cycle type.";
+            
+            if (text.includes("READY")) return "Input to sync CPU with slower peripherals.";
+            if (text.includes("HOLD")) return "DMA request for bus control.";
+            if (text.includes("HLDA")) return "Hold Acknowledge: CPU releases buses.";
+            if (text.includes("RESET IN")) return "Resets CPU, clears PC to 0000H.";
+            if (text.includes("RESET OUT")) return "Indicates CPU is reset, used to reset peripherals.";
+            
+            if (/\bVCC\b/.test(text)) return "+5V power supply.";
+            if (/\bVSS\b/.test(text)) return "Ground reference.";
+            if (/\b(X1|X2)\b/.test(text)) return "Crystal oscillator inputs for system clock.";
+            if (text.includes("CLK OUT")) return "System clock output.";
+            if (/\bCS\b/.test(text)) return "Chip Select (Active Low): Enables memory/IO chip.";
+            
+            if (text.includes("PROGRAMMED I/O")) return "Data transfer where CPU constantly polls device ready status.";
+            if (text.includes("INTERRUPT I/O")) return "Data transfer where device interrupts CPU when ready.";
+            if (/\bDMA\b/.test(text)) return "Direct Memory Access: High-speed transfer bypassing CPU.";
+            
+            if (text.includes("VECTOR")) return "Interrupts with predefined ISR addresses.";
+            if (text.includes("MASKABLE")) return "Interrupts that can be disabled via software.";
+            if (text.includes("MICROPROCESSOR")) return "A CPU built into a single LSI/VLSI chip.";
+            if (text.includes("MICROCOMPUTER")) return "A computer using a microprocessor as its CPU.";
+            
+            if (text.includes("16-BIT")) return "Can handle 16 bits of data/address simultaneously.";
+            if (text.includes("8-BIT")) return "Can handle 8 bits of data simultaneously.";
+            if (text.includes("MEMORY LOCATION")) return "A specific address in memory where data/instruction is stored.";
+            
+            // Fallback for unrecognized terms
+            return `Key term mentioned in syllabus.`;
+        }
+
+        keywords.forEach(el => {
+            el.addEventListener('mouseenter', (e) => {
+                const def = getDefinition(el.textContent);
+                tooltip.innerHTML = `<strong style="color: #03dac6;">${el.textContent}</strong><br><span style="color:#e0e0e0; font-size:0.9em; line-height: 1.4; display: block; margin-top: 4px;">${def}</span>`;
+                tooltip.classList.add('visible');
+                
+                // Position tooltip
+                const rect = el.getBoundingClientRect();
+                let top = rect.bottom + 10;
+                let left = rect.left;
+                
+                // Keep tooltip within screen bounds
+                if (top + tooltip.offsetHeight > window.innerHeight) {
+                    top = rect.top - tooltip.offsetHeight - 10;
+                }
+                if (left + tooltip.offsetWidth > window.innerWidth) {
+                    left = window.innerWidth - tooltip.offsetWidth - 10;
+                }
+                
+                tooltip.style.top = top + 'px';
+                tooltip.style.left = left + 'px';
+            });
+            
+            el.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+        });
+    </script>
 </body>
 </html>
