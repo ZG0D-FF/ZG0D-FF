@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITC Notes - Exam Paging</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f7f6;
+    --surface: #fff;
+    --text: #1e293b;
+    --text-muted: #334155;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --border-dark: #cbd5e1;
+    --accent: #2563eb;
+    --accent-bg: #eff6ff;
+    --tab-bg: #f8fafc;
+    --btn-bg: #0f172a;
+    --btn-text: #fff;
+    --btn-hover: #1e293b;
+    --btn-disabled: #cbd5e1;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  [data-theme="dark"] {
+    --bg: #090e17;
+    --surface: #1e293b;
+    --text: #f8fafc;
+    --text-muted: #cbd5e1;
+    --text-light: #94a3b8;
+    --border: #334155;
+    --border-light: #1e293b;
+    --border-dark: #475569;
+    --accent: #38bdf8;
+    --accent-bg: #0c4a6e;
+    --tab-bg: #0f172a;
+    --btn-bg: #38bdf8;
+    --btn-text: #0f172a;
+    --btn-hover: #7dd3fc;
+    --btn-disabled: #475569;
+    --shadow: rgba(0,0,0,0.4);
+  }
+  
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; align-items: center; transition: background 0.3s, color 0.3s;}
+  .container { background: var(--surface); width: 100%; max-width: 1000px; padding: 40px 50px; box-shadow: 0 10px 40px var(--shadow); border-radius: 12px; display: flex; flex-direction: column; min-height: 600px; transition: background 0.3s, box-shadow 0.3s;}
+  .tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--border-light); padding-bottom: 15px; align-items: center; flex-wrap: wrap; }
+  .tab-btn { background: var(--tab-bg); color: var(--text-muted); padding: 8px 16px; border-radius: 6px; font-size: 0.95em; font-weight: 600; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s; box-shadow: none; font-family: 'Inter', sans-serif;}
+  .tab-btn:hover { background: var(--border); transform: translateY(0); box-shadow: none; color: var(--text);}
+  .tab-btn.active { background: var(--btn-bg); color: var(--btn-text); border-color: var(--btn-bg); }
+  #slide-jump { margin-left: auto; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-dark); background: var(--surface); color: var(--text); font-weight: 600; cursor: pointer; outline: none; font-family: 'Inter', sans-serif;}
+  
+  .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text); font-size: 1.2em; cursor: pointer; border-radius: 6px; padding: 6px 12px; transition: all 0.2s; box-shadow: none;}
+  .theme-toggle:hover { background: var(--border); }
+  
+  .slide { display: none; flex-grow: 1; animation: fadeIn 0.3s ease-out; }
+  .slide.active { display: flex; flex-direction: column; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .slide h2 { color: var(--text); border-bottom: 2px solid var(--border-light); padding-bottom: 10px; font-weight: 700; margin-top: 0;}
+  .slide h3 { color: var(--text); font-weight: 700; margin-top: 20px; }
+  
+  .slide-content { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
+  .slide-content ul { font-size: 1.15em; line-height: 1.7; padding-left: 25px; color: var(--text-muted); margin-bottom: 20px;}
+  .slide-content li { margin-bottom: 12px; }
+  .slide-content p { font-size: 1.15em; line-height: 1.7; margin-bottom: 15px; color: var(--text-muted); }
+  
+  /* Bold and Underline styling */
+  .slide-content strong { color: var(--accent); font-weight: 700; }
+  .slide-content u { text-decoration-color: var(--accent); text-decoration-thickness: 3px; text-underline-offset: 4px; color: var(--text); font-weight: 600;}
+  .slide-content em { color: var(--text-light); font-style: italic; }
+  
+  .data-table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 1.1em; color: var(--text);}
+  .data-table th, .data-table td { border: 1px solid var(--border-dark); padding: 12px 18px; text-align: left; }
+  .data-table th { background: var(--tab-bg); font-weight: 700; color: var(--text); border-bottom: 2px solid var(--border-dark);}
+  .data-table tr:nth-child(even) { background: var(--bg); }
+  
+  blockquote { border-left: 4px solid var(--accent); background: var(--accent-bg); padding: 16px 20px; margin: 25px 0; border-radius: 0 8px 8px 0; color: var(--text); font-size: 1.15em;}
+  .diagram { background: var(--tab-bg); padding: 20px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; text-align: center; margin: 25px 0; color: var(--text-muted); border: 1px dashed var(--border-dark); font-size: 1.1em; }
+  .math-block { text-align: center; margin: 25px 0; font-size: 1.25em; overflow-x: auto; padding: 10px 0; color: var(--text);}
+  
+  .footer { margin-top: 40px; padding-top: 20px; font-size: 0.9em; color: var(--text-light); text-align: center; border-top: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 5px; }
+  .global-footer { margin-top: 25px; padding-top: 15px; font-size: 0.9em; color: var(--text-light); text-align: center; border-top: 1px solid var(--border-light); font-weight: 600; letter-spacing: 0.5px;}
+  
+  .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; background: var(--tab-bg); padding: 15px 30px; border-radius: 10px; border: 1px solid var(--border); transition: background 0.3s;}
+  button.nav-btn { background: var(--btn-bg); color: var(--btn-text); border: none; padding: 12px 28px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 5px var(--shadow); font-family: 'Inter', sans-serif;}
+  button.nav-btn:hover:not(:disabled) { background: var(--btn-hover); transform: translateY(-1px); box-shadow: 0 4px 8px var(--shadow); }
+  button.nav-btn:active:not(:disabled) { transform: translateY(0); }
+  button.nav-btn:disabled { background: var(--btn-disabled); color: var(--surface); cursor: not-allowed; box-shadow: none; }
+  #page-info { font-weight: 700; color: var(--text); font-size: 1.15em; letter-spacing: 0.5px; }
+  
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--border-light); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="tabs">
+    <a href="../ITC.HTML" class="tab-btn" style="text-decoration: none; color: var(--accent); border-color: var(--accent); display: flex; align-items: center;">&#8592; Back to Full Notes</a>
+    <button class="tab-btn active" id="tab-0" onclick="jumpTo(0)">Ch 1: Uncertainty</button>
+    <button class="tab-btn" id="tab-1" onclick="jumpTo(22)">Ch 2: Prefix Codes</button>
+    <button class="tab-btn" id="tab-4" onclick="jumpTo(30)">Ch 5: Kraft & Source Coding</button>
+    <button class="tab-btn" id="tab-2" onclick="jumpTo(43)">Ch 3: Huffman Coding</button>
+    <select id="slide-jump" onchange="jumpTo(parseInt(this.value))"></select>
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+  </div>
+  <div id="slides-container"></div>
+  
+  <div class="controls">
+    <button id="prevBtn" class="nav-btn" onclick="prevSlide()">&#8592; Previous</button>
+    <span id="page-info">Slide 1</span>
+    <button id="nextBtn" class="nav-btn" onclick="nextSlide()">Next &#8594;</button>
+  </div>
+</div>
+
+<script type="text/plain" id="raw-data">
+1 **Slide 1**
+
+* Information Theory, Coding and Cryptography
+* **Outline**
+* Uncertainty and Information
+* Self Information
+* Mutual Information
+* Average Mutual Information
+* Indian Institute of Technology, Delhi
+* 2
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 2**
+
+* Information Theory, Coding and Cryptography
+* **Uncertainty and Information**
+* Consider the following sentences:
+* Tomorrow, the sun will rise from the East.
+* The phone will ring in the next one hour.
+* It will snow in Delhi this winter.
+* The three sentences carry different amounts of *information*.
+* In fact, the first sentence hardly carries any information.
+* Everybody knows that the sun rises from the East and the probability of this happening again is *almost unity*
+* "Making predictions is risky, especially when it involves the future." - N. Bohr
+* Indian Institute of Technology, Delhi
+* 3
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 3**
+
+* Information Theory, Coding and Cryptography
+* **Uncertainty and Information**
+* Tomorrow, the sun will rise from the East (most probable, least information).
+* The phone will ring in the next one hour.
+* It will snow in Delhi this winter (least probable, most information).
+* **Intuitive Feel :** Occurence of a less probable event conveys more information
+* Since a lower probability implies a higher degree of uncertainty (and *vice versa*), a random variable with a higher degree of uncertainty contains more information.
+* We will use this correlation between uncertainty and information for physical interpretations
+* Indian Institute of Technology, Delhi
+* 4
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 4**
+
+* Information Theory, Coding and Cryptography
+* **Uncertainty and Information**
+* **Intuitive Feel :** Occurence of a less probable event conveys more information
+* Consider a discrete random variable $X$ with possible outcomes $x_i$, $i = 1, 2, ..., n$. The **self information** of the event $X = x_i$ is defined as
+* $$I(x_i) = \log\left(\frac{1}{P(x_i)}\right) = -\log P(x_i).$$
+* When the base of the logarithm is 2 the units of $I(x)$ are in **bits**
+* When the base is e, the units are in **nats** (natural units).
+* Indian Institute of Technology, Delhi
+* 5
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 5**
+
+* Information Theory, Coding and Cryptography
+* **Example**
+* Consider a binary source which tosses a fair coin
+* It produces an output equal to 1 if a head appears and a 0 if a tail appears.
+* For this source, $P(1) = P(0) = 0.5$. The information content of each output from the source is
+* $$I(x_i) = -\log_2 P(x_i)$$
+* $$= -\log_2(0.5) = 1 \text{ bit}$$
+* Indeed, we have to use only one bit to represent the output from this binary source
+* We use a 1 to represent H and a 0 to represent T.
+* Indian Institute of Technology, Delhi
+* 6
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 6**
+
+* Information Theory, Coding and Cryptography
+* **Example (cont'd)**
+* Suppose the successive outputs from this binary source are statistically independent, i.e., the source is memoryless.
+* Consider a block of $m$ binary digits.
+* There are $2^m$ possible $m$-bit blocks, each of which is equally probable with probability $2^{-m}$.
+* The self information of an $m$-bit block is
+* $$I(x_i) = -\log_2 P(x_i)$$
+* $$= -\log_2 2^{-m} = m \text{ bits}$$
+* Again, we observe that we indeed need $m$ bits to represent the possible $m$-bit blocks
+* Indian Institute of Technology, Delhi
+* 7
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 7**
+
+* Information Theory, Coding and Cryptography
+* **Example**
+* Consider a discrete, memoryless source (source C) that generates *two bits* at a time.
+* This source comprises of two binary sources (sources *A* and *B*), each source contributing one bit.
+* The two binary sources within the source C are independent.
+* Intuitively, the information content of the aggregate source (source C) should be the *sum* of the information contained in the outputs of the two independent sources that constitute this source C.
+* $P(C) = P(A)P(B) = (0.5)(0.5) = 0.25$
+* $I(C) = -\log_2 P(x_i) = -\log_2(0.25) = 2 \text{ bits}$
+* Indian Institute of Technology, Delhi
+* 8
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 8**
+
+* Information Theory, Coding and Cryptography
+* **Why the logarithm?**
+* Consider two independent sources
+* Independent events $\Rightarrow$ Probabilities multiply
+* Independent sources $\Rightarrow$ Information must add up
+* Logarithm seems to do the job !
+* Diagram text: Source A, Source B
+* Indian Institute of Technology, Delhi
+* 9
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 9**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information**
+* Consider *two discrete random variables* $X$ and $Y$ with possible outcomes $x_i$, $i = 1, 2, ..., n$. and $y_j$, $j = 1, 2, ..., m$ respectively.
+* Suppose we observe some outcome $Y = y_j$ and we want to determine the *amount of information* this event provides about the event $X = x_i$, $i = 1, 2, ..., n$
+* That is, we want to mathematically represent the **mutual information**.
+* Diagram text: X, Y
+* Indian Institute of Technology, Delhi
+* 10
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 10**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information**
+* We note the following:
+* *If* $X$ *and* $Y$ are independent, in which case the occurrence of $Y = y_j$ provides **no information** about $X = x_i$.
+* Diagram text: X, Y (separated by broken arrow)
+* *If* $X$ *and* $Y$ are fully dependent events, in which case the occurrence of $Y = y_j$ **determines** the occurrence of the event $X = x_i$.
+* Diagram text: X, Y (connected by solid arrow)
+* Indian Institute of Technology, Delhi
+* 11
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 11**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information**
+* **Definition :** The mutual information $I(x_i ; y_j)$ between $x_i$ and $y_j$ is defined as
+* $$I(x_i ; y_j) = \log \left(\frac{P(x_i \vert{} y_j)}{P(x_i)}\right)$$
+* As before, the units of $I(x)$ are determined by the base of the logarithm, which is usually selected as 2 or e.
+* When the base is 2 the units are in **bits**.
+* Indian Institute of Technology, Delhi
+* 12
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 12**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information**
+* Mutual information
+* $$I(x_i ; y_j) = \log \left(\frac{P(x_i \vert{} y_j)}{P(x_i)}\right)$$
+* Observe that
+* $$\frac{P(x_i \vert{} y_j)}{P(x_i)} = \frac{P(x_i \vert{} y_j)P(y_j)}{P(x_i)P(y_j)} = \frac{P(x_i, y_j)}{P(x_i)P(y_j)} = \frac{P(y_j \vert{} x_i)}{P(y_j)}$$
+* Therefore
+* $$I(x_i ; y_j) = \log \left(\frac{P(x_i \vert{} y_j)}{P(x_i)}\right) = \log \left(\frac{P(y_j \vert{} x_i)}{P(y_j)}\right) = I(y_j ; x_i)$$
+* Indian Institute of Technology, Delhi
+* 13
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 13**
+
+* Information Theory, Coding and Cryptography
+* **Physical Interpretation**
+* When the random variables $X$ and $Y$ are **statistically independent**, $P(x_i \vert{} y_j) = P(x_i)$, which leads to $I(x_i ; y_j) = 0$.
+* When the occurrence of $Y = y_j$ **uniquely determines** the occurrence of the event $X = x_i$, $P(x_i \vert{} y_j) = 1$, the mutual information becomes
+* $$I(x_i ; y_j) = \log\left(\frac{1}{P(x_i)}\right) = -\log P(x_i).$$
+* This is the self information of the event $X = x_i$.
+* Indian Institute of Technology, Delhi
+* 14
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 14**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information - Example**
+* Diagram text: 0, 1, Tx, $1-p$, $p$, $p$, $1-p$, Rx, 0, 1, CHANNEL, A binary symmetric channel (BSC)
+* $$P(Y = 0) = P(X = 0) . P(Y = 0 \vert{} X = 0) + P(X = 1) . P(Y = 0 \vert{} X = 1)$$
+* $$= 0.5(1 - p) + 0.5(p) = 0.5$$
+* $$P(Y = 1) = P(X = 0) . P(Y = 1 \vert{} X = 0) + P(X = 1) . P(Y = 1 \vert{} X = 1)$$
+* $$= 0.5(p) + 0.5(1 - p) = 0.5$$
+* $$I(x_0 ; y_0) = I(0 ; 0) = \log_2 \left(\frac{P(Y = 0 \vert{} X = 0)}{P(Y = 0)}\right) = \log_2 \frac{1 - p}{0.5} = \log_2 2(1 - p)$$
+* $$I(x_1 ; y_0) = I(1 ; 0) = \log_2 \left(\frac{P(Y = 0 \vert{} X = 1)}{P(Y = 0)}\right) = \log_2 \frac{p}{0.5} = \log_2 2p$$
+* Indian Institute of Technology, Delhi
+* 15
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 15**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information - Example**
+* Diagram text: 0, 1, Tx, $1-p$, $p$, $p$, $1-p$, Rx, 0, 1, CHANNEL
+* Suppose, $p = 0$, i.e., it is an ideal channel (noiseless). In that case
+* $$I(x_0 ; y_0) = I(0 ; 0) = \log_2 2(1 - p) = 1 \text{ bit.}$$
+* Hence having observed **with certainty** the output we can determine what was transmitted.
+* Recall that the self information about the event $X = x_0$ was 1 bit.
+* Indian Institute of Technology, Delhi
+* 16
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 16**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information - Example**
+* Diagram text: 0, 1, Tx, $1-p$, $p$, $p$, $1-p$, Rx, 0, 1, CHANNEL
+* However, if $p = 0.5$, we obtain
+* $$I(x_0 ; y_0) = I(0 ; 0) = \log_2 2(1 - p) = \log_2 2(0.5) = 0.$$
+* This implies that having observed the output, we have **no information** about what was transmitted.
+* Thus, it is a useless channel.
+* For such a channel, there is no point in observing the received symbol and trying to make a guess as to what was sent.
+* Instead we can as well toss a fair coin at the receiver in order to estimate what was sent!
+* Indian Institute of Technology, Delhi
+* 17
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 17**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information - BSC**
+* Diagram axes: $I(x_0 ; y_0)$, $p$
+* Indian Institute of Technology, Delhi
+* 18
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 18**
+
+* Information Theory, Coding and Cryptography
+* **Mutual Information - BSC**
+* Diagram containing a line chart plotted along axes $I(x_0 ; y_0)$ and $p$.
+* Indian Institute of Technology, Delhi
+* 18
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 19**
+
+* Information Theory, Coding and Cryptography
+* **Binary Channel**
+* Diagram text: 0, 1, Tx, $1-p_0$, $p_1$, $p_0$, $1-p_1$, Rx, 0, 1, CHANNEL
+* From the channel transition probabilities we have
+* $$P(Y = 0) = P(X = 0) . P(Y = 0 \vert{} X = 0) + P(X = 1) . P(Y = 0 \vert{} X = 1)$$
+* $$= 0.5(1 - p_0) + 0.5(p_1) = 0.5(1 - p_0 + p_1).$$
+* $$P(Y = 1) = P(X = 0) . P(Y = 1 \vert{} X = 0) + P(X = 1) . P(Y = 1 \vert{} X = 1)$$
+* $$= 0.5(p_0) + 0.5(1 - p_1) = 0.5(1 - p_1 + p_0).$$
+* Indian Institute of Technology, Delhi
+* 19
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 20**
+
+* Information Theory, Coding and Cryptography
+* **Binary Channel**
+* Diagram text: 0, 1, Tx, $1-p_0$, $p_1$, $p_0$, $1-p_1$, Rx, 0, 1, CHANNEL
+* The mutual information about the occurrence of the event $X = 0$ given that $Y = 0$ is
+* $$I(x_0 ; y_0) = I(0 ; 0) = \log_2 \left(\frac{P(Y = 0 \vert{} X = 0)}{P(Y = 0)}\right) = \log_2 \left(\frac{2(1 - p_0)}{1 - p_0 + p_1}\right)$$
+* $$I(x_1 ; y_0) = I(1 ; 0) = \log_2 \left(\frac{P(Y = 0 \vert{} X = 1)}{P(Y = 0)}\right) = \log_2 \left(\frac{2p_1}{1 - p_0 + p_1}\right)$$
+* Indian Institute of Technology, Delhi
+* 20
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 21**
+
+* Information Theory, Coding and Cryptography
+* **Average Mutual Information**
+* **Definition** The average mutual information between two random variables $X$ and $Y$ is given by
+* $$I(X ; Y) = \sum_{i=1}^{n} \sum_{j=1}^{m} P(x_i, y_j) I(x_i ; y_j) = \sum_{i=1}^{n} \sum_{j=1}^{m} P(x_i, y_j) \log \frac{P(x_i, y_j)}{P(x_i)P(y_j)}$$
+* $I(X ; Y) \ge 0$, with equality if and only if $X$ and $Y$ are **statistically independent**.
+* Indian Institute of Technology, Delhi
+* 21
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 22**
+
+* Information Theory, Coding and Cryptography
+* **Summary**
+* Uncertainty and Information
+* Self Information
+* Mutual Information
+* Average Mutual Information
+* Indian Institute of Technology, Delhi
+* 22
+* Ranjan Bose, Department of Electrical Engineering
+
+**Slide 19b**<br>
+*Information Theory, Coding and Cryptography*<br>
+**What is a code?**
+
+* A **code** is a set of vectors called **codewords**
+* As we saw earlier, to encode the letters of the English alphabet, we need $R = \lfloor\log_2 26\rfloor + 1 = 5$ bits.
+* The fixed length code for the English alphabet suggests that each of the letters in the alphabet is equally important (probable) and hence each one requires 5 bits for representation.
+* However, we know that some of the letters are less common (x, q, z etc.) while some others are more frequently used (s, t, e etc.).
+* It appears that allotting equal number of bits to both the frequently used letters as well as not so commonly used letters is *not* an efficient way of representation (coding).
+
+*Indian Institute of Technology, Delhi | 19 | Ranjan Bose, Department of Electrical Engineering*<br>
+---<br>
+**Slide 20b**<br>
+*Information Theory, Coding and Cryptography*<br>
+**What is a variable length code?**
+
+* It appears that allotting equal number of bits to both the frequently used letters as well as not so commonly used letters is *not* an efficient way of representation (coding).
+* Intuitively, we should represent the more frequently occurring letters by fewer numbers of bits and represent the less frequently occurring letters by larger number of bits.
+* In this manner, if we have to encode a whole page of written text, we might end up using fewer number of bits overall.
+* When the source symbols are not equally probable, a more efficient method is to use a **Variable Length Code (VLC)**
+
+*Indian Institute of Technology, Delhi | 20 | Ranjan Bose, Department of Electrical Engineering*<br>
+---<br>
+**Slide 21b**<br>
+*Information Theory, Coding and Cryptography*<br>
+**Example**
+
+* Suppose we have only the **first eight letters** of the English alphabet (A ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ H) in our vocabulary.
+* The **fixed length code** for this set of letters would be
+
+| Letter | Codeword | Letter | Codeword |
+| --- | --- | --- | --- |
+| A | 000 | E | 100 |
+| B | 001 | F | 101 |
+| C | 010 | G | 110 |
+| D | 011 | H | 111 |
+
+* A **variable length code** for the same set of letters can be
+
+| Letter | Codeword | Letter | Codeword |
+| --- | --- | --- | --- |
+| A | 00 | E | 101 |
+| B | 010 | F | 110 |
+| C | 011 | G | 1110 |
+| D | 100 | H | 1111 |
+
+*Indian Institute of Technology, Delhi | 21 | Ranjan Bose, Department of Electrical Engineering*<br>
+---<br>
+**Slide 22b**<br>
+*Information Theory, Coding and Cryptography*<br>
+**Example**
+
+* Suppose we have to code the series of letters:
+
+"**A BAD CAB**"
+
+* The fixed length and the variable length representation of the pseudo sentence would be
+
+|  |  |  |
+| --- | --- | --- |
+| **Fixed Length Code** | 000 001 000 011 010 000 001 | Total bits = 21 |
+| **Variable Length Code** | 00 010 00 100 011 00 010 | Total bits = 18 |
+
+* Note that the variable length code uses **fewer numbers of bits**
+* This is because the letters appearing more frequently in the pseudo sentence are represented with fewer numbers of bits.
+
+*Indian Institute of Technology, Delhi | 22 | Ranjan Bose, Department of Electrical Engineering*<br>
+---<br>
+**Slide 23**<br>
+*Information Theory, Coding and Cryptography*<br>
+**Example**
+
+* We look at yet another variable length code for the first 8 letters of the English alphabet
+
+| Letter | Codeword | Letter | Codeword |
+| --- | --- | --- | --- |
+| A | 0 | E | 10 |
+| B | 1 | F | 11 |
+| C | 00 | G | 000 |
+| D | 01 | H | 111 |
+
+* This second variable length code appears to be more efficient in terms of representation of the letters.
+
+|  |  |  |
+| --- | --- | --- |
+| **Variable Length Code 1** | 00 010 00 100 011 00 010 | Total bits = 18 |
+| **Variable Length Code 2** | 0 1001 0001 | Total bits = 9 |
+
+*Indian Institute of Technology, Delhi | 23 | Ranjan Bose, Department of Electrical Engineering*<br>
+---<br>
+**Slide 24**<br>
+*Information Theory, Coding and Cryptography*<br>
+**Uniquely decodable !**
+
+| Letter | Codeword | Letter | Codeword |
+| --- | --- | --- | --- |
+| A | 0 | E | 10 |
+| B | 1 | F | 11 |
+| C | 00 | G | 000 |
+| D | 01 | H | 111 |
+|  |  |  |
+| --- | --- | --- |
+| **Variable Length Code 2** | 0 1001 0001 | Total bits = 9 |
+
+* However there is a problem with VLC2.
+* Consider the sequence of bits 0 1001 0001 which is used to represent **A BAD CAB**
+* We could regroup the bits in a different manner to have [0][10][0][1] [0][0][01] which translates to **A EAB AAD**
+* or we can decode the vector as [0] [1][0][0][1] [0][0][0][1] which stands for **A BAAB AAAB** !
+* **Not uniquely decodable**
+
+*Indian Institute of Technology, Delhi | 24 | Ranjan Bose, Department of Electrical Engineering*<br>
+---<br>
+**Slide 25**<br>
+*Information Theory, Coding and Cryptography*<br>
+**Revisit VLC1 and VLC2**<br>
+**VLC1**
+
+| Letter | Codeword | Letter | Codeword |
+| --- | --- | --- | --- |
+| A | **00** | E | **101** |
+| B | **010** | F | **110** |
+| C | **011** | G | **1110** |
+| D | **100** | H | **1111** |
+
+**VLC2**
+
+| Letter | Codeword | Letter | Codeword |
+| --- | --- | --- | --- |
+| A | **0** | E | **10** |
+| B | **1** | F | **11** |
+| C | **00** | G | **000** |
+| D | **01** | H | **111** |
+
+* **VLC2**: We have no clue where the codeword of one letter (symbol) ends and where the next one begins, since the lengths of the codewords are variable.
+* However, this problem does not exist with the **VLC1**.
+* *It can be seen that no codeword forms the prefix of any other codeword.*
+
+*Indian Institute of Technology, Delhi | 25 | Ranjan Bose, Department of Electrical Engineering*<br>
+---<br>
+**Slide 26**<br>
+*Information Theory, Coding and Cryptography*<br>
+**Prefix Codes**
+
+* Observation: No codeword of VLC1 forms the prefix of any other codeword.
+* This is called the **prefix condition**.
+* So, as soon as a sequence of bits corresponding to any one of the possible codewords is detected, we can declare that symbol decoded.
+
+> A **Prefix Code** is one in which no codeword forms the prefix of any other codeword.
+
+* Such codes are also called **Instantaneous Codes**.
+
+*Indian Institute of Technology, Delhi | 26 | Ranjan Bose, Department of Electrical Engineering*<br>
+**Slide 27**<br>
+*Information Theory & Coding*<br>
+**From "Can I build this code?" to "How much can I compress?"**
+
+| KRAFT | ENTROPY | SOURCE CODING |
+| --- | --- | --- |
+| Can the code fit? | Theoretical limit | How close can we get? |
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose*<br>
+**Slide 28**<br>
+*Information Theory & Coding*<br>
+**1. Why do we need source coding?**
+
+* The basic idea: common symbols should need fewer bits.
+* If every symbol uses 2 bits, we waste bits on very common symbols.
+  * A (50%) &rarr; 00
+  * B (25%) &rarr; 01
+  * C (15%) &rarr; 10
+  * D (10%) &rarr; 11
+* **Goal**: give short codewords to frequent symbols and long codewords to rare symbols.
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 2*<br>
+**Slide 29**<br>
+*Information Theory & Coding*<br>
+**2. A better code**
+
+* Short for common symbols, long for rare symbols
+  * A (50%) &rarr; 0
+  * B (25%) &rarr; 10
+  * C (15%) &rarr; 110
+  * D (10%) &rarr; 111
+* Notice: no codeword is the beginning of another codeword.
+* `0 | 10 | 110 | 111`
+* This is a **PREFIX CODE**.
+* The receiver can decode the bit stream without guessing.
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 3*<br>
+**Slide 30**<br>
+*Information Theory & Coding*<br>
+**3. What is a prefix?**
+
+* "Prefix" simply means the beginning of a word/codeword.
+* **APP** is a prefix of **APPLE**
+* For a prefix code: no complete codeword is the prefix of another.
+* **NOT a prefix code** example:
+  * A &rarr; 0
+  * B &rarr; 01
+* If A = 0 and B = 01, receiving 01 creates ambiguity: did the 0 finish A, or is it part of B?
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 4*<br>
+**Slide 31**<br>
+*Information Theory & Coding*<br>
+**4. Kraft inequality &mdash; the easy idea**
+
+* It answers: "Can these codeword lengths fit into a prefix-code tree?"
+* For binary codes:
+* $$\sum 2^{-l_i} \le 1$$
+* $l_i$ = length of the $i$-th codeword
+* 1-bit code uses 1/2
+* 2-bit code uses 1/4
+* 3-bit code uses 1/8
+* Total space = 1
+* Think of the inequality as a "space check" for the binary code tree.
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 5*<br>
+**Slide 32**<br>
+*Information Theory & Coding*<br>
+**5. Kraft example &mdash; possible**
+
+* Lengths: 1, 2, 3, 3
+* A: 1 bit, B: 2 bits, C: 3 bits, D: 3 bits
+* $$2^{-1} + 2^{-2} + 2^{-3} + 2^{-3} = 1$$
+* Because the result is $\le 1$:
+* **A prefix code IS possible &check;**
+* Example: 0, 10, 110, 111
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 6*<br>
+**Slide 33**<br>
+*Information Theory & Coding*<br>
+**6. Kraft example &mdash; impossible**
+
+* Lengths: 1, 1, 2
+* 1 bit, 1 bit, 2 bits
+* $$2^{-1} + 2^{-1} + 2^{-2} = 1.25$$
+* $$1.25 > 1$$ &rarr; too much code-space is being demanded.
+* **No binary prefix code can have these lengths &cross;**
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 7*<br>
+**Slide 34**<br>
+*Information Theory & Coding*<br>
+**7. Now: how good can compression become?**
+
+* This is where entropy enters.
+* Imagine a source producing A, B, C, D with different probabilities.
+* A: 0.50, B: 0.25, C: 0.125, D: 0.125
+* A good code gives short codewords to high-probability symbols.
+* A &rarr; 0 (1 bit)
+* B &rarr; 10 (2 bits)
+* C &rarr; 110 (3 bits)
+* D &rarr; 111 (3 bits)
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 8*<br>
+**Slide 35**<br>
+*Information Theory & Coding*<br>
+**8. Average code length**
+
+* We care about the average number of bits per symbol.
+* $$L = \sum p_i l_i$$
+* For our example:
+* $$L = 0.5(1) + 0.25(2) + 0.125(3) + 0.125(3)$$
+* $$L = 1.75 \text{ bits/symbol}$$
+* So we use 1.75 bits per symbol on average &mdash; not 3 bits every time.
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 9*<br>
+**Slide 36**<br>
+*Information Theory & Coding*<br>
+**9. Entropy: the theoretical minimum**
+
+* Entropy tells us the average information produced by the source.
+* $$H(X) = - \sum p(x) \log_2 p(x)$$
+* For our example, the entropy is:
+* $$H(X) = 1.75 \text{ bits/symbol}$$
+* Meaning: in the long run, we cannot losslessly represent this source using fewer than 1.75 bits/symbol on average.
+* **Entropy = the compression limit**
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 10*<br>
+**Slide 37**<br>
+*Information Theory & Coding*<br>
+**10. Source Coding Theorem**
+
+* The big result to remember
+* $$H(X) \le L < H(X) + 1$$
+* For a good binary lossless source code:
+* **$H(X)$**: Theoretical minimum
+* **$L$**: Actual average length
+* Good code: $L$ is close to $H$
+* You cannot beat entropy without losing information.
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 11*<br>
+**Slide 38**<br>
+*Information Theory & Coding*<br>
+**11. Kraft + Entropy + Source Coding**
+
+* See how the pieces fit together
+* **SOURCE**: symbols + probabilities
+* **ENTROPY**: theoretical limit
+* **CODE**: short/long words
+* **KRAFT**: checks code lengths
+* **L**: average length
+* The target relationship:
+* $$H(X) \le L < H(X)+1$$
+* Kraft asks "Can I build it?" | Source coding asks "How close can I get to the limit?"
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose | 12*<br>
+**Slide 39**<br>
+*Information Theory & Coding*<br>
+**12. One-minute recap**
+
+| KRAFT | ENTROPY | SOURCE CODING |
+| --- | --- | --- |
+| Can I build this prefix code? | What is the theoretical limit? | How close can I get? |
+
+* Remember:
+* Kraft = "Can it fit?"
+* Entropy = "What is the limit?"
+* Source coding theorem = "A good code gets close to the limit."
+
+*Indian Institute of Technology, Delhi | Kraft Inequality & Source Coding | Ranjan Bose*<br>
+**Slide 40**<br>
+*Information Theory & Coding*<br>
+**2. The algorithm**
+
+* Five steps, repeated until one symbol remains
+* **1.** Arrange all source symbols in decreasing order of probability.
+* **2.** Take the two lowest-probability symbols and tie them together into one combined node.
+* **3.** Add their probabilities; write the sum on the combined node, and re-sort.
+* **4.** Repeat steps 2–3 until only one node is left — its probability must be 1.
+* **5.** Label every split with a 0 (one branch) and a 1 (the other). Read root &rarr; leaf to get each codeword.
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 4*<br>
+**Slide 41**<br>
+*Information Theory & Coding*<br>
+**3. Back to our A, B, C, D source**
+
+* Same source we used for entropy and the source coding theorem
+
+| A | B | C | D |
+| --- | --- | --- | --- |
+| 0.50 | 0.25 | 0.125 | 0.125 |
+
+* $H(X) = 1.75$ bits/symbol (already computed earlier)
+* **Question**: does Huffman's mechanical procedure rediscover that same optimal code?
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 5*<br>
+**Slide 42**<br>
+*Information Theory & Coding*<br>
+**4. Combine step by step**
+
+* Always tie together the two smallest
+* **1.** Sorted: A=0.50 B=0.25 C=0.125 D=0.125
+* **2.** Combine the two smallest, C + D = 0.125 + 0.125 = 0.25
+* **3.** Now: A=0.50 B=0.25 {CD}=0.25 &mdash; combine B + {CD} = 0.50
+* **4.** Now: A=0.50 {BCD}=0.50 &mdash; combine to close the tree: 1.00
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 6*<br>
+**Slide 43**<br>
+*Information Theory & Coding*<br>
+**5. Read the tree &rarr; codewords**
+
+* Root to leaf, 0 on one branch, 1 on the other
+  * A &rarr; 0 (1 bit)
+  * B &rarr; 10 (2 bits)
+  * C &rarr; 110 (3 bits)
+  * D &rarr; 111 (3 bits)
+* $L = H(X) = 1.75$ bits/symbol &rarr; $\eta = 1$
+* Exactly the code we already knew was optimal &mdash; Huffman found it mechanically, with no guessing.
+* This happens because every probability here is a power of &frac12; &mdash; a special "D-adic" source.
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 7*<br>
+**Slide 44**<br>
+*Information Theory & Coding*<br>
+**6. A more realistic source**
+
+* Seven symbols &mdash; probabilities are not neat powers of &frac12; this time
+
+| Symbol | $x_1$ | $x_2$ | $x_3$ | $x_4$ | $x_5$ | $x_6$ | $x_7$ |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Probability | 0.37 | 0.33 | 0.16 | 0.07 | 0.04 | 0.02 | 0.01 |
+
+* Equiprobable would need 3 bits/symbol (since $2^3 = 8 \ge 7$). Can Huffman beat that on average?
+* Arrange in decreasing order &mdash; exactly as given here &mdash; and start combining from the bottom.
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 8*<br>
+**Slide 45**<br>
+*Information Theory & Coding*<br>
+**7. Build the Huffman tree**
+
+* Repeatedly combine the two smallest nodes
+* **1.** 0.01 + 0.02 = 0.03
+* **2.** 0.03 + 0.04 = 0.07 (now two nodes both read 0.07)
+* **3.** 0.07 + 0.07 = 0.14
+* **4.** 0.14 + 0.16 = 0.30
+* **5.** 0.30 + 0.33 = 0.63
+* **6.** 0.63 + 0.37 = 1.00 &mdash; tree complete
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 9*<br>
+**Slide 46**<br>
+*Information Theory & Coding*<br>
+**8. Codewords & efficiency**
+
+* Reading the tree back out
+
+| Symbol | Prob. | Self-info (bits) | Codeword | Length |
+| --- | --- | --- | --- | --- |
+| $x_1$ | 0.37 | 1.43 | 0 | 1 |
+| $x_2$ | 0.33 | 1.60 | 10 | 2 |
+| $x_3$ | 0.16 | 2.64 | 110 | 3 |
+| $x_4$ | 0.07 | 3.84 | 1110 | 4 |
+| $x_5$ | 0.04 | 4.64 | 11110 | 5 |
+| $x_6$ | 0.02 | 5.64 | 111110 | 6 |
+| $x_7$ | 0.01 | 6.64 | 111111 | 6 |
+
+* $H(X) = 2.1152$ bits, $L = 2.1700$ bits, $\eta = 0.9747$
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 10*<br>
+**Slide 47**<br>
+*Information Theory & Coding*<br>
+**9. Why isn't $\eta$ exactly 1 here?**
+
+* Self-information rarely lands on a whole number
+* Self-information values: 1.43, 1.60, 2.64, 3.84, 4.64, 5.64, 6.64 bits &mdash; none are integers.
+* But codeword lengths **MUST** be whole numbers.
+* Huffman rounds each symbol to the nearest achievable length &mdash; a little bit is always "wasted" unless probabilities are exact powers of &frac12;.
+* That's exactly why our earlier A,B,C,D source (all powers of &frac12;) reached $\eta = 1$, and this one doesn't.
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 11*<br>
+**Slide 48**<br>
+*Information Theory & Coding*<br>
+**10. Huffman codes aren't unique**
+
+* Ties in probability can be broken either way
+
+| Tie-break A | Tie-break B |
+| --- | --- |
+| 0, 10, 011, 0110, 01110, 011110, 011111 | 1, 00, 011, 0101, 01001, 010000, 010001 |
+
+* Both are valid prefix codes. Both give the SAME $L$ and the SAME $\eta$.
+* Only the codeword lengths matter for efficiency &mdash; which symbol gets which exact bit pattern doesn't.
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 12*<br>
+**Slide 49**<br>
+*Information Theory & Coding*<br>
+**11. Extended Huffman &mdash; coding in blocks**
+
+* Why code one symbol at a time?
+* Group $B$ symbols into a super-symbol and Huffman-code the blocks instead.
+* $$H(X) \le L / B < H(X) + 1/B$$
+
+| B | $\eta$ |
+| --- | --- |
+| 1 | 0.9743 |
+| 2 | 0.9812 |
+| large | &rarr; 1 |
+
+* The gap to entropy shrinks as $1/B$ &mdash; at the cost of an exponentially bigger Huffman tree.
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 13*<br>
+**Slide 50**<br>
+*Information Theory & Coding*<br>
+**12. One-minute recap**
+
+| ALGORITHM | WORKED EXAMPLES | BLOCKS |
+| --- | --- | --- |
+| Combine the two smallest, repeat | D-adic source &rarr; $\eta=1$; real source &rarr; $\eta\approx0.97$ | Coding $B$ symbols at once pushes $\eta \to 1$ |
+
+* Huffman = build the tree from the bottom up, smallest first.
+* It's optimal among prefix codes &mdash; but the exact codewords are not unique.
+* Coding in blocks (Extended Huffman) trades tree size for efficiency closer to $H(X)$.
+
+*Indian Institute of Technology, Delhi | Huffman Coding | Ranjan Bose | 14*
+</script>
+
+<script>
+function parseMarkdownToHTML(chunk) {
+    let html = '<div class="slide-content">';
+    const lines = chunk.split('\n');
+    let inList = false;
+    let inTable = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line || line === '---') continue;
+
+        // Multiline Footer extraction (Ignored)
+        let strippedLine = line.replace(/^\*\s*/, '').trim();
+        if (strippedLine === 'Indian Institute of Technology, Delhi' || strippedLine.startsWith('Ranjan Bose, Department of')) {
+            window._lastWasIITD = (strippedLine === 'Indian Institute of Technology, Delhi');
+            continue;
+        }
+        if (window._lastWasIITD && strippedLine.match(/^\d+$/)) {
+            continue;
+        }
+        window._lastWasIITD = false;
+
+        // Single line Footer extraction (Ignored)
+        if (line.includes('Indian Institute of Technology, Delhi') && line.includes('Ranjan Bose')) {
+            if(inList) { html += '</ul>'; inList = false; }
+            if(inTable) { html += '</table>'; inTable = false; }
+            // Ignore the footer text entirely
+            continue;
+        }
+
+        // Headers
+        if (line.startsWith('**') && line.endsWith('**') && !line.includes('Slide')) {
+            if(inList) { html += '</ul>'; inList = false; }
+            if(inTable) { html += '</table>'; inTable = false; }
+            html += '<h3>' + line.replace(/\*\*/g, '') + '</h3>';
+            continue;
+        }
+
+        // Math blocks
+        if (line.startsWith('$$') && line.endsWith('$$')) {
+            if(inList) { html += '</ul>'; inList = false; }
+            if(inTable) { html += '</table>'; inTable = false; }
+            html += '<div class="math-block">' + line + '</div>';
+            continue;
+        }
+
+        // Blockquotes
+        if (line.startsWith('> ')) {
+            if(inList) { html += '</ul>'; inList = false; }
+            if(inTable) { html += '</table>'; inTable = false; }
+            
+            let content = line.substring(2);
+            content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            content = content.replace(/__([^_]+)__/g, '<u>$1</u>');
+            html += '<blockquote>' + content + '</blockquote>';
+            continue;
+        }
+
+        // Tables
+        if (line.startsWith('|')) {
+            if(inList) { html += '</ul>'; inList = false; }
+            if (!inTable) { html += '<table class="data-table">'; inTable = true; }
+            if (line.includes('---')) continue; 
+            
+            let cells = line.split('|').filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+            
+            let isHeader = false;
+            if (i + 1 < lines.length && lines[i+1].trim().startsWith('|') && lines[i+1].includes('---')) {
+                isHeader = true;
+            }
+
+            html += '<tr>' + cells.map(c => {
+                let cText = c.trim();
+                cText = cText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                cText = cText.replace(/__([^_]+)__/g, '<u>$1</u>');
+                return isHeader ? '<th>' + cText + '</th>' : '<td>' + cText + '</td>';
+            }).join('') + '</tr>';
+            continue;
+        } else {
+            if (inTable) { html += '</table>'; inTable = false; }
+        }
+
+        // Lists
+        if (line.startsWith('* ')) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            let content = line.substring(2);
+            
+            if (content.startsWith('$$') && content.endsWith('$$')) {
+                html += '</ul><div class="math-block">' + content + '</div><ul>';
+                continue;
+            }
+            if (content.startsWith('Diagram ')) {
+                html += '</ul><div class="diagram">' + content + '</div><ul>';
+                continue;
+            }
+
+            content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            content = content.replace(/__([^_]+)__/g, '<u>$1</u>');
+            content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            html += '<li>' + content + '</li>';
+            continue;
+        }
+
+        // Paragraphs
+        if(inList) { html += '</ul>'; inList = false; }
+        
+        line = line.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        line = line.replace(/__([^_]+)__/g, '<u>$1</u>');
+        line = line.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        
+        html += '<p>' + line + '</p>';
+    }
+
+    if(inList) html += '</ul>';
+    if(inTable) html += '</table>';
+    
+    if (!html.includes('<div class="footer">')) {
+        html += '</div>';
+    }
+
+    return html;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const rawData = document.getElementById('raw-data').textContent;
+    const slideChunks = rawData.split(/\*\*Slide [^*]+\*\*/);
+    slideChunks.shift(); 
+
+    const slidesContainer = document.getElementById('slides-container');
+    let currentSlide = 0;
+    const totalSlides = slideChunks.length;
+
+    const slideData = [];
+    slideChunks.forEach((chunk, index) => {
+        const slideDiv = document.createElement('div');
+        slideDiv.className = 'slide' + (index === 0 ? ' active' : '');
+        slideDiv.id = 'slide-' + index;
+        slidesContainer.appendChild(slideDiv);
+        slideData.push({ chunk: chunk, parsed: false, dom: slideDiv });
+    });
+
+    const selectJump = document.getElementById('slide-jump');
+    slideChunks.forEach((_, idx) => {
+        let opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = 'Slide ' + (idx + 1);
+        selectJump.appendChild(opt);
+    });
+
+    const cached = localStorage.getItem('itc_slide');
+    if (cached !== null) currentSlide = parseInt(cached);
+
+        window.toggleTheme = function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('itc_theme', newTheme);
+        document.getElementById('theme-btn').innerText = newTheme === 'dark' ? '☀️' : '🌙';
+    };
+
+    const savedTheme = localStorage.getItem('itc_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-btn').innerText = '☀️';
+    }
+
+    window.jumpTo = function(idx) {
+        if (idx >= 0 && idx < totalSlides) {
+            currentSlide = idx;
+            updateControls();
+        }
+    };
+
+    window.updateControls = function() {
+        localStorage.setItem('itc_slide', currentSlide);
+        document.getElementById('prevBtn').disabled = currentSlide === 0;
+        document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        document.getElementById('page-info').innerText = 'Slide ' + (currentSlide + 1) + ' / ' + totalSlides;
+        
+        selectJump.value = currentSlide;
+        document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+            btn.classList.remove('active');
+            if (currentSlide < 22 && btn.id === 'tab-0') btn.classList.add('active');
+            else if (currentSlide >= 22 && currentSlide < 30 && btn.id === 'tab-1') btn.classList.add('active');
+            else if (currentSlide >= 30 && currentSlide < 43 && btn.id === 'tab-4') btn.classList.add('active');
+            else if (currentSlide >= 43 && btn.id === 'tab-2') btn.classList.add('active');
+        });
+
+        document.querySelectorAll('.slide').forEach((el, idx) => {
+            el.classList.toggle('active', idx === currentSlide);
+        });
+        
+        const currentData = slideData[currentSlide];
+        if (!currentData.parsed) {
+            currentData.dom.innerHTML = parseMarkdownToHTML(currentData.chunk);
+            currentData.parsed = true;
+        }
+        
+        if (window.MathJax) {
+            MathJax.typesetPromise([currentData.dom]);
+        }
+    };
+
+    window.prevSlide = function() {
+        if (currentSlide > 0) {
+            currentSlide--;
+            updateControls();
+        }
+    };
+
+    window.nextSlide = function() {
+        if (currentSlide < totalSlides - 1) {
+            currentSlide++;
+            updateControls();
+        }
+    };
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowRight') nextSlide();
+        if(e.key === 'ArrowLeft') prevSlide();
+    });
+
+    updateControls();
+});
+</script>
+</body>
+</html>
+
+
+
+

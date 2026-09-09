@@ -1,0 +1,3682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Information Theory Notes</title>
+<style>
+  :root {
+    --bg: #f4f7f6;
+    --surface: #fff;
+    --text: #1e293b;
+    --text-muted: #334155;
+    --border: #e2e8f0;
+    --accent: #2563eb;
+    --tab-bg: #f8fafc;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+  .container { display: flex; height: 100vh; width: 100vw; background: var(--surface); }
+  
+  .tabs { width: 320px; min-width: 320px; background: var(--tab-bg); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .tab-btn { text-align: left; background: transparent; color: var(--text-muted); padding: 10px 14px; border-radius: 6px; font-size: 0.95em; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; line-height: 1.3; }
+  .tab-btn:hover { background: #e2e8f0; }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+  
+  #content { flex: 1; overflow-y: auto; padding: 40px; background: var(--surface); }
+  
+  .tab-content { display: none; animation: fadeIn 0.3s; max-width: 1100px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  h1, h2, h3 { color: #111; margin-top: 1.5em; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+  blockquote { border-left: 4px solid var(--accent); background: #eff6ff; padding: 15px 20px; margin: 25px 0; border-radius: 0 8px 8px 0; font-size: 1.1em; }
+  table { border-collapse: collapse; width: 100%; margin: 20px 0; font-size: 1.05em; }
+  th, td { border: 1px solid #cbd5e1; padding: 12px 18px; text-align: left; }
+  th { background-color: var(--tab-bg); font-weight: 700; }
+  tr:nth-child(even) { background: #f8fafc; }
+  img { max-width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 8px; box-shadow: 0 4px 12px var(--shadow); }
+  code { background-color: #f1f5f9; padding: 3px 6px; border-radius: 4px; font-family: monospace; font-size: 0.95em; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['$$', '$$']]
+      }
+    };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs" id="tabs-container">
+            <a href="index.html" class="tab-btn" style="text-decoration: none; text-align: center; margin-bottom: 15px; color: var(--accent); border: 1px solid var(--accent);">Go to Exam Paging Mode</a>
+        </div>
+        <div id="content">Loading...</div>
+    <pre id="raw-markdown" style="display:none;">
+
+Got you DJ. From now on I'm bounded only to the text you gave. My job is to make you build intuition from scratch, not add outside theory unless the slide itself implies it.
+Think of this as ECE exam mode: concept first, then why, then formula, then examples.
+# Information Theory (Slides 1–22) — Lucidified Notes
+> Core Idea of the whole chapter:
+> Information is simply a way of measuring how much uncertainty gets reduced when something happens.
+## Slide 1 — What is this chapter about?
+This chapter has four connected ideas.
+* Uncertainty and Information
+Why some events feel "more informative" than others.
+* Self Information
+Information contained in a single event.
+* Mutual Information
+How much one event tells us about another.
+* Average Mutual Information
+Average information shared between two random variables.
+Think of it as climbing a staircase.
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%22140%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20640%20140%22%20width%3D%22100%25%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20x%3D%2220%22%20y%3D%2290%22%20width%3D%22120%22%20height%3D%2230%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22170%22%20y%3D%2270%22%20width%3D%22120%22%20height%3D%2250%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22320%22%20y%3D%2250%22%20width%3D%22140%22%20height%3D%2270%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22490%22%20y%3D%2230%22%20width%3D%22130%22%20height%3D%2290%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Ctext%20x%3D%2280%22%20y%3D%22108%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3EUncertainty%3C%2Ftext%3E%3Ctext%20x%3D%22230%22%20y%3D%2298%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3ESelf%20Info%3C%2Ftext%3E%3Ctext%20x%3D%22390%22%20y%3D%2288%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3EMutual%20Info%3C%2Ftext%3E%3Ctext%20x%3D%22555%22%20y%3D%2278%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3EAverage%20MI%3C%2Ftext%3E%3C%2Fsvg%3E)
+## Slides 2–4 — Why does uncertainty become information?
+The slides compare three sentences.
+
+| Statement | Probability | Information |
+| --- | --- | --- |
+| Sun rises in East | Almost 1 | Almost none |
+| Phone rings next hour | Medium | Medium |
+| Snow in Delhi | Very low | Very high |
+### Why?
+Imagine someone tells you:
+> "The sun will rise tomorrow."
+Your reaction?
+> "Obviously."
+Nothing new.
+Now someone says,
+> "It will snow in Delhi."
+Now you're surprised.
+That surprise is exactly what these slides call information.
+## Golden Rule
+> Less probable event → More information.
+Why?
+Because before the event happened, there was much more uncertainty.
+### Visual intuition
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%22170%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20700%20170%22%20width%3D%22100%25%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cline%20x1%3D%2260%22%20y1%3D%22130%22%20x2%3D%22660%22%20y2%3D%22130%22%20stroke%3D%22currentColor%22%20stroke-width%3D%223%22%2F%3E%3Ctext%20x%3D%2260%22%20y%3D%22150%22%20font-size%3D%2214%22%3EProbability%20%3D%201%3C%2Ftext%3E%3Ctext%20x%3D%22610%22%20y%3D%22150%22%20font-size%3D%2214%22%3EProbability%20%3D%200%3C%2Ftext%3E%3Ccircle%20cx%3D%22110%22%20cy%3D%22130%22%20r%3D%2210%22%20fill%3D%22currentColor%22%2F%3E%3Ccircle%20cx%3D%22350%22%20cy%3D%22130%22%20r%3D%2210%22%20fill%3D%22currentColor%22%2F%3E%3Ccircle%20cx%3D%22610%22%20cy%3D%22130%22%20r%3D%2210%22%20fill%3D%22currentColor%22%2F%3E%3Ctext%20x%3D%2290%22%20y%3D%2285%22%20font-size%3D%2214%22%3ESun%20rises%3C%2Ftext%3E%3Ctext%20x%3D%22320%22%20y%3D%2265%22%20font-size%3D%2214%22%3EPhone%20rings%3C%2Ftext%3E%3Ctext%20x%3D%22560%22%20y%3D%2245%22%20font-size%3D%2214%22%3EDelhi%20snow%3C%2Ftext%3E%3Cpath%20d%3D%22M110%2095%20C150%2080%2C220%2075%2C300%2070%22%20stroke%3D%22currentColor%22%20fill%3D%22none%22%2F%3E%3Cpath%20d%3D%22M350%2075%20C420%2060%2C500%2045%2C580%2035%22%20stroke%3D%22currentColor%22%20fill%3D%22none%22%2F%3E%3Ctext%20x%3D%2260%22%20y%3D%2225%22%20font-size%3D%2215%22%3EAs%20probability%20decreases%2C%20information%20increases.%3C%2Ftext%3E%3C%2Fsvg%3E)
+## Slide 4 — Self Information
+Now the slides convert intuition into mathematics.
+For an event
+X=xiX=x_iX=xi
+Self-information is
+I(xi)=log(1P(xi))=−logP(xi)I(x_i)=\log\left(\frac1{P(x_i)}\right)=-\log P(x_i)I(xi)=log(P(xi)1)=−logP(xi)
+This formula measures the information contained in one specific event.
+## Break the formula
+Suppose
+P=0.5
+Then
+$$I=-\log_2(0.5)=1\text{ bit}$$
+Suppose
+$$P=0.25$$
+Then
+$$I=-\log_2(0.25)=2\text{ bits}$$
+Notice something beautiful.
+
+| Probability | Self Information |
+| --- | --- |
+| 1 | 0 bits |
+| 0.5 | 1 bit |
+| 0.25 | 2 bits |
+| 0.125 | 3 bits |
+Every time probability halves,
+information increases by one bit.
+### Why "bit"?
+The slide says:
+* Base 2 → bits
+* Base e → nats
+For exams, unless stated otherwise, use base 2.
+## Slides 5–7 — Fair Coin Examples
+## Example 1
+A fair coin.
+P(H)=P(T)=0.5P(H)=P(T)=0.5P(H)=P(T)=0.5
+Information of Head:
+I=−log2(0.5)=1 bitI=-\log_2(0.5)=1\text{ bit}I=−log2(0.5)=1 bit
+Same for Tail.
+### Why exactly one bit?
+Because only two possibilities exist.
+One binary digit is enough.
+
+| Coin | Binary |
+| --- | --- |
+| Head | 1 |
+| Tail | 0 |
+## Example 2 — Memoryless Source
+The slide introduces an important word.
+### Memoryless
+Each toss does not remember previous tosses.
+Every toss is independent.
+Suppose we observe 3 tosses.
+Possible outcomes:
+* HHH
+* HHT
+* HTH
+* HTT
+* THH
+* THT
+* TTH
+* TTT
+There are
+$$2^3=8$$
+possible sequences.
+Each has probability
+$$2^{-3}=\frac18$$
+Information becomes
+$$I=-\log_2\left(\frac18\right)=3\text{ bits}$$
+Notice
+3 tosses require 3 bits.
+Exactly matching intuition.
+## Example 3 — Two Independent Sources
+Source A gives one bit.
+Source B gives one bit.
+Together they form Source C.
+Since they're independent,
+P(C)=P(A)P(B)=0.5×0.5=0.25P(C)=P(A)P(B)=0.5\times0.5=0.25P(C)=P(A)P(B)=0.5×0.5=0.25
+Information becomes
+I(C)=−log2(0.25)=2 bitsI(C)=-\log_2(0.25)=2\text{ bits}I(C)=−log2(0.25)=2 bits
+### Big observation
+Two independent 1-bit sources
+become
+2 bits.
+Nothing mysterious happened.
+Information simply added.
+## Slide 8 — Why do we use logarithm?
+This slide answers a famous question.
+Without logarithm,
+independent probabilities multiply.
+0.5×0.5=0.250.5\times0.5=0.250.5×0.5=0.25
+But information should add.
+1+1=21+1=21+1=2
+The logarithm converts multiplication into addition.
+log(ab)=loga+logb\log(ab)=\log a+\log blog(ab)=loga+logb
+This is exactly why Shannon chose logarithms.
+### Memory Trick
+> Probability multiplies.
+> Log converts multiplication into addition.
+> Therefore information adds.
+This is one of the most important ideas in the chapter.
+## Slides 9–13 — Mutual Information
+Until now,
+we measured information inside one event.
+Now we ask a new question.
+> If I observe Y, how much does it tell me about X?
+This is Mutual Information.
+## Example intuition
+Suppose
+* X = What was transmitted
+* Y = What was received
+After seeing Y,
+can we guess X better?
+That improvement is mutual information.
+## Two extreme cases
+### Case 1 — Independent
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%2270%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20260%2070%22%20width%3D%22260%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2245%22%20cy%3D%2235%22%20r%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Ccircle%20cx%3D%22215%22%20cy%3D%2235%22%20r%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cline%20x1%3D%2263%22%20y1%3D%2235%22%20x2%3D%22197%22%20y2%3D%2235%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-dasharray%3D%226%206%22%2F%3E%3Ctext%20x%3D%2245%22%20y%3D%2240%22%20text-anchor%3D%22middle%22%20font-size%3D%2216%22%3EX%3C%2Ftext%3E%3Ctext%20x%3D%22215%22%20y%3D%2240%22%20text-anchor%3D%22middle%22%20font-size%3D%2216%22%3EY%3C%2Ftext%3E%3C%2Fsvg%3E)
+If
+XXX
+and
+YYY
+are unrelated,
+observing Y changes nothing.
+Mutual information becomes
+I(X;Y)=0.I(X;Y)=0.I(X;Y)=0.
+### Case 2 — Completely dependent
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%2270%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20260%2070%22%20width%3D%22260%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2245%22%20cy%3D%2235%22%20r%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Ccircle%20cx%3D%22215%22%20cy%3D%2235%22%20r%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cline%20x1%3D%2263%22%20y1%3D%2235%22%20x2%3D%22197%22%20y2%3D%2235%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2245%22%20y%3D%2240%22%20text-anchor%3D%22middle%22%20font-size%3D%2216%22%3EX%3C%2Ftext%3E%3Ctext%20x%3D%22215%22%20y%3D%2240%22%20text-anchor%3D%22middle%22%20font-size%3D%2216%22%3EY%3C%2Ftext%3E%3C%2Fsvg%3E)
+If Y completely reveals X,
+then observing Y removes all uncertainty.
+Mutual information becomes maximum.
+## Slide 11 — Formula
+The definition is
+I(xi;yj)=log(P(xi∣yj)P(xi))I(x_i;y_j)=\log\left(\frac{P(x_i|y_j)}{P(x_i)}\right)I(xi;yj)=log(P(xi)P(xi∣yj))
+Read it in words.
+> Information equals
+> "New probability after observing Y"
+> divided by
+> "Old probability before observing Y."
+### Interpretation
+If observing Y makes X much more likely,
+the ratio becomes large.
+Large ratio
+→ Large information.
+## Slide 12 — Symmetry
+The slide proves
+I(xi;yj)=I(yj;xi).I(x_i;y_j)=I(y_j;x_i).I(xi;yj)=I(yj;xi).
+Meaning
+Information shared between X and Y
+is identical in either direction.
+Think of it like this.
+If knowing your roll number identifies your exam paper,
+then your exam paper also identifies your roll number.
+The shared information is the same.
+## Slide 13 — Physical Meaning
+Two important conclusions.
+## Independent
+P(x∣y)=P(x)P(x|y)=P(x)P(x∣y)=P(x)
+Therefore
+I=0.I=0.I=0.
+No information gained.
+## Perfect dependence
+If
+P(x∣y)=1P(x|y)=1P(x∣y)=1
+then
+I=log1P(x).I=\log\frac1{P(x)}.I=logP(x)1.
+Wait.
+That's exactly the self-information formula.
+Meaning:
+> Perfect observation gives all the information that event originally contained.
+Beautiful connection.
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%22140%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20640%20140%22%20width%3D%22100%25%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20x%3D%2230%22%20y%3D%2230%22%20width%3D%22250%22%20height%3D%2280%22%20rx%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22360%22%20y%3D%2230%22%20width%3D%22250%22%20height%3D%2280%22%20rx%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M280%2070%20L360%2070%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cpolygon%20points%3D%22360%2C70%20344%2C62%20344%2C78%22%20fill%3D%22currentColor%22%2F%3E%3Ctext%20x%3D%22155%22%20y%3D%2260%22%20text-anchor%3D%22middle%22%20font-size%3D%2215%22%3EObserve%20Y%3C%2Ftext%3E%3Ctext%20x%3D%22155%22%20y%3D%2282%22%20text-anchor%3D%22middle%22%20font-size%3D%2213%22%3EPerfect%20dependence%3C%2Ftext%3E%3Ctext%20x%3D%22485%22%20y%3D%2260%22%20text-anchor%3D%22middle%22%20font-size%3D%2215%22%3EAll%20uncertainty%20gone%3C%2Ftext%3E%3Ctext%20x%3D%22485%22%20y%3D%2282%22%20text-anchor%3D%22middle%22%20font-size%3D%2213%22%3EMutual%20%3D%20Self%20information%3C%2Ftext%3E%3C%2Fsvg%3E)
+## Slides 14–18 — Binary Symmetric Channel (BSC)
+This is the first communication example.
+## Channel diagram
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%22180%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20640%20180%22%20width%3D%22100%25%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20x%3D%2240%22%20y%3D%2255%22%20width%3D%2290%22%20height%3D%2270%22%20rx%3D%2210%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22275%22%20y%3D%2245%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2210%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22510%22%20y%3D%2255%22%20width%3D%2290%22%20height%3D%2270%22%20rx%3D%2210%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Ctext%20x%3D%2285%22%20y%3D%2295%22%20text-anchor%3D%22middle%22%20font-size%3D%2215%22%3ETx%3C%2Ftext%3E%3Ctext%20x%3D%22320%22%20y%3D%2295%22%20text-anchor%3D%22middle%22%20font-size%3D%2215%22%3EChannel%3C%2Ftext%3E%3Ctext%20x%3D%22555%22%20y%3D%2295%22%20text-anchor%3D%22middle%22%20font-size%3D%2215%22%3ERx%3C%2Ftext%3E%3Cpath%20d%3D%22M130%2072%20L275%2072%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cpolygon%20points%3D%22275%2C72%20259%2C64%20259%2C80%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M365%2072%20L510%2072%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cpolygon%20points%3D%22510%2C72%20494%2C64%20494%2C80%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M130%20108%20C200%20145%2C230%20145%2C275%20108%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20fill%3D%22none%22%2F%3E%3Cpolygon%20points%3D%22275%2C108%20259%2C100%20259%2C116%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M365%20108%20C430%20145%2C460%20145%2C510%20108%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20fill%3D%22none%22%2F%3E%3Cpolygon%20points%3D%22510%2C108%20494%2C100%20494%2C116%22%20fill%3D%22currentColor%22%2F%3E%3Ctext%20x%3D%22200%22%20y%3D%2262%22%20text-anchor%3D%22middle%22%20font-size%3D%2213%22%3E0%20with%201%E2%88%92p%3C%2Ftext%3E%3Ctext%20x%3D%22200%22%20y%3D%22155%22%20text-anchor%3D%22middle%22%20font-size%3D%2213%22%3E1%20with%20p%3C%2Ftext%3E%3Ctext%20x%3D%22440%22%20y%3D%2262%22%20text-anchor%3D%22middle%22%20font-size%3D%2213%22%3E0%20with%201%E2%88%92p%3C%2Ftext%3E%3Ctext%20x%3D%22440%22%20y%3D%22155%22%20text-anchor%3D%22middle%22%20font-size%3D%2213%22%3E1%20with%20p%3C%2Ftext%3E%3C%2Fsvg%3E)
+The channel behaves like this.
+If we send 0
+* Receive 0 with probability 1−p1-p1−p
+* Receive 1 with probability ppp
+If we send 1
+* Receive 1 with probability 1−p1-p1−p
+* Receive 0 with probability ppp
+Notice:
+Both directions have the same error probability.
+That's why it's called Symmetric.
+## Output probabilities
+The slide calculates
+P(Y=0)=0.5P(Y=0)=0.5P(Y=0)=0.5
+and
+P(Y=1)=0.5.P(Y=1)=0.5.P(Y=1)=0.5.
+So even after passing through the channel,
+outputs remain equally likely.
+## Mutual Information inside BSC
+The slide gives
+$$I(0;0)=\log_2\big(2(1-p)\big).$$
+Now look at two extreme cases.
+### Case A — Perfect channel
+$$p=0$$
+Then
+$$I=\log_22=1\text{ bit}.$$
+Everything received is correct.
+One received bit completely reveals one transmitted bit.
+### Case B — Completely noisy channel
+p=0.5p=0.5p=0.5
+Then
+I=log21=0.I=\log_21=0.I=log21=0.
+Receiving a bit tells us nothing.
+The slide jokes that
+> Tossing a fair coin would work equally well.
+Exactly.
+The received bit has become meaningless.
+## How does the graph behave?
+The graph simply shows
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%22180%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20320%20180%22%20width%3D%22320%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cline%20x1%3D%2240%22%20y1%3D%22140%22%20x2%3D%22290%22%20y2%3D%22140%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cline%20x1%3D%2240%22%20y1%3D%22140%22%20x2%3D%2240%22%20y2%3D%2230%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M40%2040%20Q165%2090%20290%20140%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%223%22%2F%3E%3Ctext%20x%3D%2218%22%20y%3D%2245%22%20font-size%3D%2212%22%3E1%3C%2Ftext%3E%3Ctext%20x%3D%2212%22%20y%3D%22145%22%20font-size%3D%2212%22%3E0%3C%2Ftext%3E%3Ctext%20x%3D%2236%22%20y%3D%22160%22%20font-size%3D%2212%22%3E0%3C%2Ftext%3E%3Ctext%20x%3D%22275%22%20y%3D%22160%22%20font-size%3D%2212%22%3E0.5%3C%2Ftext%3E%3Ctext%20x%3D%22300%22%20y%3D%22145%22%20font-size%3D%2212%22%3Ep%3C%2Ftext%3E%3Ctext%20x%3D%228%22%20y%3D%2222%22%20font-size%3D%2212%22%3EI%3C%2Ftext%3E%3C%2Fsvg%3E)
+As
+ppp
+increases,
+mutual information decreases.
+More errors
+→ Less useful information.
+## Slides 19–20 — General Binary Channel
+Now the slide removes symmetry.
+Instead of one error probability,
+there are two.
+
+| Error | Probability |
+| --- | --- |
+| 0 becomes 1 | p0p_0p0 |
+| 1 becomes 0 | p1p_1p1 |
+So
+p0p_0p0
+and
+p1p_1p1
+can be different.
+The slide first finds
+P(Y=0)P(Y=0)P(Y=0)
+and
+P(Y=1)P(Y=1)P(Y=1)
+using probability addition.
+Then it substitutes them into
+I(0;0)=log2(2(1−p0)1−p0+p1).I(0;0)=\log_2\left(\frac{2(1-p_0)}{1-p_0+p_1}\right).I(0;0)=log2(1−p0+p12(1−p0)).
+Notice the pattern.
+It's still
+> Conditional probability divided by ordinary probability.
+Only the probabilities became more complicated.
+## Slide 21 — Average Mutual Information
+Until now,
+we looked at one pair of events.
+Example:
+> "0 was sent and 0 was received."
+But many different pairs can occur.
+So we average them.
+The definition is
+I(X;Y)=∑i∑jP(xi,yj)logP(xi,yj)P(xi)P(yj).I(X;Y)=\sum_i\sum_j P(x_i,y_j)\log\frac{P(x_i,y_j)}{P(x_i)P(y_j)}.I(X;Y)=i∑j∑P(xi,yj)logP(xi)P(yj)P(xi,yj).
+### Understand this slowly
+For every possible pair
+(xi,yj)(x_i,y_j)(xi,yj)
+1. Find its probability.
+2. Find its mutual information.
+3. Multiply them.
+4. Add everything.
+It's simply a weighted average.
+## Important property
+The slide states
+I(X;Y)≥0.I(X;Y)\ge0.I(X;Y)≥0.
+It becomes zero only when X and Y are independent.
+Meaning
+Average shared information
+can never be negative.
+## Slide 22 — Chapter Summary
+Everything connects beautifully.
+![](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20height%3D%22120%22%20style%3D%22color%3Argb\(255%2C%20255%2C%20255\)%22%20viewBox%3D%220%200%20760%20120%22%20width%3D%22100%25%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20x%3D%2210%22%20y%3D%2230%22%20width%3D%22150%22%20height%3D%2260%22%20rx%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22200%22%20y%3D%2230%22%20width%3D%22150%22%20height%3D%2260%22%20rx%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22390%22%20y%3D%2230%22%20width%3D%22160%22%20height%3D%2260%22%20rx%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Crect%20x%3D%22590%22%20y%3D%2230%22%20width%3D%22160%22%20height%3D%2260%22%20rx%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M160%2060%20L200%2060%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cpolygon%20points%3D%22200%2C60%20184%2C52%20184%2C68%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M350%2060%20L390%2060%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cpolygon%20points%3D%22390%2C60%20374%2C52%20374%2C68%22%20fill%3D%22currentColor%22%2F%3E%3Cpath%20d%3D%22M550%2060%20L590%2060%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%2F%3E%3Cpolygon%20points%3D%22590%2C60%20574%2C52%20574%2C68%22%20fill%3D%22currentColor%22%2F%3E%3Ctext%20x%3D%2285%22%20y%3D%2255%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3EUncertainty%3C%2Ftext%3E%3Ctext%20x%3D%2285%22%20y%3D%2273%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%3ELess%20probable%20%E2%86%92%20more%20info%3C%2Ftext%3E%3Ctext%20x%3D%22275%22%20y%3D%2255%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3ESelf%20Info%3C%2Ftext%3E%3Ctext%20x%3D%22275%22%20y%3D%2273%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%3ESingle%20event%3C%2Ftext%3E%3Ctext%20x%3D%22470%22%20y%3D%2255%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3EMutual%20Info%3C%2Ftext%3E%3Ctext%20x%3D%22470%22%20y%3D%2273%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%3EY%20tells%20us%20about%20X%3C%2Ftext%3E%3Ctext%20x%3D%22670%22%20y%3D%2255%22%20text-anchor%3D%22middle%22%20font-size%3D%2214%22%3EAverage%20MI%3C%2Ftext%3E%3Ctext%20x%3D%22670%22%20y%3D%2273%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%3EAverage%20over%20all%20pairs%3C%2Ftext%3E%3C%2Fsvg%3E)
+## One-page Memory Sheet (Exam Revision)
+
+| Concept | Formula | Meaning |
+| --- | --- | --- |
+| Self Information | I(x)=−logP(x)I(x)=-\log P(x)I(x)=−logP(x) | Information in one event |
+| Mutual Information | I(x;y)=logP(x∣y)P(x)I(x;y)=\log\frac{P(x|y)}{P(x)}I(x;y)=logP(x)P(x∣y) | Information gained about X after observing Y |
+| Symmetry | I(x;y)=I(y;x)I(x;y)=I(y;x)I(x;y)=I(y;x) | Same in both directions |
+| Average Mutual Information | ∑P(x,y)logP(x,y)P(x)P(y)\sum P(x,y)\log\frac{P(x,y)}{P(x)P(y)}∑P(x,y)logP(x)P(y)P(x,y) | Average shared information |
+| Independent events | I=0I=0I=0 | Observation gives no information |
+| Perfect dependence | I=Self InformationI=\text{Self Information}I=Self Information | Observation completely determines the event |
+| BSC ideal | p=0⇒1p=0\Rightarrow1p=0⇒1 bit | Perfect channel |
+| BSC useless | p=0.5⇒0p=0.5\Rightarrow0p=0.5⇒0 | Output gives no information |
+## The 5 Golden Intuitions to Remember
+1. Less probability = More information.
+2. Self-information measures one event's surprise.
+3. Independent sources add their information because logarithms turn multiplication into addition.
+4. Mutual information measures how much observing Y reduces uncertainty about X.
+5. Average mutual information is never negative and becomes zero only when X and Y are independent.
+Got you, DJ. **From here on, my job is to lucidify the text you give me — not expand the syllabus.** I’ll stay bounded to the concepts and relationships present in your slides, and build the understanding underneath them.
+# The Big Picture — Slides 1–26
+This whole section is basically answering one question:
+> **How can we represent source symbols using as few bits as possible, while still being able to decode them unambiguously?**
+The progression is:
+**Variable-length codes → Prefix condition → Kraft inequality → Source coding theorem → Efficiency → Huffman coding → Block coding**
+---
+## 1. Why Variable-Length Codes?
+Suppose a source produces symbols with different probabilities.
+Some symbols occur **very frequently**, while others are **rare**.
+It would be wasteful to give every symbol the same number of bits.
+Instead, we can do this:
+* Frequent symbol → **short codeword**
+* Rare symbol → **long codeword**
+For example:
+
+| Symbol | Probability | Code  |
+| ------ | ----------: | ----- |
+| A      |        high | `0`   |
+| B      |      medium | `10`  |
+| C      |         low | `110` |
+So instead of using the same number of bits for everyone, we save bits on average.
+That is the basic idea behind **variable-length coding**.
+But there is a problem:
+### How do we know where one codeword ends?
+Suppose:
+* A = `0`
+* B = `01`
+Now if we receive:
+`01`
+Is it:
+**B**
+or
+**A followed by something?**
+The code boundaries become ambiguous.
+This leads directly to **prefix codes**.
+---
+## 2. Prefix Code
+Look at Slide 3:
+
+| Letter | Codeword |
+| ------ | -------- |
+| A      | `00`     |
+| B      | `010`    |
+| C      | `011`    |
+| D      | `100`    |
+| E      | `101`    |
+| F      | `110`    |
+| G      | `1110`   |
+| H      | `1111`   |
+The important observation is:
+> **No codeword is the beginning of another codeword.**
+For example:
+* `00` → nobody else starts with `00`
+* `010` → nobody else has `010...`
+* `1110` → nobody else starts with `1110`
+Therefore, once the received bits match a complete codeword, we immediately know the symbol.
+### Example
+Suppose the received stream is:
+`0101111`
+Look at the beginning:
+`010` → B
+Remaining:
+`1111` → H
+So:
+**010 | 1111 → B H**
+No guessing is required.
+---
+## 3. Why "Prefix" Matters
+A **prefix** simply means:
+> The beginning portion of a sequence.
+For example:
+`1011`
+has prefixes:
+* `1`
+* `10`
+* `101`
+* `1011`
+So if we had:
+* A = `10`
+* B = `101`
+then `10` is a prefix of `101`.
+That violates the prefix condition.
+Therefore:
+> **Prefix condition = no complete codeword can be the beginning of another codeword.**
+Because of this property, the code is also called an:
+> **Instantaneous code**
+Why "instantaneous"?
+Because once the complete codeword arrives, we can **immediately decode it**.
+---
+## 4. Kraft Inequality
+Now the slides ask something slightly different.
+Instead of asking:
+> "Is this particular code a prefix code?"
+we ask:
+> **"Can a prefix code with these codeword lengths even exist?"**
+That's what **Kraft inequality** tells us.
+For a binary prefix code:
+$$
+\boxed{\sum_{k=1}^{L}2^{-n_k}\leq1}
+$$
+where \(n_k\) is the length of the \(k\)-th codeword.
+For an alphabet of size \(M\):
+$$
+\boxed{\sum_{k=1}^{L}M^{-n_k}\leq1}
+$$
+### What should you remember?
+Don't just memorize the equation.
+Its meaning is:
+> **The proposed codeword lengths must satisfy this inequality for a prefix code to exist.**
+And importantly, the slide says this condition is **necessary and sufficient**.
+So:
+$$
+\boxed{\text{Kraft condition satisfied} \iff \text{prefix code can exist}}
+$$
+for the stated setting.
+---
+## 5. Source Coding Theorem
+Now we reach the central result.
+Suppose the source has entropy:
+$$
+H(X)
+$$
+and we construct a prefix code.
+Let its average number of bits per source symbol be:
+$$
+\bar R
+$$
+The source coding theorem says we can construct a prefix code such that:
+$$
+\boxed{H(X)\leq\bar R<H(X)+1}
+$$
+This is extremely important.
+It says:
+> The average number of bits required by a suitable prefix code can be made **at least the entropy**, but **less than entropy + 1 bit**.
+So entropy acts like a fundamental lower bound.
+---
+## 6. Why Can't We Go Below Entropy?
+Suppose:
+$$
+H(X)=2.1
+$$
+Then you cannot have a prefix code whose average length is:
+$$
+\bar R=1.8
+$$
+because:
+$$
+\bar R\ge H(X)
+$$
+The best you could theoretically approach is around:
+$$
+2.1\text{ bits/symbol}
+$$
+And the theorem guarantees a code with:
+$$
+2.1\le\bar R<3.1
+$$
+So if you actually find:
+$$
+\bar R=H(X)
+$$
+then you've hit the lower bound.
+That's why Slide 7 says:
+> If \(\bar R=H(X)\), stop searching — you cannot do better.
+---
+## 7. Connection Between Entropy and Uncertainty
+The slides then make an important conceptual statement:
+> **Higher entropy → higher average number of bits required.**
+Why?
+Entropy represents the uncertainty of the source.
+More uncertainty means the source is harder to represent efficiently.
+So, within this context:
+$$
+\boxed{\text{Higher uncertainty}\Rightarrow\text{higher entropy}\Rightarrow\text{more bits on average}}
+$$
+---
+## 8. Efficiency of a Code
+The slides define:
+$$
+\boxed{\eta=\frac{H(X)}{R}}
+$$
+Here \(R\) represents the average code length.
+Think of it as:
+> **How close is our actual average representation to the theoretical minimum?**
+If:
+$$
+H(X)=2
+$$
+and:
+$$
+R=2.2
+$$
+then:
+$$
+\eta=\frac{2}{2.2}=0.9091
+$$
+So efficiency is about:
+$$
+90.91\%
+$$
+The source coding theorem gives:
+$$
+R\ge H(X)
+$$
+Therefore:
+$$
+\boxed{\eta\le1}
+$$
+The closer \(\eta\) is to 1, the more efficient the code.
+---
+## 9. Why This Gives Compression
+Suppose every symbol was originally represented using 8 bits.
+But after source coding, we need only:
+$$
+2.2\text{ bits/symbol on average}
+$$
+Then we are representing the same source information using fewer bits.
+That is **compression**.
+Hence the slide connects:
+**Efficient representation → fewer bits → compression**
+And source coding can be applied to things such as:
+* speech
+* text
+* images
+* video
+---
+## 10. Huffman Coding
+Now comes the practical question:
+> **How do we actually construct such an efficient variable-length prefix code?**
+The slides introduce:
+## Huffman Coding
+Huffman coding uses the source probabilities.
+Its goal is:
+> Construct a prefix code with minimum average number of bits.
+So Huffman coding simultaneously aims for:
+1. **Prefix condition**
+2. **Minimum average code length**
+---
+## 11. The Huffman Idea
+The procedure is very intuitive.
+### Step 1 — Arrange probabilities
+Put symbols in decreasing probability order.
+For example:
+$$
+0.37,\ 0.33,\ 0.16,\ 0.07,\ 0.04,\ 0.02,\ 0.01
+$$
+### Step 2 — Pick the two smallest
+The two smallest are:
+$$
+0.01,\quad0.02
+$$
+Combine them:
+$$
+0.01+0.02=0.03
+$$
+Now treat that combination as one node.
+So instead of having:
+$$
+0.01,\ 0.02
+$$
+we now have:
+$$
+0.03
+$$
+---
+## 12. Why Combine the Smallest?
+Because these are the **least probable symbols**.
+They can afford to receive longer codewords.
+The Huffman construction therefore pushes low-probability symbols deeper into the tree.
+High-probability symbols remain closer to the root and therefore receive shorter codewords.
+So the basic intuition is:
+$$
+\boxed{\text{High probability}\rightarrow\text{short code}}
+$$
+$$
+\boxed{\text{Low probability}\rightarrow\text{long code}}
+$$
+---
+## 13. Continue Combining
+After obtaining:
+$$
+0.03
+$$
+we combine it with the next smallest probability:
+$$
+0.04+0.03=0.07
+$$
+Then:
+$$
+0.07+0.07=0.14
+$$
+Then:
+$$
+0.14+0.16=0.30
+$$
+Then:
+$$
+0.30+0.33=0.63
+$$
+Then:
+$$
+0.63+0.37=1
+$$
+Eventually everything becomes:
+$$
+\boxed{1}
+$$
+because all source probabilities together equal 1.
+This creates the **Huffman tree**.
+---
+## 14. Where Do the 0s and 1s Come From?
+Every time two nodes are joined, we assign:
+* one branch → `0`
+* other branch → `1`
+Then to obtain a symbol's codeword:
+> Start at the root and follow the branches until reaching that symbol.
+The sequence of `0`s and `1`s encountered is its codeword.
+That's why Huffman naturally creates a **prefix code**.
+---
+## 15. First Huffman Example
+Probabilities:
+
+| Symbol  | Probability |
+| ------- | ----------: |
+| \(x_1\) |        0.37 |
+| \(x_2\) |        0.33 |
+| \(x_3\) |        0.16 |
+| \(x_4\) |        0.07 |
+| \(x_5\) |        0.04 |
+| \(x_6\) |        0.02 |
+| \(x_7\) |        0.01 |
+The combinations are:
+$$
+0.01+0.02=0.03
+$$
+$$
+0.03+0.04=0.07
+$$
+$$
+0.07+0.07=0.14
+$$
+$$
+0.14+0.16=0.30
+$$
+$$
+0.30+0.33=0.63
+$$
+$$
+0.63+0.37=1
+$$
+The resulting code lengths are:
+
+| Symbol  | Probability | Length |
+| ------- | ----------: | -----: |
+| \(x_1\) |        0.37 |      1 |
+| \(x_2\) |        0.33 |      2 |
+| \(x_3\) |        0.16 |      3 |
+| \(x_4\) |        0.07 |      4 |
+| \(x_5\) |        0.04 |      5 |
+| \(x_6\) |        0.02 |      6 |
+| \(x_7\) |        0.01 |      6 |
+Notice the pattern:
+**Most probable → shortest**
+**Least probable → longest**
+---
+## 16. Calculating Entropy
+The entropy is:
+$$
+H(X)
+=
+-\sum_{k=1}^{7}P(x_k)\log_2P(x_k)
+$$
+For this example:
+$$
+\boxed{H(X)=2.1152\text{ bits}}
+$$
+This is the theoretical lower bound.
+The Huffman code gives:
+$$
+\boxed{\bar R=2.1700\text{ bits}}
+$$
+Check the source coding theorem:
+$$
+2.1152\le2.1700<3.1152
+$$
+Correct.
+---
+## 17. Calculating Average Code Length
+The average length is:
+$$
+\bar R=\sum n_kP(x_k)
+$$
+For this example:
+$$
+\bar R=
+1(0.37)+2(0.33)+3(0.16)+4(0.07)
+$$
+$$
++5(0.04)+6(0.02)+6(0.01)
+$$
+which gives:
+$$
+\boxed{\bar R=2.1700}
+$$
+So the average source symbol requires **2.17 bits**.
+---
+## 18. Efficiency
+Now:
+$$
+\eta=\frac{H(X)}{\bar R}
+$$
+Therefore:
+$$
+\eta=
+\frac{2.1152}{2.1700}
+$$
+$$
+\boxed{\eta=0.9747}
+$$
+or approximately:
+$$
+\boxed{97.47\%}
+$$
+So this Huffman code is quite close to the theoretical limit.
+---
+## 19. Huffman Codes Are Not Unique
+This is an important subtle point.
+The **same probabilities** can sometimes produce different Huffman trees.
+Why?
+Because during construction, two nodes can sometimes have equal probabilities, and there can be different valid ways to combine them.
+Therefore you can get:
+> Different codewords
+while still having:
+> Same codeword lengths → same average length → same efficiency.
+That's what Slides 17–19 demonstrate.
+For the second example:
+$$
+H(X)=1.9781
+$$
+and:
+$$
+\bar R=1.9900
+$$
+so:
+$$
+\eta=
+\frac{1.9781}{1.9900}
+=0.9940
+$$
+Both possible Huffman codes have the same:
+$$
+\boxed{\eta=0.9940}
+$$
+Therefore:
+> **Huffman coding is not necessarily unique.**
+---
+## 20. The Perfect Case: \(\eta=1\)
+Slide 20 gives a particularly clean probability distribution:
+$$
+\frac12,\frac14,\frac18,\frac1{16},\frac1{32},\frac1{64},\frac1{64}
+$$
+Notice something beautiful:
+$$
+\frac12=2^{-1}
+$$
+$$
+\frac14=2^{-2}
+$$
+$$
+\frac18=2^{-3}
+$$
+and so on.
+Therefore the self-information is:
+$$
+-\log_2P(x)
+$$
+giving:
+$$
+1,2,3,4,5,6,6
+$$
+bits.
+And the Huffman code lengths are exactly:
+$$
+1,2,3,4,5,6,6
+$$
+So:
+$$
+\boxed{\bar R=H(X)}
+$$
+and therefore:
+$$
+\boxed{\eta=1}
+$$
+This is **perfect efficiency**.
+---
+## 21. What Does D-adic Mean Here?
+The slide defines a probability distribution as **D-adic** if every probability has the form:
+$$
+D^{-n}
+$$
+for some integer \(n\).
+Here we're using binary coding, so:
+$$
+D=2
+$$
+Thus probabilities such as:
+$$
+2^{-1},2^{-2},2^{-3},...
+$$
+are **2-adic**.
+Why does this matter?
+Because their self-information is:
+$$
+-\log_2(2^{-n})=n
+$$
+which is an integer.
+So the required information for the symbol is already an integer number of bits.
+That lets Huffman assign exactly that many bits.
+Hence:
+$$
+\boxed{\text{integer self-information}\Rightarrow\text{possibility of }\eta=1}
+$$
+The slide emphasizes that real-world probabilities are **not always** like this.
+---
+## 22. Why Encode Blocks?
+Until now, we encoded:
+> **one source symbol at a time.**
+But this has a limitation.
+The source coding theorem gives:
+$$
+H(X)\le\bar R<H(X)+1
+$$
+There can be almost **1 extra bit per symbol** in the worst bound.
+The idea now is:
+> Instead of coding one symbol, combine several symbols into a block and code the entire block.
+Suppose:
+$$
+B=2
+$$
+Then instead of:
+$$
+x_1,\quad x_2
+$$
+we consider:
+$$
+x_1x_2
+$$
+as one combined source symbol.
+---
+## 23. Why Block Coding Helps
+For a block of \(B\) symbols:
+$$
+\boxed{BH(X)\le\bar R_B<BH(X)+1}
+$$
+Here:
+$$
+\bar R_B
+$$
+is the average number of bits for the **whole block**.
+Divide everything by \(B\):
+$$
+H(X)
+\le
+\frac{\bar R_B}{B}
+<
+H(X)+\frac1B
+$$
+This is the key insight.
+For one symbol:
+$$
+H(X)\le\bar R<H(X)+1
+$$
+For blocks:
+$$
+H(X)
+\le
+\bar R
+<
+H(X)+\frac1B
+$$
+As \(B\) gets larger:
+$$
+\frac1B\rightarrow0
+$$
+Therefore the upper bound gets closer and closer to entropy.
+---
+## 24. The Slide 24 → 25 Example
+For the original symbol-by-symbol coding:
+$$
+H(X)=1.5589
+$$
+and:
+$$
+\bar R=1.6000
+$$
+Therefore:
+$$
+\eta=0.9743
+$$
+So we are close, but not perfect.
+Now instead of coding individual symbols, we code **pairs**.
+Since there are 3 possible symbols:
+$$
+x_1,x_2,x_3
+$$
+there are:
+$$
+3\times3=9
+$$
+possible pairs:
+$$
+x_1x_1,\ x_1x_2,\ldots,x_3x_3
+$$
+The probability of a pair is obtained from the individual probabilities.
+For example:
+$$
+P(x_1x_1)
+=
+0.4\times0.4
+=
+0.16
+$$
+and:
+$$
+P(x_1x_2)
+=
+0.4\times0.35
+=
+0.14
+$$
+Then Huffman coding is applied to these **pairs** as if each pair were one large source symbol.
+---
+## 25. Why the Entropy Becomes \(2H(X)\)
+For a block containing 2 symbols:
+$$
+\boxed{H(\text{pair})=2H(X)}
+$$
+The slide gives:
+$$
+2H(X)=3.1177
+$$
+so:
+$$
+H(X)=1.5589
+$$
+The Huffman coding of the pairs gives:
+$$
+2\bar R=3.1775
+$$
+Therefore:
+$$
+\bar R=
+\frac{3.1775}{2}
+=
+1.5888
+$$
+Compare:
+### Symbol-by-symbol
+$$
+\bar R=1.6000
+$$
+### Two-symbol blocks
+$$
+\bar R=1.5888
+$$
+So block coding has improved the average bits per symbol.
+Consequently:
+$$
+\eta=0.9812
+$$
+instead of:
+$$
+0.9743
+$$
+Hence:
+$$
+\boxed{\text{Block coding gives better efficiency here}}
+$$
+---
+# 🔥 The Entire Chapter in One Mental Chain
+Keep this chain in your head:
+**Source has symbols with probabilities**
+↓
+**Different probabilities mean we shouldn't necessarily use equal-length codes**
+↓
+**Use variable-length codes**
+↓
+**But variable lengths can cause ambiguity**
+↓
+**So impose the prefix condition**
+↓
+**Prefix condition → instantaneous/unambiguous decoding**
+↓
+**Kraft inequality tells whether a set of lengths can form a prefix code**
+↓
+**Entropy \(H(X)\) tells the fundamental lower bound**
+↓
+$$
+H(X)\le\bar R<H(X)+1
+$$
+↓
+**Efficiency**
+$$
+\eta=\frac{H(X)}{\bar R}\le1
+$$
+↓
+**Huffman coding constructs an optimal prefix code**
+↓
+**High probability → short code**
+**Low probability → long code**
+↓
+**Sometimes multiple Huffman codes are possible**
+↓
+**If probabilities are powers of \(1/2\), perfect efficiency can occur**
+↓
+**To get even closer to entropy, encode blocks instead of individual symbols**
+↓
+$$
+H(X)\le\bar R<H(X)+\frac1B
+$$
+↓
+As \(B\) increases:
+$$
+\boxed{\frac1B\to0}
+$$
+so the average rate can get increasingly close to:
+$$
+\boxed{H(X)}
+$$
+### The core idea of all 26 slides:
+> **Entropy tells us how few bits we fundamentally need; prefix coding lets us decode variable-length representations instantly; Huffman coding constructs an optimal prefix code; and block coding can push the average rate even closer to the entropy limit.**
+Got you, DJ. I’ll **only lucidify the given text**, keep the explanation **strictly within the context of these slides**, and focus on making the underlying idea easy to understand.
+## Slide 19 — What is a Code?
+### 1. What is a code?
+A **code** is simply a collection of **codewords**.
+Think:
+> **Symbol/letter → codeword**
+For example, if `A → 000`, then `000` is the codeword representing A.
+---
+### 2. Why does English need 5 bits?
+There are **26 letters** in the English alphabet.
+To represent 26 different possibilities using binary, we need:
+$$
+R=\lfloor\log_2 26\rfloor+1=5
+$$
+Why 5?
+* 4 bits can represent only \(2^4=16\) possibilities.
+* 5 bits can represent \(2^5=32\) possibilities.
+Since we need at least 26 possibilities, **5 bits are required**.
+So a fixed-length representation could give every letter exactly 5 bits.
+---
+### 3. What's wrong with giving everyone 5 bits?
+A fixed-length code effectively treats every letter as if it is **equally important/frequent**.
+But English doesn't work like that.
+Some letters occur very frequently:
+> **e, t, s → common**
+Some occur much less frequently:
+> **x, q, z → uncommon**
+Yet with fixed-length coding:
+> `e → 5 bits`
+> `t → 5 bits`
+> `q → 5 bits`
+> `z → 5 bits`
+Everyone gets the same amount of space.
+### Core idea
+If a letter occurs **very often**, we are repeatedly spending 5 bits on it.
+That can waste a lot of bits.
+So the slides are leading to a better idea:
+> **Give fewer bits to frequently occurring symbols and more bits to rarely occurring symbols.**
+That is the motivation for **variable-length coding**.
+---
+## Slide 20 — Variable Length Code (VLC)
+Instead of forcing every symbol to have the same number of bits, we allow different symbols to have **different codeword lengths**.
+For example, conceptually:
+> Frequent symbol → short codeword
+> Rare symbol → long codeword
+Why does this help?
+Imagine a page contains a huge number of letters.
+If a very common letter gets a short codeword, that short code is used **again and again**.
+So the total number of bits needed for the whole page can decrease.
+### Main idea
+**Fixed-length:**
+> Every symbol gets the same number of bits.
+**Variable-length:**
+> Symbols can get different numbers of bits depending on how frequently they occur.
+And therefore:
+> **When source symbols are not equally probable, VLC can represent the overall information more efficiently.**
+---
+## Slide 21 — Example: A–H
+Now they simplify the alphabet.
+Instead of 26 letters, suppose our vocabulary contains only:
+> **A, B, C, D, E, F, G, H**
+That's **8 symbols**.
+Since:
+$$
+2^3=8
+$$
+we can represent all 8 symbols using exactly **3 bits**.
+So the fixed-length code is:
+
+| Letter | Code |
+| ------ | ---- |
+| A      | 000  |
+| B      | 001  |
+| C      | 010  |
+| D      | 011  |
+| E      | 100  |
+| F      | 101  |
+| G      | 110  |
+| H      | 111  |
+Every letter gets exactly **3 bits**.
+---
+### Now variable length
+The slides give another assignment:
+
+| Letter | Code |
+| ------ | ---- |
+| A      | 00   |
+| B      | 010  |
+| C      | 011  |
+| D      | 100  |
+| E      | 101  |
+| F      | 110  |
+| G      | 1110 |
+| H      | 1111 |
+Notice the lengths:
+* A → 2 bits
+* B → 3 bits
+* C → 3 bits
+* D → 3 bits
+* E → 3 bits
+* F → 3 bits
+* G → 4 bits
+* H → 4 bits
+So **not everyone gets 3 bits anymore**.
+This is a variable-length code.
+---
+## Slide 22 — Why VLC can save bits
+The sentence is:
+> **A BAD CAB**
+Using the fixed-length code:
+* A → 000
+* B → 001
+* A → 000
+* D → 011
+* C → 010
+* A → 000
+* B → 001
+So:
+$$
+000\ 001\ 000\ 011\ 010\ 000\ 001
+$$
+There are 7 letters and each requires 3 bits:
+$$
+7\times3=21\text{ bits}
+$$
+---
+Using VLC1:
+* A → 00
+* B → 010
+* A → 00
+* D → 100
+* C → 011
+* A → 00
+* B → 010
+Therefore:
+$$
+00\ 010\ 00\ 100\ 011\ 00\ 010
+$$
+Total:
+$$
+18\text{ bits}
+$$
+So:
+> **Fixed length = 21 bits**
+> **Variable length = 18 bits**
+### Why did we save bits?
+Look at the sentence.
+**A appears 3 times**, and A has a short code:
+$$
+A\rightarrow00
+$$
+So every time A appears, we save bits compared with a 3-bit fixed code.
+That's the whole intuition:
+> **Frequently occurring symbols should ideally get shorter codewords.**
+---
+## Slide 23 — But wait... can we make it even shorter?
+The slides introduce another VLC:
+
+| Letter | Code |
+| ------ | ---- |
+| A      | 0    |
+| B      | 1    |
+| C      | 00   |
+| D      | 01   |
+| E      | 10   |
+| F      | 11   |
+| G      | 000  |
+| H      | 111  |
+Here A has only **1 bit**!
+So it looks even more efficient.
+For the same sentence:
+> A BAD CAB
+the slides give:
+$$
+0\ 1001\ 0001
+$$
+Total:
+$$
+9\text{ bits}
+$$
+That's dramatically smaller than the previous 18 bits.
+So at first glance, this looks **amazing**.
+But...
+---
+## Slide 24 — The Problem: Can We Decode It?
+This is the critical point.
+With fixed-length coding, decoding is easy.
+If every codeword has 3 bits:
+> `[000][001][000][011]...`
+You automatically know:
+> Every 3 bits = one symbol.
+But with variable lengths, the receiver doesn't automatically know **where one codeword ends and the next begins**.
+And VLC2 has exactly this problem.
+---
+## The encoded bits
+For:
+> **A BAD CAB**
+we get:
+$$
+0\ 1001\ 0001
+$$
+If we simply read the intended grouping:
+$$
+[0][1001][0001]
+$$
+we get:
+> A BAD CAB
+But the same continuous sequence can be regrouped differently.
+For example:
+$$
+[0][10][0][1][0][0][01]
+$$
+Using the VLC2 table:
+* `0` → A
+* `10` → E
+* `0` → A
+* `1` → B
+* `0` → A
+* `0` → A
+* `01` → D
+So we get:
+> **A EAB AAD**
+Same transmitted bits, different message.
+---
+Another possible grouping:
+$$
+[0][1][0][0][1][0][0][0][1]
+$$
+which gives:
+> **A BAAB AAAB**
+Again, the **same bits**.
+---
+## So what's the problem?
+The receiver receives only:
+$$
+010010001
+$$
+It doesn't know which grouping was intended.
+Therefore:
+> **One encoded bit sequence can correspond to multiple possible messages.**
+Hence VLC2 is:
+> ❌ **Not uniquely decodable**
+---
+## Slide 25 — Revisit VLC1 vs VLC2
+Now the slides compare the two codes.
+### VLC2
+Remember:
+
+| Letter | Code |
+| ------ | ---- |
+| A      | 0    |
+| B      | 1    |
+| C      | 00   |
+| D      | 01   |
+| E      | 10   |
+| F      | 11   |
+| G      | 000  |
+| H      | 111  |
+Look at:
+$$
+A=0
+$$
+But C is:
+$$
+C=00
+$$
+So the codeword for A, `0`, is the **beginning of C's codeword `00`**.
+Likewise:
+$$
+B=1
+$$
+and:
+$$
+E=10,\quad F=11,\quad H=111
+$$
+So when the receiver sees `1`, it can't immediately know:
+> "Ah, that's B."
+It might just be the **beginning** of another codeword.
+That's why the receiver has:
+> **No clue where one codeword ends and the next begins.**
+---
+## VLC1 solves this
+VLC1:
+
+| Letter | Code |
+| ------ | ---- |
+| A      | 00   |
+| B      | 010  |
+| C      | 011  |
+| D      | 100  |
+| E      | 101  |
+| F      | 110  |
+| G      | 1110 |
+| H      | 1111 |
+Now check the important property.
+For example:
+$$
+A=00
+$$
+Does `00` appear at the beginning of another codeword?
+No.
+Similarly:
+$$
+B=010
+$$
+Is `010` the beginning of another codeword?
+No.
+And this is true for **every codeword**.
+Therefore:
+> **No codeword is the prefix of another codeword.**
+This is called the **prefix condition**.
+---
+## Slide 26 — Prefix Codes
+This gives us the definition.
+### Prefix
+A **prefix** is the beginning part of something.
+For example:
+`010`
+is a prefix of:
+`01011`
+because `010` is exactly the beginning.
+---
+### Prefix condition
+A code satisfies the **prefix condition** if:
+> **No codeword is the prefix of any other codeword.**
+VLC1 satisfies this.
+So when the receiver reads bits and reaches a complete codeword, it can immediately say:
+> "That's one symbol. Stop here and start reading the next one."
+It doesn't need to wonder whether those bits are merely the beginning of a longer codeword.
+---
+## Example with VLC1
+Suppose we receive:
+$$
+00\ 010\ 011
+$$
+Read from left to right:
+* `00` → A
+* `010` → B
+* `011` → C
+Done.
+There is no ambiguity because once `00` is recognized, **no other codeword can continue from `00`**.
+That's why these codes are also called:
+> **Instantaneous Codes**
+### Why "instantaneous"?
+Because once a valid codeword is detected, the symbol can be decoded **immediately**.
+---
+# 🧠 The whole story of Slides 19–26
+The slides are building one chain of reasoning:
+**Fixed-length code**
+↓
+Everyone gets the same number of bits
+↓
+But symbols don't occur equally often
+↓
+So give common symbols fewer bits
+↓
+This creates a **Variable Length Code (VLC)**
+↓
+VLC can reduce the total number of bits
+↓
+But variable lengths create a new problem:
+**Where does one codeword end and the next begin?**
+↓
+If codewords can be prefixes of other codewords → **ambiguity**
+↓
+So we want:
+> **No codeword is the prefix of another**
+↓
+That is a **Prefix Code**
+↓
+Prefix codes are also called:
+> **Instantaneous Codes**
+### 🔥 One-line memory chain
+**Equal bits → inefficient → variable bits → efficient → possible ambiguity → prefix condition → uniquely/instantaneously decodable.**
+Got you, DJ. I’ll stay **strictly within the text you provide** and focus only on **lucidifying it + building your base understanding**. No outside concepts unless they are necessary to explain the exact text.
+# Lec 9 — Channel Capacity & Noisy Channels
+The whole lecture is basically answering one question:
+> **We have already compressed information into bits. Now, how reliably can we send those bits through a noisy channel?**
+The flow is:
+**Source → bits → noisy channel → received bits**
+The problem is that the received bits may not be identical to what was sent.
+---
+## 1. Communication Channel — what problem are we facing?
+Earlier, we learned how to represent source information efficiently using bits.
+For example, after source coding, we might have:
+**Source information → `101101001...`**
+Now we need to transmit this bit stream through something physical:
+* telephone line
+* optical fibre
+* wireless channel
+* etc.
+But the channel isn't perfect.
+### What is noise?
+**Noise = unwanted signals/waves that disturb the wanted signal.**
+The lecture gives two broad sources:
+**External noise**
+* atmospheric noise
+* man-made noise
+**Internal noise**
+* thermal noise
+* shot noise
+Because of noise:
+**Transmitted bit stream ≠ necessarily received bit stream**
+For example:
+`101101`
+might arrive as:
+`101001`
+Some bits may have been changed.
+### The key problem
+So source coding answers:
+> **How efficiently can I represent information?**
+Channel coding/capacity now asks:
+> **How reliably can I transmit that information through an imperfect channel?**
+---
+## 2. Channel Model
+The lecture first considers a very simple model: the **Binary Symmetric Channel (BSC).**
+"Binary" means the possible symbols are just:
+**0 and 1**
+And the channel takes an input bit and produces an output bit.
+The complete communication system is represented as:
+**Channel Encoder → Modulator → Channel → Demodulator/Detector → Channel Decoder**
+For this lecture, we can think of the middle part as a channel that takes a bit in and gives a bit out.
+---
+## 3. Discrete-input, Discrete-output Channel
+This sounds complicated, but the slide is saying something simple.
+A channel is described by:
+### Input set
+$$
+X=\{0,1\}
+$$
+So the transmitter can put either **0 or 1** into the channel.
+### Output set
+$$
+Y=\{0,1\}
+$$
+So the receiver sees either **0 or 1**.
+Then we need probabilities telling us:
+> **If I send this input, what is the probability that I receive each possible output?**
+For the BSC:
+
+| Sent | Received | Probability |
+| ---- | -------- | ----------: |
+| 0    | 0        |     \(1-p\) |
+| 0    | 1        |       \(p\) |
+| 1    | 0        |       \(p\) |
+| 1    | 1        |     \(1-p\) |
+So:
+* probability of **correct transmission** = \(1-p\)
+* probability of **error/flip** = \(p\)
+That's why it is called **symmetric**: both bits have the same error probability.
+---
+## 4. Discrete Memoryless Channel — DMC
+Now the lecture generalizes the idea.
+Instead of only having:
+$$
+X=\{0,1\}
+$$
+the input can have \(q\) possible symbols:
+$$
+X=\{x_0,x_1,\ldots,x_{q-1}\}
+$$
+Similarly, the output can have \(Q\) possible symbols:
+$$
+Y=\{y_0,y_1,\ldots,y_{Q-1}\}
+$$
+The channel is described using conditional probabilities:
+$$
+P(Y=y_i|X=x_j)
+$$
+or simply
+$$
+P(y_i|x_j)
+$$
+### What does this mean?
+Read it as:
+> **Probability of receiving \(y_i\), given that \(x_j\) was sent.**
+For every possible input-output combination, we have a probability.
+There are \(qQ\) such conditional probabilities.
+---
+## Why "memoryless"?
+The slide says:
+> We assume that the channel and modulation is memoryless.
+Within this lecture's context, this means the current input-output relationship is described by these probabilities without needing previous channel inputs/outputs.
+So we can analyze one use of the channel using:
+$$
+P(y_i|x_j)
+$$
+---
+## 5. Channel Capacity — THE MAIN IDEA
+Now we reach the central concept.
+The channel may be noisy, so we cannot simply say:
+> "I can send as many bits as I want."
+There is a **limit**.
+That limit is called:
+## Channel Capacity \(C\)
+The slide defines it as:
+> **Maximum average mutual information obtainable in one use of the channel, by choosing the input probabilities appropriately.**
+Mathematically:
+$$
+\boxed{C=\max_{P(x_j)} I(X;Y)}
+$$
+Don't get scared by the equation.
+It means:
+### \(I(X;Y)\)
+How much information about the input \(X\) can be obtained by looking at the output \(Y\).
+Then:
+### \(\max_{P(x_j)}\)
+Try different probabilities of sending the different input symbols and choose the one that gives the **largest** \(I(X;Y)\).
+That largest value is:
+$$
+\boxed{C}
+$$
+### Mental picture
+Think:
+**Input choice probabilities**
+↓
+**Channel**
+↓
+**Output**
+↓
+**How much information about input survives?**
+↓
+**Maximum possible = Capacity**
+---
+## 6. BSC Example
+For the Binary Symmetric Channel:
+$$
+P(0|1)=p=P(1|0)
+$$
+So \(p\) is the probability of flipping the bit.
+Its transition matrix is:
+$$
+P=
+\begin{bmatrix}
+1-p & p\\
+p & 1-p
+\end{bmatrix}
+$$
+Meaning:
+* \(0\rightarrow0\): \(1-p\)
+* \(0\rightarrow1\): \(p\)
+* \(1\rightarrow0\): \(p\)
+* \(1\rightarrow1\): \(1-p\)
+---
+## 7. The Capacity of BSC
+The lecture gives:
+$$
+\boxed{
+C=1+p\log_2p+(1-p)\log_2(1-p)
+}
+$$
+Then it defines the binary entropy function:
+$$
+\boxed{
+H(p)=-p\log_2p-(1-p)\log_2(1-p)
+}
+$$
+Notice that the terms are exactly the negative of the extra terms in the capacity equation.
+Therefore:
+$$
+\boxed{C=1-H(p)}
+$$
+This is the important final expression for BSC.
+---
+## 8. What does \(p\) actually do?
+This is probably the most important intuition from the BSC example.
+\(p\) = **probability that a transmitted bit gets flipped.**
+So:
+### \(p=0\)
+No errors.
+$$
+C=1
+$$
+Therefore:
+$$
+\boxed{C=1\text{ bit/use}}
+$$
+Every use of the channel can successfully carry 1 bit.
+---
+### \(p=0.5\)
+Now something very strange happens.
+Suppose you send:
+**0**
+The receiver gets:
+* 0 with probability 0.5
+* 1 with probability 0.5
+Suppose you send:
+**1**
+The receiver also gets:
+* 0 with probability 0.5
+* 1 with probability 0.5
+So the receiver's output gives **no clue whatsoever** about what was sent.
+This is exactly what the handwritten slide illustrates:
+$$
+0\rightarrow0\;(0.5)
+$$
+$$
+0\rightarrow1\;(0.5)
+$$
+$$
+1\rightarrow0\;(0.5)
+$$
+$$
+1\rightarrow1\;(0.5)
+$$
+Therefore:
+$$
+\boxed{C=0}
+$$
+and
+$$
+I(X;Y)\rightarrow0
+$$
+---
+## 9. Why is \(C=0\) at \(p=0.5\)?
+This is worth understanding deeply.
+Imagine I tell you:
+> "I sent either 0 or 1."
+You observe the output.
+But because \(p=0.5\), the output is completely equally likely to be 0 or 1 **regardless of what I sent**.
+So after seeing the output, you haven't learned anything about the input.
+Therefore:
+$$
+\text{Information obtained about input}=0
+$$
+Hence:
+$$
+C=0
+$$
+The lecture describes this as equivalent to the channel being **broken**.
+You might as well:
+> **throw away the channel and toss a fair coin to guess the transmitted bit.**
+That's the intuition behind zero capacity.
+---
+## 10. Capacity vs Error Probability
+The graph in the lecture shows:
+* \(p=0\) → capacity \(=1\)
+* \(p=0.5\) → capacity \(=0\)
+* \(p=1\) → capacity \(=1\)
+That last one can initially look weird.
+But notice:
+At \(p=1\), the channel **always flips**:
+$$
+0\rightarrow1
+$$
+$$
+1\rightarrow0
+$$
+So although the received bit is not the same as the transmitted bit, the relationship is perfectly predictable.
+Therefore the channel hasn't lost information.
+The lecture's key highlighted point, though, is:
+$$
+\boxed{p=0.5\Rightarrow C=0}
+$$
+because that's where the output provides no information about the input.
+---
+## 11. Binary Erasure Channel — BEC
+Now the lecture gives another channel example.
+Instead of the received bit being **wrong**, imagine the receiver sometimes says:
+> "I don't know."
+That unknown symbol is represented by:
+$$
+e
+$$
+The possible outputs are therefore:
+$$
+\{0,e,1\}
+$$
+The BEC transition matrix is:
+$$
+P=
+\begin{bmatrix}
+1-\varepsilon & \varepsilon & 0\\
+0 & \varepsilon & 1-\varepsilon
+\end{bmatrix}
+$$
+The transitions are:
+### If 0 is sent:
+$$
+0\rightarrow0
+$$
+with probability
+$$
+1-\varepsilon
+$$
+and
+$$
+0\rightarrow e
+$$
+with probability
+$$
+\varepsilon
+$$
+### If 1 is sent:
+$$
+1\rightarrow e
+$$
+with probability
+$$
+\varepsilon
+$$
+and
+$$
+1\rightarrow1
+$$
+with probability
+$$
+1-\varepsilon
+$$
+So here the channel doesn't turn 0 into 1 or 1 into 0.
+Instead, it sometimes **erases** the information.
+---
+## 12. Capacity of BEC
+The lecture derives:
+$$
+C=\max_{P(x_j)}I(X;Y)
+$$
+and uses:
+$$
+I(X;Y)=H(Y)-H(Y|X)
+$$
+For this channel, given \(X\), there are only two possible outcomes:
+$$
+\{1-\varepsilon,\varepsilon\}
+$$
+So:
+$$
+H(Y|X)=H(\varepsilon)
+$$
+The output has three possible cases:
+$$
+0,\quad e,\quad1
+$$
+with probabilities:
+$$
+P_Y(0)=p(1-\varepsilon)
+$$
+$$
+P_Y(e)=\varepsilon
+$$
+$$
+P_Y(1)=(1-p)(1-\varepsilon)
+$$
+The lecture obtains:
+$$
+H(Y)=H(\varepsilon)+(1-\varepsilon)H(p)
+$$
+Therefore:
+$$
+C
+=\max_p\left[(1-\varepsilon)H(p)\right]
+$$
+We know from the lecture that:
+$$
+H(p)\leq1
+$$
+with maximum at:
+$$
+p=0.5
+$$
+Therefore:
+$$
+\boxed{C_{BEC}=1-\varepsilon}
+$$
+---
+## 13. What does \(C_{BEC}=1-\varepsilon\) mean?
+This is actually very intuitive.
+If the channel erases a fraction \(\varepsilon\) of the transmissions, then the usable fraction is:
+$$
+1-\varepsilon
+$$
+So:
+$$
+\boxed{\text{BEC capacity}=1-\text{erasure probability}}
+$$
+For example, conceptually:
+If
+$$
+\varepsilon=0
+$$
+then:
+$$
+C=1
+$$
+No erasures.
+If
+$$
+\varepsilon=1
+$$
+then:
+$$
+C=0
+$$
+Everything is erased.
+---
+## 14. Living with Errors
+Now the lecture moves from theory to real communication systems.
+It says:
+> **All real-life channels are affected by noise.**
+A typical noisy wireless channel can have:
+$$
+P_e=10^{-2}
+$$
+That means:
+$$
+10^{-2}=\frac1{100}
+$$
+So, on average:
+> **1 bit out of every 100 transmitted bits gets flipped.**
+But this isn't reliable enough for many applications.
+Different applications require different error probabilities.
+
+| Application                            | Probability of error |
+| -------------------------------------- | -------------------: |
+| Speech telephony                       |          \(10^{-4}\) |
+| Voice band data                        |          \(10^{-6}\) |
+| Electronic mail / newspaper            |          \(10^{-6}\) |
+| Internet access                        |          \(10^{-6}\) |
+| Video telephony / high-speed computing |          \(10^{-7}\) |
+So the important idea is:
+$$
+\boxed{\text{Different applications require different reliability levels}}
+$$
+---
+## 15. Symmetric Channels
+The lecture then defines two related ideas.
+## Symmetric DMC
+A DMC is **symmetric** if:
+1. The rows of its transition probability matrix are permutations of each other.
+2. The columns are also permutations of each other.
+In simpler words:
+> The channel treats its input/output possibilities in a balanced, symmetric way.
+---
+## Weakly Symmetric Channel
+A DMC is **weakly symmetric** if:
+1. The rows are permutations of each other.
+2. The column sums are equal.
+For a weakly symmetric channel, the lecture gives:
+$$
+\boxed{
+C=\log|Y|-H(\text{row of transition matrix})
+}
+$$
+and says this capacity is obtained when the input alphabet has a:
+$$
+\boxed{\text{uniform distribution}}
+$$
+Meaning the possible input symbols are used with equal probability.
+---
+## 16. Noisy Channel Coding Theorem — BIG RESULT
+This is the climax of the lecture.
+We have a source producing symbols.
+The source has entropy:
+$$
+H(X)
+$$
+and produces one symbol every:
+$$
+T_s
+$$
+seconds.
+The channel has capacity:
+$$
+C
+$$
+and is used once every:
+$$
+T_c
+$$
+seconds.
+Now compare two rates.
+### Source information production rate
+$$
+\boxed{\frac{H(X)}{T_s}}
+$$
+Think:
+> How much information does the source produce per second?
+### Channel information-carrying rate
+$$
+\boxed{\frac{C}{T_c}}
+$$
+Think:
+> How much information per second can the channel reliably handle?
+---
+## 17. The Critical Comparison
+The theorem says:
+### Case 1: Source rate ≤ Channel rate
+If
+$$
+\boxed{
+\frac{H(X)}{T_s}\leq\frac{C}{T_c}
+}
+$$
+then:
+> There exists a coding scheme that can transmit the source output through the noisy channel and reconstruct it with an **arbitrarily low probability of error**.
+This is the **good region**.
+The channel has enough capacity to handle the source information rate.
+---
+### Case 2: Source rate > Channel rate
+If
+$$
+\boxed{
+\frac{H(X)}{T_s}>\frac{C}{T_c}
+}
+$$
+then:
+> It is impossible to transmit the information and reconstruct it with arbitrarily small probability of error.
+The source is demanding more information rate than the channel can support.
+---
+## 18. Critical Rate
+The lecture calls:
+$$
+\boxed{\frac{C}{T_c}}
+$$
+the **Critical Rate**.
+So you can mentally remember:
+$$
+\boxed{
+\text{Source rate}\leq\text{Critical rate}
+\Rightarrow \text{reliable communication is possible}
+}
+$$
+while:
+$$
+\boxed{
+\text{Source rate}>\text{Critical rate}
+\Rightarrow \text{arbitrarily reliable communication is impossible}
+}
+$$
+---
+## 19. One VERY important subtlety
+The theorem does **not** tell us:
+> "Here is the exact code you should use."
+Instead, it tells us something more fundamental:
+> **If the information rate is below the channel's capacity, suitable codes exist that can make the error probability arbitrarily small.**
+The lecture explicitly emphasizes:
+### The theorem tells us about the **existence** of suitable codes.
+But:
+### It does **not** give us the recipe for constructing those codes.
+That's why the theorem is a **fundamental limit**, not a coding algorithm.
+---
+# 🧠 Entire Lecture in One Mental Map
+Keep this chain in your head:
+**SOURCE**
+↓ produces information
+$$
+H(X)/T_s
+$$
+↓
+**CHANNEL**
+↓ has limited ability to carry information
+$$
+C/T_c
+$$
+↓
+Compare them:
+$$
+\boxed{
+\frac{H(X)}{T_s}\leq\frac{C}{T_c}
+}
+$$
+↓
+**Reliable communication can be achieved**
+But if:
+$$
+\boxed{
+\frac{H(X)}{T_s}>\frac{C}{T_c}
+}
+$$
+↓
+**Reliable communication is impossible**
+---
+## 🔥 The 7 things you should actually remember
+1. **Noise** can make the received bit stream different from the transmitted bit stream.
+2. A **DMC** describes a discrete input/output channel using conditional probabilities \(P(y_i|x_j)\).
+3. **Channel capacity** is the maximum mutual information obtainable per channel use:
+$$
+\boxed{C=\max I(X;Y)}
+$$
+4. For a **BSC**:
+$$
+\boxed{C=1-H(p)}
+$$
+5. For a **BEC**:
+$$
+\boxed{C=1-\varepsilon}
+$$
+6. For reliable communication, compare:
+$$
+\boxed{\frac{H(X)}{T_s}}
+\quad\text{with}\quad
+\boxed{\frac{C}{T_c}}
+$$
+7. The **Noisy Channel Coding Theorem** says that if source information rate is no greater than channel rate, codes **exist** that can make the probability of error arbitrarily small—but the theorem itself doesn't tell us how to construct those codes.
+Absolutely, DJ. I’ll solve the **entire set**, with full working for numerical problems and exam-ready explanations for theory.
+Since this is a **very large question bank (multiple pages and 70+ questions)**, I’ll structure it section-by-section so you can use it directly as an **answer notebook**.
+# INFORMATION THEORY AND CODING — COMPLETE SOLUTIONS
+---
+# A. CONCEPTS AND DEFINITIONS
+## A1. Define Hamming weight and calculate it for 111001011.
+### Definition
+The **Hamming weight** of a binary word is the **number of 1s present in the word**.
+For a binary sequence
+`x = 111001011`
+Count the 1s:
+`1 1 1 0 0 1 0 1 1`
+Number of 1s = **6**
+### Answer
+**Hamming weight = 6**
+---
+## A2. Find the Hamming distance between 11010110 and 10011110.
+### Definition
+The **Hamming distance** between two binary words is the number of positions at which they differ.
+Compare:
+`11010110`
+`10011110`
+Position-by-position:
+
+| Position | First | Second | Different? |
+| -------- | ----: | -----: | ---------- |
+| 1        |     1 |      1 | No         |
+| 2        |     1 |      0 | Yes        |
+| 3        |     0 |      0 | No         |
+| 4        |     1 |      1 | No         |
+| 5        |     0 |      1 | Yes        |
+| 6        |     1 |      1 | No         |
+| 7        |     1 |      1 | No         |
+| 8        |     0 |      0 | No         |
+There are **2 differing positions**.
+### Answer
+**Hamming distance = 2**
+---
+## A3. Explain the meaning of a binary (10,6) block code.
+A binary `(n,k)` block code means:
+* `n` = number of bits in every codeword
+* `k` = number of information/data bits
+* The remaining `n-k` bits are redundant bits.
+For a `(10,6)` code:
+`n = 10`
+`k = 6`
+Therefore:
+`Redundant bits = n-k = 10-6 = 4`
+So every:
+**6-bit message → 10-bit codeword**
+### Answer
+A binary `(10,6)` block code takes **6 information bits** and encodes them into a **10-bit codeword**, adding **4 redundant bits**.
+---
+## A4. How many redundant bits are present in a (12,8) code?
+For an `(n,k)` block code:
+`Redundant bits = n-k`
+Therefore:
+`12-8 = 4`
+### Answer
+**4 redundant bits**
+---
+## A5. Conditions required for a binary block code to be linear
+A binary block code is **linear** if the set of codewords forms a vector space over the binary field GF(2).
+The important conditions are:
+1. The **all-zero codeword must belong to the code**.
+2. The sum of any two codewords must also be a codeword.
+3. More generally, the code must be closed under binary linear combinations.
+Since addition in GF(2) is equivalent to **XOR**, if:
+`c1` and `c2`
+are codewords, then:
+`c1 XOR c2`
+must also be a codeword.
+### Answer
+A binary block code is linear if it contains the all-zero codeword and is closed under binary addition (XOR).
+---
+## A6. Define self-information and state its unit when logarithms are base 2.
+The **self-information** of an event with probability `p` is:
+`I(x) = -log2 p(x)`
+It measures how much information is obtained when that event occurs.
+A rare event has **high information**, while a very probable event has **low information**.
+When logarithms are base 2, the unit is:
+**bits**
+### Answer
+`I(x) = -log2 p(x)`
+Unit = **bits**
+---
+## A7. An event has probability 1/64. Calculate its self-information.
+Given:
+`p = 1/64`
+Self-information:
+`I = -log2(1/64)`
+Since:
+`64 = 2^6`
+we have:
+`1/64 = 2^-6`
+Therefore:
+`I = -(-6) = 6 bits`
+### Answer
+**Self-information = 6 bits**
+---
+## A8. Define mutual information between two random variables.
+Mutual information measures **how much knowing one random variable reduces uncertainty about the other**.
+It is given by:
+`I(X;Y) = H(X) - H(X|Y)`
+Equivalently:
+`I(X;Y) = H(Y) - H(Y|X)`
+It can also be written as:
+`I(X;Y) = H(X) + H(Y) - H(X,Y)`
+### Answer
+Mutual information is the amount of information that one random variable provides about another random variable.
+---
+## A9. State the relationship between mutual information and conditional entropy.
+The relationship is:
+`I(X;Y) = H(X) - H(X|Y)`
+Also:
+`I(X;Y) = H(Y) - H(Y|X)`
+Therefore:
+**Mutual information = uncertainty before knowing the other variable − uncertainty remaining after knowing it.**
+---
+## A10. Explain the meaning of H(X|Y).
+`H(X|Y)` is called the **conditional entropy of X given Y**.
+It represents the **remaining uncertainty in X when Y is already known**.
+For example:
+* Before knowing Y → uncertainty about X = `H(X)`
+* After knowing Y → remaining uncertainty = `H(X|Y)`
+Therefore, if Y gives useful information about X:
+`H(X|Y) < H(X)`
+If X and Y are independent:
+`H(X|Y) = H(X)`
+---
+## A11. Define a binary prefix code.
+A **binary prefix code** is a code in which each codeword consists of binary symbols `0` and `1`, and **no codeword is the prefix of another codeword**.
+For example:
+`{0, 10, 110, 111}`
+is prefix-free.
+But:
+`{0, 01, 10}`
+is not prefix-free because `0` is a prefix of `01`.
+---
+## A12. Determine whether {00,01,10,110,111} is prefix-free.
+Check every codeword.
+`00`
+`01`
+`10`
+`110`
+`111`
+No codeword is the beginning of another codeword.
+For example:
+* `10` is not a prefix of `110`
+* `00` is not a prefix of anything
+* `01` is not a prefix of anything
+### Answer
+**Yes, the set is prefix-free.**
+---
+## A13. Determine whether {1,01,001,000} is prefix-free.
+Codewords:
+`1`
+`01`
+`001`
+`000`
+No codeword begins with another complete codeword.
+* `1` does not prefix `01`, `001`, or `000`
+* `01` does not prefix `001` or `000`
+* `001` does not prefix `000`
+### Answer
+**Yes, it is prefix-free.**
+---
+## A14. Why does a prefix code support instantaneous decoding?
+In a prefix code, **no codeword is the prefix of another codeword**.
+Therefore, when the decoder reaches the end of a valid codeword, it immediately knows which symbol was transmitted.
+It does not need to wait for additional bits.
+Hence prefix codes permit:
+**instantaneous / uniquely identifiable decoding.**
+---
+## A15. Maximum entropy of a source with sixteen equally likely symbols
+For `M` equally likely symbols:
+`Hmax = log2 M`
+Here:
+`M = 16 = 2^4`
+Therefore:
+`Hmax = log2 16 = 4 bits/symbol`
+### Answer
+**Maximum entropy = 4 bits/symbol**
+---
+# B. ENTROPY AND INFORMATION
+## Formula
+For a source with probabilities `p1, p2, ..., pn`:
+`H(X) = -sum pi log2 pi`
+or:
+`H(X) = sum pi I(i)`
+where:
+`I(i) = -log2 pi`
+---
+## B1. Entropy of a binary source with probabilities 0.75 and 0.25
+Given:
+`p1 = 0.75`
+`p2 = 0.25`
+Therefore:
+`H = -[0.75 log2(0.75) + 0.25 log2(0.25)]`
+Now:
+`log2(0.75) ≈ -0.4150`
+`log2(0.25) = -2`
+Therefore:
+`H = -(0.75 × -0.4150 + 0.25 × -2)`
+`H = 0.3113 + 0.5`
+`H ≈ 0.8113 bits/symbol`
+### Answer
+**H ≈ 0.811 bits/symbol**
+---
+## B2. Four-symbol source: 0.5, 0.25, 0.125, 0.125
+Calculate each information value:
+For `0.5`:
+`I1 = -log2(0.5) = 1`
+For `0.25`:
+`I2 = 2`
+For `0.125`:
+`I3 = 3`
+For `0.125`:
+`I4 = 3`
+Entropy:
+`H = 0.5(1) + 0.25(2) + 0.125(3) + 0.125(3)`
+`H = 0.5 + 0.5 + 0.375 + 0.375`
+`H = 1.75`
+### Answer
+**H = 1.75 bits/symbol**
+---
+## B3. Entropy for probabilities 0.6, 0.2, 0.1, 0.1
+Use:
+`H = -sum pi log2 pi`
+Information values approximately:
+`-log2(0.6) ≈ 0.737`
+`-log2(0.2) ≈ 2.322`
+`-log2(0.1) ≈ 3.322`
+Therefore:
+`H = 0.6(0.737) + 0.2(2.322) + 0.1(3.322) + 0.1(3.322)`
+`H ≈ 0.442 + 0.464 + 0.332 + 0.332`
+`H ≈ 1.570`
+### Answer
+**H ≈ 1.571 bits/symbol**
+---
+## B4. Probabilities 0.45, 0.25, 0.20, 0.10
+## Step 1: Self-information
+`I = -log2 p`
+### For p = 0.45
+`I1 = -log2(0.45) ≈ 1.152`
+### For p = 0.25
+`I2 = 2 bits`
+### For p = 0.20
+`I3 ≈ 2.322 bits`
+### For p = 0.10
+`I4 ≈ 3.322 bits`
+## Step 2: Entropy
+`H = sum pi Ii`
+`H = 0.45(1.152) + 0.25(2) + 0.20(2.322) + 0.10(3.322)`
+`H ≈ 0.5184 + 0.5 + 0.4644 + 0.3322`
+`H ≈ 1.815`
+### Answer
+
+| Probability | Self-information |
+| ----------: | ---------------: |
+|        0.45 |       1.152 bits |
+|        0.25 |           2 bits |
+|        0.20 |       2.322 bits |
+|        0.10 |       3.322 bits |
+**Entropy ≈ 1.815 bits/symbol**
+---
+## B5. Five-symbol source: 0.4, 0.2, 0.15, 0.15, 0.10
+Calculate:
+`H = -sum pi log2 pi`
+Approximate information values:
+* `I(0.4) = 1.322`
+* `I(0.2) = 2.322`
+* `I(0.15) ≈ 2.737`
+* `I(0.15) ≈ 2.737`
+* `I(0.10) = 3.322`
+Therefore:
+`H = 0.4(1.322) + 0.2(2.322) + 0.15(2.737) + 0.15(2.737) + 0.1(3.322)`
+`H ≈ 0.5288 + 0.4644 + 0.4106 + 0.4106 + 0.3322`
+`H ≈ 2.1466`
+### Answer
+**H ≈ 2.147 bits/symbol**
+---
+## B6. Eight equally likely symbols
+For equally likely symbols:
+`H = log2 M`
+Here:
+`M = 8`
+Therefore:
+`H = log2 8 = 3`
+### Answer
+**H = 3 bits/symbol**
+---
+## B7. Why is entropy maximum when all symbols are equally probable?
+Entropy measures uncertainty.
+If one symbol has a very high probability, we can predict the source more easily.
+Therefore uncertainty is lower.
+When all symbols are equally likely, no symbol is more predictable than another.
+Thus uncertainty is greatest.
+For `M` symbols:
+`H <= log2 M`
+Equality occurs when:
+`p1 = p2 = ... = pM = 1/M`
+### Answer
+Entropy is maximum for a uniform distribution because the source is then **most uncertain and least predictable**.
+---
+## B8. Can a four-symbol source have entropy 2.3 bits/symbol?
+For a source with `M = 4` symbols:
+`H <= log2 4`
+`H <= 2 bits/symbol`
+Therefore:
+`2.3 > 2`
+which violates the entropy bound.
+### Answer
+**No.**
+A four-symbol source cannot have entropy 2.3 bits/symbol.
+Maximum possible entropy:
+**2 bits/symbol**
+---
+## B9. Average self-information for probabilities 1/2, 1/4, 1/8, 1/8
+Average self-information is entropy.
+Information values:
+`1/2 → 1 bit`
+`1/4 → 2 bits`
+`1/8 → 3 bits`
+`1/8 → 3 bits`
+Therefore:
+`H = (1/2)(1) + (1/4)(2) + (1/8)(3) + (1/8)(3)`
+`H = 0.5 + 0.5 + 0.375 + 0.375`
+`H = 1.75`
+### Answer
+**Average self-information = 1.75 bits/symbol**
+---
+## B10. Sources with entropy 1.4 and 1.9 bits/symbol
+Greater entropy means greater uncertainty.
+Since:
+`1.9 > 1.4`
+the second source has greater uncertainty.
+### Answer
+The source with **1.9 bits/symbol** has greater uncertainty because entropy measures average uncertainty.
+---
+# C. MUTUAL INFORMATION
+## C1. H(X)=4.1 and H(X|Y)=1.6
+Formula:
+`I(X;Y) = H(X) - H(X|Y)`
+Therefore:
+`I(X;Y) = 4.1 - 1.6`
+`= 2.5 bits/symbol`
+### Answer
+**I(X;Y) = 2.5 bits/symbol**
+---
+## C2. H(Y)=3.0 and H(Y|X)=0.8
+`I(X;Y) = H(Y) - H(Y|X)`
+`= 3.0 - 0.8`
+`= 2.2`
+### Answer
+**I(X;Y) = 2.2 bits/symbol**
+---
+## C3. Statistically independent variables
+If X and Y are independent:
+Knowing Y gives no information about X.
+Therefore:
+`H(X|Y) = H(X)`
+Hence:
+`I(X;Y) = H(X)-H(X|Y)`
+`= 0`
+### Answer
+**Mutual information = 0**
+---
+## C4. If H(X|Y)=0
+`H(X|Y)=0` means that once Y is known, there is **no uncertainty remaining about X**.
+Therefore X can be determined completely from Y.
+Since:
+`I(X;Y)=H(X)-H(X|Y)`
+we get:
+`I(X;Y)=H(X)`
+### Answer
+Knowing Y completely determines X.
+---
+## C5. Difference between entropy, conditional entropy and mutual information
+### Entropy
+`H(X)`
+Measures the uncertainty of X before receiving additional information.
+### Conditional entropy
+`H(X|Y)`
+Measures the uncertainty remaining in X after Y is known.
+### Mutual information
+`I(X;Y)`
+Measures how much knowing Y reduces uncertainty about X.
+Relationship:
+`I(X;Y)=H(X)-H(X|Y)`
+So conceptually:
+**Entropy = total uncertainty**
+**Conditional entropy = remaining uncertainty**
+**Mutual information = uncertainty removed**
+---
+## C6. Mutual information using joint and marginal entropies
+The relationship is:
+`I(X;Y)=H(X)+H(Y)-H(X,Y)`
+where:
+* `H(X)` = entropy of X
+* `H(Y)` = entropy of Y
+* `H(X,Y)` = joint entropy
+---
+# D. LINEAR BLOCK CODES AND (7,4) HAMMING CODE
+For a standard `(7,4)` Hamming code:
+* Total bits = 7
+* Data bits = 4
+* Parity bits = 3
+Parity positions are:
+`1, 2, 4`
+Data positions are:
+`3, 5, 6, 7`
+We use **even parity**.
+So the arrangement is:
+
+| Position | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
+| -------- | -- | -- | -- | -- | -- | -- | -- |
+| Type     | p1 | p2 | d1 | p4 | d2 | d3 | d4 |
+---
+## D1. Encode data word 1001
+Data:
+`d1 d2 d3 d4 = 1 0 0 1`
+Place into positions 3,5,6,7:
+
+| Position |  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+| -------- | -: | -: | -: | -: | -: | -: | -: |
+| Bit      | p1 | p2 |  1 | p4 |  0 |  0 |  1 |
+## Find p1
+p1 checks positions:
+`1,3,5,7`
+So:
+`p1, 1, 0, 1`
+For even parity:
+`p1 + 1 + 0 + 1`
+must be even.
+There are already two 1s.
+Therefore:
+`p1 = 0`
+## Find p2
+p2 checks:
+`2,3,6,7`
+Bits:
+`p2,1,0,1`
+Again two 1s already exist.
+Therefore:
+`p2=0`
+## Find p4
+p4 checks:
+`4,5,6,7`
+Bits:
+`p4,0,0,1`
+There is one 1.
+To make the total even:
+`p4=1`
+Therefore codeword:
+`0011001`
+### Answer
+**Encoded codeword = 0011001**
+---
+## D2. Encode 0111
+Data:
+`0 1 1 1`
+Place into data positions:
+
+| Position |  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+| -------- | -: | -: | -: | -: | -: | -: | -: |
+| Bit      | p1 | p2 |  0 | p4 |  1 |  1 |  1 |
+### p1
+Checks:
+`1,3,5,7`
+`p1,0,1,1`
+There are already two 1s.
+`p1=0`
+### p2
+Checks:
+`2,3,6,7`
+`p2,0,1,1`
+Two 1s already.
+`p2=0`
+### p4
+Checks:
+`4,5,6,7`
+`p4,1,1,1`
+Three 1s already.
+Therefore:
+`p4=1`
+Codeword:
+`0001111`
+### Answer
+**Encoded codeword = 0001111**
+---
+## D3. Encode a data word of your choice
+Choose:
+`1010`
+Place data:
+`d1=1, d2=0, d3=1, d4=0`
+Arrangement:
+`p1 p2 1 p4 0 1 0`
+### p1
+Positions 1,3,5,7:
+`p1,1,0,0`
+One 1 exists.
+Therefore:
+`p1=1`
+### p2
+Positions 2,3,6,7:
+`p2,1,1,0`
+Two 1s already.
+Therefore:
+`p2=0`
+### p4
+Positions 4,5,6,7:
+`p4,0,1,0`
+One 1 exists.
+Therefore:
+`p4=1`
+Codeword:
+`1011010`
+## Verification
+p1 group:
+`1,1,0,0` → two 1s → even ✓
+p2 group:
+`0,1,1,0` → two 1s → even ✓
+p4 group:
+`1,0,1,0` → two 1s → even ✓
+### Answer
+**Codeword = 1011010**
+All parity checks pass.
+---
+## D4. Parity-check groups
+For the standard `(7,4)` Hamming code:
+### p1
+Checks:
+`1,3,5,7`
+### p2
+Checks:
+`2,3,6,7`
+### p4
+Checks:
+`4,5,6,7`
+So:
+`p1 → {1,3,5,7}`
+`p2 → {2,3,6,7}`
+`p4 → {4,5,6,7}`
+---
+## D5. Calculate syndrome for a received word
+Choose received word:
+`1011011`
+We calculate the three parity checks.
+Positions:
+
+| Position |  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+| -------- | -: | -: | -: | -: | -: | -: | -: |
+| Bit      |  1 |  0 |  1 |  1 |  0 |  1 |  1 |
+### Check S1
+Positions:
+`1,3,5,7`
+Bits:
+`1,1,0,1`
+Number of 1s = 3 → odd.
+Therefore:
+`S1=1`
+### Check S2
+Positions:
+`2,3,6,7`
+Bits:
+`0,1,1,1`
+Number of 1s = 3 → odd.
+Therefore:
+`S2=1`
+### Check S4
+Positions:
+`4,5,6,7`
+Bits:
+`1,0,1,1`
+Number of 1s = 3 → odd.
+Therefore:
+`S4=1`
+Syndrome:
+`S4 S2 S1 = 111`
+Binary `111` = decimal `7`.
+Therefore error is at:
+**position 7**
+### Answer
+**Syndrome = 111₂ = 7₁₀**
+So the seventh bit is erroneous.
+---
+## D6. How does a (7,4) code provide redundancy?
+A `(7,4)` Hamming code contains:
+`4 data bits + 3 parity bits = 7 bits`
+The three parity bits provide extra information about the data.
+This redundancy allows the receiver to:
+* detect a single-bit error
+* locate the position of a single-bit error
+* correct that single-bit error
+Thus redundancy improves reliability.
+---
+## D7. Possible messages in a binary (7,4) code
+Number of possible messages:
+`2^k`
+Here:
+`k=4`
+Therefore:
+`2^4 = 16`
+### Answer
+**16 possible messages**
+---
+## D8. Possible codewords in binary (15,11) code
+`k=11`
+Number of possible codewords:
+`2^11 = 2048`
+### Answer
+**2048 possible codewords**
+---
+## D9. Systematic vs non-systematic block coding
+## Systematic code
+The original data bits appear **unchanged** inside the codeword.
+Example:
+`data + parity`
+For a `(7,4)` Hamming code:
+`d1 d2 d3 d4`
+appear directly in the codeword positions.
+### Non-systematic code
+The original message bits are transformed and do not necessarily appear directly in the codeword.
+### Main difference
+**Systematic:** data bits are directly visible.
+**Non-systematic:** codeword is generated through transformation and original data bits need not appear directly.
+---
+## D10. Generator matrix
+For a linear block code, a message vector `m` is multiplied by the generator matrix `G`.
+In binary arithmetic:
+`c = mG`
+where:
+* `m` = message vector
+* `G` = generator matrix
+* `c` = resulting codeword
+Because the arithmetic is over GF(2), addition is XOR.
+Thus every possible message vector generates one codeword.
+---
+# E. PREFIX CODES AND AVERAGE LENGTH
+## E1. Check {0,10,110,111}
+Codewords:
+`0`
+`10`
+`110`
+`111`
+No codeword is the prefix of another.
+### Answer
+**Prefix-free ✓**
+---
+## E2. Check {00,01,10,110}
+Check:
+`10` is not a prefix of `110` because `110` begins with `11`, not `10`.
+No other prefix relationship exists.
+### Answer
+**Prefix-free ✓**
+---
+## E3. Check {1,01,001,000}
+As in A13:
+No codeword is a prefix of another.
+### Answer
+**Prefix-free ✓**
+---
+## E4. Probabilities 0.5, 0.25, 0.125, 0.125
+A suitable prefix code is:
+
+| Symbol | Probability | Codeword | Length |
+| ------ | ----------: | -------- | -----: |
+| A      |        0.50 | 0        |      1 |
+| B      |        0.25 | 10       |      2 |
+| C      |       0.125 | 110      |      3 |
+| D      |       0.125 | 111      |      3 |
+Average length:
+`Lavg = sum pi li`
+`= 0.5(1)+0.25(2)+0.125(3)+0.125(3)`
+`= 0.5+0.5+0.375+0.375`
+`=1.75 bits/symbol`
+### Answer
+**Average length = 1.75 bits/symbol**
+---
+## E5. Lengths 1,2,3,3 and probabilities 0.45,0.30,0.15,0.10
+Formula:
+`Lavg = sum pi li`
+Therefore:
+`Lavg = 0.45(1)+0.30(2)+0.15(3)+0.10(3)`
+`=0.45+0.60+0.45+0.30`
+`=1.80`
+### Answer
+**Lavg = 1.80 bits/symbol**
+---
+## E6. Why is variable-length coding useful for a non-uniform source?
+In a non-uniform source, some symbols occur much more frequently than others.
+Variable-length coding assigns:
+* **short codewords → high-probability symbols**
+* **long codewords → low-probability symbols**
+Therefore the frequently occurring symbols require fewer bits on average.
+This reduces the average number of bits per source symbol.
+### Answer
+Variable-length coding is useful because it exploits unequal probabilities to reduce the **average codeword length**.
+---
+## E7. Kraft inequality for lengths 1,2,3,3
+For a binary code:
+`sum 2^(-li) <= 1`
+Substitute:
+`2^-1 + 2^-2 + 2^-3 + 2^-3`
+`= 1/2 + 1/4 + 1/8 + 1/8`
+`= 1`
+Since:
+`1 <= 1`
+the lengths satisfy the Kraft inequality.
+### Answer
+**The lengths are valid for a binary prefix code.**
+---
+## E8. Set of binary prefix codewords with lengths 1,2,3,3
+One valid set is:
+`{0,10,110,111}`
+Lengths:
+`1,2,3,3`
+Check:
+* `0` → length 1
+* `10` → length 2
+* `110` → length 3
+* `111` → length 3
+No codeword is a prefix of another.
+### Answer
+**{0, 10, 110, 111}**
+---
+## E9. Fixed vs variable-length coding
+Suppose the source probabilities are strongly unequal.
+A fixed-length code for four symbols requires:
+`log2 4 = 2 bits/symbol`
+A variable-length code can assign:
+* most probable symbol → 1 bit
+* less probable symbols → longer codewords
+Thus its average length can be less than 2 bits/symbol.
+For example, for:
+`0.5, 0.25, 0.125, 0.125`
+the variable-length code above has:
+`Lavg = 1.75 bits/symbol`
+while fixed-length requires:
+`2 bits/symbol`
+Savings:
+`2 - 1.75 = 0.25 bits/symbol`
+---
+# F. HUFFMAN CODING
+## F1. Probabilities 0.50, 0.25, 0.15, 0.10
+Sort:
+`0.10, 0.15, 0.25, 0.50`
+Combine two smallest:
+`0.10 + 0.15 = 0.25`
+Now:
+`0.25, 0.25, 0.50`
+Combine:
+`0.25 + 0.25 = 0.50`
+Now:
+`0.50 + 0.50 = 1`
+One valid Huffman code is:
+
+| Symbol | Probability | Code | Length |
+| ------ | ----------: | ---- | -----: |
+| A      |        0.50 | 0    |      1 |
+| B      |        0.25 | 10   |      2 |
+| C      |        0.15 | 110  |      3 |
+| D      |        0.10 | 111  |      3 |
+Average length:
+`L = 0.5(1)+0.25(2)+0.15(3)+0.10(3)`
+`=0.5+0.5+0.45+0.30`
+`=1.75`
+### Answer
+**Huffman average length = 1.75 bits/symbol**
+---
+## F2. Probabilities 0.40, 0.30, 0.20, 0.10
+Sort:
+`0.10,0.20,0.30,0.40`
+Combine:
+`0.10+0.20=0.30`
+Now:
+`0.30,0.30,0.40`
+Combine:
+`0.30+0.30=0.60`
+Finally:
+`0.40+0.60=1`
+One valid code:
+
+| Symbol | Probability | Code | Length |
+| ------ | ----------: | ---- | -----: |
+| A      |        0.40 | 0    |      1 |
+| B      |        0.30 | 10   |      2 |
+| C      |        0.20 | 110  |      3 |
+| D      |        0.10 | 111  |      3 |
+Average:
+`L=0.40(1)+0.30(2)+0.20(3)+0.10(3)`
+`=0.40+0.60+0.60+0.30`
+`=1.90`
+### Answer
+**Lavg = 1.90 bits/symbol**
+---
+## F3. Five symbols: 0.35, 0.25, 0.18, 0.12, 0.10
+Sort:
+`0.10,0.12,0.18,0.25,0.35`
+Combine:
+`0.10+0.12=0.22`
+Now:
+`0.18,0.22,0.25,0.35`
+Combine:
+`0.18+0.22=0.40`
+Now:
+`0.25,0.35,0.40`
+Combine:
+`0.25+0.35=0.60`
+Finally:
+`0.40+0.60=1`
+One valid tree gives lengths:
+* 0.35 → 2
+* 0.25 → 2
+* 0.18 → 3
+* 0.12 → 3
+* 0.10 → 3
+Average length:
+`L = 0.35(2)+0.25(2)+0.18(3)+0.12(3)+0.10(3)`
+`=0.70+0.50+0.54+0.36+0.30`
+`=2.40`
+### Answer
+**Huffman average length = 2.40 bits/symbol**
+---
+## F4. Six symbols: 0.30, 0.25, 0.18, 0.12, 0.10, 0.05
+Sort:
+`0.05,0.10,0.12,0.18,0.25,0.30`
+Combine:
+`0.05+0.10=0.15`
+Now:
+`0.12,0.15,0.18,0.25,0.30`
+Combine:
+`0.12+0.15=0.27`
+Now:
+`0.18,0.25,0.27,0.30`
+Combine:
+`0.18+0.25=0.43`
+Now:
+`0.27,0.30,0.43`
+Combine:
+`0.27+0.30=0.57`
+Finally:
+`0.43+0.57=1`
+Depths become:
+* 0.30 → 2
+* 0.25 → 2
+* 0.18 → 3
+* 0.12 → 4
+* 0.10 → 4
+* 0.05 → 4
+Average:
+`L = 0.30(2)+0.25(2)+0.18(3)+0.12(4)+0.10(4)+0.05(4)`
+`=0.60+0.50+0.54+0.48+0.40+0.20`
+`=2.72`
+### Answer
+**Lavg = 2.72 bits/symbol**
+---
+## F5. Seven symbols
+Probabilities:
+`0.34, 0.27, 0.15, 0.09, 0.07, 0.05, 0.03`
+Sort:
+`0.03,0.05,0.07,0.09,0.15,0.27,0.34`
+Combine:
+`0.03+0.05=0.08`
+Now:
+`0.07,0.08,0.09,0.15,0.27,0.34`
+Combine:
+`0.07+0.08=0.15`
+Now:
+`0.09,0.15,0.15,0.27,0.34`
+Combine:
+`0.09+0.15=0.24`
+Now:
+`0.15,0.24,0.27,0.34`
+Combine:
+`0.15+0.24=0.39`
+Now:
+`0.27,0.34,0.39`
+Combine:
+`0.27+0.34=0.61`
+Finally:
+`0.39+0.61=1`
+Resulting lengths:
+* 0.34 → 2
+* 0.27 → 2
+* 0.15 → 3
+* 0.09 → 4
+* 0.07 → 4
+* 0.05 → 5
+* 0.03 → 5
+Average:
+`L = 0.34(2)+0.27(2)+0.15(3)+0.09(4)+0.07(4)+0.05(5)+0.03(5)`
+`=0.68+0.54+0.45+0.36+0.28+0.25+0.15`
+`=2.71`
+### Answer
+**Huffman average length = 2.71 bits/symbol**
+---
+## F6. Given code lengths and probabilities
+General formula:
+`Lavg = sum pi li`
+For every symbol:
+1. multiply its probability by its codeword length
+2. add all products.
+---
+## F7. Entropy and Huffman length for 0.5,0.25,0.125,0.125
+From earlier:
+`H = 1.75 bits/symbol`
+A Huffman code gives:
+`Lavg = 1.75 bits/symbol`
+Therefore:
+`Lavg = H`
+This happens because the probabilities are exact powers of two and therefore can be represented perfectly by integer-length codewords.
+### Answer
+**Entropy = 1.75 bits/symbol**
+**Huffman average length = 1.75 bits/symbol**
+---
+## F8. H=2.25 and Lavg=2.40
+Efficiency:
+`η = H/Lavg × 100%`
+Therefore:
+`η = (2.25/2.40) × 100`
+`=93.75%`
+### Answer
+**Efficiency = 93.75%**
+---
+## F9. Why can different Huffman trees be valid?
+Huffman coding may encounter symbols with equal probabilities.
+When probabilities are equal, either symbol can be assigned to either branch without changing the optimal average length.
+Also, swapping the 0 and 1 labels at a branch produces another valid Huffman code.
+Therefore different-looking Huffman trees may produce the **same optimal average length**.
+---
+## F10. Complete Huffman algorithm
+### Step 1
+List all source symbols with their probabilities.
+### Step 2
+Arrange probabilities from smallest to largest.
+### Step 3
+Select the two smallest probabilities.
+### Step 4
+Combine them into a new node whose probability equals their sum.
+### Step 5
+Insert the new probability back into the list.
+### Step 6
+Repeat until only one node remains.
+### Step 7
+The resulting structure is the Huffman tree.
+### Step 8
+Assign `0` to one branch and `1` to the other.
+### Step 9
+Read the path from root to each symbol to obtain its codeword.
+### Step 10
+Calculate average length:
+`Lavg = sum pi li`
+Huffman coding produces an optimal binary prefix code for the given symbol probabilities.
+---
+# G. EFFICIENCY AND SOURCE CODING THEOREM
+## G1. H=2.4, L=2.55
+Efficiency:
+`η = H/L ×100%`
+`=2.4/2.55 ×100`
+`≈94.12%`
+### Answer
+**Efficiency ≈ 94.12%**
+---
+## G2. H=3.1, L=3.5
+Efficiency:
+`η = 3.1/3.5 ×100`
+`≈88.57%`
+### Excess length
+`Excess length = L-H`
+`=3.5-3.1`
+`=0.4 bits/symbol`
+### Answer
+**Efficiency ≈ 88.57%**
+**Excess length = 0.4 bits/symbol**
+---
+## G3. H=1.8, L=1.6
+For a lossless code:
+`Lavg >= H`
+But here:
+`1.6 < 1.8`
+Therefore the proposed result violates the source coding bound.
+### Answer
+**No, the result is inconsistent with the lossless coding bound.**
+A valid lossless code cannot have average length below the source entropy.
+---
+## G4. H=2.05, L=2.12
+`η = H/L ×100`
+`=2.05/2.12 ×100`
+`≈96.70%`
+### Answer
+**Efficiency ≈ 96.70%**
+---
+## G5. Standard binary Huffman length bound
+For a binary Huffman code:
+`H(X) <= Lavg < H(X)+1`
+where:
+* `H(X)` = source entropy
+* `Lavg` = Huffman average codeword length
+This means Huffman coding produces an average length that is:
+* never below entropy
+* less than one bit above entropy
+### Answer
+`H <= Lavg < H+1`
+This is the standard binary Huffman bound.
+---
+## G6. Practical meaning of coding redundancy
+Coding redundancy is the additional number of bits used beyond the theoretical minimum represented by entropy.
+It can be expressed as:
+`Redundancy = Lavg - H`
+For example:
+`H=2.0`
+`Lavg=2.3`
+Then:
+`Redundancy=0.3 bits/symbol`
+The extra bits arise because practical lossless codes generally need integer-length codewords and must satisfy prefix/decodability constraints.
+---
+## G7. Why can an efficient code still have average length greater than entropy?
+Entropy represents the **theoretical minimum average number of bits per symbol** for lossless compression under the source model.
+Actual prefix codes have additional structural restrictions.
+For example, a codeword length must be an integer number of bits.
+Therefore:
+`Lavg >= H`
+Even a highly efficient code may have:
+`Lavg > H`
+but a good code keeps the difference small.
+For Huffman:
+`H <= Lavg < H+1`
+---
+# H. ARITHMETIC CODING
+## H1. Principle of arithmetic coding
+Arithmetic coding represents an entire sequence using **one number inside an interval between 0 and 1**.
+Initially:
+`[0,1)`
+The interval is divided according to symbol probabilities.
+When a symbol occurs, the current interval is narrowed to the subinterval corresponding to that symbol.
+This continues for every symbol.
+At the end, **any number inside the final interval represents the complete message**.
+---
+## H2. Initial cumulative intervals
+Given:
+`P(A)=0.5`
+`P(B)=0.3`
+`P(C)=0.2`
+Starting with:
+`[0,1)`
+Assign cumulative intervals.
+### A
+Probability = 0.5
+`A → [0,0.5)`
+### B
+Next probability = 0.3
+`B → [0.5,0.8)`
+### C
+Remaining = 0.2
+`C → [0.8,1)`
+Therefore:
+
+| Symbol | Probability | Interval  |
+| ------ | ----------: | --------- |
+| A      |         0.5 | [0,0.5)   |
+| B      |         0.3 | [0.5,0.8) |
+| C      |         0.2 | [0.8,1)   |
+---
+## H3. A=0.7, B=0.3; message beginning with B
+Initial:
+`[0,1)`
+Intervals:
+`A → [0,0.7)`
+`B → [0.7,1)`
+Because the message begins with B:
+Final interval after the first symbol is:
+**[0.7,1)**
+If the message has more symbols, this interval is subdivided again according to the same probabilities.
+---
+## H4. Encode a three-symbol message
+Choose message:
+**ABC**
+Probabilities:
+`A=0.5`
+`B=0.3`
+`C=0.2`
+Initial interval:
+`[0,1)`
+## Symbol 1: A
+A occupies:
+`[0,0.5)`
+So:
+`L=0`
+`U=0.5`
+---
+## Symbol 2: B
+Current range:
+`R=U-L`
+`=0.5`
+B occupies cumulative range:
+`[0.5,0.8)`
+Therefore:
+New lower:
+`L' = L + R(0.5)`
+`=0 + 0.5(0.5)`
+`=0.25`
+New upper:
+`U' = L + R(0.8)`
+`=0 + 0.5(0.8)`
+`=0.40`
+So:
+**[0.25,0.40)**
+---
+## Symbol 3: C
+Current interval:
+`[0.25,0.40)`
+Range:
+`R=0.15`
+C occupies `[0.8,1)`.
+New lower:
+`L'=0.25 + 0.15(0.8)`
+`=0.25+0.12`
+`=0.37`
+New upper:
+`U'=0.25+0.15(1)`
+`=0.40`
+Final interval:
+**[0.37,0.40)**
+Therefore any number in this interval identifies the message `ABC`.
+For example:
+`0.38`
+can be used as the encoded value.
+### Answer
+Message:
+`ABC`
+Final interval:
+**[0.37, 0.40)**
+One possible arithmetic code value:
+**0.38**
+---
+## H5. How does the final interval identify the complete message?
+Every transmitted symbol narrows the interval.
+Therefore, after all symbols have been processed, the final interval corresponds uniquely to the complete sequence.
+The decoder starts with `[0,1)` and repeatedly determines which symbol's subinterval contains the encoded number.
+It then reconstructs the original sequence.
+---
+## H6. Why can arithmetic coding allow fractional average rates?
+Arithmetic coding encodes a **whole sequence**, rather than assigning an integer number of bits independently to each symbol.
+Therefore the total number of bits needed can approach the theoretical information content of the entire sequence.
+For long sequences, the average rate can approach:
+`H`
+even when the average information per symbol is not an integer.
+---
+## H7. Arithmetic coding vs Huffman coding
+
+| Feature              | Huffman              | Arithmetic                                   |
+| -------------------- | -------------------- | -------------------------------------------- |
+| Basic representation | Individual codewords | One interval/number for sequence             |
+| Code length          | Integer bits/symbol  | Can achieve fractional average rate          |
+| Method               | Build binary tree    | Repeated interval subdivision                |
+| Prefix-free          | Yes                  | Not represented as ordinary prefix codewords |
+| Efficiency           | Very good            | Can approach entropy more closely            |
+| Complexity           | Relatively simple    | More computationally involved                |
+---
+## H8. Why must the probability model be available to encoder and decoder?
+The encoder uses probabilities to determine how the interval is divided.
+The decoder must perform exactly the same subdivisions to determine which symbols correspond to the encoded value.
+If the encoder and decoder use different probability models, they will produce different intervals.
+Therefore decoding will fail.
+### Answer
+**Both sides must use the same probability model so that they construct identical interval subdivisions.**
+---
+## H9. One advantage and one limitation
+### Advantage
+Arithmetic coding can achieve an average rate **very close to the source entropy**, especially for long sequences.
+### Limitation
+It is generally more computationally complex than simple prefix coding such as Huffman coding and requires careful numerical/range implementation.
+---
+# I. LONG-ANSWER PRACTICE
+These are the questions you should be prepared to write as **full 8–10 mark answers**.
+---
+## I1. Complete four-symbol non-uniform source example
+Consider:
+
+| Symbol | Probability |
+| ------ | ----------: |
+| A      |        0.50 |
+| B      |        0.25 |
+| C      |       0.125 |
+| D      |       0.125 |
+## Step 1: Self-information
+`I(A)=-log2(0.5)=1 bit`
+`I(B)=-log2(0.25)=2 bits`
+`I(C)=-log2(0.125)=3 bits`
+`I(D)=-log2(0.125)=3 bits`
+## Step 2: Entropy
+`H=sum piIi`
+`=0.5(1)+0.25(2)+0.125(3)+0.125(3)`
+`=1.75 bits/symbol`
+## Step 3: Huffman construction
+Combine:
+`0.125+0.125=0.25`
+Then:
+`0.25+0.25=0.50`
+Finally:
+`0.50+0.50=1`
+One resulting code:
+
+| Symbol | Probability | Code | Length |
+| ------ | ----------: | ---- | -----: |
+| A      |        0.50 | 0    |      1 |
+| B      |        0.25 | 10   |      2 |
+| C      |       0.125 | 110  |      3 |
+| D      |       0.125 | 111  |      3 |
+## Step 4: Average length
+`Lavg = 0.5(1)+0.25(2)+0.125(3)+0.125(3)`
+`=1.75 bits/symbol`
+## Step 5: Efficiency
+`η=H/Lavg ×100`
+`=1.75/1.75 ×100`
+`=100%`
+## Step 6: Verify entropy bound
+For Huffman:
+`H <= Lavg < H+1`
+Here:
+`1.75 <= 1.75 < 2.75`
+Correct.
+### Final result
+**Entropy = 1.75 bits/symbol**
+**Average length = 1.75 bits/symbol**
+**Efficiency = 100%**
+This is an ideal example because all probabilities are powers of `1/2`.
+---
+## I2. Complete six-symbol Huffman example
+Take:
+`0.30, 0.25, 0.18, 0.12, 0.10, 0.05`
+## Huffman combining
+`0.05+0.10=0.15`
+`0.12+0.15=0.27`
+`0.18+0.25=0.43`
+`0.27+0.30=0.57`
+`0.43+0.57=1`
+One possible set of code lengths:
+
+| Probability | Length |
+| ----------: | -----: |
+|        0.30 |      2 |
+|        0.25 |      2 |
+|        0.18 |      3 |
+|        0.12 |      4 |
+|        0.10 |      4 |
+|        0.05 |      4 |
+Average length:
+`L=2(0.30)+2(0.25)+3(0.18)+4(0.12)+4(0.10)+4(0.05)`
+`=2.72 bits/symbol`
+## Entropy
+`H=-sum pi log2 pi`
+Approximate:
+`H ≈ 2.395 bits/symbol`
+Therefore:
+`η = H/L ×100`
+`≈2.395/2.72 ×100`
+`≈88.05%`
+The exact value can vary only in the code assignment, not in the optimal Huffman average length.
+### Final
+**Entropy ≈ 2.395 bits/symbol**
+**Huffman average length = 2.72 bits/symbol**
+**Efficiency ≈ 88.05%**
+And:
+`H <= L < H+1`
+`2.395 <= 2.72 < 3.395`
+✓ Bound satisfied.
+---
+## I3. Arithmetic coding numerical explanation
+Consider:
+`A=0.5`
+`B=0.3`
+`C=0.2`
+Message:
+`ABC`
+Initial:
+`[0,1)`
+Symbol intervals:
+`A=[0,0.5)`
+`B=[0.5,0.8)`
+`C=[0.8,1)`
+### After A
+`[0,0.5)`
+### After B
+The B region occupies 30% of the current interval:
+`[0.25,0.40)`
+### After C
+C occupies the last 20%:
+`[0.37,0.40)`
+Thus the final interval is:
+**[0.37,0.40)**
+Choose:
+`0.38`
+Since 0.38 lies inside the final interval, it represents `ABC`.
+---
+## I4. Hamming weight, distance and (7,4) Hamming code
+## Hamming weight
+Number of 1s in a binary word.
+Example:
+`101101`
+has four 1s.
+Therefore:
+`w=4`
+## Hamming distance
+Number of positions where two binary words differ.
+It can also be calculated as the Hamming weight of their XOR:
+`d(x,y)=w(x XOR y)`
+## (7,4) Hamming code
+There are:
+`7 total bits`
+`4 data bits`
+`3 parity bits`
+Parity positions:
+`1,2,4`
+Data positions:
+`3,5,6,7`
+The parity groups are:
+`p1 → 1,3,5,7`
+`p2 → 2,3,6,7`
+`p4 → 4,5,6,7`
+With even parity, each group must contain an even number of 1s.
+The receiver calculates the three parity-check results.
+These three results form the syndrome:
+`S4 S2 S1`
+The binary value of the syndrome gives the position of a single-bit error.
+Thus the `(7,4)` Hamming code can **correct one-bit errors**.
+---
+## I5. Huffman vs Arithmetic Coding
+
+| Property       | Huffman Coding                            | Arithmetic Coding                        |
+| -------------- | ----------------------------------------- | ---------------------------------------- |
+| Representation | Codeword for each symbol                  | Number representing entire sequence      |
+| Main structure | Binary tree                               | Probability interval                     |
+| Procedure      | Repeatedly combine smallest probabilities | Repeatedly subdivide interval            |
+| Code length    | Integer number of bits                    | Fractional average rate possible         |
+| Prefix code    | Yes                                       | No ordinary prefix codewords             |
+| Efficiency     | Close to entropy                          | Can approach entropy more closely        |
+| Complexity     | Lower                                     | Higher                                   |
+| Best feature   | Simple and fast                           | Excellent compression for long sequences |
+### Conclusion
+Huffman coding assigns individual binary codewords according to symbol probabilities.
+Arithmetic coding represents an entire sequence by progressively narrowing a numerical interval.
+Both exploit source probability, but arithmetic coding can generally get closer to the theoretical entropy limit.
+---
+## I6. Self-information, entropy, conditional entropy and mutual information
+## Self-information
+For event x:
+`I(x)=-log2 p(x)`
+It measures the information associated with a particular event.
+Rare events have greater self-information.
+---
+## Entropy
+Entropy is the average self-information:
+`H(X)=-sum px log2 px`
+It represents the average uncertainty of a source.
+---
+## Conditional entropy
+`H(X|Y)`
+represents the uncertainty remaining in X after Y is known.
+---
+## Mutual information
+`I(X;Y)`
+measures the reduction in uncertainty about X due to knowing Y.
+Mathematically:
+`I(X;Y)=H(X)-H(X|Y)`
+Similarly:
+`I(X;Y)=H(Y)-H(Y|X)`
+And:
+`I(X;Y)=H(X)+H(Y)-H(X,Y)`
+Conceptually:
+**Entropy → total uncertainty**
+**Conditional entropy → remaining uncertainty**
+**Mutual information → uncertainty removed**
+---
+## I7. Complete prefix-code problem
+Consider probabilities:
+`0.45, 0.25, 0.20, 0.10`
+## Step 1: Arrange probabilities
+`0.10, 0.20, 0.25, 0.45`
+## Step 2: Huffman combinations
+Smallest two:
+`0.10+0.20=0.30`
+Remaining:
+`0.25,0.30,0.45`
+Next:
+`0.25+0.30=0.55`
+Finally:
+`0.45+0.55=1`
+A valid code can therefore have lengths:
+
+| Symbol | Probability | Code | Length |
+| ------ | ----------: | ---- | -----: |
+| A      |        0.45 | 0    |      1 |
+| B      |        0.25 | 10   |      2 |
+| C      |        0.20 | 110  |      3 |
+| D      |        0.10 | 111  |      3 |
+## Step 3: Entropy
+Self-information:
+`A: -log2(0.45) ≈ 1.152`
+`B: -log2(0.25)=2`
+`C: -log2(0.20)≈2.322`
+`D: -log2(0.10)≈3.322`
+Entropy:
+`H = 0.45(1.152)+0.25(2)+0.20(2.322)+0.10(3.322)`
+`H ≈ 1.815 bits/symbol`
+## Step 4: Average code length
+`Lavg=0.45(1)+0.25(2)+0.20(3)+0.10(3)`
+`=0.45+0.50+0.60+0.30`
+`=1.85 bits/symbol`
+## Step 5: Efficiency
+`η=H/Lavg ×100`
+`≈1.815/1.85 ×100`
+`≈98.1%`
+## Step 6: Bound check
+`H <= Lavg < H+1`
+`1.815 <= 1.85 < 2.815`
+✓ Correct.
+### Final answer
+**Entropy ≈ 1.815 bits/symbol**
+**Average length = 1.85 bits/symbol**
+**Efficiency ≈ 98.1%**
+**Redundancy ≈ 0.035 bits/symbol**
+---
+# 🔥 FINAL FORMULA SHEET
+These are the formulas you should have at the front of your answer notebook.
+### Hamming weight
+`w(x) = number of 1s`
+### Hamming distance
+`d(x,y) = number of differing positions`
+or:
+`d(x,y)=w(x XOR y)`
+### Redundant bits
+`r=n-k`
+### Number of messages
+`M=2^k`
+### Self-information
+`I(x)=-log2 p(x)`
+### Entropy
+`H(X)=-sum pi log2 pi`
+### Maximum entropy
+`Hmax=log2 M`
+### Conditional entropy
+`H(X|Y) = remaining uncertainty in X after Y is known`
+### Mutual information
+`I(X;Y)=H(X)-H(X|Y)`
+`I(X;Y)=H(Y)-H(Y|X)`
+`I(X;Y)=H(X)+H(Y)-H(X,Y)`
+### Average code length
+`Lavg=sum pi li`
+### Binary Kraft inequality
+`sum 2^(-li) <= 1`
+### Coding efficiency
+`η = H/Lavg ×100%`
+### Coding redundancy / excess length
+`R=Lavg-H`
+### Huffman bound
+`H <= Lavg < H+1`
+### (7,4) Hamming code
+`n=7`
+`k=4`
+`r=3`
+Parity positions:
+`1,2,4`
+Data positions:
+`3,5,6,7`
+Parity groups:
+`p1 → 1,3,5,7`
+`p2 → 2,3,6,7`
+`p4 → 4,5,6,7`
+Syndrome:
+`S4 S2 S1`
+Its binary value identifies the erroneous bit position for a single-bit error.
+---
+## ⚡ What you should REALLY understand for the exam
+The entire chapter can be mentally connected like this:
+**Probability → Self-information → Entropy → Coding → Average length → Efficiency**
+And for relationships between variables:
+**X uncertainty → know Y → remaining uncertainty → mutual information**
+`H(X)` → `H(X|Y)` → difference is `I(X;Y)`
+And for coding:
+**Unequal probabilities → give short codes to frequent symbols → Huffman → reduce average length**
+while:
+**Arithmetic coding → repeatedly shrink an interval → represent the whole sequence with one number.**
+That is the conceptual backbone connecting almost the entire question bank.
+
+</pre>
+    <script>
+        const rawMd = document.getElementById('raw-markdown').textContent;
+        let cleanMd = rawMd.replace(/data\\:image/g, 'data:image');
+        
+        // Fix MathJax triplicated copy-paste errors on the fly
+        cleanMd = cleanMd.replace(/(.*?)(?:\\n)?(.+)=(.+)(?:\\n)?\2=\3(?:\\n)?\2=\3(.*)/g, (match) => {
+            return match.replace(/([^\n=]+=[^\n=]+)\1\1/g, '$$$$$1$$$$');
+        });
+        
+        cleanMd = cleanMd.replace(/(.+)(I=.*?)(I=-\\log_2.*?)(I=.*?)(.+)/g, '$1$$$$$3$$$$$5');
+        cleanMd = cleanMd.replace(/(I\(0;0\)=.*?)(I\(0;0\)=-\\log_2.*?)(I\(0;0\)=.*?)/g, '$$$$$2$$$$');
+        cleanMd = cleanMd.replace(/(I=log2.*?)(I=\\log_2.*?)(I=log2.*?)/g, '$$$$$2$$$$');
+        cleanMd = cleanMd.replace(/(p=0)(p=0)(p=0)/g, '$$$$$1$$$$');
+        cleanMd = cleanMd.replace(/(23=8)(2\^3=8)(23=8)/g, '$$$$$2$$$$');
+        cleanMd = cleanMd.replace(/(2−3=.*?)(2\^{-3}=.*?)(2−3=.*?)/g, '$$$$$2$$$$');
+        
+        // Split markdown by H1 headers to lazy load
+        const chunks = cleanMd.split(/\n(?=# )/);
+        
+        const contentDiv = document.getElementById('content');
+        const tabsContainer = document.getElementById('tabs-container');
+        contentDiv.innerHTML = '';
+        
+        let tabs = [];
+        
+        chunks.forEach((chunk, index) => {
+            const isIntro = !chunk.startsWith('# ');
+            let title = 'Intro';
+            if (!isIntro) {
+                const firstLine = chunk.split('\n')[0];
+                title = firstLine.replace('# ', '').split('—')[0].trim() || `Tab ${index + 1}`;
+            }
+            
+            const tabId = index + 1;
+            
+            const btn = document.createElement('button');
+            btn.className = 'tab-btn tab-nav-btn' + (tabId === 1 ? ' active' : '');
+            btn.textContent = title;
+            btn.onclick = () => switchTab(tabId);
+            tabsContainer.appendChild(btn);
+            
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content' + (tabId === 1 ? ' active' : '');
+            tabContent.id = 'tab-' + tabId;
+            contentDiv.appendChild(tabContent);
+            
+            tabs.push({ id: tabId, chunk: chunk, dom: tabContent, parsed: false, btn: btn });
+        });
+        
+        function parseAndRenderTab(tab) {
+            if (tab.parsed) return Promise.resolve();
+            tab.dom.innerHTML = marked.parse(tab.chunk);
+            tab.parsed = true;
+            if (window.MathJax && MathJax.typesetPromise) {
+                return MathJax.typesetPromise([tab.dom]).catch(err => console.error(err));
+            }
+            return Promise.resolve();
+        }
+        
+        function switchTab(id) {
+            tabs.forEach(t => {
+                const isActive = t.id === id;
+                t.btn.classList.toggle('active', isActive);
+                t.dom.classList.toggle('active', isActive);
+                if (isActive && !t.parsed) {
+                    parseAndRenderTab(t);
+                }
+            });
+            contentDiv.scrollTo(0,0);
+        }
+        
+        // Load the first tab immediately
+        if (tabs.length > 0) {
+            parseAndRenderTab(tabs[0]);
+        }
+    </script>
+    </div>
+</body>
+</html>
