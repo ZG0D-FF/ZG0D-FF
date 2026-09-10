@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Oracle SQL DDL Lab — Reference Notes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#0f141b;
+    --panel:#161d26;
+    --panel-line:#232d3a;
+    --amber:#e3a63e;
+    --steel:#7ea3c9;
+    --text:#dbe2ea;
+    --muted:#8391a3;
+    --good:#7fb98a;
+    --bad:#d9776b;
+    --code-bg:#0a0e13;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--panel-line) 1px, transparent 1px) 0 0/100% 42px,
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.6;
+  }
+
+  .wrap{max-width:760px;margin:0 auto;padding:64px 24px 120px;}
+
+  header.title{
+    border-left:3px solid var(--amber);
+    padding-left:20px;
+    margin-bottom:56px;
+  }
+  header.title .kicker{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--steel);
+    font-size:13px;
+    letter-spacing:.02em;
+    margin:0 0 10px;
+  }
+  header.title h1{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:30px;
+    font-weight:600;
+    margin:0 0 12px;
+    color:#fff;
+  }
+  header.title p{
+    color:var(--muted);
+    margin:0;
+    max-width:56ch;
+  }
+
+  h2.task-head{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:20px;
+    font-weight:600;
+    color:#fff;
+    margin:64px 0 4px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  h2.task-head .num{
+    color:var(--amber);
+    font-size:15px;
+  }
+  section.task{border-top:1px solid var(--panel-line);padding-top:8px;}
+  section.task:first-of-type{border-top:none;}
+
+  h3{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    letter-spacing:.03em;
+    color:var(--steel);
+    margin:28px 0 10px;
+    font-weight:500;
+  }
+
+  p{margin:10px 0;color:var(--text);}
+  p.muted{color:var(--muted);}
+
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--panel-line);
+    border-left:3px solid var(--steel);
+    border-radius:2px;
+    padding:16px 18px;
+    overflow-x:auto;
+    margin:10px 0 18px;
+  }
+  code{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13.5px;
+    color:#c9d6e3;
+  }
+  .kw{color:var(--amber);}
+  .out pre{border-left-color:var(--good);}
+  .out code{color:var(--good);}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0 20px;
+    font-size:14px;
+  }
+  th,td{
+    text-align:left;
+    padding:8px 12px;
+    border-bottom:1px solid var(--panel-line);
+  }
+  th{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.03em;
+    color:var(--muted);
+    font-weight:500;
+  }
+  td{color:var(--text);}
+  td.ok{color:var(--good);}
+  td.no{color:var(--bad);}
+
+  ul{margin:10px 0;padding-left:20px;}
+  li{margin:4px 0;color:var(--text);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:4px;
+    padding:18px 20px;
+    margin:12px 0 20px;
+  }
+
+  /* ---- image slot ---- */
+  figure.shot{
+    margin:18px 0 26px;
+    background:var(--panel);
+    border:1px dashed var(--panel-line);
+    border-radius:4px;
+    padding:10px;
+  }
+  figure.shot img{
+    display:block;
+    width:100%;
+    border-radius:2px;
+    background:#000;
+  }
+  figure.shot figcaption{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--muted);
+    padding:8px 4px 2px;
+  }
+  figure.shot .missing{
+    display:flex;align-items:center;justify-content:center;
+    height:140px;color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    border:1px solid var(--panel-line);border-radius:2px;
+  }
+
+  .divider{
+    height:1px;background:var(--panel-line);
+    margin:60px 0 40px;
+  }
+
+  footer{
+    color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    margin-top:40px;
+  }
+</style>
+</head>
+<body>
+<div style="margin: 20px auto; max-width: 960px; text-align: left; padding: 0 20px;">
+  <a href="index.html" style="display: inline-block; background: #2c3e50; color: #fff; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-family: sans-serif; font-size: 0.9rem;">&larr; Back to Index</a>
+</div>
+<div class="wrap">
+
+  <header class="title">
+    <p class="kicker">DBMS · Assignment 1 · SQL Workshop</p>
+    <h1>Oracle SQL DDL Lab</h1>
+    <p>Lucid, exam/viva-ready notes on Data Definition Language — the commands that shape a database's structure (tables, columns, constraints) rather than its data.</p>
+  </header>
+
+  <!-- ============ TASK 1 ============ -->
+  <section class="task" id="task1">
+    <h2 class="task-head"><span class="num">01</span> Create EMP Table</h2>
+
+    <h3>Code</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> EMP_XX (
+    Empno NUMBER(4) <span class="kw">PRIMARY KEY</span>,
+    Ename VARCHAR2(10) <span class="kw">CHECK</span> (Ename = UPPER(Ename)),
+    Job VARCHAR2(9),
+    Mgr NUMBER(4),
+    Hiredate DATE,
+    Sal NUMBER(7,2),
+    Comm NUMBER(7,2),
+    <span class="kw">CONSTRAINT</span> chk_sal_XX <span class="kw">CHECK</span> (Sal BETWEEN 1500 AND 50000)
+);</code></pre>
+    <p class="muted">Replace <code>XX</code> with your roll number.</p>
+
+    <h3>Why this code exists</h3>
+    <p>Every database needs a place to store employee details. This command creates that table and adds rules so invalid data cannot be entered.</p>
+
+    <h3>What it can do</h3>
+    <ul>
+      <li>Creates an employee table.</li>
+      <li>Prevents duplicate employee numbers.</li>
+      <li>Forces employee names to be uppercase.</li>
+      <li>Allows only valid salary values.</li>
+      <li>Stores manager, hiring date, and commission information.</li>
+    </ul>
+
+    <h3>Columns</h3>
+    <table>
+      <tr><th>Column</th><th>Purpose</th></tr>
+      <tr><td>Empno</td><td>Employee ID</td></tr>
+      <tr><td>Ename</td><td>Employee Name</td></tr>
+      <tr><td>Job</td><td>Job role</td></tr>
+      <tr><td>Mgr</td><td>Manager's Employee ID</td></tr>
+      <tr><td>Hiredate</td><td>Joining date</td></tr>
+      <tr><td>Sal</td><td>Salary</td></tr>
+      <tr><td>Comm</td><td>Commission</td></tr>
+    </table>
+
+    <h3>Constraints explained</h3>
+    <p><strong>PRIMARY KEY</strong> — <code>Empno NUMBER(4) PRIMARY KEY</code> makes every employee number unique and disallows NULL.</p>
+    <table>
+      <tr><th>Empno</th></tr>
+      <tr><td>1001</td></tr>
+      <tr><td>1002</td></tr>
+    </table>
+    <p class="muted">Trying another 1002 gives an error.</p>
+
+    <p><strong>CHECK (uppercase)</strong> — <code>CHECK (Ename = UPPER(Ename))</code> only accepts uppercase names.</p>
+    <table>
+      <tr><th>Input</th><th>Result</th></tr>
+      <tr><td>RAHUL</td><td class="ok">Accepted</td></tr>
+      <tr><td>Rahul</td><td class="no">Rejected</td></tr>
+    </table>
+
+    <p><strong>Salary CHECK</strong> — <code>CHECK (Sal BETWEEN 1500 AND 50000)</code>.</p>
+    <table>
+      <tr><th>Salary</th><th>Result</th></tr>
+      <tr><td>2000</td><td class="ok">Accepted</td></tr>
+      <tr><td>1000</td><td class="no">Rejected</td></tr>
+      <tr><td>70000</td><td class="no">Rejected</td></tr>
+    </table>
+
+    <h3>General structure</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> table_name (
+    column datatype constraint,
+    column datatype constraint
+);</code></pre>
+
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table created.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 2 ============ -->
+  <section class="task" id="task2">
+    <h2 class="task-head"><span class="num">02</span> View Table Structure</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">DESC</span> EMP_XX;</code></pre>
+    <h3>Why this code exists</h3>
+    <p>After creating a table, we should verify that all columns and data types were created correctly.</p>
+    <h3>What it can do</h3>
+    <p>Displays column names, data types, and NULL permission.</p>
+    <h3>General structure</h3>
+    <pre><code><span class="kw">DESC</span> table_name;</code></pre>
+    <h3>Expected output</h3>
+    <table>
+      <tr><th>Name</th><th>Null</th><th>Type</th></tr>
+      <tr><td>EMPNO</td><td>NOT NULL</td><td>NUMBER(4)</td></tr>
+      <tr><td>ENAME</td><td>—</td><td>VARCHAR2(10)</td></tr>
+      <tr><td>JOB</td><td>—</td><td>VARCHAR2(9)</td></tr>
+      <tr><td>MGR</td><td>—</td><td>NUMBER(4)</td></tr>
+      <tr><td>HIREDATE</td><td>—</td><td>DATE</td></tr>
+      <tr><td>SAL</td><td>—</td><td>NUMBER(7,2)</td></tr>
+      <tr><td>COMM</td><td>—</td><td>NUMBER(7,2)</td></tr>
+    </table>
+
+    <!-- IMAGE SLOT 2 -->
+    <figure class="shot" data-slot="desc_emp_xx">
+      <img src="images/desc_emp_xx.png" alt="DESC EMP_XX output"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'missing',textContent:'Image slot: images/desc_emp_xx.png'}))">
+      <figcaption>Screenshot — DESC EMP_XX (Oracle APEX)</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ TASK 3 ============ -->
+  <section class="task" id="task3">
+    <h2 class="task-head"><span class="num">03</span> Add DEPTNO Column</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> EMP_XX <span class="kw">ADD</span> DEPTNO INTEGER;</code></pre>
+    <h3>Why this code exists</h3>
+    <p>Suppose the company later decides every employee should belong to a department. Instead of recreating the table, we simply add a new column.</p>
+    <h3>What it can do</h3>
+    <ul><li>Adds a new column.</li><li>Keeps existing columns unchanged.</li></ul>
+
+    <h3>Before</h3>
+    <table><tr><th>EMPNO</th><th>ENAME</th></tr><tr><td>1001</td><td>RAHUL</td></tr></table>
+    <h3>After</h3>
+    <table><tr><th>EMPNO</th><th>ENAME</th><th>DEPTNO</th></tr><tr><td>1001</td><td>RAHUL</td><td>NULL</td></tr></table>
+
+    <h3>General structure</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> table_name
+<span class="kw">ADD</span> column_name datatype;</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table altered.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 4 ============ -->
+  <section class="task" id="task4">
+    <h2 class="task-head"><span class="num">04</span> Create Department Table</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> DEPT (
+    Deptno NUMBER(2) <span class="kw">PRIMARY KEY</span>,
+    Dname VARCHAR2(10) <span class="kw">CHECK</span> (Dname = UPPER(Dname)),
+    Location VARCHAR2(9)
+        <span class="kw">CHECK</span> (Location IN ('KOL','MUM','DEL')),
+    City VARCHAR2(30)
+);</code></pre>
+    <h3>Why this code exists</h3>
+    <p>Instead of writing department names repeatedly for every employee, we create one department table.</p>
+    <h3>What it can do</h3>
+    <p>Stores department number, department name, allowed office location, and city.</p>
+
+    <h3>Location CHECK</h3>
+    <table>
+      <tr><th>Input</th><th>Result</th></tr>
+      <tr><td>KOL</td><td class="ok">Accepted</td></tr>
+      <tr><td>DEL</td><td class="ok">Accepted</td></tr>
+      <tr><td>MUM</td><td class="ok">Accepted</td></tr>
+      <tr><td>CHENNAI</td><td class="no">Rejected</td></tr>
+    </table>
+
+    <h3>General structure</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> table_name (
+    column datatype,
+    column datatype
+);</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table created.</code></pre></div>
+
+    <!-- IMAGE SLOT 3 -->
+    <figure class="shot" data-slot="desc_dept">
+      <img src="images/desc_dept.png" alt="DESC DEPT output"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'missing',textContent:'Image slot: images/desc_dept.png'}))">
+      <figcaption>Screenshot — DESC DEPT (Oracle APEX)</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ TASK 5 ============ -->
+  <section class="task" id="task5">
+    <h2 class="task-head"><span class="num">05</span> Add Foreign Key</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> EMP_XX
+<span class="kw">ADD CONSTRAINT</span> fk_deptno_XX
+<span class="kw">FOREIGN KEY</span> (DEPTNO)
+<span class="kw">REFERENCES</span> DEPT(Deptno);</code></pre>
+    <h3>Why this code exists</h3>
+    <p>Every employee should belong to a real department. Without this rule, an employee could reference a department number that doesn't exist. The foreign key prevents this.</p>
+
+    <h3>How it works</h3>
+    <p>DEPT table contains Deptno 10 and 20. An employee can reference 10 or 20, but not 30 if it's absent.</p>
+
+    <h3>General structure</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> child_table
+<span class="kw">ADD CONSTRAINT</span> constraint_name
+<span class="kw">FOREIGN KEY</span>(column)
+<span class="kw">REFERENCES</span> parent_table(column);</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table altered.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 6 ============ -->
+  <section class="task" id="task6">
+    <h2 class="task-head"><span class="num">06</span> Remove City Column</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> DEPT <span class="kw">DROP COLUMN</span> City;</code></pre>
+    <h3>Why this code exists</h3>
+    <p>If a column becomes unnecessary, it can be removed.</p>
+    <h3>Before</h3>
+    <table><tr><th>Deptno</th><th>Dname</th><th>Location</th><th>City</th></tr><tr><td>10</td><td>SALES</td><td>KOL</td><td>Kolkata</td></tr></table>
+    <h3>After</h3>
+    <table><tr><th>Deptno</th><th>Dname</th><th>Location</th></tr><tr><td>10</td><td>SALES</td><td>KOL</td></tr></table>
+    <h3>General structure</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> table_name
+<span class="kw">DROP COLUMN</span> column_name;</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table altered.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 7 ============ -->
+  <section class="task" id="task7">
+    <h2 class="task-head"><span class="num">07</span> Drop Salary Constraint</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> EMP_XX
+<span class="kw">DROP CONSTRAINT</span> chk_sal_XX;</code></pre>
+    <h3>Why this code exists</h3>
+    <p>Sometimes business rules change. Old rule: salary must be between 1500 and 50000. After dropping it, any salary becomes acceptable.</p>
+    <h3>General structure</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> table_name
+<span class="kw">DROP CONSTRAINT</span> constraint_name;</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table altered.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 8 ============ -->
+  <section class="task" id="task8">
+    <h2 class="task-head"><span class="num">08</span> Duplicate Table Structure</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> DEPT_DUP
+<span class="kw">AS SELECT</span> * <span class="kw">FROM</span> DEPT;</code></pre>
+    <h3>Why this code exists</h3>
+    <p>Creates a copy of another table quickly. Since DEPT is empty, only the structure gets copied.</p>
+    <table>
+      <tr><th>Feature</th><th>Copied?</th></tr>
+      <tr><td>Columns</td><td class="ok">Yes</td></tr>
+      <tr><td>Data</td><td class="no">No</td></tr>
+      <tr><td>Constraints</td><td class="no">No</td></tr>
+    </table>
+    <h3>General structure</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> new_table
+<span class="kw">AS SELECT</span> * <span class="kw">FROM</span> old_table;</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table created.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 9 ============ -->
+  <section class="task" id="task9">
+    <h2 class="task-head"><span class="num">09</span> Rename Table</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">RENAME</span> DEPT_DUP <span class="kw">TO</span> DUP_DEPT;</code></pre>
+    <h3>Why this code exists</h3>
+    <p>Changes the table name without changing its contents.</p>
+    <h3>General structure</h3>
+    <pre><code><span class="kw">RENAME</span> old_name <span class="kw">TO</span> new_name;</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table renamed.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 10 ============ -->
+  <section class="task" id="task10">
+    <h2 class="task-head"><span class="num">10</span> Delete Table</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">DROP TABLE</span> DUP_DEPT;</code></pre>
+    <h3>Why this code exists</h3>
+    <p>Removes a table completely — structure gone, data gone.</p>
+    <h3>General structure</h3>
+    <pre><code><span class="kw">DROP TABLE</span> table_name;</code></pre>
+    <h3>Expected output</h3>
+    <div class="out"><pre><code>Table dropped.</code></pre></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============ BONUS TASK 12 ============ -->
+  <section class="task" id="task12">
+    <h2 class="task-head"><span class="num">12</span> Bonus — Swiggy Database</h2>
+
+    <h3>Restaurant table</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> RESTAURANT (
+    rest_id NUMBER <span class="kw">PRIMARY KEY</span>,
+    rest_name VARCHAR2(50),
+    city VARCHAR2(50),
+    rating NUMBER
+);</code></pre>
+    <p>Stores restaurant information.</p>
+    <table>
+      <tr><th>rest_id</th><th>rest_name</th><th>city</th><th>rating</th></tr>
+      <tr><td>1</td><td>FOOD HUB</td><td>Kolkata</td><td>4.5</td></tr>
+    </table>
+    <div class="out"><pre><code>Table created.</code></pre></div>
+
+    <h3>Menu table</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> MENU_ITEM (
+    item_id NUMBER <span class="kw">PRIMARY KEY</span>,
+    rest_id NUMBER,
+    item_name VARCHAR2(50),
+    price NUMBER(7,2),
+    <span class="kw">CONSTRAINT</span> fk_rest
+        <span class="kw">FOREIGN KEY</span>(rest_id)
+        <span class="kw">REFERENCES</span> RESTAURANT(rest_id)
+);</code></pre>
+    <p>Stores menu items connected to restaurants — one restaurant, many menu items.</p>
+    <div class="out"><pre><code>Table created.</code></pre></div>
+
+    <!-- IMAGE SLOT 4 -->
+    <figure class="shot" data-slot="desc_restaurant">
+      <img src="images/desc_restaurant.png" alt="DESC RESTAURANT output"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'missing',textContent:'Image slot: images/desc_restaurant.png'}))">
+      <figcaption>Screenshot — DESC RESTAURANT (Oracle APEX)</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ TASK 13 ============ -->
+  <section class="task" id="task13">
+    <h2 class="task-head"><span class="num">13</span> Rating Constraint</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> RESTAURANT
+<span class="kw">ADD CONSTRAINT</span> chk_rating
+<span class="kw">CHECK</span> (rating BETWEEN 0 AND 5);</code></pre>
+    <h3>Why this exists</h3>
+    <p>Restaurant ratings should stay between 0 and 5.</p>
+    <table>
+      <tr><th>Rating</th><th>Result</th></tr>
+      <tr><td>4.8</td><td class="ok">Accepted</td></tr>
+      <tr><td>5</td><td class="ok">Accepted</td></tr>
+      <tr><td>6</td><td class="no">Rejected</td></tr>
+    </table>
+    <div class="out"><pre><code>Table altered.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 14 ============ -->
+  <section class="task" id="task14">
+    <h2 class="task-head"><span class="num">14</span> Add Vegetarian Column</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> MENU_ITEM
+<span class="kw">ADD</span> is_veg NUMBER(1);</code></pre>
+    <h3>Why this exists</h3>
+    <p>Oracle has no native BOOLEAN table type, so a 1-digit NUMBER stands in for it.</p>
+    <table>
+      <tr><th>Value</th><th>Meaning</th></tr>
+      <tr><td>1</td><td>Vegetarian</td></tr>
+      <tr><td>0</td><td>Non-Vegetarian</td></tr>
+    </table>
+    <div class="out"><pre><code>Table altered.</code></pre></div>
+  </section>
+
+  <!-- ============ TASK 15 ============ -->
+  <section class="task" id="task15">
+    <h2 class="task-head"><span class="num">15</span> Remove Vegetarian Column</h2>
+    <h3>Code</h3>
+    <pre><code><span class="kw">ALTER TABLE</span> MENU_ITEM
+<span class="kw">DROP COLUMN</span> is_veg;</code></pre>
+    <h3>Why this exists</h3>
+    <p>Removes the column if it is no longer needed.</p>
+    <div class="out"><pre><code>Table altered.</code></pre></div>
+
+    <!-- IMAGE SLOT 1 -->
+    <figure class="shot" data-slot="desc_menu_item">
+      <img src="images/desc_menu_item.png" alt="DESC MENU_ITEM output"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'missing',textContent:'Image slot: images/desc_menu_item.png'}))">
+      <figcaption>Screenshot — DESC MENU_ITEM (Oracle APEX)</figcaption>
+    </figure>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ============ DROP vs TRUNCATE ============ -->
+  <section class="task" id="drop-vs-truncate">
+    <h2 class="task-head" style="margin-top:0;">DROP vs TRUNCATE</h2>
+    <p class="muted">One of the most common viva questions.</p>
+    <table>
+      <tr><th>Feature</th><th>DROP</th><th>TRUNCATE</th></tr>
+      <tr><td>Deletes data</td><td class="ok">Yes</td><td class="ok">Yes</td></tr>
+      <tr><td>Deletes structure</td><td class="ok">Yes</td><td class="no">No</td></tr>
+      <tr><td>Table remains?</td><td class="no">No</td><td class="ok">Yes</td></tr>
+      <tr><td>Can insert again immediately?</td><td class="no">No (table gone)</td><td class="ok">Yes</td></tr>
+    </table>
+    <p>After <code>TRUNCATE</code>, the table stays but is empty. After <code>DROP</code>, the table itself no longer exists.</p>
+  </section>
+
+  <!-- ============ RESET COMMANDS ============ -->
+  <section class="task" id="reset">
+    <h2 class="task-head">Assignment Reset Commands</h2>
+    <pre><code><span class="kw">DROP TABLE</span> EMP_XX <span class="kw">CASCADE CONSTRAINTS</span>;
+<span class="kw">DROP TABLE</span> DEPT <span class="kw">CASCADE CONSTRAINTS</span>;
+<span class="kw">DROP TABLE</span> DUP_DEPT <span class="kw">CASCADE CONSTRAINTS</span>;
+<span class="kw">DROP TABLE</span> MENU_ITEM <span class="kw">CASCADE CONSTRAINTS</span>;
+<span class="kw">DROP TABLE</span> RESTAURANT <span class="kw">CASCADE CONSTRAINTS</span>;</code></pre>
+
+    <h3>Why CASCADE CONSTRAINTS?</h3>
+    <p>Some tables depend on others through foreign keys — <code>MENU_ITEM</code> depends on <code>RESTAURANT</code>, and <code>EMP_XX</code> depends on <code>DEPT</code>. Without <code>CASCADE CONSTRAINTS</code>, Oracle blocks the deletion.</p>
+    <div class="out"><pre><code>Table dropped.
+(Repeated for each table.)</code></pre></div>
+  </section>
+
+  <!-- ============ TOTAL SCHEMA WIPE ============ -->
+  <section class="task" id="wipe">
+    <h2 class="task-head">Total Schema Wipe</h2>
+    <pre><code><span class="kw">BEGIN</span>
+   <span class="kw">FOR</span> t <span class="kw">IN</span> (<span class="kw">SELECT</span> table_name <span class="kw">FROM</span> user_tables) <span class="kw">LOOP</span>
+      <span class="kw">EXECUTE IMMEDIATE</span>
+      'DROP TABLE ' || t.table_name ||
+      ' CASCADE CONSTRAINTS';
+   <span class="kw">END LOOP</span>;
+<span class="kw">END</span>;
+/</code></pre>
+    <h3>Why this exists</h3>
+    <p>Deletes every table owned by your current Oracle account.</p>
+    <h3>How it works</h3>
+    <ul>
+      <li>Reads all table names.</li>
+      <li>Picks one table.</li>
+      <li>Drops it.</li>
+      <li>Repeats until none remain.</li>
+    </ul>
+    <div class="out"><pre><code>PL/SQL procedure successfully completed.</code></pre></div>
+  </section>
+
+  <!-- ============ FINAL VERIFICATION ============ -->
+  <section class="task" id="verify">
+    <h2 class="task-head">Final Verification Commands</h2>
+    <p>Run these after completing the lab, replacing <code>_XX</code> with your roll number.</p>
+    <pre><code><span class="kw">DESC</span> EMP_XX;
+<span class="kw">DESC</span> DEPT;
+<span class="kw">DESC</span> RESTAURANT;
+<span class="kw">DESC</span> MENU_ITEM;</code></pre>
+    <p>Confirms that tables exist, columns are correct, and data types match the lab requirements.</p>
+
+    <h3>Example output — DESC RESTAURANT</h3>
+    <table>
+      <tr><th>Name</th><th>Null</th><th>Type</th></tr>
+      <tr><td>REST_ID</td><td>NOT NULL</td><td>NUMBER</td></tr>
+      <tr><td>REST_NAME</td><td>—</td><td>VARCHAR2(50)</td></tr>
+      <tr><td>CITY</td><td>—</td><td>VARCHAR2(50)</td></tr>
+      <tr><td>RATING</td><td>—</td><td>NUMBER</td></tr>
+    </table>
+    <p class="muted">These <code>DESC</code> commands are the quickest way to verify your DDL operations worked correctly before submitting the lab.</p>
+  </section>
+
+  <footer>oracle-sql-ddl-lab · DBMS Assignment 1</footer>
+</div>
+</body>
+</html>

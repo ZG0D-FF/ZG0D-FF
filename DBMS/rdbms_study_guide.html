@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RDBMS Study Guide: Relational Model, Constraints &amp; ER Design</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    max-width: 880px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.6;
+    color: #222;
+    background: #fdfdfd;
+  }
+  h1 {
+    font-size: 1.7em;
+    border-bottom: 3px solid #2c3e50;
+    padding-bottom: 8px;
+    color: #2c3e50;
+  }
+  .source {
+    font-style: italic;
+    color: #777;
+    margin-top: -6px;
+    margin-bottom: 20px;
+    font-size: 0.92em;
+  }
+  h2 {
+    font-size: 1.3em;
+    margin-top: 40px;
+    color: #1a5276;
+    border-left: 5px solid #2980b9;
+    padding-left: 10px;
+  }
+  h3 {
+    font-size: 1.05em;
+    color: #34495e;
+    margin-top: 18px;
+  }
+  p { margin: 8px 0; }
+  ul, ol { margin: 6px 0 14px 22px; }
+  li { margin-bottom: 6px; }
+  strong { color: #1a1a1a; }
+  code {
+    background: #eef1f3;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.92em;
+    color: #a0224e;
+  }
+  .algebra {
+    background: #f4f8fb;
+    border: 1px solid #d6e4ee;
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin: 8px 0;
+    font-family: "Cambria Math", Georgia, serif;
+    font-size: 1.05em;
+    color: #1a3a5c;
+  }
+  details {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin: 10px 0;
+    padding: 10px 14px;
+  }
+  details[open] { border-color: #2980b9; }
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #1a5276;
+  }
+  summary::marker { color: #2980b9; }
+  .lead {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 24px;
+  }
+  .footer-question {
+    margin-top: 36px;
+    padding: 14px 16px;
+    background: #eef6fb;
+    border-left: 4px solid #2980b9;
+    border-radius: 4px;
+    font-size: 0.98em;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 34px 0;
+  }
+  .result-accept { color: #1e8449; font-weight: 600; }
+  .result-reject { color: #c0392b; font-weight: 600; }
+</style>
+</head>
+<body>
+<div style="margin: 20px auto; max-width: 960px; text-align: left; padding: 0 20px;">
+  <a href="index.html" style="display: inline-block; background: #2c3e50; color: #fff; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-family: sans-serif; font-size: 0.9rem;">&larr; Back to Index</a>
+</div>
+
+<h1>CHAPTER 2: Introduction to the Relational Model</h1>
+<p class="source">Source: Introduction to RDBMS.pdf</p>
+
+<h2>Practice Exercises</h2>
+
+<details>
+<summary>Practice Exercise 2.1 — Appropriate primary keys for employee, works, company, manages</summary>
+<p><strong>Question:</strong> Consider the relational database of Figure 2.14 (<code>employee</code>, <code>works</code>, <code>company</code>, <code>manages</code>). What are the appropriate primary keys?</p>
+<ul>
+  <li><code>employee (person_name, street, city)</code>: <strong><code>person_name</code></strong>. In this relation schema, <code>person_name</code> serves as the unique identifier for each individual employee record.</li>
+  <li><code>works (person_name, company_name, salary)</code>: <strong><code>person_name</code></strong>. Assuming that each person works for at most one company, <code>person_name</code> uniquely identifies their employment details.</li>
+  <li><code>company (company_name, city)</code>: <strong><code>company_name</code></strong>. The company name uniquely distinguishes each company row.</li>
+  <li><code>manages (person_name, manager_name)</code>: <strong><code>person_name</code></strong>. Assuming each employee has at most one direct manager, <code>person_name</code> uniquely identifies their management relationship record.</li>
+</ul>
+</details>
+
+<details>
+<summary>Practice Exercise 2.2 — Foreign key violation examples (dept_name → department)</summary>
+<p><strong>Question:</strong> Consider the foreign key constraint from <code>dept_name</code> in <code>instructor</code> referencing <code>department</code>. Give examples of inserts and deletes that cause a violation.</p>
+<p>A <strong>foreign key constraint</strong> requires that any value appearing in foreign key attributes of a referencing table must exist in the primary key of the referenced table.</p>
+<ol>
+  <li><strong>Insert Violation:</strong> Attempting to insert a new instructor tuple with <code>dept_name = 'Astronomy'</code> into <code>instructor</code> when <code>'Astronomy'</code> does not exist in the <code>department</code> table.</li>
+  <li><strong>Delete Violation:</strong> Attempting to delete the department tuple <code>'Comp. Sci.'</code> from <code>department</code> when instructor records in <code>instructor</code> still reference <code>'Comp. Sci.'</code>.</li>
+</ol>
+</details>
+
+<details>
+<summary>Practice Exercise 2.3 — Why day and start_time are part of the primary key</summary>
+<p><strong>Question:</strong> In the <code>time_slot</code> relation, explain why <code>day</code> and <code>start_time</code> are part of the primary key, while <code>end_time</code> is not.</p>
+<ul>
+  <li><strong>Why <code>day</code> and <code>start_time</code> are included:</strong> A single time slot identifier (such as slot <code>'A'</code>) can meet on multiple days of the week (e.g., Monday and Wednesday). Therefore, <code>time_slot_id</code> alone cannot uniquely distinguish individual class meetings. Adding <code>day</code> and <code>start_time</code> guarantees uniqueness for every meeting instance.</li>
+  <li><strong>Why <code>end_time</code> is excluded:</strong> A primary key must be a <strong>minimal candidate key</strong> with no redundant attributes. Once <code>time_slot_id</code>, <code>day</code>, and <code>start_time</code> are fixed, the <code>end_time</code> is determined and does not add any candidate key uniqueness.</li>
+</ul>
+</details>
+
+<details>
+<summary>Practice Exercise 2.4 — Does no two instructors sharing a name make name a key?</summary>
+<p><strong>Question:</strong> In Figure 2.1, no two instructors have the same name. Can we conclude that <code>name</code> is a superkey or primary key of <code>instructor</code>?</p>
+<p><strong>Answer:</strong> No.</p>
+<p><strong>Explanation:</strong> A key is a property of the entire relation schema that must hold for <strong>all possible valid states</strong> of the database over time, not just a single snapshot. Even if no two instructors share a name in a sample figure, two instructors in the real world could eventually share the same name.</p>
+</details>
+
+<details>
+<summary>Practice Exercise 2.5 — σ(s_id = ID)(student × advisor)</summary>
+<p><strong>Question:</strong> What is the result of:</p>
+<p class="algebra">σ<sub>s_id = ID</sub>(student × advisor)</p>
+<p><strong>Code Breakdown:</strong></p>
+<ol>
+  <li><code>student × advisor</code>: Performs a <strong>Cartesian product</strong>, pairing every single student tuple with every single advisor tuple.</li>
+  <li><code>σ<sub>s_id = ID</sub>(...)</code>: Performs a <strong>Selection</strong>, filtering the combined pairs to retain only rows where the student's <code>ID</code> matches the <code>s_id</code> in <code>advisor</code>.</li>
+</ol>
+<p><strong>Result:</strong> This pairs each student with their assigned advisor, effectively executing an <strong>inner join</strong>.</p>
+</details>
+
+<details>
+<summary>Practice Exercise 2.6 — Relational algebra code explanations (a, b, c)</summary>
+<h3>(a) σ<sub>year ≥ 2009</sub>(takes) ⋈ student</h3>
+<ul>
+  <li><code>σ<sub>year ≥ 2009</sub>(takes)</code>: Selection operator (σ) filters rows from the <code>takes</code> table where <code>year</code> is 2009 or later.</li>
+  <li><code>⋈ student</code>: Natural Join operator (⋈) merges those filtered <code>takes</code> tuples with matching rows from <code>student</code> based on the common attribute <code>ID</code>.</li>
+</ul>
+<p><strong>Plain English:</strong> Retrieves all student information paired with course section details for courses taken in or after 2009.</p>
+
+<h3>(b) σ<sub>year ≥ 2009</sub>(takes ⋈ student)</h3>
+<ul>
+  <li><code>takes ⋈ student</code>: First performs a natural join between <code>takes</code> and <code>student</code> on <code>ID</code>.</li>
+  <li><code>σ<sub>year ≥ 2009</sub>(...)</code>: Filters the joined relation to keep only records where <code>year ≥ 2009</code>.</li>
+</ul>
+<p><strong>Plain English:</strong> Produces the exact same result as part (a): student details for courses taken in or after 2009.</p>
+
+<h3>(c) Π<sub>ID, name, course_id</sub>(student ⋈ takes)</h3>
+<ul>
+  <li><code>student ⋈ takes</code>: Joins student records with course records on <code>ID</code>.</li>
+  <li><code>Π<sub>ID, name, course_id</sub>(...)</code>: Projection operator (Π) keeps only the three specified columns (<code>ID</code>, <code>name</code>, <code>course_id</code>) and removes duplicate rows.</li>
+</ul>
+<p><strong>Plain English:</strong> Returns a list of student IDs, student names, and course IDs taken.</p>
+</details>
+
+<details>
+<summary>Practice Exercise 2.7 — Employee queries (Miami, salary)</summary>
+<h3>(a) Names of all employees who live in city "Miami"</h3>
+<p class="algebra">Π<sub>person_name</sub>(σ<sub>city = 'Miami'</sub>(employee))</p>
+<ol>
+  <li><code>σ<sub>city = 'Miami'</sub>(employee)</code>: Filters <code>employee</code> rows where <code>city</code> equals <code>'Miami'</code>.</li>
+  <li><code>Π<sub>person_name</sub>(...)</code>: Projects only the <code>person_name</code> column.</li>
+</ol>
+
+<h3>(b) Names of all employees whose salary is greater than $100,000</h3>
+<p class="algebra">Π<sub>person_name</sub>(σ<sub>salary &gt; 100000</sub>(works))</p>
+<ol>
+  <li><code>σ<sub>salary &gt; 100000</sub>(works)</code>: Selects <code>works</code> tuples with <code>salary &gt; 100000</code>.</li>
+  <li><code>Π<sub>person_name</sub>(...)</code>: Outputs the <code>person_name</code> attribute.</li>
+</ol>
+
+<h3>(c) Names of employees who live in "Miami" and earn &gt; $100,000</h3>
+<p class="algebra">Π<sub>person_name</sub>(σ<sub>city = 'Miami'</sub>(employee) ⋈ σ<sub>salary &gt; 100000</sub>(works))</p>
+<ol>
+  <li><code>σ<sub>city = 'Miami'</sub>(employee)</code>: Selects Miami residents.</li>
+  <li><code>σ<sub>salary &gt; 100000</sub>(works)</code>: Selects high earners.</li>
+  <li><code>⋈</code>: Natural joins both subsets on the common attribute <code>person_name</code>.</li>
+  <li><code>Π<sub>person_name</sub>(...)</code>: Extracts employee names.</li>
+</ol>
+</details>
+
+<details>
+<summary>Practice Exercise 2.8 — Branch and borrower queries</summary>
+<h3>(a) Names of all branches located in "Chicago"</h3>
+<p class="algebra">Π<sub>branch_name</sub>(σ<sub>branch_city = 'Chicago'</sub>(branch))</p>
+<p>Filters <code>branch</code> tuples where <code>branch_city = 'Chicago'</code>, then projects <code>branch_name</code>.</p>
+
+<h3>(b) Names of all borrowers who have a loan in branch "Downtown"</h3>
+<p class="algebra">Π<sub>customer_name</sub>(σ<sub>branch_name = 'Downtown'</sub>(borrower ⋈ loan))</p>
+<p>Joins <code>borrower</code> and <code>loan</code> on <code>loan_number</code>, filters rows where <code>branch_name = 'Downtown'</code>, and extracts <code>customer_name</code>.</p>
+</details>
+
+<h2>Exercises</h2>
+
+<details>
+<summary>Exercise 2.9 — Primary and foreign keys for the bank database</summary>
+<p><strong>Question:</strong> Identify primary and foreign keys for the bank database (Figure 2.15).</p>
+<p><strong>Primary Keys:</strong></p>
+<ul>
+  <li><code>branch</code>: <strong><code>branch_name</code></strong></li>
+  <li><code>customer</code>: <strong><code>customer_name</code></strong></li>
+  <li><code>loan</code>: <strong><code>loan_number</code></strong></li>
+  <li><code>borrower</code>: <strong><code>(customer_name, loan_number)</code></strong></li>
+  <li><code>account</code>: <strong><code>account_number</code></strong></li>
+  <li><code>depositor</code>: <strong><code>(customer_name, account_number)</code></strong></li>
+</ul>
+<p><strong>Foreign Keys:</strong></p>
+<ul>
+  <li><code>loan.branch_name</code> → <code>branch.branch_name</code></li>
+  <li><code>borrower.customer_name</code> → <code>customer.customer_name</code></li>
+  <li><code>borrower.loan_number</code> → <code>loan.loan_number</code></li>
+  <li><code>account.branch_name</code> → <code>branch.branch_name</code></li>
+  <li><code>depositor.customer_name</code> → <code>customer.customer_name</code></li>
+  <li><code>depositor.account_number</code> → <code>account.account_number</code></li>
+</ul>
+</details>
+
+<details>
+<summary>Exercise 2.10 — Can s_id remain the primary key with multiple advisors?</summary>
+<p><strong>Question:</strong> In <code>advisor(s_id, i_id)</code>, if a student can have multiple advisors, can <code>s_id</code> remain the primary key?</p>
+<p><strong>Answer:</strong> No.</p>
+<p><strong>Explanation:</strong> If a student has multiple advisors, <code>s_id</code> will repeat across rows and can no longer uniquely identify a tuple. The new primary key must be the composite key <strong><code>(s_id, i_id)</code></strong>.</p>
+</details>
+
+<details>
+<summary>Exercise 2.11 — Relation vs. relation schema</summary>
+<p><strong>Question:</strong> Difference between <code>relation</code> and <code>relation schema</code>.</p>
+<ul>
+  <li><strong>Relation Schema:</strong> The static blueprint or logical design of the table (analogous to a programming type definition), specifying attribute names and domains.</li>
+  <li><strong>Relation (Instance):</strong> The actual contents or rows of the table at a specific moment in time, which changes whenever data is inserted, updated, or deleted.</li>
+</ul>
+</details>
+
+<details>
+<summary>Exercise 2.12 — First Bank Corporation employee queries</summary>
+<h3>(a) Names of employees working for "First Bank Corporation"</h3>
+<p class="algebra">Π<sub>person_name</sub>(σ<sub>company_name = 'First Bank Corporation'</sub>(works))</p>
+<p>Filters <code>works</code> where <code>company_name = 'First Bank Corporation'</code>, then projects <code>person_name</code>.</p>
+
+<h3>(b) Names and cities of residence of employees working for "First Bank Corporation"</h3>
+<p class="algebra">Π<sub>person_name, city</sub>(employee ⋈ σ<sub>company_name = 'First Bank Corporation'</sub>(works))</p>
+<p>Filters <code>works</code> by company, joins with <code>employee</code> on <code>person_name</code>, and projects <code>person_name</code> and <code>city</code>.</p>
+
+<h3>(c) Names, street addresses, and cities of "First Bank Corporation" employees earning &gt; $10,000</h3>
+<p class="algebra">Π<sub>person_name, street, city</sub>(employee ⋈ σ<sub>company_name = 'First Bank Corporation' ∧ salary &gt; 10000</sub>(works))</p>
+<p>Filters <code>works</code> for both company name and salary &gt; 10000, joins with <code>employee</code>, and extracts name, street, and city.</p>
+</details>
+
+<details>
+<summary>Exercise 2.13 — Loan and depositor queries</summary>
+<h3>(a) All loan numbers with a loan value &gt; $10,000</h3>
+<p class="algebra">Π<sub>loan_number</sub>(σ<sub>amount &gt; 10000</sub>(loan))</p>
+<p>Selects <code>loan</code> rows where <code>amount &gt; 10000</code> and extracts <code>loan_number</code>.</p>
+
+<h3>(b) Names of all depositors who have an account value &gt; $6,000</h3>
+<p class="algebra">Π<sub>customer_name</sub>(depositor ⋈ σ<sub>balance &gt; 6000</sub>(account))</p>
+<p>Filters <code>account</code> for <code>balance &gt; 6000</code>, joins with <code>depositor</code> on <code>account_number</code>, and projects <code>customer_name</code>.</p>
+
+<h3>(c) Depositors with account value &gt; $6,000 at the "Uptown" branch</h3>
+<p class="algebra">Π<sub>customer_name</sub>(depositor ⋈ σ<sub>balance &gt; 6000 ∧ branch_name = 'Uptown'</sub>(account))</p>
+<p>Filters accounts matching both balance and branch conditions, joins with <code>depositor</code>, and extracts customer names.</p>
+</details>
+
+<details>
+<summary>Exercise 2.14 — Reasons for NULL values</summary>
+<p><strong>Question:</strong> List two reasons why NULL values might be introduced into a database.</p>
+<ol>
+  <li><strong>Unknown value:</strong> The value exists in reality, but is currently missing or unrecorded.</li>
+  <li><strong>Inapplicable attribute:</strong> The attribute does not apply to that particular entity (e.g., visa status for domestic students).</li>
+</ol>
+</details>
+
+<details>
+<summary>Exercise 2.15 — Procedural vs. nonprocedural languages</summary>
+<p><strong>Question:</strong> Discuss the relative merits of procedural and nonprocedural languages.</p>
+<ul>
+  <li><strong>Procedural Languages (e.g., Relational Algebra):</strong> The user explicitly specifies the exact sequence of algebraic operations to compute the desired result.</li>
+  <li><strong>Nonprocedural Languages (e.g., Relational Calculus / SQL):</strong> The user declaratively states <em>what</em> data is needed without specifying a step-by-step algorithm, allowing the database query optimizer freedom to choose execution plans.</li>
+</ul>
+</details>
+
+<hr>
+
+<h1>CHAPTER 5: The Relational Data Model &amp; Relational Database Constraints</h1>
+<p class="source">Source: Introduction to Relational Model-Navathe.pdf</p>
+
+<h2>Review Questions</h2>
+
+<details>
+<summary>Question 5.1 — Definitions (Domain, Attribute, Tuple, Schema, State, Degree)</summary>
+<ul>
+  <li><strong>Domain:</strong> A named set of indivisible (atomic) values defined by a data type and format.</li>
+  <li><strong>Attribute:</strong> A column header representing a named role played by a domain in a relation schema.</li>
+  <li><strong>n-tuple:</strong> An ordered list of n values &lt;v<sub>1</sub>, v<sub>2</sub>, …, v<sub>n</sub>&gt; where each value belongs to the corresponding attribute domain or is NULL.</li>
+  <li><strong>Relation Schema:</strong> R(A<sub>1</sub>, A<sub>2</sub>, …, A<sub>n</sub>), consisting of relation name R and a list of attributes A<sub>i</sub>.</li>
+  <li><strong>Relation State:</strong> r(R), a finite set of n-tuples representing a valid real-world state at a specific point in time.</li>
+  <li><strong>Degree (Arity):</strong> The total number of attributes n in a relation schema.</li>
+  <li><strong>Relational Database Schema:</strong> S = {R<sub>1</sub>, R<sub>2</sub>, …, R<sub>m</sub>} along with a set of integrity constraints IC.</li>
+  <li><strong>Relational Database State:</strong> DB = {r<sub>1</sub>, r<sub>2</sub>, …, r<sub>m</sub>}, a set of relation states satisfying all integrity constraints in IC.</li>
+</ul>
+</details>
+
+<details>
+<summary>Question 5.2 — Why tuples are not ordered</summary>
+<p>A relation is formally defined as a <strong>mathematical set</strong> of tuples. Elements of a set have no natural order among them.</p>
+</details>
+
+<details>
+<summary>Question 5.3 — Why duplicate tuples are not allowed</summary>
+<p>By definition, all elements of a mathematical set are distinct. Since a relation is a set of tuples, duplicate tuples are prohibited.</p>
+</details>
+
+<details>
+<summary>Question 5.4 — Key vs. superkey</summary>
+<ul>
+  <li><strong>Superkey:</strong> Any set of attributes that uniquely identifies every tuple in a relation state.</li>
+  <li><strong>Key:</strong> A <strong>minimal superkey</strong> — a superkey from which no attribute can be removed without destroying its uniqueness property.</li>
+</ul>
+</details>
+
+<details>
+<summary>Question 5.5 — Why designate a primary key</summary>
+<p>To serve as the official, principal identifier for tuples in a table and to be referenced by foreign keys in other relations.</p>
+</details>
+
+<details>
+<summary>Question 5.6 — Characteristics of relations vs. ordinary tables/files</summary>
+<ol>
+  <li>Tuples are strictly unordered.</li>
+  <li>Attribute values within tuples must be atomic (First Normal Form).</li>
+  <li>Duplicate tuples are strictly prohibited.</li>
+  <li>Values are restricted to defined atomic domains or NULL.</li>
+  <li>Facts about entities and relationships are represented uniformly as relations.</li>
+</ol>
+</details>
+
+<details>
+<summary>Question 5.7 — Reasons leading to NULL values</summary>
+<ol>
+  <li>Value exists, but is unknown.</li>
+  <li>Value exists, but is currently unavailable or unrecorded.</li>
+  <li>Attribute does not apply to this tuple (value undefined/inapplicable).</li>
+</ol>
+</details>
+
+<details>
+<summary>Question 5.8 — Entity integrity vs. referential integrity</summary>
+<ul>
+  <li><strong>Entity Integrity:</strong> No primary key attribute can be NULL. Crucial because primary keys uniquely identify tuples.</li>
+  <li><strong>Referential Integrity:</strong> Foreign key values must either match an existing primary key value in the referenced relation or be NULL. Crucial for maintaining consistent references across tables.</li>
+</ul>
+</details>
+
+<details>
+<summary>Question 5.9 — Foreign key definition and purpose</summary>
+<p>A set of attributes FK in a referencing relation R<sub>1</sub> whose values must match the primary key PK of a referenced relation R<sub>2</sub> or be NULL. Used to establish and enforce relationships between records across tables.</p>
+</details>
+
+<details>
+<summary>Question 5.10 — Transaction vs. Update operation</summary>
+<ul>
+  <li><strong>Transaction:</strong> An executing program comprising multiple database operations (reads, updates) that forms an atomic unit of work, leaving the database in a consistent state.</li>
+  <li><strong>Update Operation:</strong> A single modification action (Insert, Delete, or Update) executed on a relation.</li>
+</ul>
+</details>
+
+<h2>Exercises (5.11 to 5.20)</h2>
+
+<details>
+<summary>Exercise 5.11 — Constraint violation analysis (COMPANY database, Figure 5.6)</summary>
+<p><strong>(a)</strong> Insert &lt;'Robert', 'F', 'Scott', '943775543', '1972-06-21', '2365 Newcastle Rd, Bellaire, TX', M, 58000, '888665555', 1&gt; into <code>EMPLOYEE</code>:<br>
+Analysis: <code>Ssn = '943775543'</code> is unique, <code>Super_ssn = '888665555'</code> exists, and <code>Dno = 1</code> exists.<br>
+Result: <span class="result-accept">Acceptable</span>.</p>
+
+<p><strong>(b)</strong> Insert &lt;'ProductA', 4, 'Bellaire', 2&gt; into <code>PROJECT</code>:<br>
+Analysis: Department <code>Dnum = 2</code> does not exist in <code>DEPARTMENT</code>.<br>
+Result: <span class="result-reject">Rejected</span> due to Referential Integrity violation.</p>
+
+<p><strong>(c)</strong> Insert &lt;'Production', 4, '943775543', '2007-10-01'&gt; into <code>DEPARTMENT</code>:<br>
+Analysis: <code>Dnumber = 4</code> already exists in <code>DEPARTMENT</code>.<br>
+Result: <span class="result-reject">Rejected</span> due to Primary Key / Uniqueness violation.</p>
+
+<p><strong>(d)</strong> Insert &lt;'677678989', NULL, '40.0'&gt; into <code>WORKS_ON</code>:<br>
+Analysis: <code>Pno</code> is part of the primary key <code>(Essn, Pno)</code> and cannot be NULL.<br>
+Result: <span class="result-reject">Rejected</span> due to Entity Integrity violation.</p>
+
+<p><strong>(e)</strong> Insert &lt;'453453453', 'John', 'M', '1990-12-12', 'spouse'&gt; into <code>DEPENDENT</code>:<br>
+Analysis: <code>Essn = '453453453'</code> exists in <code>EMPLOYEE</code> and <code>(Essn, Dependent_name)</code> is unique.<br>
+Result: <span class="result-accept">Acceptable</span>.</p>
+
+<p><strong>(f)</strong> Delete <code>WORKS_ON</code> tuples with <code>Essn = '333445555'</code>:<br>
+Analysis: Deleting tuples from a referencing table causes no referential violations.<br>
+Result: <span class="result-accept">Acceptable</span>.</p>
+
+<p><strong>(g)</strong> Delete <code>EMPLOYEE</code> tuple with <code>Ssn = '987654321'</code>:<br>
+Analysis: Referenced in <code>DEPARTMENT</code> (<code>Mgr_ssn</code>) and <code>EMPLOYEE</code> (<code>Super_ssn</code>).<br>
+Result: <span class="result-reject">Rejected</span> under RESTRICT option; or set referencing fields to NULL / default.</p>
+
+<p><strong>(h)</strong> Delete <code>PROJECT</code> tuple with <code>Pname = 'ProductX'</code>:<br>
+Analysis: <code>Pnumber = 1</code> is referenced in <code>WORKS_ON</code>.<br>
+Result: <span class="result-reject">Rejected</span> under RESTRICT; or CASCADE deletion of matching <code>WORKS_ON</code> tuples.</p>
+
+<p><strong>(i)</strong> Modify <code>Mgr_ssn</code> of <code>DEPARTMENT</code> (<code>Dnumber = 5</code>) to '123456789':<br>
+Analysis: '123456789' exists as a valid employee <code>Ssn</code>.<br>
+Result: <span class="result-accept">Acceptable</span>.</p>
+
+<p><strong>(j)</strong> Modify <code>Super_ssn</code> of <code>EMPLOYEE</code> (<code>Ssn = '999887777'</code>) to '943775543':<br>
+Analysis: '943775543' does not exist in <code>EMPLOYEE</code>.<br>
+Result: <span class="result-reject">Rejected</span> due to Referential Integrity violation.</p>
+
+<p><strong>(k)</strong> Modify <code>Hours</code> of <code>WORKS_ON</code> (<code>Essn = '999887777', Pno = 10</code>) to '5.0':<br>
+Analysis: <code>Hours</code> is a non-key attribute.<br>
+Result: <span class="result-accept">Acceptable</span>.</p>
+</details>
+
+<details>
+<summary>Exercise 5.12 — AIRLINE database (Figure 5.8)</summary>
+<p><strong>(a) Operations:</strong> Insert new tuple into <code>SEAT_RESERVATION</code> and update <code>LEG_INSTANCE.Number_of_available_seats</code>.</p>
+<p><strong>(b) Constraints Checked:</strong> Domain constraints, available seats availability (&gt;0), primary key uniqueness, and foreign key references.</p>
+<p><strong>(c) Constraint Classification:</strong> Seat availability check is an application semantic rule; reservation key check is Entity/Key Integrity; flight leg links are Referential Integrity.</p>
+<p><strong>(d) Foreign Keys:</strong></p>
+<ul>
+  <li><code>FLIGHT_LEG.(Flight_number)</code> → <code>FLIGHT.Flight_number</code></li>
+  <li><code>LEG_INSTANCE.(Flight_number, Leg_number)</code> → <code>FLIGHT_LEG.(Flight_number, Leg_number)</code></li>
+  <li><code>SEAT_RESERVATION.(Flight_number, Leg_number, Date)</code> → <code>LEG_INSTANCE.(Flight_number, Leg_number, Date)</code></li>
+</ul>
+</details>
+
+<details>
+<summary>Exercise 5.13 — Candidate keys for CLASS relation</summary>
+<ol>
+  <li><code>Univ_Section#</code>: Valid assuming section numbers are unique campus-wide.</li>
+  <li><code>(Course#, Semester, Univ_Section#)</code>: Valid if section numbers are unique per course per semester.</li>
+  <li><code>(Building_code, Room#, Time_period, Weekdays, Semester)</code>: Valid assuming a physical room cannot host two classes simultaneously.</li>
+  <li><code>(Instructor_name, Time_period, Weekdays, Semester)</code>: Valid assuming an instructor cannot teach two classes at the exact same time.</li>
+</ol>
+</details>
+
+<details>
+<summary>Exercise 5.14 — Order processing database foreign keys</summary>
+<ul>
+  <li><code>ORDER.Cust#</code> → <code>CUSTOMER.Cust#</code></li>
+  <li><code>ORDER_ITEM.Order#</code> → <code>ORDER.Order#</code></li>
+  <li><code>ORDER_ITEM.Item#</code> → <code>ITEM.Item#</code></li>
+  <li><code>SHIPMENT.Order#</code> → <code>ORDER.Order#</code></li>
+  <li><code>SHIPMENT.Warehouse#</code> → <code>WAREHOUSE.Warehouse#</code></li>
+</ul>
+</details>
+
+<details>
+<summary>Exercise 5.15 — Business trip database foreign keys</summary>
+<ul>
+  <li><code>TRIP.Ssn</code> → <code>SALESPERSON.Ssn</code></li>
+  <li><code>EXPENSE.Trip_id</code> → <code>TRIP.Trip_id</code></li>
+</ul>
+</details>
+
+<details>
+<summary>Exercise 5.16 — Student &amp; book enrollment foreign keys</summary>
+<ul>
+  <li><code>ENROLL.Ssn</code> → <code>STUDENT.Ssn</code></li>
+  <li><code>ENROLL.Course#</code> → <code>COURSE.Course#</code></li>
+  <li><code>BOOK_ADOPTION.Course#</code> → <code>COURSE.Course#</code></li>
+  <li><code>BOOK_ADOPTION.Book_isbn</code> → <code>TEXT.Book_isbn</code></li>
+</ul>
+</details>
+
+<details>
+<summary>Exercise 5.17 — Automobile dealership foreign keys &amp; insertions</summary>
+<p><strong>Foreign Keys:</strong> <code>OPTION.Serial_no</code> → <code>CAR.Serial_no</code>, <code>SALE.Serial_no</code> → <code>CAR.Serial_no</code>, <code>SALE.Salesperson_id</code> → <code>SALESPERSON.Salesperson_id</code>.</p>
+<p><strong>Violating Insertion:</strong> Inserting into <code>SALE</code> with <code>Serial_no = 'XYZ'</code> when 'XYZ' does not exist in <code>CAR</code>.</p>
+<p><strong>Valid Insertion:</strong> Inserting into <code>SALE</code> referencing an existing <code>Serial_no</code> and existing <code>Salesperson_id</code>.</p>
+</details>
+
+<details>
+<summary>Exercise 5.18 — Splitting Social Security Numbers</summary>
+<p>Splitting SSN into three fields (<code>Area_code</code>, <code>Group_code</code>, <code>Serial_code</code>) is beneficial when frequently querying by geographic area, applying partial privacy masking (e.g., last 4 digits), or performing demographic statistical analysis.</p>
+</details>
+
+<details>
+<summary>Exercise 5.19 — Student phone &amp; name schema design</summary>
+<p><strong>(a) Missing Info:</strong> Country codes and area codes.</p>
+<p><strong>(b) Phone Storage:</strong> Store full phone strings including area code within existing phone attributes.</p>
+<p><strong>(c) Name Splitting:</strong> Splitting into first, middle, and last names enables easy sorting and searching by last name, but adds columns and complexity for non-standard international names.</p>
+<p><strong>(d) Guideline:</strong> Split an attribute if subcomponents are independently queried, sorted, or constrained; keep atomic if accessed together.</p>
+<p><strong>(e) 0 to 5 Phones Options:</strong></p>
+<ol>
+  <li>Separate table <code>STUDENT_PHONE(Ssn, Phone_number, Phone_type)</code>.</li>
+  <li>Add 5 nullable phone columns (<code>Phone1</code>, …, <code>Phone5</code>) in <code>STUDENT</code>.</li>
+</ol>
+</details>
+
+<details>
+<summary>Exercise 5.20 — Surrogate keys vs. natural keys</summary>
+<p><strong>(a) Natural Keys:</strong> <code>Email</code> address or <code>(First_name, Last_name, Date_of_birth)</code>.</p>
+<p><strong>(b) Name Changes:</strong> Natural key attributes like last names can change; updating requires cascading updates across referencing tables.</p>
+<p><strong>(c) Surrogate Key Evaluation:</strong></p>
+<ul>
+  <li><em>Advantages:</em> Immutable, short, integer-indexed, and never changes over time.</li>
+  <li><em>Disadvantages:</em> Artificial value with no real-world semantic context, requiring secondary unique constraints on natural attributes.</li>
+</ul>
+</details>
+
+<hr>
+
+<h1>Entity-Relationship (ER) Modeling: Phased Database Design</h1>
+<p class="lead">In the broader context of Entity-Relationship (ER) modeling, designing a database for complex real-world applications requires a systematic, multi-phase approach. Rather than directly creating tables or writing database code, designers follow structured design phases to separate conceptual user requirements from technical and storage details.</p>
+
+<h2>1. Requirements Collection and Analysis</h2>
+<ul>
+  <li><strong>Data Requirements:</strong> The database designer interacts extensively with prospective users and domain experts to document the enterprise's data needs. The outcome is a concise, detailed textual specification of user data requirements.</li>
+  <li><strong>Functional Requirements:</strong> In parallel, designers analyze the user operations and transactions (retrievals, updates, searches, and deletes) that will run against the database.</li>
+</ul>
+
+<h2>2. Conceptual Design (The Core Role of the ER Model)</h2>
+<ul>
+  <li><strong>High-Level Abstraction:</strong> The designer translates the textual requirements into a conceptual schema using a high-level conceptual data model — most commonly the Entity-Relationship (ER) model.</li>
+  <li><strong>Structural Specifications:</strong> The ER schema formally defines entity types, attributes, relationship types, and structural constraints (such as cardinalities and participation rules).</li>
+  <li><strong>DBMS-Independent Blueprint:</strong> The conceptual design ignores implementation details, commercial software specifics, and physical storage structures. This makes the resulting ER diagram a clear communication tool between database designers and nontechnical stakeholders.</li>
+  <li><strong>Functional Alignment:</strong> Designers review the conceptual ER schema against the functional requirements to confirm that all required user transactions can be executed smoothly.</li>
+</ul>
+
+<h2>3. Logical Design (Data Model Mapping)</h2>
+<ul>
+  <li><strong>Mapping to Implementation Models:</strong> Once the conceptual schema is finalized, it is transformed from the high-level ER model into the implementation data model of the chosen commercial DBMS.</li>
+  <li><strong>Relational Schema Generation:</strong> In relational database systems, this step consists of algorithmically mapping ER constructs (strong entity sets, weak entities, multivalued attributes, and relationships) into relational table schemas, primary keys, and foreign-key constraints.</li>
+</ul>
+
+<h2>4. Physical Design</h2>
+<ul>
+  <li><strong>Internal Storage &amp; Performance:</strong> The system-specific relational schema is mapped to physical file organizations, index structures, access paths, and internal storage parameters.</li>
+  <li><strong>Transaction Implementation:</strong> In parallel with physical design, application programs and database transactions are designed and coded.</li>
+</ul>
+
+<hr>
+
+<h2>Key Pitfalls Avoided by Phased ER Modeling</h2>
+<ul>
+  <li><strong>Redundancy:</strong> Developing a clear ER model first prevents repeating identical attributes unnecessarily across multiple tables, which avoids data inconsistency.</li>
+  <li><strong>Incompleteness:</strong> Early ER modeling prevents missing vital real-world concepts, ensuring the database does not require awkward <code>NULL</code> workarounds to represent basic data.</li>
+  <li><strong>Costly Late-Stage Changes:</strong> Modifying a physical or logical database schema after application code has already been written is difficult and expensive; conceptual ER modeling catches architectural errors early.</li>
+</ul>
+
+<div class="footer-question">
+💡 Would you like to explore how specific ER constructs — such as weak entity sets or multivalued attributes — are mapped into relational tables during the logical design phase?
+</div>
+
+</body>
+</html>
