@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>File Organization & Indexing — DBMS Notes</title>
+<style>
+:root{--bg:#0f1117;--card:#171a23;--acc:#5eb1ff;--acc2:#ffb454;--txt:#e6e8ee;--sub:#9aa4b2;--line:#2a2f3a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',Arial,sans-serif;line-height:1.5;padding:24px}
+.wrap{max-width:960px;margin:0 auto}
+h1{font-size:2rem;border-bottom:3px solid var(--acc);padding-bottom:10px}
+h2{color:var(--acc);margin-top:40px;font-size:1.4rem}
+h3{color:var(--acc2);margin:18px 0 6px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+th{background:#1f2430;color:var(--acc)}
+code,.mono{font-family:Consolas,monospace;background:#1f2430;padding:2px 6px;border-radius:4px;color:var(--acc2)}
+.note{border-left:3px solid var(--acc);padding-left:12px;color:var(--sub);margin:10px 0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:14px 0}
+.box{background:#1f2430;border-radius:8px;padding:14px;border:1px solid var(--line)}
+.box h4{margin:0 0 6px;color:var(--acc)}
+.tag{display:inline-block;background:var(--acc);color:#0f1117;font-weight:600;border-radius:4px;padding:2px 8px;font-size:.8rem;margin-bottom:6px}
+ul{margin:6px 0;padding-left:20px}
+.blk{display:flex;gap:2px;margin:12px 0;flex-wrap:wrap}
+.cell{background:#26314a;border:1px solid var(--acc);border-radius:4px;padding:8px 12px;font-size:.85rem;text-align:center}
+.cell.empty{background:transparent;border-style:dashed;color:var(--sub)}
+</style>
+</head>
+<body>
+<div style="margin: 20px auto; max-width: 960px; text-align: left; padding: 0 20px;">
+  <a href="index.html" style="display: inline-block; background: #2c3e50; color: #fff; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-family: sans-serif; font-size: 0.9rem;">&larr; Back to Index</a>
+</div>
+<div class="wrap">
+<h1>File Organization &amp; Indexing</h1>
+
+<section>
+<h2>1. What is a File?</h2>
+<p>A <b>file</b> is a named collection of related records on disk, representing one entity type (e.g., all students).</p>
+<div class="grid3">
+<div class="box"><h4>One Entity Type</h4>STUDENT records don't mix with COURSE records in the same file.</div>
+<div class="box"><h4>Many Records</h4>Each record describes one instance — one student, one order.</div>
+<div class="box"><h4>Sequence of Blocks</h4>Physically, a file is just disk blocks stored one after another.</div>
+</div>
+</section>
+
+<section>
+<h2>2. What is a Record?</h2>
+<p>A record is one row, built from fields of different types.</p>
+<table>
+<tr><th>Field</th><th>Type</th><th>Size</th></tr>
+<tr><td>Roll_No</td><td>INTEGER</td><td>4 bytes</td></tr>
+<tr><td>Name</td><td>CHAR(30)</td><td>30 bytes</td></tr>
+<tr><td>Department</td><td>CHAR(10)</td><td>10 bytes</td></tr>
+<tr><td>CGPA</td><td>FLOAT</td><td>4 bytes</td></tr>
+</table>
+<p>Record size = 4+30+10+4 = <b>48 bytes</b> (fixed-length record).</p>
+<p class="note">Database → Files → Disk Blocks (Pages) → Records → Fields. Each level physically contains the one below it.</p>
+</section>
+
+<section>
+<h2>3. Blocks &amp; Blocking Factor</h2>
+<p>Disks read/write in <b>blocks</b> (typically 4–16 KB), not individual records.</p>
+<p class="mono">bfr = ⌊ B / R ⌋</p>
+<p>Example: B = 4096 bytes, R = 100 bytes → bfr = ⌊4096/100⌋ = <b>40 records/block</b>, wasting 96 bytes.</p>
+<div class="blk">
+<div class="cell">40 records</div><div class="cell empty">96 B unused</div>
+</div>
+
+<h3>Unspanned vs Spanned Organization</h3>
+<table>
+<tr><th>Unspanned</th><th>Spanned</th></tr>
+<tr><td>Record never split across blocks; leftover space wasted.</td><td>Record may split across blocks via a pointer; no space wasted.</td></tr>
+<tr><td>✓ Simple, one read = whole record</td><td>✓ Zero waste, but extra I/O to reassemble</td></tr>
+</table>
+</section>
+
+<section>
+<h2>4. Fixed-Length Records</h2>
+<p>Every record occupies the same number of bytes (padding fills short values).</p>
+<p class="mono">Address(record i) = start_of_file + i × R</p>
+<p>Example: R = 48 bytes → record #500 is at offset 500×48 = <b>24,000 bytes</b>. No scanning needed.</p>
+<h3>Handling Deletion</h3>
+<div class="grid3">
+<div class="box"><h4>Deletion Marker</h4>Flag slot as 'deleted' (tombstone) — fast, leaves a gap.</div>
+<div class="box"><h4>Free-Slot List</h4>Chain deleted slots so new records can reuse space.</div>
+<div class="box"><h4>Compaction</h4>Periodically shift records to close gaps.</div>
+</div>
+</section>
+
+<section>
+<h2>5. Variable-Length Records</h2>
+<div class="grid3">
+<div class="box"><h4>Variable-length fields</h4>e.g. VARCHAR(50) — "Al" shouldn't cost as much as "Alexandra Bartholomew".</div>
+<div class="box"><h4>Repeating fields</h4>e.g. Courses[] — different number of values per record.</div>
+<div class="box"><h4>Mixed record types</h4>e.g. Employee vs Manager in one file.</div>
+</div>
+<h3>Storage Techniques</h3>
+<table>
+<tr><th>Technique</th><th>Idea</th><th>Trade-off</th></tr>
+<tr><td>Separator characters</td><td>Delimiter like '|' between fields</td><td>Simple, but must scan byte-by-byte</td></tr>
+<tr><td>Length indicator</td><td>Store field length before value</td><td>Instant jump, more bookkeeping</td></tr>
+<tr><td>Fixed + variable split</td><td>Fixed fields first, variable ones appended with offsets</td><td>Best of both — used by most DBMS</td></tr>
+</table>
+</section>
+
+<section>
+<h2>6. Fixed vs Variable — Quick Reference</h2>
+<table>
+<tr><th></th><th>Fixed-Length</th><th>Variable-Length</th></tr>
+<tr><td>Record size</td><td>Identical for every record</td><td>Differs record to record</td></tr>
+<tr><td>Addressing</td><td>Direct: i × R</td><td>Needs offsets/pointers</td></tr>
+<tr><td>Space efficiency</td><td>Wastes space on short values</td><td>Packs tightly, no padding</td></tr>
+<tr><td>Implementation</td><td>Simple</td><td>More bookkeeping</td></tr>
+<tr><td>Best for</td><td>Uniform data (sensor logs, IDs)</td><td>Text-heavy/optional fields</td></tr>
+</table>
+</section>
+
+<h1 style="margin-top:50px">Indexing in Database Systems</h1>
+
+<section>
+<h2>7. Why Indexes?</h2>
+<p>Like a book's index lets you jump to a page instead of reading cover-to-cover, a DB index jumps straight to a record's block instead of scanning the whole file.</p>
+<table>
+<tr><th>Without Index</th><th>With Index</th></tr>
+<tr><td>Full linear scan — O(n) block accesses</td><td>Search index, jump to block — O(log n) block accesses</td></tr>
+</table>
+</section>
+
+<section>
+<h2>8. Single-Level Indexes</h2>
+<div class="grid3">
+<div class="box"><span class="tag">Sparse</span><h4>Primary Index</h4>On ordering primary key of a sorted file. One entry per block (block anchor). Only one per file.</div>
+<div class="box"><span class="tag">Sparse</span><h4>Clustering Index</h4>On a non-key field the file is physically ordered by. One entry per distinct value. Only one per file.</div>
+<div class="box"><span class="tag">Dense</span><h4>Secondary Index</h4>On any non-ordering field (key or non-key). One entry per record. Multiple allowed per file.</div>
+</div>
+
+<table>
+<tr><th>Aspect</th><th>Primary</th><th>Clustering</th><th>Secondary</th></tr>
+<tr><td>Built on</td><td>Primary key</td><td>Non-key ordering field</td><td>Any key/non-key field</td></tr>
+<tr><td>File ordered by field?</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+<tr><td>Dense/Sparse</td><td>Sparse</td><td>Sparse</td><td>Dense</td></tr>
+<tr><td>Entries</td><td>One per block</td><td>One per distinct value</td><td>One per record</td></tr>
+<tr><td>Multiple per file?</td><td>No</td><td>No</td><td>Yes</td></tr>
+</table>
+</section>
+
+<section>
+<h2>9. Multilevel Indexes</h2>
+<p>A single-level index can still grow large. Solution: treat it as an ordered file and build a sparse second-level index over it, then a third, until the top level fits in one block.</p>
+<p>Reduces cost from O(log₂ r) to about <span class="mono">O(log_fo r)</span>, where fo = fan-out (entries per block).</p>
+</section>
+
+<section>
+<h2>10. Dynamic Indexes: B-Tree &amp; B+-Tree</h2>
+<p class="note">Static multilevel indexes degrade as data changes (overflow/underflow on insert/delete). Dynamic self-balancing trees solve this — nodes split on overflow, merge/redistribute on underflow, and all leaves stay at the same level.</p>
+
+<table>
+<tr><th>Feature</th><th>B-Tree</th><th>B+-Tree</th></tr>
+<tr><td>Data pointers</td><td>In internal AND leaf nodes</td><td>Only in leaf nodes</td></tr>
+<tr><td>Leaf nodes linked?</td><td>No</td><td>Yes — sequential linked list</td></tr>
+<tr><td>Fan-out per node</td><td>Lower</td><td>Higher (no data ptrs stored)</td></tr>
+<tr><td>Range queries</td><td>Slower — revisit tree</td><td>Fast — follow leaf links</td></tr>
+<tr><td>Common usage</td><td>Less common</td><td>Standard in most RDBMS</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Key Takeaways</h2>
+<ul>
+<li><b>Single-level indexes:</b> primary &amp; clustering (sparse) vs. secondary (dense).</li>
+<li><b>Multilevel indexes:</b> an index over the index, until the top level fits in one block.</li>
+<li><b>B-Tree:</b> balanced, data pointers at every level, self-adjusts via splits/merges.</li>
+<li><b>B+-Tree:</b> data only in linked leaves — higher fan-out, shorter tree, fast range scans. Industry standard.</li>
+</ul>
+</section>
+
+</div>
+</body>
+</html>
