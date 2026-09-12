@@ -1,7 +1,6 @@
 <div align="center">
 
-<!-- TWO-LINE BOOT SEQUENCE (non-repeating, fires once on load) -->
-<img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=13&duration=1800&pause=400&color=00E5FF&center=true&vCenter=true&multiline=true&repeat=false&width=620&height=60&lines=%5BSYS%5D+Initializing+ZG0D-FF+kernel...+%5BOK%5D;%5BSYS%5D+Hardware+online.+AI+stack+mounted.+Standing+by." alt="Boot" />
+
 
 <br/>
 
