@@ -34,7 +34,7 @@ function generateRandomChars(len) {
   let str = '';
   const bytes = crypto.getRandomValues(new Uint8Array(len));
   for (let i = 0; i < len; i++) {
-    str += ENCODING[bytes[i] % ENCODING_LEN];
+    str += ENCODING[bytes[i] & 31];
   }
   return str;
 }
