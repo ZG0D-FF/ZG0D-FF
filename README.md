@@ -92,7 +92,7 @@ My engineering philosophy is built on **performance, low latency, and mathematic
 
 <!-- ROW 2: Streak -->
 <div align="center">
-<img src="https://streak-stats.demolab.com?user=ZG0D-FF&theme=tokyonight&hide_border=true&ring=00E5FF&fire=00E5FF&currStreakLabel=00E5FF&sideLabels=a9b1d6&dates=a9b1d6&background=0D1117&stroke=1C2333&border_radius=6" width="65%" alt="GitHub Streak"/>
+<img src="https://streak-stats.demolab.com?user=ZG0D-FF&theme=tokyonight&hide_border=true&ring=00E5FF&fire=00E5FF&currStreakLabel=00E5FF&sideLabels=a9b1d6&dates=a9b1d6&background=0D1117&stroke=1C2333&border_radius=6&cache_bust=main2" width="65%" alt="GitHub Streak"/>
 </div>
 <br/>
 
