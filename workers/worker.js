@@ -188,7 +188,7 @@ export default {
       // --- [SECURITY UPDATE: FRONTEND SUPABASE PROXY] ---
 if (payload.action === "get_known_users") {
           let url = `${context.SUPABASE_URL}/rest/v1/jarvis_known_users?order=last_seen.desc`;
-          if (!payload.adminToken || payload.adminToken !== (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
+          if (!payload.adminToken || !constantTimeEquals(payload.adminToken, context.env.ADMIN_SECRET || "")) {
               if (payload.visitorName) {
                   url += `&visitor_name_lower=eq.${encodeURIComponent(payload.visitorName.toLowerCase())}`;
               } else {
@@ -211,7 +211,7 @@ if (payload.action === "get_known_users") {
       }
 
       if (payload.action === "verify_admin") {
-        const secret = context.env.ADMIN_SECRET || "ZGOD_ADMIN_777";
+        const secret = context.env.ADMIN_SECRET || "";
         if (constantTimeEquals(payload.password, secret)) {
           return new Response(JSON.stringify({ success: true }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
         }
@@ -277,7 +277,7 @@ if (payload.action === "get_known_users") {
       const creatorAliases = ["dj", "zg0d-ff", "dj_admin", "dibyajyotee", "zgod", "dibyajyotee ghosh"];
       let isAdmin = false;
       if (creatorAliases.includes(cleanVisitorName)) {
-          if (payload.adminToken && constantTimeEquals(payload.adminToken, context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
+          if (payload.adminToken && constantTimeEquals(payload.adminToken, context.env.ADMIN_SECRET || "")) {
               isAdmin = true;
           } else {
               return errorResponse("[SECURITY ALERT] This alias is reserved for the System Architect. Invalid or missing authorization token.");
