@@ -28,7 +28,7 @@ jobs:
           semgrep scan --config auto --sarif --output semgrep.sarif workers api js || true
 
       - name: Upload Semgrep SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: semgrep.sarif
@@ -54,7 +54,7 @@ jobs:
           njsscan --sarif -o njsscan.sarif workers api || true
 
       - name: Upload njsscan SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: njsscan.sarif
@@ -69,8 +69,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run OSV Scanner
-        uses: google/osv-scanner-action@v1.9.2
+      - name: Download and Run OSV Scanner
+        run: |
+          curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 -o osv-scanner
+          chmod +x osv-scanner
+          ./osv-scanner --lockfile=pnpm-lock.yaml --format sarif --output osv.sarif || true
+
+      - name: Upload OSV SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
         with:
-          scan-args: |-
-            --lockfile=pnpm-lock.yaml
+          sarif_file: osv.sarif
