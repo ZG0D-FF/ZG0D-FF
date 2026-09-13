@@ -107,7 +107,7 @@ export default async function handler(req, res) {
       try {
         diffResponse = await fetch(diffUrl, { headers });
       } catch (fetchErr) {
-        console.error(`Network error fetching diff for ${commit.id}:`, fetchErr);
+        console.error("Network error fetching diff for commit:", commit.id, fetchErr);
         continue;
       }
 

@@ -1446,12 +1446,12 @@ User: ${userText}`;
 
     // ── Handle rate limit / quota errors ─────────────────────
     if (res.status === 429) {
-      console.warn(`${modelId} returned 429`);
+      console.warn("Model returned 429:", modelId);
       return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
     }
     if (!res.ok) {
       const errText = await res.text();
-      console.error(`${modelId} HTTP ${res.status}:`, errText);
+      console.error("Model HTTP error:", modelId, res.status, errText);
       // 503 = overloaded, treat like 429 for retry
       if (res.status === 503 || res.status === 500) {
         return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
@@ -1502,7 +1502,7 @@ User: ${userText}`;
     if (data.error) {
       const code = data.error.code || 0;
       const msg = data.error.message || "";
-      console.error(`${modelId} API error:`, msg);
+      console.error("Model API error:", modelId, msg);
       if (code === 429 || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
         return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
       }
@@ -1605,7 +1605,7 @@ User: ${userText}`;
     return { aiReply, redirectUrl, newMemory, tokenUsage };
 
   } catch (e) {
-    console.error(`${modelId} fetch exception:`, e.message);
+    console.error("Model fetch exception:", modelId, e.message);
     return { aiReply: "", redirectUrl: null, newMemory: null, error429: true }; // treat as retryable
   }
 }
@@ -1998,10 +1998,10 @@ async function fetchSystemConfig(key, context) {
       `${context.SUPABASE_URL}/rest/v1/jarvis_system_config?config_key=eq.${key}&select=config_value`,
       { headers: sbHeaders(context) }
     );
-    if (!res.ok) { console.warn(`fetchSystemConfig(${key}) HTTP ${res.status}`); return []; }
+    if (!res.ok) { console.warn("fetchSystemConfig HTTP error:", key, res.status); return []; }
     return await safeJsonParse(res);
   } catch (e) {
-    console.warn(`fetchSystemConfig(${key}) failed:`, e.message);
+    console.warn("fetchSystemConfig failed:", key, e.message);
     return [];
   }
 }
