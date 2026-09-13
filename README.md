@@ -1,10 +1,5 @@
 <div align="center">
 
-<!-- TWO-LINE BOOT SEQUENCE (non-repeating, fires once on load) -->
-<img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=13&duration=1800&pause=400&color=00E5FF&center=true&vCenter=true&multiline=true&repeat=false&width=620&height=60&lines=%5BSYS%5D+Initializing+ZG0D-FF+kernel...+%5BOK%5D;%5BSYS%5D+Hardware+online.+AI+stack+mounted.+Standing+by." alt="Boot" />
-
-<br/>
-
 <!-- ANIMATED ROLE TITLES -->
 <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=30&duration=2800&pause=900&color=00E5FF&center=true&vCenter=true&width=680&lines=DJ+%7C+Systems+Architect;Hardware+Integrator;AI+%2B+IoT+Developer;Edge+Deployment+Specialist;ECE+Engineer" alt="Roles" />
 
@@ -12,7 +7,7 @@
 
 <!-- SOCIAL BADGES — clean pill style -->
 <a href="mailto:ZGODMR@gmail.com"><img src="https://img.shields.io/badge/Gmail-0D1117?style=for-the-badge&logo=gmail&logoColor=00E5FF"/></a>
-<a href="https://www.linkedin.com/in/mr-zgod-06a24631a/"><img src="https://img.shields.io/badge/LinkedIn-0D1117?style=for-the-badge&logo=linkedin&logoColor=00E5FF"/></a>
+<a href="https://www.linkedin.com/in/dibyajyotee-ghosh-06a24631a/"><img src="https://img.shields.io/badge/LinkedIn-0D1117?style=for-the-badge&logo=linkedin&logoColor=00E5FF"/></a>
 <a href="https://zg0d-ff.github.io/ZG0D-FF/"><img src="https://img.shields.io/badge/Portfolio-0D1117?style=for-the-badge&logo=googlechrome&logoColor=00E5FF"/></a>
 
 </div>
@@ -58,24 +53,24 @@ My strength is **rapid prototyping and system integration**. I build the physica
 ---
 
 ### ⬛ SYSTEMS ONLINE & IN ARCHIVE
-<sub><i>Active edge deployments · Archived neural networks · Ongoing R&D</i></sub>
+<sub><i>Edge AI deployments · Embedded signal processing · Cloud-native serverless · Low-latency infrastructure</i></sub>
 <br/><br/>
 
-> ### 🔵 `J.A.R.V.I.S. Local AI`
-> Voice-activated Python assistant running **fully local** on Raspberry Pi hardware. Executes system checks, runs voice protocols, and operates without cloud dependency.
-> `Python` · `Raspberry Pi` · `Speech Recognition` · `Edge AI`
+> ### 🟠 `PoultryHealth-AI` · Edge Bioacoustics
+> Low-latency avian bioacoustic detection system using **Google YAMNet + custom MLP StackingClassifier** to mathematically isolate respiratory distress on edge hardware.
+> `Google YAMNet` · `MLP StackingClassifier` · `TensorFlow Lite` · `Raspberry Pi` · `Edge Bioacoustics`
 
-> ### 🟢 `Edge-Olfaction Logistics`  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-status/edge-status.svg" align="center" height="20" />
-> Adaptive hardware network for perishable goods monitoring. Integrates **MQ gas sensors + DHT environmental arrays** to detect fruit spoilage in real-time at the edge.
-> `Arduino` · `MQ Sensors` · `IoT` · `Real-time Analytics`
+> ### 🟢 `Edge-Olfaction Logistics` · Signal Processing
+> Dual-processor edge framework for perishable goods monitoring. IEEE-aligned pipeline utilizing **Haar Discrete Wavelet Transforms (DWT) and fuzzy logic** to process real-time multi-gas sensor telemetry.
+> `Haar DWT` · `Fuzzy Logic` · `MQ Sensor Arrays` · `Arduino` · `Raspberry Pi` · `IoT Telemetry`
 
-> ### 🟠 `Avian Disease Audio Detector`
-> Lightweight acoustic AI deployed on edge hardware. Monitors poultry health by classifying **environmental audio signatures** against a disease pattern model.
-> `TensorFlow Lite` · `Audio ML` · `Raspberry Pi` · `Edge Inference`
+> ### 🔵 `NEXUS` · Cloud-Native Serverless Router
+> Edge-deployed multi-model LLM router utilizing **Cloudflare Workers, Upstash Redis, and Supabase**. Implements delayed-execution checkpointing and real-time RAG strictly within serverless CPU budgets.
+> `Cloudflare Workers` · `Upstash Redis` · `Supabase` · `RAG` · `Serverless Edge`
 
-> ### 🟣 `FC Manager AI`
-> Tactical prediction engine using **OCR + data analytics** to parse match data and generate football management strategies with statistical backing.
-> `Python` · `OCR` · `Data Analytics` · `Predictive Modelling`
+> ### 🟣 `Low-Latency In-Memory Engine` · Systems Architecture
+> High-performance in-memory text matching engine in **C++ (bypassing Python GIL with native C++ DLLs)** and asynchronous Pub/Sub EventBus architectures handling heavy ML workloads without blocking REST API threads.
+> `C++` · `Python C-DLL` · `GIL Bypass` · `Pub/Sub EventBus` · `Zero-Latency Queue`
 
 ---
 ---
