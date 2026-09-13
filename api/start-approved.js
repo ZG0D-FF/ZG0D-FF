@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
   const { roomId, secretToken, approvedWord } = req.body;
@@ -26,7 +28,7 @@ export default async function handler(req, res) {
     const playablePlayers = players.filter(p => !p.is_host);
     if (playablePlayers.length < 3) return res.status(400).json({ error: 'Need at least 3 active players (excluding Host) to start in Observer mode!' });
 
-    const imposterIndex = Math.floor(Math.random() * playablePlayers.length);
+    const imposterIndex = crypto.randomInt(playablePlayers.length);
     const imposterId = playablePlayers[imposterIndex].id;
 
     // Save to Redis

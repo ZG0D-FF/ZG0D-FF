@@ -9,6 +9,12 @@ function constantTimeEquals(a, b) {
   return diff === 0;
 }
 
+function secureRandom() {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0] / 4294967296;
+}
+
 // ============================================================
 // NEXUS AI WORKER v3 — MULTI-MODEL ROTATION + QUOTA MANAGEMENT
 //
@@ -332,7 +338,7 @@ if (payload.action === "get_known_users") {
       // --- AUDIO THROTTLE LOGIC ---
       const chatsSinceAudio = existingUser?.chats_since_audio || 0;
       // Randomly unlock audio if 3, 4, or 5 chats have passed
-      context.isAudioEligible = chatsSinceAudio >= (Math.floor(Math.random() * 3) + 3);
+      context.isAudioEligible = chatsSinceAudio >= (Math.floor(secureRandom() * 3) + 3);
       context.triggeredAudioFile = null;
 
       const chatHistory = (historyData?.length > 0)
@@ -510,7 +516,7 @@ if (payload.action === "get_known_users") {
               "[VOICE: KOTL] I feel the dread coalescing in the pit of your stomach... [EXECUTE_BANISHMENT]",
               "[VOICE: WISEMAN] A poor choice of words, traveler. [EXECUTE_BANISHMENT]"
             ];
-            earlyToxicReply = hostileReplies[Math.floor(Math.random() * hostileReplies.length)];
+            earlyToxicReply = hostileReplies[Math.floor(secureRandom() * hostileReplies.length)];
             break;
           }
         }

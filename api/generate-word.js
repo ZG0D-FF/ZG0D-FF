@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -83,7 +85,7 @@ export default async function handler(req, res) {
     const bannedWordsList = historyData ? historyData.flatMap(row => [row.crew_word, row.imposter_word]).join(', ') : '';
 
     // 3. Select an imposter
-    const imposterIndex = Math.floor(Math.random() * players.length);
+    const imposterIndex = crypto.randomInt(players.length);
     const imposterId = players[imposterIndex].id;
 
     // 4. Generate category, normal word, and imposter word via Gemini

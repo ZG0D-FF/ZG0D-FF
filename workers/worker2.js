@@ -9,6 +9,12 @@ function constantTimeEquals(a, b) {
   return diff === 0;
 }
 
+function secureRandom() {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0] / 4294967296;
+}
+
 // ============================================================
 // NEXUS AI WORKER v3 — MULTI-MODEL ROTATION + QUOTA MANAGEMENT
 //
@@ -450,7 +456,7 @@ if (payload.action === "get_known_users") {
       // --- AUDIO THROTTLE LOGIC ---
       const chatsSinceAudio = existingUser?.chats_since_audio || 0;
       // Randomly unlock audio if 3, 4, or 5 chats have passed
-      context.isAudioEligible = chatsSinceAudio >= (Math.floor(Math.random() * 3) + 3);
+      context.isAudioEligible = chatsSinceAudio >= (Math.floor(secureRandom() * 3) + 3);
       context.triggeredAudioFile = null;
 
       const chatHistory = (historyData?.length > 0)
@@ -687,7 +693,7 @@ if (payload.action === "get_known_users") {
               "[VOICE: KOTL] I feel the dread coalescing in the pit of your stomach... [EXECUTE_BANISHMENT]",
               "[VOICE: WISEMAN] A poor choice of words, traveler. [EXECUTE_BANISHMENT]"
             ];
-            earlyToxicReply = hostileReplies[Math.floor(Math.random() * hostileReplies.length)];
+            earlyToxicReply = hostileReplies[Math.floor(secureRandom() * hostileReplies.length)];
             break;
           }
         }
@@ -1167,7 +1173,7 @@ function pickModel(modelUsage, needsImage, isAdmin = false) {
   let eligibleModels = MODEL_POOL.filter(m => isAdmin || m.tier >= 3);
   
   // 2. DOGPILE FIX: Shuffle the eligible models first...
-  eligibleModels.sort(() => Math.random() - 0.5);
+  eligibleModels.sort(() => secureRandom() - 0.5);
   // ...Then sort by tier. This guarantees we try Tier 1 before Tier 2, 
   // but randomizes the order *within* the same tier to stop RPM dogpiling!
   eligibleModels.sort((a, b) => a.tier - b.tier);
