@@ -1,0 +1,76 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ "main", "main2" ]
+  pull_request:
+    branches: [ "main", "main2" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install and Run Semgrep
+        run: |
+          python3 -m pip install semgrep
+          semgrep scan --config auto --sarif --output semgrep.sarif workers api js || true
+
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  njsscan:
+    name: njsscan Node Security
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run njsscan
+        run: |
+          python3 -m pip install njsscan
+          njsscan --sarif -o njsscan.sarif workers api || true
+
+      - name: Upload njsscan SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: njsscan.sarif
+
+  osv-scanner:
+    name: Google OSV Dependency Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run OSV Scanner
+        uses: google/osv-scanner-action/v1.9.2
+        with:
+          scan-args: |-
+            --lockfile=pnpm-lock.yaml
