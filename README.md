@@ -29,9 +29,11 @@
 
 ### ⬛ SYSTEM.BIO
 
-I am an **Electronics & Communication Engineering** student who builds at the intersection of physical hardware and intelligent logic. I don't just write scripts — I design the architecture, wire the microcontrollers, and deploy sensor networks into the real world.
+I am an **ECE student at IEM Kolkata**, driven by a singular focus: **architecting high-performance systems at the intersection of hardware and AI**. I specialize in rapid prototyping, edge computing, and full-stack embedded solutions—from bare-metal microcontrollers to cloud-native serverless deployments.
 
-My strength is **rapid prototyping and system integration**. I build the physical foundation using Raspberry Pi and Arduino, and I partner with advanced AI tools to rapidly generate, debug, and deploy the software logic needed to make those systems *think*.
+My engineering philosophy is built on **performance, low latency, and mathematical rigor**. Whether bypassing Python's GIL with native C++ DLLs or deploying bioacoustic ML ensembles on a Raspberry Pi, I build systems that scale efficiently under strict hardware constraints.
+
+> *"If a project needs a brain, a sensor network, and a real-world application, I figure out how to put the pieces together."*
 
 ---
 
