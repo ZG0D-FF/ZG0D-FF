@@ -130,5 +130,32 @@ My strength is **rapid prototyping and system integration**. I build the physica
   <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-3d/profile-3d-contrib/profile-night-rainbow.svg" width="100%" alt="3D Cityscape"/>
 </div>
 
+<!-- CONTRIBUTORS & AI ARCHITECTS -->
+<br/>
+
+### ⬛ CONTRIBUTORS & AI PAIR PROGRAMMERS
+<sub><i>Engineering intelligence · Co-architected & hardened with Google AI</i></sub>
+
+<div align="center">
+
+<br/>
+
+<a href="https://deepmind.google/technologies/gemini/">
+  <img src="https://img.shields.io/badge/Google%20Gemini-0D1117?style=for-the-badge&logo=googlegemini&logoColor=00E5FF" alt="Google Gemini"/>
+</a>
+&nbsp;
+<a href="https://github.com/google-deepmind">
+  <img src="https://img.shields.io/badge/Google%20DeepMind%20Antigravity-0D1117?style=for-the-badge&logo=google&logoColor=00E5FF" alt="Google DeepMind Antigravity"/>
+</a>
+
+<br/><br/>
+
+> **Core Pair Programmer & Autonomous Systems Agent:**  
+> **Google DeepMind Antigravity (powered by Gemini)** — Active co-engineering partner for system architectures, automated vulnerability remediation, edge security scanning, and algorithm optimization.
+
+</div>
+
+<br/>
+
 <!-- CAPSULE RENDER WAVING FOOTER -->
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:00E5FF,100:0D1117&height=80&section=footer"/>
