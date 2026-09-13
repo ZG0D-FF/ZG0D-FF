@@ -46,7 +46,7 @@ function SlideshowBackground() {
 
 
 
-const getClientToken = () => localStorage.getItem('imposter_client_token') || localStorage.getItem('imposter_secret') || '';
+const getDeviceGuid = () => localStorage.getItem('imposter_device_uid') || localStorage.getItem('imposter_client_token') || localStorage.getItem('imposter_secret') || '';
 
 function App() {
   const [playerId, setPlayerId] = useState('');
@@ -105,12 +105,12 @@ function App() {
   
   useEffect(() => {
     let pid = localStorage.getItem('imposter_pid');
-    let clientToken = getClientToken();
-    if (!pid || !clientToken) {
+    let deviceGuid = getDeviceGuid();
+    if (!pid || !deviceGuid) {
       pid = pid || crypto.randomUUID();
-      clientToken = clientToken || crypto.randomUUID();
+      deviceGuid = deviceGuid || crypto.randomUUID();
       localStorage.setItem('imposter_pid', pid);
-      localStorage.setItem('imposter_client_token', clientToken);
+      localStorage.setItem('imposter_device_uid', deviceGuid);
     }
     setPlayerId(pid);
     console.log("Initialized Player Auth");
@@ -231,7 +231,7 @@ function App() {
     setLoading(true);
     
     try {
-      const secretToken = getClientToken();
+      const secretToken = getDeviceGuid();
       const res = await fetch('/api/join-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -266,7 +266,7 @@ function App() {
     setLoading(true);
     
     try {
-      const secretToken = getClientToken();
+      const secretToken = getDeviceGuid();
       const res = await fetch('/api/join-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -301,7 +301,7 @@ function App() {
     setLoading(true);
     
     try {
-      const secretToken = getClientToken();
+      const secretToken = getDeviceGuid();
       const res = await fetch('/api/join-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -334,7 +334,7 @@ function App() {
       const res = await fetch('/api/end-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getClientToken(), action })
+        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getDeviceGuid(), action })
       });
       if (!res.ok) throw new Error("Action failed");
       
@@ -380,7 +380,7 @@ function App() {
       const res = await fetch('/api/tally-votes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getClientToken() })
+        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getDeviceGuid() })
       });
       if (!res.ok) throw new Error("Failed to tally votes");
     } catch (err) {
@@ -396,7 +396,7 @@ function App() {
       const res = await fetch('/api/start-voting', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getClientToken() })
+        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getDeviceGuid() })
       });
       if (!res.ok) throw new Error("Failed to start voting");
     } catch(err) {
@@ -420,7 +420,7 @@ function App() {
          const res = await fetch('/api/preview-word', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ roomId: currentRoom.id, secretToken: getClientToken() })
+           body: JSON.stringify({ roomId: currentRoom.id, secretToken: getDeviceGuid() })
          });
          const data = await res.json();
          if (!res.ok) throw new Error(data.error);
@@ -430,7 +430,7 @@ function App() {
          const res = await fetch('/api/generate-word', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ roomId: currentRoom.id, secretToken: getClientToken() })
+           body: JSON.stringify({ roomId: currentRoom.id, secretToken: getDeviceGuid() })
          });
          if (!res.ok) throw new Error("Failed to start game");
       }
@@ -447,7 +447,7 @@ function App() {
       const res = await fetch('/api/start-approved', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getClientToken(), approvedWord: previewWord })
+        body: JSON.stringify({ roomId: currentRoom.id, secretToken: getDeviceGuid(), approvedWord: previewWord })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
