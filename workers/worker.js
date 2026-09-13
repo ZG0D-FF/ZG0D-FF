@@ -1955,10 +1955,13 @@ function checkRuleBasedProtocols(existingUser, dailyChatCount, newMemory, curren
 
 // ── Database update (fire & forget) ───────────────────────
 function sanitizeForDB(text, bannedWords) {
-  if (!text || !bannedWords?.length) return text;
+  if (!text || !Array.isArray(bannedWords) || !bannedWords.length) return text;
   let clean = text;
   for (const word of bannedWords) {
-    const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    if (typeof word !== 'string' || !word) continue;
+    const escaped = word.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+    const regex = new RegExp(escaped, 'gi');
     clean = clean.replace(regex, '[REDACTED]');
   }
   return clean;

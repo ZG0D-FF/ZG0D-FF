@@ -1895,7 +1895,7 @@ async function checkBurstLimit(cleanVisitorName, context) {
 async function checkTokenLimit(cleanVisitorName, context) {
   try {
     // 1. Identify Guest vs Named User (Guests usually default to IP addresses containing dots or colons)
-    const isGuest = /^[0-9\.:]+$/.test(cleanVisitorName); 
+    const isGuest = cleanVisitorName.length > 0 && cleanVisitorName.split('').every(c => (c >= '0' && c <= '9') || c === '.' || c === ':');
     const maxRequests = isGuest ? 200 : 500;
 
     // 2. Fetch BOTH total_tokens and request_count, using your native sbHeaders
@@ -2235,10 +2235,13 @@ function checkRuleBasedProtocols(existingUser, dailyChatCount, newMemory, curren
 
 // ── Database update (fire & forget) ───────────────────────
 function sanitizeForDB(text, bannedWords) {
-  if (!text || !bannedWords?.length) return text;
+  if (!text || !Array.isArray(bannedWords) || !bannedWords.length) return text;
   let clean = text;
   for (const word of bannedWords) {
-    const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    if (typeof word !== 'string' || !word) continue;
+    const escaped = word.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+    const regex = new RegExp(escaped, 'gi');
     clean = clean.replace(regex, '[REDACTED]');
   }
   return clean;
