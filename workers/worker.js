@@ -1,5 +1,14 @@
 import { buildDynamicPrompt } from './prompts.js';
 
+function constantTimeEquals(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ (b.charCodeAt(i % b.length) || 0);
+  }
+  return diff === 0;
+}
+
 // ============================================================
 // NEXUS AI WORKER v3 — MULTI-MODEL ROTATION + QUOTA MANAGEMENT
 //
@@ -197,7 +206,7 @@ if (payload.action === "get_known_users") {
 
       if (payload.action === "verify_admin") {
         const secret = context.env.ADMIN_SECRET || "ZGOD_ADMIN_777";
-        if (payload.password === secret) {
+        if (constantTimeEquals(payload.password, secret)) {
           return new Response(JSON.stringify({ success: true }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
         }
         return new Response(JSON.stringify({ success: false }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
@@ -262,7 +271,7 @@ if (payload.action === "get_known_users") {
       const creatorAliases = ["dj", "zg0d-ff", "dj_admin", "dibyajyotee", "zgod", "dibyajyotee ghosh"];
       let isAdmin = false;
       if (creatorAliases.includes(cleanVisitorName)) {
-          if (payload.adminToken && payload.adminToken === (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
+          if (payload.adminToken && constantTimeEquals(payload.adminToken, context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
               isAdmin = true;
           } else {
               return errorResponse("[SECURITY ALERT] This alias is reserved for the System Architect. Invalid or missing authorization token.");
