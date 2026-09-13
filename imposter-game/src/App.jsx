@@ -46,7 +46,7 @@ function SlideshowBackground() {
 
 
 
-const getDeviceGuid = () => localStorage.getItem('imposter_device_uid') || localStorage.getItem('imposter_client_token') || localStorage.getItem('imposter_secret') || '';
+const getDeviceGuid = () => localStorage.getItem('imposter_device_uid') || '';
 
 function App() {
   const [playerId, setPlayerId] = useState('');
@@ -231,12 +231,11 @@ function App() {
     setLoading(true);
     
     try {
-      const secretToken = getDeviceGuid();
       const res = await fetch('/api/join-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          playerName, playerId, secretToken, isCreating: true, maxPlayers 
+          playerName, playerId, secretToken: getDeviceGuid(), isCreating: true, maxPlayers 
         })
       });
       
@@ -266,7 +265,6 @@ function App() {
     setLoading(true);
     
     try {
-      const secretToken = getDeviceGuid();
       const res = await fetch('/api/join-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -274,7 +272,7 @@ function App() {
           roomCode: recentRoomCode, 
           playerName: recentPlayerName, 
           playerId, 
-          secretToken, 
+          secretToken: getDeviceGuid(), 
           isCreating: false 
         })
       });
@@ -301,12 +299,11 @@ function App() {
     setLoading(true);
     
     try {
-      const secretToken = getDeviceGuid();
       const res = await fetch('/api/join-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          roomCode, playerName, playerId, secretToken, isCreating: false 
+          roomCode, playerName, playerId, secretToken: getDeviceGuid(), isCreating: false 
         })
       });
       

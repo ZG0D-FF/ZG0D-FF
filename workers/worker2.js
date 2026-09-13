@@ -421,10 +421,6 @@ if (payload.action === "get_known_users") {
         fetchSystemConfig("global_cache_version", context), // ← NEW: Global Cache Versioning
         redisGet("cache:daily_tech_scraper", context) // ← NEW: Fetch Daily GitHub Tech Briefing
       ]);
-      if (existingUser) {
-          // 🛡️ MITIGATION: Forcing Admin Clearance
-          existingUser.user_role = context.isAdmin ? 'ADMIN' : 'GUEST';
-      }
       // Parse the banned words array from the DB (fallback to empty array if missing)
       context.bannedWords = [];
       if (bannedWordsRes?.length > 0) {
@@ -613,7 +609,7 @@ if (payload.action === "get_known_users") {
 				Upstash Redis Circuit Breaker: ${bypassRedis ? "BYPASSED (Quota Protected)" : "ACTIVE"}
 				Model Router: Online (Rotational Pool)
 				Supabase Vectors: Hardened (m=16, ef_construction=64)
-				Clearance Level: ${existingUser?.user_role || "GUEST"}
+				Clearance Level: ${context.isAdmin ? "ADMIN" : "GUEST"}
 				Subject Threat Matrix: ${existingUser?.ban_strikes || 0} Strikes | ${existingUser?.chat_count || 0} Total Interactions
 				Daily Compute Cycles Burned: ${totalCfRequests} / 100,000
 				Signal Origin: ${request.headers.get("cf-ipcountry") || "Unknown"}
@@ -709,7 +705,7 @@ if (payload.action === "get_known_users") {
       const cacheTTL = (canonicalIntent === 'INTENT_TIME' || canonicalIntent === 'INTENT_WEATHER') ? 60 : 86400;
 
       // 🛡️ MITIGATION 3: Upstash Redis Circuit Breaker (With Admin Override)
-      const bypassRedis = (existingUser?.chat_count > 50) && (existingUser?.user_role !== "ADMIN");
+      const bypassRedis = (existingUser?.chat_count > 50) && !context.isAdmin;
 
       if (userTextLower && !hasPhoto && !earlyToxicReply && !isDynamicQuery && !bypassRedis && context.env.UPSTASH_URL && context.env.UPSTASH_TOKEN) {
           let cached = await redisGet(`cache:${cacheKey}`, context);
