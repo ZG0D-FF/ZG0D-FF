@@ -62,7 +62,6 @@ My engineering philosophy is built on **performance, low latency, and mathematic
 </div>
 
 ---
----
 
 ### ⬛ SYSTEMS ONLINE & IN ARCHIVE
 <sub><i>Edge AI deployments · Embedded signal processing · Cloud-native serverless · Low-latency infrastructure</i></sub>
@@ -84,7 +83,6 @@ My engineering philosophy is built on **performance, low latency, and mathematic
 > High-performance in-memory text matching engine in **C++ (bypassing Python GIL with native C++ DLLs)** and asynchronous Pub/Sub EventBus architectures handling heavy ML workloads without blocking REST API threads.
 > `C++` · `Python C-DLL` · `GIL Bypass` · `Pub/Sub EventBus` · `Zero-Latency Queue`
 
----
 ---
 
 <br/>
