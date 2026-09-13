@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Traversal (DSA)</title>
+    <style>
+        /* Minimalist Dark Mode Theme */
+        :root {
+            --bg-color: #121212;
+            --sidebar-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --heading-color: #ffffff;
+            --link-color: #64b5f6;
+            --code-bg: #2d2d2d;
+            --border-color: #333;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            line-height: 1.6;
+        }
+
+        /* Sidebar Navigation */
+        nav {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        nav h2 {
+            color: var(--heading-color);
+            font-size: 1.2rem;
+            margin-top: 0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            margin-bottom: 12px;
+        }
+
+        nav ul li a {
+            color: var(--link-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 40px;
+            max-width: 950px;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color);
+        }
+
+        h1 { font-size: 2.2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
+        h2 { font-size: 1.8rem; margin-top: 50px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        h3 { font-size: 1.3rem; margin-top: 30px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--sidebar-bg);
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th { background-color: #2a2a2a; color: var(--heading-color); }
+
+        ul, ol { margin-bottom: 20px; }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 0.95rem;
+        }
+        
+        code {
+            font-family: "Consolas", "Courier New", monospace;
+            background-color: var(--code-bg);
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        
+        pre code {
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Code Syntax Highlighting Colors */
+        .comment { color: #6a9955; font-style: italic; }
+        .keyword { color: #569cd6; }
+        .type { color: #4ec9b0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+
+        .note {
+            background-color: rgba(100, 181, 246, 0.1);
+            border-left: 4px solid var(--link-color);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#what-is-graph">What Is a Graph?</a></li>
+            <li><a href="#what-is-traversal">What Is Graph Traversal?</a></li>
+            <li><a href="#bfs">Breadth First Search (BFS)</a></li>
+            <li><a href="#dfs">Depth First Search (DFS)</a></li>
+            <li><a href="#bfs-vs-dfs">BFS vs DFS</a></li>
+            <li><a href="#special-cases">Special Cases</a></li>
+            <li><a href="#multi-source-bfs">Multi-Source BFS</a></li>
+            <li><a href="#topological-sorting">Topological Sorting</a></li>
+            <li><a href="#shortest-path">Shortest Path Algorithms</a></li>
+            <li><a href="#mst-dsu">MST & DSU</a></li>
+            <li><a href="#summary">Revision Summary</a></li>
+        </ul>
+    </nav>
+    <main>
+        <h1>Graph Traversal (Data Structures & Algorithms)</h1>
+        
+        <h2 id="what-is-graph">What Is a Graph?</h2>
+        <p>A graph is a non-linear data structure that works like a map. It is made of two main parts:</p>
+        <ul>
+            <li><strong>V (Vertices or Nodes):</strong> The specific locations or points on the map.</li>
+            <li><strong>E (Edges):</strong> The lines or roads connecting two locations together.</li>
+        </ul>
+
+        <h3>Types of Graphs You Must Know</h3>
+        <table>
+            <tr><th>Type</th><th>Description</th></tr>
+            <tr><td><strong>Directed (Digraph)</strong></td><td>Edges have a strict direction, like a one-way street (e.g., u &rarr; v).</td></tr>
+            <tr><td><strong>Undirected</strong></td><td>Edges go both ways, like a two-way street (u &mdash; v means you can travel v &mdash; u).</td></tr>
+            <tr><td><strong>Weighted</strong></td><td>Each road has a specific cost or distance attached to it.</td></tr>
+            <tr><td><strong>Unweighted</strong></td><td>All roads are equal; every move costs exactly 1 unit.</td></tr>
+            <tr><td><strong>Connected</strong></td><td>You can reach any location from any other location. There are no isolated islands.</td></tr>
+            <tr><td><strong>Disconnected</strong></td><td>The graph is broken into separate, unreachable pieces.</td></tr>
+            <tr><td><strong>Cyclic / Acyclic</strong></td><td>Cyclic means you can go in a loop. Acyclic means no loops (DAG = Directed Acyclic Graph).</td></tr>
+        </ul>
+
+        <h3>Common Graph Representations</h3>
+        <ol>
+            <li><strong>Adjacency Matrix:</strong> A 2D grid/array. Very fast to check if a specific road exists <code>O(1)</code>, but it wastes a lot of memory <code>O(V&sup2;)</code>.</li>
+            <li><strong>Adjacency List:</strong> Each location simply holds a list of its direct neighbors. It is highly memory efficient <code>O(V+E)</code> and is the <strong>best choice for traversals (BFS/DFS)</strong>.</li>
+            <li><strong>Edge List:</strong> Just a big list of every pair of connected nodes. Compact, but very slow when you need to find a node's neighbors.</li>
+        </ol>
+
+        <h2 id="what-is-traversal">What Is Graph Traversal?</h2>
+        <p>Graph traversal is the process of visiting every single location in the graph systematically, exactly once, by following the edges. It is the backbone of almost every advanced graph algorithm.</p>
+        
+        <div class="note">
+            <strong>Crucial Rule:</strong> Unlike a standard tree, graphs can have loops. If you aren't careful, you will walk in circles forever.
+        </div>
+        
+        <p>To safely traverse a graph, algorithms must:</p>
+        <ul>
+            <li>Maintain a <strong>visited marker</strong> (like an array or set) for each location to avoid infinite loops.</li>
+            <li>Optionally <strong>restart the search</strong> from any unvisited location to ensure disconnected islands aren't ignored.</li>
+        </ul>
+
+        <p>The two fundamental strategies are:</p>
+        <ol>
+            <li><strong>Breadth First Search (BFS):</strong> Explores like a ripple in water—level by level.</li>
+            <li><strong>Depth First Search (DFS):</strong> Explores like a maze runner—going as deep as possible down one path before hitting a dead end and turning back.</li>
+        </ol>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+
+        <h2 id="bfs">Breadth First Search (BFS)</h2>
+        <h3>The Idea</h3>
+        <p>BFS starts at a chosen location, checks all of its direct neighbors first, then checks the neighbors of those neighbors, moving outward in layers. Because it expands equally in all directions, <strong>it is guaranteed to find the shortest path (fewest edges) in an unweighted graph</strong>.</p>
+
+        <h3>Data Structure Used</h3>
+        <p>A <strong>Queue (First-In, First-Out)</strong>. As we discover new locations, we make them wait in line. This naturally forces the level-by-level effect.</p>
+
+        <h3>Step-by-Step Algorithm</h3>
+        <ol>
+            <li>Mark the start location as visited and put it in the Queue.</li>
+            <li>While the Queue isn't empty:
+                <ul>
+                    <li>Take the front item out (let's call it <code>curr</code>).</li>
+                    <li>For every unvisited neighbor of <code>curr</code>: mark it visited immediately and put it at the back of the Queue.</li>
+                </ul>
+            </li>
+            <li>(For disconnected graphs): Check if any location is still unvisited, and start a fresh BFS from it.</li>
+        </ol>
+
+        <h3>C Code Implementation</h3>
+<pre><code><span class="keyword">#include</span> <span class="string">&lt;stdio.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;stdbool.h&gt;</span>
+
+<span class="keyword">#define</span> V 5 <span class="comment">// Total number of vertices</span>
+<span class="comment">// 🔧 TECH (Level 0): Set maximum nodes to 5.</span>
+<span class="comment">// 💡 THINK: "We are throwing a party for a maximum of 5 people."</span>
+
+<span class="keyword">#define</span> MAXQ 100 <span class="comment">// Queue capacity limit</span>
+<span class="comment">// 🔧 TECH (Level 0): Set queue array size to 100.</span>
+<span class="comment">// 💡 THINK: "Our waiting room holds 100 chairs max."</span>
+
+<span class="comment">// Adjacency list stored as a 2D array for simplicity:</span>
+<span class="comment">// adj[i][0] stores the NUMBER of neighbors for vertex 'i'</span>
+<span class="comment">// adj[i][1..] stores the actual IDs of those neighbors</span>
+<span class="comment">// 🔧 TECH (Level 0): 2D Array where row = node, col 0 = neighbor count, col 1+ = neighbor IDs.</span>
+<span class="comment">// 💡 THINK: "adj is our phonebook. Page 'i' says how many friends they have, and their names."</span>
+<span class="type">int</span> adj[V][V + 1];
+
+<span class="type">void</span> <span class="function">addEdge</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="comment">// Add 'v' to 'u's list, and increase 'u's neighbor count</span>
+    <span class="comment">// 🔧 TECH (Level 0): Increment neighbor count for node u, then save node v at that index.</span>
+    <span class="comment">// 💡 THINK: "Write Bob's name in Alice's phonebook."</span>
+    adj[u][++adj[u][0]] = v;
+    <span class="comment">// Because this is undirected, we also add 'u' to 'v's list.</span>
+    <span class="comment">// Remove this exact line if building a directed graph!</span>
+    <span class="comment">// 🔧 TECH (Level 0): Do the exact reverse for node v to create a 2-way connection.</span>
+    <span class="comment">// 💡 THINK: "Write Alice's name in Bob's phonebook too."</span>
+    adj[v][++adj[v][0]] = u; 
+}
+
+<span class="comment">// BFS starting from a single source</span>
+<span class="type">int</span> <span class="function">bfs</span>(<span class="type">int</span> start, <span class="type">int</span> order[V]) {
+    <span class="comment">// Keep track of where we've been to avoid infinite loops</span>
+    <span class="comment">// 🔧 TECH (Level 0): Array of booleans, initialized to false. True means we processed it.</span>
+    <span class="comment">// 💡 THINK: "A guest list. If they are already checked off, don't invite them again."</span>
+    <span class="type">bool</span> visited[V] = { <span class="keyword">false</span> };
+    
+    <span class="comment">// Setup a simple array-based Queue</span>
+    <span class="comment">// 🔧 TECH (Level 0): 'front' tracks the dequeue index, 'rear' tracks the enqueue index.</span>
+    <span class="comment">// 💡 THINK: "The actual waiting room line."</span>
+    <span class="type">int</span> queue[MAXQ], front = 0, rear = 0, count = 0;
+    
+    <span class="comment">// 1. Mark the starting node and put it in the queue</span>
+    <span class="comment">// 🔧 TECH (Level 0): Mark start true, store in queue[rear], then increment rear.</span>
+    <span class="comment">// 💡 THINK: "Check off the host on the guest list and put them at the front of the line."</span>
+    visited[start] = <span class="keyword">true</span>;
+    queue[rear++] = start;
+    
+    <span class="comment">// 2. Keep processing as long as people are in the queue</span>
+    <span class="comment">// 🔧 TECH (Level 0): Loop runs until front index catches up to rear index.</span>
+    <span class="comment">// 💡 THINK: "As long as the waiting room isn't empty..."</span>
+    <span class="keyword">while</span> (front &lt; rear) {
+        <span class="type">int</span> u = queue[front++]; <span class="comment">// Pull the first person out</span>
+        <span class="comment">// 🔧 TECH (Level 0): Read queue[front], then increment front.</span>
+        <span class="comment">// 💡 THINK: "Call the next person from the front of the line."</span>
+        
+        order[count++] = u;     <span class="comment">// Record our traversal</span>
+        
+        <span class="comment">// 3. Look at all the neighbors of 'u'</span>
+        <span class="comment">// 🔧 TECH (Level 0): Loop from 1 to the neighbor count (stored at index 0).</span>
+        <span class="comment">// 💡 THINK: "Open this person's phonebook and look at all their friends."</span>
+        <span class="keyword">for</span> (<span class="type">int</span> i = 1; i &lt;= adj[u][0]; i++) {
+            <span class="type">int</span> v = adj[u][i];
+            
+            <span class="comment">// If we haven't visited this neighbor yet...</span>
+            <span class="comment">// 🔧 TECH (Level 0): If visited[v] is false...</span>
+            <span class="comment">// 💡 THINK: "Is this friend missing from the guest list?"</span>
+            <span class="keyword">if</span> (!visited[v]) {
+                <span class="comment">// Mark it visited IMMEDIATELY and add to the queue</span>
+                <span class="comment">// 🔧 TECH (Level 0): Set visited[v] to true, push to queue, increment rear.</span>
+                <span class="comment">// 💡 THINK: "Check them off the guest list NOW, and send them to the back of the waiting room."</span>
+                visited[v] = <span class="keyword">true</span>;
+                queue[rear++] = v;
+            }
+        }
+    }
+    <span class="keyword">return</span> count;
+}
+
+<span class="comment">// BFS that checks for disconnected "islands"</span>
+<span class="comment">// 🔧 TECH (Level 0): Handles graphs where some nodes are completely disconnected.</span>
+<span class="comment">// 💡 THINK: "What if there are two completely separate groups of friends who don't know each other?"</span>
+<span class="type">int</span> <span class="function">bfsAllComponents</span>(<span class="type">int</span> order[V]) {
+    <span class="type">bool</span> visited[V] = { <span class="keyword">false</span> };
+    <span class="type">int</span> queue[MAXQ], count = 0;
+    
+    <span class="comment">// Loop over every single vertex in the entire graph</span>
+    <span class="comment">// 🔧 TECH (Level 0): Iterate through all nodes 0 to V-1.</span>
+    <span class="comment">// 💡 THINK: "Look at every single person in the whole city."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> s = 0; s &lt; V; s++) {
+        <span class="comment">// If it was visited by a previous island's BFS, ignore it</span>
+        <span class="comment">// 🔧 TECH (Level 0): If visited[s] is true, skip to next iteration.</span>
+        <span class="comment">// 💡 THINK: "Did they already attend a party? Skip them."</span>
+        <span class="keyword">if</span> (visited[s]) <span class="keyword">continue</span>;
+        
+        <span class="comment">// We found an unvisited island! Start a fresh BFS here.</span>
+        <span class="comment">// 🔧 TECH (Level 0): Reset queue pointers, mark s as visited, push to queue.</span>
+        <span class="comment">// 💡 THINK: "Found someone who hasn't partied! Start a totally new party with them as the host."</span>
+        <span class="type">int</span> front = 0, rear = 0;
+        visited[s] = <span class="keyword">true</span>;
+        queue[rear++] = s;
+        
+        <span class="keyword">while</span> (front &lt; rear) {
+            <span class="type">int</span> u = queue[front++];
+            order[count++] = u;
+            <span class="keyword">for</span> (<span class="type">int</span> i = 1; i &lt;= adj[u][0]; i++) {
+                <span class="type">int</span> v = adj[u][i];
+                <span class="keyword">if</span> (!visited[v]) {
+                    visited[v] = <span class="keyword">true</span>;
+                    queue[rear++] = v;
+                }
+            }
+        }
+    }
+    <span class="keyword">return</span> count;
+}
+</code></pre>
+
+        <h3>Bonus: Even Simpler Implementations</h3>
+        
+        <h4>Super-Simple BFS in C (Hiding array complexities)</h4>
+        <p>If the array-based adjacency list above is confusing, here is an ultra-basic concept in C without the messy 2D array size trackers:</p>
+<pre><code><span class="type">void</span> <span class="function">simple_bfs</span>(<span class="type">int</span> start) {
+    <span class="type">bool</span> visited[5] = { <span class="keyword">false</span> };
+    <span class="type">int</span> queue[100], front = 0, rear = 0;
+    
+    visited[start] = <span class="keyword">true</span>;
+    queue[rear++] = start;
+    
+    <span class="keyword">while</span> (front &lt; rear) {
+        <span class="type">int</span> current = queue[front++];
+        <span class="function">printf</span>(<span class="string">"Visiting: %d\n"</span>, current);
+        
+        <span class="comment">// Assume we have a function get_neighbors that returns a list of connected friends</span>
+        <span class="type">int</span>* neighbors = get_neighbors(current); 
+        
+        <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; num_neighbors(current); i++) {
+            <span class="type">int</span> friend = neighbors[i];
+            <span class="keyword">if</span> (!visited[friend]) {
+                visited[friend] = <span class="keyword">true</span>;
+                queue[rear++] = friend;
+            }
+        }
+    }
+}
+</code></pre>
+
+        <h4>Super-Simple BFS in Python (The Easiest to Read)</h4>
+        <p>Python makes BFS extremely clean because we don't have to manually manage array sizes, and dictionaries act as perfect phonebooks.</p>
+<pre><code><span class="keyword">def</span> <span class="function">bfs</span>(graph, start):
+    <span class="comment"># 🔧 TECH (Level 0): Create an empty set to track visited nodes.</span>
+    <span class="comment"># 💡 THINK: "Our guest list is an empty set (no duplicates allowed)"</span>
+    visited = <span class="type">set</span>()
+    <span class="comment"># 🔧 TECH (Level 0): Initialize a list acting as a queue, containing the start node.</span>
+    <span class="comment"># 💡 THINK: "Our waiting line starts with just the host"</span>
+    queue = [start]
+    
+    <span class="comment"># 🔧 TECH (Level 0): Add the start node to the visited set.</span>
+    <span class="comment"># 💡 THINK: "Mark host as invited"</span>
+    visited.add(start)
+    
+    <span class="keyword">while</span> queue:
+        <span class="comment"># 🔧 TECH (Level 0): Remove and return the first element (index 0) from the list.</span>
+        <span class="comment"># 💡 THINK: "Call the first person in line"</span>
+        current = queue.pop(0)
+        <span class="function">print</span>(<span class="string">f"Visiting: {current}"</span>)
+        
+        <span class="comment"># 🔧 TECH (Level 0): Iterate through all nodes connected to 'current' in the dictionary.</span>
+        <span class="comment"># 💡 THINK: "Look at all their friends in the phonebook"</span>
+        <span class="keyword">for</span> neighbor <span class="keyword">in</span> graph[current]:
+            <span class="keyword">if</span> neighbor <span class="keyword">not in</span> visited:
+                <span class="comment"># 🔧 TECH (Level 0): Add the neighbor to visited set and append to end of queue.</span>
+                <span class="comment"># 💡 THINK: "Invite them and put them at the end of the line"</span>
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+<span class="comment"># Example Graph (The Phonebook)</span>
+<span class="comment"># Node 0 is friends with 1 and 2, etc.</span>
+my_graph = {
+    0: [1, 2],
+    1: [0, 2],
+    2: [0, 1, 3, 4],
+    3: [2],
+    4: [2]
+}
+
+bfs(my_graph, 0)
+</code></pre>
+
+        <h3>Key BFS Uses</h3>
+        <ul>
+            <li>Shortest path in unweighted graphs (e.g., GPS shortest-hop).</li>
+            <li>Level-order processing (e.g., finding the nearest '1' in a grid).</li>
+            <li>Social network "degrees of separation".</li>
+        </ul>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+
+        <h2 id="dfs">Depth First Search (DFS)</h2>
+        <h3>The Idea</h3>
+        <p>DFS goes as deep as possible along a single path before turning back. It dives into a neighbor, then that neighbor's neighbor, and only turns around ("backtracks") when it hits a dead end where all neighbors are already visited.</p>
+
+        <h3>Data Structure Used</h3>
+        <p>A <strong>Stack (Last-In, First-Out)</strong>. You can use an explicit stack variable, or simply rely on <strong>Recursion</strong> (which uses the computer's built-in call stack automatically).</p>
+
+        <h3>Step-by-Step Algorithm (Recursive)</h3>
+        <ol>
+            <li>Mark the current location as visited.</li>
+            <li>Look at every neighbor. If it's unvisited, recursively call DFS on it immediately.</li>
+            <li>When you run out of unvisited neighbors, the function naturally returns (backtracks) to the previous step.</li>
+        </ol>
+
+        <h3>C Code Implementation</h3>
+<pre><code><span class="comment">// Recursive DFS Helper</span>
+<span class="comment">// 🔧 TECH (Level 0): A function that calls itself to go deeper.</span>
+<span class="type">void</span> <span class="function">dfsRec</span>(<span class="type">int</span> u, <span class="type">bool</span> visited[V], <span class="type">int</span> order[V], <span class="type">int</span> *count) {
+    <span class="comment">// Mark current spot as visited the moment we land on it</span>
+    <span class="comment">// 🔧 TECH (Level 0): Set visited[u] to true, store u in order array, increment count.</span>
+    <span class="comment">// 💡 THINK: "We stepped into this room of the maze. Leave a breadcrumb."</span>
+    visited[u] = <span class="keyword">true</span>;
+    order[(*count)++] = u;
+    
+    <span class="comment">// Check all neighbors</span>
+    <span class="comment">// 🔧 TECH (Level 0): Loop through all neighbors of u (from 1 to neighbor count).</span>
+    <span class="comment">// 💡 THINK: "Look at all the doors leading out of this room."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 1; i &lt;= adj[u][0]; i++) {
+        <span class="type">int</span> v = adj[u][i];
+        <span class="keyword">if</span> (!visited[v]) {
+            <span class="comment">// If unvisited, dive in immediately! (This pauses the current loop)</span>
+            <span class="comment">// 🔧 TECH (Level 0): Recursively call dfsRec for neighbor v.</span>
+            <span class="comment">// 💡 THINK: "Run through the first open door immediately! We will check the other doors when we hit a dead end and come back."</span>
+            dfsRec(v, visited, order, count);
+        }
+    }
+}
+
+<span class="comment">// DFS that handles disconnected islands</span>
+<span class="comment">// 🔧 TECH (Level 0): Outer loop to ensure all nodes are processed.</span>
+<span class="comment">// 💡 THINK: "What if there are completely separate mazes on the map?"</span>
+<span class="type">int</span> <span class="function">dfsAllComponents</span>(<span class="type">int</span> order[V]) {
+    <span class="type">bool</span> visited[V] = { <span class="keyword">false</span> };
+    <span class="type">int</span> count = 0;
+    
+    <span class="comment">// Check every node to make sure no islands are left behind</span>
+    <span class="comment">// 🔧 TECH (Level 0): Loop through nodes 0 to V-1.</span>
+    <span class="comment">// 💡 THINK: "Check the entrance of every known maze."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> s = 0; s &lt; V; s++) {
+        <span class="keyword">if</span> (!visited[s]) {
+            <span class="comment">// 🔧 TECH (Level 0): If false, start a new recursive DFS tree here.</span>
+            <span class="comment">// 💡 THINK: "Found an unexplored maze! Dive in."</span>
+            dfsRec(s, visited, order, &amp;count);
+        }
+    }
+    <span class="keyword">return</span> count;
+}
+
+<span class="comment">// Iterative DFS using our own explicit Stack (No Recursion)</span>
+<span class="comment">// 🔧 TECH (Level 0): Uses an array as a LIFO Stack instead of the call stack.</span>
+<span class="type">int</span> <span class="function">dfsIterative</span>(<span class="type">int</span> start, <span class="type">int</span> order[V]) {
+    <span class="type">bool</span> visited[V] = { <span class="keyword">false</span> };
+    <span class="type">int</span> stack[MAXS], top = -1, count = 0;
+    
+    <span class="comment">// Push the starting node onto the stack</span>
+    <span class="comment">// 🔧 TECH (Level 0): Increment 'top' index and store start value.</span>
+    <span class="comment">// 💡 THINK: "Write the starting room down on our clipboard."</span>
+    stack[++top] = start;
+    
+    <span class="keyword">while</span> (top &gt;= 0) {
+        <span class="comment">// Pop the most recently added item off the stack (LIFO)</span>
+        <span class="comment">// 🔧 TECH (Level 0): Read stack[top] and decrement 'top'.</span>
+        <span class="comment">// 💡 THINK: "Look at the MOST RECENT room we wrote on the clipboard."</span>
+        <span class="type">int</span> u = stack[top--];
+        
+        <span class="comment">// In iterative DFS, a node might sit on the stack and get visited </span>
+        <span class="comment">// by a different path before we pop it. So we check here:</span>
+        <span class="comment">// 🔧 TECH (Level 0): Skip if already visited.</span>
+        <span class="comment">// 💡 THINK: "Did we already visit this room through another hallway? If yes, skip."</span>
+        <span class="keyword">if</span> (visited[u]) <span class="keyword">continue</span>;
+        
+        visited[u] = <span class="keyword">true</span>;
+        order[count++] = u;
+        
+        <span class="comment">// Push neighbors onto stack in REVERSE order. </span>
+        <span class="comment">// This ensures we pop/visit the first neighbor first, mimicking recursion.</span>
+        <span class="comment">// 🔧 TECH (Level 0): Loop backwards from neighbor count down to 1. Push unvisited neighbors to stack.</span>
+        <span class="comment">// 💡 THINK: "Write all unvisited neighbor rooms onto the clipboard. Write them backwards so the FIRST door is at the top of our list to check next."</span>
+        <span class="keyword">for</span> (<span class="type">int</span> i = adj[u][0]; i &gt;= 1; i--) {
+            <span class="type">int</span> v = adj[u][i];
+            <span class="keyword">if</span> (!visited[v]) {
+                stack[++top] = v;
+            }
+        }
+    }
+    <span class="keyword">return</span> count;
+}
+</code></pre>
+
+        <h3>Bonus: Even Simpler Implementations</h3>
+        
+        <h4>Super-Simple Recursive DFS in C</h4>
+        <p>Hiding the messy 2D array logic, here is the absolute core concept of recursive DFS in C:</p>
+<pre><code><span class="type">bool</span> visited[5] = { <span class="keyword">false</span> };
+
+<span class="type">void</span> <span class="function">simple_dfs</span>(<span class="type">int</span> current) {
+    <span class="comment">// 🔧 TECH (Level 0): Mark node true and print it.</span>
+    <span class="comment">// 💡 THINK: "Leave a breadcrumb."</span>
+    visited[current] = <span class="keyword">true</span>;
+    <span class="function">printf</span>(<span class="string">"Visiting: %d\n"</span>, current);
+    
+    <span class="comment">// Assume get_neighbors returns connected rooms</span>
+    <span class="type">int</span>* neighbors = get_neighbors(current); 
+    
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; num_neighbors(current); i++) {
+        <span class="type">int</span> next_room = neighbors[i];
+        
+        <span class="comment">// 🔧 TECH (Level 0): If false, recursively call function.</span>
+        <span class="comment">// 💡 THINK: "If door is unexplored, run through it immediately!"</span>
+        <span class="keyword">if</span> (!visited[next_room]) {
+            simple_dfs(next_room);
+        }
+    }
+}
+</code></pre>
+
+        <h4>Super-Simple DFS in Python (The Easiest to Read)</h4>
+        <p>Using a Python <code>set</code> and recursion, DFS becomes incredibly small.</p>
+<pre><code><span class="comment"># 🔧 TECH (Level 0): A global set to remember visited nodes across recursive calls.</span>
+<span class="comment"># 💡 THINK: "Our permanent map of rooms we've already seen."</span>
+visited = <span class="type">set</span>()
+
+<span class="keyword">def</span> <span class="function">dfs</span>(graph, current):
+    <span class="comment"># 🔧 TECH (Level 0): Add node to set.</span>
+    <span class="comment"># 💡 THINK: "Mark this room on our map."</span>
+    visited.add(current)
+    <span class="function">print</span>(<span class="string">f"Visiting: {current}"</span>)
+    
+    <span class="comment"># 🔧 TECH (Level 0): Loop over adjacent nodes in dictionary.</span>
+    <span class="comment"># 💡 THINK: "Look at every door leaving this room."</span>
+    <span class="keyword">for</span> neighbor <span class="keyword">in</span> graph[current]:
+        <span class="keyword">if</span> neighbor <span class="keyword">not in</span> visited:
+            <span class="comment"># 🔧 TECH (Level 0): Recursive call.</span>
+            <span class="comment"># 💡 THINK: "Run through the door immediately!"</span>
+            dfs(graph, neighbor)
+
+<span class="comment"># Example Graph</span>
+my_graph = {
+    0: [1, 2],
+    1: [0, 2],
+    2: [0, 1, 3, 4],
+    3: [2],
+    4: [2]
+}
+
+dfs(my_graph, 0)
+</code></pre>
+
+        <h3>Key DFS Uses</h3>
+        <ul>
+            <li>Cycle detection (if you find a back-edge to an already visited node).</li>
+            <li>Topological sorting (recording the order in which nodes finish processing).</li>
+            <li>Pathfinding in mazes, and backtracking problems (like Sudoku).</li>
+        </ul>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+
+        <h2 id="bfs-vs-dfs">BFS vs DFS Head-to-Head</h2>
+        <table>
+            <tr><th>Aspect</th><th>BFS</th><th>DFS</th></tr>
+            <tr><td><strong>Data Structure</strong></td><td>Queue (FIFO)</td><td>Stack / Recursion (LIFO)</td></tr>
+            <tr><td><strong>Traversal Style</strong></td><td>Level by level, broad.</td><td>One path deep, then backtracks.</td></tr>
+            <tr><td><strong>Finds Shortest Path?</strong></td><td>Yes (in unweighted graphs)</td><td>No guarantee</td></tr>
+            <tr><td><strong>Best Suited For</strong></td><td>Shortest path, level-order problems</td><td>Cycle detection, topological sort, backtracking</td></tr>
+            <tr><td><strong>Time Complexity</strong></td><td>O(V + E)</td><td>O(V + E)</td></tr>
+        </table>
+        
+        <div class="note">
+            <strong>Rule of thumb:</strong> If the problem asks for "shortest path", "minimum steps", or "levels", use <strong>BFS</strong>. If it asks for "all paths", "cycles", "connectivity", or requires "backtracking", use <strong>DFS</strong>.
+        </div>
+
+        <h3>Side-by-Side Code Compare (Python)</h3>
+        <p>Notice how identical the core logic is. The <em>only</em> structural difference is how we handle the unvisited neighbors:</p>
+        <div style="display: flex; gap: 20px; margin-bottom: 40px;">
+            <div style="flex: 1; min-width: 0;">
+                <h4 style="margin-top: 0; text-align: center;">Breadth First Search (Queue)</h4>
+<pre style="height: 100%; margin: 0;"><code style="font-size: 0.85rem;"><span class="keyword">def</span> <span class="function">bfs</span>(graph, start):
+    visited = <span class="type">set</span>()
+    queue = [start]
+    visited.add(start)
+    
+    <span class="keyword">while</span> queue:
+        current = queue.pop(0)
+        <span class="function">print</span>(current)
+        
+        <span class="keyword">for</span> neighbor <span class="keyword">in</span> graph[current]:
+            <span class="keyword">if</span> neighbor <span class="keyword">not in</span> visited:
+                visited.add(neighbor)
+<span style="display: block; background-color: rgba(255, 235, 59, 0.15); color: #fff59d; font-weight: bold; border-left: 4px solid #ffee58; padding: 2px 0 2px 10px;">                queue.append(neighbor) <span class="comment"># WAIT IN LINE</span></span></code></pre>
+            </div>
+            
+            <div style="flex: 1; min-width: 0;">
+                <h4 style="margin-top: 0; text-align: center;">Depth First Search (Recursion)</h4>
+<pre style="height: 100%; margin: 0;"><code style="font-size: 0.85rem;">visited = <span class="type">set</span>()
+
+<span class="keyword">def</span> <span class="function">dfs</span>(graph, current):
+    visited.add(current)
+    <span class="function">print</span>(current)
+    
+    <span class="keyword">for</span> neighbor <span class="keyword">in</span> graph[current]:
+        <span class="keyword">if</span> neighbor <span class="keyword">not in</span> visited:
+<span style="display: block; background-color: rgba(0, 229, 255, 0.15); color: #84ffff; font-weight: bold; border-left: 4px solid #18ffff; padding: 2px 0 2px 10px;">            dfs(graph, neighbor) <span class="comment"># DIVE IN IMMEDIATELY!</span></span></code></pre>
+            </div>
+        </div>
+
+        <h2 id="special-cases">Handling Special Cases</h2>
+        <p>Real-world graphs are rarely perfectly connected, unweighted, two-way streets. Here is how standard BFS/DFS breaks, and how we fix it.</p>
+
+        <!-- DISCONNECTED GRAPHS -->
+        <div style="background-color: var(--code-bg); padding: 20px; border-radius: 6px; margin-bottom: 25px; border-left: 4px solid var(--link-color);">
+            <h3 style="margin-top: 0;">1. Disconnected Graphs</h3>
+            <p><strong>The Scenario:</strong> Your map has two completely separate cities with no roads connecting them.</p>
+            <p><strong>Why does standard BFS/DFS fail?</strong> If you start BFS in City A, the queue will empty once City A is fully explored. City B is left completely undiscovered.</p>
+            <p><strong>How to fix it?</strong> Wrap your entire traversal in a loop that checks the "guest list" (visited array) for every single person in the whole world. If you find an uninvited person, start a brand new BFS/DFS right there!</p>
+            <p><strong>💡 THINK:</strong> "Check every house in the world. If you find an unexplored island, start a new party there."</p>
+<pre style="margin-bottom: 0;"><code style="font-size: 0.9rem;"><span class="keyword">for</span> node <span class="keyword">in</span> <span class="type">range</span>(total_nodes):
+    <span class="keyword">if</span> node <span class="keyword">not in</span> visited:
+        <span class="comment"># Found a new island! Start a new traversal here.</span>
+        bfs(graph, node)</code></pre>
+        </div>
+
+        <!-- DIRECTED GRAPHS -->
+        <div style="background-color: var(--code-bg); padding: 20px; border-radius: 6px; margin-bottom: 25px; border-left: 4px solid #ffab00;">
+            <h3 style="margin-top: 0;">2. Directed Graphs (One-Way Streets)</h3>
+            <p><strong>The Scenario:</strong> The edges have arrows (A &rarr; B). You can go from A to B, but NOT from B to A.</p>
+            <p><strong>Why does standard Cycle Detection fail?</strong> In a normal undirected graph, if you see an already-visited node, you found a loop. But in a Directed graph, seeing a visited node just means two different one-way paths led to the same dead end. That's not a cycle!</p>
+            <p><strong>How to fix it?</strong> You need a <em>second</em> tracker called <code>in_stack</code>. A cycle ONLY exists if you run into a node that is currently in your <em>active, unfinished recursive dive</em>.</p>
+            <p><strong>💡 THINK:</strong> "Imagine dropping glowing breadcrumbs as you walk deep into a maze, and picking them up as you walk backward out of dead ends. A loop only happens if you step on a breadcrumb that is STILL glowing on the floor!"</p>
+<pre style="margin-bottom: 0;"><code style="font-size: 0.9rem;"><span class="keyword">def</span> <span class="function">has_cycle_dfs</span>(node, visited, in_stack):
+    visited.add(node)
+    in_stack.add(node) <span class="comment"># Drop breadcrumb</span>
+    
+    <span class="keyword">for</span> neighbor <span class="keyword">in</span> graph[node]:
+        <span class="keyword">if</span> neighbor <span class="keyword">in</span> in_stack:
+            <span class="keyword">return</span> <span class="keyword">True</span> <span class="comment"># Stepped on an active breadcrumb! LOOP!</span>
+        <span class="keyword">if</span> neighbor <span class="keyword">not in</span> visited:
+            <span class="keyword">if</span> has_cycle_dfs(neighbor, visited, in_stack):
+                <span class="keyword">return</span> <span class="keyword">True</span>
+                
+    in_stack.remove(node) <span class="comment"># Pick up breadcrumb as we back out of dead end</span>
+    <span class="keyword">return</span> <span class="keyword">False</span></code></pre>
+        </div>
+
+        <!-- WEIGHTED GRAPHS -->
+        <div style="background-color: var(--code-bg); padding: 20px; border-radius: 6px; margin-bottom: 25px; border-left: 4px solid #00e676;">
+            <h3 style="margin-top: 0;">3. Weighted Graphs</h3>
+            <p><strong>The Scenario:</strong> Roads have different costs. Highway A&rarr;B takes 1 hour, but backroad A&rarr;C takes 4 hours.</p>
+            <p><strong>Why does standard BFS fail?</strong> Standard BFS assumes every road takes 1 hour. It expands evenly in all directions by counting the "number of edges", totally ignoring the actual road costs.</p>
+            <p><strong>How to fix it?</strong> Swap the standard Queue (FIFO) for a <strong>Priority Queue (Min-Heap)</strong>. This forces the algorithm to always process the "cheapest known" location first, rather than just the "next in line".</p>
+            <p><strong>💡 THINK:</strong> "Instead of standing in a normal waiting line, everyone in line is automatically sorted by how cheap their ticket was. The cheapest ticket ALWAYS goes first."</p>
+            <table style="background: transparent; margin-bottom: 0;">
+                <tr><th style="background: rgba(255,255,255,0.05);">Condition</th><th style="background: rgba(255,255,255,0.05);">Solution Algorithm</th></tr>
+                <tr><td>All costs are positive (Normal driving)</td><td><strong>Dijkstra's Algorithm</strong> (Uses Priority Queue)</td></tr>
+                <tr><td>Some costs are negative (You gain money!)</td><td><strong>Bellman-Ford</strong> (Dijkstra breaks on negative paths)</td></tr>
+            </table>
+        </div>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+
+        <h2 id="multi-source-bfs">Multi-Source BFS</h2>
+        <p>Instead of starting at one single point, what if we have multiple starting points? We simply push <em>all</em> sources into our Queue at the very beginning (at distance 0). The BFS still expands outward properly, automatically calculating the shortest distance to the <em>nearest</em> source for every vertex simultaneously.</p>
+        <p><strong>Classic Problem:</strong> "Rotten Oranges" (finding how long it takes for rot to spread from multiple bad oranges).</p>
+
+<pre><code><span class="type">int</span> <span class="function">minutesToRotAll</span>() {
+    <span class="comment">// Set up our queue arrays (one for Row, one for Column)</span>
+    <span class="comment">// 🔧 TECH (Level 0): Two arrays to hold coordinates.</span>
+    <span class="comment">// 💡 THINK: "A waiting list for zombies. One list for their X coordinate, one for Y."</span>
+    <span class="type">int</span> qr[N * M], qc[N * M], front = 0, rear = 0;
+    <span class="type">int</span> dist[N][M];
+    <span class="function">memset</span>(dist, -1, <span class="keyword">sizeof</span>(dist));
+    <span class="type">int</span> freshCount = 0;
+    
+    <span class="comment">// 1. Multi-Source Setup: Push ALL initially rotten oranges into the Queue</span>
+    <span class="comment">// 🔧 TECH (Level 0): Nested loops scan the entire grid to find all '2's (sources).</span>
+    <span class="comment">// 💡 THINK: "Scan the city. Find EVERY Patient Zero and put them in the queue at Time = 0."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; N; i++) {
+        <span class="keyword">for</span> (<span class="type">int</span> j = 0; j &lt; M; j++) {
+            <span class="keyword">if</span> (grid[i][j] == 2) { <span class="comment">// If rotten</span>
+                qr[rear] = i; qc[rear] = j; rear++;
+                dist[i][j] = 0;
+            } <span class="keyword">else</span> <span class="keyword">if</span> (grid[i][j] == 1) {
+                <span class="comment">// 🔧 TECH (Level 0): Count 1s to verify all are processed later.</span>
+                <span class="comment">// 💡 THINK: "Count the uninfected humans so we know when everyone is a zombie."</span>
+                freshCount++; 
+            }
+        }
+    }
+    
+    <span class="type">int</span> maxTime = 0;
+    
+    <span class="comment">// 2. Standard BFS loop</span>
+    <span class="comment">// 🔧 TECH (Level 0): Standard while loop using front and rear pointers.</span>
+    <span class="comment">// 💡 THINK: "Release the zombies one by one from the waiting line."</span>
+    <span class="keyword">while</span> (front &lt; rear) {
+        <span class="type">int</span> r = qr[front], c = qc[front];
+        front++;
+        
+        <span class="comment">// Check all 4 directions (Up, Down, Left, Right)</span>
+        <span class="comment">// 🔧 TECH (Level 0): Iterate through coordinate offsets.</span>
+        <span class="comment">// 💡 THINK: "The zombie reaches its arms out North, South, East, and West."</span>
+        <span class="keyword">for</span> (<span class="type">int</span> d = 0; d &lt; 4; d++) {
+            <span class="type">int</span> nr = r + dr[d], nc = c + dc[d];
+            
+            <span class="comment">// If inside grid AND it's a fresh orange AND unvisited...</span>
+            <span class="comment">// 🔧 TECH (Level 0): Bounds check, target value check, and dist check (-1).</span>
+            <span class="comment">// 💡 THINK: "Did they grab a human? Or just a wall?"</span>
+            <span class="keyword">if</span> (nr &gt;= 0 &amp;&amp; nr &lt; N &amp;&amp; nc &gt;= 0 &amp;&amp; nc &lt; M &amp;&amp; 
+                grid[nr][nc] == 1 &amp;&amp; dist[nr][nc] == -1) {
+                
+                <span class="comment">// Rot it! Time taken is current orange's time + 1 minute</span>
+                <span class="comment">// 🔧 TECH (Level 0): Update target distance to current distance + 1.</span>
+                <span class="comment">// 💡 THINK: "Human is bitten! They become a zombie in exactly 1 minute."</span>
+                dist[nr][nc] = dist[r][c] + 1;
+                <span class="keyword">if</span> (dist[nr][nc] &gt; maxTime) maxTime = dist[nr][nc];
+                
+                freshCount--; <span class="comment">// One less fresh orange</span>
+                
+                <span class="comment">// Add the newly rotten orange to the queue to infect others</span>
+                <span class="comment">// 🔧 TECH (Level 0): Push new coordinates to queue arrays.</span>
+                <span class="comment">// 💡 THINK: "Send the newly turned zombie to the back of the waiting line to bite more people."</span>
+                qr[rear] = nr; qc[rear] = nc; rear++;
+            }
+        }
+    }
+    
+    <span class="comment">// If fresh oranges remain that we couldn't reach, return -1. Otherwise, return time.</span>
+    <span class="comment">// 🔧 TECH (Level 0): Ternary operator checks if freshCount is 0.</span>
+    <span class="comment">// 💡 THINK: "Did any humans survive in an isolated bunker? If yes, return -1."</span>
+    <span class="keyword">return</span> (freshCount == 0) ? maxTime : -1; 
+}
+</code></pre>
+
+        <h3>Bonus: Even Simpler Implementations</h3>
+
+        <h4>Super-Simple Multi-Source BFS in Python</h4>
+        <p>Using a Python <code>deque</code> and coordinate tuples makes Grid BFS incredibly readable.</p>
+<pre><code><span class="keyword">from</span> collections <span class="keyword">import</span> deque
+
+<span class="keyword">def</span> <span class="function">orangesRotting</span>(grid):
+    <span class="comment"># 🔧 TECH (Level 0): Get grid dimensions.</span>
+    <span class="comment"># 💡 THINK: "Measure how big the city is."</span>
+    <span class="comment"># ❓ WHY len(grid[0])?: `len(grid)` gives the number of rows (how tall). `grid[0]` looks at the very first row, so `len(grid[0])` counts how many items are inside that first row, giving us the width (columns)!</span>
+    rows, cols = <span class="type">len</span>(grid), <span class="type">len</span>(grid[0])
+    
+    <span class="comment"># 🔧 TECH (Level 0): Initialize a double-ended queue.</span>
+    <span class="comment"># 💡 THINK: "Create a waiting line for zombies."</span>
+    queue = <span class="type">deque</span>()
+    
+    <span class="comment"># 🔧 TECH (Level 0): Initialize counter for target values.</span>
+    <span class="comment"># 💡 THINK: "Keep a tally of how many uninfected humans exist."</span>
+    fresh_count = 0
+    
+    <span class="comment"># 🔧 TECH (Level 0): Multi-Source Setup - Iterate over every cell in grid.</span>
+    <span class="comment"># 💡 THINK: "Send a scout to look at every single building in the city."</span>
+    <span class="keyword">for</span> r <span class="keyword">in</span> <span class="type">range</span>(rows):
+        <span class="keyword">for</span> c <span class="keyword">in</span> <span class="type">range</span>(cols):
+            <span class="comment"># 🔧 TECH (Level 0): If value is 2, append to queue with time=0.</span>
+            <span class="comment"># 💡 THINK: "If building has a Patient Zero, put them in line immediately at minute 0."</span>
+            <span class="comment"># ❓ WHY 2?: In the classic 'Rotten Oranges' problem, the grid uses specific numbers: 0 = Empty, 1 = Fresh Orange (Human), 2 = Rotten Orange (Zombie). We are specifically hunting for the rotten ones here.</span>
+            <span class="keyword">if</span> grid[r][c] == 2:
+                queue.append((r, c, 0)) <span class="comment"># (row, col, minutes)</span>
+                
+            <span class="comment"># 🔧 TECH (Level 0): If value is 1, increment fresh counter.</span>
+            <span class="comment"># 💡 THINK: "If building has humans, add to our tally."</span>
+            <span class="keyword">elif</span> grid[r][c] == 1:
+                fresh_count += 1
+                
+    <span class="comment"># 🔧 TECH (Level 0): Initialize max time tracker.</span>
+    <span class="comment"># 💡 THINK: "Start the master stopwatch at 0."</span>
+    max_time = 0
+    
+    <span class="comment"># 🔧 TECH (Level 0): Define neighbor offsets (down, up, right, left).</span>
+    <span class="comment"># 💡 THINK: "Define the 4 directions a zombie can lunge."</span>
+    directions = [(1,0), (-1,0), (0,1), (0,-1)]
+    
+    <span class="comment"># 🔧 TECH (Level 0): Standard BFS loop continues until queue is empty.</span>
+    <span class="comment"># 💡 THINK: "Unleash the horde! Keep going until the waiting line is empty."</span>
+    <span class="keyword">while</span> queue:
+        <span class="comment"># 🔧 TECH (Level 0): Pop tuple from left side of deque.</span>
+        <span class="comment"># 💡 THINK: "Call the next zombie from the front of the line."</span>
+        <span class="comment"># ❓ WHAT IS popleft()?: A standard Python list (array) is slow if you pull from the front, because it has to shift every other item over. A `deque` (Double Ended Queue) is a special tube where pulling from the front (`popleft()`) is instantly fast!</span>
+        r, c, minutes = queue.popleft()
+        
+        <span class="comment"># 🔧 TECH (Level 0): Update max_time if current minutes is higher.</span>
+        <span class="comment"># 💡 THINK: "Update the master stopwatch to match this zombie's infection time."</span>
+        max_time = <span class="type">max</span>(max_time, minutes)
+        
+        <span class="comment"># 🔧 TECH (Level 0): Loop through the 4 directional offsets.</span>
+        <span class="comment"># 💡 THINK: "Zombie lunges in all 4 directions."</span>
+        <span class="keyword">for</span> dr, dc <span class="keyword">in</span> directions:
+            <span class="comment"># 🔧 TECH (Level 0): Calculate neighbor coordinates.</span>
+            <span class="comment"># 💡 THINK: "Target the building next door."</span>
+            <span class="comment"># ❓ WHY r + dr?: `r` and `c` are the current zombie's location (e.g., Row 5, Col 5). `dr` and `dc` are the direction offsets (e.g., Row +1, Col 0 is moving South). Adding them together gives the exact coordinates of the building next door (Row 6, Col 5)!</span>
+            nr, nc = r + dr, c + dc
+            
+            <span class="comment"># 🔧 TECH (Level 0): Check if coordinates are in bounds AND cell equals 1.</span>
+            <span class="comment"># 💡 THINK: "Did they grab a human? Or just hit a wall?"</span>
+            <span class="keyword">if</span> 0 &lt;= nr &lt; rows <span class="keyword">and</span> 0 &lt;= nc &lt; cols <span class="keyword">and</span> grid[nr][nc] == 1:
+                <span class="comment"># 🔧 TECH (Level 0): Change value to 2, decrement counter.</span>
+                <span class="comment"># 💡 THINK: "Human is bitten! Cross them off the uninfected tally."</span>
+                grid[nr][nc] = 2
+                fresh_count -= 1
+                
+                <span class="comment"># 🔧 TECH (Level 0): Append new coordinates to queue, incrementing time by 1.</span>
+                <span class="comment"># 💡 THINK: "Send the new zombie to the back of the line. Their time is exactly 1 minute later."</span>
+                queue.append((nr, nc, minutes + 1))
+                
+    <span class="comment"># 🔧 TECH (Level 0): Return max_time if fresh_count is 0, else return -1.</span>
+    <span class="comment"># 💡 THINK: "If there are zero humans left, stop the watch. Otherwise, someone survived in a bunker (-1)."</span>
+    <span class="keyword">return</span> max_time <span class="keyword">if</span> fresh_count == 0 <span class="keyword">else</span> -1
+</code></pre>
+
+        <h2 id="topological-sorting">Topological Sorting</h2>
+        <p>Topological sorting creates a linear timeline for Directed Acyclic Graphs (DAG). If a task 'A' must happen before task 'B' (A &rarr; B), topological sort guarantees 'A' will appear before 'B' in the final list.</p>
+        <p><strong>Real world analogy:</strong> Figuring out the exact order to take university courses based on their prerequisites.</p>
+
+        <h3>Method 1: Kahn's Algorithm (BFS-Based)</h3>
+        <p>This counts how many prerequisites every node has (its "in-degree"). Nodes with 0 prerequisites go in the queue. When processed, they "complete", reducing the prerequisites of their neighbors.</p>
+<pre><code><span class="type">void</span> <span class="function">topoSortKahn</span>() {
+    <span class="comment">// 🔧 TECH (Level 0): Initialize array of size V with all 0s.</span>
+    <span class="comment">// 💡 THINK: "Create a list to track how many prerequisites every course has."</span>
+    <span class="type">int</span> inDegree[V] = {0};
+    
+    <span class="comment">// 1. Calculate how many incoming arrows (prerequisites) each node has</span>
+    <span class="comment">// 🔧 TECH (Level 0): Loop through every node 'u', then loop through its neighbors 'i'.</span>
+    <span class="comment">// 💡 THINK: "Check every course. Look at all the advanced courses it unlocks."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> u = 0; u &lt; V; u++)
+        <span class="keyword">for</span> (<span class="type">int</span> i = 1; i &lt;= adj[u][0]; i++)
+            <span class="comment">// 🔧 TECH (Level 0): Increment the inDegree counter for the target neighbor node.</span>
+            <span class="comment">// 💡 THINK: "Tell that advanced course: 'You have one more prerequisite to finish first!'"</span>
+            <span class="comment">// ❓ WHY inDegree[adj[u][i]]++?: `adj[u][i]` gives us the ID of the neighbor. We are using that ID as an index in the `inDegree` array to count up by 1. We are basically saying "whoever is at the tip of this arrow gets +1 incoming arrows".</span>
+            inDegree[adj[u][i]]++;
+            
+    <span class="comment">// 🔧 TECH (Level 0): Initialize queue array and pointers.</span>
+    <span class="comment">// 💡 THINK: "Create a waiting line for courses we are allowed to take right now."</span>
+    <span class="type">int</span> queue[V], front = 0, rear = 0;
+    
+    <span class="comment">// 2. Put nodes with ZERO prerequisites into the queue to start</span>
+    <span class="comment">// 🔧 TECH (Level 0): Loop over nodes, if inDegree is 0, add to queue.</span>
+    <span class="comment">// 💡 THINK: "Find all the 101-level freshman courses that have NO prerequisites, and put them in the line."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> u = 0; u &lt; V; u++)
+        <span class="keyword">if</span> (inDegree[u] == 0)
+            queue[rear++] = u;
+            
+    <span class="comment">// 🔧 TECH (Level 0): Array to hold final answer, and count of processed nodes.</span>
+    <span class="comment">// 💡 THINK: "Our final graduation transcript."</span>
+    <span class="type">int</span> order[V], count = 0;
+    
+    <span class="comment">// 3. Process the queue</span>
+    <span class="comment">// 🔧 TECH (Level 0): Standard BFS loop while queue has items.</span>
+    <span class="comment">// 💡 THINK: "Take courses one by one from the allowed list."</span>
+    <span class="keyword">while</span> (front &lt; rear) {
+        <span class="comment">// 🔧 TECH (Level 0): Pop node from queue and add to 'order' array.</span>
+        <span class="comment">// 💡 THINK: "Take the course, and write it down on our final transcript."</span>
+        <span class="type">int</span> u = queue[front++];
+        order[count++] = u;
+        
+        <span class="comment">// We completed 'u'. Now reduce the prerequisite count for all its neighbors.</span>
+        <span class="comment">// 🔧 TECH (Level 0): Loop through all neighbors of the popped node.</span>
+        <span class="comment">// 💡 THINK: "Look at all the advanced courses this course unlocks."</span>
+        <span class="keyword">for</span> (<span class="type">int</span> i = 1; i &lt;= adj[u][0]; i++) {
+            <span class="type">int</span> v = adj[u][i];
+            
+            <span class="comment">// If a neighbor's prerequisite count drops to 0, it's ready to go in the queue!</span>
+            <span class="comment">// 🔧 TECH (Level 0): Decrement inDegree[v] BEFORE checking if it equals 0.</span>
+            <span class="comment">// 💡 THINK: "Cross this prerequisite off the list for the advanced course. Are there zero left?"</span>
+            <span class="comment">// ❓ WHAT IS --inDegree[v]?: The `--` before the variable means "subtract 1 FIRST, then look at the new value". So we subtract 1 prerequisite, and if the new total is exactly 0, it means all prerequisites are finally met!</span>
+            <span class="keyword">if</span> (--inDegree[v] == 0)
+                <span class="comment">// 🔧 TECH (Level 0): Add neighbor to queue.</span>
+                <span class="comment">// 💡 THINK: "Yes! All prerequisites met. Put this advanced course in the 'allowed to take' line."</span>
+                queue[rear++] = v;
+        }
+    }
+    
+    <span class="comment">// Cycle check! If we couldn't process all V vertices, a loop exists.</span>
+    <span class="comment">// 🔧 TECH (Level 0): Compare nodes processed vs total nodes.</span>
+    <span class="comment">// 💡 THINK: "Did we graduate? Or are we stuck because Course A requires B, and B requires A?"</span>
+    <span class="comment">// ❓ WHY count != V?: If there is a loop (A requires B, B requires A), their prerequisite counts will NEVER reach 0. They will never enter the queue, so they never get added to our `count`. If `count` is less than `V` (total courses), a cycle trapped us!</span>
+    <span class="keyword">if</span> (count != V) {
+        <span class="function">printf</span>(<span class="string">"Graph has a cycle — topological sort not possible\n"</span>);
+        <span class="keyword">return</span>;
+    }
+}
+</code></pre>
+
+        <h3>Bonus: Even Simpler Implementations</h3>
+
+        <h4>Super-Simple Topological Sort in Python (Kahn's)</h4>
+        <p>Using Python's <code>defaultdict</code> for the graph and <code>deque</code> for the queue makes Kahn's Algorithm incredibly readable.</p>
+<pre><code><span class="keyword">from</span> collections <span class="keyword">import</span> deque, defaultdict
+
+<span class="keyword">def</span> <span class="function">topoSortKahn</span>(num_nodes, edges):
+    <span class="comment"># 🔧 TECH (Level 0): Create adjacency list and in-degree tracking array.</span>
+    <span class="comment"># 💡 THINK: "Get our notebooks ready."</span>
+    <span class="comment"># ❓ WHY defaultdict?: A normal Python dictionary crashes if you try to append to a key that doesn't exist yet. `defaultdict(list)` is smart—if you say "add this to Course 5", and Course 5 isn't in the book yet, it automatically creates an empty list for it first! No crash.</span>
+    graph = <span class="type">defaultdict</span>(<span class="type">list</span>)
+    in_degree = [<span class="number">0</span>] * num_nodes
+    
+    <span class="comment"># 🔧 TECH (Level 0): Populate graph and in-degrees from edge list.</span>
+    <span class="comment"># 💡 THINK: "Read the course catalog to build our prerequisite lists."</span>
+    <span class="comment"># ❓ WHY in_degree[v] += 1?: `u` is the basic course, `v` is the advanced course. `graph[u].append(v)` records "taking u unlocks v". `in_degree[v] += 1` means "course v just got one more prerequisite added to its total requirements".</span>
+    <span class="keyword">for</span> u, v <span class="keyword">in</span> edges:
+        graph[u].append(v)
+        in_degree[v] += <span class="number">1</span>
+        
+    <span class="comment"># 🔧 TECH (Level 0): Initialize queue with nodes that have in-degree == 0.</span>
+    <span class="comment"># 💡 THINK: "Find all the 101-level freshman courses with zero prerequisites."</span>
+    <span class="comment"># ❓ WHAT IS IN-DEGREE?: "In-degree" literally means "how many arrows are pointing IN to this node". In our analogy, it means "how many prerequisites does this course have". So `in_degree == 0` means zero prerequisites!</span>
+    queue = <span class="type">deque</span>([i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="type">range</span>(num_nodes) <span class="keyword">if</span> in_degree[i] == <span class="number">0</span>])
+    
+    <span class="comment"># 🔧 TECH (Level 0): Array to hold the final sorted result.</span>
+    <span class="comment"># 💡 THINK: "Our final graduation transcript."</span>
+    transcript = []
+    
+    <span class="comment"># 🔧 TECH (Level 0): Process queue until empty.</span>
+    <span class="comment"># 💡 THINK: "Take courses one by one."</span>
+    <span class="keyword">while</span> queue:
+        <span class="comment"># 🔧 TECH (Level 0): Pop node and add to result list.</span>
+        <span class="comment"># 💡 THINK: "Take the course, write it on transcript."</span>
+        current = queue.popleft()
+        transcript.append(current)
+        
+        <span class="comment"># 🔧 TECH (Level 0): Loop through neighbors.</span>
+        <span class="comment"># 💡 THINK: "Look at the advanced courses this unlocks."</span>
+        <span class="keyword">for</span> neighbor <span class="keyword">in</span> graph[current]:
+            <span class="comment"># 🔧 TECH (Level 0): Decrement neighbor's in-degree.</span>
+            <span class="comment"># 💡 THINK: "Cross this prerequisite off the advanced course's list."</span>
+            <span class="comment"># ❓ WHY -= 1?: We just finished taking `current` (the basic course). Therefore, all the advanced courses that relied on it just lost one of their prerequisites. We subtract 1 to represent that!</span>
+            in_degree[neighbor] -= <span class="number">1</span>
+            
+            <span class="comment"># 🔧 TECH (Level 0): If in-degree hits 0, append to queue.</span>
+            <span class="comment"># 💡 THINK: "If zero prerequisites left, we are finally allowed to take it!"</span>
+            <span class="keyword">if</span> in_degree[neighbor] == <span class="number">0</span>:
+                queue.append(neighbor)
+                
+    <span class="comment"># 🔧 TECH (Level 0): Check if result length matches total nodes.</span>
+    <span class="comment"># 💡 THINK: "Did we take all courses, or did a cycle trap us?"</span>
+    <span class="keyword">if</span> <span class="type">len</span>(transcript) == num_nodes:
+        <span class="keyword">return</span> transcript
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> [] <span class="comment"># Cycle detected!</span>
+</code></pre>
+
+        <h2 id="shortest-path">Shortest Path Algorithms (Weighted)</h2>
+        <p>When roads have different lengths/costs, plain BFS doesn't work. We need tools that respect the edge weights.</p>
+
+        <h3>1. Dijkstra's Algorithm</h3>
+        <p>Finds the shortest path from a single source. It uses a Priority Queue (or array) to always expand the currently known "closest" unvisited node first. <strong>Limitation:</strong> Fails entirely if the graph contains negative road weights.</p>
+<pre><code><span class="comment">// Dijkstra using an Adjacency Matrix and simple Array</span>
+<span class="type">void</span> <span class="function">dijkstra</span>(<span class="type">int</span> src) {
+    <span class="comment">// 🔧 TECH (Level 0): Arrays to track shortest known distance and visit status.</span>
+    <span class="comment">// 💡 THINK: "A notepad tracking the fastest driving time to every city, and a checklist of cities we've fully explored."</span>
+    <span class="type">int</span> dist[V];
+    <span class="type">bool</span> visited[V] = { <span class="keyword">false</span> };
+    
+    <span class="comment">// 🔧 TECH (Level 0): Initialize all distances to infinity.</span>
+    <span class="comment">// 💡 THINK: "Assume every city is impossibly far away until we discover a road to it."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; V; i++) dist[i] = INF;
+    
+    <span class="comment">// 🔧 TECH (Level 0): Distance to source is 0.</span>
+    <span class="comment">// 💡 THINK: "The driving time to your own driveway is 0 minutes."</span>
+    dist[src] = 0; 
+    
+    <span class="comment">// 🔧 TECH (Level 0): Loop V-1 times to process all vertices.</span>
+    <span class="comment">// 💡 THINK: "Explore the map, city by city."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> count = 0; count &lt; V - 1; count++) {
+        <span class="comment">// 🔧 TECH (Level 0): Find unvisited vertex with minimum distance.</span>
+        <span class="comment">// 💡 THINK: "Look at our notepad. Which unvisited city currently has the shortest driving time? Let's go there next."</span>
+        <span class="comment">// ❓ WHY minDistanceVertex?: We always expand the closest node first (greedy). This guarantees that once we 'visit' a node, we have absolutely found the shortest possible path to it.</span>
+        <span class="type">int</span> u = minDistanceVertex(dist, visited);
+        <span class="keyword">if</span> (u == -1) <span class="keyword">break</span>; 
+        
+        <span class="comment">// 🔧 TECH (Level 0): Mark vertex as visited.</span>
+        <span class="comment">// 💡 THINK: "Mark this city off our checklist. We've explored it."</span>
+        visited[u] = <span class="keyword">true</span>;
+        
+        <span class="comment">// 🔧 TECH (Level 0): Iterate through all V vertices to find neighbors.</span>
+        <span class="comment">// 💡 THINK: "Look at all the roads leaving this city."</span>
+        <span class="keyword">for</span> (<span class="type">int</span> v = 0; v &lt; V; v++) {
+            <span class="comment">// 🔧 TECH (Level 0): If unvisited, edge exists, u is reachable, and path via u is strictly less than current dist[v]...</span>
+            <span class="comment">// 💡 THINK: "Does this road lead to an unvisited city? And is taking this road FASTER than the old route we had written down?"</span>
+            <span class="comment">// ❓ WHAT IS dist[u] + graph[u][v] < dist[v]?: `dist[u]` is time to get here. `graph[u][v]` is time to drive the road to neighbor `v`. If their sum is less than `dist[v]` (the old record), we found a shortcut!</span>
+            <span class="keyword">if</span> (!visited[v] &amp;&amp; graph[u][v] != 0 &amp;&amp; 
+                dist[u] != INF &amp;&amp; dist[u] + graph[u][v] &lt; dist[v]) {
+                
+                <span class="comment">// 🔧 TECH (Level 0): Update dist[v] with the new shorter distance.</span>
+                <span class="comment">// 💡 THINK: "Erase the old time on our notepad and write down the new faster shortcut!"</span>
+                dist[v] = dist[u] + graph[u][v];
+            }
+        }
+    }
+}
+</code></pre>
+
+        <h4>Super-Simple Dijkstra in Python (using Priority Queue)</h4>
+        <p>Instead of scanning arrays like C, Python uses <code>heapq</code> (a priority queue) to instantly hand us the closest city.</p>
+<pre><code><span class="keyword">import</span> heapq
+
+<span class="keyword">def</span> <span class="function">dijkstra</span>(graph, start):
+    <span class="comment"># 🔧 TECH (Level 0): Dictionary to hold shortest distances, default infinity.</span>
+    <span class="comment"># 💡 THINK: "Notepad for driving times."</span>
+    distances = {node: <span class="type">float</span>(<span class="string">'infinity'</span>) <span class="keyword">for</span> node <span class="keyword">in</span> graph}
+    distances[start] = <span class="number">0</span>
+    
+    <span class="comment"># 🔧 TECH (Level 0): Priority Queue storing tuples (distance, node).</span>
+    <span class="comment"># 💡 THINK: "A magical sorting hat that always gives us the closest city instantly."</span>
+    pq = [(<span class="number">0</span>, start)]
+    
+    <span class="keyword">while</span> pq:
+        <span class="comment"># 🔧 TECH (Level 0): Pop node with lowest distance.</span>
+        <span class="comment"># 💡 THINK: "Grab the closest unexplored city."</span>
+        current_dist, current_node = heapq.heappop(pq)
+        
+        <span class="comment"># 🔧 TECH (Level 0): Optimization - skip if we already found a shorter path earlier.</span>
+        <span class="comment"># 💡 THINK: "If our notepad already has a faster time than this old record, ignore it."</span>
+        <span class="keyword">if</span> current_dist &gt; distances[current_node]:
+            <span class="keyword">continue</span>
+            
+        <span class="comment"># 🔧 TECH (Level 0): Loop through neighbors and edge weights.</span>
+        <span class="comment"># 💡 THINK: "Check all roads leaving this city."</span>
+        <span class="keyword">for</span> neighbor, weight <span class="keyword">in</span> graph[current_node].items():
+            <span class="comment"># 🔧 TECH (Level 0): Calculate total distance to neighbor.</span>
+            <span class="comment"># 💡 THINK: "Calculate total driving time if we take this road."</span>
+            distance = current_dist + weight
+            
+            <span class="comment"># 🔧 TECH (Level 0): If calculated distance is less than known distance, update and push.</span>
+            <span class="comment"># 💡 THINK: "Is this a shortcut? If yes, update notepad and put neighbor in the sorting hat!"</span>
+            <span class="keyword">if</span> distance &lt; distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+                
+    <span class="keyword">return</span> distances
+
+        <hr style="border-color: #333; margin: 40px 0;">
+        <h3>2. Bellman-Ford</h3>
+        <p>Slower than Dijkstra, but it <strong>handles negative edge weights</strong>. It simply iterates over every single edge <code>V-1</code> times to ensure distances are finalized. If it loops a final time and a distance <em>still</em> improves, it successfully detects a "negative-weight cycle".</p>
+<pre><code><span class="comment">// Bellman-Ford using an Edge List (u, v, weight)</span>
+<span class="type">void</span> <span class="function">bellmanFord</span>(<span class="type">int</span> src) {
+    <span class="type">int</span> dist[V];
+    <span class="comment">// 🔧 TECH (Level 0): Initialize all distances to infinity.</span>
+    <span class="comment">// 💡 THINK: "Assume every city is infinitely far away."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; V; i++) dist[i] = INF;
+    dist[src] = 0;
+    
+    <span class="comment">// 🔧 TECH (Level 0): Relax all edges V-1 times.</span>
+    <span class="comment">// 💡 THINK: "Broadcast the shortest paths across the whole map, repeating until it ripples to the furthest city."</span>
+    <span class="comment">// ❓ WHY V-1?: The longest possible shortest path without a cycle can only have V-1 edges. So V-1 full sweeps guarantees every city gets the memo.</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 1; i &lt;= V - 1; i++) {
+        <span class="keyword">for</span> (<span class="type">int</span> j = 0; j &lt; E; j++) {
+            <span class="type">int</span> u = edges[j].u, v = edges[j].v, weight = edges[j].weight;
+            <span class="comment">// 🔧 TECH (Level 0): If taking this edge is strictly better, update dist[v].</span>
+            <span class="comment">// 💡 THINK: "If this road provides a shortcut, write down the new faster time."</span>
+            <span class="keyword">if</span> (dist[u] != INF &amp;&amp; dist[u] + weight &lt; dist[v])
+                dist[v] = dist[u] + weight;
+        }
+    }
+    
+    <span class="comment">// 🔧 TECH (Level 0): 1 final sweep to detect negative-weight cycles.</span>
+    <span class="comment">// 💡 THINK: "Do one last check. Did any route get EVEN SHORTER?"</span>
+    <span class="comment">// ❓ WHY?: After V-1 sweeps, all paths SHOULD be final. If a path still gets shorter on the Vth sweep, we must be trapped in a time-traveling (negative) loop!</span>
+    <span class="keyword">for</span> (<span class="type">int</span> j = 0; j &lt; E; j++) {
+        <span class="type">int</span> u = edges[j].u, v = edges[j].v, weight = edges[j].weight;
+        <span class="keyword">if</span> (dist[u] != INF &amp;&amp; dist[u] + weight &lt; dist[v]) {
+            <span class="function">printf</span>(<span class="string">"Graph contains negative weight cycle\n"</span>);
+            <span class="keyword">return</span>;
+        }
+    }
+}
+</code></pre>
+
+        <h4>Super-Simple Bellman-Ford in Python</h4>
+<pre><code><span class="keyword">def</span> <span class="function">bellman_ford</span>(num_nodes, edges, start):
+    <span class="comment"># 🔧 TECH (Level 0): Initialize distances list.</span>
+    <span class="comment"># 💡 THINK: "Blank notepad for driving times."</span>
+    dist = [<span class="type">float</span>(<span class="string">'inf'</span>)] * num_nodes
+    dist[start] = <span class="number">0</span>
+    
+    <span class="comment"># 🔧 TECH (Level 0): Relax V-1 times.</span>
+    <span class="comment"># 💡 THINK: "Sweep the map over and over."</span>
+    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="type">range</span>(num_nodes - <span class="number">1</span>):
+        <span class="keyword">for</span> u, v, weight <span class="keyword">in</span> edges:
+            <span class="comment"># 🔧 TECH (Level 0): Shortcut check.</span>
+            <span class="comment"># 💡 THINK: "Is this road a shortcut?"</span>
+            <span class="keyword">if</span> dist[u] + weight &lt; dist[v]:
+                dist[v] = dist[u] + weight
+                
+    <span class="comment"># 🔧 TECH (Level 0): Negative cycle check.</span>
+    <span class="comment"># 💡 THINK: "Are there time machines (negative loops)?"</span>
+    <span class="keyword">for</span> u, v, weight <span class="keyword">in</span> edges:
+        <span class="keyword">if</span> dist[u] + weight &lt; dist[v]:
+            <span class="keyword">print</span>(<span class="string">"Negative cycle detected!"</span>)
+            <span class="keyword">return</span> <span class="type">None</span>
+            
+    <span class="keyword">return</span> dist
+</code></pre>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+        <h3>3. Floyd-Warshall</h3>
+        <p>Finds the shortest path between <strong>every single pair</strong> of nodes in the graph using Dynamic Programming. Very simple code (three nested loops), but very slow <code>O(V&sup3;)</code>. Best for small, dense graphs.</p>
+<pre><code><span class="type">void</span> <span class="function">floydWarshall</span>(<span class="type">int</span> graph[V][V]) {
+    <span class="type">int</span> dist[V][V];
+    
+    <span class="comment">// 🔧 TECH (Level 0): Copy input graph to distance matrix.</span>
+    <span class="comment">// 💡 THINK: "Copy the original map to our notepad."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; V; i++)
+        <span class="keyword">for</span> (<span class="type">int</span> j = 0; j &lt; V; j++)
+            dist[i][j] = graph[i][j];
+            
+    <span class="comment">// 🔧 TECH (Level 0): 'k' is the intermediate vertex. Must be the OUTER loop!</span>
+    <span class="comment">// 💡 THINK: "Test every city as a potential 'middle-man' stopover."</span>
+    <span class="comment">// ❓ WHY outer loop?: If we don't fix 'k' first, we might find a path through 'k', but later overwrite it when testing a different path. Keeping 'k' outside ensures we build up longer paths step-by-step.</span>
+    <span class="keyword">for</span> (<span class="type">int</span> k = 0; k &lt; V; k++) {
+        <span class="comment">// 🔧 TECH (Level 0): 'i' is the source vertex.</span>
+        <span class="comment">// 💡 THINK: "Starting city."</span>
+        <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; V; i++) {
+            <span class="comment">// 🔧 TECH (Level 0): 'j' is the destination vertex.</span>
+            <span class="comment">// 💡 THINK: "Destination city."</span>
+            <span class="keyword">for</span> (<span class="type">int</span> j = 0; j &lt; V; j++) {
+                <span class="comment">// 🔧 TECH (Level 0): If path through 'k' is shorter, update dist[i][j].</span>
+                <span class="comment">// 💡 THINK: "Is driving from i ➔ k ➔ j faster than driving directly from i ➔ j?"</span>
+                <span class="keyword">if</span> (dist[i][k] != INF &amp;&amp; dist[k][j] != INF &amp;&amp; 
+                    dist[i][k] + dist[k][j] &lt; dist[i][j]) {
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                }
+            }
+        }
+    }
+}
+</code></pre>
+
+        <h4>Super-Simple Floyd-Warshall in Python</h4>
+<pre><code><span class="keyword">def</span> <span class="function">floyd_warshall</span>(graph):
+    <span class="comment"># 🔧 TECH (Level 0): Get number of nodes.</span>
+    <span class="comment"># 💡 THINK: "Count the cities."</span>
+    V = <span class="type">len</span>(graph)
+    
+    <span class="comment"># 🔧 TECH (Level 0): Create a deep copy of the graph.</span>
+    <span class="comment"># 💡 THINK: "Make a copy of the map to write on."</span>
+    dist = [<span class="type">list</span>(row) <span class="keyword">for</span> row <span class="keyword">in</span> graph]
+    
+    <span class="comment"># 🔧 TECH (Level 0): The 3 nested loops (k, i, j).</span>
+    <span class="comment"># 💡 THINK: "Test every middle-man, for every start, for every destination."</span>
+    <span class="keyword">for</span> k <span class="keyword">in</span> <span class="type">range</span>(V):
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="type">range</span>(V):
+            <span class="keyword">for</span> j <span class="keyword">in</span> <span class="type">range</span>(V):
+                <span class="comment"># 🔧 TECH (Level 0): Check if intermediate path is shorter.</span>
+                <span class="comment"># 💡 THINK: "Is the layover faster than the direct flight?"</span>
+                <span class="keyword">if</span> dist[i][k] + dist[k][j] &lt; dist[i][j]:
+                    dist[i][j] = dist[i][k] + dist[k][j]
+                    
+    <span class="keyword">return</span> dist
+</code></pre>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+        <h2 id="mst-dsu">Minimum Spanning Tree (MST) & DSU</h2>
+        <p>A Minimum Spanning Tree connects every node in the graph together without any loops, using the absolute lowest total edge cost. (Used for laying cheap fiber-optic cables to all houses in a town).</p>
+
+        <h3>Disjoint Set Union (DSU / Union-Find)</h3>
+        <p>A data structure used to track which nodes are clustered together. Used by Kruskal's algorithm to ensure we don't accidentally create loops.</p>
+<pre><code><span class="comment">// Path Compression: Flattens the tree so future lookups are instant O(1)</span>
+<span class="comment">// Path Compression: Flattens the tree so future lookups are instant O(1)</span>
+<span class="type">int</span> <span class="function">find</span>(<span class="type">int</span> x) {
+    <span class="comment">// 🔧 TECH (Level 0): Base case check: if node is not its own parent, recursively call find.</span>
+    <span class="comment">// 💡 THINK: "Who is the ultimate boss of this cluster? If it's not me, ask my manager."</span>
+    <span class="keyword">if</span> (parent[x] != x)
+        <span class="comment">// 🔧 TECH (Level 0): Set parent to the result of the recursive find (Path Compression).</span>
+        <span class="comment">// 💡 THINK: "Once I find the ultimate boss, I'll rewrite my own record so next time I can just call the boss directly instead of asking my manager!"</span>
+        <span class="comment">// ❓ WHY parent[x] = ?: This is 'Path Compression'. By pointing directly to the root, we flatten the tree. Next time we call find(x), it takes O(1) time instead of walking up the whole chain.</span>
+        parent[x] = find(parent[x]); 
+    <span class="keyword">return</span> parent[x];
+}
+
+<span class="comment">// Union by Rank: Always attach the smaller tree UNDER the bigger tree's root</span>
+<span class="type">void</span> <span class="function">unionSets</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
+    <span class="comment">// 🔧 TECH (Level 0): Find roots for both elements.</span>
+    <span class="comment">// 💡 THINK: "Find the ultimate bosses for both people."</span>
+    <span class="type">int</span> rootX = find(x);
+    <span class="type">int</span> rootY = find(y);
+    
+    <span class="comment">// 🔧 TECH (Level 0): If roots are the same, they are in the same set.</span>
+    <span class="comment">// 💡 THINK: "If they have the same boss, they are already in the same company. Do nothing."</span>
+    <span class="keyword">if</span> (rootX == rootY) <span class="keyword">return</span>;
+    
+    <span class="comment">// 🔧 TECH (Level 0): Attach smaller rank tree under larger rank tree.</span>
+    <span class="comment">// 💡 THINK: "The smaller company gets bought out by the bigger company. The smaller boss now reports to the bigger boss."</span>
+    <span class="keyword">if</span> (rank_[rootX] &lt; rank_[rootY]) {
+        parent[rootX] = rootY;
+    } <span class="keyword">else</span> <span class="keyword">if</span> (rank_[rootX] &gt; rank_[rootY]) {
+        parent[rootY] = rootX;
+    } <span class="keyword">else</span> {
+        <span class="comment">// 🔧 TECH (Level 0): If ranks are equal, pick one as root and increment its rank.</span>
+        <span class="comment">// 💡 THINK: "If companies are the same size, pick one boss to be the CEO, and promote them."</span>
+        parent[rootY] = rootX;
+        rank_[rootX]++;
+    }
+}
+</code></pre>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+        <h3>Kruskal's Algorithm (Edge-Based)</h3>
+        <p>Sort all edges from cheapest to most expensive. Keep adding the cheapest edge to your MST, as long as it doesn't create a loop (checked instantly via DSU). Best for sparse graphs.</p>
+<pre><code><span class="comment">// Kruskal's MST (Requires the DSU 'find' and 'unionSets' functions from above)</span>
+<span class="type">int</span> <span class="function">kruskalMST</span>(Edge edges[], <span class="type">int</span> E) {
+    <span class="comment">// 🔧 TECH (Level 0): Sort all edges by weight.</span>
+    <span class="comment">// 💡 THINK: "Sort the catalog of cables from cheapest to most expensive."</span>
+    <span class="function">qsort</span>(edges, E, <span class="keyword">sizeof</span>(Edge), compareEdges);
+    
+    <span class="type">int</span> mstWeight = 0;
+    
+    <span class="comment">// 🔧 TECH (Level 0): Loop through sorted edges.</span>
+    <span class="comment">// 💡 THINK: "Look at the cheapest available cable."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; E; i++) {
+        <span class="type">int</span> u = edges[i].u;
+        <span class="type">int</span> v = edges[i].v;
+        
+        <span class="comment">// 🔧 TECH (Level 0): Use DSU to check if they are in the same set.</span>
+        <span class="comment">// 💡 THINK: "Are these two houses already connected to the same grid?"</span>
+        <span class="keyword">if</span> (find(u) != find(v)) {
+            <span class="comment">// 🔧 TECH (Level 0): Union them and add weight.</span>
+            <span class="comment">// 💡 THINK: "No? Then buy this cheap cable and connect them!"</span>
+            unionSets(u, v);
+            mstWeight += edges[i].weight;
+        }
+    }
+    <span class="keyword">return</span> mstWeight;
+}
+</code></pre>
+
+        <h4>Super-Simple Kruskal's in Python</h4>
+<pre><code><span class="keyword">class</span> <span class="function">DSU</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, n):
+        self.parent = <span class="type">list</span>(<span class="type">range</span>(n))
+    
+    <span class="keyword">def</span> <span class="function">find</span>(self, i):
+        <span class="keyword">if</span> self.parent[i] != i:
+            self.parent[i] = self.find(self.parent[i])
+        <span class="keyword">return</span> self.parent[i]
+        
+    <span class="keyword">def</span> <span class="function">union</span>(self, i, j):
+        root_i = self.find(i)
+        root_j = self.find(j)
+        <span class="keyword">if</span> root_i != root_j:
+            self.parent[root_i] = root_j
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">return</span> <span class="keyword">False</span>
+
+<span class="keyword">def</span> <span class="function">kruskals</span>(num_nodes, edges):
+    <span class="comment"># 🔧 TECH (Level 0): Sort edges by weight (the 3rd element).</span>
+    <span class="comment"># 💡 THINK: "Sort catalog cheapest to most expensive."</span>
+    edges.sort(key=<span class="keyword">lambda</span> x: x[<span class="number">2</span>])
+    
+    dsu = DSU(num_nodes)
+    mst_weight = <span class="number">0</span>
+    
+    <span class="keyword">for</span> u, v, weight <span class="keyword">in</span> edges:
+        <span class="comment"># 🔧 TECH (Level 0): Union returns True if they were separate.</span>
+        <span class="comment"># 💡 THINK: "If they aren't already connected, buy the cable!"</span>
+        <span class="keyword">if</span> dsu.union(u, v):
+            mst_weight += weight
+            
+    <span class="keyword">return</span> mst_weight
+</code></pre>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+        <h3>Prim's Algorithm (Vertex-Based)</h3>
+        <p>Start at one node. Continuously pick the cheapest road that connects your growing tree to an outsider node. Almost identical structure to Dijkstra. Best for dense graphs.</p>
+<pre><code><span class="comment">// Prim's MST using Adjacency Matrix</span>
+<span class="type">void</span> <span class="function">primMST</span>(<span class="type">int</span> graph[V][V]) {
+    <span class="type">int</span> parent[V]; <span class="comment">// Array to store the constructed MST</span>
+    <span class="type">int</span> key[V];    <span class="comment">// Minimum weight edge to pick this node</span>
+    <span class="type">bool</span> inMST[V] = { <span class="keyword">false</span> };
+    
+    <span class="comment">// 🔧 TECH (Level 0): Initialize all keys to infinity.</span>
+    <span class="comment">// 💡 THINK: "Every house is currently infinitely expensive to connect to our grid."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i &lt; V; i++) key[i] = INF;
+    
+    <span class="comment">// 🔧 TECH (Level 0): Start at node 0.</span>
+    <span class="comment">// 💡 THINK: "Build the power plant at House 0. Cost to connect it to itself is 0."</span>
+    key[0] = 0;
+    parent[0] = -1; <span class="comment">// Root of MST</span>
+    
+    <span class="comment">// 🔧 TECH (Level 0): Loop V-1 times to add all other vertices.</span>
+    <span class="comment">// 💡 THINK: "Connect the remaining houses one by one."</span>
+    <span class="keyword">for</span> (<span class="type">int</span> count = 0; count &lt; V - 1; count++) {
+        <span class="comment">// 🔧 TECH (Level 0): Pick the minimum key vertex not yet in MST.</span>
+        <span class="comment">// 💡 THINK: "Which unconnected house is cheapest to connect to our CURRENT grid?"</span>
+        <span class="type">int</span> u = minKeyVertex(key, inMST);
+        inMST[u] = <span class="keyword">true</span>;
+        
+        <span class="comment">// 🔧 TECH (Level 0): Update key and parent of neighbors.</span>
+        <span class="comment">// 💡 THINK: "Now that this house is on the grid, look at its neighbors. Can we connect them cheaper now?"</span>
+        <span class="keyword">for</span> (<span class="type">int</span> v = 0; v &lt; V; v++) {
+            <span class="comment">// ❓ WHY graph[u][v] < key[v]?: In Dijkstra, we add total distance from start (`dist[u] + graph[u][v]`). In Prim's, we ONLY care about the cost of the single cable (`graph[u][v]`). We don't care how far it is from the start, just how cheap it is to attach to the grid!</span>
+            <span class="keyword">if</span> (graph[u][v] != 0 &amp;&amp; !inMST[v] &amp;&amp; graph[u][v] &lt; key[v]) {
+                parent[v] = u;
+                key[v] = graph[u][v];
+            }
+        }
+    }
+}
+</code></pre>
+
+        <h4>Super-Simple Prim's in Python (using Priority Queue)</h4>
+<pre><code><span class="keyword">import</span> heapq
+
+<span class="keyword">def</span> <span class="function">prims_mst</span>(graph, start):
+    <span class="comment"># 🔧 TECH (Level 0): Priority Queue stores (weight, node).</span>
+    <span class="comment"># 💡 THINK: "Sorting hat to instantly find the cheapest available cable."</span>
+    pq = [(<span class="number">0</span>, start)]
+    visited = <span class="type">set</span>()
+    mst_weight = <span class="number">0</span>
+    
+    <span class="keyword">while</span> pq <span class="keyword">and</span> <span class="type">len</span>(visited) &lt; <span class="type">len</span>(graph):
+        <span class="comment"># 🔧 TECH (Level 0): Pop the cheapest edge.</span>
+        <span class="comment"># 💡 THINK: "Grab the cheapest cable we know about."</span>
+        weight, node = heapq.heappop(pq)
+        
+        <span class="keyword">if</span> node <span class="keyword">in</span> visited:
+            <span class="keyword">continue</span>
+            
+        <span class="comment"># 🔧 TECH (Level 0): Add to MST.</span>
+        <span class="comment"># 💡 THINK: "Plug the house into the grid!"</span>
+        visited.add(node)
+        mst_weight += weight
+        
+        <span class="comment"># 🔧 TECH (Level 0): Add all outbound edges to PQ.</span>
+        <span class="comment"># 💡 THINK: "Now that this house is online, look at all its outgoing cables and throw them in the sorting hat."</span>
+        <span class="keyword">for</span> neighbor, edge_weight <span class="keyword">in</span> graph[node].items():
+            <span class="keyword">if</span> neighbor <span class="keyword">not</span> <span class="keyword">in</span> visited:
+                heapq.heappush(pq, (edge_weight, neighbor))
+                
+    <span class="keyword">return</span> mst_weight
+</code></pre>
+
+        <hr style="border-color: #333; margin: 40px 0;">
+
+        <h2 id="summary">Quick Revision Summary</h2>
+        <ul style="line-height: 1.8; list-style-type: square;">
+            <li style="margin-bottom: 12px;"><strong>Graph Traversal:</strong> Visiting every vertex systematically. Always use a <code>visited</code> array!</li>
+            <li style="margin-bottom: 12px;"><strong>BFS (Breadth First):</strong> Uses a Queue. Level-by-level. Finds shortest paths. <code>O(V+E)</code>.</li>
+            <li style="margin-bottom: 12px;"><strong>DFS (Depth First):</strong> Uses a Stack/Recursion. Dives deep. Finds cycles & orders. <code>O(V+E)</code>.</li>
+            <li style="margin-bottom: 12px;"><strong>Multi-source BFS:</strong> Put all start locations in the queue at distance 0 before looping.</li>
+            <li style="margin-bottom: 12px;"><strong>Topological Sort:</strong> For DAGs only. Kahn's algorithm (BFS-based) uses In-Degrees and detects cycles naturally.</li>
+            <li style="margin-bottom: 12px;"><strong>Shortest Path (Weighted):</strong> Dijkstra (fast, no negative edges). Bellman-Ford (slower, allows negative edges). Floyd-Warshall (All-Pairs, <code>O(V&sup3;)</code>).</li>
+            <li style="margin-bottom: 12px;"><strong>MST:</strong> Kruskal's (Sort Edges + DSU). Prim's (Grow tree + Priority Queue).</li>
+            <li style="margin-bottom: 12px;"><strong>DSU:</strong> Used to track groups and find cycles instantly using path compression.</li>
+        </ul>
+    </main>
+</body>
+</html>

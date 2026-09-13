@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESEP-V · Statement & Assumption</title>
+<style>
+  :root{
+    --paper:#f6f3ec;
+    --ink:#232019;
+    --ink-soft:#5c564a;
+    --rule:#cfc6b3;
+    --card:#fffdf8;
+    --accent:#8a3b1f;
+    --accent-soft:#f1e2d6;
+    --good:#2f5d3a;
+    --good-bg:#e7f0e5;
+    --bad:#8a2f2f;
+    --bad-bg:#f3e2e0;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:"Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.55;
+  }
+  .wrap{max-width:840px;margin:0 auto;padding:28px 20px 80px;}
+  header.top{
+    border-bottom:3px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:20px;
+  }
+  header.top .kicker{
+    font-size:13px;
+    color:var(--accent);
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  header.top h1{
+    font-family:var(--serif);
+    font-size:clamp(26px,4vw,34px);
+    margin:4px 0 2px;
+  }
+  header.top .sub{color:var(--ink-soft);font-size:14.5px;}
+
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    margin:22px 0 22px;
+    border-bottom:1px solid var(--rule);
+  }
+  nav.tabs button{
+    font-family:var(--sans);
+    font-size:15px;
+    font-weight:600;
+    background:none;
+    border:none;
+    padding:10px 14px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    margin-bottom:-1px;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom:3px solid var(--accent);
+  }
+  nav.tabs button:hover{color:var(--ink);}
+
+  section.panel{display:none;}
+  section.panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  h2.sec-title{
+    font-family:var(--serif);
+    font-size:21px;
+    margin:30px 0 8px;
+    padding-top:6px;
+    border-top:1px solid var(--rule);
+  }
+  section.panel > h2.sec-title:first-child{border-top:none;padding-top:0;}
+  p{margin:8px 0;}
+  ul{margin:8px 0;padding-left:22px;}
+  li{margin:4px 0;}
+
+  .def-box{
+    background:var(--card);
+    border-left:4px solid var(--accent);
+    padding:12px 16px;
+    margin:12px 0;
+    font-size:15px;
+  }
+  .def-box strong{color:var(--accent);}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:14px 0;
+    background:var(--card);
+    font-size:14px;
+  }
+  table th, table td{
+    border:1px solid var(--rule);
+    padding:9px 10px;
+    text-align:left;
+    vertical-align:top;
+  }
+  table th{background:var(--accent-soft);font-family:var(--serif);font-size:14.5px;}
+
+  .example{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:14px 16px;
+    margin:14px 0;
+  }
+  .example .tag{
+    display:inline-block;
+    font-size:12px;
+    font-weight:700;
+    color:var(--accent);
+    margin-bottom:6px;
+  }
+
+  ol.steps{padding-left:20px;}
+  ol.steps li{margin:6px 0;}
+
+  /* Practice */
+  .q-card{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:16px 18px;
+    margin:16px 0;
+  }
+  .q-card .q-num{
+    font-family:var(--serif);
+    color:var(--accent);
+    font-weight:700;
+    font-size:15px;
+  }
+  .q-card .q-text{margin:6px 0 12px;font-size:15.5px;}
+  .opt{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:9px 10px;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    margin:6px 0;
+    cursor:pointer;
+    background:#fff;
+    font-size:14.5px;
+    transition:background .12s;
+  }
+  .opt:hover{background:var(--accent-soft);}
+  .opt .letter{
+    font-weight:700;
+    color:var(--ink-soft);
+    min-width:16px;
+  }
+  .opt.correct{background:var(--good-bg);border-color:var(--good);}
+  .opt.incorrect{background:var(--bad-bg);border-color:var(--bad);}
+  .opt.disabled{cursor:default;}
+  .opt.disabled:hover{background:inherit;}
+
+  .explain{
+    display:none;
+    margin-top:12px;
+    padding:12px 14px;
+    background:var(--accent-soft);
+    border-left:4px solid var(--accent);
+    font-size:14.5px;
+  }
+  .explain.show{display:block;}
+  .verdict{font-weight:700;margin-bottom:4px;}
+  .verdict.right{color:var(--good);}
+  .verdict.wrong{color:var(--bad);}
+
+  .reveal-btn{
+    margin-top:10px;
+    font-size:13px;
+    background:none;
+    border:1px solid var(--ink-soft);
+    color:var(--ink-soft);
+    padding:5px 10px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .reveal-btn:hover{border-color:var(--ink);color:var(--ink);}
+
+  /* Answer key */
+  .ak-item{
+    border-bottom:1px solid var(--rule);
+    padding:12px 0;
+  }
+  .ak-item .ak-head{font-weight:700;font-family:var(--serif);color:var(--accent);}
+  .ak-item p{margin:4px 0 0;font-size:14.5px;}
+
+  .score-bar{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+
+  footer.note{
+    margin-top:36px;
+    padding-top:14px;
+    border-top:1px solid var(--rule);
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="kicker">ESEP-V · Module 2 · Advanced Aptitude and Logic</div>
+    <h1>Statement and Assumption</h1>
+    <div class="sub">Critical Reasoning for SSC / IBPS / RRB / CAT / GRE-GMAT style exams</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="theory">Theory</button>
+    <button class="tab-btn" data-tab="practice">Practice (8 Qs)</button>
+    <button class="tab-btn" data-tab="answers">Answer Key</button>
+  </nav>
+
+  <!-- ================= THEORY ================= -->
+  <section class="panel active" id="theory">
+
+    <h2 class="sec-title">1. Introduction: Critical Reasoning in Competitive Exams</h2>
+    <p>Critical Reasoning is a core Verbal/Logical Ability component in almost every major competitive and admission examination — SSC CGL/CHSL, IBPS/SBI PO & Clerk, RRB NTPC, insurance exams (LIC AAO, NIACL), CAT, XAT, MAT, CMAT, and GRE/GMAT Analytical sections. Unlike grammar or vocabulary items, these questions do not test language knowledge — they test how tightly a candidate can reason from a given statement to what it logically requires, implies, or does not require.</p>
+    <p>The "Statement and Assumption" question type is one of the most frequently repeated formats across these exams because it directly measures a skill engineers and managers use daily: distinguishing what a piece of information actually establishes from what the reader is quietly supplying on their own.</p>
+
+    <h2 class="sec-title">2. What Is an Assumption?</h2>
+    <p>An assumption is something that is taken for granted or supposed, without being explicitly stated in a passage or argument. It is the unstated premise that must be true for the statement's stated action, claim, or conclusion to make logical sense.</p>
+    <div class="def-box"><strong>Working definition for exam purposes:</strong> An assumption is implicit — it is never written in the statement itself, yet the statement's speaker clearly believes it and relies on it.</div>
+    <div class="example">
+      <div class="tag">EXAMPLE</div>
+      <p>A notice reads, <em>"All employees must submit their medical certificates by Friday to be eligible for reimbursement."</em></p>
+      <ul>
+        <li><strong>Implicit assumption:</strong> Employees are capable of obtaining and submitting medical certificates within this timeframe.</li>
+        <li><strong>NOT an assumption:</strong> "Some employees may not submit on time" — this is a possible outcome, not something the statement takes for granted.</li>
+      </ul>
+    </div>
+
+    <h2 class="sec-title">3. Assumption vs. Inference vs. Conclusion — Do Not Confuse These</h2>
+    <table>
+      <tr><th>Term</th><th>Definition</th><th>Direction of Reasoning</th></tr>
+      <tr><td>Assumption</td><td>An unstated premise the statement relies on to hold true</td><td>Works backward — what must have been true BEFORE the statement was made</td></tr>
+      <tr><td>Inference</td><td>A conclusion drawn FROM the given facts</td><td>Works forward — what follows AFTER the statement</td></tr>
+      <tr><td>Conclusion</td><td>The main point an argument is explicitly building toward</td><td>Stated (or near-stated) within the passage itself</td></tr>
+    </table>
+
+    <h2 class="sec-title">4. The Negation Test (Most Important Rule for This Topic)</h2>
+    <p>Almost every competitive exam question of this type is best solved using the Negation Test, developed for GMAT/CAT-style critical reasoning and equally valid for SSC/Bank exams:</p>
+    <ol class="steps">
+      <li>Negate the assumption (make it false / reverse it).</li>
+      <li>Check: does the original statement's claim, action, or plan still make logical sense if the assumption is false?</li>
+      <li>If the statement falls apart or becomes illogical → the assumption IS implicit (necessary).</li>
+      <li>If the statement still stands even without it → the assumption is NOT implicit (irrelevant or too broad).</li>
+    </ol>
+    <div class="def-box"><strong>Exam tip:</strong> An assumption must be (i) implicit — never stated, (ii) necessary — the statement collapses without it, and (iii) minimal — it should not be broader, more general, or more extreme than what the statement requires.</div>
+
+    <h2 class="sec-title">5. Common Statement Types Seen in Exams</h2>
+    <ul>
+      <li>Advertisements and public notices ("Join our institute for guaranteed placement")</li>
+      <li>Official circulars, policy statements, government orders</li>
+      <li>Warning signs and instructions ("Do not touch the wet paint")</li>
+      <li>Newspaper reports and editorial claims</li>
+      <li>Cause–effect and recommendation statements ("The company should increase the ad budget to boost sales")</li>
+    </ul>
+
+    <h2 class="sec-title">6. Standard Traps to Avoid</h2>
+    <ul>
+      <li>Choosing an option that is TRUE in general but not something the statement itself depends on.</li>
+      <li>Choosing an option that is too broad/extreme (uses words like "all," "always," "never," "only") when the statement only requires a modest, specific assumption.</li>
+      <li>Mistaking a possible consequence (inference) for an assumption (something presupposed before the fact).</li>
+      <li>Assuming outside/real-world knowledge not warranted by the statement's own logic.</li>
+    </ul>
+
+    <h2 class="sec-title">7. Step-by-Step Strategy for the Exam</h2>
+    <ol class="steps" start="5">
+      <li>Read the statement once and identify exactly what action, claim, or recommendation is being made.</li>
+      <li>Ask: "What does the speaker need to believe is true for this action/claim to make sense?"</li>
+      <li>Apply the Negation Test to each option/assumption given.</li>
+      <li>Eliminate options that are too general, are restatements of the statement, or introduce new unrelated information.</li>
+      <li>Select the option that is both necessary and minimal.</li>
+    </ol>
+
+    <h2 class="sec-title">8. Worked Example</h2>
+    <div class="example">
+      <div class="tag">STATEMENT</div>
+      <p>"To reduce the number of road accidents in the city, the traffic police have decided to install speed cameras at all major intersections."</p>
+      <div class="tag">ASSUMPTION</div>
+      <p>Drivers who know they are being monitored by speed cameras are likely to reduce their speed.</p>
+      <div class="tag">NEGATION CHECK</div>
+      <p>If drivers do NOT reduce speed even when monitored, installing cameras would not help reduce accidents — the plan collapses. Since the statement's entire logic depends on this belief, it IS a valid, necessary assumption.</p>
+    </div>
+
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section class="panel" id="practice">
+    <h2 class="sec-title" style="border-top:none;">Practice MCQs (Competitive Exam Pattern)</h2>
+    <p style="color:var(--ink-soft);font-size:14.5px;">Each question gives a statement and four options. Choose the option that is the most reasonable IMPLICIT ASSUMPTION underlying the statement. Tap an option to check it; tap "Show explanation" for the reasoning.</p>
+    <div class="score-bar" id="scoreBar">Score: 0 / 8</div>
+
+    <div id="quizRoot"></div>
+  </section>
+
+  <!-- ================= ANSWER KEY ================= -->
+  <section class="panel" id="answers">
+    <h2 class="sec-title" style="border-top:none;">Answer Key with Explanations</h2>
+    <div id="ansRoot"></div>
+  </section>
+
+  <footer class="note">ESEP-V · Module 2 · Sub-topic: Statement and Assumption</footer>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    statement: 'A notice outside a library reads, "Silence must be maintained at all times inside the reading hall."',
+    options: [
+      "Some readers may talk loudly if not instructed otherwise.",
+      "The library has more than one reading hall.",
+      "All readers dislike noise.",
+      "The notice will be read by everyone who enters."
+    ],
+    correct: 0,
+    explanation: "The notice is only necessary if there is a real possibility some readers would otherwise be noisy. This is the minimal, necessary assumption; the others are either unstated facts, over-broad claims, or unrelated to the notice's purpose."
+  },
+  {
+    statement: "An advertisement says, \"Buy our water purifier — because your family's health cannot be compromised.\"",
+    options: [
+      "This purifier is the only effective option in the market.",
+      "The advertisement is legally approved.",
+      "Consumers are willing to pay more for a product linked to family health.",
+      "All competing purifiers are unsafe."
+    ],
+    correct: 2,
+    explanation: "The ad's persuasive logic depends on buyers valuing health enough to act on a health-based appeal. Options (a) and (d) are extreme claims the ad does not need; (c) is irrelevant to the reasoning."
+  },
+  {
+    statement: 'The principal announced, "Students who arrive after 9:00 a.m. will not be allowed to enter the examination hall."',
+    options: [
+      "Some students may attempt to arrive late.",
+      "All students own a working watch.",
+      "9:00 a.m. is a reasonable time for every student to arrive.",
+      "The examination will not be rescheduled."
+    ],
+    correct: 0,
+    explanation: "A rule restricting late entry only has purpose if lateness is a genuine possibility among students. This is the necessary, minimal assumption underlying the rule."
+  },
+  {
+    statement: '"The company should shift its customer support operations online to cut costs."',
+    options: [
+      "Online support can be delivered at a lower cost than the current model.",
+      "Online support is always preferred by customers.",
+      "The company currently has no online presence at all.",
+      "Cost-cutting is the company's only business objective."
+    ],
+    correct: 0,
+    explanation: "The recommendation's entire rationale (\"to cut costs\") depends on online support actually being cheaper. Negate it — if online support were not cheaper, the recommendation would fail to achieve its stated goal."
+  },
+  {
+    statement: 'A sign at a construction site reads, "Helmets are mandatory beyond this point."',
+    options: [
+      "Workers may enter the area without a helmet if not instructed.",
+      "All accidents at construction sites are caused by head injuries.",
+      "Helmets are uncomfortable to wear for long hours.",
+      "The site has never had an accident before."
+    ],
+    correct: 0,
+    explanation: "The mandate is meaningful only if, without it, some workers would proceed unprotected. The other options are either overstated (b), irrelevant to the rule's necessity (c), or contradicted by the very existence of a safety rule (d)."
+  },
+  {
+    statement: '"To improve student performance in Verbal English, the department has introduced weekly vocabulary quizzes with instant score feedback."',
+    options: [
+      "Students are more motivated to learn when they receive immediate feedback on performance.",
+      "Vocabulary is the only factor affecting Verbal English performance.",
+      "All students will score well on the quizzes.",
+      "Weekly quizzes are more effective than monthly exams in every subject."
+    ],
+    correct: 0,
+    explanation: "The stated purpose (\"to improve performance\") depends on instant feedback actually motivating better learning. This is the minimal link connecting the action to its intended effect; the rest are extreme or unrelated generalisations."
+  },
+  {
+    statement: 'A bank circular states, "Customers are requested to update their KYC details before the 30th of this month to avoid account suspension."',
+    options: [
+      "Some customers have not yet updated their KYC details.",
+      "All customers read bank circulars carefully.",
+      "KYC updates take less than a day to process.",
+      "Account suspension is irreversible."
+    ],
+    correct: 0,
+    explanation: "A deadline-based warning is issued precisely because it is assumed that not everyone has already complied. Without this assumption, the circular would serve no purpose."
+  },
+  {
+    statement: '"Engineers applying for the GATE exam should begin their preparation at least six months in advance."',
+    options: [
+      "Six months of preparation meaningfully improves a candidate's chances of success.",
+      "No candidate can clear GATE with less than six months of preparation.",
+      "All engineering students plan to appear for GATE.",
+      "GATE preparation material takes six months to complete regardless of the candidate."
+    ],
+    correct: 0,
+    explanation: "The recommendation's logic requires that the extra preparation time actually helps outcomes — a necessary but modest assumption. (b) and (d) overstate this into an absolute rule the statement does not require."
+  }
+];
+
+const LETTERS = ["a","b","c","d"];
+let score = 0;
+const answered = new Array(QUESTIONS.length).fill(false);
+
+function buildQuiz(){
+  const root = document.getElementById('quizRoot');
+  QUESTIONS.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'q-card';
+
+    const num = document.createElement('div');
+    num.className = 'q-num';
+    num.textContent = 'Q' + (qi+1);
+    card.appendChild(num);
+
+    const stmt = document.createElement('div');
+    stmt.className = 'q-text';
+    stmt.textContent = 'Statement: ' + q.statement;
+    card.appendChild(stmt);
+
+    const explainEl = document.createElement('div');
+    explainEl.className = 'explain';
+    explainEl.innerHTML = '<div class="verdict"></div><div class="expl-text">' + q.explanation + '</div>';
+
+    q.options.forEach((optText, oi) => {
+      const opt = document.createElement('div');
+      opt.className = 'opt';
+      opt.innerHTML = '<span class="letter">(' + LETTERS[oi] + ')</span><span>' + optText + '</span>';
+      opt.addEventListener('click', () => {
+        if(answered[qi]) return;
+        answered[qi] = true;
+        const allOpts = card.querySelectorAll('.opt');
+        allOpts.forEach(o => o.classList.add('disabled'));
+        allOpts[q.correct].classList.add('correct');
+        const verdict = explainEl.querySelector('.verdict');
+        if(oi === q.correct){
+          score++;
+          verdict.textContent = 'Correct.';
+          verdict.className = 'verdict right';
+        } else {
+          opt.classList.add('incorrect');
+          verdict.textContent = 'Not quite — correct answer is (' + LETTERS[q.correct] + ').';
+          verdict.className = 'verdict wrong';
+        }
+        explainEl.classList.add('show');
+        document.getElementById('scoreBar').textContent = 'Score: ' + score + ' / ' + QUESTIONS.length;
+      });
+      card.appendChild(opt);
+    });
+
+    const revealBtn = document.createElement('button');
+    revealBtn.className = 'reveal-btn';
+    revealBtn.textContent = 'Show explanation';
+    revealBtn.addEventListener('click', () => {
+      if(!answered[qi]){
+        answered[qi] = true;
+        const allOpts = card.querySelectorAll('.opt');
+        allOpts.forEach(o => o.classList.add('disabled'));
+        allOpts[q.correct].classList.add('correct');
+        const verdict = explainEl.querySelector('.verdict');
+        verdict.textContent = 'Correct answer: (' + LETTERS[q.correct] + ')';
+        verdict.className = 'verdict';
+      }
+      explainEl.classList.toggle('show');
+    });
+    card.appendChild(revealBtn);
+    card.appendChild(explainEl);
+    root.appendChild(card);
+  });
+}
+
+function buildAnswerKey(){
+  const root = document.getElementById('ansRoot');
+  QUESTIONS.forEach((q, qi) => {
+    const item = document.createElement('div');
+    item.className = 'ak-item';
+    item.innerHTML = '<div class="ak-head">Q' + (qi+1) + ': (' + LETTERS[q.correct] + ')</div>' +
+      '<p>Q' + (qi+1) + '. ' + q.explanation + '</p>';
+    root.appendChild(item);
+  });
+}
+
+function initTabs(){
+  const buttons = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.panel');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+buildQuiz();
+buildAnswerKey();
+initTabs();
+</script>
+</body>
+</html>

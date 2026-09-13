@@ -1,0 +1,45 @@
+name: Vercel Auto-Retention (Keep 4 Production, Delete Previews)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prune old Vercel deployments
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # 1. Delete ALL old preview builds (where the 61 GB came from)
+          echo "Scanning preview deployments..."
+          PREVIEWS=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&target=preview&limit=100" | jq -r '.deployments[]?.uid // empty')
+
+          for ID in $PREVIEWS; do
+            echo "Deleting preview deployment: $ID"
+            curl -s -X DELETE -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v13/deployments/$ID" > /dev/null
+          done
+
+          # 2. Keep only latest 4 Production builds (1 live + 3 rollback history)
+          echo "Scanning production deployments..."
+          PROD_BUILDS=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&target=production&limit=100" | jq -r '.deployments[]?.uid // empty')
+
+          COUNT=0
+          for ID in $PROD_BUILDS; do
+            COUNT=$((COUNT + 1))
+            if [ $COUNT -le 4 ]; then
+              echo "Keeping Production #$COUNT: $ID"
+            else
+              echo "Deleting old Production #$COUNT: $ID"
+              curl -s -X DELETE -H "Authorization: Bearer $VERCEL_TOKEN" \
+                "https://api.vercel.com/v13/deployments/$ID" > /dev/null
+            fi
+          done
+
+          echo "Done! Vercel storage kept strictly minimal."

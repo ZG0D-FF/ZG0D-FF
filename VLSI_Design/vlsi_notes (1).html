@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VLSI Notes — Ch 2.8–2.10</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #181c27;
+    --border: #2a2f3d;
+    --accent: #4f8ef7;
+    --green: #3ecf8e;
+    --yellow: #f5c542;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --mono: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.65; padding: 24px 16px; max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; letter-spacing: .3px; }
+  h2 { font-size: 1rem; color: var(--yellow); margin: 28px 0 10px; }
+  h3 { font-size: .9rem; color: var(--green); margin: 16px 0 6px; }
+  p { margin-bottom: 10px; color: var(--text); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
+  .tag { display: inline-block; background: var(--accent); color: #fff; font-size: .7rem; border-radius: 4px; padding: 1px 7px; margin-right: 6px; font-weight: 600; vertical-align: middle; }
+  .tag.g { background: var(--green); color: #000; }
+  .tag.y { background: var(--yellow); color: #000; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: .88rem; }
+  th { background: #1e2335; color: var(--accent); text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--border); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .formula { font-family: var(--mono); background: #1a1e2e; border-left: 3px solid var(--accent); padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 10px 0; font-size: .9rem; color: #a9c8ff; }
+  .warn { border-left-color: var(--yellow); color: var(--yellow); }
+  .note { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+  ul { padding-left: 18px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:520px){ .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>VLSI Design — Sections 2.8, 2.9, 2.10</h1>
+
+<!-- 2.8 -->
+<h2>2.8 Pull-up / Pull-down Ratio — nMOS Inverter via Pass Transistors</h2>
+
+<div class="card">
+  <p><strong>Setup:</strong> Inverter 1 → pass transistor(s) → Inverter 2.</p>
+  <p><strong>Problem:</strong> Does Inverter 2 still see a valid logic 1 after passing through the switch?</p>
+</div>
+
+<h3>Voltage Loss</h3>
+<div class="formula">V<sub>C</sub> = V<sub>DD</sub> − V<sub>tp</sub></div>
+<p class="note">Even with many pass transistors in series, loss is only <em>one</em> V<sub>tp</sub> — no static current means no extra drop.</p>
+
+<h3>Deriving the New Ratio</h3>
+<p>Equating outputs of both inverters (V<sub>out1</sub> = V<sub>out2</sub>) yields:</p>
+<div class="formula">Z<sub>pu2</sub> / Z<sub>pd2</sub> = (Z<sub>pu1</sub> / Z<sub>pd1</sub>) × (V<sub>DD</sub> − V<sub>t</sub>) / (V<sub>DD</sub> − V<sub>tp</sub> − V<sub>t</sub>)</div>
+
+<h3>Typical Values</h3>
+<div class="formula warn">V<sub>t</sub> = 0.2 V<sub>DD</sub> &nbsp;&nbsp; V<sub>tp</sub> = 0.3 V<sub>DD</sub> &nbsp;&nbsp; → &nbsp;&nbsp; 0.8 / 0.5 = 1.6×</div>
+
+<h3>Design Rules</h3>
+<table>
+  <tr><th>Situation</th><th>Z<sub>pu</sub> : Z<sub>pd</sub></th></tr>
+  <tr><td>Directly driven inverter</td><td>4 : 1</td></tr>
+  <tr><td>Driven through pass transistor(s)</td><td>8 : 1</td></tr>
+</table>
+<p class="note"><span class="tag y">EXAM TRAP</span> Only <strong>Inverter 2</strong> (the driven one) changes its ratio. Inverter 1 stays at 4:1.</p>
+
+<!-- 2.9 -->
+<h2>2.9 Alternative Pull-Up Forms</h2>
+
+<div class="grid2">
+  <div class="card">
+    <h3>1. Resistor</h3>
+    <ul>
+      <li>Simple circuit</li>
+      <li>❌ Large silicon area</li>
+      <li>❌ Wastes power</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>2. nMOS Depletion-mode</h3>
+    <ul>
+      <li>✅ Better charging at start of transition (acts as low-R)</li>
+      <li>Switches when V<sub>in</sub> > V<sub>t</sub></li>
+      <li>❌ High static power (current from V<sub>DD</sub> to GND when input = 1)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>3. nMOS Enhancement-mode</h3>
+    <ul>
+      <li>❌ Output never reaches full V<sub>DD</sub></li>
+      <li>✅ Clocked V<sub>GG</sub> reduces power</li>
+      <li>V<sub>GG</sub> > V<sub>DD</sub> needs extra supply rail</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>4. CMOS (pMOS pull-up)</h3>
+    <ul>
+      <li>✅ No static current at stable states</li>
+      <li>✅ Full logic levels (0 to V<sub>DD</sub>)</li>
+      <li>⚠ pMOS is slower than nMOS for equal dimensions</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 2.10 -->
+<h2>2.10 CMOS Inverter — Five Regions</h2>
+
+<table>
+  <tr><th>Region</th><th>nMOS</th><th>pMOS</th><th>Output</th></tr>
+  <tr><td>1 — V<sub>in</sub> = 0</td><td>OFF</td><td>ON (resistive)</td><td>V<sub>DD</sub>, no current</td></tr>
+  <tr><td>2 — V<sub>in</sub> slightly > V<sub>t</sub></td><td>Saturation</td><td>Resistive</td><td>Small current flows</td></tr>
+  <tr><td><strong>3 — Gain region</strong></td><td>Saturation</td><td>Saturation</td><td>Both act as current sources; high gain, rapid switch</td></tr>
+  <tr><td>4 — Mirror of Region 2</td><td>Resistive</td><td>Saturation</td><td>Small current flows</td></tr>
+  <tr><td>5 — V<sub>in</sub> = V<sub>DD</sub></td><td>ON (resistive)</td><td>OFF</td><td>GND, no current</td></tr>
+</table>
+
+<h3>Symmetrical Switching Point</h3>
+<p>When β<sub>n</sub> = β<sub>p</sub> and V<sub>tn</sub> = −V<sub>tp</sub>:</p>
+<div class="formula">V<sub>in</sub> = 0.5 V<sub>DD</sub></div>
+
+<h3>Why pMOS Must Be Wider</h3>
+<div class="formula">W<sub>p</sub>/L<sub>p</sub> ≈ 2.5 × W<sub>n</sub>/L<sub>n</sub></div>
+<p class="note">Hole mobility is lower than electron mobility, so pMOS needs ≈2.5× the W/L ratio to match nMOS strength.</p>
+
+<h3>Mobility Correction</h3>
+<div class="formula">μ = μ<sub>z</sub>(1 − φ(V<sub>gs</sub> − V<sub>t</sub>)) &nbsp;&nbsp; where φ ≈ 0.05</div>
+<p class="note">β<sub>n</sub> = β<sub>p</sub> is exact only near V<sub>in</sub> = V<sub>out</sub> = 0.5 V<sub>DD</sub>.</p>
+
+<!-- Quick ref -->
+<h2>Quick Reference</h2>
+<table>
+  <tr><th>Topic</th><th>Key Result</th></tr>
+  <tr><td>Pass transistor output</td><td>V<sub>DD</sub> − V<sub>tp</sub></td></tr>
+  <tr><td>Direct nMOS ratio</td><td>4 : 1</td></tr>
+  <tr><td>Pass-transistor-driven ratio</td><td>8 : 1</td></tr>
+  <tr><td>Ratio change applies to</td><td>Driven inverter only</td></tr>
+  <tr><td>Best nMOS pull-up</td><td>Depletion-mode MOS</td></tr>
+  <tr><td>Best CMOS pull-up</td><td>pMOS transistor</td></tr>
+  <tr><td>CMOS gain region</td><td>Region 3</td></tr>
+  <tr><td>Symmetrical switch point</td><td>V<sub>in</sub> = 0.5 V<sub>DD</sub></td></tr>
+  <tr><td>Balanced geometry</td><td>W<sub>p</sub>/L<sub>p</sub> ≈ 2.5 W<sub>n</sub>/L<sub>n</sub></td></tr>
+  <tr><td>β<sub>n</sub>/β<sub>p</sub> = 1 → V<sub>M</sub></td><td>2.5 V (for 5 V supply)</td></tr>
+  <tr><td>β<sub>n</sub>/β<sub>p</sub> = 10 → V<sub>M</sub></td><td>≈ 1.72 V (shift = 0.78 V toward GND)</td></tr>
+</table>
+
+</body>
+</html>

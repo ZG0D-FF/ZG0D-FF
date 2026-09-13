@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Theory (Slides 1–22) — Lucidified Notes</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: 20px auto; padding: 0 20px; color: #333; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { border-bottom: 2px solid #34495e; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 30px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ccc; padding: 10px 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        blockquote { border-left: 4px solid #3498db; margin: 0; padding-left: 15px; background: #f9f9f9; padding: 15px; font-style: italic; border-radius: 0 4px 4px 0; }
+        .highlight { background-color: #e8f4f8; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #0277bd; }
+        .memory-trick { background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0; }
+        .summary-box { background-color: #eef7ee; padding: 20px; border-radius: 5px; border: 1px solid #c3e6c3; margin-top: 30px; }
+        code { background-color: #f4f4f4; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+        .formula { font-family: "Courier New", Courier, monospace; font-size: 1.1em; background: #f9f9f9; padding: 10px; display: inline-block; border-radius: 4px; border: 1px solid #eee; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>Information Theory (Slides 1–22) — Lucidified Notes</h1>
+    
+    <blockquote>
+        <strong>Core Idea of the whole chapter:</strong><br>
+        Information is simply a way of measuring how much uncertainty gets reduced when something happens.
+    </blockquote>
+
+    <h2>Slide 1 — What is this chapter about?</h2>
+    <p>This chapter has four connected ideas. Think of it as climbing a staircase:</p>
+    <ol>
+        <li><strong>Uncertainty and Information:</strong> Why some events feel "more informative" than others.</li>
+        <li><strong>Self Information:</strong> Information contained in a single event.</li>
+        <li><strong>Mutual Information:</strong> How much one event tells us about another.</li>
+        <li><strong>Average Mutual Information:</strong> Average information shared between two random variables.</li>
+    </ol>
+
+    <h2>Slides 2–4 — Why does uncertainty become information?</h2>
+    <p>The slides compare three sentences:</p>
+    <table>
+        <tr>
+            <th>Statement</th>
+            <th>Probability</th>
+            <th>Information</th>
+        </tr>
+        <tr><td>Sun rises in East</td><td>Almost 1</td><td>Almost none</td></tr>
+        <tr><td>Phone rings next hour</td><td>Medium</td><td>Medium</td></tr>
+        <tr><td>Snow in Delhi</td><td>Very low</td><td>Very high</td></tr>
+    </table>
+
+    <p><strong>Why?</strong> Imagine someone tells you: <em>"The sun will rise tomorrow."</em> Your reaction? <em>"Obviously."</em> Nothing new.<br>
+    Now someone says, <em>"It will snow in Delhi."</em> Now you're surprised. That surprise is exactly what these slides call information.</p>
+
+    <div class="highlight">
+        <strong>Golden Rule:</strong> Less probable event &rarr; More information.<br>
+        <em>Why?</em> Because before the event happened, there was much more uncertainty.
+    </div>
+
+    <h2>Slide 4 — Self Information</h2>
+    <p>Now the slides convert intuition into mathematics. For an event <code>X = x<sub>i</sub></code>, self-information is:</p>
+    <div class="formula">I(x<sub>i</sub>) = log( 1 / P(x<sub>i</sub>) ) = -log P(x<sub>i</sub>)</div>
+    <p>This formula measures the information contained in one specific event.</p>
+
+    <h3>Break the formula:</h3>
+    <ul>
+        <li>Suppose <code>P = 0.5</code>. Then <code>I = -log<sub>2</sub>(0.5) = 1 bit</code></li>
+        <li>Suppose <code>P = 0.25</code>. Then <code>I = -log<sub>2</sub>(0.25) = 2 bits</code></li>
+    </ul>
+
+    <p>Notice something beautiful:</p>
+    <table>
+        <tr><th>Probability</th><th>Self Information</th></tr>
+        <tr><td>1</td><td>0 bits</td></tr>
+        <tr><td>0.5</td><td>1 bit</td></tr>
+        <tr><td>0.25</td><td>2 bits</td></tr>
+        <tr><td>0.125</td><td>3 bits</td></tr>
+    </table>
+    <p><em>Every time probability halves, information increases by one bit.</em></p>
+
+    <p><strong>Why "bit"?</strong> The slide says: Base 2 &rarr; bits, Base e &rarr; nats. For exams, unless stated otherwise, use base 2.</p>
+
+    <h2>Slides 5–7 — Fair Coin Examples</h2>
+    
+    <h3>Example 1 — A fair coin</h3>
+    <p><code>P(H) = P(T) = 0.5</code><br>
+    Information of Head: <code>I = -log<sub>2</sub>(0.5) = 1 bit</code>. Same for Tail.</p>
+    <p><strong>Why exactly one bit?</strong> Because only two possibilities exist. One binary digit is enough (Head = 1, Tail = 0).</p>
+
+    <h3>Example 2 — Memoryless Source</h3>
+    <p>The slide introduces an important word: <strong>Memoryless</strong>. Each toss does not remember previous tosses. Every toss is independent.</p>
+    <p>Suppose we observe 3 tosses. There are <code>2<sup>3</sup> = 8</code> possible sequences (HHH, HHT, etc.).<br>
+    Each has probability <code>1/8</code>.<br>
+    Information becomes <code>I = -log<sub>2</sub>(1/8) = 3 bits</code>.<br>
+    <em>Notice:</em> 3 tosses require 3 bits. Exactly matching intuition.</p>
+
+    <h3>Example 3 — Two Independent Sources</h3>
+    <p>Source A gives one bit. Source B gives one bit. Together they form Source C.<br>
+    Since they're independent, <code>P(C) = P(A) &times; P(B) = 0.5 &times; 0.5 = 0.25</code>.<br>
+    Information becomes <code>I(C) = -log<sub>2</sub>(0.25) = 2 bits</code>.</p>
+    <p><strong>Big observation:</strong> Two independent 1-bit sources become 2 bits. Nothing mysterious happened. Information simply added.</p>
+
+    <h2>Slide 8 — Why do we use logarithm?</h2>
+    <p>This slide answers a famous question. Without logarithm, independent probabilities multiply (<code>0.5 &times; 0.5 = 0.25</code>). But information should add (<code>1 + 1 = 2</code>).</p>
+    <p>The logarithm converts multiplication into addition:<br>
+    <div class="formula">log(ab) = log a + log b</div>
+    This is exactly why Shannon chose logarithms.</p>
+
+    <div class="memory-trick">
+        <strong>Memory Trick:</strong> Probability multiplies. Log converts multiplication into addition. Therefore information adds. This is one of the most important ideas in the chapter.
+    </div>
+
+    <h2>Slides 9–13 — Mutual Information</h2>
+    <p>Until now, we measured information inside one event. Now we ask a new question:<br>
+    <strong>If I observe Y, how much does it tell me about X?</strong><br>
+    This is Mutual Information.</p>
+
+    <p><strong>Example intuition:</strong> Suppose <code>X</code> = What was transmitted, and <code>Y</code> = What was received. After seeing <code>Y</code>, can we guess <code>X</code> better? That improvement is mutual information.</p>
+
+    <h3>Two extreme cases:</h3>
+    <ul>
+        <li><strong>Case 1 — Independent:</strong> If <code>X</code> and <code>Y</code> are unrelated, observing <code>Y</code> changes nothing. Mutual information becomes <code>I(X;Y) = 0</code>.</li>
+        <li><strong>Case 2 — Completely dependent:</strong> If <code>Y</code> completely reveals <code>X</code>, then observing <code>Y</code> removes all uncertainty. Mutual information becomes maximum.</li>
+    </ul>
+
+    <h3>Slide 11 — Formula</h3>
+    <div class="formula">I(x<sub>i</sub>; y<sub>j</sub>) = log( P(x<sub>i</sub> | y<sub>j</sub>) / P(x<sub>i</sub>) )</div>
+    <p>Read it in words: Information equals "New probability after observing Y" divided by "Old probability before observing Y."<br>
+    <strong>Interpretation:</strong> If observing <code>Y</code> makes <code>X</code> much more likely, the ratio becomes large. Large ratio &rarr; Large information.</p>
+
+    <h3>Slide 12 — Symmetry</h3>
+    <p>The slide proves <code>I(x<sub>i</sub>; y<sub>j</sub>) = I(y<sub>j</sub>; x<sub>i</sub>)</code>. Meaning information shared between <code>X</code> and <code>Y</code> is identical in either direction. (If knowing your roll number identifies your exam paper, then your exam paper also identifies your roll number).</p>
+
+    <h3>Slide 13 — Physical Meaning</h3>
+    <ul>
+        <li><strong>Independent:</strong> <code>P(x|y) = P(x)</code>. Therefore <code>I = 0</code>. No information gained.</li>
+        <li><strong>Perfect dependence:</strong> If <code>P(x|y) = 1</code>, then <code>I = log(1 / P(x))</code>.<br>
+        <em>Wait. That's exactly the self-information formula.</em> Meaning: Perfect observation gives all the information that event originally contained.</li>
+    </ul>
+
+    <h2>Slides 14–18 — Binary Symmetric Channel (BSC)</h2>
+    <p>This is the first communication example. The channel behaves like this:</p>
+    <ul>
+        <li><strong>If we send 0:</strong> Receive 0 with probability <code>1 - p</code>. Receive 1 with probability <code>p</code>.</li>
+        <li><strong>If we send 1:</strong> Receive 1 with probability <code>1 - p</code>. Receive 0 with probability <code>p</code>.</li>
+    </ul>
+    <p>Notice: Both directions have the same error probability. That's why it's called <em>Symmetric</em>.</p>
+    
+    <p><strong>Output probabilities:</strong> The slide calculates <code>P(Y=0) = 0.5</code> and <code>P(Y=1) = 0.5</code>. So even after passing through the channel, outputs remain equally likely.</p>
+
+    <p><strong>Mutual Information inside BSC:</strong> The slide gives <code>I(0;0) = log<sub>2</sub>(2(1 - p))</code>.</p>
+    
+    <ul>
+        <li><strong>Case A — Perfect channel (p = 0):</strong> <code>I = log<sub>2</sub>(2) = 1 bit</code>. Everything received is correct. One received bit completely reveals one transmitted bit.</li>
+        <li><strong>Case B — Completely noisy channel (p = 0.5):</strong> <code>I = log<sub>2</sub>(1) = 0</code>. Receiving a bit tells us nothing. <em>(Tossing a fair coin would work equally well.)</em></li>
+    </ul>
+    <p><strong>How does the graph behave?</strong> As <code>p</code> increases, mutual information decreases. More errors &rarr; Less useful information.</p>
+
+    <h2>Slides 19–20 — General Binary Channel</h2>
+    <p>Now the slide removes symmetry. Instead of one error probability, there are two (<code>p<sub>0</sub></code> and <code>p<sub>1</sub></code> can be different).<br>
+    The slide substitutes them into:</p>
+    <div class="formula">I(0;0) = log<sub>2</sub>( 2(1 - p<sub>0</sub>) / (1 - p<sub>0</sub> + p<sub>1</sub>) )</div>
+    <p>Notice the pattern. It's still Conditional probability divided by ordinary probability. Only the probabilities became more complicated.</p>
+
+    <h2>Slide 21 — Average Mutual Information</h2>
+    <p>Until now, we looked at one pair of events (e.g., "0 was sent and 0 was received"). But many different pairs can occur. So we average them. The definition is:</p>
+    <div class="formula">I(X;Y) = &sum;<sub>i</sub> &sum;<sub>j</sub> P(x<sub>i</sub>, y<sub>j</sub>) log( P(x<sub>i</sub>, y<sub>j</sub>) / (P(x<sub>i</sub>)P(y<sub>j</sub>)) )</div>
+    <p><strong>Understand this slowly:</strong> For every possible pair <code>(x<sub>i</sub>, y<sub>j</sub>)</code>, find its probability, find its mutual information, multiply them, and add everything. It's simply a weighted average.</p>
+    
+    <p><strong>Important property:</strong> <code>I(X;Y) &ge; 0</code>. It becomes zero only when <code>X</code> and <code>Y</code> are independent. Meaning average shared information can never be negative.</p>
+
+    <div class="summary-box">
+        <h2>Slide 22 — Chapter Summary (Exam Revision Sheet)</h2>
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Formula</th>
+                <th>Meaning</th>
+            </tr>
+            <tr>
+                <td>Self Information</td>
+                <td><code>I(x) = -log P(x)</code></td>
+                <td>Information in one event</td>
+            </tr>
+            <tr>
+                <td>Mutual Information</td>
+                <td><code>I(x;y) = log( P(x|y) / P(x) )</code></td>
+                <td>Information gained about X after observing Y</td>
+            </tr>
+            <tr>
+                <td>Symmetry</td>
+                <td><code>I(x;y) = I(y;x)</code></td>
+                <td>Same in both directions</td>
+            </tr>
+            <tr>
+                <td>Average Mutual Info</td>
+                <td><code>&sum; P(x,y) log( P(x,y) / (P(x)P(y)) )</code></td>
+                <td>Average shared information</td>
+            </tr>
+            <tr>
+                <td>Independent events</td>
+                <td><code>I = 0</code></td>
+                <td>Observation gives no information</td>
+            </tr>
+            <tr>
+                <td>Perfect dependence</td>
+                <td><code>I = Self Information</code></td>
+                <td>Observation completely determines the event</td>
+            </tr>
+            <tr>
+                <td>BSC ideal</td>
+                <td><code>p = 0 &rArr; 1 bit</code></td>
+                <td>Perfect channel</td>
+            </tr>
+            <tr>
+                <td>BSC useless</td>
+                <td><code>p = 0.5 &rArr; 0</code></td>
+                <td>Output gives no information</td>
+            </tr>
+        </table>
+
+        <h3>The 5 Golden Intuitions to Remember:</h3>
+        <ol>
+            <li><strong>Less probability = More information.</strong></li>
+            <li><strong>Self-information</strong> measures one event's surprise.</li>
+            <li><strong>Independent sources</strong> add their information because logarithms turn multiplication into addition.</li>
+            <li><strong>Mutual information</strong> measures how much observing Y reduces uncertainty about X.</li>
+            <li><strong>Average mutual information</strong> is never negative and becomes zero only when X and Y are independent.</li>
+        </ol>
+    </div>
+
+</body>
+</html>
