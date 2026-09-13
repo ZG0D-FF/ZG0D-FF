@@ -283,7 +283,7 @@ if (payload.action === "get_known_users") {
               return errorResponse("[SECURITY ALERT] This alias is reserved for the System Architect. Invalid or missing authorization token.");
           }
       }
-      const userRole = isAdmin ? "[ADMIN]" : "[GUEST]";
+      const roleTag = isAdmin ? "[ADMIN]" : "[GUEST]";
 
       if (!isAdmin) {
         const rateLimit = await checkRateLimit(cleanVisitorName, context);
@@ -471,7 +471,7 @@ if (payload.action === "get_known_users") {
 
       const systemPrompt = masterTemplate
         .replace("{{VISITOR_NAME}}", payload.visitorName)
-        .replace("{{USER_ROLE}}", userRole)
+        .replace("{{USER_ROLE}}", roleTag)
         .replace("{{AGE}}", payload.age || "Unknown")
         .replace("{{MEMORY_PROFILE}}", trimmedMemory)
         .replace("{{CONVERSATION_SUMMARY}}", currentConversationSummary)
@@ -1974,10 +1974,13 @@ function sanitizeForDB(text, bannedWords) {
   let clean = text;
   for (const word of bannedWords) {
     if (typeof word !== 'string' || !word) continue;
-    const escaped = word.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
-    const regex = new RegExp(escaped, 'gi');
-    clean = clean.replace(regex, '[REDACTED]');
+    const target = word.slice(0, 100).toLowerCase();
+    if (!target) continue;
+    let idx = clean.toLowerCase().indexOf(target);
+    while (idx !== -1) {
+      clean = clean.slice(0, idx) + '[REDACTED]' + clean.slice(idx + target.length);
+      idx = clean.toLowerCase().indexOf(target, idx + 10);
+    }
   }
   return clean;
 }

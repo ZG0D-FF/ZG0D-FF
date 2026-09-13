@@ -398,7 +398,6 @@ if (payload.action === "get_known_users") {
       }
 	  // ✅ NEW: Save your admin status to the global context for the AI Router
       context.isAdmin = isAdmin;
-      const userRole = isAdmin ? "[ADMIN]" : "[GUEST]";
 
       if (!isAdmin) {
         const rateLimit = await checkRateLimit(cleanVisitorName, context);
@@ -424,7 +423,7 @@ if (payload.action === "get_known_users") {
       ]);
       if (existingUser) {
           // 🛡️ MITIGATION: Forcing Admin Clearance
-          existingUser.user_role = (existingUser.visitor_name_lower === 'dj' || existingUser.visitor_name_lower === 'dibyajyotee') ? 'ADMIN' : 'GUEST';
+          existingUser.user_role = context.isAdmin ? 'ADMIN' : 'GUEST';
       }
       // Parse the banned words array from the DB (fallback to empty array if missing)
       context.bannedWords = [];
@@ -2254,10 +2253,13 @@ function sanitizeForDB(text, bannedWords) {
   let clean = text;
   for (const word of bannedWords) {
     if (typeof word !== 'string' || !word) continue;
-    const escaped = word.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
-    const regex = new RegExp(escaped, 'gi');
-    clean = clean.replace(regex, '[REDACTED]');
+    const target = word.slice(0, 100).toLowerCase();
+    if (!target) continue;
+    let idx = clean.toLowerCase().indexOf(target);
+    while (idx !== -1) {
+      clean = clean.slice(0, idx) + '[REDACTED]' + clean.slice(idx + target.length);
+      idx = clean.toLowerCase().indexOf(target, idx + 10);
+    }
   }
   return clean;
 }
