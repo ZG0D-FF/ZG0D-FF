@@ -82,13 +82,6 @@ My strength is **rapid prototyping and system integration**. I build the physica
 
 <br/>
 
-<!-- ROW 1: GitHub Stats + Top Languages -->
-<div align="center">
-<img src="https://github-readme-stats.vercel.app/api?username=ZG0D-FF&show_icons=true&count_private=true&include_all_commits=true&theme=tokyonight&hide_border=true&title_color=00E5FF&text_color=a9b1d6&icon_color=00E5FF&bg_color=0D1117" width="48%" alt="GitHub Stats"/>
-&nbsp;
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ZG0D-FF&layout=compact&langs_count=6&theme=tokyonight&hide_border=true&title_color=00E5FF&text_color=a9b1d6&bg_color=0D1117" width="47%" alt="Top Languages"/>
-</div>
-<br/>
 
 <!-- ROW 2: Streak -->
 <div align="center">
@@ -109,18 +102,14 @@ My strength is **rapid prototyping and system integration**. I build the physica
   <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&size=16&duration=3000&pause=1000&color=00E5FF&center=true&vCenter=true&width=560&lines=Open+to+internships+%26+collabs;Building+at+the+edge+of+hardware+%2B+AI;Rapid+prototype+--+Wire+--+Deploy"/>
 </div>
 <div align="center">
-  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/main/assets/jarvis.svg" width="400" alt="JARVIS HUD"/>
+  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/main2/assets/jarvis.svg" width="400" alt="JARVIS HUD"/>
 </div>
 
-<!-- LIVE CUSTOM SENSOR HUD (Served from Vercel/Cloudflare) -->
+<!-- LIVE CUSTOM SENSOR HUD -->
 <div align="center">
   <br/>
   <a href="https://zg-0-d-ff.vercel.app/dashboard.html">
     <img src="https://img.shields.io/badge/OPEN%20LIVE%20EDGE%20DASHBOARD-0D1117?style=for-the-badge&logo=googlechrome&logoColor=00E5FF" alt="Dashboard Button"/>
-  </a>
-  <br/><br/>
-  <a href="https://github.com/ZG0D-FF/Edge-Olfaction">
-    <img src="https://soft-thunder-2965.zgodmr.workers.dev/sensor-hud.svg" width="600" alt="Live Sensor Telemetry"/>
   </a>
 </div>
 
