@@ -90,17 +90,6 @@ My engineering philosophy is built on **performance, low latency, and mathematic
 <br/>
 
 
-<!-- ROW 2: Streak -->
-<div align="center">
-<img src="https://streak-stats.demolab.com?user=ZG0D-FF&theme=tokyonight&hide_border=true&ring=00E5FF&fire=00E5FF&currStreakLabel=00E5FF&sideLabels=a9b1d6&dates=a9b1d6&background=0D1117&stroke=1C2333&border_radius=6&cache_bust=main2" width="65%" alt="GitHub Streak"/>
-</div>
-<br/>
-
-<div align="center">
-  <img src="https://quotes-github-readme.vercel.app/api?type=horizontal&theme=tokyonight"/>
-</div>
-<br/>
-
 <!-- TERMINAL SYSTEM STATUS FOOTER -->
 <div align="center">
   <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output/github-contribution-grid-snake-dark.svg" alt="Snake contribution graph"/>
@@ -120,22 +109,21 @@ My engineering philosophy is built on **performance, low latency, and mathematic
   </a>
 </div>
 
-<!-- 3D ISOMETRIC CONTRIBUTION CITYSCAPE -->
-<div align="center">
-  <br/>
-  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-3d/profile-3d-contrib/profile-night-rainbow.svg" width="100%" alt="3D Cityscape"/>
-</div>
 
 <!-- CONTRIBUTORS & AI ARCHITECTS -->
 <br/>
 
 ### ⬛ CONTRIBUTORS & AI PAIR PROGRAMMERS
-<sub><i>Engineering intelligence · Co-architected & hardened with Google AI</i></sub>
+<sub><i>Engineering intelligence · Co-architected & hardened with Frontier AI</i></sub>
 
 <div align="center">
 
 <br/>
 
+<a href="https://claude.ai">
+  <img src="https://img.shields.io/badge/Anthropic%20Claude-0D1117?style=for-the-badge&logo=anthropic&logoColor=00E5FF" alt="Anthropic Claude"/>
+</a>
+&nbsp;
 <a href="https://deepmind.google/technologies/gemini/">
   <img src="https://img.shields.io/badge/Google%20Gemini-0D1117?style=for-the-badge&logo=googlegemini&logoColor=00E5FF" alt="Google Gemini"/>
 </a>
@@ -146,8 +134,9 @@ My engineering philosophy is built on **performance, low latency, and mathematic
 
 <br/><br/>
 
-> **Core Pair Programmer & Autonomous Systems Agent:**  
-> **Google DeepMind Antigravity (powered by Gemini)** — Active co-engineering partner for system architectures, automated vulnerability remediation, edge security scanning, and algorithm optimization.
+> **Core Pair Programmers & Autonomous Systems Engineering:**  
+> - **Anthropic Claude** — Architecture design, edge pipeline formulation, and rapid system ideation.  
+> - **Google DeepMind Antigravity (powered by Gemini)** — Autonomous pair programming, AST-level vulnerability remediation, CodeQL hardening, and low-latency systems optimization.
 
 </div>
 
