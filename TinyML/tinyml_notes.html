@@ -1873,6 +1873,196 @@
 <div class="divider"></div>
 <div class="divider"></div>
 <div class="divider"></div>
+<section id="tutorial-1-2">
+  <div class="section-label">Tutorial 1.2</div>
+  <h2 class="section-title">Building your first<br>Neural Network</h2>
+
+  <!-- CODE BLOCK -->
+  <div style="background: #050505; border: 1px solid #222; border-left: 4px solid var(--gold); padding: 24px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.8rem; color: #aaa; position: relative; overflow-x: auto; margin-bottom: 60px;">
+<pre style="margin: 0; white-space: pre-wrap; line-height: 1.5; color: #ccc;"># ==============================================================================
+# Tutorial 1.2: Building your first Neural Network
+# Modeled Relationship: y = 2x - 1
+# ==============================================================================
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
+
+# ------------------------------------------------------------------------------
+# SECTION 1: Single-Layer Neural Network
+# ------------------------------------------------------------------------------
+# 1. Define the layer and model
+my_layer = keras.layers.Dense(units=1, input_shape=[1])
+model_1 = keras.Sequential([my_layer])
+
+# 2. Compile model with SGD optimizer and Mean Squared Error loss
+model_1.compile(optimizer='sgd', loss='mean_squared_error')
+
+# 3. Small training dataset (6 points satisfying y = 2x - 1)
+xs = np.array([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0], dtype=float)
+ys = np.array([-3.0, -1.0, 1.0, 3.0, 5.0, 7.0], dtype=float)
+
+# 4. Train the model for 500 epochs
+model_1.fit(xs, ys, epochs=500)
+
+# 5. Prediction on unseen data
+print("Single-Layer Prediction for x=10:", model_1.predict(np.array([10.0])))
+print("Learned W and B:", my_layer.get_weights())
+
+# ------------------------------------------------------------------------------
+# SECTION 2: Multi-Layer Neural Network (Single Input x)
+# ------------------------------------------------------------------------------
+my_layer_1 = keras.layers.Dense(units=2, input_shape=[1])
+my_layer_2 = keras.layers.Dense(units=1)
+model_2 = keras.Sequential([my_layer_1, my_layer_2])
+model_2.compile(optimizer='sgd', loss='mean_squared_error')
+model_2.fit(xs, ys, epochs=500)
+
+print("Multi-Layer Prediction for x=10:", model_2.predict(np.array([10.0])))
+w1, b1 = my_layer_1.get_weights()
+w2, b2 = my_layer_2.get_weights()
+print("Layer 1 Weights:\n", w1, "\nLayer 1 Biases:\n", b1)
+print("Layer 2 Weights:\n", w2, "\nLayer 2 Biases:\n", b2)
+
+# Output neuron in Layer 2 (Manual Forward Pass):
+a1 = (10.0 * w1[0][0]) + b1[0]
+a2 = (10.0 * w1[0][1]) + b1[1]
+a3 = (a1 * w2[0][0]) + (a2 * w2[1][0]) + b2[0]
+print("Manual Forward Pass Output:", a3)
+
+# ------------------------------------------------------------------------------
+# SECTION 3: Multi-Layer Network with 2 Inputs (x1, x2)
+# ------------------------------------------------------------------------------
+multi_in_layer_1 = keras.layers.Dense(units=2, input_shape=[2])
+multi_in_layer_2 = keras.layers.Dense(units=1)
+model_3 = keras.Sequential([multi_in_layer_1, multi_in_layer_2])
+model_3.compile(optimizer='adam', loss='mean_squared_error')
+
+X_data, Y_data = [], []
+for x1 in range(100):
+  for x2 in range(100):
+    X_data.append([float(x1), float(x2)])
+    Y_data.append(2.0 * x1 - 1.0)
+X_data = np.array(X_data, dtype=float)
+Y_data = np.array(Y_data, dtype=float)
+
+model_3.fit(X_data, Y_data, epochs=10)
+test_input = np.array([[120.0, -10.0]])
+print("Prediction on [120, -10]:", model_3.predict(test_input))</pre>
+  </div>
+
+  <h3 style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--gold); letter-spacing: 2px; margin-bottom: 30px;">Video Transcript Notes</h3>
+  <div class="parts-grid reveal">
+    <div class="part-card">
+      <div class="part-num">01</div>
+      <div class="part-label">00:01 - 00:09</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Intro & Overview</div>
+      <div class="part-desc">Overview of neural network training via TensorFlow and Keras.<br><br><b>Roadmap:</b><br>- Part 1: Single-layer network setups.<br>- Part 2: Multi-layer network setups.<br>Goal: Learning the linear equation y = 2x - 1.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">02</div>
+      <div class="part-label">00:30 - 01:08</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Single-Layer Setup</div>
+      <div class="part-desc">A basic single-neuron setup featuring input, output, weight (W), and bias (b). Built using <code>keras.layers.Dense(units=1, input_shape=[1])</code>. Assembled into a feed-forward model via <code>tf.keras.Sequential</code>.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">03</div>
+      <div class="part-label">01:41 - 03:09</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Compile & Train</div>
+      <div class="part-desc">Configured with Mean Squared Error (MSE) and Stochastic Gradient Descent (SGD). Trains on a small 6-point dataset for 500 epochs to refine W and b. Inspecting parameters shows W ≈ 1.99 and b ≈ -0.99.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">04</div>
+      <div class="part-label">04:18 - 05:41</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Multi-Layer Architecture</div>
+      <div class="part-desc">Connects two layers: a 2-neuron hidden layer followed by a 1-neuron output layer. Input shape is only explicitly required for the initial layer; subsequent layers deduce it automatically.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">05</div>
+      <div class="part-label">07:12 - 08:48</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Divide and Conquer</div>
+      <div class="part-desc">The multi-layer structure converges quicker. Multiple parallel optimization paths per epoch enable faster overall convergence than a single neuron allows. Manual forward pass outputs match <code>model.predict()</code>.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-num">06</div>
+      <div class="part-label">09:58 - 12:57</div>
+      <div class="part-sep"></div>
+      <div class="part-title">Multi-Input Network</div>
+      <div class="part-desc">Expands from scalar to 2D vector input (X1, X2). Optimizer changes to <b>adam</b>. Generates 10,000 synthetic data points. Evaluated out-of-distribution [120, -10], matching the target expected value.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="tutorial-1-3">
+  <div class="section-label">Tutorial 1.3</div>
+  <h2 class="section-title">Classification with<br>Categorical Data</h2>
+
+  <!-- CODE BLOCK -->
+  <div style="background: #050505; border: 1px solid #222; border-left: 4px solid var(--gold); padding: 24px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.8rem; color: #aaa; position: relative; overflow-x: auto; margin-bottom: 60px;">
+<pre style="margin: 0; white-space: pre-wrap; line-height: 1.5; color: #ccc;"># ==============================================================================
+# Tutorial 1.3: Classification with Categorical Data
+# Task: Image Classification on the MNIST dataset
+# ==============================================================================
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------------------------------------------------------------------
+# SECTION 1: Data Loading & Preprocessing
+# ------------------------------------------------------------------------------
+mnist = keras.datasets.mnist
+(training_images, training_labels), (test_images, test_labels) = mnist.load_data()
+training_images = training_images / 255.0
+test_images = test_images / 255.0
+
+# ------------------------------------------------------------------------------
+# SECTION 2: Designing and Training the Neural Network
+# ------------------------------------------------------------------------------
+model = keras.Sequential([
+    keras.layers.Flatten(input_shape=(28, 28)),
+    keras.layers.Dense(units=20, activation='relu'),
+    keras.layers.Dense(units=10, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(training_images, training_labels, epochs=20, validation_data=(test_images, test_labels))
+
+# ------------------------------------------------------------------------------
+# SECTION 3: Evaluation & Prediction
+# ------------------------------------------------------------------------------
+loss, accuracy = model.evaluate(test_images, test_labels)
+print(f"Test Accuracy: {accuracy * 100:.2f}%")
+
+classifications = model.predict(test_images)
+predicted_class = np.argmax(classifications[0])
+print("Predicted Class:", predicted_class)
+print("Actual Ground Truth Class:", test_labels[0])
+
+# ------------------------------------------------------------------------------
+# SECTION 4: Inspecting Model Weights and Biases
+# ------------------------------------------------------------------------------
+layer_1 = keras.layers.Dense(units=20, activation='relu')
+layer_2 = keras.layers.Dense(units=10, activation='softmax')
+model_inspect = keras.Sequential([keras.layers.Flatten(input_shape=(28, 28)), layer_1, layer_2])
+model_inspect.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model_inspect.fit(training_images, training_labels, epochs=1)
+
+w1, b1 = layer_1.get_weights()
+w2, b2 = layer_2.get_weights()
+print(f"\nTotal weights in Layer 1: {w1.size}")
+print(f"Total biases in Layer 1: {b1.size}")
+print(f"Total weights in Layer 2: {w2.size}")
+print(f"Total biases in Layer 2: {b2.size}")</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
 
 <!-- FOOTER -->
 <footer>
