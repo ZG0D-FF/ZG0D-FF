@@ -915,6 +915,11 @@
     <li><a href="#lecture-5-3">5.3 What You'll Learn in Part 2</a></li>
     <li><a href="#lecture-6-1">6.1 Preview of TinyML Applications</a></li>
     <li><a href="#lecture-7-1">7.1 The ML Lifecycle</a></li>
+    <li><a href="#lecture-7-2">7.2 The ML Workflow</a></li>
+    <li><a href="#tut-7-3">7.3 Intro to TFLite</a></li>
+    <li><a href="#tut-2-1">Tutorial 2.1: TFLite Converter</a></li>
+    <li><a href="#tut-8-1">Tutorial 8.1: TFLite Optimization</a></li>
+    <li><a href="#lecture-8-2">8.2 Post-Training Quantization</a></li>
   </ul>
 
   <h3>PART 3: HARDWARE</h3>
@@ -922,7 +927,6 @@
     <li><a href="#wrap-nano">Arduino Nano 33 BLE Sense</a></li>
   </ul>
 </div>
-
 <!-- NAVBAR -->
 <nav id="device-banner" style="padding-left: 60px;">
   <div class="nav-logo">TINYML</div>
@@ -940,6 +944,9 @@
         <a href="#tut-4-1">4.1 Convolutions</a>
         <a href="#tut-4-2">4.2 DNN to CNN</a>
         <a href="#tut-4-3">4.3 Working w/ Images</a>
+        <a href="#tut-7-3">7.3 Intro to TFLite</a>
+        <a href="#tut-2-1">2.1 TFLite Converter</a>
+        <a href="#tut-8-1">8.1 TFLite Optimization</a>
       </div>
     </div>
 
@@ -952,6 +959,8 @@
         <a href="#lecture-5-3">5.3 Part 2</a>
         <a href="#lecture-6-1">6.1 Apps Preview</a>
         <a href="#lecture-7-1">7.1 ML Lifecycle</a>
+        <a href="#lecture-7-2">7.2 ML Workflow</a>
+        <a href="#lecture-8-2">8.2 Post-Training Quantization</a>
       </div>
     </div>
 
@@ -2240,6 +2249,125 @@ model = tf.keras.models.Sequential([
 model.compile(loss='binary_crossentropy', optimizer=RMSprop(learning_rate=0.001), metrics=['accuracy'])
 history = model.fit(train_generator, steps_per_epoch=8, epochs=15, validation_data=validation_generator, validation_steps=8)</span>
 
+<span class="spy-code" id="code-sec-24"># ==============================================================================
+# 7.3: Introduction to TFLite - Model Conversion Boilerplate
+# Task: Convert a trained TF model to a TFLite model, with optional Quantization
+# ==============================================================================
+import tensorflow as tf
+
+# 1. Standard Conversion (No Quantization)
+print("Converting model to TFLite (Standard)...")
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+
+with open('model.tflite', 'wb') as f:
+    f.write(tflite_model)
+print("Standard TFLite model saved as 'model.tflite'.")</span>
+
+<span class="spy-code" id="code-sec-25"># 2. Conversion WITH Post-Training Quantization (Float32 -> Int8)
+print("Converting model to TFLite (with int8 Quantization)...")
+converter_quant = tf.lite.TFLiteConverter.from_keras_model(model)
+converter_quant.optimizations = [tf.lite.Optimize.DEFAULT]
+tflite_quant_model = converter_quant.convert()
+
+with open('model_quantized.tflite', 'wb') as f:
+    f.write(tflite_quant_model)
+print("Quantized TFLite model saved as 'model_quantized.tflite'.")</span>
+
+<span class="spy-code" id="code-sec-26"># ==============================================================================
+# Tutorial 2.1: TensorFlow Lite Converter
+# Task: Train a simple regression model, convert it to TFLite, and test inference.
+# ==============================================================================
+import tensorflow as tf
+import numpy as np
+
+# 1. DESIGN AND TRAIN THE TENSORFLOW MODEL
+model = tf.keras.Sequential([tf.keras.layers.Dense(units=1, input_shape=[1])])
+model.compile(optimizer='sgd', loss='mean_squared_error')
+
+xs = np.array([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0], dtype=float)
+ys = np.array([ 1.0, 3.0, 5.0, 7.0, 9.0, 11.0], dtype=float)
+
+model.fit(xs, ys, epochs=500, verbose=0)</span>
+
+<span class="spy-code" id="code-sec-27"># 2. SAVE THE TENSORFLOW MODEL TO DISK
+export_dir = 'saved_model/1'
+tf.saved_model.save(model, export_dir)
+print(f"Model saved as a protobuf at {export_dir}")</span>
+
+<span class="spy-code" id="code-sec-28"># 3. CONVERT TO TENSORFLOW LITE (.tflite)
+converter = tf.lite.TFLiteConverter.from_saved_model(export_dir)
+tflite_model = converter.convert()
+
+tflite_model_path = 'model.tflite'
+with open(tflite_model_path, 'wb') as f:
+    f.write(tflite_model)</span>
+
+<span class="spy-code" id="code-sec-29"># 4. RUN INFERENCE USING THE TFLITE INTERPRETER
+interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
+interpreter.allocate_tensors()
+
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+input_index = input_details[0]['index']
+output_index = output_details[0]['index']
+
+to_predict = np.array([[10.0]], dtype=np.float32)
+interpreter.set_tensor(input_index, to_predict)
+interpreter.invoke()
+tflite_results = interpreter.get_tensor(output_index)</span>
+
+<span class="spy-code" id="code-sec-30"># 5. TEST WITH ANOTHER VALUE
+to_predict_2 = np.array([[5.5]], dtype=np.float32)
+interpreter.set_tensor(input_index, to_predict_2)
+interpreter.invoke()
+tflite_results_2 = interpreter.get_tensor(output_index)
+print(f"Prediction for x=5.5: {tflite_results_2[0][0]:.2f}")</span>
+
+<span class="spy-code" id="code-sec-31"># ==============================================================================
+# Tutorial 8.1: TFLite Optimization and Quantization
+# Task: Convert a model using Default Optimization and Full Int8 Quantization.
+# ==============================================================================
+# 1. SETUP: Create a dummy model and export it
+print("Building and exporting a dummy model...")
+model = tf.keras.Sequential([
+    tf.keras.Input(shape=(100, 100, 3)),
+    tf.keras.layers.Conv2D(16, 3, activation='relu'),
+    tf.keras.layers.GlobalAveragePooling2D(),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+export_dir = 'saved_model/cats_vs_dogs'
+model.export(export_dir)</span>
+
+<span class="spy-code" id="code-sec-32"># 2. STANDARD OPTIMIZATION (Default)
+print("\nConverting with Default Optimization...")
+converter_default = tf.lite.TFLiteConverter.from_saved_model(export_dir)
+converter_default.optimizations = [tf.lite.Optimize.DEFAULT]
+
+tflite_default_model = converter_default.convert()
+with open('model_optimized.tflite', 'wb') as f:
+    f.write(tflite_default_model)
+print("Optimized TFLite model saved.")</span>
+
+<span class="spy-code" id="code-sec-33"># 3. FULL INT8 QUANTIZATION USING A REPRESENTATIVE DATASET
+print("\nConverting with Full Int8 Quantization...")
+converter_quant = tf.lite.TFLiteConverter.from_saved_model(export_dir)
+converter_quant.optimizations = [tf.lite.Optimize.DEFAULT]
+
+def representative_data_generator():
+    for _ in range(100):
+        dummy_data = np.random.rand(1, 100, 100, 3).astype(np.float32)
+        yield [dummy_data]
+
+converter_quant.representative_dataset = representative_data_generator
+converter_quant.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+converter_quant.inference_input_type = tf.int8
+converter_quant.inference_output_type = tf.int8
+
+tflite_quant_model = converter_quant.convert()
+with open('model_quantized_int8.tflite', 'wb') as f:
+    f.write(tflite_quant_model)</span>
+
 
 </code></pre>
     </div>
@@ -2447,6 +2575,151 @@ history = model.fit(train_generator, steps_per_epoch=8, epochs=15, validation_da
         <div class="part-desc">The fit API takes the generator directly. Since it streams batches, we define <code>steps_per_epoch</code> (total images / batch size) to mark the end of an epoch. RMSprop is used as the optimizer alongside binary crossentropy loss.</div>
       </div>
 
+      <!-- Tutorial 7.3 Header -->
+      <h2 id="tut-7-3" class="section-title" style="font-size: 3rem; margin-top: 80px; margin-bottom: 20px;">7.3 Intro to TFLite</h2>
+      <p style="color: #888; font-size: 0.9rem; margin-bottom: 60px;">Task: Model Conversion & Compression</p>
+
+      <div class="what-card spy-trigger" data-target="code-sec-24" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">01</div>
+        <div class="part-title" style="font-size: 1.4rem;">High-Level Architecture</div>
+        <div class="part-desc">
+          When sharing models with the world, there are multiple deployment options: TensorFlow Serving (Cloud/REST), TensorFlow.js (Browser), and TensorFlow Lite / Micro (Constrained edge devices).<br><br>
+          <img src="assets/7_3_deployment_options.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="Deployment Options">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-24" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">02</div>
+        <div class="part-title" style="font-size: 1.4rem;">Edge Deployment Flow</div>
+        <div class="part-desc">
+          To run on constrained, low-power devices, models must be compressed. We use the TFLite Converter to optimize the trained Keras model into a Flatbuffer format.<br><br>
+          <img src="assets/7_3_tf_to_tflite.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="TF to TFLite Flow">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-25" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">03</div>
+        <div class="part-title" style="font-size: 1.4rem;">Model Compression: Pruning</div>
+        <div class="part-desc">
+          Pruning simplifies the model by removing excess synapses or neurons that do not have a dramatic impact on final accuracy. This aggressively cuts down memory consumption.<br><br>
+          <img src="assets/7_3_model_compression.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="Model Compression">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-25" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">04</div>
+        <div class="part-title" style="font-size: 1.4rem;">Model Compression: Quantization</div>
+        <div class="part-desc">
+          Quantization recasts weight data from high-memory Float32 (32 bits) down to Int8 (8 bits). As shown below, weight distributions are often tightly concentrated. Recasting to Int8 reduces memory by 75% while maintaining a very similar distribution.<br><br>
+          <img src="assets/7_3_quantization.png" style="width: 48%; display: inline-block; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="Quantization">
+          <img src="assets/7_3_weight_ranges.png" style="width: 48%; display: inline-block; border-radius: 4px; margin-top: 16px; border: 1px solid #333; float: right;" alt="Weight Ranges">
+        </div>
+      </div>
+      <!-- Appended TF vs TFLite Inference Engine Theory -->
+      <div class="what-card spy-trigger" data-target="code-sec-25" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">05</div>
+        <div class="part-title" style="font-size: 1.4rem;">The Inference Engine Philosophy</div>
+        <div class="part-desc">
+          <p style="margin-bottom: 16px;">When building ML systems, optimizing the model is only half the battle; you must optimize the runtime. <b>TensorFlow</b> is built for researchers to train complex models (backward passes) on cloud CPUs/GPUs. <b>TensorFlow Lite (TFLite)</b> strips away training logic, built explicitly for inference (forward passes) on mobile devices. <b>TFLite Micro</b> goes further, built for ultra-constrained bare-metal microcontrollers.</p>
+          <img src="assets/7_3_architecture_diagram.png" style="width: 100%; border-radius: 4px; border: 1px solid #333;" alt="Architecture Diagram">
+          <img src="assets/7_3_tf_vs_tflite_tree.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="TF vs TFLite Tree">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-25" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">06</div>
+        <div class="part-title" style="font-size: 1.4rem;">Network Topology & Operators</div>
+        <div class="part-desc">
+          <p style="margin-bottom: 16px;">Training requires constant topological changes and weight updates. Inference assumes a frozen model. While TF supports 1,400+ ops for research, TFLite supports ~130 widely used ops, and TFLite Micro supports ~50 bare-minimum ops. Furthermore, TF trains in Float32, while TFLite natively supports INT8 quantization.</p>
+          <img src="assets/7_3_key_differences.png" style="width: 100%; border-radius: 4px; border: 1px solid #333;" alt="Key Differences">
+          <img src="assets/7_3_ops_table.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="Operators Table">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-25" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">07</div>
+        <div class="part-title" style="font-size: 1.4rem;">Software Infrastructure & OS</div>
+        <div class="part-desc">
+          <p style="margin-bottom: 16px;">TF and TFLite require a host OS (Linux, Android) to handle dynamic memory allocation. TFLite Micro does not require an OS—it runs bare-metal, pre-allocating all memory statically to prevent crashes. TFLite also utilizes memory mapping to load models efficiently on mobile.</p>
+          <img src="assets/7_3_os_mapping_table.png" style="width: 100%; border-radius: 4px; border: 1px solid #333;" alt="OS Mapping Table">
+          <img src="assets/7_3_tflite_mobile.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="TFLite Mobile">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-25" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">08</div>
+        <div class="part-title" style="font-size: 1.4rem;">Hardware & Binary Footprint</div>
+        <div class="part-desc">
+          <p style="margin-bottom: 16px;">The standard TF binary is massive. The TFLite binary is ~3 MB (optimized for ARM Cortex-A), and TFLite Micro is measured in tens of kilobytes (optimized for Cortex-M). You cannot deploy a standard TF graph to a microcontroller; the TFLite Converter strips out training logic to create a lean inference engine.</p>
+          <img src="assets/7_3_binary_size_table.png" style="width: 100%; border-radius: 4px; border: 1px solid #333;" alt="Binary Size Table">
+        </div>
+      </div>
+	  
+      <!-- Tutorial 2.1 Header -->
+      <h2 id="tut-2-1" class="section-title" style="font-size: 3rem; margin-top: 80px; margin-bottom: 20px;">Tutorial 2.1:<br>TFLite Converter</h2>
+      <p style="color: #888; font-size: 0.9rem; margin-bottom: 60px;">Task: Train, Export, Convert, and Infer via TFLite</p>
+
+      <div class="what-card spy-trigger" data-target="code-sec-26" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">01</div>
+        <div class="part-title" style="font-size: 1.4rem;">Design & Train</div>
+        <div class="part-desc">We start by training a hyper-simple linear regression model (1 Dense layer, 1 neuron) on 6 data points to approximate the function y = 2x + 3.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-27" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">02</div>
+        <div class="part-title" style="font-size: 1.4rem;">Save the Model</div>
+        <div class="part-desc">We export the trained model to disk as a standard TensorFlow SavedModel (protobuf).</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-28" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">03</div>
+        <div class="part-title" style="font-size: 1.4rem;">Convert to TFLite</div>
+        <div class="part-desc">We use <code>tf.lite.TFLiteConverter.from_saved_model</code> to ingest the exported protobuf model and compress it down into the optimized <code>.tflite</code> Flatbuffer format, saving it to disk.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-29" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">04</div>
+        <div class="part-title" style="font-size: 1.4rem;">Run TFLite Inference</div>
+        <div class="part-desc">
+          To test the compressed model without embedded hardware, we instantiate the <code>tf.lite.Interpreter</code>.<br><br>
+          We allocate tensors, retrieve the precise input/output index details, format our prediction value (10.0) as a float32 array, set the tensor, and finally invoke the interpreter to get the result.
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-30" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">05</div>
+        <div class="part-title" style="font-size: 1.4rem;">Testing Edge Cases</div>
+        <div class="part-desc">We easily swap the tensor payload with a new float value (5.5) and re-invoke the interpreter to verify the TFLite model generalizes correctly.</div>
+      </div>
+
+      <!-- Tutorial 8.1 Header -->
+      <h2 id="tut-8-1" class="section-title" style="font-size: 3rem; margin-top: 80px; margin-bottom: 20px;">8.1 TFLite Optimization</h2>
+      <p style="color: #888; font-size: 0.9rem; margin-bottom: 60px;">Task: Quantization using Representative Datasets</p>
+
+      <div class="what-card spy-trigger" data-target="code-sec-31" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">01</div>
+        <div class="part-title" style="font-size: 1.4rem;">Setup Dummy Model</div>
+        <div class="part-desc">We simulate the baseline architecture (e.g. from the Cats vs. Dogs dataset) by creating a Sequential model with Conv2D, GlobalAveragePooling, and Dense layers, then exporting it via <code>model.export()</code>.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-32" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">02</div>
+        <div class="part-title" style="font-size: 1.4rem;">Default Optimization</div>
+        <div class="part-desc">At the point of model conversion, we can introduce built-in automatic optimization by setting <code>converter.optimizations = [tf.lite.Optimize.DEFAULT]</code>. This optimizes for both size (storage) and latency (speed), dropping our 9MB model down to 2.3MB.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-33" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">03</div>
+        <div class="part-title" style="font-size: 1.4rem;">Representative Dataset Gen</div>
+        <div class="part-desc">To properly quantize weights from Float32 to Int8, the converter needs to calibrate expected ranges. We write a Python generator function <code>representative_data_generator()</code> that yields dummy/sample batches of data representative of our actual test distribution.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-33" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">04</div>
+        <div class="part-title" style="font-size: 1.4rem;">Full Int8 Quantization</div>
+        <div class="part-desc">We pass our generator to the converter, specify <code>TFLITE_BUILTINS_INT8</code> as our strict supported ops (mandatory for hardware without floating-point units), and strictly force inputs/outputs to also be Int8. We convert, and save the aggressively compressed <code>.tflite</code> file.</div>
+      </div>
+
 
 
     </div>
@@ -2511,7 +2784,6 @@ history = model.fit(train_generator, steps_per_epoch=8, epochs=15, validation_da
 document.addEventListener('DOMContentLoaded', () => {
   const triggers = document.querySelectorAll('.spy-trigger');
   const codes = document.querySelectorAll('.spy-code');
-  const codeContainer = document.querySelector('#tutorials-scrollspy > div > div:first-child');
   
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -2523,6 +2795,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeCode = document.getElementById(targetId);
         if (activeCode) {
           activeCode.classList.add('active');
+          
+          // Dynamically find the correct scrolling container for this specific code block
+          const codeContainer = activeCode.closest('pre').parentElement;
           
           if (codeContainer) {
             codeContainer.scrollTo({
@@ -2762,6 +3037,1237 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </div>
 
+  <div class="divider"></div>
+
+  <!-- 7.2 ML WORKFLOW -->
+  <h2 id="lecture-7-2" class="section-title" style="font-size: 3.5rem; text-align: center; margin-top: 80px; margin-bottom: 20px;">7.2 The ML Workflow</h2>
+  <p style="text-align: center; color: #888; font-size: 1.1rem; margin-bottom: 80px;">The Pipeline for Edge AI Applications</p>
+
+  <div style="background: #0a0a0a; border: 1px solid #222; border-radius: 8px; padding: 40px; margin-bottom: 80px;">
+    <h3 style="color: var(--gold); font-size: 1.5rem; margin-bottom: 20px;">Principled Approach to TinyML</h3>
+    <p style="color: #aaa; font-size: 1rem; line-height: 1.6; margin-bottom: 30px;">
+      The Machine Learning Workflow is the systematic, principled pipeline we use to build edge applications across our bedrock sensors (Audio for Keyword Spotting, Vision for Person Detection, Accelerometer for Time Series Data).
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div style="background: #111; padding: 20px; border-left: 4px solid #00bcd4;">
+        <h4 style="color: #fff; font-size: 1.2rem; margin-bottom: 8px;">1. Data Engineering</h4>
+        <p style="color: #aaa; font-size: 0.95rem;">Ensure data is properly collected, labeled, and prepared before any learning happens.</p>
+      </div>
+      <div style="background: #111; padding: 20px; border-left: 4px solid var(--gold);">
+        <h4 style="color: #fff; font-size: 1.2rem; margin-bottom: 8px;">2. Model Engineering</h4>
+        <p style="color: #aaa; font-size: 0.95rem;">Train the model and design the network architecture to learn relevant characteristics.</p>
+      </div>
+      <div style="background: #111; padding: 20px; border-left: 4px solid #ff5722;">
+        <h4 style="color: #fff; font-size: 1.2rem; margin-bottom: 8px;">3. Model Deployment</h4>
+        <p style="color: #aaa; font-size: 0.95rem;">Optimize the trained model for performance, energy, and latency constraints, preparing it for the embedded ecosystem.</p>
+      </div>
+    </div>
+  </div>
+
+<div class="divider"></div><div class="divider"></div>
+
+  <!-- 8.2 POST-TRAINING QUANTIZATION -->
+  <h2 id="lecture-8-2" class="section-title" style="font-size: 3.5rem; text-align: center; margin-top: 80px; margin-bottom: 20px;">8.2 Post-Training Quantization</h2>
+  <p style="text-align: center; color: #888; font-size: 1.1rem; margin-bottom: 80px;">The Engineering Triangle: Good, Fast, Cheap</p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 80px;">
+    
+    <!-- Left Col -->
+    <div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+      <h3 style="color: var(--gold); font-size: 1.5rem; margin-bottom: 16px;">What is Quantization?</h3>
+      <p style="color: #aaa; line-height: 1.6; margin-bottom: 24px;">
+        Quantization reduces the precision of the numbers used to represent a model's parameters. By shrinking 32-bit floating-point weights down to 8-bit integers (Int8), we compress the model by 4x.
+      </p>
+      <img src="assets/8_2_quant_pillars.png" style="width: 100%; border-radius: 4px; border: 1px solid #444;" alt="Quantization Pillars">
+    </div>
+
+    <!-- Right Col -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px;">
+        <h4 style="color: #00bcd4; font-size: 1.2rem; margin-bottom: 8px;">1. Size (Storage & RAM)</h4>
+        <p style="color: #aaa; font-size: 0.95rem;">Microcontrollers typically have 1MB storage and 256KB RAM. Int8 quantization is mandatory just to fit models onto the chip.</p>
+      </div>
+      <div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px;">
+        <h4 style="color: #ff5722; font-size: 1.2rem; margin-bottom: 8px;">2. Latency & Power</h4>
+        <p style="color: #aaa; font-size: 0.95rem;">Integer arithmetic executes in 1-2 cycles compared to 10-15 cycles for floating-point math, dramatically accelerating inference while slashing power consumption.</p>
+      </div>
+      <div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px;">
+        <h4 style="color: #9c27b0; font-size: 1.2rem; margin-bottom: 8px;">3. Portability</h4>
+        <p style="color: #aaa; font-size: 0.95rem;">Many resource-constrained embedded systems physically lack a Floating Point Unit (FPU). Int8 math ensures universal hardware compatibility.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deep Dive Stats -->
+  <div style="background: #0a0a0a; border: 1px solid #222; border-radius: 8px; padding: 40px; margin-bottom: 80px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+      <div>
+        <h3 style="color: var(--gold); font-size: 1.5rem; margin-bottom: 16px;">The Resolution Trade-off</h3>
+        <p style="color: #aaa; line-height: 1.6; margin-bottom: 24px;">
+          Hashing a vast floating-point space into 256 integer buckets causes closely clustered floats to land in the same bucket. When decompressed during inference, resolution is permanently lost, causing a slight dip in model accuracy.
+        </p>
+        <img src="assets/8_2_layers.png" style="width: 100%; border-radius: 4px; border: 1px solid #333;" alt="Neural Net Layers">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <img src="assets/8_2_cpu_time.png" style="width: 100%; border-radius: 4px; border: 1px solid #333;" alt="CPU Time Int8 vs Float32">
+        <img src="assets/8_2_portability.png" style="width: 100%; border-radius: 4px; border: 1px solid #333;" alt="Portability">
+      </div>
+    </div>
+  </div>
+  <!-- Quantization Deep Dive Gallery -->
+  <div style="margin-bottom: 80px;">
+    <h3 style="color: var(--gold); font-size: 1.8rem; margin-bottom: 24px; text-align: center; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">Quantization Deep Dive</h3>
+    
+    <div style="display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 24px; scroll-behavior: smooth;">
+      
+      <!-- Slide 1 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">1. Discretization Process</h4>
+        <img src="assets/8_2_discretize.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Discretization Process">
+      </div>
+      
+      <!-- Slide 2 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">2. Reconstruction</h4>
+        <img src="assets/8_2_reconstruction.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Reconstruction">
+      </div>
+
+      <!-- Slide 3 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">3. Quantization Types</h4>
+        <img src="assets/8_2_quant_tree.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Quantization Tree">
+      </div>
+
+      <!-- Slide 4 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">4. Weight Compression</h4>
+        <img src="assets/8_2_weight_compression.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Weight Compression">
+      </div>
+
+      <!-- Slide 5 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">5. Inference Calculation</h4>
+        <img src="assets/8_2_inference_calculation.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Inference Calculation">
+      </div>
+            <!-- Slide 6 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">6. Accuracy vs Latency</h4>
+        <img src="assets/8_2_accuracy_latency.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Accuracy vs Latency">
+      </div>
+
+      <!-- Slide 7 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">7. Quantization Parts (Theory)</h4>
+        <img src="assets/8_2_quant_parts_text.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Quantization Parts Theory">
+      </div>
+
+      <!-- Slide 8 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">8. Quantization Parts (Diagram)</h4>
+        <img src="assets/8_2_quant_parts_diagram.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Quantization Parts Diagram">
+      </div>
+
+      <!-- Slide 9 -->
+      <div style="flex: 0 0 85%; scroll-snap-align: center; background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px;">
+        <h4 style="color: #00bcd4; font-size: 1.3rem; margin-bottom: 16px;">9. Key Advantages</h4>
+        <img src="assets/8_2_advantages.png" style="width: 100%; border-radius: 4px; border: 1px solid #222;" alt="Key Advantages">
+      </div>
+    </div>
+  </div>
+  
+<div class="divider"></div>
+
+<div class="divider"></div>
+
+<!-- ADVANCED TUTORIALS SCROLLSPY (Tut 2.2 & QAT) -->
+<section id="advanced-tutorials-scrollspy" style="padding: 40px 80px; position: relative; background: var(--dark2);">
+  <div class="section-label" style="margin-bottom: 40px;">Advanced Optimizations</div>
+  
+  <div style="display: flex; gap: 60px; position: relative; align-items: flex-start;">
+    
+    <!-- LEFT PANE: STICKY CODE -->
+    <div style="flex: 1; position: sticky; top: 100px; height: calc(100vh - 140px); background: #050505; border: 1px solid #222; border-left: 4px solid var(--gold); border-radius: 8px; overflow-y: auto; padding: 24px; scroll-behavior: smooth;">
+      <pre style="margin: 0; font-family: 'Consolas', monospace; font-size: 0.8rem; line-height: 1.6; color: #555;"><code id="code-block-adv">
+<span class="spy-code" id="code-sec-30"># ==============================================================================
+# Tutorial 2.2: TensorFlow-Lite Optimizations
+# Dataset: Cats vs Dogs (Binary Image Classification)
+# ==============================================================================
+import tensorflow as tf
+import tensorflow_datasets as tfds
+
+# 1. SETUP AND LOAD DATASET (80/10/10 split)
+train_ds, val_ds, test_ds = tfds.load('cats_vs_dogs', 
+                                      split=['train[:80%]', 'train[80%:90%]', 'train[90%:]'], 
+                                      as_supervised=True)</span>
+
+<span class="spy-code" id="code-sec-31"># 2. DATA PRE-PROCESSING
+def format_image(image, label):
+    image = tf.image.resize(image, (224, 224))
+    image = image / 255.0
+    return image, label
+
+BATCH_SIZE = 32
+train_ds = train_ds.shuffle(1000).map(format_image).batch(BATCH_SIZE).prefetch(1)
+val_ds = val_ds.map(format_image).batch(BATCH_SIZE).prefetch(1)
+test_ds = test_ds.map(format_image).batch(1)</span>
+
+<span class="spy-code" id="code-sec-32"># 3. TRANSFER LEARNING (MobileNet V2)
+base_model = tf.keras.applications.MobileNetV2(input_shape=(224, 224, 3), 
+                                               include_top=False, 
+                                               weights='imagenet')
+base_model.trainable = False  # Freeze base model weights
+
+model = tf.keras.Sequential([
+    base_model,
+    tf.keras.layers.GlobalAveragePooling2D(),
+    tf.keras.layers.Dense(2, activation='softmax')
+])
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_ds, epochs=5, validation_data=val_ds)
+tf.saved_model.save(model, 'saved_model/mobilenet')</span>
+
+<span class="spy-code" id="code-sec-33"># 4. TFLITE CONVERSIONS
+# Model 1: Standard Conversion (9 MB)
+converter = tf.lite.TFLiteConverter.from_saved_model('saved_model/mobilenet')
+with open('model1.tflite', 'wb') as f:
+    f.write(converter.convert())
+
+# Model 2: Dynamic Range Quantization (~4x smaller)
+converter = tf.lite.TFLiteConverter.from_saved_model('saved_model/mobilenet')
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+with open('model2_dynamic.tflite', 'wb') as f:
+    f.write(converter.convert())
+
+# Model 3: Full Integer Quantization
+def representative_data_gen():
+    for input_value, _ in test_ds.take(100):
+        yield [input_value]
+
+converter = tf.lite.TFLiteConverter.from_saved_model('saved_model/mobilenet')
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+converter.representative_dataset = representative_data_gen
+converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+with open('model3_fullint.tflite', 'wb') as f:
+    f.write(converter.convert())</span>
+
+<span class="spy-code" id="code-sec-34"># ==============================================================================
+# Quantization-Aware Training (QAT) on MNIST (Fixed for TF 2.16+)
+# ==============================================================================
+!pip install tensorflow-model-optimization
+import tensorflow as tf
+import tf_keras as keras 
+import tensorflow_model_optimization as tfmot
+
+mnist = keras.datasets.mnist
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+train_images, test_images = train_images / 255.0, test_images / 255.0
+
+def create_model():
+    return keras.Sequential([
+        keras.layers.Reshape((28, 28, 1), input_shape=(28, 28)),
+        keras.layers.Conv2D(32, (3, 3), activation='relu'),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Flatten(),
+        keras.layers.Dense(10)
+    ])</span>
+
+<span class="spy-code" id="code-sec-35"># APPLY QUANTIZATION-AWARE TRAINING (QAT)
+quantize_model = tfmot.quantization.keras.quantize_model
+q_aware_model = quantize_model(create_model())
+
+q_aware_model.compile(optimizer='adam', 
+                      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), 
+                      metrics=['accuracy'])
+q_aware_model.fit(train_images, train_labels, epochs=1, validation_data=(test_images, test_labels))</span>
+
+<span class="spy-code" id="code-sec-36"># CONVERT Q-AWARE MODEL TO TFLITE
+converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+# No representative_dataset needed!
+with open('qat_mnist_model.tflite', 'wb') as f:
+    f.write(converter.convert())</span>
+      </code></pre>
+    </div>
+
+    <!-- RIGHT PANE: SCROLLING NARRATIVE -->
+    <div style="flex: 1; padding-right: 20px;">
+      
+      <!-- Tutorial 2.2 Header -->
+      <h2 id="tut-2-2" class="section-title" style="font-size: 3rem; margin-bottom: 20px;">Tutorial 2.2:<br>TFLite Optimizations</h2>
+      
+      <div class="what-card spy-trigger" data-target="code-sec-30" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">01</div>
+        <div class="part-title" style="font-size: 1.4rem;">Setup & Data Loading</div>
+        <div class="part-desc">We load the Cats vs Dogs dataset using `tfds.load`, splitting it 80/10/10. We use a GPU runtime as this dataset is large.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-31" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">02</div>
+        <div class="part-title" style="font-size: 1.4rem;">Pre-processing</div>
+        <div class="part-desc">We use `.map()` to format images to 224x224 and normalize. `.shuffle()` ensures generalized learning, while `.batch()` and `.prefetch()` optimize pipeline latency.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-32" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">03</div>
+        <div class="part-title" style="font-size: 1.4rem;">Transfer Learning</div>
+        <div class="part-desc">We load pre-trained weights from MobileNet V2 (trained on ImageNet). Setting `trainable = False` freezes the base weights, allowing us to converge rapidly by only training our custom dense layer.</div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-33" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">04</div>
+        <div class="part-title" style="font-size: 1.4rem;">TFLite Conversions</div>
+        <div class="part-desc">We convert the model three ways: Standard (~9MB), Dynamic Range (Int8 weights, ~4x smaller), and Full Integer (Int8 weights and activations). Full integer requires a `representative_dataset` to pre-quantize activations.</div>
+      </div>
+
+      <!-- QAT Concepts Header -->
+      <h2 id="lecture-8-3" class="section-title" style="font-size: 3rem; margin-top: 80px; margin-bottom: 20px;">8.3 Quantization Aware Training</h2>
+      
+      <div class="what-card spy-trigger" data-target="code-sec-34" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">05</div>
+        <div class="part-title" style="font-size: 1.4rem;">The Quantization Trade-Off</div>
+        <div class="part-desc">
+          <p>Post-Training Quantization (PTQ) reduces size and latency, but causes an accuracy drop. Discretization forces a smooth FP32 signal into rigid INT8 buckets, creating "quantization error".</p>
+          <img src="assets/8_2_why_accuracy_drop.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="Why Accuracy Drop">
+          <img src="assets/8_2_quant_error_signal.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="Quantization Error Signal">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-35" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">06</div>
+        <div class="part-title" style="font-size: 1.4rem;">QAT Mechanics</div>
+        <div class="part-desc">
+          <p>QAT modifies the training graph to inject expected quantization error directly during backpropagation. The loss function actively works to fix it, learning resilience naturally.</p>
+          <img src="assets/8_2_qat_text.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="QAT Text">
+          <img src="assets/8_2_qat_diagram.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="QAT Diagram">
+        </div>
+      </div>
+
+      <div class="what-card spy-trigger" data-target="code-sec-36" style="margin-bottom: 30px; border-radius: 4px;">
+        <div class="what-num" style="font-size: 4rem;">07</div>
+        <div class="part-title" style="font-size: 1.4rem;">Performance Realities</div>
+        <div class="part-desc">
+          <p>QAT typically outperforms PTQ. In rare stochastic cases, an INT8 QAT model will even outperform its original FP32 baseline. Because it learns quantization internally, a representative dataset generator is no longer needed during conversion.</p>
+          <img src="assets/8_2_accuracy_drop_table.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="Accuracy Drop Table">
+          <img src="assets/8_2_qat_accuracy_table.png" style="width: 100%; border-radius: 4px; margin-top: 16px; border: 1px solid #333;" alt="QAT Accuracy Table">
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<!-- TUTORIAL 2.3 QAT END-TO-END -->
+<div style="padding: 40px 80px; max-width: 1400px; margin: 0 auto 80px auto;">
+  <h2 class="section-title" style="font-size: 3rem; margin-bottom: 20px;">Tutorial 2.3:<br>QAT End-to-End Pipeline</h2>
+  <p style="color: #888; font-size: 1.1rem; margin-bottom: 40px; max-width: 800px;">
+    This tutorial demonstrates how to apply Quantization-Aware Training (QAT) to an image classification problem (MNIST) and compares the size and accuracy of three models: a baseline Float32 model, a standard Post-Training Quantized (PTQ) model, and a QAT model.
+  </p>
+
+  <div style="display: flex; gap: 40px; margin-bottom: 40px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px; background: #111; border: 1px solid #333; border-radius: 8px; padding: 24px;">
+      <h4 style="color: var(--gold); margin-bottom: 12px; font-size: 1.2rem;">1. Baseline Model</h4>
+      <p style="color: #ccc; font-size: 0.95rem; line-height: 1.5;">Trains a standard CNN using <code>SparseCategoricalCrossentropy(from_logits=True)</code> for numerical stability. Achieves ~97% accuracy but is large (~0.08 MB) and uses Float32 math.</p>
+    </div>
+    <div style="flex: 1; min-width: 300px; background: #111; border: 1px solid #333; border-radius: 8px; padding: 24px;">
+      <h4 style="color: var(--gold); margin-bottom: 12px; font-size: 1.2rem;">2. Applying QAT</h4>
+      <p style="color: #ccc; font-size: 0.95rem; line-height: 1.5;">Wraps the baseline using <code>quantize_model()</code>. Injects fake quantization nodes that simulate inference-time errors, forcing the network to learn robust parameters.</p>
+    </div>
+    <div style="flex: 1; min-width: 300px; background: #111; border: 1px solid #333; border-radius: 8px; padding: 24px;">
+      <h4 style="color: var(--gold); margin-bottom: 12px; font-size: 1.2rem;">3. Evaluation</h4>
+      <p style="color: #ccc; font-size: 0.95rem; line-height: 1.5;">By pre-allocating tensors (<code>interpreter.allocate_tensors()</code>), we run inference efficiently. The QAT model shrinks by ~4x (Int8) while recovering the accuracy lost by standard PTQ.</p>
+    </div>
+  </div>
+
+  <div style="background: #050505; border: 1px solid #222; border-left: 4px solid #00bcd4; border-radius: 8px; padding: 30px; overflow-x: auto;">
+    <h3 style="color: #00bcd4; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; margin-bottom: 24px; font-size: 1.5rem;">End-to-End QAT Comparison Script</h3>
+    <pre style="margin: 0; font-family: 'Consolas', monospace; font-size: 0.9rem; line-height: 1.6; color: #a9b7c6;"><code># ==============================================================================
+# 1. LOAD DATASET & PREPROCESSING (MNIST)
+# ==============================================================================
+import tensorflow as tf
+import tf_keras as keras
+import tensorflow_model_optimization as tfmot
+import numpy as np
+import os
+
+mnist = keras.datasets.mnist
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+train_images, test_images = train_images / 255.0, test_images / 255.0
+
+val_split = int(0.1 * len(train_images))
+val_images, val_labels = train_images[:val_split], train_labels[:val_split]
+train_images, train_labels = train_images[val_split:], train_labels[val_split:]
+
+# ==============================================================================
+# 2. DEFINE AND TRAIN BASELINE MODEL
+# ==============================================================================
+def create_model():
+    return keras.Sequential([
+        keras.layers.Reshape((28, 28, 1), input_shape=(28, 28)),
+        keras.layers.Conv2D(32, (3, 3), activation='relu'),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Flatten(),
+        keras.layers.Dense(10) # No Softmax here! Logits handled by loss function
+    ])
+
+baseline_model = create_model()
+baseline_model.compile(optimizer='adam', loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+baseline_model.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
+
+# ==============================================================================
+# 3. APPLY QUANTIZATION-AWARE TRAINING (QAT)
+# ==============================================================================
+q_aware_model = tfmot.quantization.keras.quantize_model(create_model())
+q_aware_model.compile(optimizer='adam', loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+q_aware_model.fit(train_images[:1000], train_labels[:1000], epochs=1, validation_data=(val_images, val_labels))
+
+# ==============================================================================
+# 4. CONVERT TO TFLITE (3 VARIANTS)
+# ==============================================================================
+# Model 1: Baseline (Float32)
+with open('model1_baseline.tflite', 'wb') as f:
+    f.write(tf.lite.TFLiteConverter.from_keras_model(baseline_model).convert())
+
+# Model 2: PTQ (Int8 dynamically, NO QAT)
+converter_2 = tf.lite.TFLiteConverter.from_keras_model(baseline_model)
+converter_2.optimizations = [tf.lite.Optimize.DEFAULT]
+with open('model2_ptq.tflite', 'wb') as f:
+    f.write(converter_2.convert())
+
+# Model 3: QAT + PTQ (Trained with QAT, converted to Int8)
+converter_3 = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
+converter_3.optimizations = [tf.lite.Optimize.DEFAULT]
+with open('model3_qat.tflite', 'wb') as f:
+    f.write(converter_3.convert())
+
+# ==============================================================================
+# 5. INFERENCE EVALUATION & SIZE COMPARISON
+# ==============================================================================
+def evaluate_tflite_model(tflite_file):
+    interpreter = tf.lite.Interpreter(model_path=tflite_file)
+    interpreter.allocate_tensors()
+    input_idx = interpreter.get_input_details()[0]["index"]
+    output_idx = interpreter.get_output_details()[0]["index"]
+
+    correct = 0
+    test_imgs_f32 = test_images.astype(np.float32)
+    for i in range(len(test_images)):
+        img = np.expand_dims(test_imgs_f32[i], axis=0)
+        interpreter.set_tensor(input_idx, img)
+        interpreter.invoke()
+        if np.argmax(interpreter.get_tensor(output_idx)[0]) == test_labels[i]:
+            correct += 1
+    return correct / len(test_images)
+
+print(f"Model 1 (Baseline): {evaluate_tflite_model('model1_baseline.tflite'):.4f} Acc | {os.path.getsize('model1_baseline.tflite')/1024**2:.4f} MB")
+print(f"Model 2 (PTQ Only): {evaluate_tflite_model('model2_ptq.tflite'):.4f} Acc | {os.path.getsize('model2_ptq.tflite')/1024**2:.4f} MB")
+print(f"Model 3 (QAT+PTQ):  {evaluate_tflite_model('model3_qat.tflite'):.4f} Acc | {os.path.getsize('model3_qat.tflite')/1024**2:.4f} MB")</code></pre>
+  </div>
+</div>
+<div class="divider"></div>
+<!-- MODULE 3: KEYWORD SPOTTING (TABBED ZIG-ZAG UI) -->
+<style>
+  .kws-tab {
+    overflow: hidden;
+    background-color: #111;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid #333;
+    border-bottom: none;
+    display: flex;
+  }
+  .kws-tab button {
+    background-color: inherit;
+    color: #888;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 20px 32px;
+    transition: 0.3s;
+    font-size: 1.1rem;
+    font-weight: bold;
+    flex: 1;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-family: 'Bebas Neue', sans-serif;
+  }
+  .kws-tab button:hover { background-color: #222; color: #fff; }
+  .kws-tab button.active { background-color: #00bcd4; color: #000; }
+  .kws-tabcontent {
+    display: none;
+    padding: 80px 60px;
+    border: 1px solid #333;
+    background: #050505;
+    border-radius: 0 0 8px 8px;
+    animation: fadeEffect 0.5s;
+  }
+  @keyframes fadeEffect { from {opacity: 0;} to {opacity: 1;} }
+  .zig-zag-row { display: flex; gap: 60px; align-items: center; margin-bottom: 100px; }
+  .zig-zag-row:last-child { margin-bottom: 0; }
+  .zig-zag-row.reverse { flex-direction: row-reverse; }
+  .zig-zag-text { flex: 1; }
+  .zig-zag-img { flex: 1.2; }
+  .zig-zag-img img { width: 100%; border-radius: 8px; border: 1px solid #222; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+</style>
+
+<div style="padding: 40px 80px; max-width: 1400px; margin: 0 auto 80px auto;">
+  <h2 class="section-title" style="font-size: 3.5rem; margin-bottom: 40px; text-align: center;">Module 3: Keyword Spotting</h2>
+  
+  <!-- Tabs -->
+  <div class="kws-tab">
+    <button class="kws-tablinks active" onclick="openKwsTab(event, 'KWS-Intro')" id="defaultOpenKws">1. Introduction</button>
+    <button class="kws-tablinks" onclick="openKwsTab(event, 'KWS-Challenges')">2. Challenges & Constraints</button>
+    <button class="kws-tablinks" onclick="openKwsTab(event, 'KWS-Datasets')">3. Dataset Engineering</button>
+  </div>
+
+  <!-- TAB 1: INTRODUCTION -->
+  <div id="KWS-Intro" class="kws-tabcontent" style="display: block;">
+    
+    <div class="zig-zag-row">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">The "Front-End Beast Waker"</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">Full Automatic Speech Recognition (ASR) systems are massive, power-hungry cloud models. Keyword spotting (KWS) is the complete opposite. It is designed to sit at the very front of the audio pipeline, constantly listening for a specific "wake word" (like "OK Google").</p>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6;">Once triggered, it wakes the device up, activates Wi-Fi, and offloads the complex sentence parsing to the cloud beast.</p>
+      </div>
+      <div class="zig-zag-img"><img src="assets/kws_anatomy.png" alt="KWS Anatomy"></div>
+    </div>
+
+    <div class="zig-zag-row reverse">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">The End-to-End Pipeline</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">Because it listens 24/7, KWS must be unbelievably power-efficient. If these models were large, your phone would die in hours. By using TinyML techniques (Quantization, TFLite Micro), we shrink KWS models so they run entirely "on-device" consuming almost zero power.</p>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6;">Building this requires an end-to-end pipeline: Data Curation &rarr; Audio Preprocessing &rarr; Tiny CNN Training &rarr; TFLite Optimization &rarr; Microcontroller Deployment.</p>
+      </div>
+      <div class="zig-zag-img"><img src="assets/kws_architecture.png" alt="KWS Architecture"></div>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: CHALLENGES -->
+  <div id="KWS-Challenges" class="kws-tabcontent">
+    
+    <div class="zig-zag-row">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">Latency, Bandwidth & Scale</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">If a system takes more than 200ms to respond to a wake word, the human brain perceives it as broken. Furthermore, continuously streaming a microphone feed to the cloud 24/7 across billions of users would destroy global network bandwidth and drain device batteries instantly.</p>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6;">The solution is the tiered architecture: The TinyML edge device processes the continuous stream locally at microwatt power, and only triggers the massive backend cloud when a hit occurs.</p>
+      </div>
+      <div class="zig-zag-img"><img src="assets/kws_challenges.png" alt="KWS Challenges"></div>
+    </div>
+
+    <div class="zig-zag-row reverse">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">Safety, Privacy & Rejection</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">Users are highly sensitive to devices recording their homes 24/7. By running KWS purely on the edge, raw audio data never leaves the room unless explicitly triggered. This prevents interception and mitigates massive privacy risks.</p>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6;">To achieve this safely, the model must be exceptional at False Positive rejection—ignoring TVs, background noise, and words that merely sound similar to the wake word.</p>
+      </div>
+      <div class="zig-zag-img"><img src="assets/kws_qc_food_for_thought.png" alt="Safety and Privacy"></div>
+    </div>
+
+  </div>
+
+  <!-- TAB 3: DATASETS -->
+  <div id="KWS-Datasets" class="kws-tabcontent">
+    
+    <div class="zig-zag-row">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">Dataset Engineering Variability</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">If you feed a model garbage data, everything down the pipeline is useless. A KWS dataset must account for intense real-world variability.</p>
+        <ul style="color: #ccc; font-size: 1.1rem; line-height: 1.6; padding-left: 20px;">
+          <li><b>User Diversity:</b> Thousands of different accents, ages, and pronunciations.</li>
+          <li><b>Environment:</b> Echoes from across a living room vs talking directly into a phone.</li>
+          <li><b>Background Noise:</b> Traffic, yelling, and ambient static.</li>
+        </ul>
+      </div>
+      <div class="zig-zag-img"><img src="assets/kws_dataset_questions.png" alt="Dataset Questions"></div>
+    </div>
+
+    <div class="zig-zag-row reverse">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">The Speech Commands Dataset</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">Unlike massive general-purpose cloud datasets (like ImageNet with 14M images), TinyML datasets are highly constrained. You cannot fit a general language model on a microcontroller.</p>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6;">Created by Pete Warden, the crowdsourced Google Speech Commands dataset focuses purely on single command words to fit these extreme edge constraints.</p>
+      </div>
+      <div class="zig-zag-img"><img src="assets/kws_speech_commands_paper.png" alt="Speech Commands Paper"></div>
+    </div>
+
+    <div class="zig-zag-row">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">Dataset Composition</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">The dataset is strictly limited to 25 target keywords (like "Yes", "No", "Left", "Right").</p>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6;">Crucially, it deliberately includes 10 "similar" words (confusers) to act as negative training data, teaching the model not to trigger on sounds that just happen to rhyme or share syllables with the target. It also includes folders of raw background noise.</p>
+      </div>
+      <div class="zig-zag-img"><img src="assets/kws_speech_commands_details.png" alt="Speech Commands Details"></div>
+    </div>
+
+    <div class="zig-zag-row reverse">
+      <div class="zig-zag-text">
+        <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 20px;">Utterance Distribution</h3>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6; margin-bottom: 16px;">A successful model requires heavily balanced data. We must analyze the distribution of utterances across all classes to ensure the model doesn't become biased toward overrepresented words.</p>
+        <p style="color: #ccc; font-size: 1.1rem; line-height: 1.6;">We convert these 1-second audio waveforms into spectrograms (2D image grids) before feeding them into our Convolutional Neural Networks.</p>
+      </div>
+      <div class="zig-zag-img">
+        <img src="assets/kws_image_grid_reference.jpg" style="margin-bottom: 20px;" alt="Image Grid Reference">
+        <div style="display: flex; gap: 20px;">
+          <img src="assets/kws_utterances_bar_1.png" style="flex: 1;" alt="Utterances Bar 1">
+          <img src="assets/kws_utterances_bar_2.png" style="flex: 1;" alt="Utterances Bar 2">
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function openKwsTab(evt, tabName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("kws-tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("kws-tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+<div class="divider"></div>
+<!-- MODULE 3 & 4: KWS vs VWW (HUB & SPOKE FACE-OFF UI) -->
+<style>
+  .hub-container {
+    position: relative;
+    width: 100%;
+    height: 450px;
+    margin: 60px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .hub-center {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #00bcd4, #004d56);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.6rem;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(0, 188, 212, 0.4);
+    z-index: 10;
+    border: 4px solid #000;
+  }
+  .hub-spoke {
+    position: absolute;
+    padding: 14px 28px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 30px;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 1.5px;
+    font-size: 1.3rem;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  .hub-spoke:hover {
+    background: #222;
+    color: #fff;
+    border-color: #00bcd4;
+    transform: scale(1.05);
+  }
+  .hub-spoke.active {
+    background: #00bcd4;
+    color: #000;
+    border-color: #00bcd4;
+    box-shadow: 0 0 20px rgba(0, 188, 212, 0.6);
+  }
+  
+  /* Orbital Positions */
+  .spoke-1 { top: 5%; left: 50%; transform: translateX(-50%); }
+  .spoke-2 { top: 25%; right: 10%; }
+  .spoke-3 { bottom: 25%; right: 10%; }
+  .spoke-4 { bottom: 5%; left: 50%; transform: translateX(-50%); }
+  .spoke-5 { bottom: 25%; left: 10%; }
+  .spoke-6 { top: 25%; left: 10%; }
+
+  .spoke-line {
+    position: absolute;
+    background: #333;
+    height: 2px;
+    z-index: 1;
+    transform-origin: 0 50%;
+    transition: background 0.3s;
+  }
+  .spoke-line.active { background: #00bcd4; height: 3px; box-shadow: 0 0 10px #00bcd4; }
+
+  /* Face-Off Pane */
+  .faceoff-container {
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-top: 4px solid #00bcd4;
+    border-radius: 12px;
+    padding: 60px;
+    margin-bottom: 80px;
+  }
+  .faceoff-pane { display: none; animation: slideUp 0.5s ease; }
+  .faceoff-pane.active { display: block; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .faceoff-split { display: flex; gap: 60px; position: relative; }
+  .faceoff-left, .faceoff-right { flex: 1; display: flex; flex-direction: column; gap: 24px; }
+  .faceoff-divider { width: 1px; background: linear-gradient(to bottom, transparent, #333, transparent); flex-shrink: 0; }
+  
+  .mod-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 2px; margin-bottom: 20px; text-align: center; }
+  .title-audio { color: #4caf50; }
+  .title-vision { color: #ff9800; }
+  
+  .fo-card { background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; }
+  .fo-card h4 { color: #fff; font-size: 1.3rem; margin-bottom: 12px; }
+  .fo-card p { color: #aaa; font-size: 1.05rem; line-height: 1.6; margin-bottom: 16px; }
+  .fo-card img { width: 100%; border-radius: 4px; border: 1px solid #333; }
+</style>
+
+<div style="max-width: 1600px; margin: 0 auto;">
+  
+  <div class="hub-container" id="hub-container">
+    <div class="hub-center" id="hub-center">TinyML<br>Applications</div>
+    
+    <div class="hub-spoke spoke-1 active" data-target="fo-intro" id="spoke-1">1. Intro & Concepts</div>
+    <div class="hub-spoke spoke-2" data-target="fo-challenges" id="spoke-2">2. Constraints</div>
+    <div class="hub-spoke spoke-3" data-target="fo-data" id="spoke-3">3. Data Engineering</div>
+    <div class="hub-spoke spoke-4" data-target="fo-preprocess" id="spoke-4">4. Pre-Processing</div>
+    <div class="hub-spoke spoke-5" data-target="fo-model" id="spoke-5">5. Architecture</div>
+    <div class="hub-spoke spoke-6" data-target="fo-eval" id="spoke-6">6. Deployment</div>
+  </div>
+
+  <div class="faceoff-container">
+    
+    <!-- PANE 1: INTRO -->
+    <div id="fo-intro" class="faceoff-pane active">
+      <div class="faceoff-split">
+        <div class="faceoff-left">
+          <h3 class="mod-title title-audio">Keyword Spotting (Audio)</h3>
+          <div class="fo-card">
+            <h4>The Front-End Beast Waker</h4>
+            <p>Full ASR cloud systems are massive and power-hungry. KWS sits at the very front of the pipeline, constantly listening for a "wake word" (e.g., "OK Google") while consuming microwatts. Once triggered, it wakes the device up and offloads complex processing to the cloud beast.</p>
+            <img src="assets/kws_anatomy.png" alt="KWS Anatomy">
+          </div>
+        </div>
+        <div class="faceoff-divider"></div>
+        <div class="faceoff-right">
+          <h3 class="mod-title title-vision">Visual Wake Words (Vision)</h3>
+          <div class="fo-card">
+            <h4>The "Lick and Stick" Sensor</h4>
+            <p>VWW constantly scans for a visual trigger (like a person entering a room) using an image sensor. Because it runs purely on battery without requiring electrical permits or wiring, you can "lick and stick" it anywhere to build smart doorbells or passive occupancy sensors.</p>
+            <img src="assets/vww_intro_applications.png" alt="VWW Applications">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 2: CONSTRAINTS -->
+    <div id="fo-challenges" class="faceoff-pane">
+      <div class="faceoff-split">
+        <div class="faceoff-left">
+          <h3 class="mod-title title-audio">Keyword Spotting (Audio)</h3>
+          <div class="fo-card">
+            <h4>Latency & Privacy</h4>
+            <p>If a system takes >200ms to wake up, the user thinks it's broken. Furthermore, streaming 24/7 audio to the cloud creates massive privacy risks ("smart home horror stories"). We solve this by processing locally on the edge, keeping raw audio inside the room.</p>
+            <img src="assets/kws_challenges.png" alt="KWS Challenges">
+          </div>
+        </div>
+        <div class="faceoff-divider"></div>
+        <div class="faceoff-right">
+          <h3 class="mod-title title-vision">Visual Wake Words (Vision)</h3>
+          <div class="fo-card">
+            <h4>The Data Volume Trap</h4>
+            <p>A 1-second audio clip is ~8KB. A standard RGB image is ~600KB. Transmitting 600KB over cellular takes >2 seconds. By the time the cloud confirms "Yes, that's a cat," the cat is gone. The sheer data volume of sensors forces us to compute locally.</p>
+            <img src="assets/vww_cloud_latency_lag.png" alt="Cloud Latency Lag">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 3: DATA ENGINEERING -->
+    <div id="fo-data" class="faceoff-pane">
+      <div class="faceoff-split">
+        <div class="faceoff-left">
+          <h3 class="mod-title title-audio">Keyword Spotting (Audio)</h3>
+          <div class="fo-card">
+            <h4>Speech Commands Dataset</h4>
+            <p>Created by Pete Warden, this crowdsourced dataset contains thousands of recordings of 25 target words (to handle varied accents and proximity) plus 10 "similar" words (confusers) to act as negative training data to prevent False Positives.</p>
+            <img src="assets/kws_speech_commands_details.png" alt="Speech Commands Details">
+            <img src="assets/kws_dataset_questions.png" style="margin-top: 16px;" alt="Dataset Questions">
+          </div>
+        </div>
+        <div class="faceoff-divider"></div>
+        <div class="faceoff-right">
+          <h3 class="mod-title title-vision">Visual Wake Words (Vision)</h3>
+          <div class="fo-card">
+            <h4>Licensing & Repurposing</h4>
+            <p>Scraping data illegally (e.g., from Tinder) poisons your model legally. Instead, we repurpose massive open datasets like MS COCO. By dynamically cropping images using their bounding-box coordinates, we automatically generate focused TinyML datasets.</p>
+            <img src="assets/vww_dataset_challenges.png" alt="VWW Dataset Challenges">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 4: PRE-PROCESSING -->
+    <div id="fo-preprocess" class="faceoff-pane">
+      <div class="faceoff-split">
+        <div class="faceoff-left">
+          <h3 class="mod-title title-audio">Keyword Spotting (Audio)</h3>
+          <div class="fo-card">
+            <h4>FFT, Spectrograms & MFCCs</h4>
+            <p>Raw audio waveforms look chaotic. We use the Fast Fourier Transform (FFT) on sliding windows to break audio into frequencies over time (a Spectrogram). We then apply Mel Filter Banks to crush high frequencies (mimicking human hearing), producing highly efficient MFCCs.</p>
+            <img src="assets/kws_mfcc_pipeline_steps.png" alt="MFCC Pipeline">
+            <img src="assets/kws_mel_filterbanks.png" style="margin-top: 16px;" alt="Mel Filterbanks">
+          </div>
+        </div>
+        <div class="faceoff-divider"></div>
+        <div class="faceoff-right">
+          <h3 class="mod-title title-vision">Visual Wake Words (Vision)</h3>
+          <div class="fo-card">
+            <h4>Resolution Downscaling</h4>
+            <p>Processing standard 224x224 images requires millions of Multiply-Accumulate (MAC) operations. We aggressively downscale the camera feed to 128x128 or lower before it hits the network, massively improving latency and power draw.</p>
+            <img src="assets/vww_image_size_calculation.png" alt="VWW Downscaling">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 5: ARCHITECTURE -->
+    <div id="fo-model" class="faceoff-pane">
+      <div class="faceoff-split">
+        <div class="faceoff-left">
+          <h3 class="mod-title title-audio">Keyword Spotting (Audio)</h3>
+          <div class="fo-card">
+            <h4>The TinyConv Model</h4>
+            <p>Standard CNNs (6.8 MB) cannot fit in 256KB of RAM. TinyML requires hyper-specialization. The "TinyConv" model uses just 1 Convolutional layer + 1 Dense layer, shrinking down to 17 KB when quantized while maintaining enough capacity for a few words.</p>
+            <img src="assets/kws_tiny_conv_architecture.png" alt="TinyConv Architecture">
+          </div>
+        </div>
+        <div class="faceoff-divider"></div>
+        <div class="faceoff-right">
+          <h3 class="mod-title title-vision">Visual Wake Words (Vision)</h3>
+          <div class="fo-card">
+            <h4>Depthwise Separable Convolutions</h4>
+            <p>Standard 3x3 convolutions are too expensive. We split the math into a Depthwise step (filtering channels individually) and a Pointwise 1x1 step (merging them). This reduces MAC operations by nearly 100x, forming the basis of the MobileNet architecture.</p>
+            <img src="assets/vww_depthwise_separable_benefit.png" alt="Depthwise Separable Convolutions">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 6: DEPLOYMENT -->
+    <div id="fo-eval" class="faceoff-pane">
+      <div class="faceoff-split">
+        <div class="faceoff-left">
+          <h3 class="mod-title title-audio">Keyword Spotting (Audio)</h3>
+          <div class="fo-card">
+            <h4>Cascade Architectures</h4>
+            <p>To balance False Accepts vs False Rejects without draining battery, modern phones use cascades. An ultra-low-power Always-On Processor runs TinyConv 24/7. If triggered, it wakes the Main CPU to run a heavier verification model before finally contacting the Cloud.</p>
+            <img src="assets/kws_cascade_detection_4stage.png" alt="Cascade Architecture">
+          </div>
+        </div>
+        <div class="faceoff-divider"></div>
+        <div class="faceoff-right">
+          <h3 class="mod-title title-vision">Visual Wake Words (Vision)</h3>
+          <div class="fo-card">
+            <h4>Total Memory Footprint</h4>
+            <p>The 17KB quantized model is only one piece of the puzzle. The microcontroller's 256KB RAM must also hold Application Code, the TFLite Micro Inference Engine, the Tensor Arena (working variables), and a double buffer for incoming camera frames.</p>
+            <img src="assets/vww_ram_memory_breakdown.png" alt="RAM Breakdown">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  (function initHub() {
+    const hub = document.getElementById('hub-container');
+    const center = document.getElementById('hub-center');
+    const spokes = document.querySelectorAll('.hub-spoke');
+    const panes = document.querySelectorAll('.faceoff-pane');
+    const lines = [];
+
+    // Draw connecting lines dynamically
+    spokes.forEach((spoke, idx) => {
+      const line = document.createElement('div');
+      line.className = 'spoke-line';
+      if(idx === 0) line.classList.add('active');
+      hub.appendChild(line);
+      lines.push(line);
+
+      // Click logic
+      spoke.addEventListener('click', () => {
+        spokes.forEach(s => s.classList.remove('active'));
+        panes.forEach(p => p.classList.remove('active'));
+        lines.forEach(l => l.classList.remove('active'));
+        
+        spoke.classList.add('active');
+        line.classList.add('active');
+        document.getElementById(spoke.getAttribute('data-target')).classList.add('active');
+      });
+    });
+
+    function drawLines() {
+      const hRect = hub.getBoundingClientRect();
+      const cx = hRect.width / 2;
+      const cy = hRect.height / 2;
+      
+      spokes.forEach((spoke, idx) => {
+        const sRect = spoke.getBoundingClientRect();
+        // Spoke center relative to hub
+        const sx = sRect.left - hRect.left + sRect.width / 2;
+        const sy = sRect.top - hRect.top + sRect.height / 2;
+        
+        const length = Math.sqrt(Math.pow(sx - cx, 2) + Math.pow(sy - cy, 2));
+        const angle = Math.atan2(sy - cy, sx - cx) * 180 / Math.PI;
+        
+        const line = lines[idx];
+        line.style.width = (length - 60) + 'px'; // Subtract center radius roughly
+        line.style.left = cx + 'px';
+        line.style.top = cy + 'px';
+        line.style.transform = `rotate(${angle}deg)`;
+      });
+    }
+
+    // Give DOM time to lay out CSS transforms
+    setTimeout(drawLines, 100);
+    window.addEventListener('resize', drawLines);
+  })();
+</script>
+<!-- VWW DEEP DIVES: TRANSFER LEARNING & METRICS -->
+<style>
+  /* Transfer Learning Walkthrough */
+  .tl-container {
+    max-width: 1400px;
+    margin: 80px auto;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 40px;
+    display: flex;
+    gap: 40px;
+  }
+  .tl-steps {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .tl-step-btn {
+    background: #111;
+    border: 1px solid #333;
+    padding: 24px;
+    border-radius: 8px;
+    color: #888;
+    cursor: pointer;
+    text-align: left;
+    transition: 0.3s;
+  }
+  .tl-step-btn h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; margin-bottom: 8px; }
+  .tl-step-btn p { font-size: 0.95rem; line-height: 1.4; display: none; }
+  .tl-step-btn:hover { background: #1a1a1a; border-color: #555; }
+  .tl-step-btn.active { background: #00bcd4; color: #000; border-color: #00bcd4; box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3); }
+  .tl-step-btn.active h4 { color: #000; }
+  .tl-step-btn.active p { display: block; color: #222; font-weight: bold; }
+  
+  .tl-display {
+    flex: 2;
+    background: #000;
+    border-radius: 8px;
+    border: 1px solid #333;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tl-slide { display: none; animation: fadeIn 0.4s ease; text-align: center; }
+  .tl-slide.active { display: block; }
+  .tl-slide img { width: 100%; max-width: 800px; border-radius: 4px; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Metrics Report Card */
+  .rc-container {
+    max-width: 1400px;
+    margin: 80px auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+  .rc-card {
+    background: #111;
+    border-top: 4px solid var(--gold);
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .rc-card img { width: 100%; border-radius: 4px; margin-bottom: 24px; border: 1px solid #333; }
+  .rc-card h3 { color: #fff; font-size: 1.4rem; margin-bottom: 16px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+  .rc-card p { color: #aaa; font-size: 1.05rem; line-height: 1.6; }
+</style>
+
+<div style="max-width: 1400px; margin: 0 auto;">
+  <h2 class="section-title" style="font-size: 3.5rem; text-align: center; margin-bottom: 20px;">The Concept of Transfer Learning</h2>
+  <p style="color: #888; font-size: 1.2rem; text-align: center; max-width: 800px; margin: 0 auto;">When you learn to drive a new car, you don't relearn how a steering wheel works. Transfer learning allows Neural Networks to reuse foundational knowledge, drastically cutting TinyML training time.</p>
+</div>
+
+<!-- Interactive Walkthrough -->
+<div class="tl-container">
+  <div class="tl-steps">
+    <div class="tl-step-btn active" onclick="switchTlSlide(1)">
+      <h4>1. The Base Model</h4>
+      <p>We start with a massive pre-trained network that has already been exposed to a wide variety of classes and images.</p>
+    </div>
+    <div class="tl-step-btn" onclick="switchTlSlide(2)">
+      <h4>2. Feature Extraction</h4>
+      <p>The early layers of a network learn fundamental, task-independent features (like edges, textures, and shapes). We reuse these weights.</p>
+    </div>
+    <div class="tl-step-btn" onclick="switchTlSlide(3)">
+      <h4>3. Freezing Layers</h4>
+      <p>We "freeze" the general feature extraction layers so their math and weights do not change during our new training session.</p>
+    </div>
+    <div class="tl-step-btn" onclick="switchTlSlide(4)">
+      <h4>4. Task Specialization</h4>
+      <p>We only retrain the final layers to specialize on our specific TinyML task (e.g., person detection). This saves immense compute time.</p>
+    </div>
+  </div>
+  
+  <div class="tl-display">
+    <div id="slide-1" class="tl-slide active"><img src="assets/vww_transfer_learning_base_model.png" alt="Base Model"></div>
+    <div id="slide-2" class="tl-slide"><img src="assets/vww_transfer_learning_general_features.png" alt="Feature Extraction"></div>
+    <div id="slide-3" class="tl-slide"><img src="assets/vww_transfer_learning_freeze_layers.png" alt="Freeze Layers"></div>
+    <div id="slide-4" class="tl-slide"><img src="assets/vww_transfer_learning_train_layers.png" alt="Train Layers"></div>
+  </div>
+</div>
+
+<div style="max-width: 1400px; margin: 120px auto 40px auto;">
+  <h2 class="section-title" style="font-size: 3.5rem; text-align: center;">Evaluation & Fairness Report Card</h2>
+</div>
+
+<!-- 3-Column Report Card -->
+<div class="rc-container">
+  <div class="rc-card">
+    <img src="assets/vww_top1_accuracy_example.png" alt="Top 1 Accuracy">
+    <h3>1. Accuracy Metrics</h3>
+    <p><b>Top-1 Accuracy</b> means the exact highest probability guess must match the ground truth. <b>Top-5 Accuracy</b> is a softer metric where the answer is acceptable if the ground truth appears anywhere in the top 5 guesses.</p>
+  </div>
+  
+  <div class="rc-card">
+    <img src="assets/vww_model_evolution_accuracy_ops.png" alt="Latency Tradeoff">
+    <h3>2. The UX Trade-Off</h3>
+    <p>A highly accurate model that takes 10 seconds to classify a person results in a terrible user experience. In TinyML, we must often compromise raw model quality for speed (Latency) to make the device feel responsive.</p>
+  </div>
+  
+  <div class="rc-card">
+    <img src="assets/vww_model_performance_metrics.png" alt="Fairness and Bias">
+    <h3>3. Fairness & Diversity</h3>
+    <p>If a model is trained predominantly on a majority demographic, it will perform poorly on unrepresented characteristics. A lack of generalization in the dataset leads to bias, ruining the experience regardless of model speed.</p>
+  </div>
+</div>
+
+<script>
+  function switchTlSlide(stepNum) {
+    // Reset all buttons and slides
+    const btns = document.querySelectorAll('.tl-step-btn');
+    const slides = document.querySelectorAll('.tl-slide');
+    
+    btns.forEach(b => b.classList.remove('active'));
+    slides.forEach(s => s.classList.remove('active'));
+    
+    // Activate target
+    btns[stepNum - 1].classList.add('active');
+    document.getElementById('slide-' + stepNum).classList.add('active');
+  }
+</script>
+<div class="divider"></div>
+<!-- MODULE 5: ANOMALY DETECTION (CINEMATIC PARALLAX UI) -->
+<style>
+  .parallax-section {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding: 120px 20px;
+    margin-bottom: 0;
+  }
+  
+  .parallax-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.75); /* Darkens the background so the glass card pops */
+    z-index: 1;
+  }
+  
+  .glass-card {
+    position: relative;
+    z-index: 2;
+    background: rgba(15, 15, 15, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid var(--gold);
+    border-radius: 16px;
+    padding: 60px;
+    max-width: 1200px;
+    width: 100%;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+  }
+
+  .glass-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    letter-spacing: 2px;
+    color: #fff;
+    margin-bottom: 24px;
+    text-align: center;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  }
+
+  .glass-intro {
+    color: #ccc;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto 50px auto;
+  }
+
+  .glass-grid {
+    display: flex;
+    gap: 40px;
+    align-items: stretch;
+  }
+  
+  .glass-col {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 30px;
+  }
+
+  .glass-col h4 {
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  
+  .glass-col p { color: #bbb; font-size: 1.05rem; line-height: 1.6; margin-bottom: 24px; }
+  .glass-col img { width: 100%; border-radius: 6px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+
+  /* Backgrounds */
+  .bg-ad-1 { background-image: url('assets/ad_predictive_maintenance_app.png'); }
+  .bg-ad-2 { background-image: url('assets/ad_dataset_wind_turbine.png'); border-top: 1px solid #222; }
+  .bg-ad-3 { background-image: url('assets/ad_autoencoder_architecture.png'); border-top: 1px solid #222; }
+</style>
+
+<!-- SECTION 1: WHAT IS AD? -->
+<div class="parallax-section bg-ad-1">
+  <div class="parallax-overlay"></div>
+  <div class="glass-card">
+    <h2 class="glass-title">Module 5: Anomaly Detection</h2>
+    <p class="glass-intro">Finding the needle in a haystack. While previous applications used supervised learning to recognize known patterns (like cats or wake words), Anomaly Detection does the exact opposite: It looks for the "Unknown Unknowns."</p>
+    
+    <div class="glass-grid">
+      <div class="glass-col">
+        <h4>The 3 Building Blocks</h4>
+        <p>This module introduces <b>Time-Series Data</b> streams to catch industrial motor failures in real-time. Every AD system relies on 3 blocks: The live <b>Input Signal</b>, the <b>Predictor</b> (the model's expectation of normal behavior), and the <b>Error</b> (the difference between the two).</p>
+        <img src="assets/ad_prediction_error_comparison.png" alt="Prediction Error">
+      </div>
+      <div class="glass-col">
+        <h4>Why TinyML?</h4>
+        <p>Sensors are often placed deep inside machines (like motor ball bearings) where electromagnetic interference kills Wi-Fi. Processing locally ensures zero latency, preventing the machine from destroying itself, while preserving the battery by not streaming hours of boring, normal data to the cloud.</p>
+        <img src="assets/ad_unsupervised_vs_supervised.png" alt="Unsupervised vs Supervised">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: DATASETS -->
+<div class="parallax-section bg-ad-2">
+  <div class="parallax-overlay"></div>
+  <div class="glass-card">
+    <h2 class="glass-title" style="color: #00bcd4;">The "Unknown Unknowns"</h2>
+    <p class="glass-intro">Normal operating data is a closed set (we have lots of it). Abnormal operating data is an open set (a machine can fail in an infinite, unpredictable number of ways). You cannot intentionally break expensive wind turbines to collect failure data.</p>
+    
+    <div class="glass-grid">
+      <div class="glass-col">
+        <h4 style="color: #00bcd4;">The MIMII Dataset</h4>
+        <p>To solve the massive data imbalance in Anomaly Detection, researchers created the MIMII dataset by instrumenting real factory pumps, fans, and valves to capture audio during both normal and abnormal operations.</p>
+        <img src="assets/ad_mimii_dataset_spectrograms.png" alt="MIMII Dataset">
+      </div>
+      <div class="glass-col">
+        <h4 style="color: #00bcd4;">The ToyADMOS Solution</h4>
+        <p>Because breaking real industrial machines is too expensive, researchers bought miniature toy cars and trains and intentionally damaged them. They recorded the failure sounds using multiple microphones, providing 180+ hours of data.</p>
+        <img src="assets/ad_toyadmos_dataset_toys.png" alt="ToyADMOS Dataset">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: AUTOENCODERS -->
+<div class="parallax-section bg-ad-3">
+  <div class="parallax-overlay"></div>
+  <div class="glass-card">
+    <h2 class="glass-title" style="color: #e91e63;">The Autoencoder Architecture</h2>
+    <p class="glass-intro">We cannot train a model to recognize every single failure state. Instead, we use a specialized network called an Autoencoder to exploit our massive wealth of <i>normal</i> data. It is trained purely to act as an identity function, taking an input and spitting out the exact same input.</p>
+    
+    <div class="glass-grid" style="margin-bottom: 40px;">
+      <div class="glass-col">
+        <h4 style="color: #e91e63;">The Compression Bottleneck</h4>
+        <p>The network is shaped like an hourglass. The <b>Encoder</b> forces the high-dimensional spectrogram through smaller layers, stripping away noise. The <b>Latent Space</b> holds the distilled essence of normal data. The <b>Decoder</b> expands it back out to reconstruct the signal.</p>
+      </div>
+      <div class="glass-col">
+        <h4 style="color: #e91e63;">Reconstruction Loss as a Trigger</h4>
+        <p>During inference, if an abnormal grinding gear occurs, the network attempts to compress and reconstruct it using the rules it learned for normal data. It fails completely. We measure this failure (Reconstruction Error) and use a high error spike as the flag to trigger an anomaly alert.</p>
+      </div>
+    </div>
+    
+    <!-- Foreground Architecture Diagram -->
+    <div style="margin-bottom: 30px; text-align: center;">
+      <img src="assets/ad_autoencoder_architecture.png" style="width: 100%; max-width: 900px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.8);" alt="Autoencoder Architecture">
+    </div>
+
+    <!-- Scrollable Container with Arrows -->
+    <style>#ad-scroll::-webkit-scrollbar { display: none; }</style>
+    <div style="position: relative; max-width: 100%; margin: 0 auto;">
+      <!-- Left Arrow -->
+      <button onclick="document.getElementById('ad-scroll').scrollBy({left: -800, behavior: 'smooth'})" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(0,0,0,0.8); border: 2px solid #00bcd4; color: #00bcd4; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: 0.2s;">&#8249;</button>
+      
+      <!-- Horizontal Scroll Track -->
+      <div id="ad-scroll" style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory; scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none;">
+        <img src="assets/ad_autoencoder_low_loss_normal.png" style="flex: 0 0 100%; width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); scroll-snap-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" alt="Low Loss Normal">
+        <img src="assets/ad_autoencoder_high_loss_abnormal.png" style="flex: 0 0 100%; width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); scroll-snap-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" alt="High Loss Abnormal">
+      </div>
+      
+      <!-- Right Arrow -->
+      <button onclick="document.getElementById('ad-scroll').scrollBy({left: 800, behavior: 'smooth'})" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(0,0,0,0.8); border: 2px solid #00bcd4; color: #00bcd4; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: 0.2s;">&#8250;</button>
+    </div>
+    
+    <div style="text-align: center; color: #888; font-size: 0.95rem; margin-top: -10px; letter-spacing: 1px;">
+      <i>&larr; SCROLL OR CLICK ARROWS TO COMPARE ABNORMAL STATE &rarr;</i>
+    </div>
+  </div>
+</div>
 <div class="divider"></div>
 <div id="wrap-nano" style="width:100%;height:520px;background:#0a0a0a;border:0.5px solid #222;border-radius:8px;position:relative;overflow:hidden;font-family:monospace;">
   <div id="trigger-nano" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:10;">
@@ -4174,7 +5680,34 @@ document.addEventListener('click', (e) => {
   }
 });
 </script>
+<!-- GLOBAL IMAGE LIGHTBOX -->
+<style>
+  #global-lightbox {
+    display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.92); cursor: zoom-out;
+    align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
+  }
+  #global-lightbox.active { display: flex; opacity: 1; }
+  #global-lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 0 40px rgba(0,0,0,0.9); }
+  img { cursor: zoom-in; }
+</style>
+<div id="global-lightbox" onclick="this.classList.remove('active'); setTimeout(() => this.style.display='none', 300);">
+  <img id="lightbox-img" src="">
+</div>
+<script>
+  document.querySelectorAll('img').forEach(img => {
+    img.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const lightbox = document.getElementById('global-lightbox');
+      document.getElementById('lightbox-img').src = this.src;
+      lightbox.style.display = 'flex';
+      setTimeout(() => lightbox.classList.add('active'), 10);
+    });
+  });
+</script>
 </body>
 </html>
+
+
 
 
