@@ -1,193 +1,89 @@
-# 🔐 SECURITY & INTELLECTUAL PROPERTY POLICY
+# 🔐 Security Policy & Intellectual Property
 
-**Last Updated:** May 3, 2026  
-**Repository Owner:** ZG0D-FF  
-**GitHub Profile:** https://github.com/ZG0D-FF
-
----
-
-## ⚖️ COPYRIGHT NOTICE
-
-**Copyright © 2026 ZG0D-FF. All rights reserved.**
-
-All content in this repository, including but not limited to:
-- Source code (HTML, JavaScript, CSS, Python, etc.)
-- Documentation
-- Images and assets
-- Configuration files
-- Educational materials
-
-...is the exclusive intellectual property of **ZG0D-FF** and is protected under copyright law.
+**Project:** ZG0D-FF Architecture & Systems  
+**Author:** Dibyajyotee Ghosh (ZG0D-FF)  
+**Affiliation:** Institute of Engineering & Management (IEM), Kolkata  
+**Profile:** [github.com/ZG0D-FF](https://github.com/ZG0D-FF) · [LinkedIn](https://www.linkedin.com/in/dibyajyotee-ghosh-06a24631a/)  
+**Last Updated:** September 2026  
 
 ---
 
-## 📋 LICENSING
+## 🛡️ Supported Versions
 
-This repository is protected under **DUAL LICENSING**:
+We actively maintain and provide security patches for the following project components:
 
-### Option 1: MIT License ✅
-- **File:** [`LICENSE`](./LICENSE)
-- **For:** Personal and commercial use
-- **Requirements:** 
-  - ✅ Attribution (credit ZG0D-FF)
-  - ✅ Include license copy
-- **Restrictions:** 
-  - ❌ Cannot hold liable for damages
-
-### Option 2: GPL-3.0 License ✅
-- **File:** [`LICENSE-GPL`](./LICENSE-GPL)
-- **For:** Open-source derivatives
-- **Requirements:**
-  - ✅ Share modifications publicly
-  - ✅ Use same license (copyleft)
-  - ✅ Provide source code
-- **Restrictions:**
-  - ❌ Cannot commercialize modifications without sharing
-  - ❌ Must open-source any derivative works
+| Component / System | Branch / Scope | Supported | Notes |
+| :--- | :--- | :---: | :--- |
+| **Active R&D Codebase** | `main2` | :white_check_mark: | Primary development and hardened branch |
+| **PoultryHealth-AI** | `aidata/`, `notes/` | :white_check_mark: | Edge bioacoustic ML inference & TFLite pipelines |
+| **Edge-Olfaction Logistics** | `ADC/`, `RAIN/` | :white_check_mark: | Dual-processor sensor telemetry & Haar DWT filters |
+| **Serverless Edge APIs** | `workers/` | :white_check_mark: | Cloudflare Workers, Redis caching, Supabase keep-alive |
+| **Interactive Dashboard & Web** | Root web clients | :white_check_mark: | Sanitized DOM, SRI verified CDN scripts, zero inline secrets |
+| **Legacy Archives** | `main` | :x: | Archived baseline; migrated to `main2` |
 
 ---
 
-## ⚠️ STRICT PLAGIARISM POLICY
+## 🚨 Reporting a Vulnerability
 
-### What IS Allowed ✅
-- Using code with **proper attribution** (MIT license)
-- Forking and studying the repository
-- Submitting pull requests to improve the code
-- Learning from the code for educational purposes
-- Using the MIT license for personal/commercial projects
+If you discover a security vulnerability, credential exposure, or exploit within this repository, please report it responsibly:
 
-### What IS NOT Allowed ❌
-- **Stealing code** without attribution
-- **Claiming code as your own** (plagiarism)
-- **Removing copyright notices** from files
-- **Commercial use** without proper license compliance
-- **Reverse engineering** for profit without sharing modifications
-- **Selling code** without GPL compliance (if GPL-licensed)
+1. **Email:** Send full technical details to **[ZGODMR@gmail.com](mailto:ZGODMR@gmail.com)** with the subject line `[SECURITY VULNERABILITY] - <Component Name>`.
+2. **GitHub Security Advisory:** Submit a private vulnerability report via the [Security Advisories](https://github.com/ZG0D-FF/ZG0D-FF/security/advisories/new) tab.
+3. **DO NOT** open public GitHub issues for undisclosed vulnerabilities or zero-day exploits.
+
+### Disclosure Timeline & SLA
+- **Initial Response:** Within 24–48 hours confirming receipt.
+- **Triage & Assessment:** Within 72 hours with an initial severity rating.
+- **Fix & Deployment:** Critical vulnerabilities patched within 7–14 days.
+- **Public Disclosure:** Coordinated after patch deployment to `main2`.
 
 ---
 
-## 🚨 DETECTION & CONSEQUENCES
+## 🔒 Security Architecture & Hardening Measures
 
-### How Theft is Detected 🔍
-1. **GitHub Search** — Code scanners find plagiarized content
-2. **Google & Bing** — Public web searches reveal copied code
-3. **AI Detection Tools** — Plagiarism detectors flag similar code
-4. **Community Reports** — Other developers report plagiarism
-5. **DMCA Monitoring** — Automated services track copyright violations
+This repository enforces strict defensive practices across its hardware-AI surface:
 
-### What Happens if You Steal ⚠️
-1. **GitHub Takedown Notice** — GitHub removes your repo/gists
-2. **DMCA Complaint** — Legal cease & desist letter
-3. **Account Suspension** — GitHub may ban your account
-4. **Legal Action** — Civil damages lawsuit possible
-5. **Portfolio Damage** — Career reputation destroyed
+1. **Edge Node & Sensor Telemetry Security**:
+   - Hardware sensor buffers validate frame bounds before passing to signal processing pipelines (Haar DWT / Fuzzy Logic).
+   - Microcontroller UART communication enforces structured packet framing to prevent buffer overflows.
 
----
+2. **Serverless APIs & Cloud Security**:
+   - Zero hardcoded API keys, JWT secrets, or administrative tokens in client-facing bundles.
+   - Cloudflare Worker edge endpoints enforce strict parameter validation, type-checking, and rate limiting.
 
-## 📧 REPORTING PLAGIARISM
+3. **DOM Security & XSS Mitigation**:
+   - Zero dynamic HTML interpolation via `innerHTML` without explicit sanitization.
+   - Text rendering utilizes safe `textContent` / `replaceChildren` DOM APIs.
+   - Remote script imports enforce Subresource Integrity (SRI) cryptographic SHA-384 hashes.
 
-**Found someone using your code without permission?**
-
-### Report Here:
-- **GitHub Issues:** Open an issue in this repository
-- **DMCA Notice:** File at https://github.com/github/dmca
-- **Email:** ZGODMR@gmail.com
-- **LinkedIn:** https://www.linkedin.com/in/mr-zgod-06a24631a/
-
-### Include in Report:
-- 📋 Link to stolen code
-- 🔗 Link to original code (this repo)
-- 📝 Proof of authorship (commit dates, GitHub profile)
-- 📸 Screenshots if necessary
+4. **Automated Continuous Security**:
+   - GitHub Actions automated CodeQL semantic code analysis.
+   - Semgrep static application security testing (SAST) on worker logic.
+   - OSV vulnerability scanning on package lockfiles.
 
 ---
 
-## ✅ PROPER ATTRIBUTION TEMPLATE
+## ⚖️ Intellectual Property & Plagiarism Policy
 
-**If using MIT license, use this attribution:**
+**Copyright © 2026 Dibyajyotee Ghosh (ZG0D-FF). All rights reserved.**
 
+### What Is Permitted :white_check_mark:
+- Studying, forking, and reviewing the architecture for educational and research purposes.
+- Utilizing code under the terms of the [MIT License](./LICENSE) with explicit attribution.
+- Submitting pull requests to harden security, optimize DSP algorithms, or improve inference latency.
+
+### What Is Strictly Prohibited :x:
+- Plagiarizing architecture, research pipelines, or code without prominent attribution.
+- Stripping copyright notices, author banners, or license headers from any file.
+- Commercial redistribution of proprietary edge models or telemetry logic without written consent.
+
+### Proper Attribution Template
 ```markdown
-[Project/Code Name]
-Copyright (c) 2026 ZG0D-FF
-Licensed under the MIT License
-https://github.com/ZG0D-FF/ZG0D-FF
-```
-
-**Or in code comments:**
-
-```html
-<!-- 
-  Code from: ZG0D-FF/ZG0D-FF
-  License: MIT
-  Copyright (c) 2026 ZG0D-FF
-  https://github.com/ZG0D-FF/ZG0D-FF
--->
+Architecture derived from: ZG0D-FF (Dibyajyotee Ghosh)
+Repository: https://github.com/ZG0D-FF/ZG0D-FF
+License: MIT License (Copyright (c) 2026 Dibyajyotee Ghosh)
 ```
 
 ---
 
-## 🛡️ LEGAL PROTECTION
-
-### Why Both Licenses?
-- **MIT** = Encourages sharing & collaboration
-- **GPL** = Protects against commercial misuse
-
-### What You're Protected By:
-- ✅ **Copyright Law** — Automatic protection since creation
-- ✅ **DMCA (Digital Millennium Copyright Act)** — Anti-circumvention law
-- ✅ **Berne Convention** — International copyright protection
-- ✅ **GitHub ToS** — Platform enforcement
-- ✅ **WHOIS Records** — Proof of authorship
-
-### Enforcement Options:
-1. **Cease & Desist** — Legal demand to stop
-2. **DMCA Takedown** — Remove infringing content
-3. **Civil Lawsuit** — Recover damages ($150,000+ per violation)
-4. **Criminal Prosecution** — In cases of willful infringement
-5. **Platform Ban** — GitHub account suspension/deletion
-
----
-
-## 📚 RESOURCES
-
-| Resource | Link |
-|----------|------|
-| **MIT License Full Text** | [opensource.org](https://opensource.org/licenses/MIT) |
-| **GPL-3.0 Full Text** | [gnu.org](https://www.gnu.org/licenses/gpl-3.0.html) |
-| **DMCA Info** | [dmca.com](https://www.dmca.com/) |
-| **Copyright Basics** | [copyright.gov](https://www.copyright.gov/) |
-| **GitHub IP Policy** | [github.com/policies](https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy) |
-
----
-
-## 📝 FREQUENTLY ASKED QUESTIONS
-
-**Q: Can I use your code?**  
-A: YES! With MIT license attribution.
-
-**Q: Can I modify it?**  
-A: YES! Keep the license header and attributes.
-
-**Q: Can I sell products using this code?**  
-A: YES! Under MIT license with attribution.
-
-**Q: Can I remove the copyright notice?**  
-A: NO! That's illegal and violates the license.
-
-**Q: What if I want GPL?**  
-A: You're welcome to use GPL-3.0 license. All modifications must be open-source.
-
-**Q: What if I claim it's mine?**  
-A: That's plagiarism. GitHub will remove it and you may face legal action.
-
----
-
-## 🔔 LAST REMINDER
-
-> **This code is protected by copyright law and open-source licenses. Unauthorized copying, distribution, or modification without proper attribution is illegal and subject to civil and criminal penalties.**
-
-**Use responsibly. Respect intellectual property. Build ethically.** ⚖️
-
----
-
-*For questions about licensing or usage, contact: ZGODMR@gmail.com*
+*For security inquiries, licensing questions, or collaboration: [ZGODMR@gmail.com](mailto:ZGODMR@gmail.com)*

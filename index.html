@@ -55,13 +55,10 @@ window.addEventListener('DOMContentLoaded', () => {
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#020c18">
 <title>JARVIS — Portfolio</title>
-<script type="module">import {ulid} from "https://esm.sh/ulid@2.3.0"; window.ulid = ulid;</script>
+<script type="module">import {ulid} from "./js/core/ulid.js"; window.ulid = ulid;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
-        integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- [AUDIO ENGINE: UNLOCK AUTOPLAY] -->
@@ -805,6 +802,7 @@ function proceedToLaunch(bootMessage) {
   launchDashboard();
 }
 function triggerMakerBootAuth(name) {
+  window._pendingMakerName = name;
   document.getElementById('boot-text').innerHTML = '<span style="color:#ff1744">CREATOR ALIAS DETECTED. AWAITING AUTHORIZATION...</span>';
   
   const form = document.getElementById('visitor-form');
@@ -812,13 +810,14 @@ function triggerMakerBootAuth(name) {
     <div class="form-row">
       <label style="color:#ff1744">AUTHORIZATION CODE</label>
       
-<input type="password" id="maker-pass-boot" placeholder="Enter password..." style="border-color:#ff1744; color:#ff1744; text-align:center;" autocomplete="off" onkeypress="if(event.key === 'Enter') verifyMakerBoot('${name}');" />
+<input type="password" id="maker-pass-boot" placeholder="Enter password..." style="border-color:#ff1744; color:#ff1744; text-align:center;" autocomplete="off" onkeypress="if(event.key === 'Enter') verifyMakerBoot();" />
     </div>
-    <button type="button" onclick="verifyMakerBoot('${name}')" style="margin-top:15px; background:rgba(255,23,68,0.1); border:1px solid #ff1744; color:#ff1744; padding:10px; cursor:pointer; font-family:var(--font-hud);">VERIFY UPLINK</button>
+    <button type="button" onclick="verifyMakerBoot()" style="margin-top:15px; background:rgba(255,23,68,0.1); border:1px solid #ff1744; color:#ff1744; padding:10px; cursor:pointer; font-family:var(--font-hud);">VERIFY UPLINK</button>
     <div id="auth-err-boot" style="color:#ff1744; font-size:10px; margin-top:10px;"></div>
   `;
 }
 async function verifyMakerBoot(name) {
+  const targetName = name || window._pendingMakerName;
   const pass = document.getElementById('maker-pass-boot').value;
   const errDiv = document.getElementById('auth-err-boot');
   errDiv.innerText = "AUTHENTICATING...";
@@ -832,7 +831,7 @@ async function verifyMakerBoot(name) {
       const data = await res.json();
       if (data.success) {
           window.store.sessionSet('adminToken', pass);
-          _visitorName = name;
+          _visitorName = targetName;
           _visitorGreeting = "WELCOME BACK // DJ [SYSTEM ARCHITECT]";
           proceedToLaunch('Authentication accepted. Initializing Maker Environment...');
       } else {

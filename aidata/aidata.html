@@ -531,10 +531,10 @@ body.dark-mode {
 </style>
 
     <!-- Markdown and Syntax Highlighting for Tutorials -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" integrity="sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+" crossorigin="anonymous"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha384-06z5D//U/xpvxZHuUz92xBvq3DqBBFi7Up53HRrbV7Jlv7Yvh/MZ7oenfUe9iCEt" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js" integrity="sha384-WJdEkJKrbsqw0evQ4GB6mlsKe5cGTxBOw4KAEIa52ZLB7DDpliGkwdme/HMa5n1m" crossorigin="anonymous"></script>
     <style>
         /* Tutorial Modal Styles */
         .tutorial-modal {
@@ -1315,7 +1315,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const markdownLinkRegex = /\[([\s\S]*?)\]\(([^)]*?\([^)]*?\)[^)]*?|[^)]*?)\)/gi;
             return text.replace(markdownLinkRegex, (match, linkText, url) => {
                 const cleanUrl = url.trim().replace(/\s+/g, '').toLowerCase();
-                if (cleanUrl.startsWith('javascript:')) {
+                if (!/^(https?:|\/|#)/i.test(cleanUrl) || /^javascript:/i.test(cleanUrl)) {
                     return `[${linkText}](#)`;
                 }
                 return match;
@@ -1972,7 +1972,14 @@ window.addEventListener('DOMContentLoaded', () => {
                 btn.addEventListener('click', async (e) => {
                     const labId = btn.getAttribute('data-lab');
                     if(tutorialModal) tutorialModal.classList.add('active');
-                    if(tutorialContent) tutorialContent.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 50px;">Loading ' + labId + '...</div>';
+                    if(tutorialContent) {
+                        const loadingDiv = document.createElement('div');
+                        loadingDiv.style.textAlign = 'center';
+                        loadingDiv.style.color = 'var(--text-secondary)';
+                        loadingDiv.style.padding = '50px';
+                        loadingDiv.textContent = 'Loading ' + labId + '...';
+                        tutorialContent.replaceChildren(loadingDiv);
+                    }
                     
                     try {
                         const template = document.getElementById('template-' + labId);
@@ -1995,7 +2002,13 @@ window.addEventListener('DOMContentLoaded', () => {
                         if(tutorialContent) Prism.highlightAllUnder(tutorialContent);
                         lucide.createIcons();
                     } catch (err) {
-                        if(tutorialContent) tutorialContent.innerHTML = '<div style="color: #ef4444; padding: 20px;">Error loading tutorial: ' + err.message + '</div>';
+                        if(tutorialContent) {
+                            const errDiv = document.createElement('div');
+                            errDiv.style.color = '#ef4444';
+                            errDiv.style.padding = '20px';
+                            errDiv.textContent = 'Error loading tutorial: ' + err.message;
+                            tutorialContent.replaceChildren(errDiv);
+                        }
                     }
                 });
             });

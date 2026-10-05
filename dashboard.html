@@ -119,10 +119,10 @@ if (studyTriggerBtn) {
   }
   document.addEventListener('click', unlockAudioEngine, { once: true });
 </script>
-<script type="module">import {ulid} from "https://esm.sh/ulid@2.3.0"; window.ulid = ulid;</script>
+<script type="module">import {ulid} from "./js/core/ulid.js"; window.ulid = ulid;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1503,7 +1503,14 @@ footer {
     } catch (err) {
       console.error("[JARVIS] SURVEILLANCE ERROR:", err);
       const grid = document.getElementById('surveillance-grid');
-      if (grid) grid.innerHTML = `<div style="color: #ff1744; font-family: var(--font-mono);">CRITICAL SYSTEM FAILURE: ${err.message}</div>`;
+      if (grid) {
+        grid.textContent = '';
+        const errDiv = document.createElement('div');
+        errDiv.style.color = '#ff1744';
+        errDiv.style.fontFamily = 'var(--font-mono)';
+        errDiv.textContent = `CRITICAL SYSTEM FAILURE: ${err.message}`;
+        grid.appendChild(errDiv);
+      }
     }
   };
 
@@ -2501,7 +2508,7 @@ document.addEventListener('keydown', (function(){
     if (typed === secret) {
       const voices = window.speechSynthesis.getVoices();
       const deep = voices.find(v => v.name.includes('David') || v.name.includes('Daniel') || v.name.includes('Google UK English Male')) || voices[0];
-      const name = document.querySelector('.profile-name') ? document.querySelector('.profile-name').innerText.replace('\n',' ') : 'the engineer';
+      const name = document.querySelector('.profile-name') ? document.querySelector('.profile-name').innerText.replace(/\n/g, ' ') : 'the engineer';
       const msg = new SpeechSynthesisUtterance('Good day. I am JARVIS, Just A Rather Very Intelligent System. You are currently viewing the portfolio of ' + name + '. He is a second year Electronics and Communication Engineering student at the University of Engineering and Management. He has ' + document.querySelectorAll('.proj-card').length + ' active projects on display, ranging from acoustic disease detection on edge hardware, to an adaptive olfaction logistics system. His GitHub is Z-G-zero-D dash F-F. THANK YOU');
       msg.pitch = 0.55; msg.rate = 0.85; msg.volume = 1; msg.voice = deep;
       window.speechSynthesis.cancel();

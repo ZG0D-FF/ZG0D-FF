@@ -11370,7 +11370,7 @@ defineEnvironment({
       "Bmatrix": ["\\{", "\\}"],
       "vmatrix": ["|", "|"],
       "Vmatrix": ["\\Vert", "\\Vert"]
-    }[context.envName.replace("*", "")]; // \hskip -\arraycolsep in amsmath
+    }[context.envName.replace(/\*/g, "")]; // \hskip -\arraycolsep in amsmath
 
     var colAlign = "c";
     var payload = {
@@ -12043,7 +12043,7 @@ var genfrac_mathmlBuilder = function mathmlBuilder(group, options) {
     var withDelims = [];
 
     if (group.leftDelim != null) {
-      var leftOp = new mathMLTree.MathNode("mo", [new mathMLTree.TextNode(group.leftDelim.replace("\\", ""))]);
+      var leftOp = new mathMLTree.MathNode("mo", [new mathMLTree.TextNode(group.leftDelim.replace(/\\/g, ""))]);
       leftOp.setAttribute("fence", "true");
       withDelims.push(leftOp);
     }
@@ -12051,7 +12051,7 @@ var genfrac_mathmlBuilder = function mathmlBuilder(group, options) {
     withDelims.push(node);
 
     if (group.rightDelim != null) {
-      var rightOp = new mathMLTree.MathNode("mo", [new mathMLTree.TextNode(group.rightDelim.replace("\\", ""))]);
+      var rightOp = new mathMLTree.MathNode("mo", [new mathMLTree.TextNode(group.rightDelim.replace(/\\/g, ""))]);
       rightOp.setAttribute("fence", "true");
       withDelims.push(rightOp);
     }

@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -21,7 +23,7 @@ export default async function handler(req, res) {
     if (isCreating) {
       // 1. Create Room Logic
       for (let attempt = 0; attempt < 3; attempt++) {
-        const code = Array.from({length: 4}).map(() => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.charAt(Math.floor(Math.random() * 26))).join('');
+        const code = Array.from({length: 4}).map(() => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.charAt(crypto.randomInt(26))).join('');
         
         const roomRes = await fetch(`${SUPABASE_URL}/rest/v1/imposter_rooms`, {
           method: 'POST',

@@ -1,9 +1,5 @@
 <div align="center">
 
-
-
-<br/>
-
 <!-- ANIMATED ROLE TITLES -->
 <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=30&duration=2800&pause=900&color=00E5FF&center=true&vCenter=true&width=680&lines=DJ+%7C+Systems+Architect;Hardware+Integrator;AI+%2B+IoT+Developer;Edge+Deployment+Specialist;ECE+Engineer" alt="Roles" />
 
@@ -11,7 +7,7 @@
 
 <!-- SOCIAL BADGES — clean pill style -->
 <a href="mailto:ZGODMR@gmail.com"><img src="https://img.shields.io/badge/Gmail-0D1117?style=for-the-badge&logo=gmail&logoColor=00E5FF"/></a>
-<a href="https://www.linkedin.com/in/mr-zgod-06a24631a/"><img src="https://img.shields.io/badge/LinkedIn-0D1117?style=for-the-badge&logo=linkedin&logoColor=00E5FF"/></a>
+<a href="https://www.linkedin.com/in/dibyajyotee-ghosh-06a24631a/"><img src="https://img.shields.io/badge/LinkedIn-0D1117?style=for-the-badge&logo=linkedin&logoColor=00E5FF"/></a>
 <a href="https://zg0d-ff.github.io/ZG0D-FF/"><img src="https://img.shields.io/badge/Portfolio-0D1117?style=for-the-badge&logo=googlechrome&logoColor=00E5FF"/></a>
 
 </div>
@@ -33,9 +29,11 @@
 
 ### ⬛ SYSTEM.BIO
 
-I am an **Electronics & Communication Engineering** student who builds at the intersection of physical hardware and intelligent logic. I don't just write scripts — I design the architecture, wire the microcontrollers, and deploy sensor networks into the real world.
+I am an **ECE student at IEM Kolkata**, driven by a singular focus: **architecting high-performance systems at the intersection of hardware and AI**. I specialize in rapid prototyping, edge computing, and full-stack embedded solutions—from bare-metal microcontrollers to cloud-native serverless deployments.
 
-My strength is **rapid prototyping and system integration**. I build the physical foundation using Raspberry Pi and Arduino, and I partner with advanced AI tools to rapidly generate, debug, and deploy the software logic needed to make those systems *think*.
+My engineering philosophy is built on **performance, low latency, and mathematical rigor**. Whether bypassing Python's GIL with native C++ DLLs or deploying bioacoustic ML ensembles on a Raspberry Pi, I build systems that scale efficiently under strict hardware constraints.
+
+> *"If a project needs a brain, a sensor network, and a real-world application, I figure out how to put the pieces together."*
 
 ---
 
@@ -47,6 +45,16 @@ My strength is **rapid prototyping and system integration**. I build the physica
 ![C++](https://img.shields.io/badge/C%2B%2B-0D1117?style=for-the-badge&logo=c%2B%2B&logoColor=00E5FF)
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-0D1117?style=for-the-badge&logo=raspberrypi&logoColor=00E5FF)
 ![Arduino](https://img.shields.io/badge/Arduino-0D1117?style=for-the-badge&logo=arduino&logoColor=00E5FF)
+
+<br/>
+
+![Cloudflare](https://img.shields.io/badge/Cloudflare-0D1117?style=for-the-badge&logo=cloudflare&logoColor=00E5FF)
+![Supabase](https://img.shields.io/badge/Supabase-0D1117?style=for-the-badge&logo=supabase&logoColor=00E5FF)
+![Vercel](https://img.shields.io/badge/Vercel-0D1117?style=for-the-badge&logo=vercel&logoColor=00E5FF)
+![Redis](https://img.shields.io/badge/Redis-0D1117?style=for-the-badge&logo=redis&logoColor=00E5FF)
+
+<br/>
+
 ![OpenCV](https://img.shields.io/badge/OpenCV-0D1117?style=for-the-badge&logo=opencv&logoColor=00E5FF)
 ![Linux](https://img.shields.io/badge/Linux-0D1117?style=for-the-badge&logo=linux&logoColor=00E5FF)
 ![Git](https://img.shields.io/badge/Git-0D1117?style=for-the-badge&logo=git&logoColor=00E5FF)
@@ -54,51 +62,31 @@ My strength is **rapid prototyping and system integration**. I build the physica
 </div>
 
 ---
----
 
 ### ⬛ SYSTEMS ONLINE & IN ARCHIVE
-<sub><i>Active edge deployments · Archived neural networks · Ongoing R&D</i></sub>
+<sub><i>Edge AI deployments · Embedded signal processing · Cloud-native serverless · Low-latency infrastructure</i></sub>
 <br/><br/>
 
-> ### 🔵 `J.A.R.V.I.S. Local AI`
-> Voice-activated Python assistant running **fully local** on Raspberry Pi hardware. Executes system checks, runs voice protocols, and operates without cloud dependency.
-> `Python` · `Raspberry Pi` · `Speech Recognition` · `Edge AI`
+> ### 🟠 `PoultryHealth-AI` · Edge Bioacoustics
+> Low-latency avian bioacoustic detection system using **Google YAMNet + custom MLP StackingClassifier** to mathematically isolate respiratory distress on edge hardware.
+> `Google YAMNet` · `MLP StackingClassifier` · `TensorFlow Lite` · `Raspberry Pi` · `Edge Bioacoustics`
 
-> ### 🟢 `Edge-Olfaction Logistics`  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-status/edge-status.svg" align="center" height="20" />
-> Adaptive hardware network for perishable goods monitoring. Integrates **MQ gas sensors + DHT environmental arrays** to detect fruit spoilage in real-time at the edge.
-> `Arduino` · `MQ Sensors` · `IoT` · `Real-time Analytics`
+> ### 🟢 `Edge-Olfaction Logistics` · Signal Processing
+> Dual-processor edge framework for perishable goods monitoring. IEEE-aligned pipeline utilizing **Haar Discrete Wavelet Transforms (DWT) and fuzzy logic** to process real-time multi-gas sensor telemetry.
+> `Haar DWT` · `Fuzzy Logic` · `MQ Sensor Arrays` · `Arduino` · `Raspberry Pi` · `IoT Telemetry`
 
-> ### 🟠 `Avian Disease Audio Detector`
-> Lightweight acoustic AI deployed on edge hardware. Monitors poultry health by classifying **environmental audio signatures** against a disease pattern model.
-> `TensorFlow Lite` · `Audio ML` · `Raspberry Pi` · `Edge Inference`
+> ### 🔵 `NEXUS` · Cloud-Native Serverless Router
+> Edge-deployed multi-model LLM router utilizing **Cloudflare Workers, Upstash Redis, and Supabase**. Implements delayed-execution checkpointing and real-time RAG strictly within serverless CPU budgets.
+> `Cloudflare Workers` · `Upstash Redis` · `Supabase` · `RAG` · `Serverless Edge`
 
-> ### 🟣 `FC Manager AI`
-> Tactical prediction engine using **OCR + data analytics** to parse match data and generate football management strategies with statistical backing.
-> `Python` · `OCR` · `Data Analytics` · `Predictive Modelling`
+> ### 🟣 `Low-Latency In-Memory Engine` · Systems Architecture
+> High-performance in-memory text matching engine in **C++ (bypassing Python GIL with native C++ DLLs)** and asynchronous Pub/Sub EventBus architectures handling heavy ML workloads without blocking REST API threads.
+> `C++` · `Python C-DLL` · `GIL Bypass` · `Pub/Sub EventBus` · `Zero-Latency Queue`
 
 ---
----
 
 <br/>
 
-<!-- ROW 1: GitHub Stats + Top Languages -->
-<div align="center">
-<img src="https://github-readme-stats.vercel.app/api?username=ZG0D-FF&show_icons=true&count_private=true&include_all_commits=true&theme=tokyonight&hide_border=true&title_color=00E5FF&text_color=a9b1d6&icon_color=00E5FF&bg_color=0D1117" width="48%" alt="GitHub Stats"/>
-&nbsp;
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ZG0D-FF&layout=compact&langs_count=6&theme=tokyonight&hide_border=true&title_color=00E5FF&text_color=a9b1d6&bg_color=0D1117" width="47%" alt="Top Languages"/>
-</div>
-<br/>
-
-<!-- ROW 2: Streak -->
-<div align="center">
-<img src="https://streak-stats.demolab.com?user=ZG0D-FF&theme=tokyonight&hide_border=true&ring=00E5FF&fire=00E5FF&currStreakLabel=00E5FF&sideLabels=a9b1d6&dates=a9b1d6&background=0D1117&stroke=1C2333&border_radius=6" width="65%" alt="GitHub Streak"/>
-</div>
-<br/>
-
-<div align="center">
-  <img src="https://quotes-github-readme.vercel.app/api?type=horizontal&theme=tokyonight"/>
-</div>
-<br/>
 
 <!-- TERMINAL SYSTEM STATUS FOOTER -->
 <div align="center">
@@ -108,26 +96,49 @@ My strength is **rapid prototyping and system integration**. I build the physica
   <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&size=16&duration=3000&pause=1000&color=00E5FF&center=true&vCenter=true&width=560&lines=Open+to+internships+%26+collabs;Building+at+the+edge+of+hardware+%2B+AI;Rapid+prototype+--+Wire+--+Deploy"/>
 </div>
 <div align="center">
-  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/main/assets/jarvis.svg" width="400" alt="JARVIS HUD"/>
+  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/main2/assets/jarvis.svg" width="400" alt="JARVIS HUD"/>
 </div>
 
-<!-- LIVE CUSTOM SENSOR HUD (Served from Vercel/Cloudflare) -->
+<!-- LIVE CUSTOM SENSOR HUD -->
 <div align="center">
   <br/>
   <a href="https://zg-0-d-ff.vercel.app/dashboard.html">
     <img src="https://img.shields.io/badge/OPEN%20LIVE%20EDGE%20DASHBOARD-0D1117?style=for-the-badge&logo=googlechrome&logoColor=00E5FF" alt="Dashboard Button"/>
   </a>
-  <br/><br/>
-  <a href="https://github.com/ZG0D-FF/Edge-Olfaction">
-    <img src="https://soft-thunder-2965.zgodmr.workers.dev/sensor-hud.svg" width="600" alt="Live Sensor Telemetry"/>
-  </a>
 </div>
 
-<!-- 3D ISOMETRIC CONTRIBUTION CITYSCAPE -->
+
+<!-- CONTRIBUTORS & AI ARCHITECTS -->
+<br/>
+
+### ⬛ CONTRIBUTORS & AI PAIR PROGRAMMERS
+<sub><i>Engineering intelligence · Co-architected & hardened with Frontier AI</i></sub>
+
 <div align="center">
-  <br/>
-  <img src="https://raw.githubusercontent.com/ZG0D-FF/ZG0D-FF/output-3d/profile-3d-contrib/profile-night-rainbow.svg" width="100%" alt="3D Cityscape"/>
+
+<br/>
+
+<a href="https://claude.ai">
+  <img src="https://img.shields.io/badge/Anthropic%20Claude-0D1117?style=for-the-badge&logo=anthropic&logoColor=00E5FF" alt="Anthropic Claude"/>
+</a>
+&nbsp;
+<a href="https://deepmind.google/technologies/gemini/">
+  <img src="https://img.shields.io/badge/Google%20Gemini-0D1117?style=for-the-badge&logo=googlegemini&logoColor=00E5FF" alt="Google Gemini"/>
+</a>
+&nbsp;
+<a href="https://github.com/google-deepmind">
+  <img src="https://img.shields.io/badge/Google%20DeepMind%20Antigravity-0D1117?style=for-the-badge&logo=google&logoColor=00E5FF" alt="Google DeepMind Antigravity"/>
+</a>
+
+<br/><br/>
+
+> **Core Pair Programmers & Autonomous Systems Engineering:**  
+> - **Anthropic Claude** — Architecture design, edge pipeline formulation, and rapid system ideation.  
+> - **Google DeepMind Antigravity (powered by Gemini)** — Autonomous pair programming, AST-level vulnerability remediation, CodeQL hardening, and low-latency systems optimization.
+
 </div>
+
+<br/>
 
 <!-- CAPSULE RENDER WAVING FOOTER -->
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:00E5FF,100:0D1117&height=80&section=footer"/>
