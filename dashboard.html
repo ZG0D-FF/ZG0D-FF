@@ -6709,34 +6709,30 @@ if (contactForm) {
   `;
   document.head.appendChild(style);
 
-  // 1. Master 9-Track Playlist + Harmonic Profiles for Procedural Synth Fallback
+  // 1. Master 10-Track Playlist + Harmonic Profiles for Procedural Synth Fallback
   const PLAYLIST = [
     { file: 'hesham nazih.mp3',         scale: [220, 233.08, 277.18, 329.63, 349.23, 415.30, 440], wave: 'triangle' },
     { file: 'Moon Knight.mp4',          scale: [196, 207.65, 246.94, 293.66, 311.13, 370.00, 392], wave: 'sawtooth' },
     { file: 'Tomake_Bhalobeshe.mp3',    scale: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25],   wave: 'sine'     },
     { file: 'CALLIN YOU.mp4',           scale: [246.94, 293.66, 329.63, 370.00, 440.00, 493.88],   wave: 'triangle' },
     { file: 'ISHQ_SUFIYANA.mp3',        scale: [293.66, 329.63, 370.00, 440.00, 493.88, 587.33],   wave: 'sine'     },
+    { file: 'Jay_Jaykara.mp3',          scale: [220, 261.63, 293.66, 329.63, 392.00, 440.00],       wave: 'triangle' },
     { file: 'Most Beautiful Music.mp4', scale: [261.63, 311.13, 349.23, 392.00, 466.16, 523.25],   wave: 'triangle' },
     { file: 'Krishna Flute.mp3',        scale: [329.63, 370.00, 440.00, 493.88, 554.37, 659.25],   wave: 'sine'     },
     { file: 'Jai Sri Krsna.mp4',        scale: [293.66, 329.63, 440.00, 493.88, 587.33, 659.25],   wave: 'sine'     },
     { file: 'Hitman.mp3',               scale: [146.83, 155.56, 185.00, 220.00, 233.08, 293.66],   wave: 'triangle' }
   ];
 
-  // Local relative folders to check cleanly
-  const LOCAL_DIRS = ['Journal/', '../Journal/', 'audio/', ''];
-
   let currentTrack = 0;
   let isPlaying = false;
+  let playSessionId = 0;
   let synthInterval = null;
   let synthElapsed = 0;
-  const trackCache = {};            // RAM Blob URL Dictionary
-  const fetchingTracks = new Set(); // Lock
+  const trackCache = {};            // RAM Blob / Verified URL Dictionary
 
-  // Do NOT set crossOrigin='anonymous' on file:// (prevents Chromium local media CORS block)
   const audio = document.createElement('audio');
   audio.id = 'ambient-audio';
   audio.preload = 'metadata';
-  if (!IS_FILE_PROTOCOL) audio.crossOrigin = 'anonymous';
   audio.volume = 0.85;
   document.body.appendChild(audio);
 
@@ -6858,63 +6854,29 @@ if (contactForm) {
   }
   renderPlaylistUI();
 
-  // 2. Protocol-Aware Track Prober (Zero CORS Errors on file://)
-  function probeLocalAudioElement(url) {
+  // 2. Protocol-Aware Direct Audio Loader
+  function tryPlayCandidate(url, mySession) {
     return new Promise((resolve) => {
-      const temp = document.createElement('audio');
-      temp.preload = 'metadata';
+      let settled = false;
       const cleanup = (ok) => {
-        temp.onloadedmetadata = null;
-        temp.onerror = null;
+        if (settled) return;
+        settled = true;
+        audio.removeEventListener('playing', onOk);
+        audio.removeEventListener('error', onErr);
         resolve(ok);
       };
-      temp.onloadedmetadata = () => cleanup(true);
-      temp.onerror = () => cleanup(false);
-      temp.src = url;
+      const onOk = () => cleanup(true);
+      const onErr = () => cleanup(false);
+
+      audio.addEventListener('playing', onOk, { once: true });
+      audio.addEventListener('error', onErr, { once: true });
+
+      audio.src = url;
+      audio.load();
+      audio.play().catch(() => cleanup(false));
+
+      setTimeout(() => cleanup(false), 2500);
     });
-  }
-
-  async function resolveTrackSource(index) {
-    const item = PLAYLIST[index];
-    const trackName = item.file;
-    if (trackCache[trackName]) return trackCache[trackName];
-    if (fetchingTracks.has(trackName)) return null;
-
-    fetchingTracks.add(trackName);
-    const encoded = trackName.split('/').map(encodeURIComponent).join('/');
-
-    try {
-      for (const dir of LOCAL_DIRS) {
-        const candidate = dir + encoded;
-        if (IS_FILE_PROTOCOL) {
-          // On file://, never call fetch() — probe silently via native <audio> metadata
-          const exists = await probeLocalAudioElement(candidate);
-          if (exists) {
-            trackCache[trackName] = candidate;
-            logCD(`Local track verified: ${candidate}`, '#34d399');
-            renderPlaylistUI();
-            return candidate;
-          }
-        } else {
-          // On http:// or https://, use full Blob RAM Preloader
-          try {
-            const res = await fetch(candidate);
-            if (res.ok) {
-              const blob = await res.blob();
-              if (blob.size > 1000) {
-                trackCache[trackName] = URL.createObjectURL(blob);
-                logCD(`Blob cached in RAM (${(blob.size / 1048576).toFixed(2)} MB): ${trackName}`, '#34d399');
-                renderPlaylistUI();
-                return trackCache[trackName];
-              }
-            }
-          } catch (e) {}
-        }
-      }
-    } finally {
-      fetchingTracks.delete(trackName);
-    }
-    return null;
   }
 
   // 3. Procedural WebAudio Ambient Synthesizer (When MP3/MP4 files are not in local folder yet)
@@ -6987,39 +6949,63 @@ if (contactForm) {
     stopSynthStream();
     audio.pause();
 
+    const mySession = ++playSessionId;
     const item = PLAYLIST[currentTrack];
     const trackName = item.file;
+
     btnPlayPause.innerHTML = '⌛';
     audioIcon.textContent = '⟳';
     btnToggleText.textContent = 'LOADING';
     nowPlayingText.textContent = getCleanName(trackName);
     renderPlaylistUI();
 
-    const srcUrl = await resolveTrackSource(currentTrack);
-
-    if (srcUrl) {
+    // 1. Direct RAM Blob or cached verified URL
+    if (trackCache[trackName]) {
       try {
-        if (audio.src !== srcUrl) audio.src = srcUrl;
+        if (audio.src !== trackCache[trackName]) audio.src = trackCache[trackName];
         await audio.play();
+        if (mySession !== playSessionId) return;
         isPlaying = true;
         dock.classList.add('is-playing');
         btnPlayPause.innerHTML = SVG_PAUSE;
         audioIcon.textContent = 'ılı';
-        btnToggleText.textContent = IS_FILE_PROTOCOL ? 'LOCAL DISK' : 'RAM BLOB';
+        btnToggleText.textContent = trackCache[trackName].startsWith('blob:') ? 'RAM BLOB' : (IS_FILE_PROTOCOL ? 'LOCAL DISK' : 'ACTIVE');
         logCD(`Now Playing: ${getCleanName(trackName)}`, '#38bdf8');
         renderPlaylistUI();
-
-        // Preload next track if on HTTP/HTTPS
-        if (!IS_FILE_PROTOCOL) {
-          resolveTrackSource((currentTrack + 1) % PLAYLIST.length);
-        }
         return;
       } catch (err) {
-        logCD(`Direct playback fallback triggered for ${trackName}`, '#fbbf24');
+        delete trackCache[trackName];
       }
     }
 
-    // Seamless WebAudio Synth Fallback (Zero Errors!)
+    // 2. Candidate paths (Local Journal folder first, Git LFS media fallbacks next)
+    const enc = encodeURI(trackName);
+    const candidates = [
+      `Journal/${enc}`,
+      `./Journal/${enc}`,
+      `https://media.githubusercontent.com/media/zg0d-ff/ZG0D-FF/main/Journal/${enc}`,
+      `https://media.githubusercontent.com/media/zg0d-ff/ZG0D-FF/main2/Journal/${enc}`
+    ];
+
+    for (const cand of candidates) {
+      if (mySession !== playSessionId) return;
+      const ok = await tryPlayCandidate(cand, mySession);
+      if (ok && mySession === playSessionId) {
+        trackCache[trackName] = cand;
+        isPlaying = true;
+        dock.classList.add('is-playing');
+        btnPlayPause.innerHTML = SVG_PAUSE;
+        audioIcon.textContent = 'ılı';
+        btnToggleText.textContent = cand.startsWith('http') ? 'STREAM' : (IS_FILE_PROTOCOL ? 'LOCAL DISK' : 'ACTIVE');
+        logCD(`Now Playing: ${getCleanName(trackName)}`, '#38bdf8');
+        renderPlaylistUI();
+        return;
+      }
+    }
+
+    if (mySession !== playSessionId) return;
+
+    // 3. Seamless WebAudio Synth Fallback
     isPlaying = true;
     synthElapsed = 0;
     dock.classList.add('is-playing');
@@ -7034,6 +7020,7 @@ if (contactForm) {
   function togglePlayPause() {
     if (isPlaying) {
       isPlaying = false;
+      playSessionId++;
       audio.pause();
       stopSynthStream();
       dock.classList.remove('is-playing');
