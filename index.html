@@ -1,10 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script type="module">
-  import { ENV_PREFIX, store } from './js/core/env.js';
-  window.ENV_PREFIX = ENV_PREFIX;
-  window.store = store;
+<script>
+(function initUniversalStore() {
+  const host = window.location.hostname;
+  let prefix = 'jarvis_prod_';
+  if (!host || host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || window.location.protocol === 'file:') {
+    prefix = 'jarvis_dev_';
+  } else if (host.includes('staging') || host.includes('preview') || host.includes('vercel.app')) {
+    prefix = 'jarvis_staging_';
+  }
+  window.ENV_PREFIX = prefix;
+  window.IDB_NAME = `${prefix}db`;
+  window.store = {
+    get: (k) => { try { return localStorage.getItem(`${prefix}${k}`); } catch(e) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(`${prefix}${k}`, v); } catch(e) {} },
+    del: (k) => { try { localStorage.removeItem(`${prefix}${k}`); } catch(e) {} },
+    sessionGet: (k) => { try { return sessionStorage.getItem(`${prefix}${k}`); } catch(e) { return null; } },
+    sessionSet: (k, v) => { try { sessionStorage.setItem(`${prefix}${k}`, v); } catch(e) {} },
+    sessionDel: (k) => { try { sessionStorage.removeItem(`${prefix}${k}`); } catch(e) {} }
+  };
+})();
+</script>
+<script>
+/* ════════════════════════════════════════════════════════════════
+   COMMON IEEE CLOSED-LOOP FRAME Δt & SILICON TELEMETRY ENGINE
+   Classifies High / Mid / Low Tier using 4 Real Hardware Signals
+════════════════════════════════════════════════════════════════ */
+(function initJarvisHardwareTierEngine() {
+  const cores = navigator.hardwareConcurrency || 4;
+  const mem   = navigator.deviceMemory || 4;
+  const conn  = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const saveData = Boolean(conn && conn.saveData);
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 1. WebGL Real GPU Silicon Probe
+  let gpuRenderer = 'unknown';
+  let maxTexSize  = 4096;
+  let hasWebGL    = false;
+  try {
+    const probeCanvas = document.createElement('canvas');
+    const gl = probeCanvas.getContext('webgl') || probeCanvas.getContext('experimental-webgl');
+    if (gl) {
+      hasWebGL = true;
+      maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 4096;
+      const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+      if (dbg) gpuRenderer = (gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || '').toLowerCase();
+      const loseExt = gl.getExtension('WEBGL_lose_context');
+      if (loseExt) loseExt.loseContext();
+    }
+  } catch (e) {}
+
+  const isFlagshipGPU = /apple gpu|m1|m2|m3|m4|adreno \(tm\) 7|adreno 7|mali-g7|rtx|radeon rx|arc/i.test(gpuRenderer);
+  const isBudgetGPU   = /swiftshader|llvmpipe|mali-4|mali-t|mali-g3|mali-g52|adreno \(tm\) 5|adreno \(tm\) 610|powervr/i.test(gpuRenderer);
+
+  // 2. Initial Baseline Tier from Silicon, RAM & GPU
+  let initialTier = 'mid';
+  if (!hasWebGL || reducedMotion || saveData || cores <= 2 || mem <= 2 || isBudgetGPU || maxTexSize < 4096) {
+    initialTier = 'low';
+  } else if ((cores >= 8 && mem >= 6) || isFlagshipGPU) {
+    initialTier = 'high';
+  }
+
+  const TIER_PROFILES = {
+    high: { tier: 'high', tubeCount: 108, pixelRatio: Math.min(window.devicePixelRatio || 1, 2),   ringCount: 9, particleCount: 300, blurPx: '28px', enable3D: true  },
+    mid:  { tier: 'mid',  tubeCount: 72,  pixelRatio: Math.min(window.devicePixelRatio || 1, 1.25), ringCount: 4, particleCount: 140, blurPx: '14px', enable3D: true  },
+    low:  { tier: 'low',  tubeCount: 44,  pixelRatio: 1,                                            ringCount: 2, particleCount: 40,  blurPx: '6px',  enable3D: false }
+  };
+
+  function applyTier(tierName, reason) {
+    const profile = TIER_PROFILES[tierName] || TIER_PROFILES.mid;
+    window.JARVIS_HW = Object.assign({}, profile, { cores, mem, gpuRenderer, maxTexSize, reason });
+    document.documentElement.setAttribute('data-hw-tier', profile.tier);
+    document.documentElement.style.setProperty('--jv-blur', profile.blurPx);
+
+    const bgCanvas = document.getElementById('bg-canvas') || document.getElementById('three-canvas');
+    if (bgCanvas) {
+      bgCanvas.style.display = profile.enable3D ? 'block' : 'none';
+    }
+    window.dispatchEvent(new CustomEvent('jarvis:tierchange', { detail: window.JARVIS_HW }));
+  }
+
+  applyTier(initialTier, 'silicon-init');
+
+  // 3. Battery Guard (< 20% and unplugged -> automatic Low-Power Tier)
+  if ('getBattery' in navigator) {
+    navigator.getBattery().then(bat => {
+      function checkBattery() {
+        if (!bat.charging && bat.level < 0.20 && window.JARVIS_HW.tier !== 'low') {
+          applyTier('low', 'battery-saver');
+        }
+      }
+      checkBattery();
+      bat.addEventListener('levelchange', checkBattery);
+      bat.addEventListener('chargingchange', checkBattery);
+    }).catch(() => {});
+  }
+
+  // 4. Closed-Loop Frame Δt Feedback Monitor (30-frame rolling window, < 42 FPS -> step down)
+  window.addEventListener('DOMContentLoaded', () => {
+    let frameDeltas = [];
+    let lastTs = performance.now();
+    let downgrades = 0;
+
+    function sampleFrameLoop(now) {
+      const dt = now - lastTs;
+      lastTs = now;
+      if (dt > 0 && dt < 250 && !document.hidden) {
+        frameDeltas.push(dt);
+        if (frameDeltas.length >= 30) {
+          const avgDt = frameDeltas.reduce((a, b) => a + b, 0) / frameDeltas.length;
+          frameDeltas = [];
+          // 42 FPS threshold => Δt > 23.8 ms
+          if (avgDt > 23.8 && downgrades < 2) {
+            downgrades++;
+            const nextTier = window.JARVIS_HW.tier === 'high' ? 'mid' : 'low';
+            if (nextTier !== window.JARVIS_HW.tier) {
+              applyTier(nextTier, `closed-loop-dt-${avgDt.toFixed(1)}ms`);
+            }
+          }
+        }
+      }
+      if (downgrades < 2 && window.JARVIS_HW.tier !== 'low') {
+        requestAnimationFrame(sampleFrameLoop);
+      }
+    }
+    requestAnimationFrame(sampleFrameLoop);
+  });
+})();
 </script>
 <!-- [DEV MODE: AUTO-CACHE WIPE] -->
 <!-- [DEV MODE: AUTO-CACHE WIPE & NAMESPACING] -->
@@ -19,17 +142,32 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
   // --- AUDIO HELPER ---
+// --- AUDIO HELPER ---
+window._activeVoicePromise = Promise.resolve();
 function playSystemAudio(filename) {
-    if (window.jarvisAudioContext && window.jarvisAudioContext.state === 'suspended') {
-        window.jarvisAudioContext.resume();
-    }
-    new Audio('audio/' + filename).play().catch(e => console.warn("Autoplay blocked:", e));
-}
-function playSystemAudio(filename) {
-    if (window.jarvisAudioContext && window.jarvisAudioContext.state === 'suspended') {
-        window.jarvisAudioContext.resume();
-    }
-    new Audio('audio/' + filename).play().catch(e => console.warn("Autoplay blocked:", e));
+    const voicePromise = new Promise((resolve) => {
+        try {
+            if (window.jarvisAudioContext && window.jarvisAudioContext.state === 'suspended') {
+                window.jarvisAudioContext.resume().catch(() => {});
+            }
+            const audio = new Audio('audio/' + filename);
+            window._currentBootAudio = audio;
+            const done = () => {
+                if (window._currentBootAudio === audio) window._currentBootAudio = null;
+                resolve();
+            };
+            audio.onended = done;
+            audio.onerror = done;
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(done);
+            }
+        } catch (e) {
+            resolve();
+        }
+    });
+    window._activeVoicePromise = voicePromise;
+    return voicePromise;
 }
 
 </script>
@@ -53,12 +191,23 @@ window.addEventListener('DOMContentLoaded', () => {
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#020c18">
 <title>JARVIS — Portfolio</title>
-<script type="module">import {ulid} from "./js/core/ulid.js"; window.ulid = ulid;</script>
+<script type="module">
+  try {
+    const { ulid } = await import("https://esm.sh/ulid@2.3.0");
+    window.ulid = ulid;
+  } catch(e) {
+    window.ulid = () => '01' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 8).toUpperCase();
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+        integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- [AUDIO ENGINE: UNLOCK AUTOPLAY] -->
@@ -176,19 +325,6 @@ body {
 .hud-corner.bl::after { bottom: 6px; left: 6px; }
 .hud-corner.br::after { bottom: 6px; right: 6px; }
 
-/* Status bars (top) */
-.hud-statusbar {
-  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 24px; z-index: 10;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px;
-  color: rgba(0,229,255,0.35);
-}
-.hud-statusbar span { display: flex; align-items: center; gap: 5px; }
-.hud-statusbar .dot {
-  width: 5px; height: 5px; border-radius: 50%; background: var(--cyan);
-  box-shadow: 0 0 6px var(--cyan); animation: pulse-dot 1.5s ease infinite;
-}
-@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.5)} }
 
 /* bottom status */
 .hud-bottombar {
@@ -297,9 +433,233 @@ body {
 .hw-btn.failed {
   border-color: #ff1744; color: #ff1744; background: rgba(255, 23, 68, 0.1);
 }
-</style>
+.hw-btn.failed {
+  border-color: #ff1744; color: #ff1744; background: rgba(255, 23, 68, 0.1);
+}
 
-<link rel="manifest" href="manifest.json">
+/* ── PURE GLASS CARD (SNAP 3), TOP-RIGHT LANG BAR (SNAP 2) & MOBILE VIEW ── */
+.hud-corner { display: none !important; }
+
+.jv-top-nav {
+  position: fixed;
+  top: 20px;
+  right: 28px;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: 'Rajdhani', sans-serif;
+}
+#jv-lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(10, 18, 34, 0.65);
+  backdrop-filter: blur(var(--jv-blur, 18px));
+  -webkit-backdrop-filter: blur(var(--jv-blur, 18px));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 7px 16px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.25s ease;
+}
+#jv-lang-select:hover, #jv-lang-select:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
+}
+#jv-lang-select option { background: #040b16; color: #ffffff; }
+
+.jv-nav-link {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  padding: 4px 2px;
+  letter-spacing: 0.5px;
+}
+.jv-nav-link.active::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -3px;
+  height: 2px;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 10px #ffffff;
+}
+.jv-nav-pill {
+  background: #ffffff;
+  color: #020c18;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.jv-nav-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 229, 255, 0.45);
+}
+
+/* Snap 3 Refractive Pure Glass Card */
+.jv-glass-card {
+  width: 100%;
+  max-width: 410px;
+  padding: 32px 30px 28px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(139, 92, 246, 0.28) 0%, rgba(0, 229, 255, 0.14) 34%, transparent 65%),
+    linear-gradient(145deg, rgba(12, 20, 38, 0.62) 0%, rgba(5, 10, 22, 0.78) 100%);
+  backdrop-filter: blur(var(--jv-blur, 28px)) saturate(190%);
+  -webkit-backdrop-filter: blur(var(--jv-blur, 28px)) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.jv-card-header { text-align: left; margin-bottom: 2px; }
+.jv-card-title {
+  font-family: var(--font-body);
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+}
+.jv-card-sub {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: rgba(248, 250, 252, 0.68);
+  margin-top: 4px;
+}
+#boot-text { min-height: 0 !important; font-size: 11.5px !important; line-height: 1.4 !important; }
+#visitor-form { max-width: 100% !important; gap: 12px !important; }
+.jv-dual-row { display: flex; gap: 12px; width: 100%; }
+
+.jv-input-wrap { position: relative; display: flex; align-items: center; }
+.jv-input-wrap input { width: 100%; padding-right: 38px !important; }
+.jv-input-clear {
+  position: absolute;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.jv-input-clear:hover { background: rgba(255, 255, 255, 0.22); color: #ffffff; }
+
+.form-row input, .form-row select {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  padding: 11px 14px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.form-row input:focus, .form-row select:focus {
+  border-color: rgba(139, 92, 246, 0.85) !important;
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+.jv-hw-hint { font-size: 9.5px; color: rgba(248, 250, 252, 0.45); margin-top: 3px; }
+
+#boot-submit {
+  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 52%, #00bcd4 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  padding: 12px !important;
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+.jv-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0;
+  color: rgba(248, 250, 252, 0.48);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.jv-divider::before, .jv-divider::after {
+  content: ''; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.14);
+}
+#guest-submit {
+  display: block;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  font-family: var(--font-hud) !important;
+  font-size: 11.5px !important;
+  letter-spacing: 2px !important;
+  padding: 11px !important;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+#guest-submit:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: var(--cyan) !important;
+  box-shadow: var(--glow);
+}
+
+/* Mobile Unified Layout (Keeps 3D Canvas Alive on High/Mid Tier Phones) */
+@media (max-width: 768px) {
+  html:not([data-hw-tier="low"]) #three-canvas,
+  html:not([data-hw-tier="low"]) .vignette {
+    display: block !important;
+  }
+  .jv-top-nav {
+    top: 26px;
+    right: 12px;
+    left: 12px;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .jv-nav-link { display: none; }
+  .jv-glass-card {
+    max-width: 92vw !important;
+    padding: 22px 18px !important;
+  }
+  .jv-card-title { font-size: 22px !important; }
+  .jv-dual-row { flex-direction: row; gap: 8px; }
+}
+</style>
+<script>
+  if (window.location.protocol !== 'file:') {
+    const ml = document.createElement('link');
+    ml.rel = 'manifest';
+    ml.href = 'manifest.json';
+    document.head.appendChild(ml);
+  }
+</script>
 </head>
 <body>
 <iframe id="jarvis-voice-iframe" src="jarvis_ui.html" allow="autoplay; microphone" style="position: fixed; bottom: 20px; right: 10px; width: calc(100vw - 20px); max-width: 400px; height: 80vh; max-height: 620px; border: none; z-index: 105; background: transparent; pointer-events: auto;" scrolling="yes"></iframe>
@@ -314,17 +674,21 @@ body {
 <div class="scanlines"></div>
 <div class="vignette"></div>
 
-<!-- HUD CORNERS -->
-<div class="hud-corner tl" data-label="SYS.BOOT"></div>
-<div class="hud-corner tr" data-label="SEC.LVL5"></div>
-<div class="hud-corner bl" data-label="ECE.2026"></div>
-<div class="hud-corner br" data-label="AI.CORE"></div>
-
-<!-- STATUS BAR TOP -->
-<div class="hud-statusbar">
-  <span><div class="dot"></div>NEURAL LINK</span>
-  <span><div class="dot" style="animation-delay:.3s"></div>HUD ACTIVE</span>
-  <span><div class="dot" style="animation-delay:.6s"></div>SECURE COMM</span>
+<!-- TOP-RIGHT LANGUAGE & MODE BAR (SNAP 2) -->
+<div id="jv-top-nav" class="jv-top-nav">
+  <div class="jv-lang-wrap">
+    <select id="jv-lang-select" aria-label="Select Language">
+      <option value="en">English ▾</option>
+      <option value="bn">বাংলা (Bangla) ▾</option>
+      <option value="hi">हिन्दी (Hindi) ▾</option>
+      <option value="ur">اردو (Urdu) ▾</option>
+      <option value="ta">தமிழ் (Tamil) ▾</option>
+      <option value="te">తెలుగు (Telugu) ▾</option>
+      <option value="mr">मराठी (Marathi) ▾</option>
+    </select>
+  </div>
+  <button type="button" class="jv-nav-link active" onclick="document.getElementById('v-name').focus()" data-i18n="nav_signin">Identify</button>
+  <button type="button" class="jv-nav-pill" onclick="startGuest()" data-i18n="nav_guest">Guest Pass</button>
 </div>
 
 <!-- BOTTOM BAR -->
@@ -332,44 +696,59 @@ body {
 
 <!-- BOOT SCREEN -->
 <div id="boot-screen">
-  <div class="hud-logo-label">
-    J.A.R.V.I.S
-    <span class="sub">JUST A RATHER VERY INTELLIGENT SYSTEM</span>
-  </div>
 
-  <div id="boot-text"></div>
-  <div class="scan-bar" id="scan-bar"></div>
+  <!-- PURE GLASS CARD (SNAP 3 + SNAP 2) -->
+  <div class="jv-glass-card">
+    <div class="jv-card-header">
+      <div class="jv-card-logo">J.A.R.V.I.S</div>
+      <p class="jv-card-sub" data-i18n="logo_sub">JUST A RATHER VERY INTELLIGENT SYSTEM</p>
+    </div>
 
-  <div id="visitor-form" onsubmit="return false;">
-    <div class="form-row">
-      <label>YOUR NAME</label>
-      <input type="text" id="v-name" placeholder="Enter identification..." autocomplete="off" required/>
-    </div>
-    <div class="form-row">
-      <label>YOUR AGE</label>
-      <input type="number" id="v-age" placeholder="Years of operation..." min="1" max="120" required/>
-    </div>
-    <div class="form-row">
-      <label>ADDRESS ME AS</label>
-      <select id="v-title">
-        <option value="Sir">Sir</option>
-        <option value="Ma'am">Ma'am</option>
-      </select>
-    </div>
-    
-    <div class="form-row" style="margin-top: 10px;">
-      <label>HARDWARE AUTHORIZATION</label>
-      <div style="display: flex; gap: 10px;">
-        <button type="button" id="btn-gps" class="hw-btn" onclick="requestGPS()">[ ] TELEMETRY</button>
-        <button type="button" id="btn-cam" class="hw-btn" onclick="requestCam()">[ ] OPTICS</button>
+    <div id="boot-text"></div>
+    <div class="scan-bar" id="scan-bar"></div>
+
+    <div id="visitor-form" onsubmit="return false;">
+      <div class="form-row">
+        <label data-i18n="lbl_name">YOUR NAME</label>
+        <div class="jv-input-wrap">
+          <input type="text" id="v-name" data-i18n-ph="ph_name" placeholder="Enter identification..." autocomplete="off" required/>
+          <button type="button" class="jv-input-clear" onclick="const el=document.getElementById('v-name');el.value='';el.focus();" title="Clear">✕</button>
+        </div>
       </div>
-      <div style="font-size: 8px; color: rgba(0,229,255,0.4); margin-top: 4px;">* Required for full system diagnostics. Data encrypted locally.</div>
-    </div>
-    
-    <div id="status-text" style="color: var(--amber); font-family: var(--font-mono); font-size: 10px; margin-top: 15px; text-align: center; letter-spacing: 1px; min-height: 14px;">AWAITING BIOMETRICS...</div>
 
-        <button id="boot-submit" type="button" onclick="startExperience()" style="display: block; margin-top: 10px;">INITIATE ACCESS →</button>
-    <button id="guest-submit" type="button" onclick="startGuest()" style="display: block; background: transparent; border: 1px dashed rgba(0,229,255,0.4); color: rgba(0,229,255,0.6); font-family: var(--font-hud); font-size: 11px; letter-spacing: 2px; padding: 10px; cursor: pointer; border-radius: 3px; margin-top: 10px; transition: all 0.3s; width: 100%;">ENTER AS GUEST [>>]</button>
+      <div class="jv-dual-row">
+        <div class="form-row" style="flex: 1.15;">
+          <label data-i18n="lbl_age">YOUR AGE</label>
+          <input type="number" id="v-age" data-i18n-ph="ph_age" placeholder="Years of operation..." min="1" max="120" required/>
+        </div>
+        <div class="form-row" style="flex: 0.85;">
+          <label data-i18n="lbl_title">ADDRESS ME AS</label>
+          <select id="v-title">
+            <option value="Sir" data-i18n="opt_sir">Sir</option>
+            <option value="Ma'am" data-i18n="opt_maam">Ma'am</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-row" style="margin-top: 4px;">
+        <label data-i18n="lbl_hw">HARDWARE AUTHORIZATION</label>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" id="btn-gps" class="hw-btn" onclick="requestGPS()">[ ] TELEMETRY</button>
+          <button type="button" id="btn-cam" class="hw-btn" onclick="requestCam()">[ ] OPTICS</button>
+        </div>
+        <div class="jv-hw-hint" data-i18n="hw_hint">* Required for full system diagnostics. Data encrypted locally.</div>
+      </div>
+      
+      <div id="status-text">AWAITING BIOMETRICS...</div>
+
+      <button id="boot-submit" type="button" onclick="startExperience()" data-i18n="btn_initiate">INITIATE ACCESS →</button>
+
+      <div class="jv-divider">
+        <span data-i18n="or_continue">or continue with</span>
+      </div>
+
+      <button id="guest-submit" type="button" onclick="startGuest()" data-i18n="btn_guest">ENTER AS GUEST [>>]</button>
+    </div>
   </div>
 </div>
 
@@ -382,18 +761,70 @@ let _visitorGreeting = '';
 
   // [SYS.ADMIN] BOOT UP FACIAL BIOMETRICS
   async function loadFacialModels() {
+    const statusEl = document.getElementById('status-text');
+    if (window.location.protocol === 'file:') {
+      if (statusEl) statusEl.innerText = 'LOCAL PROTOCOL ACTIVE. BIOMETRICS STANDING BY.';
+      console.warn('[JARVIS] Local file:/// origin detected: Neural weights fetch requires HTTP server or live domain.');
+      return;
+    }
+
+    if (typeof faceapi === 'undefined') {
+      console.warn('[JARVIS] faceapi script pending, waiting for window load event...');
+      window.addEventListener('load', loadFacialModels, { once: true });
+      return;
+    }
+
     const MODEL_URL = './models';
-    document.getElementById('status-text').innerText = 'LOADING BIOMETRIC NEURAL NETWORKS...';
-    try { await faceapi.tf.setBackend('webgl'); } catch (e) { await faceapi.tf.setBackend('cpu'); }
-    await faceapi.tf.ready();    
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-    ]);
-    
-    document.getElementById('status-text').innerText = 'BIOMETRICS ONLINE. AWAITING OPTICS...';
-    console.log('[JARVIS] 128-float Neural Networks Loaded Locally.');
+    if (statusEl) statusEl.innerText = 'LOADING BIOMETRIC NEURAL NETWORKS...';
+
+    // 1. Safe Hardware Backend Negotiation (WebGL with automatic fallback)
+    try {
+      if (faceapi.tf) {
+        try {
+          await faceapi.tf.setBackend('webgl');
+        } catch (webglErr) {
+          console.warn('[JARVIS] WebGL busy or unsupported, negotiating CPU backend:', webglErr.message || webglErr);
+          try {
+            await faceapi.tf.setBackend('cpu');
+          } catch (cpuErr) {
+            console.warn('[JARVIS] CPU backend negotiation notice:', cpuErr.message || cpuErr);
+          }
+        }
+        try {
+          await faceapi.tf.ready();
+        } catch (readyErr) {
+          console.warn('[JARVIS] tf.ready() notice:', readyErr.message || readyErr);
+        }
+      }
+    } catch (tfErr) {
+      console.warn('[JARVIS] Backend negotiation non-fatal:', tfErr.message || tfErr);
+    }
+
+    // 2. Resilient Neural Weight Loading (Local -> CDN High-Availability Fallback)
+    try {
+      try {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+        console.log('[JARVIS] 128-float Neural Networks Loaded Locally.');
+      } catch (localLoadErr) {
+        console.warn('[JARVIS] Local weights unreachable, attempting CDN fallback...', localLoadErr.message || localLoadErr);
+        const CDN_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(CDN_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(CDN_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(CDN_URL)
+        ]);
+        console.log('[JARVIS] 128-float Neural Networks Loaded via CDN Fallback.');
+      }
+
+      if (statusEl) statusEl.innerText = 'BIOMETRICS ONLINE. AWAITING OPTICS...';
+    } catch (err) {
+      console.warn('[JARVIS] Neural models bypassed gracefully:', err.message || err);
+      if (statusEl) statusEl.innerText = 'BIOMETRICS STANDING BY. AWAITING INPUT.';
+    }
   }
 
   // Fire this as soon as the page loads
@@ -404,23 +835,26 @@ let _visitorGreeting = '';
 ════════════════════════════════════════ */
 function init3D() {
   const canvas = document.getElementById('three-canvas');
-  
-  // 1. HARDWARE DETECTION TRICK
-  // Check CPU cores to determine if this is a high-end or low-end device
-  const logicalCores = navigator.hardwareConcurrency || 4;
-  const isHighEnd = logicalCores >= 8; 
+  if (!canvas || typeof THREE === 'undefined') return;
+  const hw = window.JARVIS_HW || { tier: 'mid', particleCount: 140, ringCount: 4, pixelRatio: 1.25 };
+  const isHighEnd = hw.tier === 'high';
+  const pCount = hw.particleCount;
+  const ringCount = hw.ringCount;
+  const pixelRatio = hw.pixelRatio;
 
-  // Scale variables based on device power
-  const pCount = isHighEnd ? 300 : 80;        // Way fewer particles for mobile
-  const ringCount = isHighEnd ? 9 : 4;        // Fewer 3D rings for mobile
-  const pixelRatio = isHighEnd ? Math.min(window.devicePixelRatio, 2) : 1; // Lower resolution on mobile
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: isHighEnd, alpha: true });
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: isHighEnd, alpha: true });
+  } catch (e) {
+    console.warn('[JARVIS] WebGL unavailable for 3D hologram:', e.message);
+    return;
+  }
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 0);
 
-  window.scene = new THREE.Scene();
+  const scene = new THREE.Scene();
+  window.scene = scene;
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0, 5);
 
@@ -575,7 +1009,7 @@ function runBootLines(container, idx, cb) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  if (window.innerWidth > 768) init3D();
+  if (!window.JARVIS_HW || window.JARVIS_HW.enable3D) init3D();
   const bt = document.getElementById('boot-text');
   document.getElementById('visitor-form').classList.add('active');
 });
@@ -621,13 +1055,15 @@ function requestGPS() {
   }
 }
 function startGuest() {
+  if (window._bootingInProgress) return;
+  window._bootingInProgress = true;
   _visitorName = "Guest";
   _visitorGreeting = "WELCOME // GUEST";
   window.store.sessionSet('name', 'Guest');
   window.store.sessionSet('greeting', 'WELCOME // GUEST');
-  // EPIC GUEST ENTRY
-  playSystemAudio('firstvisitday.mp3'); 
-  proceedToLaunch('Initializing Guest Protocol...');
+  // EPIC GUEST ENTRY — launchDashboard() will wait for this voice promise to finish!
+  playSystemAudio('firstvisitday.mp3');
+  proceedToLaunch('Initializing Guest Protocol · Voice Uplink Active...');
 }
 
 async function requestCam() {
@@ -685,49 +1121,59 @@ async function requestCam() {
     // 3. [SYS.ADMIN] RUN FACIAL BIOMETRICS SCAN
     document.getElementById('status-text').innerText = 'EXTRACTING 128-FLOAT FACIAL GEOMETRY...';
     try {
-      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                                     .withFaceLandmarks()
-                                     .withFaceDescriptor();
-      
-      if (detection) {
-        const descriptorArray = Array.from(detection.descriptor);
-        window.store.sessionSet('face', JSON.stringify(descriptorArray));
-        document.getElementById('status-text').innerText = 'GEOMETRY EXTRACTED. CROSS-REFERENCING DATABASE...';
+      const modelsReady = typeof faceapi !== 'undefined' &&
+                          faceapi.nets &&
+                          faceapi.nets.tinyFaceDetector &&
+                          faceapi.nets.tinyFaceDetector.params;
+
+      if (modelsReady) {
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                                       .withFaceLandmarks()
+                                       .withFaceDescriptor();
         
-        // 4. Send descriptor to Worker for Secure Backend Biometric Math
-        try {
-            const visitorNameInput = document.getElementById('v-name').value.trim();
-            const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: "auth_biometric", faceDescriptor: descriptorArray, visitorName: visitorNameInput })
-            });
-            const data = await res.json();
-            
-            if (data.match && data.matchedUser) {
-                // WE HAVE A MATCH! AUTO-LOGIN!
-                document.getElementById('status-text').innerText = `BIOMETRIC MATCH CONFIRMED. WELCOME BACK, ${data.matchedUser.toUpperCase()}.`;
-                document.getElementById('v-name').value = data.matchedUser;
-                _visitorName = data.matchedUser;
-                playSystemAudio('announcer_systemauth.mp3');
-                
-                // Stop camera and immediately trigger boot!
-                stream.getTracks().forEach(track => track.stop());
-                if (video.parentNode) video.parentNode.removeChild(video);
-                btn.classList.add('secured');
-                btn.textContent = "[X] BIOMETRICS LOCKED";
-                
-                setTimeout(startExperience, 1500);
-                return; // Exit function so they don't have to manually click
-            } else {
-                document.getElementById('status-text').innerText = 'NO MATCH FOUND. NEW PROFILE DETECTED.';
-            }
-        } catch(e) {
-            console.error("Backend biometrics failed:", e);
-            document.getElementById('status-text').innerText = 'SECURE BIOMETRICS FAILED. NEW PROFILE DETECTED.';
+        if (detection) {
+          const descriptorArray = Array.from(detection.descriptor);
+          window.store.sessionSet('face', JSON.stringify(descriptorArray));
+          document.getElementById('status-text').innerText = 'GEOMETRY EXTRACTED. CROSS-REFERENCING DATABASE...';
+          
+          // 4. Send descriptor to Worker for Secure Backend Biometric Math
+          try {
+              const visitorNameInput = document.getElementById('v-name').value.trim();
+              const res = await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: "auth_biometric", faceDescriptor: descriptorArray, visitorName: visitorNameInput })
+              });
+              const data = await res.json();
+              
+if (data.match && data.matchedUser) {
+                  // WE HAVE A MATCH! AUTO-LOGIN!
+                  document.getElementById('status-text').innerText = `BIOMETRIC MATCH CONFIRMED. WELCOME BACK, ${data.matchedUser.toUpperCase()}.`;
+                  document.getElementById('v-name').value = data.matchedUser;
+                  _visitorName = data.matchedUser;
+
+                  // Stop camera hardware immediately
+                  stream.getTracks().forEach(track => track.stop());
+                  if (video.parentNode) video.parentNode.removeChild(video);
+                  btn.classList.add('secured');
+                  btn.textContent = "[X] BIOMETRICS LOCKED";
+
+                  // Wait for full voice confirmation before triggering boot
+                  await playSystemAudio('announcer_systemauth.mp3');
+                  startExperience();
+                  return;
+              } else {
+                  document.getElementById('status-text').innerText = 'NO MATCH FOUND. NEW PROFILE DETECTED.';
+              }
+          } catch(e) {
+              console.error("Backend biometrics failed:", e);
+              document.getElementById('status-text').innerText = 'SECURE BIOMETRICS FAILED. NEW PROFILE DETECTED.';
+          }
+        } else {
+          document.getElementById('status-text').innerText = 'LOCAL BIOMETRICS FAILED. FALLING BACK TO NAME IDENTIFICATION.';
         }
       } else {
-        document.getElementById('status-text').innerText = 'LOCAL BIOMETRICS FAILED. FALLING BACK TO NAME IDENTIFICATION.';
+        document.getElementById('status-text').innerText = 'OPTICS CAPTURED. PROCEED WITH NAME IDENTIFICATION.';
       }
     } catch (err) {
       console.warn("Biometrics skip:", err);
@@ -802,7 +1248,6 @@ function proceedToLaunch(bootMessage) {
   launchDashboard();
 }
 function triggerMakerBootAuth(name) {
-  window._pendingMakerName = name;
   document.getElementById('boot-text').innerHTML = '<span style="color:#ff1744">CREATOR ALIAS DETECTED. AWAITING AUTHORIZATION...</span>';
   
   const form = document.getElementById('visitor-form');
@@ -810,14 +1255,13 @@ function triggerMakerBootAuth(name) {
     <div class="form-row">
       <label style="color:#ff1744">AUTHORIZATION CODE</label>
       
-<input type="password" id="maker-pass-boot" placeholder="Enter password..." style="border-color:#ff1744; color:#ff1744; text-align:center;" autocomplete="off" onkeypress="if(event.key === 'Enter') verifyMakerBoot();" />
+<input type="password" id="maker-pass-boot" placeholder="Enter password..." style="border-color:#ff1744; color:#ff1744; text-align:center;" autocomplete="off" onkeypress="if(event.key === 'Enter') verifyMakerBoot('${name}');" />
     </div>
-    <button type="button" onclick="verifyMakerBoot()" style="margin-top:15px; background:rgba(255,23,68,0.1); border:1px solid #ff1744; color:#ff1744; padding:10px; cursor:pointer; font-family:var(--font-hud);">VERIFY UPLINK</button>
+    <button type="button" onclick="verifyMakerBoot('${name}')" style="margin-top:15px; background:rgba(255,23,68,0.1); border:1px solid #ff1744; color:#ff1744; padding:10px; cursor:pointer; font-family:var(--font-hud);">VERIFY UPLINK</button>
     <div id="auth-err-boot" style="color:#ff1744; font-size:10px; margin-top:10px;"></div>
   `;
 }
 async function verifyMakerBoot(name) {
-  const targetName = name || window._pendingMakerName;
   const pass = document.getElementById('maker-pass-boot').value;
   const errDiv = document.getElementById('auth-err-boot');
   errDiv.innerText = "AUTHENTICATING...";
@@ -831,7 +1275,7 @@ async function verifyMakerBoot(name) {
       const data = await res.json();
       if (data.success) {
           window.store.sessionSet('adminToken', pass);
-          _visitorName = targetName;
+          _visitorName = name;
           _visitorGreeting = "WELCOME BACK // DJ [SYSTEM ARCHITECT]";
           proceedToLaunch('Authentication accepted. Initializing Maker Environment...');
       } else {
@@ -843,21 +1287,26 @@ async function verifyMakerBoot(name) {
 }
 
 /* ════════════════════════════════════════
-   LAUNCH — identical to original
+   LAUNCH — WAITS FOR VOICE COMPLETION BEFORE REDIRECT
 ════════════════════════════════════════ */
-function launchDashboard() {
-  console.log("[JARVIS] Launch Sequence Initiated.");
+async function launchDashboard() {
+  console.log("[JARVIS] Launch Sequence Initiated. Waiting for voice completion...");
+  const targetUrl = './dashboard.html?visitor=' + encodeURIComponent(_visitorName) + '&greeting=' + encodeURIComponent(_visitorGreeting);
+
+  // Wait for at least 900ms scan-bar animation AND full completion of any active voice audio
+  await Promise.all([
+    new Promise(r => setTimeout(r, 900)),
+    window._activeVoicePromise || Promise.resolve()
+  ]);
+
   const boot = document.getElementById('boot-screen');
   if (boot) boot.style.opacity = '0';
-  
-  const targetUrl = './dashboard.html?visitor=' + encodeURIComponent(_visitorName) + '&greeting=' + encodeURIComponent(_visitorGreeting);
-  console.log("[JARVIS] Target Dashboard URL:", targetUrl);
-  
+
   setTimeout(() => {
-    console.log("[JARVIS] Executing Redirect...");
+    console.log("[JARVIS] Voice finished. Executing Redirect...");
     window.store.sessionDel('session_logged'); // FORCE fresh telemetry sync on boot
     window.location.assign(targetUrl);
-  }, 1200);
+  }, 550);
 }
 /* ════════════════════════════════════════════════════════════════
    IIFE 1 — HUD DATA RAIN  (Easter Egg: press '1' to toggle)
@@ -1034,12 +1483,10 @@ function launchDashboard() {
   /* ─── wait for Three.js scene ─────────────────────────────── */
   function waitForScene(cb, n) {
     n = n || 0;
-    if (typeof THREE !== 'undefined' && typeof scene !== 'undefined') {
-      cb(scene);
-    } else if (n < 80) {
+    if (typeof THREE !== 'undefined' && window.scene) {
+      cb(window.scene);
+    } else if (n < 25) {
       setTimeout(() => waitForScene(cb, n + 1), 100);
-    } else {
-      console.warn('[OrbitalBurst] THREE scene not found.');
     }
   }
 
@@ -1675,13 +2122,505 @@ function launchDashboard() {
 </script>
 
 <script>
-  if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service_worker.js')
         .then(reg => console.log('SW Registered!', reg))
         .catch(err => console.error('SW Registration Failed!', err));
     });
   }
+
+/* ════════════════════════════════════════════════════════════════
+   IIFE 10: PURE LIQUID GLASS CARD (SNAP 3) & INDIAN LANGUAGES (SNAP 2)
+   Zero Backend Disruption · Supports EN, BN, HI, UR, TA, TE, MR
+════════════════════════════════════════════════════════════════ */
+(function initPureGlassAndIndianLangs() {
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Force-remove any remaining HUD corner boxes */
+    .hud-corner { display: none !important; }
+
+    /* Top-Right Language & Mode Bar (Snap 2) */
+    .jv-top-nav {
+      position: fixed;
+      top: 22px;
+      right: 28px;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-family: 'Inter', var(--font-body), sans-serif;
+    }
+    #jv-lang-select {
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 7px 16px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+    #jv-lang-select:hover, #jv-lang-select:focus {
+      border-color: rgba(0, 229, 255, 0.55);
+      background: rgba(255, 255, 255, 0.09);
+    }
+    #jv-lang-select option {
+      background: #060d1a;
+      color: #ffffff;
+    }
+    .jv-nav-link {
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      padding: 4px 2px;
+      letter-spacing: 0.3px;
+    }
+    .jv-nav-link.active::after {
+      content: '';
+      position: absolute;
+      left: 15%;
+      right: 15%;
+      bottom: -4px;
+      height: 2px;
+      border-radius: 2px;
+      background: #ffffff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+    .jv-nav-pill {
+      background: #ffffff;
+      color: #040914;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 20px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.18);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .jv-nav-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(0, 229, 255, 0.35);
+    }
+
+    /* Pure Refractive Glass Card (Snap 3) */
+    .jv-glass-card {
+      width: 100%;
+      max-width: 410px;
+      padding: 34px 32px 30px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 92% 12%, rgba(139, 92, 246, 0.26) 0%, rgba(0, 229, 255, 0.12) 32%, transparent 62%),
+        linear-gradient(145deg, rgba(14, 21, 38, 0.62) 0%, rgba(6, 11, 22, 0.76) 100%);
+      backdrop-filter: blur(30px) saturate(190%);
+      -webkit-backdrop-filter: blur(30px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow:
+        0 32px 80px rgba(0, 0, 0, 0.68),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
+        inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+      position: relative;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .jv-card-header {
+      text-align: left;
+      margin-bottom: 6px;
+    }
+    .jv-card-logo {
+      font-family: var(--font-hud);
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--cyan);
+      letter-spacing: 5px;
+      text-shadow: 0 0 24px rgba(0, 229, 255, 0.7);
+      line-height: 1.15;
+    }
+    .jv-card-sub {
+      font-family: var(--font-mono), monospace;
+      font-size: 9px;
+      letter-spacing: 2.5px;
+      color: rgba(0, 229, 255, 0.65);
+      margin-top: 4px;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+
+    #boot-text {
+      min-height: 0 !important;
+      font-size: 11.5px !important;
+      line-height: 1.5 !important;
+      margin: 0 !important;
+    }
+
+    #visitor-form {
+      max-width: 100% !important;
+      gap: 13px !important;
+    }
+
+    .jv-dual-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .form-row label {
+      font-family: var(--font-mono) !important;
+      font-size: 10px !important;
+      letter-spacing: 1.5px !important;
+      color: rgba(248, 250, 252, 0.62) !important;
+      text-shadow: none !important;
+    }
+
+    /* Snap 3 Translucent Inputs + Snap 2 Clear Button */
+    .jv-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .jv-input-wrap input {
+      width: 100%;
+      padding-right: 36px !important;
+    }
+    .jv-input-clear {
+      position: absolute;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .jv-input-clear:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+
+    .form-row input, .form-row select {
+      background: rgba(255, 255, 255, 0.045) !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      border-radius: 10px !important;
+      color: #ffffff !important;
+      font-family: 'Inter', var(--font-mono), sans-serif !important;
+      font-size: 13.5px !important;
+      font-weight: 500 !important;
+      padding: 11px 14px !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: all 0.25s ease !important;
+    }
+    .form-row input:focus, .form-row select:focus {
+      border-color: rgba(139, 92, 246, 0.85) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    }
+    .form-row input::placeholder {
+      color: rgba(248, 250, 252, 0.36) !important;
+      font-weight: 400 !important;
+    }
+
+    /* Hardware Buttons inside Glass Card */
+    .hw-btn {
+      background: rgba(255, 255, 255, 0.04) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      border-radius: 9px !important;
+      color: rgba(248, 250, 252, 0.85) !important;
+      font-family: var(--font-mono) !important;
+      padding: 9px 10px !important;
+    }
+    .hw-btn:hover {
+      border-color: var(--cyan) !important;
+      background: rgba(0, 229, 255, 0.1) !important;
+    }
+    .jv-hw-hint {
+      font-size: 9px;
+      color: rgba(248, 250, 252, 0.42);
+      margin-top: 3px;
+    }
+
+    #status-text {
+      color: #fbbf24 !important;
+      font-family: var(--font-mono) !important;
+      font-size: 10px !important;
+      margin-top: 4px !important;
+      text-align: center !important;
+      letter-spacing: 0.8px !important;
+      min-height: 14px !important;
+    }
+
+    /* Snap 3 Luminous Primary Button */
+    #boot-submit {
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #00bcd4 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.28) !important;
+      border-radius: 10px !important;
+      color: #ffffff !important;
+      font-family: 'Inter', var(--font-hud), sans-serif !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      letter-spacing: 1.5px !important;
+      padding: 13px !important;
+      margin-top: 4px !important;
+      box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+      text-shadow: none !important;
+    }
+    #boot-submit:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 16px 36px rgba(0, 229, 255, 0.45) !important;
+    }
+
+    /* Snap 2 & Snap 3 Divider Line */
+    .jv-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 2px 0;
+      color: rgba(248, 250, 252, 0.45);
+      font-family: 'Inter', var(--font-mono), sans-serif;
+      font-size: 11px;
+    }
+    .jv-divider::before, .jv-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Snap 3 Dark Translucent Secondary Button */
+    #guest-submit {
+      background: rgba(255, 255, 255, 0.055) !important;
+      border: 1px solid rgba(255, 255, 255, 0.16) !important;
+      border-radius: 10px !important;
+      color: rgba(255, 255, 255, 0.9) !important;
+      font-family: 'Inter', var(--font-hud), sans-serif !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      letter-spacing: 1.5px !important;
+      padding: 11px !important;
+      margin-top: 0 !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    }
+    #guest-submit:hover {
+      background: rgba(255, 255, 255, 0.12) !important;
+      border-color: rgba(255, 255, 255, 0.32) !important;
+      color: #ffffff !important;
+    }
+
+    @media (max-width: 768px) {
+      .jv-top-nav {
+        top: 28px;
+        right: 14px;
+        gap: 8px;
+      }
+      .jv-nav-link { display: none; }
+      .jv-glass-card {
+        padding: 24px 20px !important;
+        max-width: 92vw !important;
+      }
+      .jv-card-title { font-size: 22px !important; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  /* ── INDIAN LANGUAGES DICTIONARY ── */
+  const I18N = {
+    en: {
+      nav_signin: "Identify",
+      nav_guest: "Guest Pass",
+      logo_sub: "JUST A RATHER VERY INTELLIGENT SYSTEM",
+      card_title: "Hello ! Welcome",
+      card_sub: "Authenticate your node and keep all systems synced",
+      lbl_name: "YOUR NAME",
+      ph_name: "Enter identification...",
+      lbl_age: "YOUR AGE",
+      ph_age: "Years...",
+      lbl_title: "ADDRESS ME AS",
+      opt_sir: "Sir",
+      opt_maam: "Ma'am",
+      lbl_hw: "HARDWARE AUTHORIZATION",
+      hw_hint: "* Required for full system diagnostics. Data encrypted locally.",
+      btn_initiate: "INITIATE ACCESS →",
+      or_continue: "or continue with",
+      btn_guest: "ENTER AS GUEST [>>]",
+      status_wait: "BIOMETRICS ONLINE. AWAITING OPTICS..."
+    },
+    bn: {
+      nav_signin: "পরিচয় দিন",
+      nav_guest: "গেস্ট প্রবেশ",
+      logo_sub: "একটি অত্যন্ত বুদ্ধিমান স্বয়ংক্রিয় সিস্টেম",
+      card_title: "নমস্কার ! স্বাগতম",
+      card_sub: "আপনার নোড যাচাই করুন এবং সিস্টেম সিঙ্ক রাখুন",
+      lbl_name: "আপনার নাম",
+      ph_name: "আপনার নাম লিখুন...",
+      lbl_age: "আপনার বয়স",
+      ph_age: "বয়স...",
+      lbl_title: "সম্বোধন",
+      opt_sir: "স্যার (Sir)",
+      opt_maam: "ম্যাডাম (Ma'am)",
+      lbl_hw: "হার্ডওয়্যার অনুমতি",
+      hw_hint: "* সম্পূর্ণ সিস্টেম ডায়াগনস্টিকসের জন্য প্রয়োজন। ডেটা সুরক্ষিত।",
+      btn_initiate: "প্রবেশ শুরু করুন →",
+      or_continue: "অথবা",
+      btn_guest: "গেস্ট হিসেবে প্রবেশ করুন [>>]",
+      status_wait: "বায়োমেট্রিক্স প্রস্তুত। ক্যামেরার অপেক্ষায়..."
+    },
+    hi: {
+      nav_signin: "पहचान करें",
+      nav_guest: "गेस्ट पास",
+      logo_sub: "एक अत्यंत बुद्धिमान स्वायत्त प्रणाली",
+      card_title: "नमस्ते ! स्वागत है",
+      card_sub: "अपना नोड प्रमाणित करें और सिस्टम को सिंक रखें",
+      lbl_name: "आपका नाम",
+      ph_name: "अपनी पहचान दर्ज करें...",
+      lbl_age: "आपकी आयु",
+      ph_age: "वर्ष...",
+      lbl_title: "संबोधन",
+      opt_sir: "सर (Sir)",
+      opt_maam: "मैम (Ma'am)",
+      lbl_hw: "हार्डवेयर प्राधिकरण",
+      hw_hint: "* पूर्ण सिस्टम डायग्नोस्टिक्स के लिए आवश्यक। डेटा स्थानीय रूप से एन्क्रिप्टेड है।",
+      btn_initiate: "एक्सेस प्रारंभ करें →",
+      or_continue: "या इसके साथ जारी रखें",
+      btn_guest: "गेस्ट के रूप में प्रवेश करें [>>]",
+      status_wait: "बायोमेट्रिक्स ऑनलाइन। ऑप्टिक्स की प्रतीक्षा..."
+    },
+    ur: {
+      nav_signin: "شناخت",
+      nav_guest: "مہمان پاس",
+      logo_sub: "ایک انتہائی ذہین خودکار نظام",
+      card_title: "آداب ! خوش آمدید",
+      card_sub: "اپنے نوڈ کی تصدیق کریں اور سسٹم کو مربوط رکھیں",
+      lbl_name: "آپ کا نام",
+      ph_name: "اپنی شناخت درج کریں...",
+      lbl_age: "آپ کی عمر",
+      ph_age: "سال...",
+      lbl_title: "مخاطب کریں",
+      opt_sir: "سر (Sir)",
+      opt_maam: "میڈم (Ma'am)",
+      lbl_hw: "ہارڈویئر کی اجازت",
+      hw_hint: "* مکمل سسٹم تشخیص کے لیے ضروری ہے۔ ڈیٹا محفوظ ہے۔",
+      btn_initiate: "رسائی شروع کریں →",
+      or_continue: "یا جاری رکھیں",
+      btn_guest: "مہمان کے طور پر داخل ہوں [>>]",
+      status_wait: "بائیو میٹرکس آن لائن۔ آپٹکس کا انتظار..."
+    },
+    ta: {
+      nav_signin: "அடையாளம்",
+      nav_guest: "விருந்தினர்",
+      logo_sub: "மிகவும் அறிவார்ந்த கணினி அமைப்பு",
+      card_title: "வணக்கம் ! நல்வரவு",
+      card_sub: "உங்கள் கணக்கை உறுதிப்படுத்தி அமைப்பை இணைக்கவும்",
+      lbl_name: "உங்கள் பெயர்",
+      ph_name: "பெயரை உள்ளிடவும்...",
+      lbl_age: "வயது",
+      ph_age: "ஆண்டுகள்...",
+      lbl_title: "எப்படி அழைக்க",
+      opt_sir: "சார் (Sir)",
+      opt_maam: "மேடம் (Ma'am)",
+      lbl_hw: "வன்பொருள் அனுமதி",
+      hw_hint: "* முழு கணினி ஆய்வுக்கு தேவை. தரவு பாதுகாப்பானது.",
+      btn_initiate: "உள்நுழையவும் →",
+      or_continue: "அல்லது",
+      btn_guest: "விருந்தினராக நுழைய [>>]",
+      status_wait: "பயோமெட்ரிக்ஸ் தயார்..."
+    },
+    te: {
+      nav_signin: "గుర్తింపు",
+      nav_guest: "అతిథి పాస్",
+      logo_sub: "అత్యంత తెలివైన సిస్టమ్ నెట్‌వర్క్",
+      card_title: "నమస్కారం ! స్వాగతం",
+      card_sub: "మీ నోడ్‌ని ధృవీకరించండి మరియు సిస్టమ్‌ని సింక్ చేయండి",
+      lbl_name: "మీ పేరు",
+      ph_name: "పేరు నమోదు చేయండి...",
+      lbl_age: "మీ వయస్సు",
+      ph_age: "సంవత్సరాలు...",
+      lbl_title: "సంబోధన",
+      opt_sir: "సర్ (Sir)",
+      opt_maam: "మేడమ్ (Ma'am)",
+      lbl_hw: "హార్డ్‌వేర్ అనుమతి",
+      hw_hint: "* పూర్తి సిస్టమ్ డయాగ్నస్టిక్స్ కోసం అవసరం.",
+      btn_initiate: "ప్రవేశం ప్రారంభించండి →",
+      or_continue: "లేదా",
+      btn_guest: "అతిథిగా ప్రవేశించండి [>>]",
+      status_wait: "బయోమెట్రిక్స్ ఆన్‌లైన్..."
+    },
+    mr: {
+      nav_signin: "ओळख पटवा",
+      nav_guest: "पाहुणे प्रवेश",
+      logo_sub: "एक अत्यंत बुद्धिमान स्वायत्त प्रणाली",
+      card_title: "नमस्कार ! स्वागत आहे",
+      card_sub: "तुमचा नोड प्रमाणित करा आणि सर्व सिस्टम सिंक ठेवा",
+      lbl_name: "तुमचे नाव",
+      ph_name: "तुमची ओळख प्रविष्ट करा...",
+      lbl_age: "तुमचे वय",
+      ph_age: "वर्षे...",
+      lbl_title: "संबोधन",
+      opt_sir: "सर (Sir)",
+      opt_maam: "मॅडम (Ma'am)",
+      lbl_hw: "हार्डवेअर परवानगी",
+      hw_hint: "* पूर्ण सिस्टम डायग्नोस्टिक्ससाठी आवश्यक. डेटा सुरक्षित आहे.",
+      btn_initiate: "प्रवेश सुरू करा →",
+      or_continue: "किंवा यासह पुढे जा",
+      btn_guest: "पाहुणे म्हणून प्रवेश करा [>>]",
+      status_wait: "बायोमेट्रिक्स ऑनलाइन. ऑप्टिक्सची प्रतीक्षा..."
+    }
+  };
+
+  function applyLanguage(langCode) {
+    const dict = I18N[langCode] || I18N.en;
+    if (window.store) window.store.set('lang', langCode);
+
+    const card = document.querySelector('.jv-glass-card');
+    if (card) card.dir = (langCode === 'ur') ? 'rtl' : 'ltr';
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) el.textContent = dict[key];
+    });
+
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const key = el.getAttribute('data-i18n-ph');
+      if (dict[key]) el.setAttribute('placeholder', dict[key]);
+    });
+
+    const statusEl = document.getElementById('status-text');
+    if (statusEl && dict.status_wait && !statusEl.textContent.includes('MATCH')) {
+      statusEl.textContent = dict.status_wait;
+    }
+  }
+
+  const langSelect = document.getElementById('jv-lang-select');
+  if (langSelect) {
+    const savedLang = (window.store && window.store.get('lang')) || 'en';
+    if (I18N[savedLang]) {
+      langSelect.value = savedLang;
+      setTimeout(() => applyLanguage(savedLang), 100);
+    }
+    langSelect.addEventListener('change', (e) => applyLanguage(e.target.value));
+  }
+})();
 </script>
 </body>
 </html>
