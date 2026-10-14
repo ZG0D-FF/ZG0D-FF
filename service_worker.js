@@ -9,10 +9,6 @@ self.addEventListener('activate', event => {
   event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', event => {
-  // Pass-through
-});
-
 // Background Sync
 self.addEventListener('sync', event => {
   if (event.tag === 'outbox-drain') {

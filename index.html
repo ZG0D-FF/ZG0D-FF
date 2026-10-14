@@ -46,6 +46,8 @@
       maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 4096;
       const dbg = gl.getExtension('WEBGL_debug_renderer_info');
       if (dbg) gpuRenderer = (gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || '').toLowerCase();
+      const loseExt = gl.getExtension('WEBGL_lose_context');
+      if (loseExt) loseExt.loseContext();
     }
   } catch (e) {}
 
@@ -765,23 +767,62 @@ let _visitorGreeting = '';
       console.warn('[JARVIS] Local file:/// origin detected: Neural weights fetch requires HTTP server or live domain.');
       return;
     }
+
+    if (typeof faceapi === 'undefined') {
+      console.warn('[JARVIS] faceapi script pending, waiting for window load event...');
+      window.addEventListener('load', loadFacialModels, { once: true });
+      return;
+    }
+
     const MODEL_URL = './models';
     if (statusEl) statusEl.innerText = 'LOADING BIOMETRIC NEURAL NETWORKS...';
+
+    // 1. Safe Hardware Backend Negotiation (WebGL with automatic fallback)
     try {
-      try { await faceapi.tf.setBackend('webgl'); } catch (e) {
-        try { await faceapi.tf.setBackend('cpu'); } catch(e2) {}
+      if (faceapi.tf) {
+        try {
+          await faceapi.tf.setBackend('webgl');
+        } catch (webglErr) {
+          console.warn('[JARVIS] WebGL busy or unsupported, negotiating CPU backend:', webglErr.message || webglErr);
+          try {
+            await faceapi.tf.setBackend('cpu');
+          } catch (cpuErr) {
+            console.warn('[JARVIS] CPU backend negotiation notice:', cpuErr.message || cpuErr);
+          }
+        }
+        try {
+          await faceapi.tf.ready();
+        } catch (readyErr) {
+          console.warn('[JARVIS] tf.ready() notice:', readyErr.message || readyErr);
+        }
       }
-      await faceapi.tf.ready();    
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-      ]);
-      
+    } catch (tfErr) {
+      console.warn('[JARVIS] Backend negotiation non-fatal:', tfErr.message || tfErr);
+    }
+
+    // 2. Resilient Neural Weight Loading (Local -> CDN High-Availability Fallback)
+    try {
+      try {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+        console.log('[JARVIS] 128-float Neural Networks Loaded Locally.');
+      } catch (localLoadErr) {
+        console.warn('[JARVIS] Local weights unreachable, attempting CDN fallback...', localLoadErr.message || localLoadErr);
+        const CDN_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(CDN_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(CDN_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(CDN_URL)
+        ]);
+        console.log('[JARVIS] 128-float Neural Networks Loaded via CDN Fallback.');
+      }
+
       if (statusEl) statusEl.innerText = 'BIOMETRICS ONLINE. AWAITING OPTICS...';
-      console.log('[JARVIS] 128-float Neural Networks Loaded Locally.');
     } catch (err) {
-      console.warn('[JARVIS] Neural models bypassed:', err.message);
+      console.warn('[JARVIS] Neural models bypassed gracefully:', err.message || err);
       if (statusEl) statusEl.innerText = 'BIOMETRICS STANDING BY. AWAITING INPUT.';
     }
   }
