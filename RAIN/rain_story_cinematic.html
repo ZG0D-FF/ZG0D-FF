@@ -316,9 +316,9 @@ body{color:#fff}
 </head>
 <body>
 
-<audio id="snd-rain"     src="rain.mp3"     loop preload="auto"></audio>
-<audio id="snd-thunder"  src="thunder.mp3"  loop preload="auto"></audio>
-<audio id="snd-frogs"    src="rain and thunder.mp3"    loop preload="auto"></audio>
+<audio id="snd-rain" loop preload="auto"></audio>
+<audio id="snd-thunder" loop preload="auto"></audio>
+<audio id="snd-frogs" loop preload="auto"></audio>
 <!-- LINK TO THE WATER SYSTEM -->
 <a href="water-living-system.html" style="
   position: fixed;
@@ -754,9 +754,41 @@ window.addEventListener('scroll', onScroll, {passive:true});
 document.getElementById('s0').classList.add('in-view');
 
 let audioCtx = null;
-let rainSource = null;
-let gainNode = null;
 let soundActive = false;
+
+/* GitHub LFS CDN resolver for GitHub Pages / fallback */
+const RAIN_CDN_BASE = 'https://media.githubusercontent.com/media/ZG0D-FF/ZG0D-FF/main/RAIN/';
+const IS_GH_PAGES = window.location.hostname.includes('github.io');
+
+function getAudioSrc(localRel, cdnFile) {
+  return IS_GH_PAGES ? (RAIN_CDN_BASE + cdnFile) : localRel;
+}
+
+function initAudioElements() {
+  const rain = document.getElementById('snd-rain');
+  const thunder = document.getElementById('snd-thunder');
+  const frogs = document.getElementById('snd-frogs');
+
+  if (rain && !rain.src) rain.src = getAudioSrc('rain.mp3', 'rain.mp3');
+  if (thunder && !thunder.src) thunder.src = getAudioSrc('thunder.mp3', 'thunder.mp3');
+  if (frogs && !frogs.src) frogs.src = getAudioSrc('rain and thunder.mp3', 'rain%20and%20thunder.mp3');
+}
+
+async function safePlayAudio(el, fallbackCdn) {
+  if (!el) return;
+  try {
+    await el.play();
+  } catch (err) {
+    if (fallbackCdn && el.src !== fallbackCdn) {
+      console.warn('[RAIN] Local source failed (likely LFS pointer). Switching to CDN:', fallbackCdn);
+      el.src = fallbackCdn;
+      el.load();
+      await el.play().catch(e => console.warn('[RAIN] Fallback playback failed:', e));
+    } else {
+      console.warn('[RAIN] Audio play failed:', err);
+    }
+  }
+}
 
 function toggleSound(){
   const btn = document.getElementById('soundToggle');
@@ -764,15 +796,17 @@ function toggleSound(){
   const thunder = document.getElementById('snd-thunder');
   const frogs   = document.getElementById('snd-frogs');
 
+  initAudioElements();
+
   if(!soundActive){
     // Set starting volumes
     rain.volume    = 0.5;
     thunder.volume = 0.35;
     frogs.volume   = 0.25;
 
-    rain.play();
-    thunder.play();
-    frogs.play();
+    safePlayAudio(rain, RAIN_CDN_BASE + 'rain.mp3');
+    safePlayAudio(thunder, RAIN_CDN_BASE + 'thunder.mp3');
+    safePlayAudio(frogs, RAIN_CDN_BASE + 'rain%20and%20thunder.mp3');
 
     soundActive = true;
     soundOn = true;
@@ -780,23 +814,23 @@ function toggleSound(){
 
     // Sync rain volume to scroll intensity continuously
     function updateGain(){
-  if(!soundActive) return;
-  
-  // Check if a path was chosen to multiply the base volumes
-  let rMult = window._chosenPath === 'a' ? 1.25 : (window._chosenPath === 'b' ? 0.7 : 1);
-  let tMult = window._chosenPath === 'a' ? 1.3  : (window._chosenPath === 'b' ? 0.6 : 1);
-  let fMult = window._chosenPath === 'b' ? 1.5  : (window._chosenPath === 'a' ? 0.5 : 1);
+      if(!soundActive) return;
+      
+      // Check if a path was chosen to multiply the base volumes
+      let rMult = window._chosenPath === 'a' ? 1.25 : (window._chosenPath === 'b' ? 0.7 : 1);
+      let tMult = window._chosenPath === 'a' ? 1.3  : (window._chosenPath === 'b' ? 0.6 : 1);
+      let fMult = window._chosenPath === 'b' ? 1.5  : (window._chosenPath === 'a' ? 0.5 : 1);
 
-  rain.volume    = Math.min(1, (0.15 + intensity * 0.85) * rMult);
-  thunder.volume = Math.min(1, (0.10 + intensity * 0.60) * tMult);
-  frogs.volume   = Math.min(1, (0.20 + (1 - intensity) * 0.30) * fMult);
-  
-  requestAnimationFrame(updateGain);
-}
+      rain.volume    = Math.min(1, (0.15 + intensity * 0.85) * rMult);
+      thunder.volume = Math.min(1, (0.10 + intensity * 0.60) * tMult);
+      frogs.volume   = Math.min(1, (0.20 + (1 - intensity) * 0.30) * fMult);
+      
+      requestAnimationFrame(updateGain);
+    }
     updateGain();
 
   } else {
-    [rain, thunder, frogs].forEach(a => { a.pause(); a.currentTime = 0; });
+    [rain, thunder, frogs].forEach(a => { if (a) { a.pause(); a.currentTime = 0; } });
     soundActive = false;
     soundOn = false;
     btn.textContent = '♪ Sound On';
@@ -1298,26 +1332,28 @@ setInterval(function() {
 onScroll();
 /* ── 7. CINEMATIC VIDEO COMPOSITOR (MULTIPLE GHOST VIDEOS) ────────── */
 (function _initGhostVideos() {
+  const REPO_CDN = 'https://media.githubusercontent.com/media/ZG0D-FF/ZG0D-FF/main/';
+  const isGh = window.location.hostname.includes('github.io');
   
   /* 🎬 YOUR VIDEO PLAYLIST 🎬 */
   var ghostVideos = [
     {
-      src: '../assets/videos/12702057_2160_3840_30fps.mp4', /* Original Pedestrian */
+      src: isGh ? REPO_CDN + 'assets/videos/12702057_2160_3840_30fps.mp4' : '../assets/videos/12702057_2160_3840_30fps.mp4', /* Original Pedestrian */
       css: 'bottom: 10vh; right: 5vw; height: 70vh;',
       mask: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%)'
     },
     {
-      src: '../assets/videos/8807427-uhd_1440_2560_30fps.mp4', /* Girl Running (Vertical) */
+      src: isGh ? REPO_CDN + 'assets/videos/8807427-uhd_1440_2560_30fps.mp4' : '../assets/videos/8807427-uhd_1440_2560_30fps.mp4', /* Girl Running (Vertical) */
       css: 'bottom: 5vh; left: 5vw; height: 60vh;', /* Anchored Bottom-Left */
       mask: 'radial-gradient(ellipse 50% 70% at 50% 50%, rgba(0,0,0,1) 15%, rgba(0,0,0,0) 85%)'
     },
     {
-      src: '17627607-hd_1920_1080_50fps.mp4', /* Rain on Leaves (Landscape) */
+      src: isGh ? REPO_CDN + 'RAIN/17627607-hd_1920_1080_50fps.mp4' : '17627607-hd_1920_1080_50fps.mp4', /* Rain on Leaves (Landscape) */
       css: 'top: 0vh; left: -5vw; width: 45vw;', /* Anchored Top-Left */
       mask: 'radial-gradient(ellipse 70% 70% at 30% 30%, rgba(0,0,0,0.8) 10%, rgba(0,0,0,0) 90%)'
     },
     {
-      src: '12633847-uhd_3840_2160_30fps.mp4', /* Hummingbird (Landscape) */
+      src: isGh ? REPO_CDN + 'RAIN/12633847-uhd_3840_2160_30fps.mp4' : '12633847-uhd_3840_2160_30fps.mp4', /* Hummingbird (Landscape) */
       css: 'top: 30vh; right: 2vw; width: 35vw;', /* Middle-Right */
       mask: 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0) 70%)'
     }
