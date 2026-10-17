@@ -21,184 +21,190 @@
 })();
 </script>
 <style>
-/* KILLS THE UGLY WHITE IFRAME SCROLLBAR */
-body { margin: 0; overflow: hidden; background: transparent; }
+  * { box-sizing: border-box; }
+  body { margin: 0; overflow: hidden; background: #020810; font-family: 'Courier New', monospace; color: #00d4ff; }
 
-#cmd-input::placeholder{color:rgba(0,212,255,0.3);}
-#cmd-input:focus{border-color:rgba(0,212,255,0.7);}
-.quick-btn:hover{background:rgba(0,60,90,0.9)!important;border-color:rgba(0,212,255,0.5)!important;}
-#mic-btn:hover{border-color:#00ff88!important;}
-#send-btn:hover{background:rgba(0,100,140,0.9)!important;}
-
-/* INSIDE CHAT BOX SCROLLBAR ONLY */
-#response-box::-webkit-scrollbar { width: 5px; }
-#response-box::-webkit-scrollbar-track { background: rgba(0, 20, 35, 0.8); border-radius: 4px; }
-#response-box::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 4px; }
-/* HARDWARE UPLINK BUTTONS */
-.hw-btn {
-  flex: 1; background: rgba(0,229,255,0.05); border: 1px dashed var(--cyan);
-  color: var(--cyan); font-family: var(--font-mono); font-size: 10px;
-  padding: 10px; cursor: pointer; transition: all 0.3s;
-  letter-spacing: 1px; text-transform: uppercase; border-radius: 3px;
-}
-.hw-btn:hover { background: rgba(0,229,255,0.15); box-shadow: var(--glow); }
-.hw-btn.secured { 
-  border-color: #00e676; color: #00e676; background: rgba(0, 230, 118, 0.1); 
-  box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
-}
-.hw-btn.failed {
-  border-color: #ff1744; color: #ff1744; background: rgba(255, 23, 68, 0.1);
-}
-
-/* ══════════════════════════════════════
-   MOBILE RESPONSIVE — JARVIS UI
-══════════════════════════════════════ */
-@media (max-width: 768px) {
-  body { overflow-y: auto; }
-
-  /* Root container: flex height instead of fixed 620px */
   #root {
-    height: 100vh !important;
-    max-height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
+    width: 100%; height: 620px; background: radial-gradient(circle at 80% 55%, #07223b 0%, #020810 65%);
+    border: 1px solid rgba(0, 212, 255, 0.22); border-radius: 10px; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between; padding: 20px 28px;
   }
+  #root:fullscreen, #root:-webkit-full-screen { width: 100vw !important; height: 100vh !important; border-radius: 0; }
+  canvas#bg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
 
-  /* UI overlay: scrollable, not centered vertically */
-  #ui {
-    justify-content: flex-start !important;
-    padding: 8px 10px 12px !important;
-    overflow-y: auto !important;
-    gap: 8px;
+  /* TOP BAR */
+  .top-bar { position: relative; z-index: 4; display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+  .brand-title { font-size: 12px; letter-spacing: 5px; color: #b0e8ff; display: flex; align-items: center; gap: 10px; }
+  .brand-title::after { content: ''; width: 24px; height: 1px; background: rgba(0, 212, 255, 0.35); }
+  .top-right-wrap { display: flex; align-items: center; gap: 14px; }
+  .telemetry { text-align: right; font-size: 10px; letter-spacing: 2px; color: rgba(0, 212, 255, 0.45); line-height: 1.6; }
+  .telemetry span { color: #00d4ff; margin-left: 6px; font-weight: bold; }
+  #fs-btn {
+    background: rgba(2, 20, 35, 0.75); border: 1px solid rgba(0, 212, 255, 0.3); color: #00d4ff;
+    width: 28px; height: 28px; border-radius: 5px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
   }
+  #fs-btn:hover { border-color: #00d4ff; box-shadow: 0 0 12px rgba(0, 212, 255, 0.4); color: #fff; }
 
-  /* Status + greeting: compact */
-  #status-text { font-size: 9px !important; letter-spacing: 3px !important; margin-bottom: 2px !important; }
-  #greeting { font-size: 0.85rem !important; min-height: 18px !important; }
+  /* CENTER STAGE */
+  #stage { position: relative; z-index: 2; flex: 1; display: flex; align-items: center; justify-content: space-between; width: 100%; overflow: hidden; }
 
-  /* Ring/Mic area: shrink dramatically */
-  #ui > div:nth-child(2) {
-    width: 120px !important;
-    height: 120px !important;
-    margin-bottom: 8px !important;
+  /* LEFT GREETING (IDLE) */
+  #hero-greeting { max-width: 280px; transition: opacity 0.3s; z-index: 3; }
+  #greeting { font-size: 28px; color: #e0f4ff; letter-spacing: 1px; line-height: 1.25; margin-bottom: 12px; font-weight: normal; }
+  .sub-greeting { font-size: 12px; color: rgba(160, 232, 255, 0.6); letter-spacing: 1px; padding-bottom: 14px; position: relative; }
+  .sub-greeting::after { content: ''; position: absolute; bottom: 0; left: 0; width: 24px; height: 1.5px; background: #00d4ff; }
+
+  /* CENTER VISUALIZER — PERFECTLY CENTERED */
+  #visualizer-wrap {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 600px; height: 300px; pointer-events: none; z-index: 2;
   }
+  canvas#ring { position: absolute; inset: 0; width: 100%; height: 100%; }
   #mic-btn {
-    width: 44px !important;
-    height: 44px !important;
+    pointer-events: auto; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 82px; height: 82px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(6, 36, 58, 0.9) 0%, rgba(2, 12, 22, 0.95) 100%);
+    border: 1.8px solid #00d4ff;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.35), inset 0 0 18px rgba(0, 212, 255, 0.25);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s ease; z-index: 4;
   }
-  #mic-btn svg { width: 20px !important; height: 20px !important; }
-  #core-label { font-size: 7px !important; margin-top: 4px !important; }
-
-  /* Telemetry corners: collapse into inline row */
-  #ui > div:nth-child(5),
-  #ui > div:nth-child(6) {
-    position: relative !important;
-    top: unset !important;
-    left: unset !important;
-    right: unset !important;
-    flex-direction: row !important;
-    gap: 10px !important;
-    font-size: 8px !important;
-    justify-content: center;
-  }
-  #temp, #power, #uptime, #shield {
-    font-size: 10px !important;
+  #mic-btn:hover { border-color: #66f0ff; box-shadow: 0 0 40px rgba(0, 212, 255, 0.65), inset 0 0 22px rgba(0, 212, 255, 0.4); }
+  #core-label {
+    position: absolute; left: 50%; top: calc(50% + 118px); transform: translateX(-50%);
+    font-size: 10px; letter-spacing: 3px; color: rgba(160, 232, 255, 0.75); white-space: nowrap;
   }
 
-  /* Response box: shorter */
-  #response-box {
-    height: 60px !important;
-    max-height: 80px !important;
-    padding: 8px 12px !important;
-    margin-bottom: 8px !important;
+  /* RIGHT DECOR MOTTO */
+  #right-panel { margin-left: auto; text-align: left; font-size: 9px; letter-spacing: 2.5px; line-height: 2; color: rgba(0, 212, 255, 0.5); border-left: 1px solid rgba(0, 212, 255, 0.12); padding-left: 24px; z-index: 3; }
+  #right-panel::after { content: ''; display: block; width: 18px; height: 1px; background: rgba(0, 212, 255, 0.4); margin-top: 8px; }
+
+  /* CHAT LOG MODE */
+  #response-box { display: none; flex: 1; height: 100%; max-height: 360px; overflow-y: auto; padding-right: 24px; z-index: 3; }
+  #response-box::-webkit-scrollbar { width: 4px; }
+  #response-box::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.35); border-radius: 4px; }
+  .chat-entry { padding: 14px 0; border-bottom: 1px solid rgba(0, 212, 255, 0.1); font-size: 13px; line-height: 1.5; }
+  .chat-meta { display: flex; justify-content: space-between; font-size: 10px; color: rgba(0, 212, 255, 0.55); margin-bottom: 5px; letter-spacing: 1px; }
+  .chat-meta .sender { color: #00d4ff; display: flex; align-items: center; gap: 6px; }
+  .chat-msg { color: #d8f5ff; letter-spacing: 0.5px; word-wrap: break-word; }
+  .thinking-dots span { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: #00d4ff; animation: pulseDot 1.2s infinite ease-in-out; }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulseDot { 0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.2); } }
+
+  /* STATE SWITCHING */
+  #root.mode-talking #hero-greeting, #root.mode-listening #hero-greeting, #root.mode-talking #right-panel, #root.mode-listening #right-panel,
+  #root.mode-talking #response-box, #root.mode-listening #response-box { display: none !important; }
+  #root.mode-talking #visualizer-wrap, #root.mode-listening #visualizer-wrap { display: block !important; }
+  #root.mode-talking #mic-btn { opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(0.6); }
+  #root.mode-chat:not(.mode-talking):not(.mode-listening) #hero-greeting,
+  #root.mode-chat:not(.mode-talking):not(.mode-listening) #visualizer-wrap { display: none; }
+  #root.mode-chat:not(.mode-talking):not(.mode-listening) #response-box { display: block; }
+
+  /* BOTTOM CONTROLS */
+  .bottom-area { position: relative; z-index: 3; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  .input-pill { display: flex; align-items: center; width: 100%; background: rgba(3, 16, 28, 0.82); backdrop-filter: blur(6px); border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 999px; padding: 6px 8px 6px 14px; transition: border-color 0.2s; gap: 6px; }
+  .input-pill:focus-within { border-color: rgba(0, 212, 255, 0.7); box-shadow: 0 0 15px rgba(0, 212, 255, 0.12); }
+  .plus-icon { color: rgba(0, 212, 255, 0.6); font-size: 16px; margin-right: 4px; user-select: none; }
+  #cmd-input { flex: 1; background: transparent; border: none; color: #00d4ff; font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: 1px; outline: none; }
+  #cmd-input::placeholder { color: rgba(0, 212, 255, 0.35); }
+  #pill-mic-btn, #send-btn { width: 30px; height: 30px; border-radius: 50%; background: rgba(0, 120, 170, 0.3); border: 1px solid rgba(0, 212, 255, 0.45); color: #00d4ff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+  #pill-mic-btn:hover, #send-btn:hover { background: rgba(0, 180, 255, 0.6); color: #fff; }
+
+  .footer-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .chips-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
+  .quick-btn { display: flex; align-items: center; gap: 6px; background: rgba(2, 18, 32, 0.75); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 5px; padding: 6px 11px; color: rgba(0, 212, 255, 0.75); font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 1.5px; cursor: pointer; transition: all 0.2s; }
+  .quick-btn:hover { background: rgba(0, 60, 95, 0.85); border-color: rgba(0, 212, 255, 0.55); color: #fff; }
+  .version-tag { font-size: 9px; letter-spacing: 2px; color: rgba(0, 212, 255, 0.35); }
+
+  @media (max-width: 768px) {
+    #root { height: 100vh !important; padding: 16px; }
+    #stage { flex-direction: column; justify-content: center; gap: 10px; }
+    #visualizer-wrap { position: relative; left: unset; top: unset; transform: none; width: 100%; height: 220px; order: 1; }
+    #core-label { top: calc(50% + 95px); }
+    #hero-greeting { text-align: center; order: 2; max-width: 100%; }
+    #greeting { font-size: 22px; margin-bottom: 4px; }
+    .sub-greeting::after { left: 50%; transform: translateX(-50%); }
+    #right-panel, .version-tag { display: none !important; }
+    .quick-btn span.btn-label { display: none; }
+    .quick-btn { padding: 8px 12px; }
+    .chips-wrap { width: 100%; justify-content: center; }
   }
-  #response-text { font-size: 11px !important; }
-
-  /* Input row: compact */
-  #cmd-input { padding: 6px 10px !important; font-size: 11px !important; }
-  #send-btn { padding: 6px 10px !important; font-size: 10px !important; }
-
-  /* Quick buttons: smaller */
-  .quick-btn { padding: 4px 8px !important; font-size: 8px !important; }
-
-  /* Bottom status dots: hide to save space */
-  #ui > div:last-child {
-    display: none !important;
-  }
-}
-
 </style>
 
-<div id="root" style="width:100%;height:620px;background:transparent;border-radius:8px;position:relative;overflow:hidden;font-family:'Courier New',monospace;">
-  <canvas id="bg" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-  <div id="ui" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+<div id="root">
+  <canvas id="bg"></canvas>
 
-    <div style="text-align:center;margin-bottom:18px;">
-      <div id="status-text" style="color:#00d4ff;font-size:11px;letter-spacing:6px;margin-bottom:6px;opacity:0.8;">J.A.R.V.I.S. — ONLINE</div>
-      <div id="greeting" style="color:#fff;font-size:1.05rem;letter-spacing:2px;min-height:24px;"></div>
-    </div>
-
-    <div style="position:relative;width:220px;height:220px;margin-bottom:18px;">
-      <canvas id="ring" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="mic-btn" style="width:64px;height:64px;border-radius:50%;background:#041824;border:1.5px solid #00d4ff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color 0.2s;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round">
-            <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
-        </div>
-        <div id="core-label" style="color:#00d4ff;font-size:9px;letter-spacing:3px;margin-top:8px;opacity:0.7;">SPEAK</div>
+  <div class="top-bar">
+    <div class="brand-title">J.A.R.V.I.S.</div>
+    <div class="top-right-wrap">
+      <div class="telemetry">
+        <div>UPTIME <span id="uptime">00:00:00</span></div>
+        <div>LATENCY <span id="shield">0ms</span></div>
+        <div style="display:none;"><span id="temp"></span><span id="power"></span><span id="dot1"></span><span id="status-text"></span></div>
       </div>
+      <button id="fs-btn" title="Open Fullscreen HUD">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="hero-greeting">
+      <div id="greeting">Good day,<br>Sir.</div>
+      <div class="sub-greeting">How can I assist you today?</div>
     </div>
 
-    <div id="response-box" style="width:90%; max-width:540px; height:85px; background:rgba(0,30,50,0.7); border:0.5px solid rgba(0,212,255,0.25); border-radius:6px; padding:12px 16px; margin-bottom:14px; overflow-y:auto; display:block;">
-      <div id="response-text" style="color:#a0e8ff; font-size:13px; letter-spacing:1px; line-height:1.5; text-align:left; word-wrap:break-word;">
-        Click the mic — or type below — to speak with J.A.R.V.I.S.
+    <div id="response-box">
+      <div id="chat-log"></div>
+      <div id="response-text" style="display:none;"></div>
+    </div>
+
+    <div id="visualizer-wrap">
+      <canvas id="ring"></canvas>
+      <div id="mic-btn" title="Tap to Speak">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.6" stroke-linecap="round">
+          <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
       </div>
+      <div id="core-label">TAP TO SPEAK</div>
     </div>
 
-    <div style="display:flex;gap:8px;width:90%;max-width:540px;align-items:center;">
-      <input id="cmd-input" type="text" placeholder="Enter command..." style="flex:1;background:rgba(0,20,35,0.8);border:0.5px solid rgba(0,212,255,0.3);border-radius:4px;padding:8px 12px;color:#00d4ff;font-family:'Courier New',monospace;font-size:12px;letter-spacing:1px;outline:none;" autocomplete="off" />
-      <button id="send-btn" style="background:rgba(0,50,80,0.9);border:0.5px solid #00d4ff;border-radius:4px;padding:8px 14px;color:#00d4ff;font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;">SEND</button>
+    <div id="right-panel">
+      INTELLIGENCE<br>ASSISTANCE<br>SIMPLICITY<br>ALWAYS
+    </div>
+  </div>
+
+  <div class="bottom-area">
+    <div class="input-pill">
+      <span class="plus-icon">+</span>
+      <input id="cmd-input" type="text" placeholder="Type a message..." autocomplete="off" />
+      <button id="pill-mic-btn" title="Voice Input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+      </button>
+      <button id="send-btn" aria-label="Send">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
     </div>
 
-    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center;width:90%;max-width:540px;">
-      <button class="quick-btn" data-q="What's my system status?" style="background:rgba(0,30,50,0.7);border:0.5px solid rgba(0,212,255,0.2);border-radius:4px;padding:5px 10px;color:rgba(0,212,255,0.7);font-size:10px;letter-spacing:1px;cursor:pointer;font-family:'Courier New',monospace;">SYSTEM STATUS</button>
-      <button class="quick-btn" data-q="Run a security scan." style="background:rgba(0,30,50,0.7);border:0.5px solid rgba(0,212,255,0.2);border-radius:4px;padding:5px 10px;color:rgba(0,212,255,0.7);font-size:10px;letter-spacing:1px;cursor:pointer;font-family:'Courier New',monospace;">SECURITY SCAN</button>
-      <button class="quick-btn" data-q="What's the weather like today?" style="background:rgba(0,30,50,0.7);border:0.5px solid rgba(0,212,255,0.2);border-radius:4px;padding:5px 10px;color:rgba(0,212,255,0.7);font-size:10px;letter-spacing:1px;cursor:pointer;font-family:'Courier New',monospace;">WEATHER</button>
-      <button class="quick-btn" data-q="Tell me a joke, J.A.R.V.I.S." style="background:rgba(0,30,50,0.7);border:0.5px solid rgba(0,212,255,0.2);border-radius:4px;padding:5px 10px;color:rgba(0,212,255,0.7);font-size:10px;letter-spacing:1px;cursor:pointer;font-family:'Courier New',monospace;">HUMOUR</button>
-    </div>
-
-    <div style="position:absolute;top:14px;left:18px;display:flex;flex-direction:column;gap:5px;">
-      <div style="color:rgba(0,212,255,0.4);font-size:9px;letter-spacing:2px;">CORE TEMP</div>
-      <div id="temp" style="color:#00d4ff;font-size:13px;letter-spacing:1px;">--°C</div>
-      <div style="color:rgba(0,212,255,0.4);font-size:9px;letter-spacing:2px;margin-top:4px;">POWER</div>
-      <div id="power" style="color:#00d4ff;font-size:13px;letter-spacing:1px;">--%</div>
-    </div>
-
-    <div style="position:absolute; top:14px; right:18px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; text-align:right;">
-      <div style="color:rgba(0,212,255,0.4); font-size:9px; letter-spacing:2px;">UPTIME</div>
-      <div id="uptime" style="color:#00d4ff; font-size:13px; letter-spacing:1px; margin-bottom:8px;">00:00:00</div>
-      <div style="color:rgba(0,212,255,0.4); font-size:9px; letter-spacing:2px;">LATENCY</div>
-      <div id="shield" style="color:#00d4ff; font-size:13px; letter-spacing:1px;">0ms</div>
-    </div>
-
-    <div style="position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:24px;">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#00d4ff;" id="dot1"></div>
-        <div style="color:rgba(0,212,255,0.4);font-size:8px;letter-spacing:1px;">NET</div>
+    <div class="footer-bar">
+<div class="chips-wrap">
+        <button class="quick-btn" data-action="status" title="System Status">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+        <button class="quick-btn" data-action="security" title="Security Scan">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </button>
+        <button class="quick-btn" data-action="weather" title="Weather Telemetry">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        </button>
+        <button class="quick-btn" data-action="humour" title="Humour Protocols">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 14s1.5 2 3 2 3-2 3-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        </button>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#00ff88;" id="dot2"></div>
-        <div style="color:rgba(0,212,255,0.4);font-size:8px;letter-spacing:1px;">AI</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#00d4ff;" id="dot3"></div>
-        <div style="color:rgba(0,212,255,0.4);font-size:8px;letter-spacing:1px;">COMMS</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#ffaa00;" id="dot4"></div>
-        <div style="color:rgba(0,212,255,0.4);font-size:8px;letter-spacing:1px;">THREAT</div>
-      </div>
+      <div class="version-tag">J.A.R.V.I.S. CORE v2.7.1 ——</div>
     </div>
   </div>
 </div>
@@ -231,177 +237,356 @@ function resize(){
   bgCanvas.width = root.clientWidth;
   bgCanvas.height = root.clientHeight;
 }
+window.addEventListener('resize', resize);
 resize();
-ringCanvas.width = 220; 
-ringCanvas.height = 220;
+ringCanvas.width = 600;
+ringCanvas.height = 300;
 
-const particles = [];
-for(let i=0; i<60; i++){
-  particles.push({x:Math.random()*bgCanvas.width, y:Math.random()*bgCanvas.height, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3, r:Math.random()*1.5+0.3, a:Math.random()*0.5+0.1});
+// Fullscreen toggle (supports iframe breakout fallback)
+document.getElementById('fs-btn').addEventListener('click', () => {
+  const root = document.getElementById('root');
+  if (!document.fullscreenElement) {
+    if (root.requestFullscreen) {
+      root.requestFullscreen().catch(() => window.open(window.location.href, '_blank'));
+    } else {
+      window.open(window.location.href, '_blank');
+    }
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+// Photorealistic 3D Planet Compositor (Real NASA Earth Clouds + Atmospheric Shaders)
+const planetCanvas = document.createElement('canvas');
+planetCanvas.width = 900;
+planetCanvas.height = 900;
+
+function renderPlanetShader(earthImg) {
+  const pctx = planetCanvas.getContext('2d');
+  const cx = 480, cy = 480, r = 390;
+  pctx.clearRect(0, 0, 900, 900);
+
+  // 1. Outer atmospheric cyan halo
+  const halo = pctx.createRadialGradient(cx, cy, r * 0.94, cx, cy, r * 1.16);
+  halo.addColorStop(0, 'rgba(60, 210, 255, 0.55)');
+  halo.addColorStop(0.35, 'rgba(0, 120, 195, 0.18)');
+  halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  pctx.fillStyle = halo;
+  pctx.beginPath(); pctx.arc(cx, cy, r * 1.16, 0, Math.PI * 2); pctx.fill();
+
+  pctx.save();
+  pctx.beginPath(); pctx.arc(cx, cy, r, 0, Math.PI * 2); pctx.clip();
+
+  // 2. Deep ocean base
+  const base = pctx.createRadialGradient(cx - r * 0.35, cy - r * 0.35, r * 0.05, cx, cy, r * 1.05);
+  base.addColorStop(0, '#164b70');
+  base.addColorStop(0.45, '#071f36');
+  base.addColorStop(0.8, '#020a14');
+  base.addColorStop(1, '#000307');
+  pctx.fillStyle = base;
+  pctx.fillRect(0, 0, 900, 900);
+
+  // 3. Real Satellite Cloud/Terrain Texture (or high-res procedural cloud bands)
+  if (earthImg) {
+    pctx.save();
+    pctx.globalCompositeOperation = 'screen';
+    pctx.filter = 'grayscale(100%) contrast(155%) brightness(95%)';
+    pctx.globalAlpha = 0.65;
+    pctx.drawImage(earthImg, cx - r, cy - r, r * 2, r * 2);
+    pctx.restore();
+
+    // Colorize clouds to icy cyan
+    pctx.save();
+    pctx.globalCompositeOperation = 'color';
+    pctx.fillStyle = '#38bdf8';
+    pctx.fillRect(0, 0, 900, 900);
+    pctx.restore();
+  } else {
+    for (let i = 0; i < 900; i++) {
+      const a = Math.PI * 0.6 + Math.random() * Math.PI * 0.95;
+      const d = r * (0.3 + Math.pow(Math.random(), 0.5) * 0.69);
+      const x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+      const w = 18 + Math.random() * 65, h = 2 + Math.random() * 10;
+      const alpha = (0.03 + Math.random() * 0.09) * Math.pow(d / r, 2.2);
+      pctx.save();
+      pctx.translate(x, y);
+      pctx.rotate(a + Math.PI / 2 + (Math.random() - 0.5) * 0.25);
+      const cg = pctx.createRadialGradient(0, 0, 1, 0, 0, w);
+      cg.addColorStop(0, `rgba(195, 240, 255, ${alpha})`);
+      cg.addColorStop(0.5, `rgba(40, 150, 210, ${alpha * 0.5})`);
+      cg.addColorStop(1, 'rgba(0,0,0,0)');
+      pctx.fillStyle = cg;
+      pctx.beginPath(); pctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2); pctx.fill();
+      pctx.restore();
+    }
+  }
+
+  // 4. Inner Rayleigh atmospheric rim light
+  const innerRim = pctx.createRadialGradient(cx + r * 0.06, cy + r * 0.06, r * 0.74, cx, cy, r);
+  innerRim.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  innerRim.addColorStop(0.82, 'rgba(0, 155, 230, 0.16)');
+  innerRim.addColorStop(0.95, 'rgba(110, 225, 255, 0.52)');
+  innerRim.addColorStop(1, 'rgba(225, 250, 255, 0.92)');
+  pctx.fillStyle = innerRim;
+  pctx.fillRect(0, 0, 900, 900);
+
+  // 5. Terminator night shadow (darkens lower-right core like Snap 5)
+  const night = pctx.createLinearGradient(cx - r * 0.65, cy - r * 0.65, cx + r * 0.35, cy + r * 0.35);
+  night.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  night.addColorStop(0.45, 'rgba(2, 8, 16, 0.45)');
+  night.addColorStop(0.78, 'rgba(1, 5, 11, 0.92)');
+  night.addColorStop(1, '#010409');
+  pctx.fillStyle = night;
+  pctx.fillRect(0, 0, 900, 900);
+  pctx.restore();
+
+  // 6. Specular atmospheric limb highlight
+  pctx.save();
+  pctx.strokeStyle = 'rgba(215, 248, 255, 0.92)';
+  pctx.lineWidth = 2.2;
+  pctx.shadowColor = '#38bdf8';
+  pctx.shadowBlur = 22;
+  pctx.beginPath(); pctx.arc(cx, cy, r - 0.5, Math.PI * 0.72, Math.PI * 1.45); pctx.stroke();
+  pctx.restore();
 }
+renderPlanetShader(null);
+const satImg = new Image();
+satImg.crossOrigin = "anonymous";
+satImg.onload = () => renderPlanetShader(satImg);
+satImg.onerror = () => {
+  if (!satImg.dataset.fallback) {
+    satImg.dataset.fallback = "true";
+    satImg.src = "https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg";
+  }
+};
+satImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/500px-The_Earth_seen_from_Apollo_17.jpg";
+
+const particles = Array.from({length: 45}, () => ({
+  x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height,
+  vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+  r: Math.random() * 1.2 + 0.3, a: Math.random() * 0.35 + 0.05
+}));
 
 let listening = false;
 let talking = false;
+let lastInputWasVoice = false; // Distinguishes voice vs text queries!
 let talkLevel = 0;
 let startTime = Date.now();
 let angle = 0;
 let currentLatency = "0";
 
+function syncUIState() {
+  const root = document.getElementById('root');
+  const label = document.getElementById('core-label');
+  root.classList.toggle('mode-listening', listening);
+  root.classList.toggle('mode-talking', talking);
+  if (listening) label.textContent = 'Listening...';
+  else if (talking) label.textContent = 'Speaking...';
+  else label.textContent = 'TAP TO SPEAK';
+}
+
 function drawBg(t){
-  const w=bgCanvas.width, h=bgCanvas.height;
-  bctx.clearRect(0,0,w,h);
-  const gridAlpha=0.06;
-  bctx.strokeStyle=`rgba(0,212,255,${gridAlpha})`;
-  bctx.lineWidth=0.5;
-  const gapX=40, gapY=40;
-  for(let x=0; x<w; x+=gapX){bctx.beginPath();bctx.moveTo(x,0);bctx.lineTo(x,h);bctx.stroke();}
-  for(let y=0; y<h; y+=gapY){bctx.beginPath();bctx.moveTo(0,y);bctx.lineTo(w,y);bctx.stroke();}
-  particles.forEach(p=>{
-    p.x+=p.vx; p.y+=p.vy;
-    if(p.x<0)p.x=w; if(p.x>w)p.x=0;
-    if(p.y<0)p.y=h; if(p.y>h)p.y=0;
-    bctx.beginPath();
-    bctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    bctx.fillStyle=`rgba(0,212,255,${p.a})`;
-    bctx.fill();
+  const w = bgCanvas.width, h = bgCanvas.height;
+  bctx.clearRect(0, 0, w, h);
+
+  const isMobile = w <= 768;
+  const isChat = document.getElementById('root').classList.contains('mode-chat') && !listening && !talking;
+
+  if (isChat && !isMobile) {
+    // SNAP 4: 3D Wireframe Wave on Right Side during Chat Mode
+    bctx.save();
+    for (let row = 0; row < 18; row++) {
+      bctx.beginPath();
+      bctx.strokeStyle = `rgba(0, 195, 255, ${0.04 + (row / 18) * 0.12})`;
+      bctx.lineWidth = 1;
+      for (let x = w * 0.58; x <= w; x += 6) {
+        const nx = (x - w * 0.58) / (w * 0.42);
+        const y = h * 0.52 + Math.sin(nx * 4.5 + t * 0.7 + row * 0.22) * 42 + (row - 9) * 5;
+        x === w * 0.58 ? bctx.moveTo(x, y) : bctx.lineTo(x, y);
+      }
+      bctx.stroke();
+    }
+    bctx.restore();
+  } else if (!talking && !listening) {
+    // SNAP 1 & 5: Photorealistic 3D Planet Horizon
+    bctx.save();
+    const size = Math.max(w, h) * (isMobile ? 0.95 : 1.05);
+    const dx = isMobile ? w * 0.08 : w * 0.46;
+    const dy = isMobile ? h * 0.54 : h * 0.02;
+    bctx.drawImage(planetCanvas, dx, dy, size, size);
+    bctx.restore();
+  }
+
+  particles.forEach(p => {
+    p.x = (p.x + p.vx + w) % w; p.y = (p.y + p.vy + h) % h;
+    bctx.fillStyle = `rgba(0,212,255,${p.a})`;
+    bctx.beginPath(); bctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); bctx.fill();
   });
-  const cx=w/2, cy=h/2;
-  bctx.save();
-  bctx.translate(cx,cy);
-  bctx.strokeStyle='rgba(0,212,255,0.04)';
-  bctx.lineWidth=0.5;
-  [80,130,180,240,300].forEach(r=>{bctx.beginPath();bctx.arc(0,0,r,0,Math.PI*2);bctx.stroke();});
-  bctx.restore();
 }
 
 function drawRing(t){
-  const cx=110, cy=110, r=100;
-  rctx.clearRect(0,0,220,220);
+  syncUIState();
+  const w = ringCanvas.width, h = ringCanvas.height, cx = w / 2, cy = h / 2;
+  rctx.clearRect(0, 0, w, h);
 
-  rctx.strokeStyle='rgba(0,212,255,0.12)';
-  rctx.lineWidth=1;
-  rctx.beginPath();rctx.arc(cx,cy,r,0,Math.PI*2);rctx.stroke();
+  // SPEAKING MULTI-RIBBON 3D INTERFERENCE WAVEFORM
+  if (talking) {
+    const vGrad = rctx.createLinearGradient(cx, cy - 115, cx, cy + 115);
+    vGrad.addColorStop(0, 'rgba(0, 212, 255, 0)');
+    vGrad.addColorStop(0.5, 'rgba(0, 212, 255, 0.45)');
+    vGrad.addColorStop(1, 'rgba(0, 212, 255, 0)');
+    rctx.strokeStyle = vGrad;
+    rctx.lineWidth = 1;
+    rctx.beginPath(); rctx.moveTo(cx, cy - 115); rctx.lineTo(cx, cy + 115); rctx.stroke();
 
-  rctx.strokeStyle='rgba(0,212,255,0.2)';
-  rctx.lineWidth=1.5;
-  rctx.beginPath();rctx.arc(cx,cy,88,0,Math.PI*2);rctx.stroke();
+    const totalLines = 22;
+    for (let i = 0; i < totalLines; i++) {
+      const frac = i / (totalLines - 1);
+      const offset = (frac - 0.5) * 2;
+      rctx.beginPath();
+      const isEdge = i === 0 || i === totalLines - 1 || i === Math.floor(totalLines / 2);
+      rctx.strokeStyle = isEdge ? 'rgba(90, 230, 255, 0.75)' : 'rgba(0, 185, 255, 0.22)';
+      rctx.lineWidth = isEdge ? 1.5 : 0.8;
 
-  const activeColor=listening?'rgba(0,255,136,0.9)':talking?'rgba(0,212,255,0.9)':'rgba(0,212,255,0.55)';
-  rctx.strokeStyle=activeColor;
-  rctx.lineWidth=2;
-  const sweep=listening?Math.PI*2:talking?Math.PI*(1.2+Math.sin(t*8)*0.4):Math.PI*0.8;
-  rctx.beginPath();
-  rctx.arc(cx,cy,r,-Math.PI/2+angle,-Math.PI/2+angle+sweep);
-  rctx.stroke();
-
-  rctx.strokeStyle='rgba(0,212,255,0.4)';
-  rctx.lineWidth=1;
-  for(let i=0;i<36;i++){
-    const a=i*(Math.PI*2/36)+angle*0.3;
-    const len=i%3===0?10:5;
-    const x1=cx+Math.cos(a)*(r+4);
-    const y1=cy+Math.sin(a)*(r+4);
-    const x2=cx+Math.cos(a)*(r+4+len);
-    const y2=cy+Math.sin(a)*(r+4+len);
-    rctx.beginPath();rctx.moveTo(x1,y1);rctx.lineTo(x2,y2);rctx.stroke();
+      for (let x = 20; x <= w - 20; x += 4) {
+        const nx = (x - 20) / (w - 40);
+        const bell = Math.exp(-Math.pow((nx - 0.5) * 3.6, 2));
+        const w1 = Math.sin(nx * 13 - t * 4.5 + offset * 1.6);
+        const w2 = Math.cos(nx * 21 + t * 2.8 - offset * 2.1);
+        const y = cy + (w1 * 56 + w2 * 28 * offset) * bell * Math.max(0.65, talkLevel);
+        x === 20 ? rctx.moveTo(x, y) : rctx.lineTo(x, y);
+      }
+      rctx.stroke();
+    }
+    return;
   }
 
-  if(listening||talking){
-    const bars=12;
-    const barR=68;
-    for(let i=0;i<bars;i++){
-      const a=(i/bars)*Math.PI*2+t*2;
-      const amp=listening?0.4+Math.random()*0.6:talkLevel*(0.3+Math.sin(t*10+i)*0.3)+0.15;
-      const bLen=amp*28;
-      const x1=cx+Math.cos(a)*barR;
-      const y1=cy+Math.sin(a)*barR;
-      const x2=cx+Math.cos(a)*(barR-bLen);
-      const y2=cy+Math.sin(a)*(barR-bLen);
-      rctx.strokeStyle=listening?'rgba(0,255,136,0.7)':'rgba(0,212,255,0.7)';
-      rctx.lineWidth=2;
-      rctx.beginPath();rctx.moveTo(x1,y1);rctx.lineTo(x2,y2);rctx.stroke();
+  // (Outer circles, crosshairs, and small glowing dots removed!)
+
+  // LISTENING HORIZONTAL DUAL-CLUSTER SPECTROGRAM
+  if (listening) {
+    for (let side of [-1, 1]) {
+      const hGrad = rctx.createLinearGradient(cx + side * 44, cy, cx + side * 285, cy);
+      hGrad.addColorStop(0, 'rgba(0, 212, 255, 0.6)');
+      hGrad.addColorStop(0.85, 'rgba(0, 212, 255, 0.25)');
+      hGrad.addColorStop(1, 'rgba(0, 212, 255, 0)');
+      rctx.strokeStyle = hGrad;
+      rctx.lineWidth = 1;
+      rctx.beginPath(); rctx.moveTo(cx + side * 44, cy); rctx.lineTo(cx + side * 285, cy); rctx.stroke();
+
+      for (let d = 95; d <= 255; d += 3.5) {
+        const pkt1 = Math.exp(-Math.pow((d - 135) / 18, 2));
+        const pkt2 = Math.exp(-Math.pow((d - 195) / 22, 2)) * 0.85;
+        const env = pkt1 + pkt2;
+        if (env > 0.03) {
+          const amp = env * (6 + 14 * (0.5 + 0.5 * Math.sin(t * 18 + d * 0.45)));
+          const bx = cx + side * d;
+          rctx.strokeStyle = `rgba(110, 230, 255, ${0.35 + env * 0.55})`;
+          rctx.lineWidth = 1.4;
+          rctx.beginPath(); rctx.moveTo(bx, cy - amp); rctx.lineTo(bx, cy + amp); rctx.stroke();
+        }
+      }
     }
   }
-
-  const cross=talking?'rgba(0,212,255,0.15)':'rgba(0,212,255,0.07)';
-  rctx.strokeStyle=cross;rctx.lineWidth=0.5;
-  rctx.beginPath();rctx.moveTo(cx-r,cy);rctx.lineTo(cx+r,cy);rctx.stroke();
-  rctx.beginPath();rctx.moveTo(cx,cy-r);rctx.lineTo(cx,cy+r);rctx.stroke();
 }
 
-// THE FIX: Separate interval brains for Chat and Greeting
 let chatInterval;
+function formatTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function appendUserMessage(text) {
+  const root = document.getElementById('root');
+  root.classList.add('mode-chat');
+  document.getElementById('right-panel').innerHTML = "BETTER<br>QUESTIONS<br>BUILD A<br>BRIGHTER<br>TOMORROW";
+  document.getElementById('cmd-input').placeholder = "Ask something...";
+  const log = document.getElementById('chat-log');
+  if (!log) return;
+  const entry = document.createElement('div');
+  entry.className = 'chat-entry';
+  entry.innerHTML = `<div class="chat-meta"><span class="sender">You</span><span>${formatTime()}</span></div><div class="chat-msg"></div>`;
+  entry.querySelector('.chat-msg').textContent = text;
+  log.appendChild(entry);
+  const box = document.getElementById('response-box');
+  box.scrollTop = box.scrollHeight;
+}
+
 function typeChat(text, speed) {
-  clearInterval(chatInterval); 
-  const box = document.getElementById('response-box'); 
-  const el = document.getElementById('response-text');
-  el.textContent = '';
+  clearInterval(chatInterval);
+  const box = document.getElementById('response-box');
+  const legacyEl = document.getElementById('response-text');
+  if (legacyEl) legacyEl.textContent = text;
+
+  const log = document.getElementById('chat-log');
+  if (!log) return;
+
+  let lastMsg = log.lastElementChild;
+  if (!lastMsg || !lastMsg.classList.contains('jarvis-reply') || lastMsg.dataset.locked === 'true') {
+    lastMsg = document.createElement('div');
+    lastMsg.className = 'chat-entry jarvis-reply';
+    lastMsg.innerHTML = `<div class="chat-meta"><span class="sender">🎙 J.A.R.V.I.S.</span><span>${formatTime()}</span></div><div class="chat-msg"></div>`;
+    log.appendChild(lastMsg);
+  }
+
+  const msgEl = lastMsg.querySelector('.chat-msg');
+  // Show animated 3 dots while waiting for Cloudflare Worker (Snap 4 bottom)
+  if (text === 'Uplinking to Cloudflare AI Cascade...') {
+    msgEl.innerHTML = '<div class="thinking-dots"><span></span><span></span><span></span></div>';
+    box.scrollTop = box.scrollHeight;
+    return;
+  }
+
+  lastMsg.dataset.locked = 'true';
+  msgEl.textContent = '';
   let i = 0;
   chatInterval = setInterval(() => {
-    if (i < text.length) { 
-      el.textContent += text[i]; 
-      i++; 
-      box.scrollTop = box.scrollHeight; // Force scroll to bottom
+    if (i < text.length) {
+      msgEl.textContent += text[i++];
+      box.scrollTop = box.scrollHeight;
     } else {
       clearInterval(chatInterval);
     }
-  }, speed || 28);
+  }, speed || 22);
 }
 
-let greetInterval;
-function typeGreeting(text, speed) {
-  clearInterval(greetInterval); 
-  const el = document.getElementById('greeting');
-  el.textContent = '';
-  let i = 0;
-  greetInterval = setInterval(() => {
-    if (i < text.length) { 
-      el.textContent += text[i]; 
-      i++; 
-    } else {
-      clearInterval(greetInterval);
-    }
-  }, speed || 28);
+let cachedBattery = null;
+if (navigator.getBattery) {
+  navigator.getBattery().then(b => { cachedBattery = b; }).catch(() => {});
 }
 
-const greetings=['GOOD DAY, SIR.','ALL SYSTEMS NOMINAL.','HOW MAY I ASSIST?','STANDING BY.','READY FOR ORDERS, SIR.'];
-let gIdx=0;
-function cycleGreeting(){
-  typeGreeting(greetings[gIdx%greetings.length], 60);
-  gIdx++;
-}
-cycleGreeting();
-setInterval(cycleGreeting, 6000);
-
-async function updateStats(t) {
-  if (navigator.getBattery) {
-    const battery = await navigator.getBattery();
-    const pwr = Math.round(battery.level * 100);
+function updateStats(t) {
+  if (cachedBattery) {
+    const pwr = Math.round(cachedBattery.level * 100);
     document.getElementById('power').textContent = pwr + '%';
-    document.getElementById('dot1').style.background = battery.charging ? '#00ff88' : '#00d4ff';
   }
-
   const elapsed = Math.floor((Date.now() - startTime) / 1000);
   const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
   const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
   const s = String(elapsed % 60).padStart(2, '0');
   document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
-  document.getElementById('shield').textContent = currentLatency + 'ms';
-
-  const temp = Math.round(38 + Math.sin(t * 0.2) * 2); 
-  document.getElementById('temp').textContent = temp + '°C';
-
-  const netDot = document.getElementById('dot1');
-  netDot.style.opacity = navigator.onLine ? "1" : "0.3";
+  if (document.getElementById('shield').textContent !== 'CACHE HIT') {
+    document.getElementById('shield').textContent = currentLatency + 'ms';
+  }
 }
+
+
 
 async function checkLatency() {
   const start = Date.now();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000);
   try {
-           await fetch("https://soft-thunder-2965.zgodmr.workers.dev", { method: 'POST', body: JSON.stringify({action: 'ping'}) }).catch(()=>{});
+    await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ping' }),
+      signal: ctrl.signal
+    });
     currentLatency = (Date.now() - start);
   } catch (e) {
     currentLatency = "ERR";
+  } finally {
+    clearTimeout(timer);
   }
 }
 setInterval(checkLatency, 5000);
@@ -488,40 +673,35 @@ async function playNextInAudioQueue() {
     }
 }
 // --------------------------
-async function query(userText) {
+// --------------------------
+async function query(userText, isVoice = false, explicitAction = null) {
+  lastInputWasVoice = isVoice;
+  appendUserMessage(userText);
   const box = document.getElementById('response-text');
-  talking = true; 
-  talkLevel = 0.5;
+  talking = isVoice;
+  talkLevel = isVoice ? 0.5 : 0;
   box.style.color = 'rgba(0,212,255,0.5)';
   typeChat('Uplinking to Cloudflare AI Cascade...', 15);
 
   try {
     const PROXY_URL = "https://soft-thunder-2965.zgodmr.workers.dev";
     
-    // 1. Grab the visitor's name safely from the parent dashboard
     let visitorName = "Guest";
     try {
-        // PREFERRED: Safely access the parent window's store bypassing cross-origin frame drops
         if (window.parent && window.parent.store) {
             visitorName = window.parent.store.sessionGet('name') || "Guest";
         }
-        
-        // FALLBACK: If store is empty but parent URL has the parameter
         if (visitorName === "Guest" || visitorName === "GUEST") {
             const parentUrlParams = new URLSearchParams(window.parent.location.search);
             visitorName = parentUrlParams.get('visitor') || "Guest";
         }
     } catch (e) {
-        // ULTIMATE FALLBACK: Local store if parent is completely sandboxed
-        console.warn("[JARVIS UI] Parent window access blocked. Falling back to local store.");
         visitorName = window.store.sessionGet('name') || "Guest";
     }
     
-    // 2. Grab the secret camera/GPS data saved during the index.html boot sequence
     const locationData = window.store.sessionGet('loc') || "Unknown";
     const photoData = window.store.sessionGet('photo');
 
-    // 3. Dynamically scrape local sections and nav links from the parent window
     let dynamicRoutes = [];
     try {
         const links = window.parent.document.querySelectorAll('a[href]');
@@ -530,17 +710,15 @@ async function query(userText) {
                 dynamicRoutes.push({ text: l.innerText.trim(), url: l.href });
             }
         });
-    } catch (e) {
-        console.warn("CORS blocked parent window scraping.");
-    }
+    } catch (e) {}
 
-    // 4. Beam EVERYTHING to your Cloudflare Worker via the Offline-Resilient Outbox!
     let queueOrPost;
     try {
       ({ queueOrPost } = await import('./js/core/outbox.js'));
     } catch (e) {
       queueOrPost = async (url, body) => {
         const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return await r.json();
       };
     }
@@ -551,24 +729,23 @@ async function query(userText) {
         visitorName: visitorName,
         location: locationData,
         photoBase64: photoData,
-        dynamicRoutes: dynamicRoutes
+        dynamicRoutes: dynamicRoutes,
+        actionType: explicitAction // <--- Sends the direct action command to your backend worker!
     };
     if (adminToken) payload.adminToken = adminToken;
     
     const resPayload = await queueOrPost(PROXY_URL, payload);
-
-    // 4. Delete the photo from memory so we don't spam the network on the next chat message
     window.store.sessionDel('photo');
 
-    // If the network is offline, the outbox returns an optimistic queued response
     if (resPayload.optimistic) {
-        box.style.color = '#ffab00'; // Amber warning color
+        box.style.color = '#ffab00';
         typeChat("Network offline, sir. Command queued in local outbox for background sync.", 22);
         setTimeout(() => { talking = false; talkLevel = 0; }, 2000);
         return;
     }
 
     const data = resPayload;
+    // ... [Rest of your audio/redirect handling remains unchanged] ...
     
     // --- [AUDIO ENGINE & TELEPORT ENGINE] ---
     const redirectUrl = data.redirect_url;
@@ -654,18 +831,20 @@ async function query(userText) {
         return; // Stop execution immediately, do not type anything
     }
 	
-    box.style.color = '#a0e8ff';
+box.style.color = '#a0e8ff';
     typeChat(reply, 22); 
-    talkLevel = 0.8;
+    if (lastInputWasVoice || audioFile || data.audio_base64) {
+      talking = true;
+      talkLevel = 0.85;
+      setTimeout(() => { talking = false; talkLevel = 0; }, reply.length * 22 + 800);
+    } else {
+      talking = false;
+      talkLevel = 0;
+    }
 
-    setTimeout(() => { 
-      talking = false; 
-      talkLevel = 0; 
-    }, reply.length * 22 + 800);
-
-  } catch(e) {
+} catch(e) {
     box.style.color = 'rgba(255,100,100,0.9)';
-    box.textContent = 'Comms array offline. Worker unreachable, sir.';
+    typeChat('Comms array offline. Worker unreachable, sir.', 22);
     talking = false; 
     talkLevel = 0;
   }
@@ -686,59 +865,77 @@ document.getElementById('cmd-input').addEventListener('keydown', (e) => {
 });
 
 document.querySelectorAll('.quick-btn').forEach(btn => {
-  btn.addEventListener('click', () => query(btn.dataset.q));
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.action;
+    if (action === 'status') {
+      query("What's my system status?", false, "system_status");
+    } else if (action === 'security') {
+      query("Run a security scan.", false, "security_scan");
+    } else if (action === 'weather') {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => query(`Weather report for coords ${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`, false, "weather"),
+          () => query("What's the weather like today?", false, "weather"),
+          { timeout: 5000 }
+        );
+      } else {
+        query("What's the weather like today?", false, "weather");
+      }
+    } else if (action === 'humour') {
+      query("Tell me a joke, J.A.R.V.I.S.", false, "humour");
+    }
+  });
 });
 
 // --- UPGRADED MIC LOGIC ---
-let recog = null; // Store globally so we can control it
+let recog = null;
+
+// Connect the small mic button inside the bottom chat bar
+document.getElementById('pill-mic-btn').addEventListener('click', () => {
+  document.getElementById('mic-btn').click();
+});
 
 document.getElementById('mic-btn').addEventListener('click', () => {
   const inputField = document.getElementById('cmd-input');
   const box = document.getElementById('response-text');
 
-  // INTERRUPT OVERRIDE: If the user clicks the mic, JARVIS must shut up instantly!
   stopJarvisAudio();
 
-  // 1. TOGGLE OFF: If already listening, stop it manually
   if (listening && recog) {
     recog.stop();
     listening = false;
-    document.getElementById('core-label').textContent = 'SPEAK';
-    inputField.placeholder = "Enter command...";
+    document.getElementById('core-label').textContent = 'TAP TO SPEAK';
+    inputField.placeholder = "Type a message...";
     return;
   }
 
-  // 2. CHECK SUPPORT
   if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){
     box.style.color = 'rgba(255,180,0,0.9)';
     typeChat('Voice interface unavailable in this browser, sir.', 22);
     return;
   }
 
-  // 3. INITIALIZE
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recog = new SR();
   recog.lang = 'en-US'; 
   recog.interimResults = false;
   
-  // 4. UI FEEDBACK: START
   listening = true;
-  document.getElementById('core-label').textContent = 'LISTENING';
+  document.getElementById('core-label').textContent = 'Listening...';
   inputField.placeholder = "Awaiting voice input...";
-  inputField.value = ''; // Clear old text
+  inputField.value = '';
   
-  // 5. SUCCESSFUL CAPTURE
   recog.onresult = e => {
-    if (!listening) return; // FIX: Prevent duplicate fires from the browser engine
+    if (!listening) return;
     listening = false;
     try { recog.stop(); } catch(err) {}
     
-    document.getElementById('core-label').textContent = 'SPEAK';
-    inputField.placeholder = "Enter command...";
+    document.getElementById('core-label').textContent = 'TAP TO SPEAK';
+    inputField.placeholder = "Type a message...";
     
     const transcript = e.results[0][0].transcript;
     inputField.value = transcript;
-    query(transcript); // Send to LLM
+    query(transcript, true); // <--- Passes true so Speaking wave animates!
   };
   
   // 6. ERROR HANDLING (Tell DJ what broke!)
