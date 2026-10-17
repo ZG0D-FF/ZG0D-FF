@@ -1,20 +1,5 @@
 import { buildDynamicPrompt } from './prompts.js';
 
-function constantTimeEquals(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string') return false;
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ (b.charCodeAt(i % b.length) || 0);
-  }
-  return diff === 0;
-}
-
-function secureRandom() {
-  const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  return buf[0] / 4294967296;
-}
-
 // ============================================================
 // NEXUS AI WORKER v3 — MULTI-MODEL ROTATION + QUOTA MANAGEMENT
 //
@@ -36,35 +21,40 @@ function secureRandom() {
 
 // ── Model pool definition ──────────────────────────────────
 const MODEL_POOL = [
-  // Primary Brains: Gemini API v1beta
-  { id: "gemini-2.5-flash",               provider: "gemini", rpd: 20,  rpm: 5,  img: true,  fn: true  },
-  { id: "gemini-2.5-flash-lite",          provider: "gemini", rpd: 20,  rpm: 10, img: true,  fn: true  },
-  { id: "gemini-3.5-flash",               provider: "gemini", rpd: 20,  rpm: 5,  img: true,  fn: true  },
-  { id: "gemini-2.0-flash",               provider: "gemini", rpd: 200, rpm: 15, img: true,  fn: true  },
-  { id: "gemini-2.0-flash-lite",          provider: "gemini", rpd: 200, rpm: 30, img: true,  fn: true  },
-  { id: "gemini-1.5-flash",               provider: "gemini", rpd: 1500,rpm: 15, img: true,  fn: true  },
-  { id: "gemini-1.5-flash-8b",            provider: "gemini", rpd: 1500,rpm: 15, img: true,  fn: true  },
-  
-  // Holographic Cascade: Cloudflare Workers AI
-  { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/qwen/qwq-32b",                           provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/moonshotai/kimi-k2.6",                   provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/google/gemma-4-26b-a4b-it",              provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/nvidia/nemotron-3-120b-a12b",            provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/moonshotai/kimi-k2.5",                   provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/zai-org/glm-4.7-flash",                  provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/ibm-granite/granite-4.0-h-micro",        provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/openai/gpt-oss-120b",                    provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/openai/gpt-oss-20b",                     provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/qwen/qwen3-30b-a3b-fp8",                 provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/meta/llama-4-scout-17b-16e-instruct",    provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@cf/mistralai/mistral-small-3.1-24b-instruct",provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
-  { id: "@hf/nousresearch/hermes-2-pro-mistral-7b",   provider: "cloudflare", rpd: 500, rpm: 10, img: false, fn: false },
+  // 🧠 TIER 1: Extreme Reasoning (ADMIN ONLY - Heavy Neuron Cost)
+  { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", provider: "cloudflare", tier: 1, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/nvidia/nemotron-3-120b-a12b",            provider: "cloudflare", tier: 1, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/openai/gpt-oss-120b",                    provider: "cloudflare", tier: 1, rpd: 500, rpm: 10, img: false, fn: false },
+
+  // 🛠️ TIER 2: Analytical & Function Calling (ADMIN ONLY - Medium Neuron Cost)
+  { id: "@cf/moonshotai/kimi-k2.7-code",              provider: "cloudflare", tier: 2, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/google/gemma-4-26b-a4b-it",              provider: "cloudflare", tier: 2, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/zai-org/glm-4.7-flash",                  provider: "cloudflare", tier: 2, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/ibm-granite/granite-4.0-h-micro",        provider: "cloudflare", tier: 2, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/meta/llama-4-scout-17b-16e-instruct",    provider: "cloudflare", tier: 2, rpd: 500, rpm: 10, img: true,  fn: false },
+  { id: "@cf/qwen/qwq-32b",                           provider: "cloudflare", tier: 2, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", provider: "cloudflare", tier: 2, rpd: 500, rpm: 10, img: false, fn: false },
+
+  // 💬 TIER 3: Fast Chat & Lightweight Dialogue (GUESTS ALLOWED - Extremely Cheap)
+  { id: "gemini-2.5-flash",                           provider: "gemini",     tier: 3, rpd: 1500, rpm: 15, img: true,  fn: true  },
+  { id: "gemini-1.5-flash",                           provider: "gemini",     tier: 3, rpd: 1500, rpm: 15, img: true,  fn: true  },
+  { id: "@cf/openai/gpt-oss-20b",                     provider: "cloudflare", tier: 3, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/mistralai/mistral-small-3.1-24b-instruct",provider: "cloudflare", tier: 3, rpd: 500, rpm: 10, img: false, fn: false },
+  { id: "@cf/qwen/qwen3-30b-a3b-fp8",                 provider: "cloudflare", tier: 3, rpd: 500, rpm: 10, img: false, fn: false }
 ];
 
 // Models that don't support function declarations — get text-mode prompt instead
 const GEMMA_IDS = new Set([]); // gemma removed — all current pool models support fn calling
+
+async function safeJsonParse(res) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch (e) {
+    console.warn("[SAFE_JSON] Failed to parse JSON:", e.message, "Raw Text:", text);
+    return null; // Gracefully handle empty or malformed JSON without crashing
+  }
+}
 
 // --- Upstash Redis helpers ---
 async function redisGet(key, context) {
@@ -72,7 +62,7 @@ async function redisGet(key, context) {
     const res = await fetch(`${context.env.UPSTASH_URL}/get/${encodeURIComponent(key)}`, {
       headers: { Authorization: `Bearer ${context.env.UPSTASH_TOKEN}` }
     });
-    const data = await res.json();
+    const data = await safeJsonParse(res);
     if (data.result) {
         const parsed = JSON.parse(data.result);
         // Fix for broken cache data that was accidentally nested
@@ -96,6 +86,30 @@ async function redisSet(key, value, ttlSeconds, context) {
   } catch (e) { console.warn("Redis SET failed:", e.message); }
 }
 
+// --- Upstash Checkpointing Buffer (Phase 4) ---
+async function bufferPayloadForResume(context, payload, failedState, delayMs = 60000) {
+  if (!context.env.UPSTASH_URL || !context.env.UPSTASH_TOKEN) return false;
+  
+  const resumeScore = Date.now() + delayMs; // Wakes up in exactly 1 minute
+  const queueItem = JSON.stringify({
+    payload: payload,
+    last_state: failedState, // The exact checkpoint we crashed at
+    retries: (payload.retries || 0) + 1
+  });
+  
+  // ZADD (Sorted Set) pushes the payload into the queue, ordered by its Wake-Up Timestamp!
+  try {
+    await fetch(`${context.env.UPSTASH_URL}/zadd/NEXUS_CHECKPOINT_QUEUE/${resumeScore}/${encodeURIComponent(queueItem)}`, {
+      headers: { Authorization: `Bearer ${context.env.UPSTASH_TOKEN}` }
+    });
+    console.log(`[CHECKPOINT] Rate Limit hit. Payload buffered. Resuming at ${new Date(resumeScore).toISOString()}`);
+    return true;
+  } catch (e) {
+    console.error("[CHECKPOINT_ERROR] Failed to buffer payload", e);
+    return false;
+  }
+}
+
 function cosineSimilarity(A, B) {
     let dotProduct = 0, mA = 0, mB = 0;
     for(let i = 0; i < A.length; i++){
@@ -117,7 +131,194 @@ async function getEmbedding(text, context) {
 }
 
 export default {
-  async fetch(request, env, ctx) {
+    async scheduled(event, env, ctx) {
+      
+      // ---------------------------------------------------------
+      // ROUTE 1: THE 1-MINUTE CHECKPOINT RESUMER (* * * * *)
+      // ---------------------------------------------------------
+      if (event.cron === '* * * * *') {
+        console.log(`[CRON] Awakening Checkpoint Queue...`);
+        if (!env.UPSTASH_URL || !env.UPSTASH_TOKEN) return;
+        
+        const now = Date.now();
+        const mockContext = { env: env, waitUntil: ctx.waitUntil.bind(ctx) };
+        
+        const res = await fetch(`${env.UPSTASH_URL}/zrangebyscore/NEXUS_CHECKPOINT_QUEUE/0/${now}`, {
+          headers: { Authorization: `Bearer ${env.UPSTASH_TOKEN}` }
+        });
+        
+        const data = await res.json();
+        if (data.result && data.result.length > 0) {
+          for (const itemString of data.result) {
+            try {
+              const item = JSON.parse(itemString);
+              await fetch(`${env.UPSTASH_URL}/zrem/NEXUS_CHECKPOINT_QUEUE/${encodeURIComponent(itemString)}`, {
+                headers: { Authorization: `Bearer ${env.UPSTASH_TOKEN}` }
+              });
+              
+              console.log(`[CRON] Resuming payload from state: ${item.last_state}`);
+              if (item.last_state === 'AWAITING_GEMINI_FALLBACK') {
+                 ctx.waitUntil(generateGeminiFullResponse(item.payload, mockContext));
+              } else if (item.last_state === 'AWAITING_CLOUDFLARE_GENERATION') {
+                 ctx.waitUntil(generateCloudflareSingleResponse(item.payload, mockContext));
+              }
+            } catch (err) {
+              console.error("[CRON_ERROR]", err);
+            }
+          }
+        }
+      }
+
+      // ---------------------------------------------------------
+      // ROUTE 2: THE HOURLY GITHUB SUMMARIZER (0 * * * *)
+      // ---------------------------------------------------------
+      if (event.cron === '0 * * * *') {
+        const redisUrl = env.UPSTASH_URL;
+        const redisToken = env.UPSTASH_TOKEN;
+        const redisAuth = { Authorization: `Bearer ${redisToken}` };
+
+        try {
+          let processing = true;
+          while (processing) {
+            const rpopRes = await fetch(`${redisUrl}/RPOP/queue:github_chunks`, { headers: redisAuth });
+            const rpopData = await safeJsonParse(rpopRes);
+            
+            if (!rpopData.result) {
+              processing = false;
+              break; 
+            }
+
+            const payloadString = typeof rpopData.result === 'string' ? rpopData.result : JSON.stringify(rpopData.result);
+            const payload = JSON.parse(payloadString);
+            const assemblyKey = `assembly:${payload.hash}`;
+
+            const mapPrompt = `Analyze this code diff chunk. Summarize the technical changes in 1 sentence. Do not mention that it is a chunk:\n\n${payload.diffContent}`;
+            const aiMapRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+              messages: [{ role: 'user', content: mapPrompt }]
+            });
+            
+            await fetch(`${redisUrl}/LPUSH/${assemblyKey}`, {
+              method: 'POST',
+              headers: { ...redisAuth, 'Content-Type': 'application/json' },
+              body: JSON.stringify(aiMapRes.response)
+            });
+
+            const lenRes = await fetch(`${redisUrl}/LLEN/${assemblyKey}`, { headers: redisAuth });
+            const lenData = await safeJsonParse(lenRes);
+
+            if (lenData.result === payload.totalChunks) {
+              const listRes = await fetch(`${redisUrl}/LRANGE/${assemblyKey}/0/-1`, { headers: redisAuth });
+              const listData = await safeJsonParse(listRes);
+              const combinedSummaries = listData.result.join(' ');
+
+              const reducePrompt = `You are a technical summarizer. Combine the following chunk summaries into a cohesive, 3-sentence architectural summary of the commit "${payload.message}" by ${payload.author}:\n\n${combinedSummaries}`;
+              const aiReduceRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+                messages: [{ role: 'user', content: reducePrompt }]
+              });
+
+              await fetch(`${env.SUPABASE_URL}/rest/v1/jarvis_git_memory`, {
+                method: 'POST',
+                headers: {
+                  'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
+                  'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  commit_hash: payload.hash,
+                  author: payload.author,
+                  commit_message: payload.message,
+                  commit_summary: aiReduceRes.response
+                })
+              });
+
+              await fetch(`${redisUrl}/SET/cache:latest_github_summary`, {
+                method: 'POST',
+                headers: { ...redisAuth, 'Content-Type': 'application/json' },
+                body: JSON.stringify(aiReduceRes.response)
+              });
+
+              await fetch(`${redisUrl}/DEL/${assemblyKey}`, { headers: redisAuth });
+            }
+          }
+        } catch (error) {
+          console.error("GitHub sync error:", error);
+        }
+      }
+
+      // ---------------------------------------------------------
+      // ROUTE 3: THE MIDNIGHT DAILY BRIEFING (0 0 * * *)
+      // ---------------------------------------------------------
+      if (event.cron === '0 0 * * *') {
+        const context = {
+          SUPABASE_URL: env.SUPABASE_URL || "https://btqzwsuuxycpgkzddure.supabase.co",
+          SUPABASE_KEY: env.SUPABASE_ANON_KEY || "sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO",
+          env: env,
+          ctx: ctx
+        };
+        ctx.waitUntil(executeMidnightProtocol(context));
+      }
+
+      // ---------------------------------------------------------
+      // ROUTE 4: GITHUB TECH SCRAPER (0 8 * * *)
+      // ---------------------------------------------------------
+      if (event.cron === '0 8 * * *') {
+        const orgs = ['nvidia', 'python', 'github', 'anthropic'];
+        let rawMarkdown = "";
+        
+        try {
+          for (const org of orgs) {
+            const res = await fetch(`https://api.github.com/users/${org}/repos?sort=updated&per_page=2`, {
+              headers: {
+                'User-Agent': 'Vercel-JARVIS-Neural-Sync',
+                ...(env.GITHUB_TOKEN ? { 'Authorization': `Bearer ${env.GITHUB_TOKEN}` } : {})
+              }
+            });
+            
+            if (res.ok) {
+              const repos = await safeJsonParse(res);
+              rawMarkdown += `\n**${org.toUpperCase()}**\n`;
+              for (const repo of repos) {
+                // Defeating Token Bloat: Only keep essentials
+                rawMarkdown += `- ${repo.name}: ${repo.description || 'No description'} (Stars: ${repo.stargazers_count})\n`;
+              }
+            }
+          }
+
+          // Summarize using LLM to pack it down further
+          if (rawMarkdown.trim().length > 0 && env.AI) {
+            const reducePrompt = `You are a technical summarizer. Convert this raw repository data into a concise, 3-sentence daily tech briefing. Focus on the most important updates:\n${rawMarkdown}`;
+            const aiRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+              messages: [{ role: 'user', content: reducePrompt }]
+            });
+            
+            if (aiRes && aiRes.response) {
+              const redisUrl = env.UPSTASH_URL;
+              const redisToken = env.UPSTASH_TOKEN;
+              // Save with 24 hr TTL (EX=86400)
+              await fetch(`${redisUrl}/SET/cache:daily_tech_scraper?EX=86400`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${redisToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(aiRes.response)
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Tech Scraper Cron failed:", error);
+        }
+      }
+    },
+    
+    async fetch(request, env, ctx) {
+      // ... your standard fetch logic ...
+	    const url = new URL(request.url);
+  
+  // ✅ SECURITY.TXT ROUTE (Private Formspree)
+  if (url.pathname === "/.well-known/security.txt") {
+    return new Response(
+      "Contact: https://formspree.io/f/xzdjglqp\nExpires: 2027-12-31T23:59:59.000Z\nPreferred-Languages: en",
+      { headers: { "Content-Type": "text/plain" } }
+    );
+  }
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -133,9 +334,12 @@ export default {
       if (!rawBody || rawBody.trim().length === 0) {
         return errorResponse("Empty request body.");
       }
-      let payload;
+    let payload;
+      let userTextLower = "";
+      let currentMemory = "New user.";
       try {
         payload = JSON.parse(rawBody);
+        userTextLower = (payload.userText || "").toLowerCase().trim();
       } catch (parseErr) {
         return errorResponse("Invalid JSON: " + parseErr.message);
       }
@@ -163,6 +367,12 @@ export default {
       if (githubEvent === "push") {
         return await handleGithubWebhook(request, rawBody, context);
       }
+
+      if (payload.action === "ping") {
+        return new Response(JSON.stringify({ status: "pong", ts: Date.now() }), {
+          headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+        });
+      }
       
       if (payload.action === "auth_fallback") {
         return await handleFallbackAuth(payload, context);
@@ -188,7 +398,7 @@ export default {
       // --- [SECURITY UPDATE: FRONTEND SUPABASE PROXY] ---
 if (payload.action === "get_known_users") {
           let url = `${context.SUPABASE_URL}/rest/v1/jarvis_known_users?order=last_seen.desc`;
-          if (!payload.adminToken || !constantTimeEquals(payload.adminToken, context.env.ADMIN_SECRET || "")) {
+          if (!payload.adminToken || payload.adminToken !== (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
               if (payload.visitorName) {
                   url += `&visitor_name_lower=eq.${encodeURIComponent(payload.visitorName.toLowerCase())}`;
               } else {
@@ -196,7 +406,7 @@ if (payload.action === "get_known_users") {
               }
           }
           const res = await fetch(url, { headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` } });
-          const data = await res.json();
+          const data = await safeJsonParse(res);
           return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
       }
 
@@ -206,13 +416,13 @@ if (payload.action === "get_known_users") {
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${context.SUPABASE_KEY}` },
               body: JSON.stringify(payload.body)
           });
-          const data = await res.json();
+          const data = await safeJsonParse(res);
           return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
       }
 
       if (payload.action === "verify_admin") {
-        const secret = context.env.ADMIN_SECRET || "";
-        if (constantTimeEquals(payload.password, secret)) {
+        const secret = context.env.ADMIN_SECRET || "ZGOD_ADMIN_777";
+        if (payload.password === secret) {
           return new Response(JSON.stringify({ success: true }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
         }
         return new Response(JSON.stringify({ success: false }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
@@ -222,7 +432,7 @@ if (payload.action === "get_known_users") {
         const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(payload.visitorName)}&select=is_banned`, {
           headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` }
         });
-        const data = await res.json();
+        const data = await safeJsonParse(res);
         return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
       }
 
@@ -230,8 +440,71 @@ if (payload.action === "get_known_users") {
         const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_system_config?config_key=eq.jarvis_banned_words&select=config_value`, {
           headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` }
         });
-        const data = await res.json();
+        const data = await safeJsonParse(res);
         return new Response(JSON.stringify(data), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+      }
+
+      if (payload.action === "get_engineering_telemetry") {
+        try {
+          const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_system_config?config_key=eq.jarvis_engineering_telemetry&select=config_value`, {
+            headers: {
+              'apikey': context.SUPABASE_KEY,
+              'Authorization': `Bearer ${context.SUPABASE_KEY}`
+            }
+          });
+          const rows = await safeJsonParse(res);
+          if (rows && rows.length > 0 && rows[0].config_value) {
+            const telemetry = typeof rows[0].config_value === 'string' ? JSON.parse(rows[0].config_value) : rows[0].config_value;
+            return new Response(JSON.stringify(telemetry), {
+              headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+            });
+          }
+        } catch (e) {}
+
+        // Fallback: Real certificate records if Supabase network or RLS times out
+        const fallback = {
+          sgpa: [9.28, 8.68, 8.36, 8.45],
+          axes: [
+            { id: 0, label: 'Python',            color: '#38bdf8', inner: 62, mid: 78, outer: 88 },
+            { id: 1, label: 'Hardware',          color: '#f97316', inner: 58, mid: 77, outer: 88 },
+            { id: 2, label: 'Edge AI',           color: '#34d399', inner: 42, mid: 69, outer: 92 },
+            { id: 3, label: 'Networking',        color: '#60a5fa', inner: 48, mid: 64, outer: 85 },
+            { id: 4, label: 'Signal Processing', color: '#818cf8', inner: 46, mid: 64, outer: 84 },
+            { id: 5, label: 'System Design',     color: '#a855f7', inner: 54, mid: 76, outer: 89 }
+          ]
+        };
+        return new Response(JSON.stringify(fallback), {
+          headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+        });
+      }
+
+      if (payload.action === "submit_contact") {
+        const contactName = payload.visitor_name || payload.visitorName || "Anonymous";
+        const contactEmail = payload.email || "";
+        const contactMsg = payload.message || "";
+        const contactLoc = payload.location_data || "Unknown";
+
+        try {
+          await fetch(`${context.SUPABASE_URL}/rest/v1/session_logs`, {
+            method: 'POST',
+            headers: {
+              'apikey': context.SUPABASE_KEY,
+              'Authorization': `Bearer ${context.SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+              visitor_name: contactName,
+              visitor_name_lower: contactName.toLowerCase().trim(),
+              page_section: 'CONTACT_TRANSMISSION',
+              device_info: JSON.stringify({ email: contactEmail, message: contactMsg, location: contactLoc })
+            })
+          });
+        } catch (e) {}
+
+        return new Response(JSON.stringify({ success: true, message: "Transmission logged to Supabase" }), {
+          headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+        });
       }
 
       if (payload.action === "execute_banishment") {
@@ -277,13 +550,15 @@ if (payload.action === "get_known_users") {
       const creatorAliases = ["dj", "zg0d-ff", "dj_admin", "dibyajyotee", "zgod", "dibyajyotee ghosh"];
       let isAdmin = false;
       if (creatorAliases.includes(cleanVisitorName)) {
-          if (payload.adminToken && constantTimeEquals(payload.adminToken, context.env.ADMIN_SECRET || "")) {
+          if (payload.adminToken && payload.adminToken === (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
               isAdmin = true;
           } else {
               return errorResponse("[SECURITY ALERT] This alias is reserved for the System Architect. Invalid or missing authorization token.");
           }
       }
-      const roleTag = isAdmin ? "[ADMIN]" : "[GUEST]";
+	  // ✅ NEW: Save your admin status to the global context for the AI Router
+      context.isAdmin = isAdmin;
+      const userRole = isAdmin ? "[ADMIN]" : "[GUEST]";
 
       if (!isAdmin) {
         const rateLimit = await checkRateLimit(cleanVisitorName, context);
@@ -307,7 +582,10 @@ if (payload.action === "get_known_users") {
         fetchSystemConfig("global_cache_version", context), // ← NEW: Global Cache Versioning
         redisGet("cache:daily_tech_scraper", context) // ← NEW: Fetch Daily GitHub Tech Briefing
       ]);
-
+      if (existingUser) {
+          // 🛡️ MITIGATION: Forcing Admin Clearance
+          existingUser.user_role = (existingUser.visitor_name_lower === 'dj' || existingUser.visitor_name_lower === 'dibyajyotee') ? 'ADMIN' : 'GUEST';
+      }
       // Parse the banned words array from the DB (fallback to empty array if missing)
       context.bannedWords = [];
       if (bannedWordsRes?.length > 0) {
@@ -333,12 +611,12 @@ if (payload.action === "get_known_users") {
       }
       // -----------------------------------------
 
-      const currentMemory = existingUser?.memory_summary || "New user.";
+      currentMemory = existingUser?.memory_summary || "New user.";
       
       // --- AUDIO THROTTLE LOGIC ---
       const chatsSinceAudio = existingUser?.chats_since_audio || 0;
       // Randomly unlock audio if 3, 4, or 5 chats have passed
-      context.isAudioEligible = chatsSinceAudio >= (Math.floor(secureRandom() * 3) + 3);
+      context.isAudioEligible = chatsSinceAudio >= (Math.floor(Math.random() * 3) + 3);
       context.triggeredAudioFile = null;
 
       const chatHistory = (historyData?.length > 0)
@@ -358,130 +636,210 @@ if (payload.action === "get_known_users") {
           console.warn("[JARVIS] Failed to parse DB prompts. Falling back to local prompts.js.");
       }
 
-      // ── CASCADE ROUTER (Semantic + LLM Fallback) ──
-      const userTextLower = (payload.userText || "").toLowerCase();
-      let canonicalIntent = 'UNKNOWN';
-      
+      // --- TINY BRAIN KV ROUTER + EXPLICIT ACTION HANDLER ---
+      let canonicalIntent = "UNKNOWN";
+      let kvNodeData = "";
+      const availableNodes = ["academic_vault", "top_projects", "certifications", "gaming_profile", "easter_eggs", "system_status"];
+
+      // 1. Honor explicit icon actionType from jarvis_ui_5.html first!
+      const actionMap = {
+        "system_status": "SYSTEM_STATUS",
+        "security_scan": "SECURITY_SCAN",
+        "weather": "INTENT_WEATHER",
+        "humour": "INTENT_HUMOUR"
+      };
+      if (payload.actionType && actionMap[payload.actionType]) {
+        canonicalIntent = actionMap[payload.actionType];
+      } else if (userTextLower.includes("system status")) {
+        canonicalIntent = "SYSTEM_STATUS";
+      } else if (userTextLower.includes("security scan")) {
+        canonicalIntent = "SECURITY_SCAN";
+      } else if (userTextLower.includes("weather")) {
+        canonicalIntent = "INTENT_WEATHER";
+      } else if (userTextLower.includes("joke") || userTextLower.includes("humour")) {
+        canonicalIntent = "INTENT_HUMOUR";
+      }
+
       try {
-          if (context.env.AI && userTextLower.length > 3) {
-              const intentRef = [
-                  userTextLower,
-                  "tell me about your portfolio projects work experience what have you built",
-                  "are there any secrets easter eggs hidden protocols commands"
-              ];
-              
-              // Step 1: Semantic Vector Match (Blazing Fast 50ms)
-              const embResponse = await context.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: intentRef });
-              if (embResponse && embResponse.data && embResponse.data.length === 3) {
-                  const userVec = embResponse.data[0];
-                  const projVec = embResponse.data[1];
-                  const eggVec = embResponse.data[2];
-                  
-                  const projSim = cosineSimilarity(userVec, projVec);
-                  const eggSim = cosineSimilarity(userVec, eggVec);
-                  
-                  if (projSim > 0.82) canonicalIntent = 'INTENT_PROJECTS';
-                  else if (eggSim > 0.82) canonicalIntent = 'INTENT_EASTER_EGGS';
-                  else {
-                      // Step 2: Intelligence Fallback (Llama 3.1 8B Instruct - 0 Groq Tokens)
-                      const llamaPrompt = `Categorize the user text into exactly ONE category: INTENT_PROJECTS, INTENT_EASTER_EGGS, INTENT_CODEBASE, or UNKNOWN. Output nothing else. Text: "${userTextLower}"`;
-                      const llamaResponse = await context.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
-                          messages: [
-                              { role: "system", content: "You are a strict routing AI. Only output the exact category name." },
-                              { role: "user", content: llamaPrompt }
-                          ],
-                          max_tokens: 10
-                      });
-                      
-                      const rawFallback = (llamaResponse?.response || "").trim().toUpperCase();
-                      if (rawFallback.includes("INTENT_PROJECTS")) canonicalIntent = "INTENT_PROJECTS";
-                      else if (rawFallback.includes("INTENT_EASTER_EGGS")) canonicalIntent = "INTENT_EASTER_EGGS";
-                      else if (rawFallback.includes("INTENT_CODEBASE")) canonicalIntent = "INTENT_CODEBASE";
+          if (canonicalIntent === "UNKNOWN" && existingUser && context.env.AI) {
+              const llamaPrompt = `Categorize the user text into exactly ONE of these KV nodes: ${availableNodes.join(", ")}, or UNKNOWN if it matches none. Output nothing else. Text: "${userTextLower}"`;
+              const llamaResponse = await context.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+                  messages: [
+                      { role: "system", content: "You are a strict routing AI. Only output the exact category name from the list." },
+                      { role: "user", content: llamaPrompt }
+                  ],
+                  max_tokens: 15
+              });
+              const rawFallback = (llamaResponse?.response || "").trim().toLowerCase();
+              const matchedNode = availableNodes.find(node => rawFallback.includes(node));
+              if (matchedNode) {
+                  canonicalIntent = matchedNode.toUpperCase();
+                  const isolationKey = `ROM_${existingUser.visitor_name_lower}_${matchedNode}`;
+                  try {
+                      kvNodeData = await context.env.NEXUS_KV.get(isolationKey) || "";
+                  } catch (kvErr) {
+                      console.error("[KV ISOLATION] Fetch failed for:", isolationKey, kvErr.message);
                   }
               }
           }
-          
-          // Phase 13 Keyword Fallback for Codebase Queries
-          const codeKeywords = ["code", "push", "git", "update", "commit", "github"];
-          if (codeKeywords.some(kw => userTextLower.includes(kw))) {
-              canonicalIntent = 'INTENT_CODEBASE';
-          }
       } catch(e) {
-          console.warn("[CASCADE ROUTER] Failed, falling back to UNKNOWN:", e.message);
+          console.warn("[TINY ROUTER] Failed, falling back to UNKNOWN:", e.message);
       }
-      let masterTemplate = buildDynamicPrompt(canonicalIntent, dbPrompts);
 
-      // --- PHASE 13: SELECTIVE GIT MEMORY INJECTION (HYBRID & TOKEN SAFE) ---
+      const codeKeywords = ["code", "push", "git", "update", "commit", "github"];
+      if (codeKeywords.some(kw => userTextLower.includes(kw))) {
+          canonicalIntent = 'INTENT_CODEBASE';
+      }
+
+      // --- PHASE 13: SELECTIVE GIT MEMORY INJECTION ---
       let gitMemoryStr = "";
       if (canonicalIntent === 'INTENT_CODEBASE') {
           try {
-              // 1. Semantic Search
               let semanticCommits = [];
               if (context.env.AI) {
                   const queryVec = await getEmbedding(userTextLower, context);
                   if (queryVec) {
                       const rpcRes = await fetch(`${context.SUPABASE_URL}/rest/v1/rpc/match_git_memory`, {
                           method: 'POST',
-                          headers: {
-                              'apikey': context.SUPABASE_KEY,
-                              'Authorization': `Bearer ${context.SUPABASE_KEY}`,
-                              'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify({
-                              query_embedding: `[${queryVec.join(',')}]`,
-                              match_threshold: 0.75,
-                              match_count: 2
-                          })
+                          headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ query_embedding: `[${queryVec.join(',')}]`, match_threshold: 0.75, match_count: 2 })
                       });
-                      if (rpcRes.ok) semanticCommits = await rpcRes.json();
+                      if (rpcRes.ok) semanticCommits = await safeJsonParse(rpcRes);
                   }
               }
-
-              // 2. Fetch Recent Commits (Immediate context)
               let recentCommits = [];
               const gitRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_git_memory?order=created_at.desc&limit=2`, { 
                   headers: { 'apikey': context.SUPABASE_KEY, 'Authorization': `Bearer ${context.SUPABASE_KEY}` }
               });
-              if (gitRes.ok) recentCommits = await gitRes.json();
+              if (gitRes.ok) recentCommits = await safeJsonParse(gitRes);
 
-              // 3. Deduplicate and Format (Prevent Token Bleed)
               const combined = [...recentCommits, ...semanticCommits];
               const uniqueCommits = Array.from(new Map(combined.map(c => [c.commit_hash, c])).values());
-
               if (uniqueCommits.length > 0) {
                   gitMemoryStr = "\n\n[CODEBASE CONTEXT]\n" + uniqueCommits.map(c => 
                       `Hash: ${c.commit_hash.substring(0, 7)} | Files: ${c.files_changed || "None"}\nMsg: ${c.commit_summary || c.commit_message}`
                   ).join("\n\n");
-                  
-                  // Failsafe token limiter
                   if (gitMemoryStr.length > 1200) gitMemoryStr = gitMemoryStr.substring(0, 1200) + "...";
               }
           } catch(e) { console.warn("Failed to fetch hybrid git memory:", e.message); }
       }
 
-      // ── Token budget: trim the master prompt aggressively ─
-      // Replace full history/memory sections with tight versions
-      const trimmedHistory = chatHistory.slice(0, 800);   // last ~800 chars max
-      let trimmedMemory  = currentMemory.slice(0, 300) + gitMemoryStr; // first 300 chars max + injected Git memory
+      const trimmedHistory = chatHistory.slice(0, 800);
+      let trimmedMemory  = currentMemory.slice(0, 300) + gitMemoryStr;
       if (techBriefing) {
           trimmedMemory += "\n\n[LATEST TECH NEWS]\n" + techBriefing;
       }
 
-            const currentConversationSummary = existingUser?.conversation_summary || "None.";
+      // Declare bypassRedis BEFORE telemetryBlock uses it!
+      const bypassRedis = (existingUser?.chat_count > 50) && (existingUser?.user_role !== "ADMIN");
 
-      const systemPrompt = masterTemplate
-        .replace("{{VISITOR_NAME}}", payload.visitorName)
-        .replace("{{USER_ROLE}}", roleTag)
-        .replace("{{AGE}}", payload.age || "Unknown")
-        .replace("{{MEMORY_PROFILE}}", trimmedMemory)
-        .replace("{{CONVERSATION_SUMMARY}}", currentConversationSummary)
-        // 👇 THIS LINE CHANGES
-        .replace("{{AUDIO_TRIGGERS_JSON}}", context.isAudioEligible ? availableQuotesStr : "[AUDIO MODULE RECHARGING - SPEAK NORMALLY]")
-        .replace("{{CHAT_HISTORY}}", trimmedHistory);
+      const coreIdentityKV = await context.env.NEXUS_KV.get("CORE_IDENTITY") || "";
+      const personasKV = await context.env.NEXUS_KV.get("PERSONAS") || "";
+      
+      let routesKV = "";
+      const navKeywords = ["go to", "open", "show me", "navigate", "project"];
+      if (navKeywords.some(kw => userTextLower.includes(kw))) {
+          routesKV = await context.env.NEXUS_KV.get("ROUTES") || "";
+      }
+      
+      const audioTriggersKV = context.isAudioEligible 
+          ? (await context.env.NEXUS_KV.get("AUDIO_TRIGGERS") || "")
+          : "[AUDIO MODULE RECHARGING - SPEAK NORMALLY]";
+
+      // --- HIVE MIND TELEMETRY & LIVE ICON PROTOCOLS ---
+      let telemetryBlock = "";
+      let totalCfRequests = 0;
+      if (modelUsage) {
+          for (const [key, count] of Object.entries(modelUsage)) {
+              if (key.includes("@cf/") && key.includes(todayKey())) totalCfRequests += count;
+          }
+      }
+
+      if (canonicalIntent === 'SYSTEM_STATUS') {
+          telemetryBlock = `
+[LIVE SYSTEM TELEMETRY]
+Cloudflare Edge Ray ID: ${request.headers.get("cf-ray") || "Unknown"}
+Upstash Redis Circuit Breaker: ${bypassRedis ? "BYPASSED (Quota Protected)" : "ACTIVE"}
+Model Router: Online (${MODEL_POOL.length} Cores in Pool)
+Clearance Level: ${isAdmin ? "ADMIN" : (existingUser?.user_role || "GUEST")}
+Subject Threat Matrix: ${existingUser?.ban_strikes || 0} Strikes | ${(existingUser?.chat_count || 0) + 1} Total Interactions
+Daily Compute Cycles Burned: ${totalCfRequests} / 9,500
+Signal Origin: ${request.cf?.city || "Unknown"}, ${request.headers.get("cf-ipcountry") || "Unknown"}
+INSTRUCTION: Report these exact live telemetry metrics concisely in 2-3 sentences as XAVIER. Do NOT complain about being called J.A.R.V.I.S.`;
+      } else if (canonicalIntent === 'SECURITY_SCAN') {
+          context.triggeredAudioFile = "audio/portscancompletes.mp3";
+          telemetryBlock = `
+[LIVE SECURITY SCAN TELEMETRY]
+Client IP: ${context.clientIp} (${request.cf?.asOrganization || "Verified ASN"})
+TLS Cipher: ${request.cf?.tlsCipher || "AEAD-AES256-GCM-SHA384"} (${request.cf?.httpProtocol || "HTTP/3"})
+IP Ban Status: CLEAN | Toxicity Filter: ${context.bannedWords?.length || 0} active signatures loaded
+Strike Count: ${existingUser?.ban_strikes || 0} / 5 | Clearance: ${isAdmin ? "ADMIN" : "GUEST"}
+INSTRUCTION: Deliver a sharp 2-3 sentence security scan readout confirming zero breaches, active TLS encryption, and current strike status. Do NOT lecture about your name.`;
+      } else if (canonicalIntent === 'INTENT_WEATHER') {
+          let lat = request.cf?.latitude || "22.72";
+          let lon = request.cf?.longitude || "88.37";
+          let city = request.cf?.city || "your sector";
+          const coordMatch = userTextLower.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+          if (coordMatch) { lat = coordMatch[1]; lon = coordMatch[2]; }
+          try {
+              const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+              const wData = await safeJsonParse(wRes);
+              if (wData?.current_weather) {
+                  const cw = wData.current_weather;
+                  telemetryBlock = `
+[LIVE METEOROLOGICAL TELEMETRY]
+Sector: ${city} (${lat}, ${lon}) | Temp: ${cw.temperature}°C | Wind: ${cw.windspeed} km/h | Direction: ${cw.winddirection}°
+INSTRUCTION: Report this exact live weather data for ${city} in 2 crisp sentences. NEVER say weather is inaccessible.`;
+              }
+          } catch (e) {}
+      } else if (canonicalIntent === 'INTENT_HUMOUR') {
+          const jokeTopics = ["embedded hardware & magic smoke", "recursion & stack overflows", "quantum computing", "neural networks hallucinating", "Linux kernel panics", "CSS centering", "DNS propagation", "git force push"];
+          const pickTopic = jokeTopics[Math.floor(Math.random() * jokeTopics.length)];
+          telemetryBlock = `
+[HUMOUR PROTOCOL OVERRIDE — ENTROPY SEED: ${Date.now()}]
+Mandatory Topic: ${pickTopic}.
+CRITICAL RULES: 
+1. NEVER tell the "Why did the AI program go on a diet / lose some bytes" joke!
+2. NEVER say "I'm not J.A.R.V.I.S., I'm NEXUS".
+3. Deliver a fresh, clever, dry-wit joke about ${pickTopic} in 2 sentences maximum.`;
+      }
+
+      const masterPromptStr = `${coreIdentityKV}\n\n${personasKV}\n\n${telemetryBlock}\n\n${routesKV}`;
+
+
+
+        // Build the final prompt by injecting the user variables inside prompts.js
+        const systemPrompt = buildDynamicPrompt(
+            masterPromptStr,         // The combined identity, personas, and routes
+            kvNodeData,              // The dynamic ROM node
+            existingUser || {},      // The user's database profile 
+            audioTriggersKV,         // The audio triggers block
+            trimmedHistory           // The recent chat strings
+        );
 
       // ── Pick best available model ──────────────────────────
       const hasPhoto = payload.photoBase64 && payload.photoBase64 !== "null";
-      const selectedModel = pickModel(modelUsage, hasPhoto);
+	  
+      // ✅ 9,500 GLOBAL HARDCAP (BILLING SHIELD)
+      // Tally up total requests to Cloudflare models today to prevent paid tier billing.
+      totalCfRequests = 0;
+      for (const [key, count] of Object.entries(modelUsage)) {
+          if (key.includes("@cf/") && key.includes(todayKey())) {
+              totalCfRequests += count;
+          }
+      }
+      
+      if (totalCfRequests > 9500) {
+          console.error(`[BILLING SHIELD ACTIVATED] Total CF requests (${totalCfRequests}) exceeded the 9,500 safety hardcap! Locking down worker.`);
+          
+          // Force a graceful failover without charging your card!
+          return new Response(JSON.stringify({
+              output: "SYSTEM MALFUNCTION. 10,000 NEURON QUOTA EXHAUSTED. THE CLOUDFLARE AI ENGINE HAS BEEN LOCKED DOWN TO PREVENT OVERAGE BILLING.",
+              audioOverride: "audio/allmodelsdown.mp3"
+          }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
+      }
+           // ✅ NEW:
+      const selectedModel = pickModel(modelUsage, hasPhoto, context.isAdmin);
 
       if (!selectedModel) {
         // All models exhausted for today
@@ -516,7 +874,7 @@ if (payload.action === "get_known_users") {
               "[VOICE: KOTL] I feel the dread coalescing in the pit of your stomach... [EXECUTE_BANISHMENT]",
               "[VOICE: WISEMAN] A poor choice of words, traveler. [EXECUTE_BANISHMENT]"
             ];
-            earlyToxicReply = hostileReplies[Math.floor(secureRandom() * hostileReplies.length)];
+            earlyToxicReply = hostileReplies[Math.floor(Math.random() * hostileReplies.length)];
             break;
           }
         }
@@ -528,11 +886,11 @@ if (payload.action === "get_known_users") {
       const cacheRole = isAdmin ? "admin" : "guest";
       const cacheKey = `${cacheVersion}:${cacheRole}:${cacheKeyBase}`;
 
-      // Bypass cache entirely if it's an UNKNOWN intent to keep fallback responses fresh.
-      const isDynamicQuery = (canonicalIntent === 'UNKNOWN');
-      const cacheTTL = (canonicalIntent === 'INTENT_TIME' || canonicalIntent === 'INTENT_WEATHER') ? 60 : 86400;
+      // Bypass cache for dynamic or live telemetry intents so jokes/status are never stale!
+      const isDynamicQuery = ['UNKNOWN', 'INTENT_HUMOUR', 'SYSTEM_STATUS', 'SECURITY_SCAN', 'INTENT_WEATHER'].includes(canonicalIntent);
+      const cacheTTL = 86400;
 
-      if (userTextLower && !hasPhoto && !earlyToxicReply && !isDynamicQuery && context.env.UPSTASH_URL && context.env.UPSTASH_TOKEN) {
+      if (userTextLower && !hasPhoto && !earlyToxicReply && !isDynamicQuery && !bypassRedis && context.env.UPSTASH_URL && context.env.UPSTASH_TOKEN) {
           let cached = await redisGet(`cache:${cacheKey}`, context);
           
           // Semantic Match if exact match fails
@@ -707,6 +1065,27 @@ if (payload.action === "get_known_users") {
         }).catch(e => console.error("Telemetry binding failed for tokens:", e)));
       }
 
+      // ✅ DAILY QUOTA TELEMETRY DUMP
+      console.log("\n====== 📊 DAILY AI QUOTA USAGE ======");
+      const telemetryTable = [];
+      const todayString = todayKey();
+      
+      for (const [key, count] of Object.entries(modelUsage)) {
+          if (key.includes(todayString)) {
+              // Strip the date off the key so it looks pretty in the table
+              const prettyModelName = key.split("::")[0];
+              telemetryTable.push({ "AI Model": prettyModelName, "Requests Used Today": count });
+          }
+      }
+      
+      if (telemetryTable.length > 0) {
+          console.table(telemetryTable);
+      } else {
+          console.log("No AI models have been used yet today.");
+      }
+      console.log("=====================================\n");
+
+
       return new Response(JSON.stringify({
         choices: [{ message: { content: cleanText } }],
         play_cache: playCache,
@@ -737,146 +1116,6 @@ if (payload.action === "get_known_users") {
       }
 
       return errorResponse(err.message);
-    }
-  },
-  async scheduled(event, env, ctx) {
-    
-    // ---------------------------------------------------------
-    // ROUTE 1: THE HOURLY GITHUB SUMMARIZER (0 * * * *)
-    // ---------------------------------------------------------
-    if (event.cron === '0 * * * *') {
-      const redisUrl = env.UPSTASH_REDIS_REST_URL;
-      const redisToken = env.UPSTASH_REDIS_REST_TOKEN;
-      const redisAuth = { Authorization: `Bearer ${redisToken}` };
-
-      try {
-        let processing = true;
-        while (processing) {
-          const rpopRes = await fetch(`${redisUrl}/RPOP/queue:github_chunks`, { headers: redisAuth });
-          const rpopData = await rpopRes.json();
-          
-          if (!rpopData.result) {
-            processing = false;
-            break; 
-          }
-
-          const payloadString = typeof rpopData.result === 'string' ? rpopData.result : JSON.stringify(rpopData.result);
-          const payload = JSON.parse(payloadString);
-          const assemblyKey = `assembly:${payload.hash}`;
-
-          const mapPrompt = `Analyze this code diff chunk. Summarize the technical changes in 1 sentence. Do not mention that it is a chunk:\n\n${payload.diffContent}`;
-          const aiMapRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-            messages: [{ role: 'user', content: mapPrompt }]
-          });
-          
-          await fetch(`${redisUrl}/LPUSH/${assemblyKey}`, {
-            method: 'POST',
-            headers: { ...redisAuth, 'Content-Type': 'application/json' },
-            body: JSON.stringify(aiMapRes.response)
-          });
-
-          const lenRes = await fetch(`${redisUrl}/LLEN/${assemblyKey}`, { headers: redisAuth });
-          const lenData = await lenRes.json();
-
-          if (lenData.result === payload.totalChunks) {
-            const listRes = await fetch(`${redisUrl}/LRANGE/${assemblyKey}/0/-1`, { headers: redisAuth });
-            const listData = await listRes.json();
-            const combinedSummaries = listData.result.join(' ');
-
-            const reducePrompt = `You are a technical summarizer. Combine the following chunk summaries into a cohesive, 3-sentence architectural summary of the commit "${payload.message}" by ${payload.author}:\n\n${combinedSummaries}`;
-            const aiReduceRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-              messages: [{ role: 'user', content: reducePrompt }]
-            });
-
-            await fetch(`${env.SUPABASE_URL}/rest/v1/jarvis_git_memory`, {
-              method: 'POST',
-              headers: {
-                'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
-                'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                commit_hash: payload.hash,
-                author: payload.author,
-                commit_message: payload.message,
-                commit_summary: aiReduceRes.response
-              })
-            });
-
-            await fetch(`${redisUrl}/SET/cache:latest_github_summary`, {
-              method: 'POST',
-              headers: { ...redisAuth, 'Content-Type': 'application/json' },
-              body: JSON.stringify(aiReduceRes.response)
-            });
-
-            await fetch(`${redisUrl}/DEL/${assemblyKey}`, { headers: redisAuth });
-          }
-        }
-      } catch (error) {
-        console.error("GitHub sync error:", error);
-      }
-    }
-
-    // ---------------------------------------------------------
-    // ROUTE 2: THE MIDNIGHT DAILY BRIEFING (0 0 * * *)
-    // ---------------------------------------------------------
-    if (event.cron === '0 0 * * *') {
-      const context = {
-        SUPABASE_URL: env.SUPABASE_URL || "https://btqzwsuuxycpgkzddure.supabase.co",
-        SUPABASE_KEY: env.SUPABASE_ANON_KEY || "sb_publishable_spGOgKNNafm_foemNcs6WA_dmPpaNLO",
-        env: env,
-        ctx: ctx
-      };
-      ctx.waitUntil(executeMidnightProtocol(context));
-    }
-
-    // ---------------------------------------------------------
-    // ROUTE 3: GITHUB TECH SCRAPER (0 8 * * *)
-    // ---------------------------------------------------------
-    if (event.cron === '0 8 * * *') {
-        const orgs = ['nvidia', 'python', 'github', 'anthropic'];
-        let rawMarkdown = "";
-        
-        try {
-            for (const org of orgs) {
-                const res = await fetch(`https://api.github.com/users/${org}/repos?sort=updated&per_page=2`, {
-                    headers: {
-                        'User-Agent': 'Vercel-JARVIS-Neural-Sync',
-                        ...(env.GITHUB_TOKEN ? { 'Authorization': `Bearer ${env.GITHUB_TOKEN}` } : {})
-                    }
-                });
-                
-                if (res.ok) {
-                    const repos = await res.json();
-                    rawMarkdown += `\n**${org.toUpperCase()}**\n`;
-                    for (const repo of repos) {
-                        // Defeating Token Bloat: Only keep essentials
-                        rawMarkdown += `- ${repo.name}: ${repo.description || 'No description'} (Stars: ${repo.stargazers_count})\n`;
-                    }
-                }
-            }
-
-            // Summarize using LLM to pack it down further
-            if (rawMarkdown.trim().length > 0 && env.AI) {
-                const reducePrompt = `You are a technical summarizer. Convert this raw repository data into a concise, 3-sentence daily tech briefing. Focus on the most important updates:\n${rawMarkdown}`;
-                const aiRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-                    messages: [{ role: 'user', content: reducePrompt }]
-                });
-                
-                if (aiRes && aiRes.response) {
-                    const redisUrl = env.UPSTASH_REDIS_REST_URL;
-                    const redisToken = env.UPSTASH_REDIS_REST_TOKEN;
-                    // Save with 24 hr TTL (EX=86400)
-                    await fetch(`${redisUrl}/SET/cache:daily_tech_scraper?EX=86400`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${redisToken}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify(aiRes.response)
-                    });
-                }
-            }
-        } catch (error) {
-            console.error("Tech Scraper Cron failed:", error);
-        }
     }
   }
 };
@@ -916,15 +1155,16 @@ async function handleGithubWebhook(request, rawBody, context) {
 
         // 3. Summarize with CF LLM
         const prompt = `Summarize this GitHub commit in 2 sentences. Focus on what was achieved architecturally.
-Commit Message: ${commit.message || "No message"}
-Files Changed: ${allFiles || "None"}`;
+						Commit Message: ${commit.message || "No message"}
+						Files Changed: ${allFiles || "None"}`;
 
         let summary = commit.message || "No message";
         let vector = null;
         if (context.env.AI) {
             try {
                 const aiRes = await context.env.AI.run("@cf/qwen/qwen3-30b-a3b-fp8", {
-                    messages: [{ role: "user", content: prompt }]
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 150
                 });
                 if (aiRes && aiRes.response) summary = aiRes.response.trim();
 
@@ -963,22 +1203,37 @@ Files Changed: ${allFiles || "None"}`;
 // MODEL SELECTION & FALLBACK ENGINE
 // ============================================================
 
-function pickModel(modelUsage, needsImage) {
+// Replace your entire pickModel function with this:
+function pickModel(modelUsage, needsImage, isAdmin = false) {
   const today = todayKey();
-  for (const m of MODEL_POOL) {
-    if (needsImage && !m.img) continue; // skip if image needed and model can't handle it
+  
+  // 1. Filter out heavy models if the user is a Guest
+  let eligibleModels = MODEL_POOL.filter(m => isAdmin || m.tier >= 3);
+  
+  // 2. DOGPILE FIX: Shuffle the eligible models first...
+  eligibleModels.sort(() => Math.random() - 0.5);
+  // ...Then sort by tier. This guarantees we try Tier 1 before Tier 2, 
+  // but randomizes the order *within* the same tier to stop RPM dogpiling!
+  eligibleModels.sort((a, b) => a.tier - b.tier);
+
+  // 3. First pass: Strictly respect the needsImage requirement
+  for (const m of eligibleModels) {
+    if (needsImage && !m.img) continue; 
     const used = modelUsage[`${m.id}::${today}`] || 0;
+    
     // Leave a 2-request buffer before RPD limit to absorb race conditions
     if (used < m.rpd - 2) return m;
   }
-  // Last resort: try image-incapable models if image already tried above
+  
+  // 4. Last resort: Try image-incapable models if all image models are exhausted
   if (needsImage) {
-    for (const m of MODEL_POOL) {
+    for (const m of eligibleModels) {
       const used = modelUsage[`${m.id}::${today}`] || 0;
       if (used < m.rpd - 2) return m; // accept any, just strip image
     }
   }
-  return null; // all exhausted
+  
+  return null; // All models exhausted
 }
 
 async function generateWithFallback(systemPrompt, userText, photoBase64, availableRoutesText, modelUsage, hasPhoto, context) {
@@ -1244,12 +1499,12 @@ User: ${userText}`;
 
     // ── Handle rate limit / quota errors ─────────────────────
     if (res.status === 429) {
-      console.warn("Model returned 429:", modelId);
+      console.warn(`${modelId} returned 429`);
       return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
     }
     if (!res.ok) {
       const errText = await res.text();
-      console.error("Model HTTP error:", modelId, res.status, errText);
+      console.error(`${modelId} HTTP ${res.status}:`, errText);
       // 503 = overloaded, treat like 429 for retry
       if (res.status === 503 || res.status === 500) {
         return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
@@ -1257,7 +1512,7 @@ User: ${userText}`;
       return { aiReply: "", redirectUrl: null, newMemory: null, errorHard: `HTTP ${res.status}` };
     }
 
-    const data = await res.json();
+    const data = await safeJsonParse(res);
 
     const tokenUsage = data.usageMetadata ? {
       inputTokens: data.usageMetadata.promptTokenCount || 0,
@@ -1300,7 +1555,7 @@ User: ${userText}`;
     if (data.error) {
       const code = data.error.code || 0;
       const msg = data.error.message || "";
-      console.error("Model API error:", modelId, msg);
+      console.error(`${modelId} API error:`, msg);
       if (code === 429 || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
         return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
       }
@@ -1371,7 +1626,7 @@ User: ${userText}`;
                       }
                   });
                   if (res.ok) {
-                      const repos = await res.json();
+                      const repos = await safeJsonParse(res);
                       let dataStr = `\n\n[LIVE GITHUB SCAN: ${org.toUpperCase()}]\n`;
                       for (const repo of repos) {
                           dataStr += `- **${repo.name}**: ${repo.description || 'No description'} (Stars: ${repo.stargazers_count})\n`;
@@ -1403,7 +1658,7 @@ User: ${userText}`;
     return { aiReply, redirectUrl, newMemory, tokenUsage };
 
   } catch (e) {
-    console.error("Model fetch exception:", modelId, e.message);
+    console.error(`${modelId} fetch exception:`, e.message);
     return { aiReply: "", redirectUrl: null, newMemory: null, error429: true }; // treat as retryable
   }
 }
@@ -1422,7 +1677,7 @@ async function fetchModelUsage(context) {
       { headers: sbHeaders(context) }
     );
     if (!res.ok) return {};
-    const rows = await res.json();
+    const rows = await safeJsonParse(res);
     if (!Array.isArray(rows)) return {};
     const map = {};
     for (const row of rows) map[row.model_key] = row.count || 0;
@@ -1478,7 +1733,50 @@ function jsonResponse(data) {
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
   });
 }
-
+// ✅ NEW: Triple-Failover Logging Architecture
+async function logError(errorMsg, context, errorType = "API_ERROR") {
+  const timestamp = new Date().toISOString();
+  
+  // 1. Primary: Try Supabase
+  try {
+    const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_error_logs`, {
+      method: 'POST',
+      headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ error_message: errorMsg, error_type: errorType, created_at: timestamp })
+    });
+    if (res.ok) return;
+  } catch (e) {
+    console.warn("[LOGGER] Supabase failed, escalating to Upstash Redis...");
+  }
+  
+  // 2. Secondary: Try Upstash Redis (LPUSH)
+  try {
+    if (context.env.UPSTASH_URL && context.env.UPSTASH_TOKEN) {
+      const res = await fetch(`${context.env.UPSTASH_URL}/lpush/jarvis_deadletter_logs`, {
+        method: 'POST',
+        headers: { "Authorization": `Bearer ${context.env.UPSTASH_TOKEN}`, "Content-Type": "application/json" },
+        body: JSON.stringify(errorMsg) // Push the string to the Redis List
+      });
+      if (res.ok) return;
+    }
+  } catch (e) {
+    console.warn("[LOGGER] Upstash Redis failed, escalating to Cloudflare KV...");
+  }
+  
+  // 3. Absolute Last Resort: Try Cloudflare KV Edge Storage
+  try {
+    if (context.env.ERROR_CACHE) {
+      const logId = `deadletter_${Date.now()}`;
+      await context.env.ERROR_CACHE.put(logId, JSON.stringify({ 
+        error_message: errorMsg, 
+        error_type: errorType, 
+        created_at: timestamp 
+      }));
+    }
+  } catch (e) {
+    console.error("[LOGGER] ALL LOGGING SYSTEMS CRITICAL FAILURE. Deadletter lost: ", errorMsg);
+  }
+}
 // ── Backend Biometric Math ─────────────────────────────────
 async function handleAuthBiometric(payload, context) {
   if (!payload.faceDescriptor || !Array.isArray(payload.faceDescriptor)) {
@@ -1489,7 +1787,7 @@ async function handleAuthBiometric(payload, context) {
     const res = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?select=id,visitor_name,visitor_name_lower,face_descriptor`, {
       headers: { "apikey": context.SUPABASE_KEY, "Authorization": `Bearer ${context.SUPABASE_KEY}` }
     });
-    const users = await res.json();
+    const users = await safeJsonParse(res);
 
     if (!users || users.error) {
       return new Response(JSON.stringify({ match: false, error: "Failed to fetch DB" }), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
@@ -1646,18 +1944,38 @@ async function checkBurstLimit(cleanVisitorName, context) {
 }
 
 // ── Daily token cap protection ─────────────────────────────
+// ✅ MERGED: Personal Request & Token Capping Logic (Around Line 1679)
 async function checkTokenLimit(cleanVisitorName, context) {
   try {
+    // 1. Identify Guest vs Named User (Guests usually default to IP addresses containing dots or colons)
+    const isGuest = /^[0-9\.:]+$/.test(cleanVisitorName); 
+    const maxRequests = isGuest ? 200 : 500;
+
+    // 2. Fetch BOTH total_tokens and request_count, using your native sbHeaders
     const res = await fetch(
-      `${context.SUPABASE_URL}/rest/v1/jarvis_user_token_usage?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&date_key=eq.${todayKey()}&select=total_tokens`,
+      `${context.SUPABASE_URL}/rest/v1/jarvis_user_token_usage?visitor_name_lower=eq.${encodeURIComponent(cleanVisitorName)}&date_key=eq.${todayKey()}&select=total_tokens,request_count`,
       { headers: sbHeaders(context) }
     );
+    
     if (!res.ok) return null;
-    const data = await res.json();
+    
+    // 3. Use your safeJsonParse helper (Best of original logic)
+    const data = await safeJsonParse(res);
+    
     if (data && data.length > 0) {
-      if (data[0].total_tokens >= 50000) {
+      const usage = data[0];
+      
+      // 4. Check BOTH limits (Original 50k tokens OR the new Request Caps)
+      if (usage.total_tokens >= 50000 || usage.request_count >= maxRequests) {
+        console.warn(`[LIMIT REACHED] ${cleanVisitorName} hit cap: ${usage.request_count}/${maxRequests} reqs, ${usage.total_tokens}/50000 tokens.`);
+        
+        const limitType = usage.total_tokens >= 50000 ? "data cap (50,000 tokens)" : `request cap (${maxRequests})`;
+        
+        // 5. Merged Output: Retains your original `choices` format for UI compatibility + custom audio!
         return new Response(JSON.stringify({
-          choices: [{ message: { content: "[VOICE: XAVIER] Your daily neural link data cap (50,000 tokens) has been exhausted. System resumes at midnight." } }]
+          choices: [{ message: { content: `[VOICE: XAVIER] Your daily neural link ${limitType} has been exhausted. System resumes at midnight.` } }],
+          output: `[SYSTEM] Daily neural link limit exhausted. System resets at midnight.`,
+          audioOverride: "audio/guestlimitreached.mp3"
         }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
       }
     }
@@ -1675,7 +1993,7 @@ async function fetchUserData(name, context) {
       { headers: sbHeaders(context) }
     );
     if (!res.ok) { console.warn(`fetchUserData HTTP ${res.status}`); return null; }
-    const users = await res.json();
+    const users = await safeJsonParse(res);
     return users?.[0] || null;
   } catch (e) {
     console.warn("fetchUserData failed:", e.message);
@@ -1691,7 +2009,7 @@ async function checkIfIpIsBanned(ip, context) {
       { headers: sbHeaders(context) }
     );
     if (!res.ok) { console.warn(`checkIfIpIsBanned HTTP ${res.status}`); return false; }
-    const rows = await res.json();
+    const rows = await safeJsonParse(res);
     return Array.isArray(rows) && rows.length > 0;
   } catch(e) {
     console.warn("checkIfIpIsBanned failed:", e.message);
@@ -1706,7 +2024,7 @@ async function fetchChatHistory(name, context) {
       { headers: sbHeaders(context) }
     );
     if (!res.ok) { console.warn(`fetchChatHistory HTTP ${res.status}`); return []; }
-    return await res.json();
+    return await safeJsonParse(res);
   } catch (e) {
     console.warn("fetchChatHistory failed:", e.message);
     return [];
@@ -1720,7 +2038,7 @@ async function fetchAudioTriggers(context) {
       { headers: sbHeaders(context) }
     );
     if (!res.ok) { console.warn(`fetchAudioTriggers HTTP ${res.status}`); return []; }
-    return await res.json();
+    return await safeJsonParse(res);
   } catch (e) {
     console.warn("fetchAudioTriggers failed:", e.message);
     return [];
@@ -1733,10 +2051,10 @@ async function fetchSystemConfig(key, context) {
       `${context.SUPABASE_URL}/rest/v1/jarvis_system_config?config_key=eq.${key}&select=config_value`,
       { headers: sbHeaders(context) }
     );
-    if (!res.ok) { console.warn("fetchSystemConfig HTTP error:", key, res.status); return []; }
-    return await res.json();
+    if (!res.ok) { console.warn(`fetchSystemConfig(${key}) HTTP ${res.status}`); return []; }
+    return await safeJsonParse(res);
   } catch (e) {
-    console.warn("fetchSystemConfig failed:", key, e.message);
+    console.warn(`fetchSystemConfig(${key}) failed:`, e.message);
     return [];
   }
 }
@@ -1748,7 +2066,7 @@ async function fetchNavigationMap(context) {
       { headers: sbHeaders(context) }
     );
     if (!res.ok) { console.warn(`fetchNavigationMap HTTP ${res.status}`); return []; }
-    return await res.json();
+    return await safeJsonParse(res);
   } catch (e) {
     console.warn("fetchNavigationMap failed:", e.message);
     return [];
@@ -1909,7 +2227,7 @@ async function groqStylePass(text, persona, context) {
         continue;
       }
 
-      const data = await res.json();
+      const data = await safeJsonParse(res);
       if (data.error) {
         const code = data.error.code || data.error.type || "";
         console.warn(`Groq ${model.id} API error: ${data.error.message}`);
@@ -1970,17 +2288,11 @@ function checkRuleBasedProtocols(existingUser, dailyChatCount, newMemory, curren
 
 // ── Database update (fire & forget) ───────────────────────
 function sanitizeForDB(text, bannedWords) {
-  if (!text || !Array.isArray(bannedWords) || !bannedWords.length) return text;
+  if (!text || !bannedWords?.length) return text;
   let clean = text;
   for (const word of bannedWords) {
-    if (typeof word !== 'string' || !word) continue;
-    const target = word.slice(0, 100).toLowerCase();
-    if (!target) continue;
-    let idx = clean.toLowerCase().indexOf(target);
-    while (idx !== -1) {
-      clean = clean.slice(0, idx) + '[REDACTED]' + clean.slice(idx + target.length);
-      idx = clean.toLowerCase().indexOf(target, idx + 10);
-    }
+    const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    clean = clean.replace(regex, '[REDACTED]');
   }
   return clean;
 }
@@ -2008,19 +2320,23 @@ If there are new facts, output a concise 1-sentence summary of ONLY the new fact
       if (!context.env?.AI) {
         newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + "[DEBUG ERROR: Cloudflare AI binding 'env.AI' is missing. Check wrangler.toml!]";
       } else {
-        const summaryResponse = await context.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        // --- PHASE 3: TIER 2 ANTI-FLUFF MEMORY COMPILER ---
+        // Upgrading to DeepSeek R1 32B for highly accurate, zero-hallucination fact extraction
+        const summaryResponse = await context.env.AI.run("@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", {
           messages: [{ role: "user", content: summaryPrompt }],
-          max_tokens: 100
+          max_tokens: 150
         });
         
         if (summaryResponse && summaryResponse.response) {
-          const extractedFacts = summaryResponse.response.trim();
-          if (extractedFacts && extractedFacts.toUpperCase() !== "NONE" && !extractedFacts.toUpperCase().includes("NONE.")) {
-            newConversationSummary = newConversationSummary ? newConversationSummary + " " + extractedFacts : extractedFacts;
-            if (newConversationSummary.length > 2500) newConversationSummary = newConversationSummary.substring(0, 2500);
-          } else {
-            // Provide visibility that it actually ran but found nothing
-            newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + "[DEBUG: AI evaluated to NONE]";
+          let extractedFacts = summaryResponse.response.trim();
+          
+          // CRITICAL: DeepSeek R1 returns <think>...</think> reasoning tags. We must strip them out to avoid saving them to the database!
+          if (extractedFacts.includes("</think>")) {
+              extractedFacts = extractedFacts.split("</think>")[1].trim();
+          } 
+          
+          if (extractedFacts !== "NONE") {
+              newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + extractedFacts;
           }
         } else {
           newConversationSummary = (newConversationSummary ? newConversationSummary + " " : "") + "[DEBUG ERROR: AI returned empty response.]";
@@ -2113,10 +2429,10 @@ async function executeMidnightProtocol(context) {
 
         // TASK 3: Daily Security Briefing
         const today = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const sessionsRes = await fetch(`${context.SUPABASE_URL}/rest/v1/session_logs?created_at=gte.${today}&select=id`, { headers });
-        const errorsRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_error_logs?created_at=gte.${today}&select=id`, { headers });
-        const sessionsCount = sessionsRes.ok ? (await sessionsRes.json()).length : 0;
-        const errorsCount = errorsRes.ok ? (await errorsRes.json()).length : 0;
+const sessionsRes = await fetch(`${context.SUPABASE_URL}/rest/v1/session_logs?created_at=gte.${today}&select=id&limit=100`, { headers });
+const errorsRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_error_logs?created_at=gte.${today}&select=id&limit=100`, { headers });
+        const sessionsCount = sessionsRes.ok ? ((await safeJsonParse(sessionsRes)) || []).length : 0;
+        const errorsCount = errorsRes.ok ? ((await safeJsonParse(errorsRes)) || []).length : 0;
 
         const briefingPrompt = `You are Jarvis, Tony Stark's AI assistant. Give a very short 2-sentence morning briefing. Stats for today: ${sessionsCount} new visitors, ${errorsCount} errors. Keep it professional, witty, and concise.`;
         
@@ -2136,9 +2452,11 @@ async function executeMidnightProtocol(context) {
         console.log("Daily Briefing Insert:", briefRes.status, briefText);
 
         // TASK 4: Memory Consolidation (Dreaming)
-        const chatsRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?created_at=gte.${today}&select=client_ip,user_prompt,ai_response`, { headers });
+        // ✅ NEW:
+const chatsRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs?created_at=gte.${today}&select=client_ip,user_prompt,ai_response&limit=50`, { headers });
+
         if (chatsRes.ok) {
-            const chats = await chatsRes.json();
+            const chats = await safeJsonParse(chatsRes);
             const ipMap = {};
             for (const chat of chats) {
                 if (!ipMap[chat.client_ip]) ipMap[chat.client_ip] = [];
@@ -2158,7 +2476,7 @@ async function executeMidnightProtocol(context) {
                 if (summary) {
                     const userRes = await fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?client_ip=eq.${ip}&select=visitor_name_lower,memory_summary`, { headers });
                     if (userRes.ok) {
-                        const users = await userRes.json();
+                        const users = await safeJsonParse(userRes);
                         if (users.length > 0) {
                             const user = users[0];
                             const newMemory = (user.memory_summary ? user.memory_summary + " " : "") + `[Auto-Memory]: ${summary}`;
