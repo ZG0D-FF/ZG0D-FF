@@ -676,7 +676,7 @@ if (payload.action === "get_known_users") {
                   canonicalIntent = matchedNode.toUpperCase();
                   const isolationKey = `ROM_${existingUser.visitor_name_lower}_${matchedNode}`;
                   try {
-                      kvNodeData = await context.env.NEXUS_KV.get(isolationKey) || "";
+                      kvNodeData = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get(isolationKey) : "") || "";
                   } catch (kvErr) {
                       console.error("[KV ISOLATION] Fetch failed for:", isolationKey, kvErr.message);
                   }
@@ -733,17 +733,17 @@ if (payload.action === "get_known_users") {
       // Declare bypassRedis BEFORE telemetryBlock uses it!
       const bypassRedis = (existingUser?.chat_count > 50) && (existingUser?.user_role !== "ADMIN");
 
-      const coreIdentityKV = await context.env.NEXUS_KV.get("CORE_IDENTITY") || "";
-      const personasKV = await context.env.NEXUS_KV.get("PERSONAS") || "";
+      const coreIdentityKV = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("CORE_IDENTITY") : null) || dbPrompts?.CORE_IDENTITY || dbPrompts?.core_identity || "";
+      const personasKV = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("PERSONAS") : null) || dbPrompts?.PERSONAS || dbPrompts?.personas || "";
       
       let routesKV = "";
       const navKeywords = ["go to", "open", "show me", "navigate", "project"];
       if (navKeywords.some(kw => userTextLower.includes(kw))) {
-          routesKV = await context.env.NEXUS_KV.get("ROUTES") || "";
+          routesKV = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("ROUTES") : null) || dbPrompts?.ROUTES || dbPrompts?.routes || availableRoutesText || "";
       }
       
       const audioTriggersKV = context.isAudioEligible 
-          ? (await context.env.NEXUS_KV.get("AUDIO_TRIGGERS") || "")
+          ? ((context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("AUDIO_TRIGGERS") : null) || dbPrompts?.AUDIO_TRIGGERS || dbPrompts?.audio_triggers || availableQuotesStr || "")
           : "[AUDIO MODULE RECHARGING - SPEAK NORMALLY]";
 
       // --- HIVE MIND TELEMETRY & LIVE ICON PROTOCOLS ---
