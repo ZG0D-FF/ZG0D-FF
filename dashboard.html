@@ -7570,20 +7570,13 @@ if (contactForm) {
     nowPlayingText.textContent = getCleanName(trackName);
     renderPlaylistUI();
 
-  function safeAudioSrc(url) {
-    if (typeof url !== 'string') return '';
-    const trimmed = url.trim();
-    if (trimmed.startsWith('blob:') || trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('./') || trimmed.startsWith('Journal/')) {
-      return trimmed;
-    }
-    return '';
-  }
-
     // 1. Direct RAM Blob or cached verified URL
     if (trackCache[trackName]) {
       try {
-        const verifiedSrc = safeAudioSrc(trackCache[trackName]);
-        if (verifiedSrc && audio.src !== verifiedSrc) audio.src = verifiedSrc;
+        const rawUrl = String(trackCache[trackName] || '');
+        const verifiedSrc = encodeURI(rawUrl);
+        if (verifiedSrc.startsWith('blob:') || verifiedSrc.startsWith('https://') || verifiedSrc.startsWith('http://') || verifiedSrc.startsWith('./') || verifiedSrc.startsWith('Journal/')) {
+          if (audio.src !== verifiedSrc) audio.src = verifiedSrc;
         await audio.play();
         if (mySession !== playSessionId) return;
         isPlaying = true;
