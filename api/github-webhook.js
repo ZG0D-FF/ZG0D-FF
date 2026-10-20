@@ -38,9 +38,12 @@ export default async function handler(req, res) {
   const { Redis } = await import('@upstash/redis');
   const { getToken } = await import('@vercel/connect');
 
+  const rawRedisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_URL || '';
+  const safeHttpsRedisUrl = rawRedisUrl.trim().replace(/^(http|redis|rediss):\/\//i, 'https://');
+
   const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    url: safeHttpsRedisUrl,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.UPSTASH_TOKEN,
   });
 
   try {
@@ -90,6 +93,12 @@ export default async function handler(req, res) {
     }
 
     for (const commit of commits) {
+      const author = commit.author?.name || '';
+      if (author.includes('bot') || author === 'github-actions') {
+        console.log(`[WEBHOOK] Skipping automated bot commit from ${author}`);
+        continue;
+      }
+
       // Build the API URL manually to ensure it is always the API endpoint
       // and never the HTML endpoint (which causes 406 errors).
       const diffUrl = `https://api.github.com/repos/${repoFullName}/commits/${commit.id}`;
@@ -119,11 +128,20 @@ export default async function handler(req, res) {
 
       const diffText = await diffResponse.text();
 
+      // Guard: Skip oversized diffs (>150 KB) or binary/SVG assets
+      if (diffText.length > 150 * 1024) {
+        console.warn(`[WEBHOOK] Commit ${commit.id} diff too large (${diffText.length} bytes). Skipping chunk ingestion.`);
+        continue;
+      }
+
       const diffLines = diffText.split('\n');
       const chunkSize = 1000;
       const chunks = [];
       for (let i = 0; i < diffLines.length; i += chunkSize) {
-        chunks.push(diffLines.slice(i, i + chunkSize).join('\n'));
+        const chunkContent = diffLines.slice(i, i + chunkSize).join('\n');
+        if (chunkContent.length <= 32 * 1024) {
+          chunks.push(chunkContent);
+        }
       }
 
       const commitData = {
@@ -131,6 +149,7 @@ export default async function handler(req, res) {
         author: commit.author?.name || 'unknown',
         message: commit.message || '',
         repo: repoFullName,
+        shardKey: `${repoFullName}:${commit.id.slice(0, 4)}`, // Shard Key to prevent Hotspot / Data Skew
       };
 
       const pipeline = redis.pipeline();
@@ -145,6 +164,9 @@ export default async function handler(req, res) {
           })
         );
       });
+      // Cap queue length to 50 items and set 7-day rolling TTL
+      pipeline.ltrim('queue:github_chunks', 0, 49);
+      pipeline.expire('queue:github_chunks', 604800);
       await pipeline.exec();
     }
 

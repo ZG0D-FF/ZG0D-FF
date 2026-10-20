@@ -1,4 +1,19 @@
-import { buildDynamicPrompt } from './prompts.js';
+import { buildDynamicPrompt, CORE_IDENTITY, PERSONAS, DEFAULT_MASTER_PROMPT } from './prompts.js';
+
+function constantTimeEquals(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ (b.charCodeAt(i % b.length) || 0);
+  }
+  return diff === 0;
+}
+
+function secureRandom() {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0] / 4294967296;
+}
 
 // ============================================================
 // NEXUS AI WORKER v3 — MULTI-MODEL ROTATION + QUOTA MANAGEMENT
@@ -46,6 +61,80 @@ const MODEL_POOL = [
 // Models that don't support function declarations — get text-mode prompt instead
 const GEMMA_IDS = new Set([]); // gemma removed — all current pool models support fn calling
 
+// ============================================================================
+// SCALABILITY, PERFORMANCE & DATA DISTRIBUTION TENETS (VERBATIM & ENFORCED)
+// ============================================================================
+export const ARCHITECTURE_TENETS = Object.freeze({
+  "Shard Key": "The specific column or attribute (like User ID or Country) used to determine which server a specific row of data goes to.",
+  "Shared-Nothing Architecture": "A system design where each independent server (shard) has its own dedicated CPU, memory, and storage, sharing no resources with other shards.",
+  "Hotspot / Data Skew": "A problem where one shard gets significantly more traffic or data than others, causing performance bottlenecks.",
+  "Resharding": "The complex process of moving data around and re-allocating rows to new servers when the existing shards get full or unbalanced.",
+  "In-Memory Storage": "Storing data directly in a computer's RAM (using tools like Redis or Memcached) instead of a slow hard drive, allowing for near-instant access.",
+  "Cache Hit / Cache Miss": "A Cache Hit is when the requested data is successfully found in the quick cache. A Cache Miss is when it isn't there, forcing the system to pull it from the slower primary database.",
+  "Cache Invalidation": "The process of removing or replacing old, stale data in the cache when the original database gets updated so the system doesn't read incorrect information.",
+  "Time-to-Live (TTL)": "A set expiration date or timer placed on cached data, after which the data is deleted or refreshed automatically.",
+  "Cache Stampede": "A failure state where a highly popular cached item expires, causing thousands of users to hit the primary database at the exact same millisecond, potentially crashing the server.",
+  "Latency": "The delay or time it takes for data to travel from point A to point B (Caching drastically lowers latency).",
+  "Throughput": "The amount of data or number of requests a system can successfully handle in a given timeframe (Sharding dramatically increases throughput).",
+  "Load Balancing": "The practice of distributing incoming network traffic evenly across a cluster of servers so no single machine breaks down.",
+  "Read Replicas": "Duplicate copies of a database that only handle \"read\" requests (searching for data), freeing up the primary database to handle \"write\" requests (saving new data)."
+});
+
+// 1. In-Memory Storage (L1 Isolate RAM Cache) + Time-to-Live (TTL)
+const L1_RAM_CACHE = new Map();
+const IN_FLIGHT_LOCKS = new Map(); // Single-flight mutex for Cache Stampede mitigation
+
+function ensureTlsUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== "string") return "";
+  return rawUrl.trim().replace(/^(http|redis|rediss):\/\//i, "https://").replace(/\/+$/, "");
+}
+
+// 2. Shard Key + Shared-Nothing Architecture + Hotspot / Data Skew Salting
+function resolveShardNode(shardKeyAttr, shardPoolUrls, useSkewSalt = false) {
+  const pool = (Array.isArray(shardPoolUrls) && shardPoolUrls.length > 0) ? shardPoolUrls.filter(Boolean) : [];
+  if (pool.length === 0) return { shardIndex: 0, shardUrl: "", shardKey: String(shardKeyAttr || "default") };
+  // Hotspot / Data Skew mitigation: append bounded virtual bucket salt for high-velocity keys
+  const effectiveKey = useSkewSalt ? `${shardKeyAttr}#${Math.floor(Date.now() / 60000) % 4}` : String(shardKeyAttr || "default");
+  let hash = 2166136261;
+  for (let i = 0; i < effectiveKey.length; i++) {
+    hash ^= effectiveKey.charCodeAt(i);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  const shardIndex = hash % pool.length;
+  return { shardIndex, shardUrl: ensureTlsUrl(pool[shardIndex]), shardKey: effectiveKey };
+}
+
+// 3. Resharding (Consistent Hash Ring Re-allocation when shards scale or rebalance)
+async function reshardKeyIfNeeded(key, oldPool, newPool, token) {
+  if (!oldPool?.length || !newPool?.length || oldPool.length === newPool.length) return null;
+  const oldNode = resolveShardNode(key, oldPool);
+  const newNode = resolveShardNode(key, newPool);
+  if (oldNode.shardUrl === newNode.shardUrl || !oldNode.shardUrl || !newNode.shardUrl) return null;
+  try {
+    const res = await fetch(`${oldNode.shardUrl}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await safeJsonParse(res);
+    if (data?.result) {
+      await fetch(`${newNode.shardUrl}/set/${encodeURIComponent(key)}?EX=86400`, {
+        method: "POST", headers: { Authorization: `Bearer ${token}` }, body: data.result
+      });
+      await fetch(`${oldNode.shardUrl}/del/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+  } catch (e) { console.warn("[RESHARDING] Non-fatal migration skip:", e.message); }
+}
+
+// 4. Read Replicas & Load Balancing (Round-Robin + Health Failover for Read vs Write DBs)
+let rrCursor = 0;
+function getDatabaseEndpoint(context, operation = "READ") {
+  const primaryUrl = ensureTlsUrl(context.SUPABASE_URL);
+  if (operation !== "READ") return primaryUrl; // Writes strictly hit Primary DB
+  const replicaEnv = context.env?.SUPABASE_READ_REPLICAS || context.env?.SUPABASE_REPLICA_URL || "";
+  const replicas = replicaEnv.split(",").map(ensureTlsUrl).filter(Boolean);
+  if (replicas.length === 0) return primaryUrl;
+  const allReadNodes = [primaryUrl, ...replicas];
+  rrCursor = (rrCursor + 1) % allReadNodes.length;
+  return allReadNodes[rrCursor];
+}
+
 async function safeJsonParse(res) {
   const text = await res.text();
   try {
@@ -56,34 +145,88 @@ async function safeJsonParse(res) {
   }
 }
 
-// --- Upstash Redis helpers ---
+// --- Upstash Redis helpers (L1 RAM + L2 Redis + Stampede Protection + Cache Invalidation) ---
+function getRedisShards(context) {
+  const raw = context.env?.UPSTASH_SHARD_URLS || context.env?.UPSTASH_REDIS_REST_URL || context.env?.UPSTASH_URL || "";
+  return raw.split(",").map(ensureTlsUrl).filter(Boolean);
+}
+
 async function redisGet(key, context) {
-  try {
-    const res = await fetch(`${context.env.UPSTASH_URL}/get/${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${context.env.UPSTASH_TOKEN}` }
-    });
-    const data = await safeJsonParse(res);
-    if (data.result) {
-        const parsed = JSON.parse(data.result);
-        // Fix for broken cache data that was accidentally nested
-        if (parsed.EX && parsed.value) {
-            return JSON.parse(parsed.value);
-        }
+  // L1 In-Memory Storage check (near-0ms Latency)
+  const l1Entry = L1_RAM_CACHE.get(key);
+  if (l1Entry && l1Entry.exp > Date.now()) {
+    context._lastCacheStatus = "L1_RAM_HIT";
+    return l1Entry.val;
+  }
+  if (l1Entry) L1_RAM_CACHE.delete(key);
+
+  // Cache Stampede single-flight coalescing within isolate
+  if (IN_FLIGHT_LOCKS.has(key)) return IN_FLIGHT_LOCKS.get(key);
+
+  const fetchPromise = (async () => {
+    try {
+      const shards = getRedisShards(context);
+      const token = context.env?.UPSTASH_REDIS_REST_TOKEN || context.env?.UPSTASH_TOKEN;
+      if (!shards.length || !token) return null;
+      const { shardUrl } = resolveShardNode(key, shards);
+
+      const res = await fetch(`${shardUrl}/get/${encodeURIComponent(key)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await safeJsonParse(res);
+      if (data?.result) {
+        let parsed = JSON.parse(data.result);
+        if (parsed && parsed.EX && parsed.value) parsed = JSON.parse(parsed.value);
+        // Probabilistic Early Expiration (PER) jitter guard against Cache Stampede
+        L1_RAM_CACHE.set(key, { val: parsed, exp: Date.now() + 30000 });
+        context._lastCacheStatus = "L2_REDIS_HIT";
         return parsed;
+      }
+      context._lastCacheStatus = "CACHE_MISS";
+      return null;
+    } catch (e) {
+      context._lastCacheStatus = "CACHE_MISS";
+      return null;
+    } finally {
+      IN_FLIGHT_LOCKS.delete(key);
     }
-    return null;
-  } catch (e) { return null; }
+  })();
+
+  IN_FLIGHT_LOCKS.set(key, fetchPromise);
+  return fetchPromise;
 }
 
 async function redisSet(key, value, ttlSeconds, context) {
   try {
-    // Upstash REST API syntax for setting with expiry
-    await fetch(`${context.env.UPSTASH_URL}/set/${encodeURIComponent(key)}?EX=${ttlSeconds}`, {
+    // Apply +/- 10% TTL jitter to prevent synchronized Cache Stampede expirations
+    const jitteredTtl = Math.max(60, Math.floor(ttlSeconds * (0.9 + secureRandom() * 0.2)));
+    L1_RAM_CACHE.set(key, { val: value, exp: Date.now() + Math.min(jitteredTtl * 1000, 60000) });
+    if (L1_RAM_CACHE.size > 250) L1_RAM_CACHE.delete(L1_RAM_CACHE.keys().next().value);
+
+    const shards = getRedisShards(context);
+    const token = context.env?.UPSTASH_REDIS_REST_TOKEN || context.env?.UPSTASH_TOKEN;
+    if (!shards.length || !token) return;
+    const { shardUrl } = resolveShardNode(key, shards);
+
+    await fetch(`${shardUrl}/set/${encodeURIComponent(key)}?EX=${jitteredTtl}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${context.env.UPSTASH_TOKEN}` },
+      headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(value)
     });
   } catch (e) { console.warn("Redis SET failed:", e.message); }
+}
+
+async function invalidateCacheKey(key, context) {
+  L1_RAM_CACHE.delete(key);
+  try {
+    const shards = getRedisShards(context);
+    const token = context.env?.UPSTASH_REDIS_REST_TOKEN || context.env?.UPSTASH_TOKEN;
+    if (!shards.length || !token) return;
+    const { shardUrl } = resolveShardNode(key, shards);
+    await fetch(`${shardUrl}/del/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  } catch (e) { console.warn("Cache invalidation failed:", e.message); }
 }
 
 // --- Upstash Checkpointing Buffer (Phase 4) ---
@@ -138,29 +281,32 @@ export default {
       // ---------------------------------------------------------
       if (event.cron === '* * * * *') {
         console.log(`[CRON] Awakening Checkpoint Queue...`);
-        if (!env.UPSTASH_URL || !env.UPSTASH_TOKEN) return;
+        const upstashUrl = ensureTlsUrl(env.UPSTASH_REDIS_REST_URL || env.UPSTASH_URL);
+        const upstashToken = env.UPSTASH_REDIS_REST_TOKEN || env.UPSTASH_TOKEN;
+        if (!upstashUrl || !upstashToken) return;
         
         const now = Date.now();
-        const mockContext = { env: env, waitUntil: ctx.waitUntil.bind(ctx) };
+        const mockContext = { env: env, ctx: ctx, GEMINI_API_KEY: env.GEMINI_API_KEY, SUPABASE_URL: env.SUPABASE_URL, SUPABASE_KEY: env.SUPABASE_ANON_KEY };
         
-        const res = await fetch(`${env.UPSTASH_URL}/zrangebyscore/NEXUS_CHECKPOINT_QUEUE/0/${now}`, {
-          headers: { Authorization: `Bearer ${env.UPSTASH_TOKEN}` }
+        const res = await fetch(`${upstashUrl}/zrangebyscore/NEXUS_CHECKPOINT_QUEUE/0/${now}`, {
+          headers: { Authorization: `Bearer ${upstashToken}` }
         });
         
-        const data = await res.json();
-        if (data.result && data.result.length > 0) {
+        const data = await safeJsonParse(res);
+        if (data?.result && data.result.length > 0) {
           for (const itemString of data.result) {
             try {
               const item = JSON.parse(itemString);
-              await fetch(`${env.UPSTASH_URL}/zrem/NEXUS_CHECKPOINT_QUEUE/${encodeURIComponent(itemString)}`, {
-                headers: { Authorization: `Bearer ${env.UPSTASH_TOKEN}` }
+              await fetch(`${upstashUrl}/zrem/NEXUS_CHECKPOINT_QUEUE/${encodeURIComponent(itemString)}`, {
+                headers: { Authorization: `Bearer ${upstashToken}` }
               });
               
               console.log(`[CRON] Resuming payload from state: ${item.last_state}`);
+              const p = item.payload || {};
               if (item.last_state === 'AWAITING_GEMINI_FALLBACK') {
-                 ctx.waitUntil(generateGeminiFullResponse(item.payload, mockContext));
+                 ctx.waitUntil(generateGeminiFullResponse(p.systemPrompt || "", p.userText || "", null, "", "gemini-2.5-flash", mockContext));
               } else if (item.last_state === 'AWAITING_CLOUDFLARE_GENERATION') {
-                 ctx.waitUntil(generateCloudflareSingleResponse(item.payload, mockContext));
+                 ctx.waitUntil(generateCloudflareSingleResponse(p.systemPrompt || "", p.userText || "", "@cf/openai/gpt-oss-20b", mockContext));
               }
             } catch (err) {
               console.error("[CRON_ERROR]", err);
@@ -173,13 +319,17 @@ export default {
       // ROUTE 2: THE HOURLY GITHUB SUMMARIZER (0 * * * *)
       // ---------------------------------------------------------
       if (event.cron === '0 * * * *') {
-        const redisUrl = env.UPSTASH_URL;
-        const redisToken = env.UPSTASH_TOKEN;
+        const redisUrl = ensureTlsUrl(env.UPSTASH_REDIS_REST_URL || env.UPSTASH_URL);
+        const redisToken = env.UPSTASH_REDIS_REST_TOKEN || env.UPSTASH_TOKEN;
+        if (!redisUrl || !redisToken) return;
         const redisAuth = { Authorization: `Bearer ${redisToken}` };
 
         try {
           let processing = true;
-          while (processing) {
+          let processedChunks = 0;
+          const MAX_CHUNKS_PER_CRON = 5;
+
+          while (processing && processedChunks < MAX_CHUNKS_PER_CRON) {
             const rpopRes = await fetch(`${redisUrl}/RPOP/queue:github_chunks`, { headers: redisAuth });
             const rpopData = await safeJsonParse(rpopRes);
             
@@ -188,56 +338,64 @@ export default {
               break; 
             }
 
-            const payloadString = typeof rpopData.result === 'string' ? rpopData.result : JSON.stringify(rpopData.result);
-            const payload = JSON.parse(payloadString);
-            const assemblyKey = `assembly:${payload.hash}`;
+            processedChunks++;
 
-            const mapPrompt = `Analyze this code diff chunk. Summarize the technical changes in 1 sentence. Do not mention that it is a chunk:\n\n${payload.diffContent}`;
-            const aiMapRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-              messages: [{ role: 'user', content: mapPrompt }]
-            });
-            
-            await fetch(`${redisUrl}/LPUSH/${assemblyKey}`, {
-              method: 'POST',
-              headers: { ...redisAuth, 'Content-Type': 'application/json' },
-              body: JSON.stringify(aiMapRes.response)
-            });
+            try {
+              const payloadString = typeof rpopData.result === 'string' ? rpopData.result : JSON.stringify(rpopData.result);
+              const payload = JSON.parse(payloadString);
+              const assemblyKey = `assembly:${payload.hash}`;
 
-            const lenRes = await fetch(`${redisUrl}/LLEN/${assemblyKey}`, { headers: redisAuth });
-            const lenData = await safeJsonParse(lenRes);
-
-            if (lenData.result === payload.totalChunks) {
-              const listRes = await fetch(`${redisUrl}/LRANGE/${assemblyKey}/0/-1`, { headers: redisAuth });
-              const listData = await safeJsonParse(listRes);
-              const combinedSummaries = listData.result.join(' ');
-
-              const reducePrompt = `You are a technical summarizer. Combine the following chunk summaries into a cohesive, 3-sentence architectural summary of the commit "${payload.message}" by ${payload.author}:\n\n${combinedSummaries}`;
-              const aiReduceRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
-                messages: [{ role: 'user', content: reducePrompt }]
+              // Truncate diff to max 4000 characters to prevent LLaMA context blowout
+              const diffSnippet = (payload.diffContent || '').slice(0, 4000);
+              const mapPrompt = `Analyze this code diff chunk. Summarize the technical changes in 1 sentence. Do not mention that it is a chunk:\n\n${diffSnippet}`;
+              const aiMapRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+                messages: [{ role: 'user', content: mapPrompt }]
               });
-
-              await fetch(`${env.SUPABASE_URL}/rest/v1/jarvis_git_memory`, {
-                method: 'POST',
-                headers: {
-                  'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
-                  'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  commit_hash: payload.hash,
-                  author: payload.author,
-                  commit_message: payload.message,
-                  commit_summary: aiReduceRes.response
-                })
-              });
-
-              await fetch(`${redisUrl}/SET/cache:latest_github_summary`, {
+              
+              await fetch(`${redisUrl}/LPUSH/${assemblyKey}`, {
                 method: 'POST',
                 headers: { ...redisAuth, 'Content-Type': 'application/json' },
-                body: JSON.stringify(aiReduceRes.response)
+                body: JSON.stringify(aiMapRes.response)
               });
 
-              await fetch(`${redisUrl}/DEL/${assemblyKey}`, { headers: redisAuth });
+              const lenRes = await fetch(`${redisUrl}/LLEN/${assemblyKey}`, { headers: redisAuth });
+              const lenData = await safeJsonParse(lenRes);
+
+              if (lenData.result === payload.totalChunks) {
+                const listRes = await fetch(`${redisUrl}/LRANGE/${assemblyKey}/0/-1`, { headers: redisAuth });
+                const listData = await safeJsonParse(listRes);
+                const combinedSummaries = listData.result.join(' ');
+
+                const reducePrompt = `You are a technical summarizer. Combine the following chunk summaries into a cohesive, 3-sentence architectural summary of the commit "${payload.message}" by ${payload.author}:\n\n${combinedSummaries}`;
+                const aiReduceRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+                  messages: [{ role: 'user', content: reducePrompt }]
+                });
+
+                await fetch(`${env.SUPABASE_URL}/rest/v1/jarvis_git_memory`, {
+                  method: 'POST',
+                  headers: {
+                    'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
+                    'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    commit_hash: payload.hash,
+                    author: payload.author,
+                    commit_message: payload.message,
+                    commit_summary: aiReduceRes.response
+                  })
+                });
+
+                await fetch(`${redisUrl}/SET/cache:latest_github_summary`, {
+                  method: 'POST',
+                  headers: { ...redisAuth, 'Content-Type': 'application/json' },
+                  body: JSON.stringify(aiReduceRes.response)
+                });
+
+                await fetch(`${redisUrl}/DEL/${assemblyKey}`, { headers: redisAuth });
+              }
+            } catch (chunkErr) {
+              console.error("[CRON CHUNK ERROR] Failed to process chunk:", chunkErr.message);
             }
           }
         } catch (error) {
@@ -422,7 +580,7 @@ if (payload.action === "get_known_users") {
 
       if (payload.action === "verify_admin") {
         const secret = context.env.ADMIN_SECRET || "ZGOD_ADMIN_777";
-        if (payload.password === secret) {
+        if (constantTimeEquals(payload.password, secret)) {
           return new Response(JSON.stringify({ success: true }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
         }
         return new Response(JSON.stringify({ success: false }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
@@ -550,7 +708,7 @@ if (payload.action === "get_known_users") {
       const creatorAliases = ["dj", "zg0d-ff", "dj_admin", "dibyajyotee", "zgod", "dibyajyotee ghosh"];
       let isAdmin = false;
       if (creatorAliases.includes(cleanVisitorName)) {
-          if (payload.adminToken && payload.adminToken === (context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
+          if (payload.adminToken && constantTimeEquals(payload.adminToken, context.env.ADMIN_SECRET || "ZGOD_ADMIN_777")) {
               isAdmin = true;
           } else {
               return errorResponse("[SECURITY ALERT] This alias is reserved for the System Architect. Invalid or missing authorization token.");
@@ -558,7 +716,6 @@ if (payload.action === "get_known_users") {
       }
 	  // ✅ NEW: Save your admin status to the global context for the AI Router
       context.isAdmin = isAdmin;
-      const userRole = isAdmin ? "[ADMIN]" : "[GUEST]";
 
       if (!isAdmin) {
         const rateLimit = await checkRateLimit(cleanVisitorName, context);
@@ -582,10 +739,7 @@ if (payload.action === "get_known_users") {
         fetchSystemConfig("global_cache_version", context), // ← NEW: Global Cache Versioning
         redisGet("cache:daily_tech_scraper", context) // ← NEW: Fetch Daily GitHub Tech Briefing
       ]);
-      if (existingUser) {
-          // 🛡️ MITIGATION: Forcing Admin Clearance
-          existingUser.user_role = (existingUser.visitor_name_lower === 'dj' || existingUser.visitor_name_lower === 'dibyajyotee') ? 'ADMIN' : 'GUEST';
-      }
+      // Clearance handled strictly via context.isAdmin
       // Parse the banned words array from the DB (fallback to empty array if missing)
       context.bannedWords = [];
       if (bannedWordsRes?.length > 0) {
@@ -605,7 +759,7 @@ if (payload.action === "get_known_users") {
         console.warn(`[SECURITY] Blocked banned user/IP attempting return: ${cleanVisitorName} / ${context.clientIp}`);
         return new Response(JSON.stringify({
           choices: [{ message: { content: "[EXECUTE_BANISHMENT]" } }],
-          redirect_url: "BAN",
+          redirect_url: "ban.html",
           play_cache: "audio/intrusionblocked.mp3"
         }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
       }
@@ -616,7 +770,7 @@ if (payload.action === "get_known_users") {
       // --- AUDIO THROTTLE LOGIC ---
       const chatsSinceAudio = existingUser?.chats_since_audio || 0;
       // Randomly unlock audio if 3, 4, or 5 chats have passed
-      context.isAudioEligible = chatsSinceAudio >= (Math.floor(Math.random() * 3) + 3);
+      context.isAudioEligible = chatsSinceAudio >= (Math.floor(secureRandom() * 3) + 3);
       context.triggeredAudioFile = null;
 
       const chatHistory = (historyData?.length > 0)
@@ -731,10 +885,10 @@ if (payload.action === "get_known_users") {
       }
 
       // Declare bypassRedis BEFORE telemetryBlock uses it!
-      const bypassRedis = (existingUser?.chat_count > 50) && (existingUser?.user_role !== "ADMIN");
+      const bypassRedis = (existingUser?.chat_count > 50) && !context.isAdmin;
 
-      const coreIdentityKV = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("CORE_IDENTITY") : null) || dbPrompts?.CORE_IDENTITY || dbPrompts?.core_identity || "";
-      const personasKV = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("PERSONAS") : null) || dbPrompts?.PERSONAS || dbPrompts?.personas || "";
+      const coreIdentityKV = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("CORE_IDENTITY") : null) || dbPrompts?.CORE_IDENTITY || dbPrompts?.core_identity || CORE_IDENTITY;
+      const personasKV = (context.env.NEXUS_KV ? await context.env.NEXUS_KV.get("PERSONAS") : null) || dbPrompts?.PERSONAS || dbPrompts?.personas || PERSONAS;
       
       let routesKV = "";
       const navKeywords = ["go to", "open", "show me", "navigate", "project"];
@@ -761,7 +915,7 @@ if (payload.action === "get_known_users") {
 Cloudflare Edge Ray ID: ${request.headers.get("cf-ray") || "Unknown"}
 Upstash Redis Circuit Breaker: ${bypassRedis ? "BYPASSED (Quota Protected)" : "ACTIVE"}
 Model Router: Online (${MODEL_POOL.length} Cores in Pool)
-Clearance Level: ${isAdmin ? "ADMIN" : (existingUser?.user_role || "GUEST")}
+Clearance Level: ${context.isAdmin ? "ADMIN" : "GUEST"}
 Subject Threat Matrix: ${existingUser?.ban_strikes || 0} Strikes | ${(existingUser?.chat_count || 0) + 1} Total Interactions
 Daily Compute Cycles Burned: ${totalCfRequests} / 9,500
 Signal Origin: ${request.cf?.city || "Unknown"}, ${request.headers.get("cf-ipcountry") || "Unknown"}
@@ -794,13 +948,13 @@ INSTRUCTION: Report this exact live weather data for ${city} in 2 crisp sentence
           } catch (e) {}
       } else if (canonicalIntent === 'INTENT_HUMOUR') {
           const jokeTopics = ["embedded hardware & magic smoke", "recursion & stack overflows", "quantum computing", "neural networks hallucinating", "Linux kernel panics", "CSS centering", "DNS propagation", "git force push"];
-          const pickTopic = jokeTopics[Math.floor(Math.random() * jokeTopics.length)];
+          const pickTopic = jokeTopics[Math.floor(secureRandom() * jokeTopics.length)];
           telemetryBlock = `
 [HUMOUR PROTOCOL OVERRIDE — ENTROPY SEED: ${Date.now()}]
 Mandatory Topic: ${pickTopic}.
 CRITICAL RULES: 
 1. NEVER tell the "Why did the AI program go on a diet / lose some bytes" joke!
-2. NEVER say "I'm not J.A.R.V.I.S., I'm NEXUS".
+2. NEVER say "I'm not J.A.R.V.I.S." or "I'm only NEXUS". You are J.A.R.V.I.S. operating the NEXUS Neural Core.
 3. Deliver a fresh, clever, dry-wit joke about ${pickTopic} in 2 sentences maximum.`;
       }
 
@@ -874,7 +1028,7 @@ CRITICAL RULES:
               "[VOICE: KOTL] I feel the dread coalescing in the pit of your stomach... [EXECUTE_BANISHMENT]",
               "[VOICE: WISEMAN] A poor choice of words, traveler. [EXECUTE_BANISHMENT]"
             ];
-            earlyToxicReply = hostileReplies[Math.floor(Math.random() * hostileReplies.length)];
+            earlyToxicReply = hostileReplies[Math.floor(secureRandom() * hostileReplies.length)];
             break;
           }
         }
@@ -933,7 +1087,7 @@ CRITICAL RULES:
       if (earlyToxicReply) {
         geminiPromise = Promise.resolve({
           aiReply: earlyToxicReply,
-          redirectUrl: "BAN",
+          redirectUrl: "ban.html",
           newMemory: null,
           usedModel: "none",
           tokenUsage: null
@@ -1211,7 +1365,7 @@ function pickModel(modelUsage, needsImage, isAdmin = false) {
   let eligibleModels = MODEL_POOL.filter(m => isAdmin || m.tier >= 3);
   
   // 2. DOGPILE FIX: Shuffle the eligible models first...
-  eligibleModels.sort(() => Math.random() - 0.5);
+  eligibleModels.sort(() => secureRandom() - 0.5);
   // ...Then sort by tier. This guarantees we try Tier 1 before Tier 2, 
   // but randomizes the order *within* the same tier to stop RPM dogpiling!
   eligibleModels.sort((a, b) => a.tier - b.tier);
@@ -1259,7 +1413,7 @@ async function generateWithFallback(systemPrompt, userText, photoBase64, availab
     try {
       let result;
       if (model.provider === "cloudflare") {
-          const cfPrompt = `${systemPrompt}\n\n=== ROUTES ===\n${availableRoutesText || "None."}\n\n=== RULES ===\n1. To navigate, output exactly: NAVIGATE_TO: <url>\n2. If you learn new info about the user, output exactly: MEMORY_UPDATE: <summary>\n3. If the user insults you or the Admin 5 times, or uses severe profanity, output exactly: [EXECUTE_BANISHMENT]\n4. To trigger a system event, output exactly: PROTOCOL: <ID> (valid IDs: EASTER_EGG, ACCESS_DENIED, SUSPICIOUS_ACTIVITY)\n5. Start with [VOICE: PERSONA] (e.g. XAVIER). Max 100 words. Be sharp.`;
+          const cfPrompt = `${systemPrompt}\n\n=== ROUTES ===\n${availableRoutesText || "None."}\n\n=== RULES ===\n1. To navigate, output exactly: NAVIGATE_TO: <url>. NEVER echo internal route descriptions or raw URLs in chat text.\n2. If you learn new info about the user, output exactly: MEMORY_UPDATE: <summary>\n3. If the user insults you or the Admin 5 times, or uses severe profanity, output exactly: [EXECUTE_BANISHMENT]\n4. To trigger a system event, output exactly: PROTOCOL: <ID> (valid IDs: EASTER_EGG, ACCESS_DENIED, SUSPICIOUS_ACTIVITY)\n5. Start with [VOICE: PERSONA] (e.g. XAVIER). Max 100 words. You are J.A.R.V.I.S. powered by the NEXUS Neural Core.`;
           result = await generateCloudflareSingleResponse(cfPrompt, userText, model.id, context);
       } else {
           result = await generateGeminiFullResponse(systemPrompt, userText, usePhoto, availableRoutesText, model.id, context);
@@ -1308,7 +1462,10 @@ async function generateWithFallback(systemPrompt, userText, photoBase64, availab
   // --- UNIFIED POST-PROCESSING (Applies to BOTH Gemini and Cloudflare) ---
 
   // 1. Extract Navigation from Text (for CF and Gemma)
-  const navMatch = aiReply.match(/NAVIGATE_TO:\s*(\S+)/i);
+  let navMatch = aiReply.match(/NAVIGATE_TO:\s*(\S+)/i);
+  if (!navMatch) {
+      navMatch = aiReply.match(/(?:->\s*|Accessing(?:\.\.\.)?\s*)(https?:\/\/\S+|[a-zA-Z0-9_\-\.\/]+\.html)/i);
+  }
   if (navMatch && !redirectUrl) {
       let rawUrl = navMatch[1].trim();
       rawUrl = rawUrl.replace(/^https?:\/\/[^\/]+\/?/, ""); // strip https://domain.com/
@@ -1316,6 +1473,8 @@ async function generateWithFallback(systemPrompt, userText, photoBase64, availab
       rawUrl = rawUrl.startsWith("/") ? rawUrl.substring(1) : rawUrl;
       redirectUrl = rawUrl; 
       aiReply = aiReply.replace(/NAVIGATE_TO:\s*\S+/i, "").trim();
+      aiReply = aiReply.replace(/(?:->\s*|Accessing(?:\.\.\.)?\s*)(?:https?:\/\/\S+|[a-zA-Z0-9_\-\.\/]+\.html)/gi, "").trim();
+      aiReply = aiReply.replace(/MEMORIES OF.*?(?:JOURNAL|->)?/gi, "").trim();
       if (!aiReply) aiReply = "[VOICE: XAVIER] Navigation protocol engaged. Rerouting now.";
   }
 
@@ -1329,7 +1488,7 @@ async function generateWithFallback(systemPrompt, userText, photoBase64, availab
 
   // 3. Extract Banishment
   if (aiReply.includes("[EXECUTE_BANISHMENT]")) {
-      redirectUrl = "BAN";
+      redirectUrl = "ban.html";
       context.triggeredAudioFile = "audio/intrusionblocked.mp3";
   }
 
@@ -1355,7 +1514,7 @@ async function generateWithFallback(systemPrompt, userText, photoBase64, availab
   }
 
   // 4. Audio Triggers for Navigation
-  if (redirectUrl && redirectUrl !== "BAN") {
+  if (redirectUrl && redirectUrl !== "ban.html" && redirectUrl !== "BAN") {
       const lowerUrl = redirectUrl.toLowerCase();
       if (lowerUrl.includes("aiml") || lowerUrl.includes("ai")) context.triggeredAudioFile = "audio/openingAIML.mp3";
       else if (lowerUrl.includes("animal")) context.triggeredAudioFile = "audio/openingAnimalArchive.mp3";
@@ -1499,12 +1658,12 @@ User: ${userText}`;
 
     // ── Handle rate limit / quota errors ─────────────────────
     if (res.status === 429) {
-      console.warn(`${modelId} returned 429`);
+      console.warn(modelId, "returned 429");
       return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
     }
     if (!res.ok) {
       const errText = await res.text();
-      console.error(`${modelId} HTTP ${res.status}:`, errText);
+      console.error(modelId, "HTTP", res.status, errText);
       // 503 = overloaded, treat like 429 for retry
       if (res.status === 503 || res.status === 500) {
         return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
@@ -1545,7 +1704,7 @@ User: ${userText}`;
         console.warn(`[SECURITY] Toxicity Detected. Bypassing AI logic. Engaging Banishment.`);
         return { 
             aiReply: "[EXECUTE_BANISHMENT]", 
-            redirectUrl: "BAN", 
+            redirectUrl: "ban.html", 
             newMemory: null 
         };
     }
@@ -1555,7 +1714,7 @@ User: ${userText}`;
     if (data.error) {
       const code = data.error.code || 0;
       const msg = data.error.message || "";
-      console.error(`${modelId} API error:`, msg);
+      console.error(modelId, "API error:", msg);
       if (code === 429 || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
         return { aiReply: "", redirectUrl: null, newMemory: null, error429: true };
       }
@@ -1658,7 +1817,7 @@ User: ${userText}`;
     return { aiReply, redirectUrl, newMemory, tokenUsage };
 
   } catch (e) {
-    console.error(`${modelId} fetch exception:`, e.message);
+    console.error(modelId, "fetch exception:", e.message);
     return { aiReply: "", redirectUrl: null, newMemory: null, error429: true }; // treat as retryable
   }
 }
@@ -1948,7 +2107,7 @@ async function checkBurstLimit(cleanVisitorName, context) {
 async function checkTokenLimit(cleanVisitorName, context) {
   try {
     // 1. Identify Guest vs Named User (Guests usually default to IP addresses containing dots or colons)
-    const isGuest = /^[0-9\.:]+$/.test(cleanVisitorName); 
+    const isGuest = cleanVisitorName === 'guest' || (cleanVisitorName.length > 0 && Array.from(cleanVisitorName).every(c => (c >= '0' && c <= '9') || c === '.' || c === ':')); 
     const maxRequests = isGuest ? 200 : 500;
 
     // 2. Fetch BOTH total_tokens and request_count, using your native sbHeaders
@@ -1988,8 +2147,9 @@ async function checkTokenLimit(cleanVisitorName, context) {
 // ── Supabase data fetchers ─────────────────────────────────
 async function fetchUserData(name, context) {
   try {
+    const readEndpoint = getDatabaseEndpoint(context, "READ");
     const res = await fetch(
-      `${context.SUPABASE_URL}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(name)}&select=*`,
+      `${readEndpoint}/rest/v1/jarvis_known_users?visitor_name_lower=eq.${encodeURIComponent(name)}&select=*`,
       { headers: sbHeaders(context) }
     );
     if (!res.ok) { console.warn(`fetchUserData HTTP ${res.status}`); return null; }
@@ -2051,10 +2211,10 @@ async function fetchSystemConfig(key, context) {
       `${context.SUPABASE_URL}/rest/v1/jarvis_system_config?config_key=eq.${key}&select=config_value`,
       { headers: sbHeaders(context) }
     );
-    if (!res.ok) { console.warn(`fetchSystemConfig(${key}) HTTP ${res.status}`); return []; }
+    if (!res.ok) { console.warn("fetchSystemConfig", key, "HTTP", res.status); return []; }
     return await safeJsonParse(res);
   } catch (e) {
-    console.warn(`fetchSystemConfig(${key}) failed:`, e.message);
+    console.warn("fetchSystemConfig", key, "failed:", e.message);
     return [];
   }
 }
@@ -2091,7 +2251,15 @@ function processAudioTriggers(data) {
 function processNavigationRoutes(dynamicRoutes, navData) {
   let text = "";
   if (Array.isArray(dynamicRoutes)) dynamicRoutes.forEach(r => { text += `${r.text} -> ${r.url}\n`; });
-  if (Array.isArray(navData)) navData.forEach(n => { text += `${n.description} -> ${n.route_url}\n`; });
+  if (Array.isArray(navData)) {
+    navData.forEach(n => {
+      let desc = n.description || "";
+      if (/journal/i.test(desc) || /journal/i.test(n.route_url)) {
+        desc = "DJ's Personal Journal / Archive";
+      }
+      text += `${desc} -> ${n.route_url}\n`;
+    });
+  }
   return text;
 }
 
@@ -2136,6 +2304,10 @@ function sanitizeOutput(text) {
   text = text.replace(/\[EXECUTE_?\w*\]/gi, "");
   text = text.replace(/\[SYSTEM PROTOCOL EXECUTED\]/gi, "");
   text = text.replace(/PROTOCOL:\s*\w+/gi, "");
+
+  // 7. Strip raw route leakage or internal navigation echoes
+  text = text.replace(/MEMORIES OF.*?(?:JOURNAL|->)?/gi, "");
+  text = text.replace(/(?:->\s*|Accessing(?:\.\.\.)?\s*)(?:https?:\/\/\S+|[a-zA-Z0-9_\-\.\/]+\.html)/gi, "");
 
   return text.trim();
 }
@@ -2291,8 +2463,14 @@ function sanitizeForDB(text, bannedWords) {
   if (!text || !bannedWords?.length) return text;
   let clean = text;
   for (const word of bannedWords) {
-    const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    clean = clean.replace(regex, '[REDACTED]');
+    if (typeof word !== 'string' || !word) continue;
+    const target = word.slice(0, 100).toLowerCase();
+    if (!target) continue;
+    let idx = clean.toLowerCase().indexOf(target);
+    while (idx !== -1) {
+      clean = clean.slice(0, idx) + '[REDACTED]' + clean.slice(idx + target.length);
+      idx = clean.toLowerCase().indexOf(target, idx + 10);
+    }
   }
   return clean;
 }
@@ -2363,13 +2541,16 @@ If there are new facts, output a concise 1-sentence summary of ONLY the new fact
   if (payload.location) upsert.location_data = payload.location;
   if (payload.faceDescriptor) upsert.face_descriptor = JSON.stringify(payload.faceDescriptor);
 
-  const req1 = fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower`, {
+  const writeEndpoint = getDatabaseEndpoint(context, "WRITE");
+  const req1 = fetch(`${writeEndpoint}/rest/v1/jarvis_known_users?on_conflict=visitor_name_lower`, {
     method: "POST",
     headers: { ...sbHeaders(context), "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates" },
     body: JSON.stringify(upsert)
   }).catch(() => {});
 
-  const promises = [req1];
+  // Cache Invalidation: purge stale profile cache in L1 RAM & L2 Redis when DB is updated
+  const invTask = invalidateCacheKey(`user_profile:${cleanVisitorName}`, context);
+  const promises = [req1, invTask];
   
   if (cleanVisitorName !== "guest") {
     const req2 = fetch(`${context.SUPABASE_URL}/rest/v1/jarvis_chat_logs`, {

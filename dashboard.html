@@ -240,7 +240,7 @@ resetJarvisIdleTimer();
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 
 <style>
 :root {
@@ -6685,12 +6685,21 @@ if (contactForm) {
       if (heading.dataset.skySplit) return;
       heading.dataset.skySplit = 'true';
 
-      const words = heading.innerText.trim().split(/\s+/);
-      heading.innerHTML = words.map((w, i) => {
+      const rawWords = heading.textContent.trim();
+      const words = rawWords ? rawWords.split(/\s+/) : [];
+      heading.textContent = '';
+      words.forEach((w, i) => {
+        if (i > 0) heading.appendChild(document.createTextNode(' '));
+        const span = document.createElement('span');
+        span.className = 'sky-word';
         const tilt = microTilts[i % microTilts.length];
         const yOff = (i % 2 === 0 ? -1 : 1.5);
-        return `<span class="sky-word" style="--rest-tilt:${tilt}deg; --rest-y:${yOff}px; transition-delay:${i * 65}ms;">${w}</span>`;
-      }).join(' ');
+        span.style.setProperty('--rest-tilt', `${tilt}deg`);
+        span.style.setProperty('--rest-y', `${yOff}px`);
+        span.style.transitionDelay = `${i * 65}ms`;
+        span.textContent = w;
+        heading.appendChild(span);
+      });
     });
 
     // Tag badges and filter buttons as sky-drop tokens
@@ -7379,7 +7388,7 @@ if (contactForm) {
     <div class="jv-cd-disc" id="jv-cd-disc" title="Open Studio Tracklist"></div>
     <div class="jv-cd-meta" id="jv-cd-meta" title="Open Studio Tracklist">
       <div class="jv-cd-status"><span id="audio-icon">💿</span><span id="audio-toggle-text">STANDBY</span></div>
-      <div class="jv-cd-track" id="now-playing-text">${getCleanName(PLAYLIST[0].file)}</div>
+      <div class="jv-cd-track" id="now-playing-text"></div>
     </div>
     <div class="jv-cd-controls">
       <button type="button" class="jv-cd-btn" id="audio-prev" aria-label="Previous Track">${SVG_PREV}</button>
@@ -7388,6 +7397,8 @@ if (contactForm) {
     </div>
   `;
   document.body.appendChild(dock);
+  const initialTrackText = document.getElementById('now-playing-text');
+  if (initialTrackText && PLAYLIST[0]) initialTrackText.textContent = getCleanName(PLAYLIST[0].file);
 
   const drawer = document.createElement('div');
   drawer.id = 'jv-cd-drawer';
@@ -7428,21 +7439,28 @@ if (contactForm) {
 
   function renderPlaylistUI() {
     if (!trackListEl) return;
-    trackListEl.innerHTML = PLAYLIST.map((item, idx) => {
+    trackListEl.textContent = '';
+    PLAYLIST.forEach((item, idx) => {
       const isCached = Boolean(trackCache[item.file]);
-      return `
-        <button type="button" class="jv-track-item ${idx === currentTrack ? 'active' : ''}" data-idx="${idx}">
-          <span>${idx + 1}. ${getCleanName(item.file)}</span>
-          <span class="jv-cache-tag">${isCached ? 'RAM ●' : (idx === currentTrack && isPlaying ? 'SYNTH ▶' : '')}</span>
-        </button>
-      `;
-    }).join('');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `jv-track-item ${idx === currentTrack ? 'active' : ''}`;
+      btn.setAttribute('data-idx', String(idx));
 
-    trackListEl.querySelectorAll('.jv-track-item').forEach(btn => {
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = `${idx + 1}. ${getCleanName(item.file)}`;
+
+      const tagSpan = document.createElement('span');
+      tagSpan.className = 'jv-cache-tag';
+      tagSpan.textContent = isCached ? 'RAM ●' : (idx === currentTrack && isPlaying ? 'SYNTH ▶' : '');
+
+      btn.appendChild(titleSpan);
+      btn.appendChild(tagSpan);
       btn.addEventListener('click', () => {
-        currentTrack = parseInt(btn.getAttribute('data-idx'), 10);
+        currentTrack = idx;
         playCurrentTrack();
       });
+      trackListEl.appendChild(btn);
     });
   }
   renderPlaylistUI();
@@ -7552,10 +7570,20 @@ if (contactForm) {
     nowPlayingText.textContent = getCleanName(trackName);
     renderPlaylistUI();
 
+  function safeAudioSrc(url) {
+    if (typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (trimmed.startsWith('blob:') || trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('./') || trimmed.startsWith('Journal/')) {
+      return trimmed;
+    }
+    return '';
+  }
+
     // 1. Direct RAM Blob or cached verified URL
     if (trackCache[trackName]) {
       try {
-        if (audio.src !== trackCache[trackName]) audio.src = trackCache[trackName];
+        const verifiedSrc = safeAudioSrc(trackCache[trackName]);
+        if (verifiedSrc && audio.src !== verifiedSrc) audio.src = verifiedSrc;
         await audio.play();
         if (mySession !== playSessionId) return;
         isPlaying = true;
