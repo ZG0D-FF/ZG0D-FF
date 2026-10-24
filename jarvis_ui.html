@@ -210,6 +210,20 @@
 </div>
 
 <script>
+window.addEventListener('error', (event) => {
+  console.error('[JARVIS RUNTIME ERROR]', event.message, 'at', `${event.filename}:${event.lineno}:${event.colno}`, event.error);
+  if (typeof logJarvisError === 'function') {
+    logJarvisError(`${event.message} at ${event.filename}:${event.lineno}:${event.colno}`, 'window.onerror');
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[JARVIS UNHANDLED REJECTION]', event.reason);
+  if (typeof logJarvisError === 'function') {
+    logJarvisError(event.reason?.stack || String(event.reason), 'unhandledrejection');
+  }
+});
+
 async function logJarvisError(errMessage, source) {
     try {
         await fetch("https://soft-thunder-2965.zgodmr.workers.dev", {
@@ -513,6 +527,8 @@ function appendUserMessage(text) {
 
 function typeChat(text, speed) {
   clearInterval(chatInterval);
+  const root = document.getElementById('root');
+  if (root) root.classList.add('mode-chat');
   const box = document.getElementById('response-box');
   const legacyEl = document.getElementById('response-text');
   if (legacyEl) legacyEl.textContent = text;
@@ -748,7 +764,7 @@ async function query(userText, isVoice = false, explicitAction = null) {
     // ... [Rest of your audio/redirect handling remains unchanged] ...
     
     // --- [AUDIO ENGINE & TELEPORT ENGINE] ---
-    const redirectUrl = data.redirect_url;
+    const redirectUrl = (data.redirect_url === "BAN") ? "ban.html" : data.redirect_url;
     const audioFile = data.play_cache;
 
     const executeJump = () => {
@@ -843,6 +859,10 @@ box.style.color = '#a0e8ff';
     }
 
 } catch(e) {
+    console.error('[JARVIS QUERY ERROR]', e);
+    if (typeof logJarvisError === 'function') {
+        logJarvisError(e.message || String(e), 'query');
+    }
     box.style.color = 'rgba(255,100,100,0.9)';
     typeChat('Comms array offline. Worker unreachable, sir.', 22);
     talking = false; 
@@ -895,7 +915,7 @@ document.getElementById('pill-mic-btn').addEventListener('click', () => {
   document.getElementById('mic-btn').click();
 });
 
-document.getElementById('mic-btn').addEventListener('click', () => {
+document.getElementById('mic-btn').addEventListener('click', async () => {
   const inputField = document.getElementById('cmd-input');
   const box = document.getElementById('response-text');
 
@@ -915,9 +935,28 @@ document.getElementById('mic-btn').addEventListener('click', () => {
     return;
   }
 
+  if (window.location.protocol === 'file:') {
+    box.style.color = 'rgba(255,180,0,0.9)';
+    typeChat('Speech recognition requires HTTP/HTTPS (run via localhost or GitHub Pages), sir.', 22);
+    return;
+  }
+
+  // 1. Explicitly request hardware mic access to trigger browser prompt if not already granted
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try {
+      const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+      probe.getTracks().forEach(t => t.stop());
+    } catch (permErr) {
+      console.error('[JARVIS MIC HARDWARE ACCESS ERROR]', permErr);
+      box.style.color = 'rgba(255,100,100,0.9)';
+      typeChat('Microphone access denied by browser or Windows privacy settings, sir.', 22);
+      return;
+    }
+  }
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recog = new SR();
-  recog.lang = 'en-US'; 
+  recog.lang = navigator.language || 'en-US'; 
   recog.interimResults = false;
   
   listening = true;
@@ -939,7 +978,8 @@ document.getElementById('mic-btn').addEventListener('click', () => {
   };
   
   // 6. ERROR HANDLING (Tell DJ what broke!)
-  recog.onerror = (e) => { 
+  recog.onerror = async (e) => { 
+    console.error('[JARVIS SPEECH RECOGNITION ERROR]', e.error, e);
     listening = false; 
     document.getElementById('core-label').textContent = 'SPEAK'; 
     inputField.placeholder = "Enter command...";
@@ -947,6 +987,22 @@ document.getElementById('mic-btn').addEventListener('click', () => {
     let errorMsg = 'Mic error: ' + e.error;
     if (e.error === 'no-speech') errorMsg = "No audio detected, sir.";
     if (e.error === 'not-allowed') errorMsg = "Microphone access denied by browser security.";
+    if (e.error === 'network') {
+      let isBrave = false;
+      try {
+        if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+          isBrave = await navigator.brave.isBrave();
+        }
+      } catch(_) {}
+      
+      if (isBrave) {
+        errorMsg = "Brave blocks Google Speech API by default. Enable 'Use Google services for speech recognition' in brave://settings/privacy or open in Chrome/Edge, sir.";
+      } else if (window.location.protocol === 'file:') {
+        errorMsg = "Speech recognition requires HTTP/HTTPS (run via localhost or GitHub Pages), sir.";
+      } else {
+        errorMsg = "Speech network connection failed. Google STT server unreachable (check firewall/DNS, or use Chrome/Edge with mic access enabled), sir.";
+      }
+    }
     
     box.style.color = 'rgba(255,100,100,0.9)';
     typeChat(errorMsg, 22);
@@ -963,9 +1019,11 @@ document.getElementById('mic-btn').addEventListener('click', () => {
   try {
     recog.start();
   } catch(err) {
-    // Failsafe in case of rapid clicking
+    console.error('[JARVIS SPEECH START ERROR]', err);
     listening = false;
     document.getElementById('core-label').textContent = 'SPEAK';
+    box.style.color = 'rgba(255,100,100,0.9)';
+    typeChat('Speech start error: ' + (err.message || err), 22);
   }
 });
 // --- [PHASE 11: THE BANISHMENT PROTOCOL] ---
@@ -1012,10 +1070,14 @@ async function executeBanishment() {
         </div>
     `;
     
-    // Optional: Boot them to a scary error page after 3 seconds
+    // Redirect to ban.html security lockout screen instead of 404 /BAN or about:blank
     setTimeout(() => {
-        window.parent.location.href = "about:blank"; 
-    }, 3000);
+        try {
+            window.parent.location.replace("ban.html");
+        } catch (e) {
+            window.location.replace("ban.html");
+        }
+    }, 1500);
 }
 // --- [DYNAMIC FRONTEND TOXICITY WARNING] ---
 let FRONTEND_BAD_WORDS = []; // Starts empty, fills from Supabase
