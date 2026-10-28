@@ -15,6 +15,93 @@ function secureRandom() {
   return buf[0] / 4294967296;
 }
 
+function _gcd(a, b) {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b !== 0n) [a, b] = [b, a % b];
+  return a || 1n;
+}
+
+function _normRat(n, d) {
+  if (d === 0n) throw new Error("Division by zero");
+  if (d < 0n) { n = -n; d = -d; }
+  const g = _gcd(n, d);
+  return [n / g, d / g];
+}
+
+// Exact BigInt rational arithmetic (CSP-safe for Cloudflare Workers, zero float drift)
+function exactFractionSolve(expression) {
+  const tokens = expression.replace(/\s+/g, "").match(/(\d+(?:\.\d+)?|[\+\-\*\/\(\)])/g);
+  if (!tokens) return null;
+  let pos = 0;
+
+  const parseAtom = () => {
+    const tok = tokens[pos++];
+    if (tok === "(") {
+      const val = parseExpr();
+      if (tokens[pos++] !== ")") throw new Error("Unbalanced parens");
+      return val;
+    }
+    if (tok === "-") {
+      const [n, d] = parseAtom();
+      return [-n, d];
+    }
+    if (!/^\d+(?:\.\d+)?$/.test(tok || "")) throw new Error("Invalid token");
+    const [intPart, decPart = ""] = tok.split(".");
+    const scale = 10n ** BigInt(decPart.length);
+    return _normRat(BigInt(intPart + decPart), scale);
+  };
+
+  const parseTerm = () => {
+    let [n1, d1] = parseAtom();
+    while (tokens[pos] === "*" || tokens[pos] === "/") {
+      const op = tokens[pos++];
+      const [n2, d2] = parseAtom();
+      [n1, d1] = op === "*" ? _normRat(n1 * n2, d1 * d2) : _normRat(n1 * d2, d1 * n2);
+    }
+    return [n1, d1];
+  };
+
+  const parseExpr = () => {
+    let [n1, d1] = parseTerm();
+    while (tokens[pos] === "+" || tokens[pos] === "-") {
+      const op = tokens[pos++];
+      const [n2, d2] = parseTerm();
+      [n1, d1] = op === "+" ? _normRat(n1 * d2 + n2 * d1, d1 * d2) : _normRat(n1 * d2 - n2 * d1, d1 * d2);
+    }
+    return [n1, d1];
+  };
+
+  try {
+    const [num, den] = parseExpr();
+    if (pos !== tokens.length) return null;
+    return den === 1n ? num.toString() : `${num}/${den} (≈ ${(Number(num) / Number(den)).toFixed(6)})`;
+  } catch (_) {
+    return null;
+  }
+}
+
+// Extracted from GitContribute: internal/similarity/duplicate.go
+function computeRequestFingerprint(userMessage, visitorName) {
+  const normalized = (userMessage || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) - hash) + normalized.charCodeAt(i);
+    hash |= 0;
+  }
+  return `req_fp_${visitorName || 'anon'}_${Math.abs(hash)}`;
+}
+
+// Extracted from Jacobian: jacobian.math.matrices & logic._smt
+function requiresFormalMathVerification(text) {
+  const mathPatterns = [
+    /\b(matrix|determinant|eigenvalue|nullspace|rref|invert|jacobian)\b/i,
+    /\b(solve|integral|derivative|polynomial)\b/i,
+    /\b\d+\s*[\+\-\*\/]\s*\d+\b/
+  ];
+  return mathPatterns.some(pattern => pattern.test(text));
+}
+
 // ============================================================
 // NEXUS AI WORKER v3 — MULTI-MODEL ROTATION + QUOTA MANAGEMENT
 //
@@ -519,6 +606,29 @@ export default {
           WISEMAN:  env.ELEVENLABS_VOICE_WISEMAN  || env.ELEVENLABS_VOICE_ID,
         }
       };
+
+      // Dedup guard (GitContribute duplicate pattern)
+      if (payload.userText && (env.UPSTASH_URL || env.UPSTASH_REDIS_REST_URL)) {
+        const upstashUrl = ensureTlsUrl(env.UPSTASH_REDIS_REST_URL || env.UPSTASH_URL);
+        const upstashToken = env.UPSTASH_REDIS_REST_TOKEN || env.UPSTASH_TOKEN;
+        const fp = computeRequestFingerprint(payload.userText, payload.visitorName);
+        if (upstashUrl && upstashToken) {
+          try {
+            const isDup = await fetch(`${upstashUrl}/get/${fp}`, {
+              headers: { Authorization: `Bearer ${upstashToken}` }
+            }).then(r => r.json()).then(d => Boolean(d.result)).catch(() => false);
+            if (isDup) {
+              return new Response(JSON.stringify({
+                aiReply: "[VOICE: XAVIER] Duplicate instruction detected. Previous process is already executing or cached.",
+                cached: true
+              }), { headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" } });
+            }
+            ctx.waitUntil(fetch(`${upstashUrl}/set/${fp}/1/EX/10`, {
+              headers: { Authorization: `Bearer ${upstashToken}` }
+            }));
+          } catch (_) {}
+        }
+      }
 
       // --- [PHASE 13: GITHUB WEBHOOK LISTENER] ---
       const githubEvent = request.headers.get("x-github-event");
@@ -1358,6 +1468,27 @@ async function handleGithubWebhook(request, rawBody, context) {
 // ============================================================
 
 // Replace your entire pickModel function with this:
+/**
+ * Pure JS Pareto candidate scoring matching native calculate_pareto_score_ex.
+ * Intent: 0 = balanced, 1 = voice (low latency), 2 = coding (deep reasoning).
+ */
+export function scoreModelCandidate({ latencySec, tokensPerSec, promptTokens = 0, maxContext = 4096, intent = 0 }) {
+  if (promptTokens > maxContext) return -1.0;
+  const safeLatency = Math.max(0.01, latencySec);
+  const safeSpeed = Math.max(0.1, tokensPerSec);
+  const latencyScore = 1.0 / safeLatency;
+  const throughputScore = Math.log(safeSpeed + 1.0);
+  const contextHeadroom = (maxContext - promptTokens) / maxContext;
+
+  let wL = 0.4, wT = 0.4, wC = 0.2;
+  if (intent === 1) { // Voice / Low-latency
+    wL = 0.7; wT = 0.2; wC = 0.1;
+  } else if (intent === 2) { // Coding / Deep reasoning
+    wL = 0.2; wT = 0.5; wC = 0.3;
+  }
+  return (wL * latencyScore) + (wT * throughputScore) + (wC * contextHeadroom);
+}
+
 function pickModel(modelUsage, needsImage, isAdmin = false) {
   const today = todayKey();
   
@@ -1393,6 +1524,13 @@ function pickModel(modelUsage, needsImage, isAdmin = false) {
 async function generateWithFallback(systemPrompt, userText, photoBase64, availableRoutesText, modelUsage, hasPhoto, context) {
   const today = todayKey();
   const errors = [];
+  
+  if (userText && requiresFormalMathVerification(userText)) {
+    const exactMath = exactFractionSolve(userText);
+    if (exactMath) {
+      systemPrompt += `\n\n[EXACT MATH VERIFICATION ENGINE]: The exact arithmetic result of this calculation is ${exactMath}. Embody this exact result without floating-point error.`;
+    }
+  }
   
   let aiReply = "";
   let redirectUrl = null;
