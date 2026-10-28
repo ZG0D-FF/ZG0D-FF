@@ -988,6 +988,42 @@ document.getElementById('mic-btn').addEventListener('click', async () => {
     if (e.error === 'no-speech') errorMsg = "No audio detected, sir.";
     if (e.error === 'not-allowed') errorMsg = "Microphone access denied by browser security.";
     if (e.error === 'network') {
+      console.warn('[JARVIS STT] Google Speech API network failure. Engaging Local MediaRecorder fallback...');
+
+      // Fallback: If Web Speech network fails, initiate direct audio recorder
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mediaRecorder = new MediaRecorder(stream);
+          const audioChunks = [];
+
+          document.getElementById('core-label').textContent = 'RECORDING (RAW)...';
+          mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            stream.getTracks().forEach(t => t.stop());
+            typeChat('Recorded direct audio clip. Dispatching to neural transcription...', 20);
+            try {
+              const formData = new FormData();
+              formData.append('audio', audioBlob, 'speech.webm');
+              const resp = await fetch('/api/stt', { method: 'POST', body: formData });
+              const data = await resp.json();
+              if (data && data.text) {
+                inputField.value = data.text;
+                if (typeof query === 'function') query(data.text, true);
+              }
+            } catch (sttErr) {
+              console.error('[JARVIS WHISPER FALLBACK FAILED]', sttErr);
+              typeChat('Neural transcription unavailable. Enter command manually, sir.', 22);
+            }
+          };
+          mediaRecorder.start();
+          setTimeout(() => { if (mediaRecorder.state === 'recording') mediaRecorder.stop(); }, 4000);
+          return;
+        } catch (fallbackErr) {
+          console.error('[JARVIS AUDIO FALLBACK ERROR]', fallbackErr);
+        }
+      }
       let isBrave = false;
       try {
         if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
