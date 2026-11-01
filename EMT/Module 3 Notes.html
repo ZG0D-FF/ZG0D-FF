@@ -3,262 +3,462 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Module 3 Notes — Transmission Lines &amp; Waveguide</title>
+<title>Module 3 Notes — Transmission Lines &amp; Waveguides</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
 <style>
 :root {
-  color-scheme: dark;
-  --bg: #0d0f12;
-  --panel: #15181c;
-  --panel-soft: #111418;
-  --text: #f2f2f2;
-  --muted: #9da3aa;
-  --border: #292e34;
-  --accent: #d7d7d7;
+  --bg: #0d0f14;
+  --panel: #161922;
+  --panel2: #1e2230;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --formula: #090d13;
+  --green: #3fb950;
+  --amber: #d29922;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 50% -10%, #20242a 0, transparent 38%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.7;
 }
-main {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 44px 22px 64px;
-}
 header {
-  margin-bottom: 22px;
-  padding: 22px 24px 20px;
-  background: rgba(21, 24, 28, .92);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 12px 35px rgba(0,0,0,.22);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13, 15, 20, 0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
 }
-header::before {
-  content: "MODULE 3";
+.header-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.back-btn {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: 0.2s;
+}
+.back-btn:hover { background: var(--panel2); border-color: var(--accent); }
+h1 { margin: 0; font-size: 19px; font-weight: 700; color: #fff; }
+.sub { color: var(--muted); font-size: 11px; }
+.layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 26px;
+  padding: 26px 22px 64px;
+}
+nav {
+  position: sticky;
+  top: 74px;
+  height: max-content;
+  font-size: 13px;
+}
+nav a {
   display: block;
-  margin-bottom: 8px;
   color: var(--muted);
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .14em;
+  text-decoration: none;
+  padding: 7px 12px;
+  border-left: 2px solid transparent;
+  border-radius: 0 4px 4px 0;
+  transition: 0.2s;
 }
-h1 {
-  margin: 0 0 5px;
-  font-size: clamp(1.45rem, 3vw, 1.9rem);
-  line-height: 1.25;
-  font-weight: 650;
-  letter-spacing: -.02em;
-}
-p {
-  margin: 0;
-  color: var(--muted);
-  font-size: .9rem;
-}
-pre {
-  margin: 0;
-  padding: 28px clamp(20px, 4vw, 36px);
-  background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+nav a:hover { color: var(--accent); border-left-color: var(--accent); background: var(--panel); }
+main { min-width: 0; }
+section {
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  color: var(--text);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  font: 15px/1.78 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
-  box-shadow: 0 14px 40px rgba(0,0,0,.18);
-  tab-size: 2;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
 }
-@media (max-width: 600px) {
-  main { padding: 24px 12px 40px; }
-  header { padding: 18px; border-radius: 12px; }
-  pre { padding: 20px 16px; font-size: 14px; }
+section > h2 {
+  font-size: 16px;
+  margin: 0;
+  padding: 12px 18px;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
 }
-@media print {
-  body { background: #fff; color: #111; }
-  header, pre { box-shadow: none; }
-  header { background: #fff; border-color: #ccc; }
-  pre { background: #fff; color: #111; border-color: #ccc; }
-  p, header::before { color: #555; }
+article { padding: 18px 22px; }
+.label {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin: 14px 0 6px;
+}
+.label:first-child { margin-top: 0; }
+p { margin: 8px 0 12px; }
+.formula-box {
+  background: var(--formula);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 12px 0;
+  overflow-x: auto;
+  text-align: center;
+}
+.note {
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  background: rgba(88,166,255,0.06);
+  border-radius: 0 6px 6px 0;
+  margin: 12px 0;
+  font-size: 13.5px;
+}
+.tip {
+  border-left: 3px solid var(--green);
+  padding: 10px 14px;
+  background: rgba(63,185,80,0.06);
+  border-radius: 0 6px 6px 0;
+  margin: 12px 0;
+  font-size: 13.5px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 13.5px;
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+th { background: var(--panel2); color: var(--accent); }
+ul, ol { padding-left: 22px; margin: 8px 0 12px; }
+li { margin-bottom: 6px; }
+footer {
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+  padding: 24px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  nav { display: none; }
 }
 </style>
 </head>
 <body>
-<main>
+
 <header>
-<h1>Module 3 Notes</h1>
-<p>Transmission Lines and Waveguide</p>
+  <div class="header-wrap">
+    <div>
+      <a href="index.html" class="back-btn">← EMT HUB</a>
+      <span style="display:inline-block; margin-left:12px;">
+        <h1>📡 Module 3 — Transmission Lines &amp; Waveguides</h1>
+        <span class="sub">Complete Mathematical Formulations · Derivations · High-Yield Exam Guide</span>
+      </span>
+    </div>
+  </div>
 </header>
-<pre>Short notes on Transmission Lines
 
-Transmission lines are commonly used in power distribution (at low frequencies) and in 
-communications (at high frequencies). Transmission lines such as twisted-pair and coaxial cables 
-(thinnet and thicknet) are used in computer networks such as the Ethernet and the Internet. A 
-transmission line basically consists of two or more parallel conductors used to connect a source to a 
-load. The source may be a hydroelectric generator, a transmitter, or an oscillator; the load may be a 
-factory, an antenna, or an oscilloscope. Typical transmission lines include coaxial cable, a two-wire 
-line, a parallel-plate or planar line, a wire above the conducting plane, and a microstrip line.
-Transmission Lines can be expressed in terms of voltage and current (Telegrapher’s equations)
-and 
-The characteristic impedance Z0 of the line is the ratio of the positively traveling voltage wave to 
-the current wave at any point on the line.
-A.Lossless Line (R = 0 = G)
-A transmission line is said to be lossless if the conductors of the line are perfect ( 𝜎𝑐 ≈ 0) and the 
-dielectric medium separating them is lossless (𝜎 ≈ 0)
+<div class="layout">
+  <nav>
+    <a href="#tlines-intro">1. Transmission Lines</a>
+    <a href="#telegrapher">2. Telegrapher’s Equations</a>
+    <a href="#special-lines">3. Lossless &amp; Distortionless</a>
+    <a href="#reflection-vswr">4. Reflection &amp; VSWR</a>
+    <a href="#input-impedance">5. Input Impedance &amp; Stubs</a>
+    <a href="#transit-time">6. Transit Time Effect</a>
+    <a href="#waveguides">7. Waveguides &amp; Modes</a>
+    <a href="#cutoff-frequencies">8. Cutoff Frequency &amp; Wavelength</a>
+    <a href="#velocities">9. Phase &amp; Group Velocity</a>
+    <a href="#derivations">10. Core Exam Derivations</a>
+  </nav>
 
-B. Distortionless Line (R/L = G/C)
-A signal normally consists of a band of frequencies; wave amplitudes of different frequency 
-components will be attenuated differently in a lossy line because ∝ is frequency dependent. Since, in 
-general, the phase velocity of each frequency component is also frequency depen- dent, this will 
-result in distortion.
-A distortionless line is one in which the attenuation constant 𝛼 is frequency independent while the 
-phase constant 𝛽 is linearly dependent on frequency.
-Propagation Constant : γ = α + jβ and γ = 𝑅 + 𝑗𝑤𝐿 (𝐺 + 𝑗𝑤𝐶)
-where α = attenuation constant, dB/m, β = phase constant, rad/m
-Reflection Coefficient
-The reflection coefficient Γ𝐿
-is the ratio of the voltage reflection wave to the incident wave at the 
-load; that is,
-Γ𝐿 =
-𝑉0
-−𝑒
-𝛾𝑙
-𝑉0
-+𝑒
-−𝛾𝑙 =
-𝑍𝐿 − 𝑍0
-𝑍𝐿 + 𝑍0
-The voltage reflection coefficient at any point on the line is the ratio of the reflected voltage wave to 
-that of the incident wave.
-Voltage Standing Wave ratio (VSWR)
-VSWR is defined as
-𝑠 =
-𝑉𝑚𝑎𝑥
-𝑉𝑚𝑖𝑛
-=
-𝐼𝑚𝑎𝑥
-𝐼𝑚𝑖𝑛
-=
-1 + Γ
-1 − Γ
-Or, Γ𝐿 =
-𝑠−1
-𝑠+1
-We know, 𝐼 𝑚𝑎𝑥 =
-𝑉𝑚𝑎𝑥
-𝑍0
-𝑎𝑛𝑑 ,𝐼 𝑚𝑖𝑛 =
-𝑉𝑚𝑖𝑛
-𝑍0
- 𝑍𝑖𝑛
- 𝑚𝑎𝑥 =
-𝑉𝑚𝑎𝑥
-𝐼𝑚𝑖𝑛
-= 𝑠𝑍0 𝑎𝑛𝑑 𝑍𝑖𝑛
- 𝑚𝑖𝑛 =
-𝑉𝑚𝑖𝑛
-𝐼𝑚𝑎𝑥
-= 𝑍0/𝑠
-S ranges between 1 and ∞ or 1&lt;s&lt;∞
-Normalised impedance : 𝑍𝑛 =
-𝑍𝐿
-𝑍0
-A matched load occurs in a transmission line when the load&#x27;s impedance 𝑍𝐿
-is equal to the line&#x27;s 
-characteristic impedance 𝑍0
-resulting in maximum power transfer. This condition prevents signal 
-reflection, meaning all energy is absorbed by the load, and the line is non-resonant with no standing 
-waves.
-If impedance at some point on a line is Z₀, then load impedance will be equal to Z₀ meaning no 
-reflections and maximum power transfer.
-Transit Time Effect in Transmission Lines
-Time delay experienced by an electromagnetic wave as it travels from one end of the line to the other. 
-It is due to the finite propagation velocity of the signal along the line.
-This transit time is given by: 𝑡𝑡𝑟𝑎𝑛𝑠𝑖𝑡 =
-𝑙
-𝑣𝑝
-, where l = line length and 𝑣𝑝 = Phase velocity
-The transit time effect becomes appreciable in a transmission line when the line length is comparable 
-to a significant fraction of the wavelength (typically ≥ λ/20), or when signal frequency is high enough 
-that propagation delay cannot be ignored.
+  <main>
 
-Waveguide: A waveguide is a hollow metallic structure (usually rectangular or circular in cross￾section) that guides electromagnetic waves from one point to another by reflecting them within its 
-walls.
-A rectangular waveguide is a hollow metallic device with four sides closed and two sides open. It 
-can be used as : 
-1. a radiator
-2. a high pass filter
-3. a transmission line
-4. a feed element to antennas
-A hollow rectangular waveguide supports only TE (Transverse Electric Ez = 0) and TM
-Transverse Magnetic Hz = 0) waves/modes and it does not support TEM mode.
-A parallel plane waveguide consists of two infinite conducting planes separated by a dielectric 
-medium. It supports the propagation of TE (Transverse Electric) and TM (Transverse Magnetic)
-modes between the planes.
-The cutoff frequency is the operating frequency below which attenuation occurs and above which 
-propagation takes place.
-𝑜𝑟, 𝑓𝑐 =
-𝑐
-2
- (
-𝑚
-𝑎
-)
-2 + (
-𝑛
-𝑏
-)
-2
-If the frequency &lt; cut-off frequency, evanescent fields are produced, which decay exponentially
-along the length of the waveguide—no power is transmitted.
-Dominant mode is defined as the mode which has the lowest resonant frequency for a given cavity 
-size (a, b, c). The dominant mode (the one with the lowest cut-off frequency) for rectangular 
-waveguide is TE₁₀.
-For the dominant TE₁₀ mode, the minimum broad wall dimension (a) must satisfy:
-𝑎 &gt; 𝜆0/2𝑎
-where 𝜆0
-is the free-space wavelength at the operating frequency.
-Modes having the same resonant frequency are called degenerate modes.
-Boundary conditions on the surface of a waveguide: On the conducting walls of a waveguide:
- The tangential component of the electric field (Et) must be zero.
- The normal component of the magnetic field (Bn) must be zero.
-The guided wavelength (λg) is the distance between two successive points of equal phase along the 
-direction of propagation inside a waveguide. It represents the wavelength of the wave inside the 
-guide, which differs from the free-space wavelength (λ₀) because the wave is “guided” and partially 
-reflected within the walls.
-𝜆𝑔 =
-𝜆0
- 1 − (
- 𝜆0
- 𝜆𝑐
- )
- 2
-Case 1: As 𝜆0𝑎𝑝𝑝𝑟𝑜𝑎𝑐𝕙𝕖𝕤 𝜆𝑐
-, 𝜆𝑔 → ∞
-Case 2: As 𝜆0 ≫ 𝜆𝑐
-, 𝜆𝑔 ≈ 𝜆0
-The group velocity (vg) is the velocity with which energy or information travels along the 
-waveguide. It is given by:
-𝑣𝑔 = 𝑐 1 − 
-𝑓𝑐
-𝑓
+    <!-- 1. TRANSMISSION LINES INTRO -->
+    <section id="tlines-intro">
+      <h2>1. Transmission Lines Overview</h2>
+      <article>
+        <p>A transmission line consists of two or more parallel conductors used to transmit electromagnetic energy and signals between a source (generator, transmitter) and a load (antenna, receiver, circuit). Typical physical configurations include:</p>
+        <ul>
+          <li><b>Coaxial Cable:</b> Inner conductor surrounded by a concentric dielectric sheath and metallic outer braid shield. Widely used for broadband RF.</li>
+          <li><b>Two-Wire Line (Twin-Lead):</b> Two parallel insulated cylindrical conductors.</li>
+          <li><b>Planar / Microstrip Line:</b> Thin metallic strip separated from a conducting ground plane by a dielectric substrate. Standard for high-frequency microwave integrated circuits (MMICs).</li>
+        </ul>
+        <div class="note">
+          <b>Distributed vs. Lumped Circuits:</b> When signal frequency is high enough that the physical line length $l \ge \lambda/20$, voltage and current vary along the spatial dimension $z$, requiring distributed parameter analysis ($R, L, G, C$ per unit length).
+        </div>
+      </article>
+    </section>
 
-2
-Derivations :
-1. transmission line equation using distributed parameters (R, L, G, C)
-2. relationship between wavelength (λ), velocity of propagation (v), and frequency (f) on a 
-transmission line.
-3. expression for the Voltage Standing Wave Ratio (VSWR) in terms of reflection coefficient.
-4. expression for transmittance coefficient (T) in terms of load impedance and Z₀.
-5. expression for the phase velocity in a waveguide. Show that it is always greater than the 
-velocity of light.
-6. expression for the guide wavelength (λg) and show its relation with freespace wavelength 
-(λ₀).</pre>
-</main>
+    <!-- 2. TELEGRAPHER'S EQUATIONS -->
+    <section id="telegrapher">
+      <h2>2. Distributed Parameters &amp; Telegrapher’s Equations</h2>
+      <article>
+        <p>A differential segment of length $\Delta z$ is modeled with four distributed parameters:</p>
+        <ul>
+          <li>$R$ = Series resistance per unit length ($\Omega/\text{m}$) due to finite conductor conductivity $\sigma_c$.</li>
+          <li>$L$ = Series loop inductance per unit length ($\text{H/m}$) due to magnetic flux linkage.</li>
+          <li>$G$ = Shunt conductance per unit length ($\text{S/m}$) due to dielectric leakage current.</li>
+          <li>$C$ = Shunt capacitance per unit length ($\text{F/m}$) between the two conductors.</li>
+        </ul>
+
+        <div class="label">Time-Harmonic Telegrapher’s Equations</div>
+        <div class="formula-box">
+          $$-\frac{dV(z)}{dz} = (R + j\omega L)I(z)$$
+          $$-\frac{dI(z)}{dz} = (G + j\omega C)V(z)$$
+        </div>
+
+        <div class="label">Wave Equations for Voltage &amp; Current</div>
+        <p>Differentiating again gives second-order wave equations:</p>
+        <div class="formula-box">
+          $$\frac{d^2 V(z)}{dz^2} - \gamma^2 V(z) = 0, \quad \frac{d^2 I(z)}{dz^2} - \gamma^2 I(z) = 0$$
+        </div>
+
+        <div class="label">Complex Propagation Constant ($\gamma$)</div>
+        <div class="formula-box">
+          $$\gamma = \alpha + j\beta = \sqrt{(R + j\omega L)(G + j\omega C)}$$
+        </div>
+        <p>Where $\alpha$ is the attenuation constant ($\text{Np/m}$ or $\text{dB/m}$) and $\beta$ is the phase constant ($\text{rad/m}$).</p>
+
+        <div class="label">Characteristic Impedance ($Z_0$)</div>
+        <p>Ratio of forward-traveling voltage wave to forward-traveling current wave:</p>
+        <div class="formula-box">
+          $$Z_0 = \sqrt{\frac{R + j\omega L}{G + j\omega C}} \quad [\Omega]$$
+        </div>
+      </article>
+    </section>
+
+    <!-- 3. SPECIAL TRANSMISSION LINES -->
+    <section id="special-lines">
+      <h2>3. Lossless &amp; Distortionless Lines</h2>
+      <article>
+        <table>
+          <tr><th>Parameter</th><th>General Lossy Line</th><th>Lossless Line ($R = 0, G = 0$)</th><th>Distortionless Line ($R/L = G/C$)</th></tr>
+          <tr><td><b>Attenuation $\alpha$</b></td><td>$\text{Re}\{\gamma\}$</td><td>$\alpha = 0$ (no power loss)</td><td>$\alpha = \sqrt{RG} = R\sqrt{\frac{C}{L}}$ (frequency-independent!)</td></tr>
+          <tr><td><b>Phase Constant $\beta$</b></td><td>$\text{Im}\{\gamma\}$</td><td>$\beta = \omega\sqrt{LC}$</td><td>$\beta = \omega\sqrt{LC}$ (linearly proportional to $\omega$)</td></tr>
+          <tr><td><b>Char. Impedance $Z_0$</b></td><td>$\sqrt{\frac{R+j\omega L}{G+j\omega C}}$</td><td>$Z_0 = \sqrt{\frac{L}{C}}$ (purely real)</td><td>$Z_0 = \sqrt{\frac{L}{C}} = \sqrt{\frac{R}{G}}$ (purely real)</td></tr>
+          <tr><td><b>Phase Velocity $v_p$</b></td><td>$\omega/\beta$</td><td>$v_p = \frac{1}{\sqrt{LC}} = \frac{c}{\sqrt{\varepsilon_r}}$</td><td>$v_p = \frac{1}{\sqrt{LC}}$ (constant across all frequencies!)</td></tr>
+        </table>
+        <div class="tip">
+          💡 <b>Heaviside Condition for Distortionless Transmission:</b> When $\frac{R}{L} = \frac{G}{C}$, all frequency components travel at the identical phase velocity $v_p$ and attenuate at the identical rate $\alpha$. Pulses propagate without shape distortion!
+        </div>
+      </article>
+    </section>
+
+    <!-- 4. REFLECTION & VSWR -->
+    <section id="reflection-vswr">
+      <h2>4. Reflection Coefficient &amp; Standing Wave Ratio (VSWR)</h2>
+      <article>
+        <div class="label">Voltage Reflection Coefficient at Load ($\Gamma_L$)</div>
+        <p>The ratio of reflected voltage wave amplitude to incident voltage wave amplitude at the load terminal $z = 0$:</p>
+        <div class="formula-box">
+          $$\Gamma_L = \frac{V_0^-}{V_0^+} = \frac{Z_L - Z_0}{Z_L + Z_0} = |\Gamma_L|e^{j\theta_\Gamma}$$
+        </div>
+
+        <div class="label">Special Boundary Terminations</div>
+        <ul>
+          <li><b>Matched Load ($Z_L = Z_0$):</b> $\Gamma_L = 0$. No reflections, all power delivered to load (flat line).</li>
+          <li><b>Short Circuit ($Z_L = 0$):</b> $\Gamma_L = -1 = 1 e^{j\pi}$. Complete reflection, voltage node at load.</li>
+          <li><b>Open Circuit ($Z_L = \infty$):</b> $\Gamma_L = +1 = 1 e^{j0}$. Complete reflection, voltage antinode at load.</li>
+          <li><b>Purely Reactive Load ($Z_L = \pm jX$):</b> $|\Gamma_L| = 1$. Total reflection of power.</li>
+        </ul>
+
+        <div class="label">Voltage Standing Wave Ratio (VSWR or $s$)</div>
+        <p>Measures the ratio of maximum voltage amplitude to minimum voltage amplitude along the line:</p>
+        <div class="formula-box">
+          $$s = \text{VSWR} = \frac{V_{\max}}{V_{\min}} = \frac{1 + |\Gamma_L|}{1 - |\Gamma_L|} \quad (1 \le s < \infty)$$
+        </div>
+        <p>Inverting for reflection coefficient magnitude:</p>
+        <div class="formula-box">
+          $$|\Gamma_L| = \frac{s - 1}{s + 1}$$
+        </div>
+      </article>
+    </section>
+
+    <!-- 5. INPUT IMPEDANCE -->
+    <section id="input-impedance">
+      <h2>5. Input Impedance &amp; Impedance Matching</h2>
+      <article>
+        <div class="label">General Input Impedance Equation</div>
+        <p>At a distance $l$ from a load $Z_L$ on a lossless line with characteristic impedance $Z_0$:</p>
+        <div class="formula-box">
+          $$Z_{\text{in}}(l) = Z_0 \left[ \frac{Z_L + j Z_0 \tan(\beta l)}{Z_0 + j Z_L \tan(\beta l)} \right]$$
+        </div>
+
+        <div class="label">Extreme Impedance Transformations</div>
+        <div class="formula-box">
+          $$Z_{\text{in,max}} = s Z_0, \quad Z_{\text{in,min}} = \frac{Z_0}{s}$$
+        </div>
+
+        <div class="label">Key Line Length Special Cases</div>
+        <table>
+          <tr><th>Line Length</th><th>Formula</th><th>Behavior / Application</th></tr>
+          <tr><td><b>Quarter-Wave Transformer ($l = \lambda/4$)</b></td><td>$Z_{\text{in}} = \frac{Z_0^2}{Z_L}$</td><td>Impedance inverter. Matches two real impedances: $Z_0 = \sqrt{Z_{\text{in}} Z_L}$.</td></tr>
+          <tr><td><b>Half-Wave Line ($l = \lambda/2$)</b></td><td>$Z_{\text{in}} = Z_L$</td><td>Periodic 1:1 impedance repeater (transparent line).</td></tr>
+          <tr><td><b>Short-Circuited Stub ($Z_L = 0$)</b></td><td>$Z_{\text{in}} = j Z_0 \tan(\beta l)$</td><td>Pure reactance (inductor or capacitor depending on length).</td></tr>
+          <tr><td><b>Open-Circuited Stub ($Z_L = \infty$)</b></td><td>$Z_{\text{in}} = -j Z_0 \cot(\beta l)$</td><td>Pure susceptance.</td></tr>
+        </table>
+      </article>
+    </section>
+
+    <!-- 6. TRANSIT TIME EFFECT -->
+    <section id="transit-time">
+      <h2>6. Transit Time Effect in Transmission Lines</h2>
+      <article>
+        <p>The transit time delay $t_{\text{transit}}$ experienced by an electromagnetic wave traveling across line length $l$ at phase velocity $v_p$:</p>
+        <div class="formula-box">
+          $$t_{\text{transit}} = \frac{l}{v_p}$$
+        </div>
+        <p>Transit time effects become significant when the line length is comparable to a substantial fraction of the wavelength:</p>
+        <div class="formula-box">
+          $$l \ge \frac{\lambda}{20} \iff t_{\text{transit}} \ge \frac{T}{20}$$
+        </div>
+        <p>When this threshold is crossed, ordinary lumped-circuit Kirchhoff's Voltage and Current Laws (KVL/KCL) fail, requiring distributed transmission line wave analysis.</p>
+      </article>
+    </section>
+
+    <!-- 7. WAVEGUIDES -->
+    <section id="waveguides">
+      <h2>7. Rectangular Waveguides &amp; Modes</h2>
+      <article>
+        <p>A rectangular waveguide is a hollow metallic pipe of rectangular cross-section (broad wall dimension $a$, narrow wall dimension $b$, with $a > b$) used to guide microwave and millimeter-wave signals via successive reflections from metallic walls.</p>
+
+        <div class="label">Supported Modes</div>
+        <ul>
+          <li><b>Transverse Electric (TE) Modes ($E_z = 0, H_z \ne 0$):</b> The electric field is entirely transverse to the direction of propagation ($z$).</li>
+          <li><b>Transverse Magnetic (TM) Modes ($H_z = 0, E_z \ne 0$):</b> The magnetic field is entirely transverse to the direction of propagation ($z$).</li>
+          <li><b>TEM Mode Is NOT Supported:</b> A hollow single-conductor waveguide cannot support Transverse Electromagnetic (TEM) waves ($E_z = 0, H_z = 0$). By Gauss's Law, static field lines in a closed metallic boundary without an isolated center conductor must be zero everywhere.</li>
+        </ul>
+
+        <div class="label">Boundary Conditions on Metallic Waveguide Walls</div>
+        <div class="formula-box">
+          $$E_t = 0 \quad \text{[Tangential electric field vanishes on conductor walls]}$$
+          $$B_n = 0 \quad \text{[Normal magnetic flux vanishes on conductor walls]}$$
+        </div>
+      </article>
+    </section>
+
+    <!-- 8. CUTOFF FREQUENCY -->
+    <section id="cutoff-frequencies">
+      <h2>8. Cutoff Frequency, Cutoff Wavelength &amp; Dominant Mode</h2>
+      <article>
+        <div class="label">Cutoff Frequency Formula ($f_{c,mn}$)</div>
+        <p>The operating frequency below which electromagnetic waves undergo rapid exponential attenuation (evanescent mode) and above which wave propagation occurs:</p>
+        <div class="formula-box">
+          $$f_{c,mn} = \frac{c}{2\sqrt{\mu_r \varepsilon_r}} \sqrt{\left(\frac{m}{a}\right)^2 + \left(\frac{n}{b}\right)^2}$$
+        </div>
+        <p>Where $m, n$ are integers representing the number of half-wave field variations along dimensions $a$ and $b$.</p>
+
+        <div class="label">Cutoff Wavelength ($\lambda_{c,mn}$)</div>
+        <div class="formula-box">
+          $$\lambda_{c,mn} = \frac{2}{\sqrt{\left(\frac{m}{a}\right)^2 + \left(\frac{n}{b}\right)^2}}$$
+        </div>
+
+        <div class="label">Dominant Mode ($\text{TE}_{10}$)</div>
+        <p>The dominant mode is defined as the mode having the lowest cutoff frequency (or longest cutoff wavelength). For standard rectangular waveguide where $a > b$:</p>
+        <div class="formula-box">
+          $$\text{Dominant Mode: } \mathbf{TE}_{10} \quad (m=1, n=0)$$
+          $$f_{c,10} = \frac{c}{2a}, \quad \lambda_{c,10} = 2a$$
+        </div>
+        <div class="tip">
+          💡 <b>Broad Wall Requirement:</b> For the dominant $\text{TE}_{10}$ mode to propagate at operating frequency $f$ ($\lambda_0 = c/f$):<br>
+          $$f > f_c \iff a > \frac{\lambda_0}{2}$$
+        </div>
+
+        <div class="label">Degenerate Modes</div>
+        <p>Modes that share identical cutoff frequencies are called degenerate modes. In a rectangular guide, $\text{TE}_{11}$ and $\text{TM}_{11}$ are always degenerate.</p>
+
+        <div class="label">Guided Wavelength ($\lambda_g$)</div>
+        <p>The wavelength of the guided wave measured along the longitudinal axis of propagation:</p>
+        <div class="formula-box">
+          $$\lambda_g = \frac{\lambda_0}{\sqrt{1 - \left(\frac{f_c}{f}\right)^2}} = \frac{\lambda_0}{\sqrt{1 - \left(\frac{\lambda_0}{\lambda_c}\right)^2}} > \lambda_0$$
+        </div>
+        <ul>
+          <li>As operating frequency approaches cutoff ($f \to f_c$): $\lambda_g \to \infty$.</li>
+          <li>At very high frequencies ($f \gg f_c$): $\lambda_g \approx \lambda_0$.</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- 9. VELOCITIES -->
+    <section id="velocities">
+      <h2>9. Phase Velocity ($v_p$) vs. Group Velocity ($v_g$)</h2>
+      <article>
+        <div class="label">Phase Velocity ($v_p$)</div>
+        <p>Velocity at which a point of constant phase advances through the waveguide:</p>
+        <div class="formula-box">
+          $$v_p = \frac{\omega}{\beta} = \frac{c}{\sqrt{1 - \left(\frac{f_c}{f}\right)^2}} > c$$
+        </div>
+        <div class="note">
+          Notice that $v_p$ is always strictly <b>greater than the speed of light</b> $c$! This does not violate Einstein's theory of relativity because phase velocity carries no energy or information.
+        </div>
+
+        <div class="label">Group Velocity ($v_g$)</div>
+        <p>Velocity at which electromagnetic energy and information travel:</p>
+        <div class="formula-box">
+          $$v_g = \frac{d\omega}{d\beta} = c\sqrt{1 - \left(\frac{f_c}{f}\right)^2} < c$$
+        </div>
+
+        <div class="label">Fundamental Velocity Product Relation</div>
+        <div class="formula-box">
+          $$v_p \cdot v_g = c^2$$
+        </div>
+      </article>
+    </section>
+
+    <!-- 10. DERIVATIONS -->
+    <section id="derivations">
+      <h2>10. Core Exam Derivations</h2>
+      <article>
+        <div class="label">Derivation 1: Transmission Line Equations from Distributed Parameters</div>
+        <p>Apply KVL and KCL to an elemental line length $\Delta z$:</p>
+        $$\text{KVL: } v(z, t) - R\Delta z\,i(z, t) - L\Delta z\,\frac{\partial i(z, t)}{\partial t} - v(z+\Delta z, t) = 0$$
+        Dividing by $\Delta z \to 0$ in sinusoidal steady-state:
+        $$\frac{dV(z)}{dz} = -(R + j\omega L)I(z)$$
+        $$\text{KCL: } i(z, t) - G\Delta z\,v(z+\Delta z, t) - C\Delta z\,\frac{\partial v(z+\Delta z, t)}{\partial t} - i(z+\Delta z, t) = 0$$
+        $$\frac{dI(z)}{dz} = -(G + j\omega C)V(z)$$
+
+        <div class="label">Derivation 2: VSWR in terms of Load Reflection Coefficient</div>
+        <p>Total voltage wave along line: $V(z') = V_0^+ e^{j\beta z'}(1 + \Gamma_L e^{-j2\beta z'})$.</p>
+        $$V_{\max} = |V_0^+|(1 + |\Gamma_L|)$$
+        $$V_{\min} = |V_0^+|(1 - |\Gamma_L|)$$
+        $$\text{VSWR} = s = \frac{V_{\max}}{V_{\min}} = \frac{1 + |\Gamma_L|}{1 - |\Gamma_L|}$$
+
+        <div class="label">Derivation 3: Phase Velocity $v_p > c$ in a Waveguide</div>
+        <p>Dispersion relation in waveguide: $\beta = \sqrt{\omega^2\mu\varepsilon - k_c^2} = \frac{\omega}{c}\sqrt{1 - (f_c/f)^2}$.</p>
+        $$v_p = \frac{\omega}{\beta} = \frac{\omega}{\frac{\omega}{c}\sqrt{1 - (f_c/f)^2}} = \frac{c}{\sqrt{1 - (f_c/f)^2}}$$
+        Since $\sqrt{1 - (f_c/f)^2} < 1$ for propagating modes ($f > f_c$), the denominator is less than 1, proving $v_p > c$.
+      </article>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  ⚡ JARVIS Knowledge Core · Module 3 Transmission Lines &amp; Waveguides · Exam Ready
+</footer>
+
 </body>
 </html>
