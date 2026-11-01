@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Practical GitHub Actions | Testing + Release</title>
+<style>
+:root{--bg:#101214;--card:#171a1e;--text:#f2f4f7;--muted:#aeb5bd;--cyan:#67e8f9;--pink:#f9a8d4;--lime:#bef264;--orange:#fdba74;--line:#30353b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1000px;margin:auto;padding:32px 20px 70px}h1,h2,h3{line-height:1.2}h1{font-size:clamp(30px,5vw,52px);margin-bottom:10px}h2{margin-top:42px;color:var(--cyan)}h3{color:var(--lime)}p{color:#d9dde2}.lead{font-size:18px;color:var(--muted)}.tag{display:inline-block;padding:5px 10px;border:1px solid var(--line);border-radius:999px;color:var(--pink);margin:4px 4px 4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+pre{background:#0b0d0f;border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;color:#e8edf2;font:14px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--orange)}.flow{font-weight:700;text-align:center;padding:16px;border:1px dashed #56606b;border-radius:12px;color:var(--cyan)}
+.note{border-left:4px solid var(--pink);padding:10px 15px;background:#1d1b20}.exam{border-left:4px solid var(--lime);padding:10px 15px;background:#191d17}
+table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--cyan)}
+ul{padding-left:22px}.small{font-size:13px;color:var(--muted)}.ok{color:var(--lime);font-weight:700}.warn{color:var(--orange);font-weight:700}
+a{color:var(--cyan)}
+</style>
+</head>
+<body>
+<main>
+<span class="tag">COURSE NOTES</span><span class="tag">GITHUB ACTIONS</span><span class="tag">TESTING</span><span class="tag">RELEASE</span>
+<h1>Testing Your Action + Creating a Release</h1>
+<p class="lead">Understanding-first notes from the two transcripts. The goal is not to memorize clicks. The goal is to understand how a reusable Docker-based GitHub Action is tested, fixed, versioned, and prepared for the Marketplace.</p>
+
+<div class="card">
+<h3>Where these videos sit in the course</h3>
+<p>The course repository is <strong>github-practical-actions-4412872</strong>. Its README says the course teaches publishing a Marketplace Action through the workflow, generator-repo Dockerfile, entry point, <code>action.yml</code>, testing, and releasing. It also explains that exercise branches correspond to individual videos, while <code>main</code> holds the final state. fileciteturn15file0L2-L2</p>
+<p class="small">Repository cross-check: the current public repository exposes <code>main</code> and <code>01_02b</code>. The current <code>main</code> workflow is a course-file-copy workflow, not the historical podcast-test workflow described in these transcripts. Therefore the code below is marked <strong>lesson-aligned</strong> where the historical file is not currently exposed.</p>
+</div>
+
+<h2>1. What is being tested?</h2>
+<div class="flow">podcast-test → calls podcast-generator Action → Docker image → entrypoint.sh → feed.py → podcast.xml → git push</div>
+<p>The important idea is separation of responsibility:</p>
+<div class="grid">
+<div class="card"><h3>Calling repo</h3><p><code>podcast-test</code> contains the podcast data and workflow that invokes the reusable action.</p></div>
+<div class="card"><h3>Generator repo</h3><p><code>podcast-generator</code> contains the reusable Action, Dockerfile, entry point, and feed-generation logic.</p></div>
+<div class="card"><h3>Result</h3><p>The generator processes the calling repository's files and pushes the generated feed back to that repository.</p></div>
+</div>
+
+<h2>2. Simplify the calling workflow</h2>
+<p>The instructor removes work that the reusable action already performs. The workflow still triggers on <strong>push</strong> and checks out the repository, then calls the generator action.</p>
+<pre>name: Generate Podcast Feeds
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Run Feed Generator
+        uses: YOUR-USERNAME/podcast-generator@main</pre>
+<div class="note"><strong>Key syntax:</strong> <code>OWNER/REPOSITORY@REF</code>. Until a release exists, the instructor uses the repository plus a branch such as <code>@main</code>. Later, a versioned release can be referenced.</div>
+
+<h2>3. Why use a repository reference?</h2>
+<table><tr><th>Reference</th><th>Meaning</th></tr>
+<tr><td><code>actions/checkout@v3</code></td><td>Use a published/versioned action release.</td></tr>
+<tr><td><code>YOUR-USERNAME/podcast-generator@main</code></td><td>Use the action directly from the generator repository's <code>main</code> branch.</td></tr>
+<tr><td><code>OWNER/REPO@v1.0</code></td><td>Use a specific release/tag once the action has been released.</td></tr></table>
+<p>This gives you a useful development path: <strong>test the branch first → create a release → consume a stable version.</strong></p>
+
+<h2>4. The failure: “entrypoint.sh: permission denied”</h2>
+<div class="card">
+<p class="warn">The important error is not the long Docker daemon message.</p>
+<p>The useful clue is:</p>
+<pre>entrypoint.sh: permission denied</pre>
+<p>Meaning: the file exists, but the environment cannot execute it because its executable permission is missing.</p>
+</div>
+
+<h2>5. Fixing executable permission</h2>
+<p>Inside the Codespace, the instructor uses:</p>
+<pre>chmod -R 775 entrypoint.sh</pre>
+<p>Then checks the permissions with:</p>
+<pre>ls -la</pre>
+<p>Then the normal Git cycle is used:</p>
+<pre>git status
+git add -A
+git commit -m "Fix entrypoint permissions"
+git push</pre>
+<div class="exam"><strong>Understand it:</strong> <code>chmod</code> changes file permissions. The Action needs <code>entrypoint.sh</code> to be executable because Docker ultimately tries to run that script.</div>
+
+<h2>6. Why this connects to the previous video</h2>
+<p>The earlier entry point is the bridge between the Docker environment and the actual generator program.</p>
+<pre>#!/bin/bash
+
+git config --global user.name "$GITHUB_ACTOR"
+git config --global user.email "$INPUT_EMAIL"
+
+git config --global --add safe.directory /github/workspace
+
+python3 /usr/bin/feed.py
+
+git add -A
+git commit -m "Update feed"
+git push --set-upstream origin main</pre>
+<p><strong>Connection:</strong> <code>action.yml</code> defines inputs, the Dockerfile builds the environment, and <code>entrypoint.sh</code> performs the runtime commands. The transcript's test failure shows why the last part must actually be executable.</p>
+
+<h2>7. Verifying the successful run</h2>
+<ol>
+<li>Open <strong>Actions</strong> in the calling repository.</li>
+<li>Open the workflow run.</li>
+<li>Inspect the job steps.</li>
+<li>Collapse noisy steps when necessary.</li>
+<li>Check the generator step for errors.</li>
+<li>After success, inspect the repository's generated feed.</li>
+<li>The instructor makes a small change to <code>feed.yaml</code> to force another push-triggered run and confirms the generated feed contains that change.</li>
+</ol>
+
+<div class="flow">Push change → Workflow starts → Checkout → Run Feed Generator → feed generated → Commit → Push → Updated feed appears</div>
+
+<h2>8. The big architectural payoff</h2>
+<p>A separate generator Action can be reused by multiple podcast repositories. Instead of duplicating the generator logic in every podcast project, each project can call the same Action.</p>
+<div class="card">
+<pre>PODCAST A ─┐
+PODCAST B ─┼──→ podcast-generator Action ─→ generated feeds
+PODCAST C ─┘</pre>
+<p class="ok">One generator, many consumers.</p>
+</div>
+
+<h2>9. Now create a release</h2>
+<p>Once testing succeeds, the instructor is ready to publish the Action. GitHub offers a Marketplace publishing/release path when the repository has the expected Action files.</p>
+
+<h3>Release checklist</h3>
+<ul>
+<li>Choose Marketplace categories.</li>
+<li>Create a Git tag.</li>
+<li>Use a version-style tag beginning with <code>v</code>, such as <code>v1.0</code>.</li>
+<li>Choose the release target, here the <code>main</code> branch.</li>
+<li>Add release notes if desired.</li>
+<li>Optionally use GitHub's release-note generation feature.</li>
+<li>Mark it as a pre-release if it is not production-ready.</li>
+<li>Publish the release.</li>
+</ul>
+
+<h2>10. What does the Git tag do?</h2>
+<div class="card">
+<p><strong>Tag:</strong> a named Git reference attached to a particular point in repository history.</p>
+<pre>v1.0</pre>
+<p>When another project references a released version, it can target that specific version instead of blindly following the moving <code>main</code> branch.</p>
+</div>
+
+<h2>11. Why releases matter for Actions</h2>
+<table><tr><th>During testing</th><th>After release</th></tr>
+<tr><td>Use <code>@main</code> or another development branch.</td><td>Consumers can use a stable version/tag.</td></tr>
+<tr><td>Code may still change.</td><td>A release identifies a specific version.</td></tr>
+<tr><td>Useful for debugging and iteration.</td><td>Useful for reliable reuse and Marketplace publication.</td></tr></table>
+
+<h2>12. Marketplace information</h2>
+<p>The instructor updates the repository's About section with a description, optional website URL, and topics such as podcast, feed, XML, RSS, Python, and GitHub Actions. The README should explain what the Action does and how another project uses it.</p>
+<p>The course README also explicitly says that the repository teaches publishing a Marketplace Action and that the repository's branches correspond to course videos. fileciteturn15file0L2-L2</p>
+
+<h2>13. What the README should teach</h2>
+<div class="grid">
+<div class="card"><h3>What?</h3><p>Explain what the Action automates.</p></div>
+<div class="card"><h3>Input</h3><p>Show the YAML/configuration another project must provide.</p></div>
+<div class="card"><h3>Workflow</h3><p>Show the workflow step that calls the Action.</p></div>
+<div class="card"><h3>Example</h3><p>Give a practical usage example so a new user can reproduce the setup.</p></div>
+</div>
+
+<h2>14. Full course mental model</h2>
+<pre>1. Calling repository
+   └── workflow main.yml
+          │
+          │ uses OWNER/podcast-generator@REF
+          ▼
+2. Generator repository
+   ├── action.yml       → describes the Action
+   ├── Dockerfile       → builds the execution environment
+   ├── entrypoint.sh    → runs the commands
+   └── feed.py          → generates podcast feed
+          │
+          ▼
+3. Generated podcast.xml
+          │
+          ▼
+4. Git commit + push
+          │
+          ▼
+5. Calling repository is updated</pre>
+
+<h2>15. Testing vs releasing</h2>
+<table><tr><th>Testing</th><th>Release</th></tr>
+<tr><td>Goal: prove the Action works.</td><td>Goal: publish a usable version.</td></tr>
+<tr><td>Find runtime/configuration errors.</td><td>Create a versioned Git tag.</td></tr>
+<tr><td>Fix permissions and rerun.</td><td>Publish release and Marketplace information.</td></tr>
+<tr><td>Validate generated output.</td><td>Document how others consume it.</td></tr></table>
+
+<h2>16. Exam / interview memory points</h2>
+<div class="exam">
+<ul>
+<li><strong>Why test before Marketplace?</strong> Publishing a broken Action gives consumers a broken automation workflow.</li>
+<li><strong>What does “permission denied” on entrypoint.sh mean?</strong> The script is not executable with the required permissions.</li>
+<li><strong>Command used in the lesson?</strong> <code>chmod -R 775 entrypoint.sh</code>.</li>
+<li><strong>How do you call an unreleased repository Action?</strong> Use <code>OWNER/REPO@BRANCH</code>, for example <code>OWNER/podcast-generator@main</code>.</li>
+<li><strong>Why create a release?</strong> To provide a specific version/tag that other projects can reference.</li>
+<li><strong>Example release tag?</strong> <code>v1.0</code>.</li>
+<li><strong>What does the generator ultimately update?</strong> The generated podcast feed in the calling repository.</li>
+</ul>
+</div>
+
+<h2>17. 30-second understanding test</h2>
+<div class="card">
+<p><strong>Q:</strong> Why does the calling repository become much simpler?</p>
+<p><strong>A:</strong> Because the reusable generator Action contains the Docker environment and generation logic, so the calling workflow only needs to check out its files and invoke the Action.</p>
+<p><strong>Q:</strong> Why did the first test fail?</p>
+<p><strong>A:</strong> <code>entrypoint.sh</code> lacked executable permission.</p>
+<p><strong>Q:</strong> What changed after the fix?</p>
+<p><strong>A:</strong> The Action could execute the entry point, generate the feed, and push the updated result.</p>
+<p><strong>Q:</strong> Why move from <code>@main</code> to a release/tag concept?</p>
+<p><strong>A:</strong> A release gives consumers a stable, identifiable version instead of depending on a moving development branch.</p>
+</div>
+
+<h2>18. Repo accuracy note</h2>
+<div class="note">
+<p>The current repository metadata confirms the course structure and branch convention. fileciteturn15file0L2-L2 The currently exposed <code>main</code> workflow is <code>Copy To Branches</code>, using <code>actions/checkout@v2</code> and <code>planetoftheweb/copy-to-branches@v1.2</code>. fileciteturn18file0L2-L6</p>
+<p>So this HTML deliberately does <strong>not</strong> pretend that the historical <code>podcast-test</code>, <code>podcast-generator</code>, or <code>entrypoint.sh</code> files are present in today's <code>main</code>. The transcript's commands and lesson flow are preserved, while repository-specific code is only presented as verified when it is actually exposed by the repo.</p>
+</div>
+
+<h2>19. Final mental picture</h2>
+<div class="flow">
+BUILD → TEST → FIX → RERUN → VERIFY OUTPUT → TAG VERSION → RELEASE → REUSE
+</div>
+<p class="lead">That is the whole story of these two videos: first prove the Action works in a real consuming repository, then package that working state as a version that other projects can safely reference.</p>
+</main>
+</body>
+</html>

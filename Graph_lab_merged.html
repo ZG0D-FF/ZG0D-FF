@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Graph lab: BFS, DFS, multi-source BFS, topological sort, shortest paths, MST and DSU</title>
+<style>
+:root{--bg:#eceff3;--stage:#e2e7ee;--panel:#f7f8fa;--ink:#161b22;--mute:#5d6673;--line:#cfd6e0;--acc:#2450c8;--hl:#dbe5fb;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1217;--stage:#0a0d11;--panel:#151b23;--ink:#e6eaf0;--mute:#8d98a8;--line:#27303c;--acc:#7aa2ff;--hl:#1f2d4d}}
+:root[data-theme="dark"]{--bg:#0e1217;--stage:#0a0d11;--panel:#151b23;--ink:#e6eaf0;--mute:#8d98a8;--line:#27303c;--acc:#7aa2ff;--hl:#1f2d4d}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 Georgia,"Iowan Old Style",Palatino,serif;display:grid;grid-template-columns:minmax(0,1fr) 410px;grid-template-rows:auto 1fr;height:100vh;height:100dvh}
+header{grid-column:1/3;padding:8px 16px;border-bottom:1px solid var(--line);display:flex;gap:6px 14px;align-items:center;flex-wrap:wrap}
+h1{font-size:17px;margin:0 8px 0 0;font-weight:600}
+nav{display:flex;gap:4px;flex-wrap:wrap}nav button{border-radius:3px;padding:4px 10px}nav button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+#left{display:flex;flex-direction:column;min-height:0;min-width:0}
+#stage{flex:1;min-height:260px;position:relative;background:var(--stage);cursor:grab;overflow:hidden}
+#stage canvas{display:block;width:100%;height:100%}
+#nogl{display:none;position:absolute;inset:0;padding:30px;color:var(--mute)}
+#legend{position:absolute;left:12px;top:10px;display:flex;gap:12px;flex-wrap:wrap;font:12px ui-monospace,Menlo,monospace;color:var(--mute);pointer-events:none}
+#legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+#hint{position:absolute;right:12px;bottom:8px;font-size:12px;color:var(--mute)}
+#ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:9px 16px;border-top:1px solid var(--line);background:var(--panel);font:13px system-ui,sans-serif}
+button,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--acc)}button.p{background:var(--acc);border-color:var(--acc);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+label{color:var(--mute);display:flex;gap:6px;align-items:center}
+#side{overflow:auto;border-left:1px solid var(--line);background:var(--panel);padding:14px 18px 30px;min-height:0}
+#side h2{font-size:14px;margin:16px 0 5px;font-weight:700}#side h2:first-child{margin-top:0}
+#side p{margin:4px 0}.m{color:var(--mute)}
+#op{border-left:3px solid var(--acc);padding:4px 10px;background:var(--hl);min-height:48px}
+pre{font:12.5px/1.5 ui-monospace,Menlo,monospace;margin:0;overflow:auto;background:var(--bg);border:1px solid var(--line);padding:6px 0}
+pre span{display:block;padding:0 10px;white-space:pre}pre span.on{background:var(--hl);box-shadow:inset 3px 0 var(--acc)}
+table{border-collapse:collapse;font:12.5px ui-monospace,Menlo,monospace;width:100%}
+td,th{border:1px solid var(--line);padding:2px 6px;text-align:center}th{font-weight:600;background:var(--bg)}
+tr.cur td,td.hl{background:var(--hl)}td.kc{background:var(--line)}
+details{margin-top:12px;border-top:1px solid var(--line);padding-top:6px}summary{cursor:pointer;font-weight:700;font-size:14px}
+.tag{font:11px system-ui,sans-serif;color:var(--mute);border:1px solid var(--line);padding:0 5px;border-radius:3px;margin-left:6px}
+.g{border-bottom:1px dotted var(--mute);cursor:help}.g:focus-visible{outline:2px solid var(--acc);outline-offset:1px;border-radius:2px}
+#tip{position:fixed;z-index:20;max-width:280px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-left:3px solid var(--acc);padding:6px 9px;font:13px/1.4 system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.18);pointer-events:none}#tip[hidden]{display:none}
+#side h3{font:600 11px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:16px 0 4px}
+#side ol,#side ul{margin:4px 0;padding-left:20px}#side li{margin:3px 0}
+.cp{font:11px system-ui,sans-serif;padding:1px 8px;margin-left:8px;font-weight:400}
+pre span[data-i]{cursor:pointer}pre span[data-i]:hover{background:var(--line)}pre span[data-i]:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.rd{border-left:3px solid var(--acc);padding:2px 10px;margin:4px 0}
+@media (max-width:900px){body{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto}header{grid-column:1}#left{height:80vh}#side{border-left:0}}
+</style></head><body>
+<header><h1>Graph lab</h1><nav id="nav"></nav></header>
+<div id="left">
+ <div id="stage"><div id="legend"></div><div id="nogl"></div><div id="hint">Drag to rotate · scroll to zoom · click a vertex to set the source (where it applies)</div></div>
+ <div id="ctl">
+  <button id="bReset">Reset</button><button id="bBack">Step back</button><button id="bPlay" class="p">Play</button><button id="bStep">Step</button>
+  <label>Speed <input id="spd" type="range" min="1" max="10" value="5"></label>
+  <label id="vlab">Variant <select id="vSel"></select></label>
+  <label>Graph <select id="gSel"></select></label>
+  <label id="llab" style="display:none"><input id="lay" type="checkbox"> Layer by distance</label>
+  <span id="stepno" class="m"></span>
+ </div>
+</div>
+<aside id="side">
+ <h2 id="mtitle"></h2><p class="m" style="font:12px system-ui,sans-serif;margin:0 0 4px">Dotted terms: hover, focus or tap for a definition.</p>
+ <h3>Concept at a glance</h3><p id="concept"></p>
+ <h3>Basic definition <span class="tag">composed from your notes</span></h3><p id="def"></p>
+ <h2>What is happening now</h2><div id="op"></div><p id="why" class="m"></p>
+ <h3>How it works <span class="tag">composed from your notes</span></h3><ol id="how"></ol>
+ <h2>Pseudocode <span class="tag">from your notes</span><button class="cp" id="cpPc" type="button">Copy</button></h2><p class="m" style="font:12px system-ui,sans-serif;margin:0 0 4px">Click a line to jump to the next simulation step that executes it.</p><pre id="pc"></pre>
+ <h2>State</h2><div id="tbl"></div>
+ <details open><summary>Complexity</summary><div id="cx"></div></details>
+ <details open><summary>Exam answer <span class="tag">composed from your notes</span></summary><button class="cp" id="cpAns" type="button" style="margin:6px 0 0">Copy full answer</button><div id="ans"></div></details>
+ <details><summary>Exam connection</summary><div id="exam"></div></details>
+ <details open><summary>Quick revision</summary><div id="rev"></div></details>
+ <details><summary>Graph definition and adjacency</summary><pre id="gdef" style="padding:6px 10px"></pre></details>
+ <details><summary>Supplementary (not in your notes)</summary><p>Everything in grey under “What is happening now”, the colouring of components in Kruskal’s algorithm, the three-colour reading of DFS (unvisited, in progress, finished), BFS’s “Layer by distance” view and the “already visited” skip explanation are teaching aids added to explain the mechanism. Sections tagged “composed from your notes” (basic definition, how it works, exam answer, quick revision) and “added explanation” (why the complexity is what it is, common mistakes) rephrase or organise statements already in your notes; the glossary tooltips are added reading aids.</p></details>
+</aside>
+<div id="tip" role="tooltip" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),INF=99999,f=x=>x>=INF?'∞':x;
+/* ---------- graph builders ---------- */
+function mkG(name,n,E,P,o={}){const G={name,n,E,P,dir:!!o.dir,w:!!o.w,adj:o.adj||null,lab:o.lab||null};
+ if(!G.adj){G.adj=Array.from({length:n},()=>[]);E.forEach(([a,b,w],i)=>{G.adj[a].push([b,w??1,i]);if(!G.dir)G.adj[b].push([a,w??1,i])});G.adj.forEach(l=>l.sort((x,y)=>x[0]-y[0]))}
+ return G}
+function gridG(name,rows){const R=rows.length,C=rows[0].length,id={},P=[],cells=[];let n=0;
+ rows.forEach((r,i)=>[...r].forEach((ch,j)=>{if(ch!=='X'){id[i+','+j]=n++;P.push([(j-(C-1)/2)*2.3,((R-1)/2-i)*2.3,0]);cells.push([i,j,ch])}}));
+ const E=[],adj=Array.from({length:n},()=>[]),eid=(a,b)=>E.findIndex(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a));
+ cells.forEach(([i,j],a)=>[[i,j+1],[i+1,j]].forEach(([y,x])=>{const b=id[y+','+x];if(b!==undefined)E.push([a,b])}));
+ cells.forEach(([i,j],a)=>[[-1,0],[1,0],[0,-1],[0,1]].forEach(([dy,dx])=>{const b=id[(i+dy)+','+(j+dx)];if(b!==undefined)adj[a].push([b,1,eid(a,b)])}));
+ const G=mkG(name,n,E,P,{adj,lab:cells.map(c=>c[0]+','+c[1])});G.src=cells.map((c,i)=>c[2]==='S'?i:-1).filter(i=>i>=0);G.rot=rows.some(r=>r.includes('F'));return G}
+const UN=mkG('Notes graph (V=5)',5,[[0,1],[0,2],[1,2],[2,3],[2,4]],[[-3.5,.5,0],[-1.5,2.2,1.2],[0,-.2,0],[2.6,1.8,-1.2],[2.8,-1.8,1]]);
+const UD=mkG('Disconnected (V=7)',7,[[0,1],[0,2],[1,2],[2,3],[2,4],[5,6]],[[-3.5,.5,0],[-1.5,2.2,1.2],[0,-.2,0],[2.6,1.8,-1.2],[2.8,-1.8,1],[-3.8,-2.2,-1],[-1.8,-2.4,.8]]);
+const UL=mkG('Levels with cycles (V=8)',8,[[0,1],[0,2],[0,3],[1,4],[2,4],[3,5],[4,6],[5,6],[6,7]],[[-4,0,0],[-2,2,1],[-2,0,-1.5],[-2,-2,1],[.3,1,0],[.3,-2,-.5],[2.5,0,.5],[4.2,1.2,-.5]]);
+const TP=[[-.5,-2.2,-.5],[3.5,-1.2,1],[-.5,2,1],[2,1,-1],[-3,-1.5,.5],[-3,1.5,0]];
+const TD=mkG('DAG from notes (V=6)',6,[[5,2],[5,0],[4,0],[4,1],[2,3],[3,1]],TP,{dir:true});
+const TC=mkG('Same DAG plus edge 3→5 (cycle)',6,[[5,2],[5,0],[4,0],[4,1],[2,3],[3,1],[3,5]],TP,{dir:true});
+const W1=mkG('Notes graph (a path, V=5)',5,[[0,1,4],[1,2,8],[2,3,7],[3,4,9]],[[-5,0,0],[-2.5,1,1],[0,-.5,0],[2.5,1,-1],[5,0,.5]],{w:true});
+const W2=mkG('Relaxation graph (V=6)',6,[[0,1,7],[0,2,9],[0,5,14],[1,2,10],[1,3,15],[2,3,11],[2,5,2],[3,4,6],[4,5,9]],[[-4,0,0],[-2,2.2,1],[-1,-.5,-1],[2,1.8,0],[4,-1,1],[0,-2.5,1]],{w:true});
+const BF=mkG('Notes graph (negative edges)',5,[[0,1,-1],[0,2,4],[1,2,3],[1,3,2],[1,4,2],[3,2,5],[3,1,1],[4,3,-3]],[[-4.5,0,0],[-1.5,1.6,1],[0,-1.8,-1],[2.5,1,0],[4.8,-1,1]],{dir:true,w:true});
+const BN=mkG('Negative cycle 0→1→2→0 (V=4)',4,[[0,1,1],[1,2,-1],[2,0,-1],[2,3,2]],[[-3,0,0],[-.5,2,1],[1.5,-1.5,-1],[4,0,1]],{dir:true,w:true});
+const FW1=mkG('Notes graph (V=4)',4,[[0,1,5],[1,2,3],[2,3,1],[0,3,10]],[[-3,2,0],[3,2,0],[3,-1.5,1],[-3,-1.5,-1]],{dir:true,w:true});
+const FW2=mkG('Shortcut graph (V=4)',4,[[0,1,3],[0,2,10],[1,2,2],[2,3,1],[1,3,8]],[[-3,2,0],[3,2,0],[3,-1.5,1],[-3,-1.5,-1]],{dir:true,w:true});
+const K1=mkG('Notes Kruskal graph (V=6, 6 unique edges)',6,[[0,1,4],[0,2,4],[1,2,2],[2,3,3],[3,4,2],[4,5,6]],[[-4,0,0],[-2,2,1],[-1.5,-1,-1],[1,1,0],[3,-1,1],[5,1,-1]],{w:true});
+const K2=mkG('Notes Prim graph (V=5)',5,[[0,1,2],[0,3,6],[1,2,3],[1,3,8],[1,4,5],[2,4,7],[3,4,9]],[[-3.5,0,0],[-1,2,1],[1.5,2,-1],[-1.5,-2,-1],[2,-1.5,1]],{w:true});
+const GD=gridG('Distance grid (notes, 3×3)',['S..','...','..S']),GR=gridG('Rotten oranges (notes, 3×3)',['SFF','FFX','XFF']);
+/* ---------- snapshot helpers ---------- */
+function ctx(G){const st={vc:Array(G.n).fill('un'),ec:{},vl:Array(G.n).fill(''),strip:{t:'',items:[],hl:[]},tbl:'',ly:null},out=[];
+ return{st,out,sn:(line,msg,why)=>out.push(JSON.parse(JSON.stringify({vc:st.vc,ec:st.ec,vl:st.vl,strip:st.strip,tbl:st.tbl,ly:st.ly,line,msg,why})))}}
+const tabl=(h,rows,hr=-1)=>'<table><tr>'+h.map(x=>`<th>${x}</th>`).join('')+'</tr>'+rows.map((r,i)=>`<tr class="${i===hr?'cur':''}">`+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</table>';
+const fwT=(D,i,j,k)=>'<table><tr><th></th>'+D.map((_,c)=>`<th>${c}</th>`).join('')+'</tr>'+D.map((r,a)=>`<tr><th>${a}</th>`+r.map((x,b)=>`<td class="${a===i&&b===j?'hl':(a===i&&b===k)||(a===k&&b===j)?'kc':''}">${f(x)}</td>`).join('')+'</tr>').join('')+'</table>';
+/* ---------- algorithms ---------- */
+function bfsAlgo(G,src,v){const{st,out,sn}=ctx(G),n=G.n,vis=Array(n).fill(false),dist=Array(n).fill(-1),par=Array(n).fill(-1),done=[],order=[];let q=[],cur=-1,checks=0,enq=0,comp=0;
+ const paint=()=>{for(let u=0;u<n;u++){st.vc[u]=cur===u?'cur':done.includes(u)?'done':vis[u]?'fr':'un';st.vl[u]=dist[u]>=0?'d='+dist[u]:''}st.ly=dist.slice();
+  st.strip={t:'queue (front at left)',items:q.map(String),hl:q.length?[0]:[]};
+  st.tbl=tabl(['v','visited','dist','parent','state'],Array.from({length:n},(_,u)=>[u,vis[u],dist[u]<0?'∞':dist[u],par[u]<0?'–':par[u],cur===u?'current':done.includes(u)?'done':vis[u]?'in queue':'unvisited']),cur)+`<p><b>Queue</b> (front → rear): [ ${q.join(', ')} ]</p><p class="m">enqueues ${enq} · edge checks ${checks} · components ${comp}</p>`};
+ const snp=(line,msg,why)=>{paint();sn(line,msg,why)};
+ snp(-1,'Initial state: nothing visited, queue empty. Source = '+src+(v==='all'?' (all-components mode starts at vertex 0 and loops over every vertex).':'.'),'Every vertex starts unvisited with unknown distance. The visited marker is what protects BFS from cycles.');
+ const run=s=>{comp++;vis[s]=true;dist[s]=0;
+  snp(2,`Mark ${s} visited, dist[${s}] = 0.`,'The source is marked when it is enqueued, not when it is dequeued, so it can never be added twice.');
+  q.push(s);enq++;
+  snp(3,`Enqueue ${s}. Queue = [${q}].`,'The queue now holds the whole frontier: here only the source.');
+  while(q.length){const u=q.shift();cur=u;
+   snp(5,`Dequeue ${u} (front of queue).`,'FIFO: the vertex that has waited longest leaves first. This is why vertices come out in non-decreasing distance.');
+   order.push(u);
+   snp(6,`Process ${u}. Visit order so far: ${order.join(' → ')}.`,`${u} is the current vertex. Its neighbours ${G.adj[u].length?'['+G.adj[u].map(a=>a[0])+']':'(none)'} are scanned next.`);
+   for(const[w,,ei]of G.adj[u]){checks++;const pv=st.ec[ei];st.ec[ei]='cur';
+    if(vis[w]){snp(8,`Neighbour ${w}: already visited, skip.`,'Enqueueing it again would create duplicates and, on a cycle, loop forever.');if(pv)st.ec[ei]=pv;else delete st.ec[ei]}
+    else{vis[w]=true;dist[w]=dist[u]+1;par[w]=u;q.push(w);enq++;
+     snp(10,`Neighbour ${w}: unvisited. Mark visited, dist[${w}] = ${dist[w]}, enqueue. Queue = [${q}].`,`First time reached, so this is the fewest-edge path: dist[${w}] = dist[${u}] + 1 and it is final.`);st.ec[ei]='done'}}
+   done.push(u);cur=-1;
+   snp(4,`${u} finished. Queue = [${q}].`,q.length?'Back to the while-test: queue is not empty, so repeat.':'Queue is empty, so this component is fully explored.')}};
+ if(v!=='all')run(src);
+ else for(let s=0;s<n;s++){if(vis[s])snp(11,`Outer loop: vertex ${s} already visited, skip.`,'Reached earlier by another BFS in the same component.');else{snp(11,`Outer loop: vertex ${s} is unvisited, start a fresh BFS (component ${comp+1}).`,'A new unvisited vertex means a separate connected component.');run(s)}}
+ snp(-1,`BFS complete. Order: ${order.join(' → ')}. Enqueues = ${enq} (= vertices reached), edge checks = ${checks} (= 2E for the reached part).`,'Linear in V + E: every vertex enqueued once, every edge examined from both ends.');return out}
+const adjB=G=>{const M=Array.from({length:G.n},()=>Array(G.n).fill(0));G.E.forEach(([a,b])=>{M[a][b]=M[b][a]=1});return G.adj.map((l,i)=>`${i}: [${l.map(a=>a[0]).join(', ')}]`).join('\n')+'\n\n   '+[...Array(G.n).keys()].join(' ')+'\n'+M.map((r,i)=>i+' |'+r.join(' ')).join('\n')};
+function dfsAlgo(G,src,v){const{st,out,sn}=ctx(G),n=G.n,vis=Array(n).fill(false),disc=Array(n).fill(0),fin=Array(n).fill(0),par=Array(n).fill(-1),order=[];let t=0,stack=[];
+ const tb=()=>{st.tbl=tabl(['v','disc','fin'],Array.from({length:n},(_,i)=>[i,disc[i]||'–',fin[i]||'–']))},ss=x=>{st.strip={t:x,items:stack.map(String),hl:stack.length?[stack.length-1]:[]}};
+ const paint=cur=>{for(let u=0;u<n;u++)st.vc[u]=u===cur?'cur':vis[u]&&order.includes(u)?'done':stack.includes(u)?'fr':'un'};
+ if(v==='rec'||v==='recAll'){
+  const visit=u=>{vis[u]=true;disc[u]=++t;order.push(u);stack.push(u);st.vc[u]='cur';st.vl[u]=disc[u]+'/';ss('call stack (top at right)');tb();
+   sn(2,`DFS(${u}): mark visited, process. disc[${u}] = ${t}. Call stack = [${stack}].`,'Each recursive call is a stack frame, so the call stack is the DFS stack.');
+   for(const[w,,ei]of G.adj[u]){
+    if(!vis[w]){st.ec[ei]='cur';st.vc[u]='fr';sn(5,`Neighbour ${w} of ${u} is unvisited: recurse into it.`,'Go as deep as possible along one path before looking at other neighbours.');st.ec[ei]='done';visit(w);st.vc[u]='cur';sn(3,`Back in ${u} after returning from ${w}. Try the next neighbour.`,'Backtracking: the callee returned, so its frame left the stack.')}
+    else{if(!st.ec[ei])st.ec[ei]='rej';sn(4,`Neighbour ${w} of ${u} already visited: skip.`,'The visited marker stops DFS looping on cycles. An edge to an already-visited vertex is not a tree edge.')}}
+   fin[u]=++t;stack.pop();st.vc[u]='done';st.vl[u]=disc[u]+'/'+fin[u];ss('call stack (top at right)');tb();
+   sn(3,`${u} has no unvisited neighbours left: finish (fin[${u}] = ${t}) and backtrack.`,'Finish time is assigned when every descendant is done.')};
+  sn(-1,'Initial state. Labels will read disc/fin. '+(v==='recAll'?'Outer loop covers all components.':'Source = '+src+'.'),'Discovery and finish times power cycle detection and topological sort.');
+  if(v==='rec')visit(src);else for(let s=0;s<n;s++){if(vis[s])continue;sn(6,`Outer loop: vertex ${s} unvisited, start a fresh DFS.`,'A new unvisited vertex means a new component.');visit(s)}
+ }else{
+  const C=v==='itC',pr=()=>{ss('explicit stack (top at right)')};
+  sn(-1,'Initial state. '+(C?'Marks a vertex visited when it is popped (your C code).':'Marks a vertex visited when it is pushed (your pseudocode).'),'The two iterative forms can build different DFS trees. Watch which parent each vertex gets.');
+  stack=[src];if(!C){vis[src]=true}paint(-1);pr();sn(1,`Push ${src}. Stack = [${stack}].`,'The explicit stack replaces the recursion call stack.');
+  while(stack.length){const u=stack.pop();
+   if(C&&vis[u]){paint(-1);pr();sn(4,`Pop ${u}: already visited, discard.`,'Pushing without marking can leave duplicates in the stack, so the check happens on pop.');continue}
+   vis[u]=true;order.push(u);disc[u]=++t;if(par[u]>=0){const ei=G.adj[u].find(a=>a[0]===par[u])[2];st.ec[ei]='done'}
+   paint(u);pr();tb();sn(C?5:5,`Pop ${u} and process it. Order so far: ${order.join(' → ')}.`,'LIFO: the most recently pushed vertex is explored first, which is what makes the search go deep.');
+   for(let i=G.adj[u].length-1;i>=0;i--){const w=G.adj[u][i][0];
+    if(!vis[w]){if(C||true){par[w]=u}if(!C)vis[w]=true;stack.push(w);paint(u);pr();sn(C?8:9,`Push ${w} (neighbours are pushed in reverse so the first listed is popped first). Stack = [${stack}].`,C?'Not yet marked: it is only marked when popped.':`Marked at push time, so its parent is fixed as ${u} even if a deeper path could reach it first.`)}}}
+  paint(-1);pr();
+ }
+ tb();sn(-1,`DFS complete. Order: ${order.join(' → ')}. One path was always followed to its end before backtracking.`,'Time O(V + E): each vertex visited once, each adjacency entry examined once.');return out}
+function multi(G){const{st,out,sn}=ctx(G),n=G.n,vis=Array(n).fill(false),d=Array(n).fill(-1);let q=[],done=[],cur=-1,mx=0;
+ const paint=()=>{for(let v=0;v<n;v++){st.vc[v]=v===cur?'cur':done.includes(v)?'done':vis[v]?'fr':'un';st.vl[v]=d[v]>=0?'d='+d[v]:''}st.strip={t:'queue (front at left)',items:q.map(v=>G.lab[v]+':'+d[v]),hl:q.length?[0]:[]};
+  st.tbl=tabl(['cell','dist','state'],Array.from({length:n},(_,v)=>[G.lab[v],d[v]<0?'–':d[v],v===cur?'current':done.includes(v)?'done':vis[v]?'queued':'unvisited']),cur)};
+ paint();sn(-1,`Grid graph: each non-empty cell is a vertex joined to its 4 neighbours. Cell labels are row,col. Sources: ${G.src.map(s=>G.lab[s]).join(' and ')}.`,'Cells marked empty in the notes (0) are not vertices.');
+ G.src.forEach(s=>{vis[s]=true;d[s]=0;q.push(s)});paint();sn(0,`Push ALL sources into the queue at distance 0: [${q.map(v=>G.lab[v])}].`,'All sources start on the same footing, so the queue still yields vertices in globally increasing distance to the nearest source.');
+ while(q.length){const u=q.shift();cur=u;paint();sn(2,`Dequeue ${G.lab[u]} (dist ${d[u]}).`,'FIFO again: the wavefronts from every source advance together, one level per round.');
+  for(const[w,,ei]of G.adj[u]){if(!vis[w]){vis[w]=true;d[w]=d[u]+1;mx=Math.max(mx,d[w]);q.push(w);st.ec[ei]='done';paint();sn(5,`Neighbour ${G.lab[w]} unvisited: dist = ${d[u]} + 1 = ${d[w]}, enqueue.`,'The first time a cell is reached is by its nearest source, so this distance is final.')}}
+  done.push(u);cur=-1;paint();sn(1,`${G.lab[u]} finished.`,'')}
+ paint();sn(6,G.rot?`Queue empty. Every fresh orange rotted. Minutes required = max dist = ${mx}.`:`Queue empty. Every cell holds its distance to the nearest source. Largest distance = ${mx}.`,'One pass of O(V + E) replaces one BFS per source, which would cost O(k·(V+E)).');return out}
+function topoDfs(G){const{st,out,sn}=ctx(G),n=G.n,col=Array(n).fill(0);let stk=[],stop=false;
+ const paint=()=>{st.strip={t:'output stack (push AFTER descendants finish)',items:stk.map(String),hl:stk.length?[stk.length-1]:[]};st.tbl=tabl(['v','colour'],col.map((c,i)=>[i,['white (unvisited)','grey (in progress)','black (finished)'][c]]))};
+ const util=u=>{col[u]=1;st.vc[u]='cur';paint();sn(4,`dfsUtil(${u}): mark ${u} visited (grey, in progress).`,'');
+  for(const[w,,ei]of G.adj[u]){if(stop)return;
+   if(col[w]===0){st.ec[ei]='cur';st.vc[u]='fr';sn(6,`Edge ${u} → ${w}: ${w} unvisited, recurse.`,'');st.ec[ei]='done';util(w);if(stop)return;st.vc[u]='cur'}
+   else if(col[w]===1){st.ec[ei]='rej';sn(6,`Edge ${u} → ${w}: ${w} is grey (still on the recursion stack). Back edge, so there is a cycle and no valid topological order.`,'A grey vertex means we came back to an ancestor: a cycle in a directed graph.');stop=true;return}
+   else{sn(6,`Edge ${u} → ${w}: ${w} already finished (black), skip.`,'Visited but finished is not a cycle in a directed graph.')}}
+  col[u]=2;stk.push(u);st.vc[u]='done';paint();sn(7,`All descendants of ${u} are done: push ${u}. Stack = [${stk}].`,'u finishes after everything reachable from it, so it ends up below those vertices on the stack and comes out after them when popped.')};
+ sn(-1,'Initial state: all vertices white.','');for(let u=0;u<n&&!stop;u++)if(col[u]===0){sn(1,`Outer loop: ${u} unvisited, call dfsUtil(${u}).`,'');util(u)}
+ if(!stop){paint();sn(2,`Pop the whole stack: topological order = ${[...stk].reverse().join(' → ')}.`,'Every edge u → v has u before v in this order.')}return out}
+function kahn(G){const{st,out,sn}=ctx(G),n=G.n,ind=Array(n).fill(0),res=[];let q=[];G.E.forEach(e=>ind[e[1]]++);
+ const paint=cur=>{for(let v=0;v<n;v++){st.vc[v]=v===cur?'cur':res.includes(v)?'done':q.includes(v)?'fr':'un';st.vl[v]='in='+ind[v]}st.strip={t:'queue (front at left)',items:q.map(String),hl:q.length?[0]:[]};st.tbl=tabl(['v','in-degree','output'],ind.map((x,i)=>[i,x,res.includes(i)?'yes':'–']))};
+ paint(-1);sn(0,'Compute the in-degree of every vertex (number of incoming edges).','In-degree 0 means no unprocessed prerequisite is left.');
+ q=G.adj.map((_,i)=>i).filter(i=>ind[i]===0);paint(-1);sn(1,`Enqueue every vertex with in-degree 0: [${q}].`,'These can safely come first.');
+ while(q.length){const u=q.shift();res.push(u);paint(u);sn(3,`Dequeue ${u} and append it to the result: [${res}].`,'');
+  for(const[w,,ei]of G.adj[u]){ind[w]--;st.ec[ei]='done';let m=`Remove edge ${u} → ${w}: in-degree[${w}] = ${ind[w]}.`;if(ind[w]===0){q.push(w);m+=` It reached 0: enqueue ${w}.`}paint(u);sn(6,m,'Removing the edge means the prerequisite u has been satisfied.')}}
+ paint(-1);if(res.length!==n){G.adj.forEach((_,i)=>{if(!res.includes(i))st.vc[i]='rej'});sn(8,`Result has ${res.length} of ${n} vertices: the graph has a cycle, no valid topological order.`,'The vertices on the cycle never reach in-degree 0.')}
+ else sn(8,`Result has all ${n} vertices. Topological order: ${res.join(' → ')}.`,'Cycle detection comes for free with this method.');return out}
+function dijk(G,src){const{st,out,sn}=ctx(G),n=G.n,d=Array(n).fill(INF),vis=Array(n).fill(false),par=Array(n).fill(-1),pe=Array(n).fill(-1);d[src]=0;
+ const paint=u=>{for(let v=0;v<n;v++){st.vc[v]=v===u?'cur':vis[v]?'done':d[v]<INF?'fr':'un';st.vl[v]='d='+f(d[v])}st.strip={t:'dist[] (chosen vertex highlighted)',items:d.map((x,i)=>i+':'+f(x)),hl:u<0?[]:[u]};st.tbl=tabl(['v','dist','parent','final'],d.map((x,i)=>[i,f(x),par[i]<0?'–':par[i],vis[i]?'yes':'no']),u)};
+ paint(-1);sn(1,`dist[] = ∞ everywhere except dist[${src}] = 0.`,'Dijkstra expands the closest unfinalised vertex, like BFS with a min-priority selection instead of FIFO.');
+ for(let c=0;c<n;c++){let u=-1,m=INF+1;for(let v=0;v<n;v++)if(!vis[v]&&d[v]<m){m=d[v];u=v}
+  if(u<0||d[u]>=INF){paint(-1);sn(3,'Remaining vertices are unreachable (∞). Stop.','');break}
+  vis[u]=true;if(pe[u]>=0)st.ec[pe[u]]='done';paint(u);sn(3,`Pick the unvisited vertex with minimum dist: ${u} (dist ${d[u]}). Finalise it.`,'With non-negative weights no later path can be shorter, so this distance is final. That is why negative edges break it.');
+  for(const[w,wt,ei]of G.adj[u]){if(vis[w])continue;const old=st.ec[ei];st.ec[ei]='cur';paint(u);const nd=d[u]+wt;sn(6,`Relax edge ${u}–${w}: dist[${u}] + ${wt} = ${nd} versus dist[${w}] = ${f(d[w])}.`,'');
+   if(nd<d[w]){const od=d[w];if(pe[w]>=0)delete st.ec[pe[w]];d[w]=nd;par[w]=u;pe[w]=ei;st.ec[ei]='fr';paint(u);sn(7,`${nd} < ${f(od)}: update dist[${w}] = ${nd}, parent = ${u}.`,'A shorter route through u was found.')}else{if(old)st.ec[ei]=old;else delete st.ec[ei]}}}
+ paint(-1);sn(-1,`Done. Shortest distances from ${src}: [${d.map(f)}].`,'Array selection gives O(V²); a min-heap with adjacency lists gives O((V+E) log V).');return out}
+function bell(G,src){const{st,out,sn}=ctx(G),n=G.n,d=Array(n).fill(INF),pe=Array(n).fill(-1);d[src]=0;
+ const paint=(a)=>{for(let v=0;v<n;v++){st.vc[v]=d[v]<INF?'fr':'un';st.vl[v]='d='+f(d[v])}if(a>=0)st.vc[a]='cur';st.strip={t:'dist[]',items:d.map((x,i)=>i+':'+f(x)),hl:[]};st.tbl=tabl(['v','dist'],d.map((x,i)=>[i,f(x)]))};
+ paint(-1);sn(0,`dist[] = ∞ except dist[${src}] = 0.`,'The longest simple path has at most V − 1 edges, so V − 1 rounds of relaxing every edge are enough.');
+ for(let r=1;r<n;r++){let ch=false;for(let j=0;j<G.E.length;j++){const[a,b,w]=G.E[j];const pv=st.ec[j];st.ec[j]='cur';paint(a);let ok=d[a]<INF&&d[a]+w<d[b];
+   const m=`Round ${r}, edge ${a} → ${b} (w = ${w}): dist[${a}] + ${w} = ${d[a]<INF?d[a]+w:'∞'} versus dist[${b}] = ${f(d[b])}. ${ok?'Shorter: update.':'No change.'}`;
+   if(ok){if(pe[b]>=0&&st.ec[pe[b]]==='done')delete st.ec[pe[b]];d[b]=d[a]+w;pe[b]=j;ch=true}paint(a);sn(ok?4:3,m,'Relaxation never overshoots, so after round k every shortest path with at most k edges is correct.');if(ok)st.ec[j]='done';else if(pv)st.ec[j]=pv;else delete st.ec[j]}
+  if(!ch){sn(1,`Round ${r} changed nothing. (Your notes still run all V − 1 rounds; stopping early is only an optimisation.)`,'')}}
+ for(let j=0;j<G.E.length;j++){const[a,b,w]=G.E[j];if(d[a]<INF&&d[a]+w<d[b]){st.ec[j]='rej';paint(-1);sn(7,`Check round: edge ${a} → ${b} can still improve (${d[a]} + ${w} < ${d[b]}). Negative-weight cycle detected.`,'After V − 1 rounds everything should be final. Any further improvement means a cycle whose total weight is negative.');return out}}
+ paint(-1);sn(7,`Check round: no edge improves. No negative cycle. Distances from ${src}: [${d.map(f)}].`,'O(V × E) time, O(V) space.');return out}
+function floyd(G){const{st,out,sn}=ctx(G),n=G.n,D=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?0:INF));G.E.forEach(([a,b,w])=>D[a][b]=w);
+ const paint=(i,j,k)=>{st.vc.fill('un');if(j>=0)st.vc[j]='done';if(k>=0)st.vc[k]='fr';if(i>=0)st.vc[i]='cur';st.tbl=fwT(D,i,j,k)};
+ paint(-1,-1,-1);sn(0,'dist[i][j] = edge weight if an edge exists, ∞ otherwise, 0 on the diagonal.','Dynamic programming over intermediate vertices k.');
+ for(let k=0;k<n;k++)for(let i=0;i<n;i++)for(let j=0;j<n;j++){const a=D[i][k],b=D[k][j],ok=a+b<D[i][j];
+  const m=`k=${k}, i=${i}, j=${j}: dist[${i}][${k}] + dist[${k}][${j}] = ${f(a)} + ${f(b)} ${a>=INF||b>=INF?'(no path)':'= '+(a+b)} versus dist[${i}][${j}] = ${f(D[i][j])}. ${ok?'Shorter via '+k+': update.':'No change.'}`;
+  if(ok)D[i][j]=a+b;paint(i,j,k);sn(ok?4:3,m,'Is going from i to j through k shorter than the best path known so far? Shaded cells are the three entries compared.')}
+ paint(-1,-1,-1);sn(-1,'All vertices tried as intermediates. dist[i][j] now holds every shortest distance.','O(V³) time, O(V²) space. Gray ∞ means no path.');return out}
+function kruskal(G){const{st,out,sn}=ctx(G),n=G.n,par=[...Array(n).keys()],rk=Array(n).fill(0),ord=G.E.map((e,i)=>[...e,i]).sort((x,y)=>x[2]-y[2]||x[3]-y[3]),sts=ord.map(()=>'');let tot=0,used=0;
+ const find=x=>{if(par[x]!==x)par[x]=find(par[x]);return par[x]};
+ const paint=cur=>{for(let v=0;v<n;v++){st.vc[v]='c'+(find(v)%6);st.vl[v]=''}st.strip={t:'edges sorted by weight (+ accepted, x rejected)',items:ord.map((e,i)=>e[0]+'-'+e[1]+':'+e[2]+sts[i]),hl:cur>=0?[cur]:[]};
+  st.tbl=tabl(['v','parent','rank','root'],par.map((p,i)=>[i,p,rk[i],find(i)]))+`<p>MST weight so far: <b>${tot}</b>, edges used: ${used} of ${n-1}</p>`};
+ paint(-1);sn(1,'Edges sorted by weight; DSU initialised so every vertex is its own set (parent[i] = i). Vertex colour = set.','Sorting makes the greedy choice the cheapest available edge.');
+ for(let i=0;i<ord.length&&used<n-1;i++){const[a,b,w,ei]=ord[i],ra=find(a),rb=find(b);st.ec[ei]='cur';paint(i);sn(4,`Edge ${a}–${b} (w = ${w}): find(${a}) = ${ra}, find(${b}) = ${rb}. ${ra!==rb?'Different sets: accept.':'Same set: adding it would form a cycle, reject.'}`,'');
+  if(ra!==rb){if(rk[ra]<rk[rb])par[ra]=rb;else if(rk[ra]>rk[rb])par[rb]=ra;else{par[rb]=ra;rk[ra]++}tot+=w;used++;sts[i]='+';st.ec[ei]='done';paint(i);sn(6,`Union the sets (union by rank). MST weight = ${tot}, edges used = ${used}.`,'The two components merge into one, with the smaller-rank root hung under the larger.')}
+  else{sts[i]='x';st.ec[ei]='rej';paint(i);sn(4,`Edge ${a}–${b} rejected.`,'Both endpoints are already connected.')}}
+ paint(-1);sn(7,`Done: ${used} edges = V − 1. Total MST weight = ${tot}.`,'O(E log E) for sorting plus nearly O(E) for the DSU operations.');return out}
+function prim(G,src){const{st,out,sn}=ctx(G),n=G.n,key=Array(n).fill(INF),inM=Array(n).fill(false),par=Array(n).fill(-1),pe=Array(n).fill(-1);key[src]=0;let tot=0;
+ const paint=u=>{for(let v=0;v<n;v++){st.vc[v]=v===u?'cur':inM[v]?'done':key[v]<INF?'fr':'un';st.vl[v]='k='+f(key[v])}st.strip={t:'key[] (chosen vertex highlighted)',items:key.map((x,i)=>i+':'+f(x)),hl:u<0?[]:[u]};
+  st.tbl=tabl(['v','key','parent','in MST'],key.map((x,i)=>[i,f(x),par[i]<0?'–':par[i],inM[i]?'yes':'no']),u)+`<p>MST weight so far: <b>${tot}</b></p>`};
+ paint(-1);sn(0,`key[] = ∞ except key[${src}] = 0.`,'key[v] is the cheapest edge currently connecting v to the growing tree. It is not a cumulative distance, which is the difference from Dijkstra.');
+ for(let c=0;c<n;c++){let u=-1,m=INF;for(let v=0;v<n;v++)if(!inM[v]&&key[v]<m){m=key[v];u=v}if(u<0)break;
+  inM[u]=true;tot+=key[u];if(pe[u]>=0)st.ec[pe[u]]='done';paint(u);sn(3,`Pick vertex ${u} with the smallest key (${key[u]}) and add it to the MST.`,'The cheapest edge leaving the tree can never be part of a cycle, so it is safe to add.');
+  for(const[w,wt,ei]of G.adj[u]){if(inM[w])continue;const better=wt<key[w];
+   if(better){if(pe[w]>=0)delete st.ec[pe[w]];key[w]=wt;par[w]=u;pe[w]=ei;st.ec[ei]='fr'}paint(u);sn(better?7:6,`Edge ${u}–${w} (w = ${wt}) versus key[${w}]: ${better?'cheaper, update key and parent = '+u+'.':'not cheaper, keep.'}`,'')}}
+ paint(-1);sn(-1,`Done. Total MST weight = ${tot}.`,'O(V²) with array selection, O(E log V) with a min-heap.');return out}
+/* ---------- module registry (text follows your notes) ---------- */
+const BVD=`<table style="margin-top:6px"><tr><th></th><th>BFS</th><th>DFS</th></tr><tr><th>Structure</th><td>Queue</td><td>Stack / recursion</td></tr><tr><th>Style</th><td>Level by level</td><td>Deep, then backtrack</td></tr><tr><th>Shortest path</th><td>Yes (unweighted)</td><td>No</td></tr><tr><th>Memory</th><td>Whole frontier</td><td>Lower on deep graphs</td></tr><tr><th>Time / space</th><td>O(V+E) / O(V)</td><td>O(V+E) / O(V)</td></tr></table><p>Rule of thumb: “shortest”, “minimum steps”, “level” → BFS. “All paths”, “connectivity”, “cycles”, “ordering”, “backtracking” → DFS.</p>`;
+const MODS=[
+{k:'bfs',name:'BFS',src:true,layer:true,run:bfsAlgo,adjv:adjB,gs:[UN,UD,UL],vs:[['single','Single source'],['all','All components']],
+ leg:[['un','unvisited'],['fr','in queue'],['cur','current'],['done','processed'],['done','teal edge = discovery (parent) edge']],
+ pc:()=>['BFS(graph, source):','  create empty queue Q','  visited[source] = true','  Q.enqueue(source)','  while Q is not empty:','    u = Q.dequeue()','    process(u)','    for each neighbour v of u:','      if not visited[v]:','        visited[v] = true','        Q.enqueue(v)','// all components: for s in 0..V-1,','//   if not visited[s]: BFS(s)'],
+ concept:'BFS starts at a source vertex, visits all its direct neighbours first, then their neighbours, moving outward in levels. It uses a queue (FIFO), so vertices leave in the order they were discovered. In an unweighted graph this gives the fewest-edge path from the source.',
+ cx:'<table style="margin-top:6px"><tr><th></th><th>Time</th><th>Space</th></tr><tr><th>Adjacency list</th><td>O(V + E)</td><td>O(V)</td></tr><tr><th>Adjacency matrix</th><td>O(V²)</td><td>O(V)</td></tr></table><p>Each vertex is enqueued and dequeued once. Each edge is examined once per endpoint in an undirected graph, so 2E checks in total. Watch the “edge checks” counter reach 2E. Space is the queue plus the visited array.</p>',
+ exam:`<p><b>Steps:</b> (1) mark source visited, enqueue it. (2) While queue not empty: dequeue curr, process it, and for each unvisited neighbour mark it visited and enqueue it. (3) Repeat until queue empty, which covers one component. (4) For disconnected graphs, loop over all vertices and start a fresh BFS from each unvisited one.</p><p><b>Key properties:</b> shortest path (fewest edges) from the source in an unweighted graph; explores in increasing distance, giving levels; suits multi-source problems.</p><p><b>Applications:</b> shortest path in unweighted graphs, level-order processing, cycle detection in undirected graphs, connected components, bipartite check, multi-source BFS, basis of Dijkstra and Kahn’s algorithm.</p><p class="m">Worked example in your notes: order 0 → 1 → 2 → 3 → 4. Select “Notes graph (V=5)” and step through it.</p>${BVD}`},
+{k:'dfs',name:'DFS',src:true,run:dfsAlgo,gs:[UN,UD,UL],vs:[['rec','Recursive, single source'],['recAll','Recursive, all components'],['itC','Iterative: C code (mark on pop)'],['itP','Iterative: pseudocode (mark on push)']],
+ leg:[['un','unvisited'],['fr','in progress (on stack)'],['cur','current'],['done','finished'],['rej','non-tree edge']],
+ pc:v=>v.startsWith('rec')?['DFS(graph, u, visited):','  visited[u] = true','  process(u)','  for each neighbour v of u:','    if not visited[v]:','      DFS(graph, v, visited)','// all components: for each u, if not visited[u]: DFS(u)']:v==='itC'?['dfsIterative(start):  // C code','  stack = [start]','  while stack not empty:','    u = pop()','    if visited[u]: continue','    visited[u] = true; process(u)','    for i = deg(u) down to 1:','      v = adj[u][i]','      if not visited[v]: push(v)']:['DFS_ITERATIVE(graph, source):  // pseudocode','  stack = [source]','  visited[source] = true','  while stack not empty:','    u = stack.pop()','    process(u)','    for each neighbour v of u (reverse order):','      if not visited[v]:','        visited[v] = true','        stack.push(v)'],
+ concept:'DFS goes as deep as possible along a path before backtracking. It mirrors pre-order traversal of a tree, with a visited check to survive cycles. It uses recursion (the call stack) or an explicit stack (LIFO). Labels show discovery/finish time.',
+ cx:'<p>Adjacency list: O(V + E) time, O(V) space for visited plus O(V) recursion or stack depth in the worst case. Adjacency matrix: O(V²) time, O(V) space.</p>',
+ exam:`<p>Mark visited and process; for each unvisited neighbour recurse; return (backtrack) when none are left; for disconnected graphs loop over all vertices. DFS order is not unique: it depends on neighbour order.</p><p>Edge classes (directed): tree, back, forward, cross. A back edge signals a cycle. Applications: cycle detection, topological sort, components and SCC, maze solving, flood fill, bridges and articulation points, backtracking.</p><p><b>Note:</b> your iterative pseudocode marks on push and your C code marks on pop. Compare the two variants on the levels graph.</p>${BVD}`},
+{k:'multi',name:'Multi-source BFS',src:false,run:G=>multi(G),gs:[GD,GR],
+ leg:[['un','unvisited'],['fr','in queue'],['cur','current'],['done','processed']],
+ pc:()=>['push ALL sources into queue, dist = 0','while queue not empty:','  (r,c) = dequeue','  for each of 4 directions (up, down, left, right):','    if inside grid, not empty, unvisited:','      dist[new] = dist[cur] + 1; enqueue','answer = max dist  // Rotten Oranges: minutes'],
+ concept:'Multi-source BFS seeds the queue with every source at distance 0, then runs ordinary BFS. Every vertex gets the distance to its nearest source in one O(V + E) pass instead of k separate BFS runs.',
+ cx:'<p>O(V + E), or O(N·M) on a grid. Identical to single-source BFS, since each cell is enqueued at most once however many sources there are. Your notes’ Rotten Oranges answer for the 3×3 example is 4 minutes.</p>',
+ exam:'<p>Use cases: 01 Matrix (distance to nearest 0), Rotten Oranges (minimum time for all fresh oranges to rot), Word Ladder (same frontier idea on an implicit graph).</p>'},
+{k:'topo',name:'Topological sort',src:false,run:(G,s,v)=>v==='kahn'?kahn(G):topoDfs(G),gs:[TD,TC],vs:[['dfs','DFS finish order'],['kahn','Kahn (in-degree)']],
+ leg:[['un','unvisited / waiting'],['fr','in progress / queued'],['cur','current'],['done','output'],['rej','cycle']],
+ pc:v=>v==='kahn'?['compute inDegree[] for every vertex','queue = all vertices with inDegree == 0','while queue not empty:','  u = queue.dequeue()','  result.append(u)','  for each neighbour v of u:','    inDegree[v]--','    if inDegree[v] == 0: queue.enqueue(v)','if length(result) != V: cycle']:['DFS_TOPO(graph):','  for each vertex u: if not visited[u]: dfsUtil(u)','  result = pop all of stack','dfsUtil(u):','  visited[u] = true','  for each neighbour v of u:','    if not visited[v]: dfsUtil(v)','  stack.push(u)   // AFTER all descendants'],
+ concept:'A topological sort of a DAG orders the vertices so that for every edge u → v, u comes before v. A cycle has no valid order. Two methods: push vertices on a stack as DFS finishes them, or Kahn’s algorithm (BFS seeded with in-degree-0 vertices).',
+ cx:'<table style="margin-top:6px"><tr><th>Method</th><th>Time</th><th>Space</th></tr><tr><td>DFS-based</td><td>O(V+E)</td><td>O(V)</td></tr><tr><td>Kahn</td><td>O(V+E)</td><td>O(V)</td></tr></table>',
+ exam:'<p>DFS version: a vertex finishes after all vertices reachable from it, so popping the stack lists it before them. Kahn: detects a cycle if fewer than V vertices are output. Applications: build systems, Course Schedule I and II, task scheduling, Alien Dictionary. Notes example: 5→2, 5→0, 4→0, 4→1, 2→3, 3→1, order 5 4 2 3 1 0 (DFS version).</p>'},
+{k:'dij',name:'Dijkstra',src:true,run:dijk,gs:[W2,W1],leg:[['un','unreached'],['fr','tentative'],['cur','chosen'],['done','final'],['fr','teal edge = shortest-path tree']],
+ pc:()=>['dist[i] = INF for all i','dist[src] = 0','repeat V times:','  u = unvisited vertex with min dist','  visited[u] = true','  for each neighbour v of u (not visited):','    if dist[u] + w(u,v) < dist[v]:','      dist[v] = dist[u] + w(u,v)'],
+ concept:'Dijkstra generalises BFS for non-negative weights: always expand the closest unfinalised vertex, and relax edges: if dist[u] + w(u,v) < dist[v], update dist[v]. It fails with negative weights because finalised vertices are never revisited.',
+ cx:'<p>Array-based selection: O(V²). Min-heap with adjacency list: O((V + E) log V).</p>',
+ exam:'<p>Single source, non-negative weights. Relaxation rule: if dist[u] + weight(u,v) &lt; dist[v] then dist[v] = dist[u] + weight(u,v). Choose it over BFS when edges are weighted. The notes’ sample graph is a path, so no relaxation changes anything. Use the relaxation graph to see dist[5] fall from 14 to 11.</p>'},
+{k:'bf',name:'Bellman–Ford',src:true,run:bell,gs:[BF,BN],leg:[['un','unreached'],['fr','reached'],['cur','edge tail'],['done','shortest-path edge'],['rej','negative cycle']],
+ pc:()=>['dist[] = infinity; dist[src] = 0','repeat (V - 1) times:','  for each edge (u, v, w):','    if dist[u] + w < dist[v]:','      dist[v] = dist[u] + w','// negative cycle check','for each edge (u, v, w):','  if dist[u] + w < dist[v]: negative cycle'],
+ concept:'Bellman–Ford relaxes all E edges V − 1 times. A shortest simple path has at most V − 1 edges, so that is enough. One extra round detects negative-weight cycles: if any distance still improves, a negative cycle exists.',
+ cx:'<p>O(V × E) time, O(V) space. Slower than Dijkstra but handles negative edges and detects negative cycles.</p>',
+ exam:'<p>Use for single-source shortest paths when negative weights may exist, and for detecting a negative-weight cycle. Directed edges are drawn with arrowheads; opposite edges are offset so both stay visible.</p>'},
+{k:'fw',name:'Floyd–Warshall',src:false,run:floyd,gs:[FW1,FW2],leg:[['cur','i'],['done','j'],['fr','k (intermediate)']],
+ pc:()=>['dist[i][j] = w(i,j) if edge, else INF; dist[i][i] = 0','for k in 0..V-1:','  for i in 0..V-1:','    for j in 0..V-1:','      if dist[i][k] + dist[k][j] < dist[i][j]:','        dist[i][j] = dist[i][k] + dist[k][j]'],
+ concept:'Dynamic programming over intermediate vertices k. For every pair (i, j) ask: is the path through k shorter than the best known? After all k have been tried, dist[i][j] is the true shortest distance for every pair.',
+ cx:'<p>O(V³) time, O(V²) space. Best for dense graphs with few vertices where all-pairs distances are needed, or negative edges (no negative cycle) exist.</p>',
+ exam:'<p>All-pairs shortest path. The C code uses INF = 99999 so that INF + x does not overflow. Choosing an algorithm: unweighted single source → BFS; non-negative weights → Dijkstra; negative weights → Bellman–Ford; all pairs → Floyd–Warshall.</p>'},
+{k:'kr',name:'Kruskal and DSU',src:false,run:kruskal,gs:[K1,K2],leg:[['rej','rejected edge'],['done','MST edge'],['cur','edge under test'],['c0','vertex colour = DSU set']],
+ pc:()=>['sort all edges by weight ascending','dsuInit(V)','mstWeight = 0, edgesUsed = 0','for each edge (u, v, w) in sorted order:','  if find(u) != find(v):','    unionSets(u, v)','    mstWeight += w; edgesUsed++','  if edgesUsed == V - 1: break'],
+ concept:'A minimum spanning tree connects all V vertices with V − 1 edges, no cycle, and least total weight. Kruskal sorts edges and adds each one only if its endpoints are in different DSU sets. The DSU supports find (set representative) and union (merge).',
+ cx:'<p>Kruskal: O(E log E). DSU with path compression and union by rank: nearly O(1) amortised per operation, O(α(V)). The notes’ Kruskal edge list repeats reverse edges, so only 6 unique edges are drawn; the MST weight is 17.</p>',
+ exam:'<p>Edge-based, global greedy pick; sort edges plus DSU; best for sparse graphs with an edge list. DSU also detects cycles and counts connected components as edges are added.</p>'},
+{k:'pr',name:'Prim',src:true,run:prim,gs:[K2,K1],leg:[['un','outside tree'],['fr','frontier (has a key)'],['cur','chosen'],['done','in MST']],
+ pc:()=>['key[] = infinity; key[src] = 0','inMST[] = false; parent[src] = -1','repeat V times:','  u = min key[] among vertices not in MST','  inMST[u] = true','  for each neighbour v of u with weight w:','    if not inMST[v] and w < key[v]:','      key[v] = w; parent[v] = u'],
+ concept:'Prim grows one tree from a start vertex. At each step it adds the cheapest edge joining a vertex inside the tree to one outside. It resembles Dijkstra, but key[v] is the single edge weight, not a cumulative distance.',
+ cx:'<p>Array selection: O(V²), good for dense graphs. Min-heap with adjacency list: O(E log V).</p><table style="margin-top:6px"><tr><th></th><th>Kruskal</th><th>Prim</th></tr><tr><th>Approach</th><td>Edge-based</td><td>Vertex-based</td></tr><tr><th>Uses</th><td>Sort + DSU</td><td>Heap or array</td></tr><tr><th>Best for</th><td>Sparse</td><td>Dense</td></tr></table>',
+ exam:'<p>Any start vertex gives the same total weight. Both Kruskal and Prim give the same minimum total (16 on this graph).</p>'}];
+/* ---------- text layer: glossary, exam content, copy ---------- */
+const GLOS={
+ vis:['Visited','Already discovered.','A vertex marked as reached, so the search never processes it twice.'],
+ adj:['Adjacent vertex / neighbour','A vertex joined to this one by an edge.','u and v are adjacent if the edge (u, v) exists.'],
+ fifo:['FIFO','First in, first out.','Items leave in the order they entered: the longest-waiting item is removed first.'],
+ lifo:['LIFO','Last in, first out.','The most recently added item is removed first (a stack).'],
+ front:['Frontier','Vertices discovered but not yet fully explored.','In BFS this is the set of vertices currently in the queue.'],
+ back:['Backtracking','Returning to an earlier vertex after a path is exhausted.','When a recursive call returns, control resumes in the caller, which tries its remaining neighbours.'],
+ al:['Adjacency list','Each vertex stores a list of its neighbours.','Space O(V + E).'],
+ am:['Adjacency matrix','A V × V table; entry [i][j] shows whether edge i–j exists.','Space O(V²).'],
+ ind:['In-degree','The number of edges coming into a vertex.','In-degree 0 means no unprocessed prerequisite remains.'],
+ dag:['DAG','A directed graph with no cycles.','Directed acyclic graph: only a DAG has a topological order.'],
+ rel:['Relaxation','Checking whether going through u gives a shorter route to v.','If dist[u] + w(u,v) < dist[v], set dist[v] = dist[u] + w(u,v).'],
+ nwc:['Negative-weight cycle','A loop of edges whose weights add up to less than zero.','Going round it repeatedly keeps lowering the path cost, so shortest paths are undefined.'],
+ dsu:['Disjoint set (DSU)','A structure that tracks which vertices belong to the same group.','Supports find(x), the set representative, and union(x, y), merging two sets.'],
+ pcm:['Path compression','While finding a root, point every vertex on the way straight at it.','Flattens the tree so later find operations are faster.'],
+ ubr:['Union by rank','Hang the shallower tree under the deeper tree’s root.','Keeps DSU trees shallow.'],
+ mst:['Minimum spanning tree (MST)','The cheapest set of edges that connects every vertex with no cycle.','V − 1 edges for V vertices, with minimum total weight.'],
+ gr:['Greedy','Take the best-looking choice at each step.','Makes the locally cheapest choice and never undoes it.'],
+ be:['Back edge','An edge to an ancestor still being explored.','In a directed graph it signals a cycle.'],
+ dp:['Dynamic programming','Build the answer from answers to smaller subproblems.','Here: shortest paths using only the first k vertices as intermediates.'],
+ mh:['Min-heap','A structure that returns the smallest item quickly.','Removing the minimum costs O(log n).'],
+ cc:['Connected component','A maximal group of vertices that can reach each other.','Disconnected graphs have more than one.']};
+const GX=[['visited','vis'],['adjacent vertex|neighbours?','adj'],['FIFO','fifo'],['LIFO','lifo'],['frontier','front'],['backtrack(?:ing)?','back'],['adjacency list','al'],['adjacency matrix','am'],['in-degree','ind'],['DAG','dag'],['relax(?:ation|ing|es|ed)?','rel'],['negative-weight cycle|negative cycle','nwc'],['DSU|disjoint set','dsu'],['path compression','pcm'],['union by rank','ubr'],['minimum spanning tree|MST','mst'],['greedy','gr'],['back edge','be'],['dynamic programming','dp'],['min-heap','mh'],['connected components?|components?','cc']];
+const GRX=new RegExp(GX.map(g=>'\\b('+g[0]+')\\b').join('|'),'gi');
+function gloss(h){const seen={};return String(h).split(/(<[^>]+>)/).map(p=>p[0]==='<'?p:p.replace(GRX,(...a)=>{const i=a.slice(1,GX.length+1).findIndex(x=>x!==undefined),k=GX[i][1];if(seen[k])return a[0];seen[k]=1;return `<span class="g" tabindex="0" data-k="${k}">${a[0]}</span>`})).join('')}
+const esc=s=>String(s).replace(/</g,'&lt;'),E=s=>gloss(esc(s));
+const LB=['Definition','Working principle','Algorithm / steps','Complexity','Applications and properties'],RL=['Key terminology','Core idea','Complexity','Important conditions','Common exam mistakes'];
+const TXT={
+bfs:{def:'BFS visits a graph level by level: it starts at a source vertex, visits all its neighbours, then their neighbours, using a queue (FIFO).',
+ how:['Mark the source visited with dist = 0 and enqueue it. In the 3D scene it turns amber and appears in the queue strip.','Dequeue the front vertex and process it. It turns red (current).','For each neighbour: if already visited, skip it; otherwise mark it visited, set dist = dist[u] + 1 and enqueue it. The edge used turns teal (parent edge).','Repeat until the queue is empty, which covers one component. For disconnected graphs, start a fresh BFS from every unvisited vertex (“All components” variant).'],
+ cxw:'Time: every vertex is enqueued and dequeued once (V) and every adjacency entry is scanned once (E). With an adjacency matrix each vertex scans a whole row of V entries, giving V². Extra memory: the queue and the visited array, each holding at most V entries.',
+ ans:['Breadth First Search is a graph traversal that visits vertices in increasing order of distance from a source vertex, level by level, using a queue.','Mark the source visited and enqueue it. Repeatedly dequeue a vertex and, for each unvisited neighbour, mark it visited and enqueue it. Because the queue is FIFO, vertices leave in the order they were discovered.','(1) visited[source] = true; enqueue source. (2) While the queue is not empty: dequeue u, process u, and for each unvisited neighbour v mark it visited and enqueue it. (3) For disconnected graphs, start a fresh BFS from every unvisited vertex.','Adjacency list: O(V + E) time, O(V) space. Adjacency matrix: O(V²) time, O(V) space. Each vertex is enqueued and dequeued once; each edge is examined once per endpoint (2E checks).','Shortest path (fewest edges) in an unweighted graph, level-order processing, cycle detection in undirected graphs, connected components, bipartite check, multi-source BFS; the basis of Dijkstra and Kahn’s algorithm.'],
+ rev:['queue (FIFO), visited, frontier, level, connected component','Visit nearest vertices first; mark a vertex when it is enqueued.','O(V + E) with adjacency list, O(V²) with matrix; space O(V).','Shortest-path claim holds for unweighted graphs; disconnected graphs need the outer loop.','Marking on dequeue instead of enqueue lets a vertex be queued twice. Using BFS for shortest paths in weighted graphs (use Dijkstra).']},
+dfs:{def:'DFS explores a graph by visiting an unvisited adjacent vertex and continuing as deeply as possible before backtracking.',
+ how:['Mark the current vertex visited and process it; discovery time is recorded (labels read disc/fin in the 3D scene).','For each unvisited neighbour, recurse into it (or push it on the explicit stack).','When no unvisited neighbour is left, record the finish time and backtrack to the caller.','For disconnected graphs, loop over all vertices and start DFS from each unvisited one (“all components” variant).'],
+ cxw:'Time: each vertex is visited once and each adjacency entry examined once. Extra memory: the visited array plus the recursion (or explicit) stack, which in the worst case holds up to V vertices.',
+ ans:['Depth First Search is a graph traversal that goes as deep as possible along a path before backtracking. It mirrors pre-order traversal of a tree.','Mark and process the vertex, recurse into each unvisited neighbour, and return (backtrack) when none are left. The visited check stops infinite loops on cycles. It uses recursion (the call stack) or an explicit stack (LIFO).','DFS(u): visited[u] = true; process(u); for each neighbour v of u: if not visited[v], DFS(v). For disconnected graphs, call DFS from every unvisited vertex.','Adjacency list: O(V + E) time; O(V) space for visited plus O(V) recursion or stack depth in the worst case. Adjacency matrix: O(V²) time, O(V) space.','Cycle detection, topological sort, components and SCC, maze solving, flood fill, bridges and articulation points, backtracking. Edge classes (directed): tree, back, forward, cross; a back edge signals a cycle. DFS order depends on neighbour order.'],
+ rev:['visited, backtracking, call stack, discovery/finish time, back edge','Go as deep as possible, then backtrack.','O(V + E) with adjacency list, O(V²) with matrix; space O(V).','Iterative pseudocode marks on push; the C code marks on pop. Disconnected graphs need the outer loop.','Treating the two iterative forms as identical (they can build different DFS trees). Assuming the DFS order is unique.']},
+multi:{def:'Multi-source BFS puts every source in the queue at distance 0 and runs ordinary BFS, giving each vertex its distance to the nearest source.',
+ how:['Push all sources into the queue with dist = 0.','Dequeue a cell and examine its 4 neighbours (up, down, left, right).','Each unvisited, non-empty neighbour gets dist = dist[cur] + 1 and is enqueued.','When the queue is empty, answer = max dist (Rotten Oranges: minutes).'],
+ cxw:'Each cell is enqueued at most once however many sources there are, so the work equals one BFS: O(V + E). Extra memory is the queue and the distance array.',
+ ans:['Multi-source BFS is BFS whose queue is seeded with every source vertex at distance 0.','The wavefronts from all sources advance together, one level per round, so the first time a cell is reached is from its nearest source and that distance is final.','Push all sources; while the queue is not empty: dequeue (r, c); for each of the 4 directions, if inside the grid, not empty and unvisited, set dist[new] = dist[cur] + 1 and enqueue. Answer = max dist.','O(V + E), i.e. O(N·M) on a grid, the same as single-source BFS, instead of O(k·(V + E)) for k separate runs.','01 Matrix, Rotten Oranges (3×3 notes example: 4 minutes), Word Ladder (same frontier idea on an implicit graph).'],
+ rev:['sources, wavefront, nearest-source distance','Seed the queue with all sources, then run BFS once.','O(V + E); O(N·M) on a grid.','Cells marked empty (0 in the notes) are not vertices.','Running one BFS per source (O(k·(V + E))).']},
+topo:{def:'A topological sort orders the vertices of a DAG so that for every edge u → v, u comes before v.',
+ how:['DFS method: run DFS and push a vertex on the stack only after all its descendants finish; popping the stack gives the order.','Kahn’s method: compute the in-degree of every vertex and enqueue those with in-degree 0.','Dequeue u, append it to the result, decrement the in-degree of each neighbour and enqueue any that reach 0.','A cycle means no order: DFS meets a grey (in-progress) vertex, or Kahn outputs fewer than V vertices.'],
+ cxw:'Both methods visit every vertex once and examine every edge once (V + E). Extra memory: the colour or in-degree array plus the output stack or queue.',
+ ans:['A topological sort is a linear ordering of the vertices of a directed acyclic graph such that for every edge u → v, u appears before v. A graph with a cycle has no such order.','DFS method: a vertex finishes after everything reachable from it, so pushing it after its descendants and popping the stack lists it before them. Kahn’s method repeatedly outputs vertices whose in-degree is 0.','(DFS) for each unvisited u call dfsUtil(u): mark visited, recurse into unvisited neighbours, then push u; pop the whole stack. (Kahn) enqueue all in-degree-0 vertices; dequeue u, append it, decrement neighbours’ in-degree, enqueue those reaching 0; a cycle exists if length(result) != V.','Both methods: O(V + E) time, O(V) space.','Build systems, Course Schedule I and II, task scheduling, Alien Dictionary. Notes example: 5→2, 5→0, 4→0, 4→1, 2→3, 3→1 gives 5 4 2 3 1 0 (DFS version).'],
+ rev:['DAG, in-degree, grey/black vertex, back edge','DFS: push after descendants finish. Kahn: peel off in-degree-0 vertices.','O(V + E) time, O(V) space for both.','Only a DAG has a topological order.','Treating a black (finished) vertex as a cycle: only a grey vertex on the recursion stack is a back edge. Pushing a vertex before its descendants finish.']},
+dij:{def:'Dijkstra’s algorithm finds shortest paths from one source in a graph with non-negative weights by always finalising the closest unfinalised vertex.',
+ how:['Set dist[src] = 0 and every other distance to ∞.','Pick the unvisited vertex u with minimum dist and finalise it.','Relax each edge (u, v): if dist[u] + w(u,v) < dist[v], update dist[v] and its parent.','Repeat V times (or until the remaining vertices are unreachable).'],
+ cxw:'Array version: V rounds, each scanning up to V entries for the minimum, gives V². With a min-heap, selection costs a logarithm per update, giving (V + E) log V. Extra memory: dist[], parent[] and visited[].',
+ ans:['Dijkstra’s algorithm computes single-source shortest paths in a weighted graph with non-negative edge weights.','Repeatedly finalise the unvisited vertex with the smallest dist and relax its edges. With non-negative weights no later path can be shorter, so a finalised distance is final.','dist[i] = INF, dist[src] = 0; repeat V times: u = unvisited vertex with min dist; visited[u] = true; for each unvisited neighbour v: if dist[u] + w(u,v) < dist[v], set dist[v] = dist[u] + w(u,v).','Array selection: O(V²). Min-heap with adjacency list: O((V + E) log V).','Single-source shortest path when edges are weighted (choose it over BFS). It fails with negative weights because finalised vertices are never revisited.'],
+ rev:['relaxation, dist[], parent, finalised vertex, min-heap','BFS with minimum-distance selection instead of FIFO.','O(V²) array; O((V + E) log V) heap.','All edge weights non-negative.','Using Dijkstra with negative edges (use Bellman–Ford). Confusing dist (cumulative) with Prim’s key (single edge).']},
+bf:{def:'Bellman–Ford finds single-source shortest paths, including with negative weights, by relaxing every edge V − 1 times; an extra round detects negative-weight cycles.',
+ how:['Set dist[src] = 0 and every other distance to ∞.','Repeat V − 1 times: relax every edge (u, v, w).','Check round: if any edge can still improve a distance, a negative-weight cycle exists.','Otherwise dist[] holds the shortest distances.'],
+ cxw:'V − 1 rounds, each scanning all E edges, gives V × E. Extra memory is the dist[] array (and parents).',
+ ans:['Bellman–Ford is a single-source shortest-path algorithm that allows negative edge weights and detects negative-weight cycles.','A shortest simple path has at most V − 1 edges, so relaxing all E edges V − 1 times makes every distance final. If an extra round still improves a distance, a negative-weight cycle exists.','dist[] = ∞, dist[src] = 0; repeat V − 1 times: for each edge (u, v, w): if dist[u] + w < dist[v], set dist[v] = dist[u] + w. Then for each edge: if dist[u] + w < dist[v], report a negative cycle.','O(V × E) time, O(V) space.','Shortest paths when negative weights may exist; negative-cycle detection. Slower than Dijkstra.'],
+ rev:['relaxation, negative-weight cycle, V − 1 rounds','Relax all edges V − 1 times, then check once more.','O(V × E) time, O(V) space.','Directed edges; a cycle’s total weight must be negative to trigger detection.','Using Dijkstra when negative edges exist. Forgetting the extra check round. (Your notes run all V − 1 rounds; stopping early is only an optimisation.)']},
+fw:{def:'Floyd–Warshall computes shortest distances between every pair of vertices by dynamic programming over intermediate vertices k.',
+ how:['Set dist[i][j] = edge weight if an edge exists, ∞ otherwise, and 0 on the diagonal.','For each intermediate vertex k, and for every pair (i, j):','if dist[i][k] + dist[k][j] < dist[i][j], update dist[i][j].','After all k are tried, dist[i][j] is the true shortest distance for every pair.'],
+ cxw:'Three nested loops over V vertices give V³ time. The V × V distance matrix gives V² space.',
+ ans:['Floyd–Warshall is an all-pairs shortest-path algorithm based on dynamic programming.','For every pair (i, j) ask whether going through intermediate vertex k is shorter than the best path known. After every k has been tried, dist[i][j] is final.','Initialise dist[i][j] (weight, INF or 0). for k, for i, for j: if dist[i][k] + dist[k][j] < dist[i][j], set dist[i][j] = dist[i][k] + dist[k][j].','O(V³) time, O(V²) space.','All-pairs distances; best for dense graphs with few vertices, or negative edges (no negative cycle). Choosing: unweighted single source → BFS; non-negative weights → Dijkstra; negative weights → Bellman–Ford; all pairs → Floyd–Warshall.'],
+ rev:['dynamic programming, intermediate vertex k, dist matrix','Try every vertex as a possible stopover.','O(V³) time, O(V²) space.','No negative cycle; INF = 99999 in the C code so INF + x does not overflow.','Putting k in an inner loop (it must be outermost). Overflow when INF is too large.']},
+kr:{def:'Kruskal’s algorithm builds a minimum spanning tree by taking edges in increasing weight order and accepting an edge only if its endpoints are in different DSU sets.',
+ how:['Sort all edges by weight ascending and initialise the DSU so every vertex is its own set.','For each edge (u, v, w): if find(u) != find(v), accept it and union the two sets; otherwise reject it (it would form a cycle).','Add w to the MST weight for each accepted edge.','Stop when V − 1 edges have been accepted.'],
+ cxw:'Sorting E edges costs E log E; each find or union is nearly constant amortised time, O(α(V)). Extra memory: the DSU parent and rank arrays.',
+ ans:['A minimum spanning tree connects all V vertices with V − 1 edges, no cycle and least total weight. Kruskal’s algorithm is an edge-based greedy method for finding it.','Sort the edges by weight. Take each edge in turn and accept it only if its endpoints are in different DSU sets (find), then merge the sets (union). Otherwise it would form a cycle.','Sort edges; dsuInit(V); for each edge (u, v, w): if find(u) != find(v): unionSets(u, v), mstWeight += w, edgesUsed++; stop when edgesUsed == V − 1.','Kruskal: O(E log E). DSU with path compression and union by rank: nearly O(1) amortised, O(α(V)).','Best for sparse graphs with an edge list. DSU also detects cycles and counts connected components. Notes graph: MST weight 17 (6 unique edges).'],
+ rev:['MST, DSU, find, union, path compression, union by rank','Cheapest edge first, skip any edge that closes a cycle.','O(E log E).','Graph must be connected for V − 1 edges; sort before processing.','Listing reverse edges twice (the notes’ list repeats them: 6 unique edges). Comparing vertices instead of set representatives.']},
+pr:{def:'Prim’s algorithm grows one tree from a start vertex, always adding the cheapest edge that joins the tree to a vertex outside it.',
+ how:['Set key[src] = 0 and every other key to ∞; no vertex is in the MST yet.','Pick the vertex u outside the tree with the smallest key and add it to the MST.','For each neighbour v outside the tree: if w(u,v) < key[v], set key[v] = w and parent[v] = u.','Repeat V times; the parent links give the MST.'],
+ cxw:'Array version: V rounds, each scanning V keys for the minimum, gives V². A min-heap gives E log V. Extra memory: key[], parent[] and inMST[].',
+ ans:['A minimum spanning tree connects all V vertices with V − 1 edges, no cycle and least total weight. Prim’s algorithm is a vertex-based greedy method for finding it.','Grow a single tree from a start vertex. At each step add the cheapest edge joining a vertex inside the tree to one outside. key[v] is the cheapest edge connecting v to the tree.','key[] = ∞, key[src] = 0; repeat V times: u = vertex outside the MST with min key; inMST[u] = true; for each neighbour v outside the MST: if w < key[v], key[v] = w, parent[v] = u.','Array selection: O(V²), good for dense graphs. Min-heap with adjacency list: O(E log V).','Any start vertex gives the same total weight; Kruskal and Prim give the same minimum total (16 on this graph). Vertex-based, heap or array; best for dense graphs.'],
+ rev:['key[], parent, frontier, MST','Always add the cheapest edge leaving the tree.','O(V²) array; O(E log V) heap.','Connected graph; key holds a single edge weight.','Confusing key (one edge) with Dijkstra’s dist (cumulative). Adding an edge between two vertices already in the tree.']}};
+function renderText(){const T=TXT[M.k];
+ $('#mtitle').textContent=M.name;$('#concept').innerHTML=E(M.concept);$('#def').innerHTML=E(T.def);
+ $('#how').innerHTML=T.how.map(x=>`<li>${E(x)}</li>`).join('');
+ $('#cx').innerHTML=gloss(M.cx)+`<p class="m"><span class="tag">added explanation</span> ${E(T.cxw)}</p>`;
+ $('#ans').innerHTML=`<p class="rd"><b>Revision definition.</b> ${E(T.def)}</p><h3>Full exam answer</h3><ol>`+LB.map((l,i)=>`<li><b>${l}.</b> ${E(T.ans[i])}</li>`).join('')+'</ol>';
+ $('#exam').innerHTML=gloss(M.exam);
+ $('#rev').innerHTML='<ul>'+RL.map((l,i)=>`<li><b>${l}.</b> ${i===4?'<span class="tag">added explanation</span> ':''}${E(T.rev[i])}</li>`).join('')+'</ul>'}
+function copyText(t,b){const ok=()=>{const o=b.dataset.o||(b.dataset.o=b.textContent);b.textContent='Copied';setTimeout(()=>b.textContent=o,1200)},fb=()=>{const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){}a.remove()};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb()}
+const tip=$('#tip');let tipEl=null;
+function showTip(el){const g=GLOS[el.dataset.k];if(!g)return;tipEl=el;tip.innerHTML=`<b>${g[0]}.</b> ${g[1]}<br><span class="m">${g[2].replace(/</g,'&lt;')}</span>`;tip.hidden=false;
+ const r=el.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;let y=r.bottom+6;if(y+h>innerHeight-8)y=r.top-h-6;
+ tip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left))+'px';tip.style.top=Math.max(8,y)+'px';el.setAttribute('aria-describedby','tip')}
+function hideTip(){tip.hidden=true;if(tipEl)tipEl.removeAttribute('aria-describedby');tipEl=null}
+const sideEl=$('#side'),gOf=e=>e.target.closest&&e.target.closest('.g');
+sideEl.addEventListener('mouseover',e=>{const g=gOf(e);if(g)showTip(g)});sideEl.addEventListener('mouseout',e=>{if(gOf(e))hideTip()});
+sideEl.addEventListener('focusin',e=>{const g=gOf(e);if(g)showTip(g)});sideEl.addEventListener('focusout',e=>{if(gOf(e))hideTip()});
+sideEl.addEventListener('click',e=>{const g=gOf(e);if(g){if(tipEl===g&&!tip.hidden)hideTip();else showTip(g)}});
+sideEl.addEventListener('scroll',hideTip);document.addEventListener('click',e=>{if(!gOf(e))hideTip()});
+addEventListener('keydown',e=>{if(e.key==='Escape')hideTip()});
+function jumpLine(i){let t=steps.findIndex((s,k)=>k>idx&&s.line===i);if(t<0)t=steps.findIndex(s=>s.line===i);if(t>=0){setPlay(false);go(t);const sp=$('#pc').children[i];if(sp)sp.focus()}}
+$('#pc').addEventListener('click',e=>{const s=e.target.closest('span[data-i]');if(s)jumpLine(+s.dataset.i)});
+$('#pc').addEventListener('keydown',e=>{const s=e.target.closest&&e.target.closest('span[data-i]');if(s&&e.key==='Enter'){e.preventDefault();e.stopPropagation();jumpLine(+s.dataset.i)}});
+$('#cpPc').onclick=e=>copyText(M.pc(variant).join('\n'),e.currentTarget);
+$('#cpAns').onclick=e=>copyText(M.name+'\n'+LB.map((l,i)=>l+': '+TXT[M.k].ans[i]).join('\n'),e.currentTarget);
+$('#lay').onchange=e=>{layered=e.target.checked;apply()};
+/* ---------- WebGL ---------- */
+let gl=false,R,scene,cam,root,qg,vs=[],es=[],sb=[],ew=[],raycaster,mouse,rotX=.25,rotY=-.4,zoom=15,stT,M,G,src=0,steps=[],idx=0,playing=false,last=0,variant=null,layered=false;
+const COL={un:0x7d8794,fr:0xe0a82e,cur:0xd8452a,done:0x2f8f86,rej:0x9a3c6b,c0:0x3b6fd4,c1:0xe0a82e,c2:0x2f8f86,c3:0x9a3c6b,c4:0xd8452a,c5:0x6d8f2f};
+const ECOL={cur:[0xd8452a,3],done:[0x2f8f86,2.4],fr:[0xe0a82e,2.2],rej:[0x9a3c6b,1.6]};
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function label(txt,px,color,w,h){const c=document.createElement('canvas');c.width=256;c.height=128;const t=new THREE.CanvasTexture(c);
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(w,h,1);s.renderOrder=5;
+ s.set=x=>{const g=c.getContext('2d');g.clearRect(0,0,256,128);g.fillStyle=color;g.font=`bold ${px}px ui-monospace,Menlo,monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText(x,128,64);t.needsUpdate=true};s.set(txt);return s}
+function initGL(){
+ try{if(!window.THREE)throw 0;R=new THREE.WebGLRenderer({antialias:true})}catch(e){$('#nogl').style.display='block';$('#nogl').innerHTML='<b>WebGL or Three.js is unavailable.</b><p>The 3D scene needs WebGL and Three.js r128 from cdnjs. The pseudocode, state table and step log on the right still work.</p>';return}
+ gl=true;$('#stage').appendChild(R.domElement);R.setPixelRatio(Math.min(devicePixelRatio,2));
+ scene=new THREE.Scene();cam=new THREE.PerspectiveCamera(45,1,.1,100);root=new THREE.Group();qg=new THREE.Group();scene.add(root,qg);
+ scene.add(new THREE.AmbientLight(0xffffff,.65));const d=new THREE.DirectionalLight(0xffffff,.9);d.position.set(4,8,10);scene.add(d);
+ raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
+ const el=R.domElement;let dn=false,mv=0,px,py;
+ el.addEventListener('pointerdown',e=>{dn=true;mv=0;px=e.clientX;py=e.clientY;el.setPointerCapture(e.pointerId)});
+ el.addEventListener('pointermove',e=>{if(!dn)return;mv+=Math.abs(e.clientX-px)+Math.abs(e.clientY-py);rotY+=(e.clientX-px)*.007;rotX=Math.max(-1.2,Math.min(1.2,rotX+(e.clientY-py)*.007));px=e.clientX;py=e.clientY});
+ el.addEventListener('pointerup',e=>{dn=false;if(mv<5)pick(e)});
+ el.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(8,Math.min(26,zoom+e.deltaY*.01))},{passive:false});
+ new ResizeObserver(resize).observe($('#stage'));resize();requestAnimationFrame(loop)}
+function resize(){if(!gl)return;const s=$('#stage');R.setSize(s.clientWidth,s.clientHeight);cam.aspect=s.clientWidth/s.clientHeight;cam.updateProjectionMatrix()}
+function pick(e){if(!M.src)return;const r=R.domElement.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(mouse,cam);
+ const h=raycaster.intersectObjects(vs.map(v=>v.m));if(h.length){src=vs.findIndex(v=>v.m===h[0].object);reset()}}
+function buildScene(){
+ if(!gl)return;[root,qg].forEach(g=>{while(g.children.length)g.remove(g.children[0])});vs=[];es=[];sb=[];ew=[];const ink=cssv('--ink')||'#111';
+ G.P.forEach((p,i)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.42,32,24),new THREE.MeshStandardMaterial({color:COL.un,roughness:.45,metalness:.1}));m.position.set(...p);
+  const id=G.lab?label(G.lab[i],58,'#ffffff',1.1,.55):label(String(i),84,'#ffffff',.9,.45),ds=label('',50,ink,1.7,.85);root.add(m,id,ds);vs.push({m,id,ds,p:new THREE.Vector3(...p),tgt:new THREE.Vector3(...p)})});
+ G.E.forEach(([a,b,w],i)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1,8),new THREE.MeshStandardMaterial({color:0x8b95a3}));root.add(m);
+  const cone=G.dir?new THREE.Mesh(new THREE.ConeGeometry(.14,.36,12),new THREE.MeshStandardMaterial({color:0x8b95a3})):null;if(cone)root.add(cone);
+  const wl=G.w?label(String(w),64,ink,1.1,.55):null;if(wl)root.add(wl);const rev=G.dir&&G.E.some(e=>e[0]===b&&e[1]===a);es.push({a,b,m,cone,wl,rev})});
+ const X0=-7.4,Y=-5.2;for(let i=0;i<12;i++){const fr=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.2,.9,.5)),new THREE.LineBasicMaterial({color:0x8b95a3,transparent:true,opacity:.45}));fr.position.set(X0+i*1.3,Y,0);qg.add(fr);
+  const b=new THREE.Mesh(new THREE.BoxGeometry(1.2,.9,.5),new THREE.MeshStandardMaterial({color:0x5a6b85}));b.position.set(X0+i*1.3,Y,0);const l=label('',54,'#ffffff',1.1,.55);l.position.z=.3;b.add(l);b.visible=false;b.userData.l=l;qg.add(b);sb.push(b)}
+ stT=label('',30,ink,9,2.2);stT.position.set(X0+4.4,Y+1.0,0);qg.add(stT)}
+function loop(){requestAnimationFrame(loop);
+ if(playing&&performance.now()-last>1500/($('#spd').value**1.15)){last=performance.now();if(idx<steps.length-1)go(idx+1);else setPlay(false)}
+ root.rotation.set(rotX,rotY,0);root.position.y=.7;cam.position.set(0,0,zoom);cam.lookAt(0,-1,0);
+ es.forEach(e=>{const A=vs[e.a].m.position.clone(),B=vs[e.b].m.position.clone(),d=B.clone().sub(A),L=d.length();d.normalize();
+  if(e.rev){const o=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,0,1));if(o.length()<.1)o.set(0,1,0);o.normalize().multiplyScalar(.24);A.add(o);B.add(o)}
+  const len=L-(e.cone?.55:0);e.m.position.copy(A).addScaledVector(d,.5*len+(e.cone?0:0));if(!e.cone)e.m.position.copy(A).addScaledVector(d,L*.5);e.m.scale.y=e.cone?len:L;e.m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d);
+  if(e.cone){e.m.position.copy(A).addScaledVector(d,len*.5);e.cone.position.copy(B).addScaledVector(d,-.55+.18*0-.0);e.cone.position.copy(B).addScaledVector(d,-.6);e.cone.quaternion.copy(e.m.quaternion)}
+  if(e.wl){e.wl.position.copy(A).addScaledVector(d,L*.5);e.wl.position.y+=.32}});
+ vs.forEach(v=>{if(v.tgt)v.m.position.lerp(v.tgt,.12);v.id.position.copy(v.m.position);v.ds.position.copy(v.m.position);v.ds.position.y+=.85;const k=v.m.userData.k||1;v.m.scale.lerp(new THREE.Vector3(k,k,k),.2)});
+ R.setClearColor(new THREE.Color(cssv('--stage')||'#e2e7ee'));R.render(scene,cam)}
+/* ---------- state to view ---------- */
+function apply(){const s=steps[idx];
+ if(gl){vs.forEach((v,i)=>{v.m.material.color.setHex(COL[s.vc[i]]);v.m.userData.k=s.vc[i]==='cur'?1.3:1;v.ds.set(s.vl[i]||'');v.tgt.copy(v.p);if(layered&&s.ly&&s.ly[i]>=0)v.tgt.y=2.6-s.ly[i]*1.5});
+  es.forEach((e,i)=>{const c=ECOL[s.ec[i]],col=c?c[0]:0x8b95a3,w=c?c[1]:1;e.m.material.color.setHex(col);e.m.scale.x=e.m.scale.z=w;if(e.cone)e.cone.material.color.setHex(col)});
+  stT.set(s.strip.t||'');sb.forEach((b,i)=>{const it=s.strip.items[i];b.visible=it!==undefined;if(it!==undefined){b.userData.l.set(it);b.material.color.setHex(s.strip.hl.includes(i)?COL.fr:0x5a6b85)}})}
+ $('#op').textContent=s.msg;$('#why').textContent=s.why;$('#tbl').innerHTML=s.tbl;
+ $('#pc').innerHTML=M.pc(variant).map((l,i)=>`<span class="${i===s.line?'on':''}" data-i="${i}" tabindex="0">${l.replace(/</g,'&lt;')}</span>`).join('');
+ $('#stepno').textContent=`step ${idx} / ${steps.length-1}`}
+function go(i){idx=Math.max(0,Math.min(steps.length-1,i));apply()}
+function setPlay(p){playing=p;$('#bPlay').textContent=p?'Pause':'Play'}
+function reset(){setPlay(false);steps=M.run(G,src,variant);go(0)}
+function loadG(i){G=M.gs[i];src=0;buildScene();
+ $('#gdef').textContent=`V = ${G.n}, E = ${G.E.length}${G.dir?' (directed)':' (undirected)'}${G.w?', weighted':''}\n`+G.E.map(e=>G.w?`${e[0]} ${G.dir?'→':'–'} ${e[1]}  w=${e[2]}`:`${e[0]} ${G.dir?'→':'–'} ${e[1]}`).join('\n')+(M.adjv?'\n\n'+M.adjv(G):'');reset()}
+function loadM(k){M=MODS.find(m=>m.k===k);variant=M.vs?M.vs[0][0]:null;renderText();layered=false;$('#lay').checked=false;$('#llab').style.display=M.layer?'flex':'none';
+ $('#vlab').style.display=M.vs?'flex':'none';$('#vSel').innerHTML=(M.vs||[]).map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+ $('#gSel').innerHTML=M.gs.map((g,i)=>`<option value="${i}">${g.name}</option>`).join('');
+ $('#legend').innerHTML=M.leg.map(([k,t])=>`<span><i style="background:#${COL[k].toString(16).padStart(6,'0')}"></i>${t}</span>`).join('');
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));loadG(0)}
+$('#nav').innerHTML=MODS.map(m=>`<button data-k="${m.k}">${m.name}</button>`).join('');
+$('#nav').onclick=e=>{if(e.target.dataset.k)loadM(e.target.dataset.k)};
+$('#vSel').onchange=e=>{variant=e.target.value;reset()};$('#gSel').onchange=e=>loadG(+e.target.value);
+$('#bReset').onclick=reset;$('#bBack').onclick=()=>{setPlay(false);go(idx-1)};$('#bStep').onclick=()=>{setPlay(false);go(idx+1)};
+$('#bPlay').onclick=()=>{if(!playing&&idx>=steps.length-1)go(0);setPlay(!playing)};
+addEventListener('keydown',e=>{if(e.target.tagName==='SELECT')return;if(e.key==='ArrowRight')$('#bStep').click();if(e.key==='ArrowLeft')$('#bBack').click();if(e.key===' '){e.preventDefault();$('#bPlay').click()}});
+initGL();loadM('bfs');
+</script></body></html>

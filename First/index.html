@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semiconductor Physics & MOS Band Theory Master Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Dark Mode Overrides */
+        .dark .bg-white { background-color: #1e293b !important; border-color: #334155 !important; }
+        .dark .text-slate-900 { color: #f8fafc !important; }
+        .dark .text-slate-800 { color: #f1f5f9 !important; }
+        .dark .text-slate-700 { color: #cbd5e1 !important; }
+        .dark .text-slate-600 { color: #94a3b8 !important; }
+        .dark .bg-slate-100 { background-color: #334155 !important; }
+        .dark th, .dark td { border-color: #334155; }
+        .dark th { background-color: #0f172a; color: #f8fafc; }
+        .dark tr:nth-child(even) { background-color: #1e293b; }
+        .dark table { background: #1e293b; border-color: #334155; }
+        .dark .nav-item:hover { background-color: #334155 !important; border-left-color: #64748b !important; }
+        .dark .nav-active { background-color: #0f172a !important; border-left-color: #38bdf8 !important; color: #f8fafc !important; }
+
+        /* Colored Info Boxes Dark Mode */
+        .dark .bg-blue-50, .dark .bg-indigo-50, .dark .bg-purple-50, 
+        .dark .bg-emerald-50, .dark .bg-amber-50, .dark .bg-orange-50, 
+        .dark .bg-rose-50, .dark .bg-cyan-50 {
+            background-color: rgba(30, 41, 59, 0.6) !important;
+            border-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+        .dark .bg-blue-50 strong, .dark .bg-indigo-50 strong { color: #93c5fd !important; }
+        .dark .bg-emerald-50 strong { color: #6ee7b7 !important; }
+        .dark .bg-amber-50 strong, .dark .bg-orange-50 strong { color: #fcd34d !important; }
+        .dark .bg-rose-50 strong { color: #fca5a5 !important; }
+        .dark .bg-cyan-50 strong { color: #67e8f9 !important; }
+
+        /* Card Hover Animations */
+        .card-hover {
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        .dark ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .nav-active { background-color: #e2e8f0; border-left: 4px solid #0284c7; font-weight: 700; color: #0369a1; }
+        .nav-item { border-left: 4px solid transparent; transition: all 0.2s ease; cursor: pointer; }
+        .nav-item:hover { background-color: #f1f5f9; border-left-color: #94a3b8; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; opacity: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { border: 1px solid #e2e8f0; padding: 0.75rem 1rem; text-align: left; font-size: 0.875rem; }
+        th { background-color: #f8fafc; font-weight: 700; color: #334155; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+
+        .badge { display: inline-block; padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 700; border-radius: 0.375rem; line-height: 1; }
+        .bg-tag-blue { background-color: #0284c7; color: white; }
+        .bg-tag-emerald { background-color: #059669; color: white; }
+        .bg-tag-amber { background-color: #d97706; color: white; }
+        .bg-tag-purple { background-color: #7c3aed; color: white; }
+        .bg-tag-rose { background-color: #e11d48; color: white; }
+
+        /* Collapsible Drawers */
+        details { transition: all 0.3s ease; }
+        details > summary { list-style-type: none; outline: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary::before { content: '▶'; display: inline-block; margin-right: 0.5rem; transition: transform 0.2s; font-size: 0.8em; color: #64748b; }
+        details[open] > summary::before { transform: rotate(90deg); color: #0284c7; }
+
+        /* Lightbox Modal */
+        #lightbox { transition: opacity 0.25s ease; }
+        .lightbox-open { opacity: 1 !important; pointer-events: auto !important; }
+        .zoom-img { cursor: zoom-in; transition: transform 0.2s ease, box-shadow 0.2s ease; border-radius: 0.5rem; }
+        .zoom-img:hover { transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #38bdf8 !important; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden transition-colors duration-200">
+
+    <!-- Sticky Sidebar Navigation -->
+    <aside class="w-full md:w-80 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex-shrink-0 md:h-screen md:sticky top-0 overflow-y-auto shadow-sm z-20 transition-colors duration-200">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center">
+                <div>
+                    <span class="text-xs font-bold tracking-wider uppercase text-sky-600 dark:text-sky-400">VLSI & Physics Core</span>
+                    <h1 class="text-lg font-black tracking-tight text-slate-900 dark:text-white leading-tight mt-0.5">Semiconductor & MOS Band Guide</h1>
+                </div>
+                <button onclick="toggleDarkMode()" aria-label="Toggle Dark Mode" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                    <svg id="moon-icon" class="w-4 h-4 text-slate-700 dark:hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    <svg id="sun-icon" class="w-4 h-4 text-amber-400 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.22 4.22a1 1 0 011.415 0l.884.884a1 1 0 01-1.414 1.415l-.884-.884a1 1 0 010-1.415zM1 10a1 1 0 011-1h1a1 1 0 110 2H2a1 1 0 01-1-1zm15 0a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zM4.22 15.78a1 1 0 010-1.414l.884-.884a1 1 0 011.415 1.414l-.884.884a1 1 0 01-1.415 0zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm5.78-1.56a1 1 0 011.414 0l.884.884a1 1 0 01-1.414 1.415l-.884-.884a1 1 0 010-1.415zM10 4a6 6 0 100 12 6 6 0 000-12z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Analytical breakdown of 9 foundational band diagrams + MOS electrostatics</p>
+            <div class="mt-3 relative">
+                <input type="text" id="global-search" placeholder="Filter sections, formulas..." onkeyup="filterNav()" class="w-full text-xs pl-8 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 bg-slate-50 dark:bg-slate-700/50 placeholder-slate-400 text-slate-800 dark:text-slate-100">
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+        </div>
+
+        <nav id="nav-menu" class="py-2 flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden text-xs font-semibold">
+            <button onclick="nav('sec-intrinsic')" id="nav-sec-intrinsic" class="nav-item nav-active text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>1. Intrinsic Energy Bands</span>
+                <span class="badge bg-tag-blue">Fig 1</span>
+            </button>
+            <button onclick="nav('sec-extrinsic')" id="nav-sec-extrinsic" class="nav-item text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>2. N-Type & P-Type Doping</span>
+                <span class="badge bg-tag-emerald">Fig 2–3</span>
+            </button>
+            <button onclick="nav('sec-pn-eq')" id="nav-sec-pn-eq" class="nav-item text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>3. P-N Junction Equilibrium</span>
+                <span class="badge bg-tag-amber">Fig 4</span>
+            </button>
+            <button onclick="nav('sec-pn-bias')" id="nav-sec-pn-bias" class="nav-item text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>4. Forward & Reverse Biasing</span>
+                <span class="badge bg-tag-purple">Fig 5–6</span>
+            </button>
+            <button onclick="nav('sec-metal-oxide')" id="nav-sec-metal-oxide" class="nav-item text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>5. Metal & Oxide (Insulator)</span>
+                <span class="badge bg-tag-blue">Fig 7–8</span>
+            </button>
+            <button onclick="nav('sec-mos-band')" id="nav-sec-mos-band" class="nav-item text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>6. MOS Capacitor Electrostatics</span>
+                <span class="badge bg-tag-rose">Fig 9</span>
+            </button>
+            <button onclick="nav('sec-calculator')" id="nav-sec-calculator" class="nav-item text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>⚡ Interactive $V_T$ Calculator</span>
+                <span class="badge bg-sky-600">Sim</span>
+            </button>
+            <button onclick="nav('sec-comparison')" id="nav-sec-comparison" class="nav-item text-left px-5 py-3 flex-shrink-0 flex items-center justify-between">
+                <span>7. Master Comparison Matrix</span>
+                <span class="badge bg-slate-500">Summary</span>
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full">
+
+        <!-- ========================================== -->
+        <!-- SECTION 1: INTRINSIC SEMICONDUCTOR         -->
+        <!-- ========================================== -->
+        <section id="sec-intrinsic" class="fade-in block">
+            <header class="mb-8">
+                <span class="badge bg-sky-600 text-white mb-2">Fundamental Physics · Unit I</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Intrinsic Semiconductor Energy Band Architecture</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Direct inspection of bandgap mechanics, density of states, and intrinsic Fermi level derivation.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 items-center">
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-slate-800 dark:text-slate-100">Electronic Band Structure</h3>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                        An <strong>intrinsic semiconductor</strong> is a chemically pure crystal (pure Silicon or Germanium) devoid of significant lattice defect concentrations or dopant impurities. Its electronic states are governed by quantum mechanical periodic potential solutions resulting in two allowed energy bands separated by a forbidden energy bandgap ($E_g$):
+                    </p>
+                    <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-2 mb-4">
+                        <li>• <strong>Conduction Band ($E_c$):</strong> The lowest unoccupied band at absolute zero ($0\text{ K}$). At $T > 0\text{ K}$, thermally elevated electrons occupy these states to conduct drift current.</li>
+                        <li>• <strong>Valence Band ($E_v$):</strong> The highest occupied band at $0\text{ K}$. When valence electrons break covalent bonds, vacant quantum states (holes) behave as positive charges.</li>
+                        <li>• <strong>Forbidden Bandgap ($E_g = E_c - E_v$):</strong> For Silicon at $300\text{ K}$, $E_g = 1.12\text{ eV}$. For Germanium, $E_g = 0.66\text{ eV}$; for GaAs, $E_g = 1.42\text{ eV}$.</li>
+                    </ul>
+
+                    <div class="bg-blue-50 dark:bg-slate-800 p-4 rounded-lg border-l-4 border-l-sky-500 shadow-sm">
+                        <p class="text-xs font-bold text-sky-800 dark:text-sky-400 uppercase tracking-wider mb-1">Intrinsic Carrier Concentration Formula</p>
+                        <p class="text-xs text-slate-700 dark:text-slate-300">
+                            $$n_i = \sqrt{N_c N_v} \exp\left(-\frac{E_g}{2 k_B T}\right)$$
+                            Where $N_c = 2.8 \times 10^{19}\text{ cm}^{-3}$ and $N_v = 1.04 \times 10^{19}\text{ cm}^{-3}$ for Si at $300\text{ K}$. Standard Silicon $n_i \approx 1.5 \times 10^{10}\text{ cm}^{-3}$.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="text-center bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <img src="1_Intrinsic_Semiconductor.png" alt="Intrinsic Semiconductor Band Diagram" class="zoom-img w-full max-w-md mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white" onclick="openLightbox(this.src)">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-mono">Fig. 1. Intrinsic Semiconductor with Fermi level $E_F$ positioned midway between $E_c$ and $E_v$.</p>
+                </div>
+            </div>
+
+            <!-- Lucid Drawer 1 -->
+            <details class="mb-8 bg-blue-50 dark:bg-slate-800/80 p-4 rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
+                <summary class="font-bold text-sky-900 dark:text-sky-400 text-sm cursor-pointer">💡 Lucid Understanding: Why does the Fermi Level lie exactly at midgap?</summary>
+                <div class="mt-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed border-t border-blue-200 dark:border-blue-800 pt-3">
+                    <strong>Physical Mechanism:</strong> In an intrinsic crystal, thermal generation produces electrons and holes in exact equal pairs ($n = p = n_i$). By equating electron density $n = N_c \exp[-(E_c - E_F)/k_B T]$ to hole density $p = N_v \exp[-(E_F - E_v)/k_B T]$:
+                    $$E_F = E_i = \frac{E_c + E_v}{2} + \frac{3}{4} k_B T \ln\left(\frac{m_p^*}{m_n^*}\right)$$
+                    Since the effective mass of a hole in Silicon ($m_p^* \approx 0.59 m_0$) is close to an electron ($m_n^* \approx 1.08 m_0$), the logarithmic correction term is smaller than $0.01\text{ eV}$ at room temperature. Thus, $E_i$ is practically at the geometrical center of the bandgap!
+                </div>
+            </details>
+
+            <!-- Temperature Chart -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm mb-8 card-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">Intrinsic Carrier Density $n_i$ vs Temperature (Silicon)</h4>
+                    <span class="text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-mono px-2 py-1 rounded">Exponential $T^{3/2} e^{-E_g/2kT}$</span>
+                </div>
+                <div class="h-64 relative">
+                    <canvas id="niTempChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 2: EXTRINSIC DOPING (N & P)        -->
+        <!-- ========================================== -->
+        <section id="sec-extrinsic" class="fade-in hidden">
+            <header class="mb-8">
+                <span class="badge bg-emerald-600 text-white mb-2">Doping Physics & Carrier Statistics</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Extrinsic Semiconductors: N-Type & P-Type</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Energy levels of donor/acceptor impurities, Fermi level shifts, and the Law of Mass Action.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- N-Type Card -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="badge bg-tag-blue font-mono">N-Type Doping</span>
+                        <span class="text-xs font-mono text-slate-400">Group V Impurities</span>
+                    </div>
+                    <img src="2_N_Type_Semiconductor.png" alt="N-Type Semiconductor" class="zoom-img w-full mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white mb-3" onclick="openLightbox(this.src)">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">Donor Energy Level ($E_D$) Mechanics</h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                        Doping with pentavalent atoms (Phosphorus, Arsenic, Antimony) introduces extra valence electrons that require minimal energy to ionize into the conduction band ($\sim 0.045\text{ eV}$ in Si). The donor energy level $E_D$ sits fractions of an electron-volt beneath $E_c$.
+                    </p>
+                    <div class="bg-blue-50 dark:bg-slate-700/50 p-3 rounded text-xs font-mono text-slate-700 dark:text-slate-200 space-y-1">
+                        <div>$n_0 \approx N_D$ (Majority Carriers)</div>
+                        <div>$p_0 = \frac{n_i^2}{N_D}$ (Minority Carriers)</div>
+                        <div>$E_F - E_i = k_B T \ln\left(\frac{N_D}{n_i}\right)$</div>
+                    </div>
+                </div>
+
+                <!-- P-Type Card -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="badge bg-tag-emerald font-mono">P-Type Doping</span>
+                        <span class="text-xs font-mono text-slate-400">Group III Impurities</span>
+                    </div>
+                    <img src="3_P_Type_Semiconductor.png" alt="P-Type Semiconductor" class="zoom-img w-full mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white mb-3" onclick="openLightbox(this.src)">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">Acceptor Energy Level ($E_A$) Mechanics</h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                        Doping with trivalent atoms (Boron, Gallium, Indium) creates deficient covalent bonds (holes). Electrons from the valence band easily jump into $E_A$ ($\sim 0.045\text{ eV}$ above $E_v$), ionizing acceptors negatively and releasing free holes into $E_v$.
+                    </p>
+                    <div class="bg-emerald-50 dark:bg-slate-700/50 p-3 rounded text-xs font-mono text-slate-700 dark:text-slate-200 space-y-1">
+                        <div>$p_0 \approx N_A$ (Majority Carriers)</div>
+                        <div>$n_0 = \frac{n_i^2}{N_A}$ (Minority Carriers)</div>
+                        <div>$E_i - E_F = k_B T \ln\left(\frac{N_A}{n_i}\right)$</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Trap Callout -->
+            <div class="bg-amber-50 dark:bg-amber-950/30 border-l-4 border-l-amber-500 p-4 rounded-lg shadow-sm mb-8">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-lg">⚠️</span>
+                    <h4 class="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wide">Critical Exam Trap: Law of Mass Action ($n \cdot p = n_i^2$)</h4>
+                </div>
+                <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                    The relation $n_0 p_0 = n_i^2$ holds <strong>strictly and exclusively in thermal equilibrium</strong>! Under external illumination, laser injection, or forward/reverse voltage bias, excess carriers are generated ($n = n_0 + \Delta n$, $p = p_0 + \Delta p$), completely breaking the mass-action product ($n \cdot p \gg n_i^2$).
+                </p>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 3: P-N JUNCTION IN EQUILIBRIUM     -->
+        <!-- ========================================== -->
+        <section id="sec-pn-eq" class="fade-in hidden">
+            <header class="mb-8">
+                <span class="badge bg-amber-600 text-white mb-2">Junction Electrostatics</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">P-N Junction in Thermal Equilibrium</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Built-in potential barrier $V_{bi}$, depletion space-charge layer, and flat Fermi level invariant.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 items-center">
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-slate-800 dark:text-slate-100">Contact Phenomenon & Space Charge</h3>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                        When P-type and N-type silicon merge, huge carrier concentration gradients force electrons to diffuse from N to P and holes from P to N. This migration leaves behind uncompensated immobile ionized cores:
+                    </p>
+                    <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-1.5 mb-4">
+                        <li>• <strong>P-side Depletion:</strong> Ionized negatively charged acceptor ions ($-q N_A$).</li>
+                        <li>• <strong>N-side Depletion:</strong> Ionized positively charged donor ions ($+q N_D$).</li>
+                        <li>• <strong>Electric Field ($\mathcal{E}$):</strong> Points from N to P, opposing further majority diffusion until drift and diffusion currents precisely cancel ($J = J_{drift} + J_{diff} = 0$).</li>
+                    </ul>
+
+                    <div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 font-mono text-xs">
+                        <div class="text-sky-600 dark:text-sky-400 font-bold mb-1">Built-in Potential ($V_{bi}$):</div>
+                        <div>$$V_{bi} = \frac{k_B T}{q} \ln\left(\frac{N_A N_D}{n_i^2}\right)$$</div>
+                        <div class="text-emerald-600 dark:text-emerald-400 font-bold mt-2 mb-1">Total Depletion Width ($W$):</div>
+                        <div>$$W = \sqrt{\frac{2\epsilon_s}{q}\left(\frac{1}{N_A} + \frac{1}{N_D}\right) V_{bi}}$$</div>
+                    </div>
+                </div>
+
+                <div class="text-center bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <img src="4_PN_Junction_Equilibrium.png" alt="P-N Junction Equilibrium Band Diagram" class="zoom-img w-full max-w-md mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white" onclick="openLightbox(this.src)">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-mono">Fig. 4. P-N Junction in thermal equilibrium. Notice the single constant horizontal Fermi line $E_F$.</p>
+                </div>
+            </div>
+
+            <!-- Lucid Drawer 2 -->
+            <details class="mb-8 bg-amber-50 dark:bg-slate-800/80 p-4 rounded-lg border border-amber-200 dark:border-amber-800 shadow-sm">
+                <summary class="font-bold text-amber-900 dark:text-amber-400 text-sm cursor-pointer">💡 Lucid Understanding: Why does the Band Bend Upward on the P-Side?</summary>
+                <div class="mt-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed border-t border-amber-200 dark:border-amber-800 pt-3">
+                    <strong>Electrostatic Principle:</strong> Electrostatic potential $\psi$ and electron potential energy $E$ are inversely related by electron charge:
+                    $$E = -q \psi$$
+                    Because positive donor ions reside on the N-side, the N-region is at a <em>higher electrostatic potential</em> ($\psi_n > \psi_p$). Multiplying by $-q$ inverts the sign: electron energy is <strong>lower on the N-side</strong> and <strong>higher on the P-side</strong>. The bands bend smoothly across the space-charge width $W$, creating a potential energy hill of height $q V_{bi}$ that restrains majority carriers.
+                </div>
+            </details>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 4: FORWARD VS REVERSE BIASING      -->
+        <!-- ========================================== -->
+        <section id="sec-pn-bias" class="fade-in hidden">
+            <header class="mb-8">
+                <span class="badge bg-purple-600 text-white mb-2">Non-Equilibrium Dynamics</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">P-N Junction Under Biasing Conditions</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Quasi-Fermi level splitting, barrier lowering vs heightening, and the Shockley diode equation.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Forward Bias Card -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="badge bg-tag-emerald font-mono">Forward Bias ($V_a > 0$)</span>
+                        <span class="text-xs text-slate-400 font-mono">Barrier = $q(V_{bi} - V_a)$</span>
+                    </div>
+                    <img src="5_PN_Junction_Forward.png" alt="Forward Bias Band Diagram" class="zoom-img w-full mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white mb-3" onclick="openLightbox(this.src)">
+                    <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-1.5 mb-3">
+                        <li>• Positive terminal connected to P-type, negative to N-type.</li>
+                        <li>• External potential pushes majority carriers inward, <strong>narrowing the depletion layer</strong>: $W(V_a) = W_0 \sqrt{1 - V_a/V_{bi}}$.</li>
+                        <li>• Barrier height reduces to $q(V_{bi} - V_a)$, allowing exponential diffusion of majority carriers across the junction.</li>
+                        <li>• Quasi-Fermi levels split: $E_{Fp} - E_{Fn} = -q V_a$ ($E_{Fn}$ shifts upward relative to $E_{Fp}$).</li>
+                    </ul>
+                </div>
+
+                <!-- Reverse Bias Card -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="badge bg-tag-rose font-mono">Reverse Bias ($V_R > 0$)</span>
+                        <span class="text-xs text-slate-400 font-mono">Barrier = $q(V_{bi} + V_R)$</span>
+                    </div>
+                    <img src="6_PN_Junction_Reverse.png" alt="Reverse Bias Band Diagram" class="zoom-img w-full mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white mb-3" onclick="openLightbox(this.src)">
+                    <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-1.5 mb-3">
+                        <li>• Positive terminal connected to N-type, negative to P-type.</li>
+                        <li>• Majority carriers are pulled away from the junction, <strong>widening the depletion layer</strong>: $W(V_R) = W_0 \sqrt{1 + V_R/V_{bi}}$.</li>
+                        <li>• Potential barrier increases to $q(V_{bi} + V_R)$, completely blocking majority carrier diffusion.</li>
+                        <li>• Only thermally generated minority carriers drift across, yielding tiny reverse saturation current $I_0$.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Diode Equation Table -->
+            <div class="overflow-x-auto mb-8">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Thermal Equilibrium ($V=0$)</th>
+                            <th>Forward Bias ($V_F > 0$)</th>
+                            <th>Reverse Bias ($V_R > 0$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold">Barrier Height</td>
+                            <td>$q V_{bi}$</td>
+                            <td>$q (V_{bi} - V_F)$ (Decreased)</td>
+                            <td>$q (V_{bi} + V_R)$ (Increased)</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">Depletion Width $W$</td>
+                            <td>$W_0$</td>
+                            <td>$W_0 \sqrt{1 - V_F/V_{bi}}$ (Thin)</td>
+                            <td>$W_0 \sqrt{1 + V_R/V_{bi}}$ (Thick)</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">Current Flow</td>
+                            <td>$I = 0$ ($J_{drift} = J_{diff}$)</td>
+                            <td>$I \approx I_0 \exp\left(\frac{qV_F}{\eta k_B T}\right)$</td>
+                            <td>$I \approx -I_0$ (Saturation)</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">Dominant Capacitance</td>
+                            <td>$C_j = \frac{\epsilon_s A}{W_0}$</td>
+                            <td>Diffusion Capacitance $C_d \propto I_F$</td>
+                            <td>Junction Capacitance $C_j \propto \frac{1}{\sqrt{V_{bi}+V_R}}$</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 5: METAL & OXIDE ENERGY BANDS      -->
+        <!-- ========================================== -->
+        <section id="sec-metal-oxide" class="fade-in hidden">
+            <header class="mb-8">
+                <span class="badge bg-tag-blue text-white mb-2">Gate Stack Materials</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Metal & Insulator (Oxide) Band Profiles</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Understanding the non-semiconductor constituents of the MOS capacitor gate stack.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 items-start">
+                <!-- Metal Card -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <span class="badge bg-slate-700 text-white font-mono mb-2">Conductor</span>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Metal Band Structure</h3>
+                    <img src="7_Metal_Band.png" alt="Metal Band Diagram" class="zoom-img w-full mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white mb-3" onclick="openLightbox(this.src)">
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                        Unlike semiconductors, a metal has <strong>no bandgap</strong>. The conduction band overlaps with the valence band or is partially filled with electrons up to the Fermi energy $E_F$.
+                    </p>
+                    <div class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded text-xs space-y-1">
+                        <div><strong>Work Function ($\Phi_m$):</strong> Energy required to evacuate an electron from the Fermi level to the vacuum state ($E_0$). For Aluminum, $\Phi_m \approx 4.1\text{ eV}$; for polysilicon ($n^+$), $\Phi_{poly} \approx 4.05\text{ eV}$.</div>
+                        <div><strong>Screening Length:</strong> The Thomas-Fermi screening length in metals is sub-angstrom ($\sim 0.5\text{ \AA}$), preventing electric fields from penetrating into the metal bulk.</div>
+                    </div>
+                </div>
+
+                <!-- Oxide Card -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <span class="badge bg-tag-amber text-white font-mono mb-2">Wide-Gap Dielectric</span>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Silicon Dioxide ($\text{SiO}_2$)</h3>
+                    <img src="8_Oxide_Band.png" alt="Oxide Band Diagram" class="zoom-img w-full mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white mb-3 max-h-80 object-contain" onclick="openLightbox(this.src)">
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                        Silicon Dioxide is an amorphous insulator possessing a colossal energy bandgap of approximately <strong>$E_g \approx 9.0\text{ eV}$</strong>. 
+                    </p>
+                    <div class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded text-xs space-y-1">
+                        <div><strong>Electron Affinity ($\chi_{ox}$):</strong> $\sim 0.9\text{ eV}$, creating enormous conduction band offsets ($\Delta E_c \approx 3.15\text{ eV}$) with Silicon ($\chi_{Si} = 4.05\text{ eV}$).</div>
+                        <div><strong>Dielectric Constant ($\kappa$):</strong> $\epsilon_{ox} = 3.9 \epsilon_0$. Breakdown field $\mathcal{E}_{bd} \approx 10\text{ MV/cm}$.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 6: MOS BAND DIAGRAM & REGIMES      -->
+        <!-- ========================================== -->
+        <section id="sec-mos-band" class="fade-in hidden">
+            <header class="mb-8">
+                <span class="badge bg-tag-rose text-white mb-2">MOSFET Foundation</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">MOS Band Diagram & Surface Electrostatics</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Flatband, accumulation, depletion, and strong inversion thresholds ($2\phi_F$).</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 items-center">
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-slate-800 dark:text-slate-100">Surface Potential ($\psi_s$) Regimes</h3>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                        Applying a gate voltage $V_G$ drops potential across the oxide layer ($V_{ox}$) and bends the energy bands inside the semiconductor near the interface by an amount called the <strong>surface potential $\psi_s$</strong>:
+                    </p>
+                    <div class="space-y-2 text-xs">
+                        <div class="p-2.5 rounded bg-blue-50 dark:bg-slate-800 border-l-4 border-l-blue-500">
+                            <strong>1. Accumulation ($V_G < V_{FB}$ for p-sub):</strong> $\psi_s < 0$. Bands bend upward. Holes accumulate at the $\text{Si}-\text{SiO}_2$ interface exceeding bulk doping ($p_s > N_A$).
+                        </div>
+                        <div class="p-2.5 rounded bg-slate-100 dark:bg-slate-800 border-l-4 border-l-slate-400">
+                            <strong>2. Flatband ($V_G = V_{FB}$):</strong> $\psi_s = 0$. Bands are completely horizontal from interface to bulk. No space charge layer.
+                        </div>
+                        <div class="p-2.5 rounded bg-amber-50 dark:bg-slate-800 border-l-4 border-l-amber-500">
+                            <strong>3. Depletion ($V_{FB} < V_G < V_T$):</strong> $0 < \psi_s < 2\phi_F$. Bands bend downward. Free holes are repelled, leaving behind exposed negative acceptor ions $N_A^-$.
+                        </div>
+                        <div class="p-2.5 rounded bg-emerald-50 dark:bg-slate-800 border-l-4 border-l-emerald-500">
+                            <strong>4. Strong Inversion ($V_G \ge V_T$):</strong> $\psi_s \ge 2\phi_F$. Conduction band bends so close to $E_F$ that surface electron concentration equals bulk majority hole concentration ($n_s \ge N_A$). A continuous conducting n-channel is born!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                    <img src="9_MOS_Band_Diagram.png" alt="MOS Band Diagram P-type" class="zoom-img w-full max-w-md mx-auto rounded border border-slate-200 dark:border-slate-600 bg-white" onclick="openLightbox(this.src)">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-mono">Fig. 9. MOS P-Type Band Diagram showing linear potential slope in $\text{SiO}_2$ and downward band bending ($\psi_s > 0$) in Silicon.</p>
+                </div>
+            </div>
+
+            <!-- Lucid Drawer 3 -->
+            <details class="mb-8 bg-rose-50 dark:bg-slate-800/80 p-4 rounded-lg border border-rose-200 dark:border-rose-800 shadow-sm">
+                <summary class="font-bold text-rose-900 dark:text-rose-400 text-sm cursor-pointer">💡 Lucid Understanding: Why is Strong Inversion Defined at Exactly $\psi_s = 2\phi_F$?</summary>
+                <div class="mt-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed border-t border-rose-200 dark:border-rose-800 pt-3">
+                    <strong>Derivation:</strong> In the bulk P-type substrate, the Fermi level sits below the intrinsic level by Fermi potential $\phi_F$:
+                    $$\phi_F = \frac{k_B T}{q} \ln\left(\frac{N_A}{n_i}\right)$$
+                    When downward band bending reaches $\psi_s = \phi_F$, the intrinsic level crosses $E_F$, making the surface intrinsic ($n_s = p_s = n_i$). 
+                    <br><br>
+                    To achieve an inversion layer as strongly N-type as the bulk is P-type, the bands must bend an <em>identical distance $\phi_F$ past intrinsic</em>:
+                    $$\psi_s(\text{inversion}) = \phi_F + \phi_F = 2\phi_F$$
+                    At $\psi_s = 2\phi_F$, surface electron concentration reaches $n_s = n_i \exp[q(\psi_s - \phi_F)/k_B T] = N_A$. Any further increase in gate voltage is shielded by the exponentially growing inversion charge sheet rather than expanding the depletion width further!
+                </div>
+            </details>
+
+            <!-- Master Threshold Voltage Formula Box -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm mb-8 card-hover">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 uppercase tracking-wide">Standard MOS Threshold Voltage Equation</h4>
+                    <span class="badge bg-tag-rose font-mono">Core VLSI Formula</span>
+                </div>
+                <div class="text-center font-mono text-sm py-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg text-slate-800 dark:text-slate-200 mb-4 border border-slate-200 dark:border-slate-700">
+                    $$V_T = V_{FB} + 2\phi_F + \frac{\sqrt{2\epsilon_s q N_A (2\phi_F)}}{C_{ox}}$$
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded">
+                        <span class="font-bold text-sky-600 dark:text-sky-400">1. Flatband Offset:</span>
+                        <p class="text-slate-600 dark:text-slate-400 mt-1">$V_{FB} = \Phi_{ms} - \frac{Q_{ox}}{C_{ox}}$ compensates for work-function difference and trapped oxide charges.</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded">
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400">2. Band Bending:</span>
+                        <p class="text-slate-600 dark:text-slate-400 mt-1">$2\phi_F$ is the exact electrostatic potential required to invert the interface surface.</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded">
+                        <span class="font-bold text-amber-600 dark:text-amber-400">3. Depletion Charge:</span>
+                        <p class="text-slate-600 dark:text-slate-400 mt-1">$\frac{Q_d}{C_{ox}}$ represents the gate voltage needed to support maximum depletion layer charge $W_m = \sqrt{\frac{4\epsilon_s \phi_F}{q N_A}}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 7: INTERACTIVE CALCULATOR          -->
+        <!-- ========================================== -->
+        <section id="sec-calculator" class="fade-in hidden">
+            <header class="mb-8">
+                <span class="badge bg-sky-600 text-white mb-2">Simulation Engine</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Interactive MOS Parameter & $V_T$ Calculator</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Real-time electrostatic solver for Fermi potential, oxide capacitance, and threshold voltage.</p>
+            </header>
+
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-2">Substrate Doping $N_A$ ($\text{cm}^{-3}$)</label>
+                        <input type="number" id="calc-na" value="1e16" step="1e15" class="w-full text-sm p-2.5 border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-700 font-mono text-slate-800 dark:text-slate-100">
+                        <span class="text-[10px] text-slate-400">Typical range: $10^{15} - 10^{18}$</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-2">Oxide Thickness $t_{ox}$ ($\text{nm}$)</label>
+                        <input type="number" id="calc-tox" value="5" step="0.5" class="w-full text-sm p-2.5 border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-700 font-mono text-slate-800 dark:text-slate-100">
+                        <span class="text-[10px] text-slate-400">Typical range: $1 - 20\text{ nm}$</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-2">Gate Material Type</label>
+                        <select id="calc-gate" class="w-full text-sm p-2.5 border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-700 font-mono text-slate-800 dark:text-slate-100">
+                            <option value="-0.95">n+ Polysilicon (Standard NMOS)</option>
+                            <option value="0.15">p+ Polysilicon (Standard PMOS)</option>
+                            <option value="-0.2">Aluminum Gate ($\Phi_m = 4.1\text{ eV}$)</option>
+                        </select>
+                        <span class="text-[10px] text-slate-400">Controls flatband offset $V_{FB}$</span>
+                    </div>
+                </div>
+
+                <button onclick="calculateMOS()" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg transition-colors text-xs uppercase tracking-wider mb-6">Compute MOS Parameters</button>
+
+                <!-- Calculation Output Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded border border-slate-200 dark:border-slate-600">
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Fermi Potential $\phi_F$</span>
+                        <p id="res-phif" class="text-base font-extrabold text-sky-600 dark:text-sky-400 mt-1 font-mono">0.347 V</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded border border-slate-200 dark:border-slate-600">
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Oxide Capacitance $C_{ox}$</span>
+                        <p id="res-cox" class="text-base font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">6.91 fF/µm²</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded border border-slate-200 dark:border-slate-600">
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Max Depletion $W_{max}$</span>
+                        <p id="res-wmax" class="text-base font-extrabold text-amber-600 dark:text-amber-400 mt-1 font-mono">300.2 nm</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded border border-slate-200 dark:border-slate-600">
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Threshold Voltage $V_T$</span>
+                        <p id="res-vt" class="text-base font-extrabold text-rose-600 dark:text-rose-400 mt-1 font-mono">+0.435 V</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- C-V Characteristics Plot -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm card-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">MOS High-Frequency vs Low-Frequency $C-V$ Curves</h4>
+                    <span class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono px-2 py-1 rounded">Normalized $C/C_{ox}$</span>
+                </div>
+                <div class="h-64 relative">
+                    <canvas id="cvChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 8: MASTER COMPARISON MATRIX        -->
+        <!-- ========================================== -->
+        <section id="sec-comparison" class="fade-in hidden">
+            <header class="mb-8">
+                <span class="badge bg-slate-600 text-white mb-2">Synthesis & Revision</span>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Master Comparison Matrix: Semiconductor States</h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Cross-sectional reference table correlating all 9 figure states and electrical boundary conditions.</p>
+            </header>
+
+            <div class="overflow-x-auto mb-8">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>State / Figure</th>
+                            <th>Majority Carrier</th>
+                            <th>Fermi Level $E_F$ Location</th>
+                            <th>Depletion Width / Barrier</th>
+                            <th>Dominant Transport Mode</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold text-sky-600 dark:text-sky-400">Intrinsic Si (Fig. 1)</td>
+                            <td>$n_0 = p_0 = n_i$</td>
+                            <td>$E_i \approx \frac{E_c + E_v}{2}$ (Midgap)</td>
+                            <td>None (Bulk uniform)</td>
+                            <td>Thermal generation-recombination</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-emerald-600 dark:text-emerald-400">N-Type Extrinsic (Fig. 2)</td>
+                            <td>Electrons ($n_0 \approx N_D$)</td>
+                            <td>Closer to $E_c$ ($E_F - E_i > 0$)</td>
+                            <td>None (Bulk uniform)</td>
+                            <td>Electron drift under field</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-amber-600 dark:text-amber-400">P-Type Extrinsic (Fig. 3)</td>
+                            <td>Holes ($p_0 \approx N_A$)</td>
+                            <td>Closer to $E_v$ ($E_i - E_F > 0$)</td>
+                            <td>None (Bulk uniform)</td>
+                            <td>Hole drift under field</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-purple-600 dark:text-purple-400">P-N Equilibrium (Fig. 4)</td>
+                            <td>P: Holes, N: Electrons</td>
+                            <td>Flat everywhere across junction</td>
+                            <td>$W_0$, barrier $q V_{bi}$</td>
+                            <td>Zero net current ($J_{drift} = -J_{diff}$)</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-emerald-600 dark:text-emerald-400">P-N Forward Bias (Fig. 5)</td>
+                            <td>Injected minority carriers</td>
+                            <td>Splits into $E_{Fn}$ and $E_{Fp}$</td>
+                            <td>Reduced $W < W_0$, barrier $q(V_{bi}-V_F)$</td>
+                            <td>Exponential majority diffusion current</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-rose-600 dark:text-rose-400">P-N Reverse Bias (Fig. 6)</td>
+                            <td>Minority carriers only</td>
+                            <td>Splits into $E_{Fn}$ and $E_{Fp}$</td>
+                            <td>Expanded $W > W_0$, barrier $q(V_{bi}+V_R)$</td>
+                            <td>Thermally generated minority drift ($I_0$)</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-slate-700 dark:text-slate-300">Metal Conductor (Fig. 7)</td>
+                            <td>Free electron gas</td>
+                            <td>Intersects continuum of states</td>
+                            <td>Screening width $< 0.1\text{ nm}$</td>
+                            <td>Ohmic conduction</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-amber-600 dark:text-amber-400">Oxide Insulator (Fig. 8)</td>
+                            <td>None (Dielectric)</td>
+                            <td>In wide forbidden gap ($9\text{ eV}$)</td>
+                            <td>Complete insulating barrier</td>
+                            <td>Displacement current / Fowler-Nordheim tunneling</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-rose-600 dark:text-rose-400">MOS Inversion (Fig. 9)</td>
+                            <td>Surface Inversion Electrons</td>
+                            <td>$E_c$ within $\sim 0.1\text{ eV}$ of $E_F$</td>
+                            <td>$W_{max} = \sqrt{\frac{4\epsilon_s \phi_F}{q N_A}}$</td>
+                            <td>Surface field-effect channel conduction</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Lightbox Modal for Diagram Zoom -->
+    <div id="lightbox" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none" onclick="closeLightbox()">
+        <div class="relative max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 p-2 rounded-xl shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold shadow-lg hover:bg-red-700">✕</button>
+            <img id="lightbox-img" src="" alt="Zoomed Diagram" class="max-w-full max-h-[85vh] object-contain rounded">
+            <p id="lightbox-caption" class="text-xs text-center text-slate-500 dark:text-slate-400 mt-2 font-mono"></p>
+        </div>
+    </div>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // Dark Mode Controller
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Section Switcher
+        function nav(sectionId) {
+            const sections = document.querySelectorAll('main > section');
+            sections.forEach(sec => sec.classList.add('hidden'));
+            
+            const target = document.getElementById(sectionId);
+            if (target) {
+                target.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            const buttons = document.querySelectorAll('#nav-menu button');
+            buttons.forEach(btn => btn.classList.remove('nav-active'));
+            const activeBtn = document.getElementById('nav-' + sectionId);
+            if (activeBtn) activeBtn.classList.add('nav-active');
+        }
+
+        // Search Filter in Navigation
+        function filterNav() {
+            const query = document.getElementById('global-search').value.toLowerCase();
+            const buttons = document.querySelectorAll('#nav-menu button');
+            buttons.forEach(btn => {
+                const text = btn.innerText.toLowerCase();
+                btn.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        // Lightbox Functions
+        function openLightbox(src) {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            const cap = document.getElementById('lightbox-caption');
+            img.src = src;
+            cap.innerText = src.split('/').pop();
+            lb.classList.add('lightbox-open');
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('lightbox-open');
+        }
+
+        // MOS Calculator Engine
+        function calculateMOS() {
+            const Na = parseFloat(document.getElementById('calc-na').value) || 1e16;
+            const tox_nm = parseFloat(document.getElementById('calc-tox').value) || 5;
+            const Vfb = parseFloat(document.getElementById('calc-gate').value) || -0.95;
+
+            const q = 1.602e-19;
+            const eps0 = 8.854e-14; // F/cm
+            const eps_si = 11.7 * eps0;
+            const eps_ox = 3.9 * eps0;
+            const k = 1.38e-23;
+            const T = 300;
+            const ni = 1.5e10; // cm^-3
+
+            // 1. Fermi Potential
+            const phi_f = (k * T / q) * Math.log(Na / ni);
+
+            // 2. Oxide Capacitance per cm^2
+            const tox_cm = tox_nm * 1e-7;
+            const Cox = eps_ox / tox_cm; // F/cm^2
+            const Cox_fF_um2 = Cox * 1e15 * 1e-8; // fF/um^2
+
+            // 3. Max Depletion Width
+            const Wmax_cm = Math.sqrt((4 * eps_si * phi_f) / (q * Na));
+            const Wmax_nm = Wmax_cm * 1e7;
+
+            // 4. Depletion Charge
+            const Qd = Math.sqrt(2 * eps_si * q * Na * (2 * phi_f));
+
+            // 5. Threshold Voltage
+            const Vt = Vfb + (2 * phi_f) + (Qd / Cox);
+
+            // Update DOM
+            document.getElementById('res-phif').innerText = phi_f.toFixed(3) + ' V';
+            document.getElementById('res-cox').innerText = Cox_fF_um2.toFixed(2) + ' fF/µm²';
+            document.getElementById('res-wmax').innerText = Wmax_nm.toFixed(1) + ' nm';
+            document.getElementById('res-vt').innerText = (Vt >= 0 ? '+' : '') + Vt.toFixed(3) + ' V';
+        }
+
+        // Initialize Charts on Load
+        window.addEventListener('load', () => {
+            // Chart 1: ni vs Temp
+            const ctx1 = document.getElementById('niTempChart').getContext('2d');
+            const temps = [200, 250, 300, 350, 400, 450, 500];
+            const ni_vals = temps.map(T => {
+                const Eg = 1.12;
+                const k_eV = 8.617e-5;
+                return 5.2e15 * Math.pow(T, 1.5) * Math.exp(-Eg / (2 * k_eV * T));
+            });
+
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: temps.map(t => t + ' K'),
+                    datasets: [{
+                        label: 'Intrinsic Carrier Density ni (cm⁻³)',
+                        data: ni_vals,
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'logarithmic',
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            title: { display: true, text: 'Carrier Concentration (cm⁻³)' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            title: { display: true, text: 'Temperature (Kelvin)' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: MOS C-V Curve
+            const ctx2 = document.getElementById('cvChart').getContext('2d');
+            const vg = [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0];
+            const c_lf = [1.0, 1.0, 0.85, 0.55, 0.35, 0.40, 0.70, 0.95, 1.0];
+            const c_hf = [1.0, 1.0, 0.85, 0.55, 0.35, 0.32, 0.31, 0.31, 0.31];
+
+            new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: vg.map(v => (v >= 0 ? '+' : '') + v.toFixed(1) + ' V'),
+                    datasets: [
+                        {
+                            label: 'Low Frequency (LF) C-V',
+                            data: c_lf,
+                            borderColor: '#059669',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        },
+                        {
+                            label: 'High Frequency (HF) C-V',
+                            data: c_hf,
+                            borderColor: '#e11d48',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 1.1,
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            title: { display: true, text: 'Normalized C / Cox' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            title: { display: true, text: 'Gate Voltage VG (V)' }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

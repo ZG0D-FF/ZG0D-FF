@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Practical GitHub Actions - Chapter 1 Part 1</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+font-family:Inter,Segoe UI,Arial,sans-serif;
+background:#0f172a;
+color:#e5e7eb;
+line-height:1.7;
+}
+header{
+padding:60px 30px;
+text-align:center;
+background:linear-gradient(135deg,#0f172a,#111827,#1d4ed8);
+}
+header h1{font-size:3em;}
+header p{opacity:.8;margin-top:10px;}
+
+.container{
+max-width:1100px;
+margin:auto;
+padding:40px 20px;
+}
+
+.card{
+background:#111827;
+padding:25px;
+border-radius:18px;
+margin:25px 0;
+border:1px solid #1f2937;
+box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+
+h2{
+color:#60a5fa;
+margin-bottom:15px;
+}
+
+h3{
+color:#93c5fd;
+margin:20px 0 10px;
+}
+
+.note{
+background:#1e293b;
+border-left:5px solid #38bdf8;
+padding:15px;
+margin:15px 0;
+border-radius:10px;
+}
+
+.warning{
+background:#3b1f1f;
+border-left:5px solid #ef4444;
+padding:15px;
+margin:15px 0;
+border-radius:10px;
+}
+
+.success{
+background:#123524;
+border-left:5px solid #22c55e;
+padding:15px;
+margin:15px 0;
+border-radius:10px;
+}
+
+code{
+background:#1f2937;
+padding:2px 6px;
+border-radius:6px;
+color:#7dd3fc;
+}
+
+pre{
+background:#020617;
+padding:18px;
+overflow:auto;
+border-radius:12px;
+border:1px solid #334155;
+margin:15px 0;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin:20px 0;
+}
+
+th,td{
+border:1px solid #374151;
+padding:12px;
+}
+
+th{
+background:#1d4ed8;
+}
+
+.flow{
+display:flex;
+flex-wrap:wrap;
+gap:15px;
+justify-content:center;
+margin:20px 0;
+}
+
+.box{
+flex:1 1 170px;
+background:#172554;
+padding:18px;
+text-align:center;
+border-radius:12px;
+border:1px solid #2563eb;
+}
+
+.tag{
+display:inline-block;
+background:#2563eb;
+padding:5px 12px;
+border-radius:999px;
+margin:5px;
+font-size:.85em;
+}
+
+footer{
+text-align:center;
+padding:40px;
+opacity:.7;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>GitHub Actions</h1>
+<p>Chapter 1 • Part 1 • Understanding the Foundation</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>What You'll Build During This Course</h2>
+
+<p>This isn't just a GitHub Actions tutorial.</p>
+
+<p>Throughout the course you'll build a real automation project:</p>
+
+<div class="flow">
+<div class="box">📝 YAML Podcast Data</div>
+<div class="box">🐍 Python Parser</div>
+<div class="box">📦 Docker Container</div>
+<div class="box">⚙️ GitHub Action</div>
+<div class="box">🌐 GitHub Pages</div>
+<div class="box">🎙️ RSS Feed</div>
+</div>
+
+<p>The instructor intentionally builds something useful for their own work—a podcast RSS generator—instead of an artificial demo.</p>
+
+<div class="success">
+<strong>Learning Principle:</strong> The fastest way to learn automation is by solving an actual problem.
+</div>
+</div>
+
+<div class="card">
+<h2>What Exactly Are GitHub Actions?</h2>
+
+<p>GitHub Actions are GitHub's automation engine.</p>
+
+<p>Instead of manually doing repetitive tasks every time something changes, GitHub can perform those tasks automatically.</p>
+
+<h3>Think of it like this</h3>
+
+<table>
+<tr><th>Real Life</th><th>GitHub</th></tr>
+<tr><td>Motion sensor detects movement</td><td>Someone pushes code</td></tr>
+<tr><td>Lights turn on automatically</td><td>Workflow starts automatically</td></tr>
+<tr><td>No manual effort</td><td>No manual commands</td></tr>
+</table>
+
+<h3>Basic Formula</h3>
+
+<pre>
+Event Happens
+      ↓
+GitHub Detects It
+      ↓
+Workflow Starts
+      ↓
+Steps Execute
+      ↓
+Job Finishes
+</pre>
+
+<p>This simple chain powers everything from testing software to deploying websites.</p>
+</div>
+
+<div class="card">
+<h2>When Can GitHub Actions Run?</h2>
+
+<p>Two major ways appear immediately in this lesson.</p>
+
+<h3>1. Time-Based Automation</h3>
+
+<p>GitHub can run workflows on a schedule.</p>
+
+<pre>
+Every day at midnight
+Every Monday
+Every hour
+</pre>
+
+<p>This is useful for backups, reports, or cleaning repositories.</p>
+
+<h3>2. Event-Based Automation</h3>
+
+<p>Workflows can start when something happens.</p>
+
+Examples include:
+
+<ul>
+<li>Pushing a branch</li>
+<li>Opening a Pull Request</li>
+<li>Merging code</li>
+<li>Publishing a release</li>
+</ul>
+
+<div class="note">
+Later in the course you'll create workflows triggered by these events.
+</div>
+</div>
+
+<div class="card">
+<h2>Workflow Anatomy</h2>
+
+<p>A GitHub Action isn't just one file.</p>
+
+<p>Several technologies work together.</p>
+
+<table>
+<tr><th>Technology</th><th>Purpose</th></tr>
+<tr><td>YAML</td><td>Workflow instructions</td></tr>
+<tr><td>Python</td><td>Data processing</td></tr>
+<tr><td>Bash</td><td>Running commands</td></tr>
+<tr><td>Docker</td><td>Packaging the action</td></tr>
+<tr><td>GitHub Pages</td><td>Publishing files</td></tr>
+</table>
+
+<h3>Big Picture</h3>
+
+<pre>
+feed.yaml
+    │
+    ▼
+Python
+    │
+    ▼
+XML RSS Feed
+    │
+    ▼
+GitHub Action
+    │
+    ▼
+GitHub Pages
+    │
+    ▼
+Podcast Apps
+</pre>
+</div>
+
+<div class="card">
+<h2>Understanding YAML</h2>
+
+<p>The instructor chooses YAML because XML is difficult to write manually.</p>
+
+<h3>YAML Example</h3>
+
+<pre>
+title: My Podcast
+author: DJ
+episode:
+  title: Episode 1
+  audio: intro.mp3
+</pre>
+
+<h3>Equivalent XML</h3>
+
+<pre>
+&lt;podcast&gt;
+  &lt;title&gt;My Podcast&lt;/title&gt;
+  &lt;author&gt;DJ&lt;/author&gt;
+&lt;/podcast&gt;
+</pre>
+
+<p>YAML is cleaner, easier to edit, and much more pleasant for humans.</p>
+
+<div class="note">
+The GitHub Action will later convert this simple YAML into a proper RSS XML file.
+</div>
+</div>
+
+<div class="card">
+<h2>Why Python?</h2>
+
+<p>Python becomes the project's conversion engine.</p>
+
+Instead of manually creating XML:
+
+<pre>
+YAML
+ ↓
+Python Reads It
+ ↓
+Python Converts It
+ ↓
+RSS XML
+</pre>
+
+Python is chosen because:
+
+<ul>
+<li>Easy syntax</li>
+<li>Fast development</li>
+<li>Excellent libraries</li>
+<li>Great for processing structured data</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Why Docker Is Needed</h2>
+
+<p>GitHub doesn't execute your computer directly.</p>
+
+Instead, it creates an isolated environment.</p>
+
+<pre>
+Your Code
+    │
+    ▼
+Docker Container
+    │
+    ▼
+GitHub Cloud
+</pre>
+
+<h3>Think of a Container Like</h3>
+
+<table>
+<tr><th>Virtual Machine</th><th>Container</th></tr>
+<tr><td>Entire computer</td><td>Only what's needed</td></tr>
+<tr><td>Heavy</td><td>Lightweight</td></tr>
+<tr><td>Slow startup</td><td>Fast startup</td></tr>
+</table>
+
+<div class="note">
+The transcript simplifies containers as "virtual machines," but they're actually lighter than traditional VMs.
+</div>
+</div>
+
+<div class="card">
+<h2>GitHub Marketplace</h2>
+
+<p>GitHub lets developers publish reusable Actions.</p>
+
+Instead of writing everything yourself, you can install community-built Actions.
+
+<pre>
+Developer Creates Action
+        │
+        ▼
+GitHub Marketplace
+        │
+        ▼
+Anyone Can Use It
+</pre>
+
+This course eventually builds an Action suitable for publishing there.
+</div>
+
+<div class="card">
+<h2>Prerequisites</h2>
+
+The instructor expects familiarity with:
+
+<div class="flow">
+<div class="box">Git</div>
+<div class="box">GitHub</div>
+<div class="box">Command Line</div>
+<div class="box">Python</div>
+</div>
+
+<div class="warning">
+This is officially an advanced course, although these notes explain every concept from the ground level.
+</div>
+</div>
+
+<div class="card">
+<h2>Video 2 — Creating Your Repository</h2>
+
+First create your own repository.
+
+### Quick Creation
+
+Visit:
+
+<pre>
+github.new
+</pre>
+
+or
+
+<pre>
+github.com/new
+</pre>
+
+Repository name:
+
+<pre>
+podcast-test
+</pre>
+
+The instructor intentionally leaves most options blank.
+</div>
+
+<div class="card">
+<h2>Getting the Starter Files</h2>
+
+The LinkedIn repository contains multiple branches.
+
+For this lesson, use:
+
+<pre>
+Branch: 1_02
+</pre>
+
+Inside that branch you'll need only these items.
+
+<table>
+<tr><th>Folder/File</th><th>Purpose</th></tr>
+<tr><td><code>audio/</code></td><td>Podcast episodes</td></tr>
+<tr><td><code>images/</code></td><td>Artwork</td></tr>
+<tr><td><code>feed.yaml</code></td><td>Podcast data</td></tr>
+<tr><td><code>README-feed</code></td><td>Project page</td></tr>
+</table>
+
+### Download Method
+
+<pre>
+Code
+ ↓
+Local
+ ↓
+Download ZIP
+</pre>
+
+Then extract the ZIP.
+</div>
+
+<div class="card">
+<h2>Uploading to Your Repository</h2>
+
+Instead of cloning with Git, GitHub's website can upload files directly.
+
+Workflow:
+
+<pre>
+Extract ZIP
+      │
+      ▼
+Select Required Files
+      │
+      ▼
+Drag into GitHub
+      │
+      ▼
+Commit Changes
+</pre>
+
+Commit message:
+
+<pre>
+First Commit
+</pre>
+
+This demonstrates that many GitHub tasks can be completed entirely from the browser.
+</div>
+
+<div class="card">
+<h2>Renaming README-feed</h2>
+
+One small but important step follows.
+
+Rename:
+
+<pre>
+README-feed
+</pre>
+
+to
+
+<pre>
+README.md
+</pre>
+
+### Why?
+
+GitHub automatically displays <code>README.md</code> on the repository homepage.
+
+Without renaming, visitors wouldn't immediately see your project description.
+</div>
+
+<div class="card">
+<h2>Enabling GitHub Pages</h2>
+
+GitHub Pages hosts static websites for free.
+
+### Navigation
+
+<pre>
+Repository
+   ↓
+Settings
+   ↓
+Pages
+</pre>
+
+Choose:
+
+| Setting | Value |
+|---------|--------|
+| Source | Deploy from Branch |
+| Branch | Main |
+| Folder | Root |
+
+Then click **Save**.
+</div>
+
+<div class="card">
+<h2>What Happens After Saving?</h2>
+
+Many beginners think the website appears instantly.
+
+Actually, GitHub builds it first.
+
+<pre>
+Commit
+   │
+   ▼
+GitHub Starts Workflow
+   │
+   ▼
+Files Published
+   │
+   ▼
+Website Available
+</pre>
+
+Eventually you'll receive a public URL like:
+
+<pre>
+https://username.github.io/repository-name/
+</pre>
+
+That URL displays your README as a webpage.
+</div>
+
+<div class="card">
+<h2>Everything Becomes Public Content</h2>
+
+Once GitHub Pages is enabled, your repository files become accessible.
+
+Examples:
+
+<pre>
+images/artwork.jpeg
+audio/episode1.mp3
+feed.yaml
+</pre>
+
+This is exactly what makes GitHub suitable for hosting podcast assets.
+</div>
+
+<div class="card">
+<h2>Hidden Surprise: A GitHub Action Already Ran</h2>
+
+One of the coolest moments in this lesson is realizing that even though you selected **Deploy from Branch**, GitHub still executed an internal workflow.
+
+Look inside:
+
+<pre>
+Actions
+</pre>
+
+You'll see a workflow with a green checkmark.
+
+That means:
+
+<pre>
+You Saved Settings
+        │
+        ▼
+GitHub Triggered Automation
+        │
+        ▼
+Website Built
+        │
+        ▼
+Deployment Completed
+</pre>
+
+### Green Check Meaning
+
+| Icon | Meaning |
+|------|---------|
+| 🟢 ✔ | Success |
+| 🟡 | Running |
+| 🔴 ✖ | Failed |
+
+This is your first real GitHub Action—even before writing your own workflow.
+</div>
+
+<div class="card">
+<h2>Chapter Summary</h2>
+
+### What You Learned
+
+- GitHub Actions automate repository tasks.
+- Workflows start from events or schedules.
+- YAML is easier for humans than XML.
+- Python converts YAML into RSS.
+- Docker packages Actions for cloud execution.
+- GitHub Marketplace lets developers share Actions.
+- The project begins from the repository's **1_02** branch.
+- GitHub Pages hosts static content for free.
+- Deploying Pages secretly triggers an Action behind the scenes.
+
+<div class="success">
+🎯 **Key Insight:** Even when you don't explicitly write a workflow, GitHub often uses Actions internally to automate deployments.
+</div>
+</div>
+
+</div>
+
+<footer>
+Practical GitHub Actions • DJ Lucidify Notes • Chapter 1 Part 1
+</footer>
+
+</body>
+</html>

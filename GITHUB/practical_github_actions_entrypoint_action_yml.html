@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Practical GitHub Actions | Entry Point + action.yml</title>
+<style>
+:root{
+  --bg:#111315; --panel:#191c20; --panel2:#20242a; --text:#edf0f2;
+  --muted:#aeb6bf; --cyan:#67d8e8; --pink:#ff8fbd; --lime:#b8df73;
+  --orange:#ffb36b; --line:#30363d;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1000px;margin:auto;padding:36px 20px 70px}
+h1,h2,h3{line-height:1.2}
+h1{font-size:2.2rem;margin:0 0 8px}
+h2{margin-top:42px;color:var(--cyan)}
+h3{color:var(--orange)}
+p{color:#d7dce1}
+.muted{color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.badge{display:inline-block;padding:5px 10px;border:1px solid var(--line);border-radius:999px;color:var(--cyan);font-size:.85rem}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--lime)}
+pre{background:#0b0d0f;border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto;line-height:1.55}
+.note{border-left:4px solid var(--pink);padding:12px 16px;background:var(--panel2);border-radius:8px}
+.good{border-left-color:var(--lime)}
+.warn{border-left-color:var(--orange)}
+table{width:100%;border-collapse:collapse;margin:14px 0}
+th,td{border-bottom:1px solid var(--line);padding:11px;text-align:left;vertical-align:top}
+th{color:var(--cyan)}
+.flow{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--panel2);padding:16px;border-radius:10px;white-space:pre-wrap}
+ul{padding-left:24px}
+strong{color:#fff}
+.small{font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<span class="badge">PRACTICAL GITHUB ACTIONS</span>
+<h1>Entry Point + action.yml</h1>
+<p class="muted">Understanding-first notes from the two supplied course transcripts, cross-checked against the course repository.</p>
+
+<div class="card">
+<h2 style="margin-top:0">What are we building?</h2>
+<p>The previous lesson created the generator Dockerfile. These two lessons add the two files that make that Docker-based GitHub Action actually usable:</p>
+<div class="flow">Dockerfile
+   ↓ calls
+entrypoint.sh
+   ↓ runs
+Python → /usr/bin/feed.py
+   ↓ generates
+podcast.xml
+   ↓
+git add → git commit → git push
+
+action.yml
+   ↓ tells GitHub Actions
+use Dockerfile + inputs + branding
+   ↓
+runs entrypoint.sh
+</div>
+<p><strong>Big picture:</strong> <code>action.yml</code> describes the Action to GitHub. <code>Dockerfile</code> describes the execution environment. <code>entrypoint.sh</code> contains the commands that execute inside that environment.</p>
+</div>
+
+<h2>1. Creating the entry point</h2>
+<div class="card">
+<h3>What is <code>entrypoint.sh</code>?</h3>
+<p>It is a shell script containing the terminal commands that should run when the Docker-based Action starts.</p>
+<p>Think of it as the Action's <strong>command sequence</strong>: configure Git → run Python → commit the generated file → push it back.</p>
+</div>
+
+<h3>Complete lesson-aligned entry point</h3>
+<pre><code>#!/bin/bash
+
+echo "--------------------------------"
+echo "Running Podcast Generator"
+echo "--------------------------------"
+
+git config --global user.name "$GITHUB_ACTOR"
+git config --global user.email "$INPUT_EMAIL"
+
+git config --global --add safe.directory /github/workspace
+
+python3 /usr/bin/feed.py
+
+git add -A
+git commit -m "Update feed"
+git push --set-upstream origin main</code></pre>
+
+<div class="note warn">
+<strong>Transcript wording vs code:</strong> the transcript explains the commands verbally. The code above expresses those commands in a valid shell-script form. In particular, <code>/github/workspace</code> is the GitHub Actions workspace path used by the safe-directory command.
+</div>
+
+<h2>2. Read the entry point line by line</h2>
+<table>
+<tr><th>Code</th><th>What it does</th><th>Why it matters</th></tr>
+<tr><td><code>#!/bin/bash</code></td><td>Shebang. Selects Bash as the interpreter.</td><td>Tells the system how to execute the script.</td></tr>
+<tr><td><code>echo "..."</code></td><td>Prints a message to the action log.</td><td>Creates visible sections and helps debugging.</td></tr>
+<tr><td><code>git config --global user.name "$GITHUB_ACTOR"</code></td><td>Sets Git's username to the GitHub user who triggered the Action.</td><td>Avoids using one generic identity for every run.</td></tr>
+<tr><td><code>git config --global user.email "$INPUT_EMAIL"</code></td><td>Sets the Git commit email from the Action input.</td><td>Connects the commit identity to the Action's input configuration.</td></tr>
+<tr><td><code>git config --global --add safe.directory /github/workspace</code></td><td>Adds the workspace to Git's trusted/safe directories.</td><td>Allows Git operations in the Action workspace.</td></tr>
+<tr><td><code>python3 /usr/bin/feed.py</code></td><td>Runs the Python generator copied into the Docker image.</td><td>This is the actual feed-generation step.</td></tr>
+<tr><td><code>git add -A</code></td><td>Stages added, modified, and deleted files.</td><td>Prepares generated changes for commit.</td></tr>
+<tr><td><code>git commit -m "Update feed"</code></td><td>Creates a Git commit.</td><td>Records the generated feed change.</td></tr>
+<tr><td><code>git push --set-upstream origin main</code></td><td>Pushes the commit to the remote <code>main</code> branch and sets its upstream.</td><td>Sends the generated result back to GitHub.</td></tr>
+</table>
+
+<h2>3. The important variables</h2>
+<div class="grid">
+<div class="card"><h3><code>GITHUB_ACTOR</code></h3><p>GitHub Actions context value representing the user or account that triggered the workflow.</p></div>
+<div class="card"><h3><code>INPUT_EMAIL</code></h3><p>An Action input. The later <code>action.yml</code> file defines this input.</p></div>
+<div class="card"><h3><code>/github/workspace</code></h3><p>The workspace location used by GitHub Actions for the checked-out repository.</p></div>
+</div>
+
+<div class="note good">
+<strong>Key connection:</strong> <code>INPUT_EMAIL</code> is not random. The shell script expects it, so <code>action.yml</code> must define an input named <code>email</code>. GitHub Actions exposes Action inputs to the container as <code>INPUT_*</code> environment variables.
+</div>
+
+<h2>4. Why <code>python3 /usr/bin/feed.py</code>?</h2>
+<p>The previous Dockerfile copied the generator into the image:</p>
+<pre><code>COPY feed.py /usr/bin/feed.py</code></pre>
+<p>Therefore the entry point must execute the same destination path:</p>
+<pre><code>python3 /usr/bin/feed.py</code></pre>
+<p>This is a classic <strong>Dockerfile → entrypoint</strong> connection:</p>
+<div class="flow">COPY feed.py /usr/bin/feed.py
+             ↓
+      file exists here
+             ↓
+python3 /usr/bin/feed.py
+             ↓
+       generator runs</div>
+
+<h2>5. Creating <code>action.yml</code></h2>
+<div class="card">
+<h3>What is <code>action.yml</code>?</h3>
+<p><code>action.yml</code> is the metadata/configuration file that tells GitHub what this Action is, what inputs it accepts, how it runs, and how it should appear when published.</p>
+<p><strong>Important:</strong> this file is YAML. A Dockerfile is <strong>not</strong> YAML. The two files use different syntaxes.</p>
+</div>
+
+<h3>Lesson-aligned <code>action.yml</code></h3>
+<pre><code>name: Podcast Generator
+author: Your Name
+description: Generate podcast feeds from another repository
+
+runs:
+  using: docker
+  image: Dockerfile
+
+branding:
+  icon: git-branch
+  color: red
+
+inputs:
+  email:
+    description: Email address used for Git commits
+    required: true
+    default: ${{ github.actor }}@localhost
+
+  name:
+    description: Name used for Git commits
+    required: true
+    default: ${{ github.actor }}</code></pre>
+
+<div class="note warn">
+<strong>Important accuracy note:</strong> the transcript's spoken explanation of the exact YAML is abbreviated and contains some conversational wording. The code block above captures the intended structure and the variable relationships taught in the lesson. Replace <code>Your Name</code> with the actual author value used by the course.
+</div>
+
+<h2>6. Understand <code>runs</code></h2>
+<pre><code>runs:
+  using: docker
+  image: Dockerfile</code></pre>
+<p>This tells GitHub that the Action executes using Docker and that the Dockerfile in the Action repository defines the image/environment.</p>
+<div class="flow">action.yml
+   │
+   ├── metadata
+   ├── inputs
+   └── runs: Docker
+          ↓
+      Dockerfile
+          ↓
+      container environment
+          ↓
+      entrypoint.sh
+          ↓
+      feed.py</div>
+
+<h2>7. Understand branding</h2>
+<pre><code>branding:
+  icon: git-branch
+  color: red</code></pre>
+<p>The transcript explains that Marketplace Actions can have an icon and color. The lesson chooses the <code>git-branch</code> Feather icon and red branding.</p>
+<p class="small muted">Branding affects how the Action is presented. It is not part of the generator's execution logic.</p>
+
+<h2>8. Understand Action inputs</h2>
+<pre><code>inputs:
+  email:
+    description: Email address used for Git commits
+    required: true
+    default: ${{ github.actor }}@localhost</code></pre>
+<p>The Action declares an input called <code>email</code>. The entry point then reads the corresponding environment variable as <code>INPUT_EMAIL</code>.</p>
+
+<div class="flow">action.yml
+email
+  ↓
+GitHub Actions input handling
+  ↓
+INPUT_EMAIL
+  ↓
+entrypoint.sh
+git config --global user.email "$INPUT_EMAIL"</div>
+
+<h2>9. What about the <code>name</code> input?</h2>
+<p>The transcript says the Action also gets the name and makes it required with a default based on the GitHub actor.</p>
+<pre><code>name:
+  description: Name used for Git commits
+  required: true
+  default: ${{ github.actor }}</code></pre>
+<p>The important lesson is the relationship between <strong>Action inputs</strong> and the values consumed by the execution environment.</p>
+
+<h2>10. How the two videos fit together</h2>
+<div class="card">
+<h3>Before these videos</h3>
+<p>The generator repository has the Dockerfile and the Python generator.</p>
+</div>
+<div class="card">
+<h3>Video 1: Entry point</h3>
+<p><code>entrypoint.sh</code> becomes the executable command sequence. It configures Git, runs <code>feed.py</code>, commits the generated output, and pushes it.</p>
+</div>
+<div class="card">
+<h3>Video 2: action.yml</h3>
+<p><code>action.yml</code> describes the Action to GitHub, connects it to Docker, defines branding, and declares inputs.</p>
+</div>
+<div class="card">
+<h3>After these videos</h3>
+<p>The next step is to call this generator Action from another repository so that one reusable generator can serve multiple podcast repositories.</p>
+</div>
+
+<h2>11. Full architecture to remember</h2>
+<div class="flow">PODCAST REPOSITORY
+        │
+        │ calls reusable Action
+        ▼
+GENERATOR REPOSITORY
+        │
+        ├── action.yml
+        │      │
+        │      └── tells GitHub: use Docker
+        │
+        ├── Dockerfile
+        │      │
+        │      ├── installs Python + Git
+        │      ├── copies feed.py
+        │      └── copies entrypoint.sh
+        │
+        ├── entrypoint.sh
+        │      │
+        │      ├── configure Git
+        │      ├── run feed.py
+        │      ├── git add
+        │      ├── git commit
+        │      └── git push
+        │
+        └── feed.py
+               │
+               └── generates podcast.xml</div>
+
+<h2>12. Exam / interview memory points</h2>
+<ul>
+<li><strong>entrypoint.sh:</strong> shell script executed as the Docker Action's entry point.</li>
+<li><strong>Shebang:</strong> <code>#!/bin/bash</code> selects Bash as the interpreter.</li>
+<li><strong>GITHUB_ACTOR:</strong> identifies the GitHub actor associated with the run.</li>
+<li><strong>INPUT_EMAIL:</strong> environment variable corresponding to the Action input <code>email</code>.</li>
+<li><strong>safe.directory:</strong> marks the workspace as trusted for Git operations.</li>
+<li><strong>feed.py:</strong> Python generator executed from <code>/usr/bin/feed.py</code>.</li>
+<li><strong>git add -A:</strong> stages changes.</li>
+<li><strong>git commit:</strong> records changes in Git history.</li>
+<li><strong>git push:</strong> sends the commit to the remote repository.</li>
+<li><strong>action.yml:</strong> defines Action metadata, inputs, execution method, and optional Marketplace branding.</li>
+<li><strong>runs.using: docker:</strong> tells GitHub Actions to run the Action using Docker.</li>
+</ul>
+
+<h2>13. One-minute understanding check</h2>
+<div class="card">
+<p><strong>Q1. Who tells GitHub what this Action is?</strong><br><code>action.yml</code></p>
+<p><strong>Q2. Who defines the container environment?</strong><br><code>Dockerfile</code></p>
+<p><strong>Q3. Who contains the commands that actually run?</strong><br><code>entrypoint.sh</code></p>
+<p><strong>Q4. What program generates the feed?</strong><br><code>feed.py</code></p>
+<p><strong>Q5. Where is the generator copied inside the image?</strong><br><code>/usr/bin/feed.py</code></p>
+<p><strong>Q6. What does the entry point do after generation?</strong><br>Stages, commits, and pushes the generated changes.</p>
+<p><strong>Q7. Why does <code>action.yml</code> define <code>email</code>?</strong><br>Because the entry point expects the corresponding <code>INPUT_EMAIL</code> value.</p>
+</div>
+
+<h2>14. Course-repository cross-check</h2>
+<div class="card">
+<p>The linked LinkedIn Learning repository is the course repository for <strong>Practical GitHub Actions</strong>. Its README explicitly describes the course as covering a generator-repository Dockerfile, entry point, and <code>action.yml</code> as part of publishing a Marketplace Action.</p>
+<p class="muted">The currently accessible repository state does not expose the historical <code>entrypoint.sh</code> or <code>action.yml</code> files directly on the default <code>main</code> branch. Therefore this HTML deliberately labels the code as <strong>lesson-aligned</strong> rather than pretending those exact historical files are present in today's main branch.</p>
+</div>
+
+<h2>15. The single mental model</h2>
+<div class="note good">
+<strong>Remember this:</strong><br><br>
+<code>action.yml</code> = “GitHub, this is my Action and this is how to run it.”<br>
+<code>Dockerfile</code> = “Build the environment in which my Action runs.”<br>
+<code>entrypoint.sh</code> = “Now execute these commands.”<br>
+<code>feed.py</code> = “Do the actual podcast-feed generation.”
+</div>
+
+<p class="muted small">Prepared from the two supplied transcripts. Transcript meaning is preserved while technical syntax is clarified where needed.</p>
+</main>
+</body>
+</html>

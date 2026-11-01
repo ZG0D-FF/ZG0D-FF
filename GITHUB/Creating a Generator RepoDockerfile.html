@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Practical GitHub Actions - Generator Repo Dockerfile</title>
+<style>
+:root{
+  --bg:#101214;--panel:#171a1e;--panel2:#1d2126;--text:#e9edf1;
+  --muted:#aab2bc;--accent:#67d4ff;--green:#9be28f;--orange:#ffc46b;
+  --border:#2b3138;--code:#0b0d0f;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.65 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+main{max-width:1000px;margin:auto;padding:32px 20px 60px}
+h1{font-size:2rem;margin:0 0 8px}
+h2{margin-top:34px;color:var(--accent);font-size:1.35rem}
+h3{color:var(--green);margin-top:24px}
+p{margin:10px 0}
+.lead{color:var(--muted);font-size:1.05rem}
+.card{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;padding:20px;margin:18px 0;
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.box{background:var(--panel2);border-radius:10px;padding:15px}
+.box strong{display:block;color:var(--orange);margin-bottom:5px}
+code{
+  background:#20252b;padding:2px 6px;border-radius:5px;color:#dce8f0;
+}
+pre{
+  background:var(--code);border:1px solid var(--border);border-radius:10px;
+  padding:16px;overflow:auto;color:#e6edf3;line-height:1.5;
+}
+.note{border-left:4px solid var(--accent);padding:12px 16px;background:var(--panel2)}
+.warn{border-left:4px solid var(--orange);padding:12px 16px;background:var(--panel2)}
+ul,ol{padding-left:24px}
+.flow{font-weight:700;color:var(--accent);word-spacing:4px}
+.small{color:var(--muted);font-size:.92rem}
+kbd{background:#252a30;border:1px solid #3a4149;border-radius:5px;padding:2px 7px}
+</style>
+</head>
+
+<body>
+<main>
+  <h1>Creating a Generator Repo: Dockerfile</h1>
+  <p class="lead">Practical GitHub Actions • Understanding-first course notes</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">What this video is actually building</h2>
+    <p>The goal is to separate the reusable podcast-processing application from an individual podcast repository.</p>
+    <p class="flow">Generator repository → Docker image → GitHub Action → Other podcast repositories</p>
+    <p>This makes the application reusable: multiple podcast repositories can call the same generator/action instead of keeping separate copies of the application.</p>
+  </div>
+
+  <h2>1. Why create another repository?</h2>
+  <div class="card">
+    <p>Suppose one podcast project becomes popular and several podcasts need the same processing application.</p>
+    <ul>
+      <li>Create a separate repository called <code>podcast-generator</code>.</li>
+      <li>Move the reusable application, such as <code>feed.py</code>, into that repository.</li>
+      <li>Prepare the repository so it can run as its own GitHub Action.</li>
+      <li>Other repositories can later call this action.</li>
+    </ul>
+  </div>
+
+  <h2>2. Files needed for the generator action</h2>
+  <div class="grid">
+    <div class="box"><strong>feed.py</strong>Reusable Python application that processes the feed.</div>
+    <div class="box"><strong>Dockerfile</strong>Describes how the container image is built.</div>
+    <div class="box"><strong>entrypoint.sh</strong>Script that will be run when the action starts.</div>
+    <div class="box"><strong>action.yml</strong>Action metadata/configuration used to expose the repository as a GitHub Action. It is created in a later video.</div>
+  </div>
+
+  <h2>3. What is the Dockerfile?</h2>
+  <div class="card">
+    <p>A Dockerfile contains instructions for building a Docker image.</p>
+    <p>The important mental model is:</p>
+    <p class="flow">Base image → Install dependencies → Copy application files → Choose startup command</p>
+    <div class="warn">
+      <strong>Accuracy correction:</strong> the transcript says Dockerfiles are written in YAML. That is not correct. Dockerfiles use Docker's own instruction syntax. YAML is used by files such as GitHub Actions workflow files and <code>action.yml</code>.
+    </div>
+  </div>
+
+  <h2>4. Dockerfile: complete structure from this lesson</h2>
+  <div class="card">
+    <pre><code>FROM ubuntu:latest
+
+RUN apt-get update &amp;&amp; apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git
+
+RUN pip3 install pyYAML
+
+COPY feed.py /usr/bin/feed.py
+COPY entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]</code></pre>
+    <p class="small">The transcript describes these instructions and their purpose. The exact original repository state for this lesson is not present on the current <code>main</code> branch, so the code above is the lesson-aligned Dockerfile structure rather than a claim that this exact file currently exists in <code>main</code>.</p>
+  </div>
+
+  <h2>5. Understand every Dockerfile instruction</h2>
+
+  <h3><code>FROM ubuntu:latest</code></h3>
+  <div class="card">
+    <p><code>FROM</code> selects the base image.</p>
+    <p>Here the base is Ubuntu, using the <code>latest</code> tag.</p>
+    <p>Think: <strong>“Start my container from an Ubuntu environment.”</strong></p>
+  </div>
+
+  <h3><code>RUN</code></h3>
+  <div class="card">
+    <p><code>RUN</code> executes commands while the Docker image is being built.</p>
+    <pre><code>RUN apt-get update &amp;&amp; apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git</code></pre>
+    <p>First, the package information is updated with <code>apt-get update</code>. Then required packages are installed.</p>
+    <ul>
+      <li><code>python3.10</code> → Python 3.10</li>
+      <li><code>python3-pip</code> → Python package installer</li>
+      <li><code>git</code> → Git command-line tools</li>
+    </ul>
+  </div>
+
+  <h3>Why the backslash <code>\</code>?</h3>
+  <div class="card">
+    <p>The backslash continues the command onto the next line.</p>
+    <p>It improves readability. It does not mean that each line is a separate Docker command.</p>
+  </div>
+
+  <h3><code>pip3 install pyYAML</code></h3>
+  <div class="card">
+    <pre><code>RUN pip3 install pyYAML</code></pre>
+    <p>This installs the Python <code>PyYAML</code> package so the Python application can work with YAML data.</p>
+  </div>
+
+  <h3><code>COPY</code></h3>
+  <div class="card">
+    <pre><code>COPY feed.py /usr/bin/feed.py
+COPY entrypoint.sh /entrypoint.sh</code></pre>
+    <p><code>COPY</code> transfers files from the Docker build context into the image.</p>
+    <p>So the mental model is:</p>
+    <p class="flow">Repository file → Docker image file</p>
+    <p><code>feed.py</code> is placed at <code>/usr/bin/feed.py</code>.</p>
+    <p><code>entrypoint.sh</code> is placed at <code>/entrypoint.sh</code>.</p>
+  </div>
+
+  <h3><code>ENTRYPOINT</code></h3>
+  <div class="card">
+    <pre><code>ENTRYPOINT ["/entrypoint.sh"]</code></pre>
+    <p>This specifies the program that should run when the container starts.</p>
+    <p>Therefore:</p>
+    <p class="flow">Container starts → /entrypoint.sh runs → action begins its work</p>
+  </div>
+
+  <h2>6. Why the instructor uses Codespaces</h2>
+  <div class="card">
+    <p>Simple files can be created directly through GitHub's web interface.</p>
+    <p>As the project becomes more complicated, GitHub Codespaces provides a fuller development environment similar to Visual Studio Code.</p>
+    <p>The important idea is not “Codespaces is required.” It is simply a more convenient editor for a multi-file project.</p>
+  </div>
+
+  <h2>7. The architecture you should remember</h2>
+  <div class="card">
+    <pre><code>podcast-generator/
+├── feed.py
+├── Dockerfile
+├── entrypoint.sh
+└── action.yml        ← added later
+
+Docker image
+    │
+    ├── Ubuntu
+    ├── Python
+    ├── pip
+    ├── Git
+    ├── PyYAML
+    ├── feed.py
+    └── entrypoint.sh
+          │
+          ▼
+   ENTRYPOINT runs it
+          │
+          ▼
+ Other repositories can use
+ the generator as an Action</code></pre>
+  </div>
+
+  <h2>8. Exam / interview points</h2>
+  <div class="card">
+    <ol>
+      <li>A Dockerfile defines instructions for building a Docker image.</li>
+      <li><code>FROM</code> specifies the base image.</li>
+      <li><code>RUN</code> executes commands during image construction.</li>
+      <li><code>COPY</code> copies files into the Docker image.</li>
+      <li><code>ENTRYPOINT</code> specifies the executable that runs when the container starts.</li>
+      <li>A separate generator repository allows multiple repositories to reuse the same application/action.</li>
+      <li><code>entrypoint.sh</code> is the startup script for the container in this lesson.</li>
+      <li><code>action.yml</code> will later define the GitHub Action metadata/configuration.</li>
+    </ol>
+  </div>
+
+  <h2>9. One-minute understanding check</h2>
+  <div class="card">
+    <p><strong>Q:</strong> Why not keep <code>feed.py</code> in every podcast repository?</p>
+    <p><strong>A:</strong> Because a separate generator repository lets many repositories reuse the same application/action.</p>
+
+    <p><strong>Q:</strong> What creates the environment?</p>
+    <p><strong>A:</strong> The Dockerfile defines how the Docker image is built.</p>
+
+    <p><strong>Q:</strong> What gets installed?</p>
+    <p><strong>A:</strong> Ubuntu is used as the base, then Python 3.10, pip, Git, and PyYAML are installed.</p>
+
+    <p><strong>Q:</strong> What starts the application?</p>
+    <p><strong>A:</strong> The Docker <code>ENTRYPOINT</code> starts <code>/entrypoint.sh</code>.</p>
+  </div>
+
+  <h2>10. Repository cross-check</h2>
+  <div class="card">
+    <p>The supplied course repository is the LinkedIn Learning repository for <strong>Practical GitHub Actions</strong>. Its README explains that the course covers publishing a marketplace action, including a workflow, generator-repo Dockerfile, entry point, and <code>action.yml</code>. It also explains that course code was intended to be organized by video branches.</p>
+    <p class="small">For this lesson, the currently accessible repository state does not expose the historical <code>feed.py</code>, Dockerfile, and entrypoint files described in the transcript, so those files have not been falsely presented as current repository files.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Next lesson connection</h2>
+    <p>This video stops after the basic Dockerfile. The next files mentioned by the instructor are the <code>entrypoint.sh</code> script and the GitHub Action configuration, <code>action.yml</code>.</p>
+  </div>
+
+  <p class="small">Source: LinkedIn Learning transcript supplied for “Creating a generator repo Dockerfile” + cross-check against the course repository.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Practical GitHub Actions - Chapter 1 Part 2</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+font-family:Inter,Segoe UI,Arial,sans-serif;
+background:#0f172a;
+color:#e5e7eb;
+line-height:1.75;
+}
+header{
+padding:60px 25px;
+text-align:center;
+background:linear-gradient(135deg,#0f172a,#111827,#2563eb);
+}
+header h1{font-size:2.8em;}
+header p{opacity:.8;margin-top:10px;}
+
+.container{max-width:1100px;margin:auto;padding:40px 20px;}
+
+.card{
+background:#111827;
+padding:28px;
+border-radius:18px;
+margin:25px 0;
+border:1px solid #1f2937;
+box-shadow:0 8px 25px rgba(0,0,0,.35);
+}
+
+h2{color:#60a5fa;margin-bottom:15px;}
+h3{color:#93c5fd;margin:18px 0 10px;}
+
+.note{
+background:#1e293b;
+border-left:5px solid #38bdf8;
+padding:15px;
+border-radius:10px;
+margin:15px 0;
+}
+
+.warning{
+background:#3b1f1f;
+border-left:5px solid #ef4444;
+padding:15px;
+border-radius:10px;
+margin:15px 0;
+}
+
+.success{
+background:#123524;
+border-left:5px solid #22c55e;
+padding:15px;
+border-radius:10px;
+margin:15px 0;
+}
+
+pre{
+background:#020617;
+padding:18px;
+overflow:auto;
+border-radius:12px;
+border:1px solid #334155;
+margin:15px 0;
+}
+
+code{
+background:#1f2937;
+padding:2px 6px;
+border-radius:5px;
+color:#7dd3fc;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin:18px 0;
+}
+
+th,td{
+border:1px solid #374151;
+padding:12px;
+}
+
+th{background:#1d4ed8;}
+
+.flow{
+display:flex;
+flex-wrap:wrap;
+gap:14px;
+justify-content:center;
+margin:20px 0;
+}
+
+.box{
+flex:1 1 170px;
+background:#172554;
+padding:16px;
+text-align:center;
+border-radius:12px;
+border:1px solid #2563eb;
+}
+
+footer{
+text-align:center;
+padding:40px;
+opacity:.65;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Python + YAML + RSS Automation</h1>
+<p>Chapter 1 • Part 2 • Building feed.py inside GitHub Codespaces</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>What We're Building Now</h2>
+
+In the previous chapter, we hosted files using GitHub Pages.
+
+Now we're solving the real problem.
+
+Instead of manually writing complicated XML every time we publish an episode, we'll automate everything.
+
+<div class="flow">
+<div class="box">feed.yaml</div>
+<div class="box">Python</div>
+<div class="box">podcast.xml</div>
+<div class="box">GitHub Pages</div>
+</div>
+
+The entire automation begins with one Python file.
+
+<pre>feed.py</pre>
+
+</div>
+
+<div class="card">
+<h2>Why GitHub Codespaces?</h2>
+
+Normally, developing locally requires installing multiple tools.
+
+<table>
+<tr><th>Local Computer</th><th>Codespaces</th></tr>
+<tr><td>Install Python</td><td>Already installed</td></tr>
+<tr><td>Install pip</td><td>Already installed</td></tr>
+<tr><td>Install PyYAML</td><td>Already installed</td></tr>
+<tr><td>Configure editor</td><td>VS Code ready instantly</td></tr>
+</table>
+
+Instead of spending time configuring your computer, GitHub creates a cloud development machine for you.
+
+<AsyncImageGroup query={["GitHub Codespaces VS Code browser interface","GitHub Codespaces Create Codespace button"]} layout=carousel/>
+
+### Creating a Codespace
+
+Inside your repository:
+
+<pre>
+Code
+   ↓
+Codespaces
+   ↓
+Create Codespace on Main
+</pre>
+
+After a short wait, you'll receive an online VS Code environment connected directly to your repository.
+
+<div class="note">
+Think of Codespaces as renting a fully configured developer computer that already knows your project.
+</div>
+
+</div>
+
+<div class="card">
+<h2>Creating feed.py</h2>
+
+Inside the Codespace, create:
+
+<pre>feed.py</pre>
+
+This file becomes the translator between YAML and XML.
+
+<h3>Imports</h3>
+
+<pre>
+import yaml
+import xml.etree.ElementTree as xml_tree
+</pre>
+
+### Why These Imports Exist
+
+| Import | Purpose |
+|---------|----------|
+| `yaml` | Reads YAML |
+| `xml.etree.ElementTree` | Builds XML |
+| `as xml_tree` | Shorter name |
+
+Instead of typing:
+
+<pre>
+xml.etree.ElementTree.SubElement(...)
+</pre>
+
+we can simply write:
+
+<pre>
+xml_tree.SubElement(...)
+</pre>
+
+Much cleaner.
+</div>
+
+<div class="card">
+<h2>Reading feed.yaml</h2>
+
+The first real task is opening the YAML file.
+
+<pre>
+with open("feed.yaml") as file:
+    yaml_data = yaml.safe_load(file)
+</pre>
+
+### Step-by-Step
+
+#### Step 1
+
+<pre>
+with open(...)
+</pre>
+
+Opens the file safely.
+
+#### Step 2
+
+<pre>
+as file
+</pre>
+
+Creates a temporary file variable.
+
+#### Step 3
+
+<pre>
+yaml.safe_load(file)
+</pre>
+
+Reads the YAML and converts it into a Python dictionary.
+
+Imagine this YAML:
+
+<pre>
+title: Hiking Treks
+author: DJ
+</pre>
+
+becoming this Python object:
+
+<pre>
+{
+"title":"Hiking Treks",
+"author":"DJ"
+}
+</pre>
+
+Now accessing values becomes easy.
+
+<pre>
+yaml_data["title"]
+yaml_data["author"]
+</pre>
+
+<div class="success">
+`safe_load()` is intentionally used instead of `load()` because it avoids executing unsafe YAML objects.
+</div>
+
+</div>
+
+<div class="card">
+<h2>Understanding RSS Structure</h2>
+
+Before writing code, understand the XML we're trying to create.
+
+<pre>
+<?xml version="1.0"?>
+
+<rss>
+    <channel>
+        <title>...</title>
+
+        <item>
+            ...
+        </item>
+
+    </channel>
+</rss>
+</pre>
+
+Hierarchy:
+
+<pre>
+RSS
+ └── Channel
+      ├── Title
+      ├── Author
+      ├── Description
+      └── Items
+             ├── Episode 1
+             ├── Episode 2
+             └── Episode 3
+</pre>
+
+Every XML element we create in Python follows this exact hierarchy.
+</div>
+
+<div class="card">
+<h2>Creating the Root RSS Element</h2>
+
+The first XML element is the root.
+
+<pre>
+rss_element = xml_tree.Element("rss")
+</pre>
+
+This creates:
+
+<pre>
+<rss></rss>
+</pre>
+
+Nothing exists inside it yet.
+
+### Adding Attributes
+
+RSS needs several attributes.
+
+Instead of:
+
+<pre>
+<rss>
+</pre>
+
+we need something like:
+
+<pre>
+<rss
+xmlns:itunes="..."
+version="2.0">
+</pre>
+
+ElementTree accepts attributes as a dictionary.
+
+<pre>
+rss_element = xml_tree.Element(
+"rss",
+{
+"version":"2.0",
+"xmlns:itunes":"..."
+}
+)
+</pre>
+
+The transcript manually converts XML attributes into Python key-value pairs.
+
+| XML | Python |
+|------|---------|
+| `version="2.0"` | `"version":"2.0"` |
+| `=` | `:` |
+| Double quotes | String values |
+</table>
+
+This is one of the biggest mindset shifts when generating XML programmatically.
+</div>
+
+<div class="card">
+<h2>Creating Nested Elements</h2>
+
+Now we create the next level.
+
+<pre>
+channel_element = xml_tree.SubElement(
+rss_element,
+"channel"
+)
+</pre>
+
+Notice the difference.
+
+| Function | Meaning |
+|-----------|----------|
+| `Element()` | Creates root |
+| `SubElement()` | Creates child |
+
+Result:
+
+<pre>
+<rss>
+    <channel></channel>
+</rss>
+</pre>
+
+Everything else will be placed inside this channel.
+</div>
+
+<div class="card">
+<h2>Adding Text Inside Tags</h2>
+
+A simple tag looks like this.
+
+<pre>
+<title>Hiking Treks</title>
+</pre>
+
+Python:
+
+<pre>
+xml_tree.SubElement(
+channel_element,
+"title"
+).text = yaml_data["title"]
+</pre>
+
+Breakdown:
+
+<pre>
+Create title tag
+      ↓
+Get YAML title
+      ↓
+Place inside tag
+</pre>
+
+Result:
+
+<pre>
+<title>Hiking Treks</title>
+</pre>
+
+This pattern repeats for most fields.
+</div>
+
+<div class="card">
+<h2>Generating the XML File</h2>
+
+After building the tree, we save it.
+
+<pre>
+output_tree = xml_tree.ElementTree(rss_element)
+</pre>
+
+Then:
+
+<pre>
+output_tree.write(
+"podcast.xml",
+encoding="UTF-8",
+xml_declaration=True
+)
+</pre>
+
+### Every Parameter Explained
+
+| Parameter | Meaning |
+|------------|----------|
+| `podcast.xml` | Output filename |
+| `UTF-8` | Character encoding |
+| `xml_declaration=True` | Adds `<?xml...?>` |
+
+Without the declaration:
+
+<pre>
+<rss>...</rss>
+</pre>
+
+With it:
+
+<pre>
+<?xml version="1.0"?>
+<rss>...</rss>
+</pre>
+
+The declaration is automatically generated.
+</div>
+
+<div class="card">
+<h2>Running Python</h2>
+
+Execute:
+
+<pre>
+python feed.py
+</pre>
+
+At first the instructor encounters:
+
+<pre>
+rss_element not defined
+</pre>
+
+Cause?
+
+A minus sign accidentally replaced an equals sign.
+
+Wrong:
+
+<pre>
+rss_element - xml_tree.Element(...)
+</pre>
+
+Correct:
+
+<pre>
+rss_element = xml_tree.Element(...)
+</pre>
+
+This is a perfect example of tiny syntax mistakes causing runtime errors.
+</div>
+
+<div class="card">
+<h2>First Success</h2>
+
+After fixing the typo, Python creates:
+
+<pre>
+podcast.xml
+</pre>
+
+Output:
+
+<pre>
+<?xml version="1.0"?>
+<rss>
+    <channel>
+        <title>...</title>
+    </channel>
+</rss>
+</pre>
+
+At this stage only the podcast title exists.
+
+The next lesson expands the entire feed.
+</div>
+
+<div class="card">
+<h2>Expanding the RSS Feed</h2>
+
+Instead of writing only one tag, we now generate the complete podcast structure.
+
+Most tags follow the same pattern.
+
+<pre>
+Create tag
+      ↓
+Read YAML value
+      ↓
+Insert text
+</pre>
+
+Examples include:
+
+- language
+- subtitle
+- description
+- author
+- category
+
+Many of these simply repeat the same Python pattern.
+</div>
+
+<div class="card">
+<h2>iTunes Tags Explained</h2>
+
+You probably noticed strange names.
+
+<pre>
+itunes:author
+itunes:image
+itunes:duration
+</pre>
+
+Why?
+
+Podcast RSS extends normal RSS.
+
+| Normal RSS | Podcast Extension |
+|-------------|------------------|
+| title | itunes:author |
+| description | itunes:image |
+| link | itunes:duration |
+
+Apple introduced these extensions long ago, and nearly every podcast platform still understands them.
+</div>
+
+<div class="card">
+<h2>Why link_prefix Exists</h2>
+
+The transcript introduces:
+
+<pre>
+link_prefix
+</pre>
+
+Instead of repeatedly typing:
+
+<pre>
+https://username.github.io/repository/
+</pre>
+
+we store it once.
+
+<pre>
+link_prefix = yaml_data["link"]
+</pre>
+
+Then build URLs like:
+
+<pre>
+link_prefix + item["file"]
+</pre>
+
+Example
+
+<pre>
+link_prefix
+https://dj.github.io/podcast
+
++
+
+audio/episode1.mp3
+
+↓
+
+https://dj.github.io/podcast/audio/episode1.mp3
+</pre>
+
+This avoids repeating long URLs everywhere.
+</div>
+
+<div class="card">
+<h2>Attribute vs Text Elements</h2>
+
+This is one of the easiest places to get confused.
+
+### Text Element
+
+<pre>
+<title>My Podcast</title>
+</pre>
+
+Python:
+
+<pre>
+element.text = value
+</pre>
+
+### Attribute Element
+
+<pre>
+<itunes:image href="cover.jpg"/>
+</pre>
+
+Notice:
+
+- no inner text
+- information lives inside an attribute
+
+Python becomes:
+
+<pre>
+xml_tree.SubElement(
+channel_element,
+"itunes:image",
+{"href":image_url}
+)
+</pre>
+
+Comparison
+
+| Type | Stored In |
+|------|------------|
+| title | Text |
+| image | Attribute |
+| category | Attribute |
+| enclosure | Attributes |
+</table>
+
+This distinction appears repeatedly throughout RSS.
+</div>
+
+<div class="card">
+<h2>The Category Tag</h2>
+
+Another attribute-based element.
+
+XML:
+
+<pre>
+<itunes:category text="Technology"/>
+</pre>
+
+Python:
+
+<pre>
+xml_tree.SubElement(
+channel_element,
+"itunes:category",
+{"text":yaml_data["category"]}
+)
+</pre>
+
+Again, no `.text` property is used.
+</div>
+
+<div class="card">
+<h2>The Items Section</h2>
+
+Now comes the most important concept.
+
+Instead of creating one episode manually...
+
+<pre>
+Episode 1
+Episode 2
+Episode 3
+</pre>
+
+...Python loops automatically.
+
+<pre>
+for item in yaml_data["items"]:
+</pre>
+
+Visual:
+
+<pre>
+items
+ ├── Episode 1
+ ├── Episode 2
+ └── Episode 3
+
+        ↓ Loop
+
+Generate XML
+Generate XML
+Generate XML
+</pre>
+
+This is where automation truly begins.
+</div>
+
+<div class="card">
+<h2>Creating Each Episode</h2>
+
+Every loop creates:
+
+<pre>
+<item>
+...
+</item>
+</pre>
+
+Inside each item we generate:
+
+- title
+- author
+- description
+- duration
+- publication date
+
+Example:
+
+<pre>
+xml_tree.SubElement(
+item_element,
+"title"
+).text = item["title"]
+</pre>
+
+Notice something interesting.
+
+Author is reused globally.
+
+Instead of:
+
+<pre>
+item["author"]
+</pre>
+
+the instructor uses:
+
+<pre>
+yaml_data["author"]
+</pre>
+
+because every episode has the same author.
+</div>
+
+<div class="card">
+<h2>Publication Date</h2>
+
+The transcript maps:
+
+<pre>
+published
+</pre>
+
+from YAML into
+
+<pre>
+pubDate
+</pre>
+
+inside RSS.
+
+Example:
+
+YAML
+
+<pre>
+published:
+Mon, 01 Jan 2024 GMT
+</pre>
+
+XML
+
+<pre>
+<pubDate>Mon, 01 Jan 2024 GMT</pubDate>
+</pre>
+
+RSS expects this specific date format.
+</div>
+
+<div class="card">
+<h2>The Enclosure Tag</h2>
+
+This is arguably the most important podcast tag.
+
+Without it, podcast apps cannot locate the audio.
+
+RSS looks like:
+
+<pre>
+<enclosure
+url="..."
+length="..."
+type="audio/mpeg"/>
+</pre>
+
+Python:
+
+<pre>
+xml_tree.SubElement(
+item_element,
+"enclosure",
+{
+"url":link_prefix+item["file"],
+"type":"audio/mpeg",
+"length":item["length"]
+}
+)
+</pre>
+
+### Why Hardcode `audio/mpeg`?
+
+Every file in this project is MP3.
+
+Since the type never changes, the instructor hardcodes it instead of storing it in YAML.
+</div>
+
+<div class="card">
+<h2>Common Debugging Mistakes</h2>
+
+The instructor encounters another error.
+
+Cause?
+
+Missing quotation marks.
+
+Wrong:
+
+<pre>
+item[file]
+</pre>
+
+Python thinks `file` is a variable.
+
+Correct:
+
+<pre>
+item["file"]
+</pre>
+
+The same applies to:
+
+<pre>
+item["length"]
+item["title"]
+item["description"]
+</pre>
+
+Always quote dictionary keys.
+</div>
+
+<div class="card">
+<h2>Final Output</h2>
+
+After running:
+
+<pre>
+python feed.py
+</pre>
+
+the generated XML becomes much larger.
+
+Hierarchy:
+
+<pre>
+podcast.xml
+
+RSS
+ └── Channel
+      ├── Title
+      ├── Author
+      ├── Description
+      ├── Image
+      ├── Category
+      ├── Link
+      └── Items
+           ├── Episode 1
+           ├── Episode 2
+           └── Episode N
+</pre>
+
+At this point the feed is already compatible with podcast applications like Apple Podcasts and other RSS readers.
+
+The remaining course will automate this generation so it happens every time content changes.
+</div>
+
+<div class="card">
+<h2>Complete Process Recap</h2>
+
+<pre>
+feed.yaml
+      │
+      ▼
+yaml.safe_load()
+      │
+      ▼
+Python Dictionary
+      │
+      ▼
+ElementTree Builds XML
+      │
+      ▼
+Loop Creates Every Episode
+      │
+      ▼
+podcast.xml
+      │
+      ▼
+GitHub Pages
+      │
+      ▼
+Podcast Apps Read RSS
+</pre>
+
+<div class="success">
+🎯 **Big Win:** You've now built a real data transformation pipeline—YAML becomes structured Python data, Python constructs XML with `ElementTree`, loops generate every podcast episode automatically, and the finished `podcast.xml` is ready for GitHub Actions to publish.
+</div>
+
+</div>
+
+</div>
+
+<footer>
+Practical GitHub Actions • DJ Lucidify Notes • Chapter 1 Part 2
+</footer>
+
+</body>
+</html>
