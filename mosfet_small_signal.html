@@ -318,6 +318,150 @@
       <p>The $\Phi_F$ term is just there in the denominator to anchor the math to the actual physical doping level of your silicon chip.</p>
     </article>
 
+    <article class="entry">
+      <h2>Common-Source (CS) Amplifier: Principle &amp; Analysis</h2>
+      <p>A Common-Source (CS) amplifier works on a straightforward principle: it converts an input voltage into a current, and then passes that current through a resistor to generate an amplified output voltage.</p>
+
+      <h2>1. The Basic Circuit and Working Principle</h2>
+      <ul>
+        <li><strong>The Setup:</strong> The input signal ($V_{in}$) is applied to the <strong>Gate</strong>, the <strong>Source</strong> is connected to ground, and the amplified output ($V_{out}$) is tapped from the <strong>Drain</strong>, which connects to the supply voltage ($V_{DD}$) via a load resistor ($R_D$).</li>
+      </ul>
+
+      <figure class="diagram-figure">
+        <img src="assets/fig_3_4_common_source_stage.png" alt="Figure 3.4 Common-Source Stage">
+        <figcaption><strong>Figure 3.4:</strong> (a) Common-source stage, (b) input-output characteristic, (c) equivalent circuit in the deep triode region, and (d) small-signal model for the saturation region.</figcaption>
+      </figure>
+
+      <p><strong>The Step-by-Step Mechanism:</strong></p>
+      <ol>
+        <li>An increase in gate voltage $\Delta V_{in}$ increases the device's gate-to-source overdrive.</li>
+        <li>The transistor's transconductance ($g_m$) converts this into a drain current change: $\Delta I_D = g_m \Delta V_{in}$.</li>
+        <li>This current flows down through $R_D$, increasing the voltage drop across it.</li>
+        <li>Because $V_{out} = V_{DD} - I_D R_D$, a higher $I_D$ pulls $V_{out}$ closer to ground.</li>
+      </ol>
+
+      <p><strong>The Inversion ($180^\circ$ Phase Shift):</strong> Increasing $V_{in}$ forces $V_{out}$ downward, which is why the voltage gain is negative.</p>
+
+      <h2>2. Large-Signal Behavior (The 3 Operating Regions)</h2>
+      <p>As you sweep $V_{in}$ from $0$ up toward $V_{DD}$, the circuit travels through three distinct phases:</p>
+      <ul>
+        <li><strong>Cutoff ($V_{in} &lt; V_{TH}$):</strong> The transistor is OFF, so $I_D = 0$. With zero voltage drop across $R_D$, the output stays at the supply rail: $V_{out} = V_{DD}$.</li>
+        <li><strong>Saturation ($V_{in} &gt; V_{TH}$ and $V_{out} \ge V_{in} - V_{TH}$):</strong> The transistor turns ON and operates in saturation. Here, drain current follows a square-law curve, creating a steep downward slope in $V_{out}$. <strong>This is the amplification region</strong>, where transconductance ($g_m$) is high.</li>
+        <li><strong>Triode ($V_{in}$ high, $V_{out} &lt; V_{in} - V_{TH}$):</strong> As $V_{out}$ drops below the overdrive limit, the channel loses pinch-off. The transistor behaves as a small resistor ($R_{on}$), flattening the output curve and degrading $g_m$ and voltage gain.</li>
+      </ul>
+
+      <h2>3. Small-Signal Voltage Gain Formulas</h2>
+      <ul>
+        <li><strong>Ideal Transistor ($\lambda = 0$, ignoring output resistance):</strong>
+          <div class="math-block">$$A_v = -g_m R_D$$</div>
+        </li>
+        <li><strong>Practical Transistor ($\lambda \neq 0$, including channel-length modulation $r_o$):</strong><br>
+        Because the transistor has an internal output resistance $r_o = \frac{1}{\lambda I_D}$ connected between drain and source, it appears in parallel with $R_D$ at the output node:
+          <div class="math-block">$$A_v = -g_m (R_D \parallel r_o)$$</div>
+        </li>
+        <li><strong>Output Resistance seen from the drain:</strong>
+          <div class="math-block">$$R_{out} = R_D \parallel r_o$$</div>
+        </li>
+      </ul>
+
+      <blockquote>
+        <strong>Why neglecting $r_o$ is dangerous:</strong> If $g_m = 4\text{ mS}$, $R_D = 20\text{ k}\Omega$, and $r_o = 80\text{ k}\Omega$, calculating gain without $r_o$ yields $-g_m R_D = -80$. Accounting for $r_o$ yields $R_D \parallel r_o = 16\text{ k}\Omega$, bringing the actual gain to $-64$—meaning neglecting $r_o$ overestimates gain by 25%.
+      </blockquote>
+
+      <h2>4. The Design Dilemma (Analog Trade-offs)</h2>
+      <p>The gain formula can be expanded in terms of bias parameters:</p>
+      <div class="math-block">
+        $$A_v = -\sqrt{2 \mu_n C_{ox} \frac{W}{L}} \cdot \frac{V_{RD}}{\sqrt{I_D}}$$
+      </div>
+      <p>To maximize gain magnitude, you can adjust three variables, each with an engineering cost:</p>
+      <ul>
+        <li><strong>Increase $(W/L)$ :</strong> Larger transistor width increases parasitic device capacitance, reducing circuit bandwidth.</li>
+        <li><strong>Increase the DC drop $V_{RD}$ (higher $R_D$):</strong> Pushes the DC bias of $V_{out}$ closer to $V_{in} - V_{TH}$, leaving little room for output voltage swing before hitting the triode region.</li>
+        <li><strong>Decrease bias current $I_D$:</strong> Requires increasing $R_D$ proportionally to maintain the voltage drop, which increases the time constant ($R_D C_L$) at the output and slows down response time.</li>
+      </ul>
+
+      <h2>Deep Dive: Step-by-Step Mechanical Foundations</h2>
+
+      <h3>1. Why does current flow through $R_D$, and why does $V_{out} = V_{DD} - I_D R_D$ pull $V_{out}$ down?</h3>
+      <p>Look at <strong>Figure 3.4(a)</strong> on Page 6. Picture a single vertical path from the top power supply ($V_{DD}$) down to the ground ($0\text{ V}$) at the bottom:</p>
+      <ul>
+        <li><strong>Top:</strong> The resistor $R_D$ is connected to $V_{DD}$.</li>
+        <li><strong>Middle:</strong> The wire between the bottom of $R_D$ and the top (Drain) of the transistor $M_1$ is where we measure $V_{out}$.</li>
+        <li><strong>Bottom:</strong> The transistor $M_1$ connects from that $V_{out}$ wire down to ground.</li>
+      </ul>
+
+      <p><strong>Why current flows through $R_D$:</strong><br>
+      Think of the transistor $M_1$ as a water valve controlled by $V_{in}$ at the Gate. When you increase $V_{in}$ above the threshold voltage ($V_{TH}$), the valve opens and the transistor starts sucking current ($I_D$) down into the ground. Where does that current come from? There is only one path above it: it <strong>must</strong> come from the top supply ($V_{DD}$) and flow down through the resistor $R_D$.</p>
+
+      <p><strong>Why $V_{out}$ drops when $I_D$ increases:</strong><br>
+      By Ohm's Law, whenever a current $I_D$ flows through a resistor $R_D$, it uses up ("drops") a voltage equal to $I_D \times R_D$.<br>
+      Since you start with $V_{DD}$ volts at the top of the resistor and lose $I_D R_D$ volts going through the resistor, what is left over at the $V_{out}$ wire is:</p>
+      <div class="math-block">
+        $$V_{out} = V_{DD} - (I_D \times R_D)$$
+      </div>
+
+      <p><strong>Example with numbers:</strong> Suppose $V_{DD} = 5\text{ V}$ and $R_D = 1\text{ k}\Omega$.</p>
+      <ul>
+        <li>When $V_{in} = 0$, the transistor is OFF ($I_D = 0\text{ mA}$). Voltage lost across $R_D = 0 \times 1\text{ k}\Omega = 0\text{ V}$. So $V_{out} = 5 - 0 = 5\text{ V}$.</li>
+        <li>You increase $V_{in}$ slightly so $I_D = 2\text{ mA}$. Voltage lost across $R_D = 2\text{ mA} \times 1\text{ k}\Omega = 2\text{ V}$. Now $V_{out} = 5 - 2 = 3\text{ V}$.</li>
+        <li>You increase $V_{in}$ a tiny bit more so $I_D = 4\text{ mA}$. Voltage lost across $R_D = 4\text{ mA} \times 1\text{ k}\Omega = 4\text{ V}$. Now $V_{out} = 5 - 4 = 1\text{ V}$.</li>
+      </ul>
+      <p>Notice how a tiny increase in $V_{in}$ caused a <strong>huge</strong> drop in $V_{out}$ (from $3\text{ V}$ to $1\text{ V}$). That is how it amplifies! Because $V_{out}$ goes <strong>down</strong> when $V_{in}$ goes <strong>up</strong>, the gain has a minus sign ($A_v = -g_m R_D$).</p>
+
+      <h3>2. Why does the transistor enter the Triode region, and what happens there?</h3>
+      <p>To keep the transistor in the <strong>Saturation</strong> region (where it acts as a great amplifier), the Drain voltage ($V_{out}$) must stay high enough compared to the Gate voltage ($V_{in}$). Specifically, the rule for saturation is:</p>
+      <div class="math-block">
+        $$V_{out} \ge V_{in} - V_{TH}$$
+      </div>
+
+      <p><strong>Why it falls into Triode:</strong><br>
+      As you keep increasing $V_{in}$:</p>
+      <ol>
+        <li>$V_{in}$ is going <strong>up</strong>.</li>
+        <li>At the same time, more current $I_D$ flows, so $V_{out}$ is going <strong>down</strong>.</li>
+        <li>Eventually, they cross! $V_{out}$ drops below $V_{in} - V_{TH}$ (this exact crossing point is labeled <strong>Point A</strong> in <strong>Figure 3.4(b)</strong> on Page 6).</li>
+      </ol>
+
+      <p><strong>What happens inside the Triode region (Why amplification dies):</strong></p>
+      <ul>
+        <li>In <strong>Saturation</strong>, the current $I_D$ depends <strong>only</strong> on the input $V_{in}$ (specifically $(V_{in} - V_{TH})^2$), so $V_{in}$ has total control over the current.</li>
+        <li>Once $V_{out}$ drops too low (below $V_{in} - V_{TH}$), the transistor enters the <strong>Triode</strong> region. Now, the transistor is wide open, and there is very little voltage left between Drain ($V_{out}$) and Ground.</li>
+        <li>In <strong>deep triode</strong> (<strong>Figure 3.4(c)</strong> on Page 6), the transistor stops acting like a current source and starts acting like a simple resistor called $R_{on}$.</li>
+        <li>Now you just have two resistors in series ($R_D$ on top, $R_{on}$ on bottom) forming a voltage divider:
+          <div class="math-block">$$V_{out} = V_{DD} \frac{R_{on}}{R_{on} + R_D}$$</div>
+        </li>
+        <li>Because $V_{out}$ is already near $0\text{ V}$ (ground), increasing $V_{in}$ further barely changes $V_{out}$ at all—the curve in <strong>Figure 3.4(b)</strong> flattens out at the bottom. A flat curve means <strong>slope = gain $\approx 0$</strong>. That is why analog designers always make sure $V_{out}$ stays to the left of Point A (in Saturation).</li>
+      </ul>
+
+      <h3>3. The Missing Bridges (Pages 7 &amp; 8: Examples 3.1, 3.2, and How that Formula is Derived)</h3>
+      <p>Before getting to that big square-root formula on Page 8, the book covers two visual examples on Page 7-8:</p>
+      <ul>
+        <li><strong>Example 3.1 (Page 7, Fig. 3.5):</strong> Plots how current ($I_D$) and transconductance ($g_m$) change as $V_{in}$ increases. In Saturation (up to $V_{in1}$), $g_m = \mu_n C_{ox} \frac{W}{L}(V_{in} - V_{TH})$, so $g_m$ climbs straight up in a line. Once $V_{in}$ passes $V_{in1}$ (Point A), the transistor enters Triode and $g_m$ crashes back down because the transistor loses its amplifying power.</li>
+        <li><strong>Example 3.2 (Page 7-8, Fig. 3.6):</strong> Shows what happens if you feed a huge sine wave into $V_{in}$. When the input wave goes too high, the transistor hits Triode and the bottom of $V_{out}$ gets squished; when the input wave goes too low, the transistor turns OFF and the top of $V_{out}$ gets chopped flat at $V_{DD}$. Because $g_m$ changes as the wave moves up and down, the gain isn't constant for huge signals (<strong>nonlinearity</strong>).</li>
+      </ul>
+
+      <p><strong>Now, how did Razavi get that formula on Page 8 (Equations 3.12 &amp; 3.13)?</strong><br>
+      We know the basic gain magnitude is:</p>
+      <div class="math-block">
+        $$\vert A_v \vert = g_m R_D$$
+      </div>
+      <ol>
+        <li>From Page 3 ("The Exam Line"), one of the three standard formulas for $g_m$ is:
+          <div class="math-block">$$g_m = \sqrt{2 \mu_n C_{ox} \frac{W}{L} I_D}$$</div>
+        </li>
+        <li>And what is $R_D$? By Ohm's law, resistance equals the voltage drop across $R_D$ (which the book calls $V_{RD}$) divided by the current $I_D$:
+          <div class="math-block">$$R_D = \frac{V_{RD}}{I_D}$$</div>
+        </li>
+        <li>Multiply them together ($g_m \times R_D$) to get Equation 3.12:
+          <div class="math-block">$$A_v = -\sqrt{2 \mu_n C_{ox} \frac{W}{L} I_D} \cdot \frac{V_{RD}}{I_D}$$</div>
+        </li>
+        <li>Since $\frac{\sqrt{I_D}}{I_D} = \frac{1}{\sqrt{I_D}}$, it simplifies directly to <strong>Equation 3.13</strong>:
+          <div class="math-block">$$A_v = -\sqrt{2 \mu_n C_{ox} \frac{W}{L}} \cdot \frac{V_{RD}}{\sqrt{I_D}}$$</div>
+        </li>
+      </ol>
+      <p>Why does the book write $A_v$ this way? Because it shows you that if you try to get a huge gain by making $V_{RD}$ (the voltage lost across $R_D$) too big, $V_{out}$ ($= V_{DD} - V_{RD}$) gets pushed too low right from the start, putting the transistor dangerously close to the Triode region!</p>
+    </article>
+
     <!-- APPEND_POINT -->
 
   </div>
