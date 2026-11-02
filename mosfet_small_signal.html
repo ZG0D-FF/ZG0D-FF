@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOSFET Small-Signal Analysis Notes — Razavi Model</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      line-height: 1.7;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .back-nav {
+      margin-bottom: 24px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: #0f172a;
+      color: #38bdf8;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      background: #1e293b;
+      color: #7dd3fc;
+      transform: translateX(-2px);
+    }
+    header {
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .sub {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    .entry {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 24px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .entry > h2:first-child {
+      margin-top: 0;
+    }
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 18px 0 8px 0;
+    }
+    p {
+      margin-bottom: 14px;
+      color: #334155;
+    }
+    ul, ol {
+      margin: 0 0 16px 24px;
+      color: #334155;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    strong {
+      color: #0f172a;
+    }
+    .math-block {
+      overflow-x: auto;
+      padding: 10px 0;
+      margin: 12px 0;
+      text-align: center;
+    }
+    figure.diagram-figure {
+      margin: 22px 0;
+      padding: 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      text-align: center;
+    }
+    figure.diagram-figure img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    figure.diagram-figure figcaption {
+      margin-top: 10px;
+      font-size: 0.88rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="notes-root">
+
+    <div class="back-nav">
+      <a href="notes.html" class="back-btn">← BACK TO JARVIS NOTES HUB</a>
+    </div>
+
+    <header>
+      <h1>MOSFET Small-Signal Analysis Notes</h1>
+      <div class="sub">Razavi Analog CMOS Design · Complete Small-Signal Derivations &amp; Physical Intuition</div>
+    </header>
+
+    <article class="entry">
+      <h2>2. Where $\alpha V_{DS}$ Comes From (Fig. 2.37b, Page 4)</h2>
+      <p>In small-signal analysis, you wiggle one voltage at a time and see how the current changes:</p>
+      <ul>
+        <li>Wiggle $V_{GS}$ $\rightarrow$ $I_D$ changes by $g_m V_{GS}$. That is your first current source between Drain (D) and Source (S).</li>
+        <li>Now hold $V_{GS}$ fixed and wiggle $V_{DS}$. Because of that non-zero slope from channel-length modulation, $I_D$ also increases proportionally to the change in $V_{DS}$.</li>
+        <li>To show this extra current in the circuit diagram, Razavi places a second dependent current source in parallel between D and S called $\alpha V_{DS}$ (where $\alpha$ is simply the slope of the $I_D$ vs. $V_{DS}$ curve, $\frac{\partial I_D}{\partial V_{DS}}$).</li>
+      </ul>
+
+      <h2>3. Why $\alpha V_{DS}$ Turns Into Resistor $r_O$ (Fig. 2.37c, Page 4)</h2>
+      <p>Look closely at the $\alpha V_{DS}$ current source in Fig. 2.37(b):</p>
+      <ul>
+        <li>It is connected directly between Drain (D) and Source (S).</li>
+        <li>The voltage controlling it ($V_{DS}$) is the exact same voltage across its own two terminals (D and S).</li>
+        <li>By Ohm's Law, any two-terminal element whose current is directly proportional to the voltage across its own terminals ($I = \alpha V$) is just a linear resistor with resistance $R = \frac{V}{I} = \frac{1}{\alpha}$!</li>
+        <li><strong>Why $g_m V_{GS}$ stays a current source:</strong> Its current flows between D and S, but is controlled by the voltage at a different terminal ($G$ to $S$).</li>
+        <li><strong>Why $\alpha V_{DS}$ becomes $r_O$:</strong> Its current flows between D and S, and is controlled by the voltage between D and S. So we replace the $\alpha V_{DS}$ source with a simple resistor called output resistance ($r_O$).</li>
+      </ul>
+
+      <figure class="diagram-figure">
+        <img src="assets/fig_2_37_small_signal_models.png" alt="Figure 2.37 Small-Signal Models">
+        <figcaption><strong>Figure 2.37:</strong> (a) Basic MOS small-signal model; (b) channel-length modulation represented by a dependent current source; (c) channel-length modulation represented by a resistor; (d) body effect represented by a dependent current source.</figcaption>
+      </figure>
+
+      <h2>4. The Math for $r_O$ (Equations 2.44 – 2.48, Page 4)</h2>
+      <p>Since $r_O$ is the inverse of the slope $\frac{\partial I_D}{\partial V_{DS}}$:</p>
+      <p>Take the derivative of the saturation current equation with respect to $V_{DS}$:</p>
+      <div class="math-block">
+        $$\frac{\partial I_D}{\partial V_{DS}} = \frac{1}{2}\mu_n C_{ox}\frac{W}{L}(V_{GS} - V_{TH})^2 \cdot \lambda$$
+      </div>
+      <p>Notice that $\frac{1}{2}\mu_n C_{ox}\frac{W}{L}(V_{GS} - V_{TH})^2$ is just the DC drain current $I_D$ (assuming $\lambda V_{DS} \ll 1$). Therefore, $\frac{\partial I_D}{\partial V_{DS}} \approx \lambda I_D$.</p>
+      <p>Flip it upside down to get resistance:</p>
+      <div class="math-block">
+        $$r_O = \frac{\partial V_{DS}}{\partial I_D} \approx \frac{1}{\lambda I_D}$$
+      </div>
+      <p>If the channel was ideal ($\lambda = 0$, slope = $\tan 0^\circ$), then $r_O = \frac{1}{0} = \infty$ (an open circuit, which brings you right back to Fig. 2.37a).</p>
+
+      <h2>Part 1: Where $\alpha V_{DS}$ comes from (The Two Knobs)</h2>
+      <p>Think of the Drain Current ($I_D$) like water coming out of a pipe, controlled by two separate knobs:</p>
+      <ul>
+        <li>Knob 1 is $V_{GS}$ (Gate-to-Source voltage).</li>
+        <li>Knob 2 is $V_{DS}$ (Drain-to-Source voltage).</li>
+      </ul>
+      <p>To build the small-signal circuit, we test one knob at a time:</p>
+      <p><strong>Turn Knob 1 ($V_{GS}$), lock Knob 2 ($V_{DS}$):</strong><br>
+      You change $V_{GS}$ slightly. More current flows from Drain to Source. How much extra current? $g_m \times V_{GS}$. So, we draw a current source between Drain and Source labeled $g_m V_{GS}$ (Fig. 2.37a).</p>
+      <p><strong>Lock Knob 1 ($V_{GS}$), turn Knob 2 ($V_{DS}$):</strong><br>
+      Now, you keep $V_{GS}$ completely fixed (for example, staying on the $V_{GS1}$ curve in Fig. 2.26 on Page 3) and you increase $V_{DS}$.</p>
+
+      <figure class="diagram-figure">
+        <img src="assets/fig_2_26_finite_saturation_slope.png" alt="Figure 2.26 Finite saturation region slope resulting from channel-length modulation">
+        <figcaption><strong>Figure 2.26:</strong> Finite saturation region slope resulting from channel-length modulation ($\text{slope} = \alpha$).</figcaption>
+      </figure>
+
+      <p>If the line was flat ($\tan 0^\circ$), turning Knob 2 would do nothing. Extra current = $0$.</p>
+      <p>But the line tilts up! Because of channel-length modulation, increasing $V_{DS}$ pushes a little bit of extra current from Drain to Source.</p>
+      <p>If the upward slope of that line is some number called $\alpha$, then changing the voltage by $V_{DS}$ gives you an extra current equal to $\text{slope} \times \text{voltage} = \alpha V_{DS}$.</p>
+      <p>Since this extra current also flows from Drain to Source, we put a second current source in parallel with the first one and label it $\alpha V_{DS}$ (Fig. 2.37b).</p>
+      <p>(Total small-signal current from D to S is now the sum of both knobs: $g_m V_{GS} + \alpha V_{DS}$.)</p>
+
+      <h2>Part 2: The Ohm's Law Case (Why $\alpha V_{DS}$ becomes a resistor $r_O$)</h2>
+      <p>Now look at that second current source $\alpha V_{DS}$ in Fig. 2.37(b) on Page 4:</p>
+      <ul>
+        <li>Its top wire is connected to D (Drain).</li>
+        <li>Its bottom wire is connected to S (Source).</li>
+        <li>And the formula for the current flowing through it is:
+          <div class="math-block">$$I = \alpha \cdot V_{DS}$$</div>
+        </li>
+      </ul>
+      <p>Now think about a normal resistor in basic Ohm's Law:</p>
+      <div class="math-block">
+        $$V = I \cdot R \implies I = \left(\frac{1}{R}\right) \cdot V$$
+      </div>
+      <p>Compare the two equations:</p>
+      <ul>
+        <li>Our current source between D and S: $I = \alpha \cdot V_{DS}$</li>
+        <li>A normal resistor between D and S: $I = \left(\frac{1}{r_O}\right) \cdot V_{DS}$</li>
+      </ul>
+      <p>They are doing the exact same thing! If you put $1\text{ V}$ across D and S, both of them let a fixed multiple of current pass from D to S. If you double $V_{DS}$, both of them double the current between D and S.</p>
+      <p>Because the voltage controlling the current ($V_{DS}$) is across the exact same two points (D and S) where the current is flowing, that dependent current source behaves 100% like a normal resistor of value $r_O = \frac{1}{\alpha}$. So instead of drawing a clunky current source symbol $\alpha V_{DS}$, we just draw a simple resistor $r_O$ (Fig. 2.37c).</p>
+      <p><strong>Why couldn't we turn $g_m V_{GS}$ into a resistor too?</strong><br>
+      Because $g_m V_{GS}$ flows between D and S, while its controlling voltage ($V_{GS}$) is over at G and S. A normal resistor between D and S has no idea what voltage is happening over at the Gate! So $g_m V_{GS}$ must stay a dependent current source.</p>
+    </article>
+
+    <article class="entry">
+      <h2>The Third Element: Dependent Current Source $g_{mb}V_{bs}$ (Fig. 2.37d, Page 4)</h2>
+      <p>The third element in Figure 2.37(d) on Page 4—the dependent current source $g_{mb}V_{bs}$—comes from the <strong>Body Effect</strong> (where the bulk/substrate acts like a "second gate").</p>
+
+      <h2>1. The "Third Knob" ($V_{BS}$)</h2>
+      <p>Up to now, we looked at two knobs controlling the drain current $I_D$: Gate-Source voltage ($V_{GS}$) and Drain-Source voltage ($V_{DS}$).</p>
+      <p>However, a MOSFET actually has four terminals: Gate (G), Drain (D), Source (S), and Bulk/Body (B).</p>
+      <p>Normally, if the Source and Bulk are both tied directly to ground, $V_{BS} = 0$, and you don't have to worry about it.</p>
+      <p>But in many analog circuits (like a Source Follower or Cascode, which you'll see in Section 12), the Bulk is tied to ground, while the Source voltage wiggles up and down with the signal.</p>
+      <p>Whenever the voltage between the Bulk and Source ($V_{BS}$) changes, it changes the width of the depletion region under the channel, which directly changes the Threshold Voltage ($V_{TH}$).</p>
+
+      <h2>2. How Changing $V_{BS}$ Changes $I_D$ (The Chain Reaction)</h2>
+      <p>Hold $V_{GS}$ and $V_{DS}$ completely fixed, and wiggle only the Bulk-to-Source voltage ($V_{BS}$):</p>
+      <ul>
+        <li>You increase $V_{BS}$ (or decrease $V_{SB}$, since $V_{BS} = -V_{SB}$).</li>
+        <li>Threshold voltage $V_{TH}$ drops slightly.</li>
+        <li>Because $I_D = \frac{1}{2}\mu_n C_{ox}\frac{W}{L}(V_{GS} - V_{TH})^2$, a smaller $V_{TH}$ makes the overdrive term $(V_{GS} - V_{TH})$ larger.</li>
+        <li>Drain current $I_D$ increases!</li>
+      </ul>
+      <p>Because the Bulk voltage controls the drain current just like the main Gate does, Razavi states that <em>"the bulk behaves as a second gate"</em> (often called the back gate).</p>
+
+      <h2>3. Why It Is Drawn as a Current Source $g_{mb}V_{bs}$ in Fig. 2.37(d)</h2>
+      <p>Just like we defined transconductance $g_m$ for the main gate, we define body transconductance ($g_{mb}$) for this "second gate":</p>
+      <div class="math-block">
+        $$g_{mb} = \frac{\partial I_D}{\partial V_{BS}}$$
+      </div>
+      <p>If the small-signal voltage between Bulk and Source changes by $V_{bs}$, the drain-to-source current changes by $g_{mb}V_{bs}$.</p>
+      <p><strong>Where does this extra current flow?</strong> Between Drain (D) and Source (S), in the exact same direction as $g_m V_{GS}$.</p>
+      <p>So in Figure 2.37(d), we place another dependent current source in parallel between D and S, pointing from D to S, with value $g_{mb}V_{bs}$.</p>
+      <p><strong>Why doesn't $g_{mb}V_{bs}$ turn into a resistor like $r_O$ did?</strong> Because the current flows between D and S, whereas the controlling voltage ($V_{bs}$) is measured between B and S. Since those are not the same two terminals, it stays a dependent current source.</p>
+
+      <h2>4. The Formula Connecting $g_{mb}$ and $g_m$ (Equations 2.49 – 2.54, Page 4)</h2>
+      <p>Using the chain rule on the saturation current equation:</p>
+      <p>Differentiate $I_D$ with respect to $V_{BS}$ (remembering that $V_{TH}$ is the variable that depends on $V_{BS}$):</p>
+      <div class="math-block">
+        $$g_{mb} = \frac{\partial I_D}{\partial V_{BS}} = \mu_n C_{ox}\frac{W}{L}(V_{GS} - V_{TH})\left(-\frac{\partial V_{TH}}{\partial V_{BS}}\right)$$
+      </div>
+      <p>Notice that $\mu_n C_{ox}\frac{W}{L}(V_{GS} - V_{TH})$ is just $g_m$!</p>
+      <p>From basic MOS physics, the rate at which threshold voltage changes with source-bulk voltage is:</p>
+      <div class="math-block">
+        $$-\frac{\partial V_{TH}}{\partial V_{BS}} = \frac{\partial V_{TH}}{\partial V_{SB}} = \frac{\gamma}{2\sqrt{2\Phi_F + V_{SB}}} = \eta$$
+      </div>
+      <p>Substituting that in gives the famous exam relation (Eq. 2.53 &amp; 2.54):</p>
+      <div class="math-block">
+        $$g_{mb} = \eta g_m$$
+      </div>
+      <p>Typically, $\eta$ is around $0.1$ to $0.3$ (meaning the "back gate" Bulk is about 10% to 30% as strong as the main Gate).</p>
+
+      <h2>Part 1: Quick recap on why $g_{mb}V_{bs}$ is NOT a resistor</h2>
+      <p>Think of a normal resistor:</p>
+      <p>Water (current) flows between Pipe A and Pipe B, and the pressure difference controlling it is measured right across those same two Pipes A and B.</p>
+      <p>Now look at $g_{mb}V_{bs}$:</p>
+      <ul>
+        <li>The current ($g_{mb}V_{bs}$) flows between Drain and Source (D and S).</li>
+        <li>But the voltage controlling it ($V_{bs}$) is measured between the Bulk and Source (B and S).</li>
+      </ul>
+      <p>Because the two terminals where the current flows (D and S) are different from the terminals measuring the control voltage (B and S), it acts like a remote-controlled valve rather than a simple passive resistor. That’s why it stays a dependent current source.</p>
+
+      <h2>Part 2: What is $\Phi_F$ and why is it $\Phi_F$ (not just $F$)?</h2>
+      <p>In the formula:</p>
+      <div class="math-block">
+        $$\frac{\gamma}{2\sqrt{2\Phi_F + V_{SB}}}$$
+      </div>
+
+      <h3>1. Why is it $\Phi_F$ and not $F$?</h3>
+      <p>$\Phi$ (Phi) is the standard physics symbol for Electrostatic Potential.<br>
+      $F$ stands for Fermi (referring to the Fermi level / Fermi energy of the semiconductor).<br>
+      It is not a variable $F$ multiplied by something. $\Phi_F$ is a single combined term meaning "Fermi Potential".</p>
+
+      <h3>2. What actually is the Fermi Potential ($\Phi_F$)?</h3>
+      <p>In semiconductor physics, $\Phi_F$ is a fixed number that tells you how heavily doped your silicon bulk (substrate) is.</p>
+      <ul>
+        <li>Heavy doping = higher $\Phi_F$.</li>
+        <li>Light doping = lower $\Phi_F$.</li>
+      </ul>
+      <p>It represents a built-in energy barrier inside the silicon that the transistor has to overcome before it can create a channel to turn on.</p>
+
+      <h3>3. How does it affect the equation and $V_{TH}$?</h3>
+      <p>Look at what is happening inside that square root: $2\Phi_F + V_{SB}$.</p>
+      <ul>
+        <li>$2\Phi_F$ is the internal built-in potential barrier of the silicon.</li>
+        <li>$V_{SB}$ is the external voltage you apply between the Source and Bulk.</li>
+      </ul>
+      <p>When you change the Source-Bulk voltage ($V_{SB}$), you are tilting the energy bands inside the silicon. The total barrier the transistor faces becomes $(2\Phi_F + V_{SB})$.</p>
+      <p>Because that total barrier gets larger, it becomes harder to attract electrons to form the channel.</p>
+      <p><strong>Result?</strong> The threshold voltage ($V_{TH}$) goes up (the body effect).</p>
+      <p>The $\Phi_F$ term is just there in the denominator to anchor the math to the actual physical doping level of your silicon chip.</p>
+    </article>
+
+    <!-- APPEND_POINT -->
+
+  </div>
+</body>
+</html>
