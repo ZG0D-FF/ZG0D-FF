@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Structured, exam-ready notes on database design and the Entity–Relationship model, based on the supplied Chapter 7 textbook extract.">
+<title>Chapter 7 — Database Design and the E–R Model</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f5f4ef;
+    --paper: #fffefa;
+    --paper-2: #f2f5f4;
+    --ink: #24313c;
+    --muted: #63717a;
+    --line: #d8dfdc;
+    --navy: #173b57;
+    --teal: #287a78;
+    --teal-soft: #e5f2ef;
+    --blue-soft: #e9f0f8;
+    --sage: #52765d;
+    --sage-soft: #edf3e9;
+    --amber: #94651b;
+    --amber-soft: #fbf1dd;
+    --rose: #955453;
+    --rose-soft: #f8ece9;
+    --code-bg: #172633;
+    --code-ink: #eef5f7;
+    --shadow: 0 8px 28px rgba(27, 47, 59, .055);
+    --radius: 15px;
+    --reading-width: 1040px;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #111a20;
+    --paper: #19252d;
+    --paper-2: #202f37;
+    --ink: #e4ecef;
+    --muted: #a7b5bc;
+    --line: #344750;
+    --navy: #9bc4e2;
+    --teal: #7dc6bd;
+    --teal-soft: #203c3d;
+    --blue-soft: #233847;
+    --sage: #a9cba9;
+    --sage-soft: #273a30;
+    --amber: #e5bf76;
+    --amber-soft: #413728;
+    --rose: #e0a4a0;
+    --rose-soft: #412f31;
+    --code-bg: #0e171d;
+    --code-ink: #e7f0f4;
+    --shadow: 0 8px 28px rgba(0, 0, 0, .14);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.2rem; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.72 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  a { color: var(--teal); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--navy); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+  .shell { width: min(var(--reading-width), calc(100% - 32px)); margin: 0 auto; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 0 12px; color: var(--muted); font-size: .82rem; }
+  .brand { display: flex; align-items: center; gap: 10px; letter-spacing: .08em; text-transform: uppercase; font-weight: 750; }
+  .brand-mark { width: 10px; height: 10px; border-radius: 3px; background: var(--teal); transform: rotate(45deg); display: inline-block; }
+  .theme-toggle { border: 1px solid var(--line); color: var(--ink); background: var(--paper); padding: 8px 12px; border-radius: 999px; cursor: pointer; font: inherit; font-size: .82rem; box-shadow: none; }
+  .hero { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; padding: clamp(24px, 5vw, 52px); margin: 12px 0 22px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .hero:after { content: ""; position: absolute; width: 190px; height: 190px; border: 1px solid var(--line); border-radius: 50%; right: -75px; top: -84px; box-shadow: 0 0 0 22px color-mix(in srgb, var(--teal) 7%, transparent), 0 0 0 44px color-mix(in srgb, var(--navy) 4%, transparent); pointer-events: none; }
+  .eyebrow { color: var(--teal); letter-spacing: .14em; text-transform: uppercase; font-weight: 800; font-size: .76rem; margin: 0 0 14px; }
+  h1, h2, h3, h4 { line-height: 1.25; letter-spacing: -.025em; color: var(--navy); }
+  h1 { font-size: clamp(2rem, 4.8vw, 3.35rem); max-width: 780px; margin: 0 0 16px; }
+  h2 { font-size: clamp(1.45rem, 2.5vw, 2rem); margin: 0 0 18px; }
+  h3 { font-size: 1.17rem; margin: 26px 0 10px; }
+  h4 { font-size: 1rem; margin: 20px 0 8px; }
+  p { margin: 0 0 14px; }
+  .lede { max-width: 780px; font-size: 1.08rem; color: var(--muted); }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: .78rem; color: var(--muted); background: var(--paper-2); }
+  .layout { display: grid; grid-template-columns: 242px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .toc { position: sticky; top: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 16px; max-height: calc(100vh - 24px); overflow: auto; }
+  .toc h2 { font-size: .86rem; letter-spacing: .09em; text-transform: uppercase; margin: 0 0 12px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  .toc li { margin: 0; }
+  .toc a { display: block; text-decoration: none; color: var(--muted); padding: 6px 8px; border-radius: 8px; font-size: .83rem; line-height: 1.45; }
+  .toc a:hover { background: var(--paper-2); color: var(--teal); }
+  main { min-width: 0; }
+  .section { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(20px, 3.2vw, 34px); margin-bottom: 20px; box-shadow: var(--shadow); }
+  .section-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; }
+  .section-no { flex: 0 0 auto; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--blue-soft); color: var(--navy); font-size: .83rem; font-weight: 800; margin-top: 2px; }
+  .section-head h2 { margin: 0 0 7px; }
+  .section-head p { color: var(--muted); margin: 0; font-size: .94rem; }
+  .section > :last-child, .subsection > :last-child { margin-bottom: 0; }
+  .subsection { margin-top: 28px; }
+  .callout { border-left: 4px solid var(--teal); background: var(--teal-soft); padding: 14px 16px; border-radius: 0 10px 10px 0; margin: 18px 0; }
+  .callout strong { color: var(--navy); }
+  .callout.amber { border-color: var(--amber); background: var(--amber-soft); }
+  .callout.rose { border-color: var(--rose); background: var(--rose-soft); }
+  .callout.sage { border-color: var(--sage); background: var(--sage-soft); }
+  .label { display: inline-block; color: var(--teal); font-size: .74rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 7px; }
+  .muted { color: var(--muted); }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 16px 0; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+  .mini-card { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper-2); min-width: 0; }
+  .mini-card h3, .mini-card h4 { margin-top: 0; }
+  .mini-card p:last-child { margin-bottom: 0; }
+  .mini-card .tag { display: inline-block; color: var(--teal); font-weight: 800; font-size: .75rem; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
+  .table-wrap { overflow-x: auto; margin: 16px 0 20px; border: 1px solid var(--line); border-radius: 11px; }
+  table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: .92rem; }
+  th, td { padding: 11px 13px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { color: var(--navy); background: var(--paper-2); font-weight: 750; }
+  tbody tr:nth-child(even) { background: color-mix(in srgb, var(--paper-2) 48%, transparent); }
+  tr:last-child td { border-bottom: 0; }
+  code, .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .91em; }
+  code { background: var(--paper-2); color: var(--teal); border: 1px solid var(--line); padding: .1em .32em; border-radius: 5px; overflow-wrap: anywhere; }
+  .formula { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; margin: 13px 0; overflow-x: auto; font: .94rem/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .workflow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; margin: 22px 0; align-items: stretch; }
+  .workflow-step { position: relative; border: 1px solid var(--line); background: var(--paper-2); border-radius: 12px; padding: 14px 12px; min-width: 0; }
+  .workflow-step:not(:last-child):after { content: ""; position: absolute; width: 18px; height: 1px; background: var(--teal); right: -19px; top: 50%; }
+  .workflow-step .n { display: block; color: var(--teal); font-size: .74rem; font-weight: 800; margin-bottom: 6px; }
+  .workflow-step strong { display: block; font-size: .92rem; line-height: 1.3; color: var(--navy); margin-bottom: 6px; }
+  .workflow-step span { display: block; color: var(--muted); font-size: .8rem; line-height: 1.45; }
+  figure { margin: 20px 0; background: var(--paper-2); border: 1px solid var(--line); border-radius: 13px; padding: 14px; }
+  figure svg { width: 100%; height: auto; display: block; max-height: 390px; }
+  figcaption { margin: 9px 4px 2px; color: var(--muted); font-size: .84rem; }
+  .diagram-note { font-size: .9rem; color: var(--muted); margin-top: 8px; }
+  .svg-text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  ul, ol { padding-left: 1.35rem; margin: 8px 0 16px; }
+  li { margin: 5px 0; }
+  .check-list { list-style: none; padding: 0; }
+  .check-list li { padding-left: 25px; position: relative; }
+  .check-list li:before { content: ""; position: absolute; left: 0; top: .5em; width: 10px; height: 10px; border: 2px solid var(--teal); border-radius: 3px; }
+  .term { color: var(--teal); font-weight: 750; }
+  .key { text-decoration: underline; text-decoration-color: var(--amber); text-decoration-thickness: 2px; text-underline-offset: 3px; font-weight: 750; }
+  .small { font-size: .88rem; }
+  .revision-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+  .revision-item { border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; }
+  .revision-item strong { display: block; color: var(--navy); margin-bottom: 4px; }
+  details { margin: 10px 0; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--paper-2); }
+  summary { cursor: pointer; font-weight: 700; color: var(--navy); }
+  details p { margin: 10px 0 0; }
+  .footer { padding: 18px 0 38px; color: var(--muted); font-size: .82rem; }
+  .footer-rule { border-top: 1px solid var(--line); padding-top: 16px; }
+  .backtop { display: inline-block; margin-top: 12px; font-size: .85rem; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .toc { position: static; max-height: none; }
+    .toc ol { columns: 2; column-gap: 14px; }
+    .toc li { break-inside: avoid; }
+    .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .workflow-step:not(:last-child):after { display: none; }
+    .workflow-step:last-child { grid-column: auto; }
+  }
+  @media (max-width: 600px) {
+    body { font-size: 15px; }
+    .shell { width: min(100% - 20px, var(--reading-width)); }
+    .topbar { align-items: flex-start; }
+    .hero { border-radius: 15px; }
+    .section { border-radius: 12px; padding: 19px 16px; }
+    .toc ol { columns: 1; }
+    .grid-2, .grid-3, .revision-list { grid-template-columns: minmax(0, 1fr); }
+    .workflow { grid-template-columns: minmax(0, 1fr); }
+    .workflow-step { padding: 12px; }
+    figure { padding: 8px; }
+    .section-head { gap: 10px; }
+    .section-no { width: 30px; height: 30px; }
+  }
+  @media print {
+    :root { color-scheme: light; --page: #fff; --paper: #fff; --paper-2: #f7f8f8; --ink: #1e2a31; --muted: #49565d; --line: #cbd3d6; --navy: #173b57; --teal: #287a78; --teal-soft: #e5f2ef; --blue-soft: #e9f0f8; --sage: #52765d; --sage-soft: #edf3e9; --amber: #94651b; --amber-soft: #fbf1dd; --rose: #955453; --rose-soft: #f8ece9; --code-bg: #172633; --code-ink: #fff; }
+    body { background: #fff; font-size: 10.5pt; }
+    .shell { width: 100%; }
+    .theme-toggle, .backtop { display: none; }
+    .layout { display: block; }
+    .toc { position: static; max-height: none; margin-bottom: 18px; break-inside: avoid; }
+    .toc ol { columns: 2; }
+    .hero, .section { box-shadow: none; break-inside: auto; }
+    .section { margin-bottom: 12px; padding: 20px; }
+    a { color: inherit; text-decoration: none; }
+    figure, .mini-card, .callout, .workflow-step { break-inside: avoid; }
+    .workflow { gap: 9px; }
+    .workflow-step:not(:last-child):after { display: none; }
+    .hero:after { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell" id="top">
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>DBMS · Study Notes</span></div>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">Switch to dark mode</button>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">Chapter 7 · Conceptual database design</p>
+    <h1>Database Design and the E–R Model</h1>
+    <p class="lede">A connected, exam-ready guide to turning an enterprise’s data needs into a conceptual schema: identify entities, model relationships, describe attributes, express constraints, and prepare the design for relational implementation.</p>
+    <div class="hero-meta" aria-label="Coverage">
+      <span class="pill">Design process</span><span class="pill">Entities & relationships</span><span class="pill">Attributes</span><span class="pill">Keys & constraints</span><span class="pill">E–R diagrams</span><span class="pill">Weak entities</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Table of contents">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#design-process">1. Design process</a></li>
+        <li><a href="#er-building-blocks">2. E–R building blocks</a></li>
+        <li><a href="#attributes">3. Attribute types</a></li>
+        <li><a href="#constraints">4. Constraints</a></li>
+        <li><a href="#keys">5. Keys</a></li>
+        <li><a href="#redundancy">6. Redundant attributes</a></li>
+        <li><a href="#diagram-notation">7. E–R diagram notation</a></li>
+        <li><a href="#weak-entities">8. Weak entity sets</a></li>
+        <li><a href="#university-model">9. University model</a></li>
+        <li><a href="#relational-reduction">10. Relational reduction</a></li>
+        <li><a href="#exam-revision">11. Exam revision</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <section class="section" id="design-process">
+        <div class="section-head"><span class="section-no">01</span><div><h2>Overview of the design process</h2><p>Start with what the enterprise needs to remember, not with tables or storage details.</p></div></div>
+        <p>A database application involves more than its schema. It also needs programs that access and update data and a security scheme that controls access. Users’ needs guide the design. The E–R model provides a high-level conceptual framework for describing the data and how items are connected before the design is mapped to a relational database.</p>
+        <h3>The five connected stages</h3>
+        <div class="workflow" aria-label="Database design workflow">
+          <div class="workflow-step"><span class="n">STAGE 1</span><strong>User requirements</strong><span>Work with users and domain experts to identify required data.</span></div>
+          <div class="workflow-step"><span class="n">STAGE 2</span><strong>Conceptual design</strong><span>Choose a model; describe entities, attributes, relationships and constraints.</span></div>
+          <div class="workflow-step"><span class="n">REVIEW</span><strong>Validate the schema</strong><span>Check completeness, conflicts and redundant features; consider operations.</span></div>
+          <div class="workflow-step"><span class="n">STAGE 3</span><strong>Logical design</strong><span>Map the conceptual model to the implementation model, typically relational.</span></div>
+          <div class="workflow-step"><span class="n">STAGE 4</span><strong>Physical design</strong><span>Specify file organisation, index structures and other physical features.</span></div>
+        </div>
+        <p class="diagram-note">Notice the separation of concerns: conceptual design captures meaning; logical design expresses it in the chosen data model; physical design chooses how the system stores and accesses it.</p>
+        <div class="grid-2">
+          <div class="mini-card"><span class="tag">Conceptual schema</span><h3>What data means</h3><p>It describes the enterprise in a user-understandable way: entities, their attributes, relationships and constraints. An E–R diagram commonly records this phase.</p></div>
+          <div class="mini-card"><span class="tag">Functional requirements</span><h3>What users do</h3><p>Users also describe transactions, such as inserting or modifying data, retrieving particular data, and deleting data. The designer checks whether the schema supports these operations.</p></div>
+        </div>
+        <div class="callout amber"><strong>Why careful design matters:</strong> after an application is built, physical-schema changes are usually easier than logical-schema changes. A logical change may force edits to many queries and updates embedded across application code, so the logical design deserves particular care.</div>
+
+        <h3>Two design pitfalls</h3>
+        <div class="grid-2">
+          <div class="mini-card"><h4>Redundancy</h4><p>The same fact is stored repeatedly. If every course offering stores the course title, a title change can leave different offerings with inconsistent titles. Ideally, each fact appears in one appropriate place.</p><p class="small muted"><strong>University example:</strong> store a course’s title once with the course entity, rather than repeating it in every section.</p></div>
+          <div class="mini-card"><h4>Incompleteness</h4><p>The design cannot represent an important real-world state. If course information exists only inside course offerings, a course that has not yet been offered cannot be recorded without inventing section details or using unsuitable nulls.</p><p class="small muted"><strong>Design lesson:</strong> model <em>course</em> separately from <em>section</em>.</p></div>
+        </div>
+        <p>Even after these pitfalls are avoided, more than one sensible design may be possible. For example, a product sale can be represented as a relationship between a customer and a product, or as a separate <em>sale</em> entity connected to each. The best choice depends on which facts the enterprise needs to represent.</p>
+      </section>
+
+      <section class="section" id="er-building-blocks">
+        <div class="section-head"><span class="section-no">02</span><div><h2>The Entity–Relationship model</h2><p>Three core ideas: entity sets, relationship sets and attributes.</p></div></div>
+        <p>The <strong>Entity–Relationship (E–R) model</strong> supports conceptual database design by representing the overall logical structure of an enterprise. It provides a way to map real-world meanings and interactions into a schema that can later be translated into relation schemas.</p>
+
+        <h3>Entity and entity set</h3>
+        <div class="grid-2">
+          <div class="mini-card"><span class="tag">Entity</span><h4>A distinguishable thing</h4><p>An <strong>entity</strong> is a real-world object or “thing” distinguishable from all other objects. It may be concrete, such as a person or book, or abstract, such as a course, course offering or flight reservation.</p></div>
+          <div class="mini-card"><span class="tag">Entity set</span><h4>A type or collection</h4><p>An <strong>entity set</strong> contains entities of the same type that share the same attributes. Examples include <code>instructor</code>, <code>student</code>, <code>course</code> and <code>department</code>.</p></div>
+        </div>
+        <p>The entity set is the modeled type; its <strong>extension</strong> is the actual collection of entities currently belonging to that type. This distinction parallels a relation schema versus a relation instance.</p>
+        <p>Entity sets need not be disjoint. A person in a university may be an instructor, a student, both, or neither. The model therefore need not assume that membership in different sets is mutually exclusive.</p>
+        <h4>Attributes identify and describe entities</h4>
+        <p>An entity is described by the values of its attributes. For example, an instructor may have <code>ID</code>, <code>name</code>, <code>dept name</code> and <code>salary</code>. A course may have <code>course id</code>, <code>title</code>, <code>dept name</code> and <code>credits</code>.</p>
+        <p>An identifying attribute must distinguish one entity from others in the same set. Since two instructors may share a name, a uniquely assigned instructor ID is a more reliable identifier.</p>
+
+        <h3>Relationship and relationship set</h3>
+        <p>A <strong>relationship</strong> is an association among two or more entities. A <strong>relationship set</strong> is a set of relationships of the same type. For instance, <code>advisor</code> associates instructors with students, while <code>takes</code> associates students with course sections.</p>
+        <div class="formula">If E₁, E₂, …, Eₙ are entity sets, a relationship set R is a subset of<br>{ (e₁, e₂, …, eₙ) | e₁ ∈ E₁, e₂ ∈ E₂, …, eₙ ∈ Eₙ }, with n ≥ 2.</div>
+        <p>The entity sets that appear in a relationship participate in that relationship set. A single association of particular named entities is a <strong>relationship instance</strong>. For example, instructor Katz (ID 45565) advising student Shankar (ID 12345) is one instance of <code>advisor</code>.</p>
+
+        <figure>
+          <svg viewBox="0 0 760 260" role="img" aria-labelledby="er-basic-title er-basic-desc">
+            <title id="er-basic-title">Basic E–R relationship between instructor and student</title>
+            <desc id="er-basic-desc">Two entity boxes, instructor and student, are connected through the advisor relationship diamond. Their key and descriptive attributes are listed inside their boxes.</desc>
+            <defs><marker id="arr-basic" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#287a78"/></marker></defs>
+            <rect x="34" y="48" width="210" height="164" rx="9" fill="#e9f0f8" stroke="#6e93ad" stroke-width="1.5"/>
+            <text class="svg-text" x="139" y="77" text-anchor="middle" font-size="18" font-weight="750" fill="#173b57">instructor</text>
+            <line x1="52" y1="89" x2="226" y2="89" stroke="#9bb3c2"/>
+            <text class="svg-text" x="57" y="117" font-size="15" fill="#24313c" text-decoration="underline">ID</text>
+            <text class="svg-text" x="57" y="145" font-size="15" fill="#24313c">name</text>
+            <text class="svg-text" x="57" y="173" font-size="15" fill="#24313c">salary</text>
+            <polygon points="380,88 443,130 380,172 317,130" fill="#e5f2ef" stroke="#287a78" stroke-width="1.7"/>
+            <text class="svg-text" x="380" y="135" text-anchor="middle" font-size="16" font-weight="750" fill="#205e5c">advisor</text>
+            <line x1="244" y1="130" x2="317" y2="130" stroke="#287a78" stroke-width="2"/>
+            <line x1="443" y1="130" x2="516" y2="130" stroke="#287a78" stroke-width="2"/>
+            <rect x="516" y="48" width="210" height="164" rx="9" fill="#edf3e9" stroke="#89a58d" stroke-width="1.5"/>
+            <text class="svg-text" x="621" y="77" text-anchor="middle" font-size="18" font-weight="750" fill="#365840">student</text>
+            <line x1="534" y1="89" x2="708" y2="89" stroke="#a9bea9"/>
+            <text class="svg-text" x="539" y="117" font-size="15" fill="#24313c" text-decoration="underline">ID</text>
+            <text class="svg-text" x="539" y="145" font-size="15" fill="#24313c">name</text>
+            <text class="svg-text" x="539" y="173" font-size="15" fill="#24313c">tot_cred</text>
+            <text class="svg-text" x="380" y="235" text-anchor="middle" font-size="13" fill="#63717a">Relationship meaning: an instructor advises a student</text>
+          </svg>
+          <figcaption>Basic E–R shape: rectangles denote entity sets, a diamond denotes a relationship set, and underlining marks a key attribute. The diagram does not itself state the relationship’s cardinality unless additional notation is shown.</figcaption>
+        </figure>
+
+        <h3>Roles, recursive relationships and relationship attributes</h3>
+        <p>A <strong>role</strong> is the function an entity plays in a relationship. Roles are often obvious when the participating entity sets differ, but explicit role names are important when the same entity set participates more than once.</p>
+        <div class="mini-card">
+          <h4>Recursive example: <code>prereq</code></h4>
+          <p>The entity set <code>course</code> participates twice: one role is the course that requires a prerequisite (<code>course_id</code>), and the other is the prerequisite course (<code>prereq_id</code>). The ordered pair <code>(C1, C2)</code> means “C2 is a prerequisite for C1”; reversing the pair changes the meaning.</p>
+        </div>
+        <p>A relationship may have <strong>descriptive attributes</strong>. In <code>advisor</code>, <code>date</code> can record when the instructor became the student’s advisor. In <code>takes</code>, <code>grade</code> describes the student’s result for a particular section; an attribute such as <code>credit</code> may distinguish taking a class for credit from auditing it.</p>
+        <div class="callout amber"><strong>Important constraint:</strong> a relationship instance must be uniquely identifiable from its participating entities, not by relying on descriptive attributes. If the same instructor–student pair needs multiple advising dates, do not create indistinguishable duplicate relationship instances; model <code>date</code> as multivalued, as described in the source.</div>
+        <p>More than one relationship set may connect the same entity sets. For example, <code>advisor</code> and <code>dept advisor</code> may both connect instructors and students while capturing different meanings.</p>
+
+        <h3>Relationship degree: binary and ternary</h3>
+        <p>The <strong>degree</strong> of a relationship set is the number of participating entity sets. A binary relationship has degree 2; a ternary relationship has degree 3.</p>
+        <div class="grid-2">
+          <div class="mini-card"><span class="tag">Binary</span><h4><code>takes</code></h4><p><code>student</code> ↔ <code>section</code>: records which sections a student takes.</p></div>
+          <div class="mini-card"><span class="tag">Ternary</span><h4><code>proj guide</code></h4><p><code>instructor</code>, <code>student</code> and <code>project</code> together record which instructor guides which student on a specific project. A binary student–instructor relationship alone cannot express project-specific guidance.</p></div>
+        </div>
+        <figure>
+          <svg viewBox="0 0 760 260" role="img" aria-labelledby="ternary-title ternary-desc">
+            <title id="ternary-title">Ternary relationship proj guide</title>
+            <desc id="ternary-desc">Instructor, student and project entity sets all connect to one proj guide relationship diamond.</desc>
+            <rect x="22" y="30" width="170" height="65" rx="9" fill="#e9f0f8" stroke="#6e93ad" stroke-width="1.5"/><text class="svg-text" x="107" y="68" text-anchor="middle" font-size="17" font-weight="750" fill="#173b57">instructor</text>
+            <rect x="568" y="30" width="170" height="65" rx="9" fill="#edf3e9" stroke="#89a58d" stroke-width="1.5"/><text class="svg-text" x="653" y="68" text-anchor="middle" font-size="17" font-weight="750" fill="#365840">student</text>
+            <rect x="295" y="190" width="170" height="53" rx="9" fill="#fbf1dd" stroke="#c49c56" stroke-width="1.5"/><text class="svg-text" x="380" y="222" text-anchor="middle" font-size="17" font-weight="750" fill="#805818">project</text>
+            <polygon points="380,75 450,116 380,157 310,116" fill="#e5f2ef" stroke="#287a78" stroke-width="1.7"/><text class="svg-text" x="380" y="121" text-anchor="middle" font-size="16" font-weight="750" fill="#205e5c">proj guide</text>
+            <line x1="192" y1="77" x2="310" y2="105" stroke="#287a78" stroke-width="2"/><line x1="568" y1="77" x2="450" y2="105" stroke="#287a78" stroke-width="2"/><line x1="380" y1="157" x2="380" y2="190" stroke="#287a78" stroke-width="2"/>
+            <text class="svg-text" x="380" y="177" text-anchor="middle" font-size="12" fill="#63717a">on which project?</text>
+          </svg>
+          <figcaption>A ternary relationship stores the full combination. It can distinguish one student being guided by different instructors on different projects.</figcaption>
+        </figure>
+      </section>
+
+      <section class="section" id="attributes">
+        <div class="section-head"><span class="section-no">03</span><div><h2>Attribute types</h2><p>Attributes describe entities or relationships; their type determines how values should be interpreted.</p></div></div>
+        <p>Each attribute has a permitted set of values called its <strong>domain</strong> (or value set). For example, the domain of <code>semester</code> may be <code>{Fall, Winter, Spring, Summer}</code>. Formally, an attribute maps an entity set to a domain. An entity can be described by its attribute–value pairs; for example, an instructor might have <code>(ID, 76766)</code>, <code>(name, Crick)</code>, <code>(dept name, Biology)</code> and <code>(salary, 72000)</code>.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Attribute type</th><th>Meaning</th><th>Example from the chapter</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Simple</strong></td><td>Cannot usefully be divided into subattributes.</td><td><code>salary</code>, <code>credits</code></td></tr>
+            <tr><td><strong>Composite</strong></td><td>Can be divided into meaningful components; components can themselves form a hierarchy.</td><td><code>name</code> → first name, middle initial, last name; <code>address</code> → street, city, state, postal code</td></tr>
+            <tr><td><strong>Single-valued</strong></td><td>Has one value for a particular entity.</td><td>A student’s <code>ID</code></td></tr>
+            <tr><td><strong>Multivalued</strong></td><td>May have a set of values for one entity; the notation encloses it in braces.</td><td><code>{phone number}</code>, <code>{dependent name}</code></td></tr>
+            <tr><td><strong>Derived</strong></td><td>Computed from other attributes or related entities rather than stored as an independent value.</td><td><code>age</code> derived from date of birth and current date; <code>students advised</code> derived by counting related students</td></tr>
+            <tr><td><strong>Base / stored</strong></td><td>A stored value from which a derived value can be computed.</td><td><code>date of birth</code> is the base attribute for <code>age</code></td></tr>
+          </tbody>
+        </table></div>
+        <p>Composite attributes are useful when users sometimes need the whole value and at other times need individual components. A street component can itself be broken into street number, street name and apartment number. Multivalued attributes can also have bounds: a university might record between zero and two phone numbers per instructor.</p>
+        <figure>
+          <svg viewBox="0 0 760 270" role="img" aria-labelledby="attr-title attr-desc">
+            <title id="attr-title">Composite, multivalued and derived attributes</title>
+            <desc id="attr-desc">An instructor entity links to a composite name attribute with three components, a multivalued phone number attribute, and a derived age attribute.</desc>
+            <rect x="24" y="96" width="154" height="70" rx="9" fill="#e9f0f8" stroke="#6e93ad" stroke-width="1.5"/><text class="svg-text" x="101" y="125" text-anchor="middle" font-size="17" font-weight="750" fill="#173b57">instructor</text><text class="svg-text" x="101" y="147" text-anchor="middle" font-size="12" fill="#63717a">entity set</text>
+            <line x1="178" y1="131" x2="224" y2="131" stroke="#287a78" stroke-width="1.8"/>
+            <rect x="224" y="24" width="168" height="54" rx="8" fill="#e5f2ef" stroke="#287a78"/><text class="svg-text" x="308" y="56" text-anchor="middle" font-size="15" font-weight="700" fill="#205e5c">name (composite)</text>
+            <line x1="308" y1="78" x2="308" y2="104" stroke="#287a78" stroke-width="1.5"/><line x1="245" y1="104" x2="371" y2="104" stroke="#287a78" stroke-width="1.5"/><line x1="245" y1="104" x2="245" y2="118" stroke="#287a78"/><line x1="308" y1="104" x2="308" y2="118" stroke="#287a78"/><line x1="371" y1="104" x2="371" y2="118" stroke="#287a78"/>
+            <rect x="207" y="118" width="76" height="42" rx="7" fill="#fffefa" stroke="#9bb3c2"/><text class="svg-text" x="245" y="144" text-anchor="middle" font-size="12" fill="#24313c">first</text>
+            <rect x="270" y="174" width="76" height="42" rx="7" fill="#fffefa" stroke="#9bb3c2"/><text class="svg-text" x="308" y="200" text-anchor="middle" font-size="12" fill="#24313c">middle</text>
+            <rect x="333" y="118" width="76" height="42" rx="7" fill="#fffefa" stroke="#9bb3c2"/><text class="svg-text" x="371" y="144" text-anchor="middle" font-size="12" fill="#24313c">last</text>
+            <line x1="178" y1="131" x2="448" y2="131" stroke="#287a78" stroke-width="1.8"/>
+            <rect x="448" y="105" width="135" height="52" rx="8" fill="#edf3e9" stroke="#89a58d"/><text class="svg-text" x="515" y="126" text-anchor="middle" font-size="13" font-weight="700" fill="#365840">{phone number}</text><text class="svg-text" x="515" y="144" text-anchor="middle" font-size="11" fill="#63717a">multivalued</text>
+            <line x1="583" y1="131" x2="612" y2="131" stroke="#287a78" stroke-width="1.8"/>
+            <rect x="612" y="105" width="120" height="52" rx="8" fill="#fbf1dd" stroke="#c49c56"/><text class="svg-text" x="672" y="126" text-anchor="middle" font-size="14" font-weight="700" fill="#805818">age ( )</text><text class="svg-text" x="672" y="144" text-anchor="middle" font-size="11" fill="#63717a">derived</text>
+            <text class="svg-text" x="380" y="247" text-anchor="middle" font-size="12" fill="#63717a">Attribute design should reflect how values are used and calculated.</text>
+          </svg>
+          <figcaption>Schematic view of attribute types. The age value is computed when needed; the phone-number attribute may hold multiple values.</figcaption>
+        </figure>
+        <h3>What does NULL mean?</h3>
+        <p>A null value can mean different things, and these meanings should not be conflated:</p>
+        <ul>
+          <li><strong>Not applicable:</strong> the value does not exist for this entity, such as an apartment number for an address without an apartment.</li>
+          <li><strong>Missing:</strong> the value exists, but the database does not contain it. A missing instructor name is assumed to be this kind of case because every instructor must have a name.</li>
+          <li><strong>Unknown existence or value:</strong> we do not know the value, or do not know whether the value exists at all. For example, a null apartment number might mean that it is unknown whether the address has an apartment number.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="constraints">
+        <div class="section-head"><span class="section-no">04</span><div><h2>Constraints in the E–R model</h2><p>Constraints specify which database states are allowed.</p></div></div>
+        <p>The chapter focuses on <strong>mapping cardinalities</strong> and <strong>participation constraints</strong>. Together, they express how many entities may or must take part in a relationship.</p>
+        <h3>Mapping cardinalities for binary relationships</h3>
+        <p>For a binary relationship between entity sets A and B, the mapping cardinality describes the maximum number of entities on one side that can be associated with a single entity on the other side.</p>
+        <div class="grid-2">
+          <div class="mini-card"><span class="tag">1 : 1</span><h4>One-to-one</h4><p>An entity in A is associated with at most one entity in B, and an entity in B with at most one in A.</p></div>
+          <div class="mini-card"><span class="tag">1 : N</span><h4>One-to-many</h4><p>An entity in A may be associated with zero or more entities in B; each entity in B is associated with at most one in A.</p></div>
+          <div class="mini-card"><span class="tag">N : 1</span><h4>Many-to-one</h4><p>An entity in A is associated with at most one entity in B; an entity in B may be associated with zero or more entities in A.</p></div>
+          <div class="mini-card"><span class="tag">M : N</span><h4>Many-to-many</h4><p>Entities on both sides may be associated with zero or more entities on the other side.</p></div>
+        </div>
+        <figure>
+          <svg viewBox="0 0 760 420" role="img" aria-labelledby="cardinality-title cardinality-desc">
+            <title id="cardinality-title">Four binary mapping cardinalities</title>
+            <desc id="cardinality-desc">Four small panels show one-to-one, one-to-many, many-to-one and many-to-many using entity-set boxes and labeled connecting lines.</desc>
+            <g class="svg-text" font-size="14" font-weight="750" fill="#173b57">
+              <text x="180" y="28" text-anchor="middle">One-to-one</text><text x="580" y="28" text-anchor="middle">One-to-many</text><text x="180" y="228" text-anchor="middle">Many-to-one</text><text x="580" y="228" text-anchor="middle">Many-to-many</text>
+            </g>
+            <g stroke="#9bb3c2" stroke-width="1.4" fill="#e9f0f8"><rect x="35" y="48" width="80" height="94" rx="8"/><rect x="245" y="48" width="80" height="94" rx="8"/><rect x="435" y="48" width="80" height="94" rx="8"/><rect x="645" y="48" width="80" height="94" rx="8"/><rect x="35" y="248" width="80" height="94" rx="8"/><rect x="245" y="248" width="80" height="94" rx="8"/><rect x="435" y="248" width="80" height="94" rx="8"/><rect x="645" y="248" width="80" height="94" rx="8"/></g>
+            <g class="svg-text" font-size="15" font-weight="750" fill="#173b57" text-anchor="middle"><text x="75" y="99">A</text><text x="285" y="99">B</text><text x="475" y="99">A</text><text x="685" y="99">B</text><text x="75" y="299">A</text><text x="285" y="299">B</text><text x="475" y="299">A</text><text x="685" y="299">B</text></g>
+            <g stroke="#287a78" stroke-width="2.2" fill="none"><path d="M115 75 L245 75"/><path d="M115 115 L245 115"/><path d="M515 75 L645 62"/><path d="M515 94 L645 94"/><path d="M515 113 L645 126"/><path d="M115 262 L245 262"/><path d="M115 285 L245 285"/><path d="M115 327 L245 327"/><path d="M515 262 L645 262"/><path d="M515 282 L645 282"/><path d="M515 304 L645 304"/><path d="M515 326 L645 326"/></g>
+            <g fill="#287a78"><circle cx="115" cy="75" r="4"/><circle cx="245" cy="75" r="4"/><circle cx="115" cy="115" r="4"/><circle cx="245" cy="115" r="4"/><circle cx="515" cy="75" r="4"/><circle cx="645" cy="62" r="4"/><circle cx="515" cy="94" r="4"/><circle cx="645" cy="94" r="4"/><circle cx="515" cy="113" r="4"/><circle cx="645" cy="126" r="4"/><circle cx="115" cy="262" r="4"/><circle cx="245" cy="262" r="4"/><circle cx="115" cy="285" r="4"/><circle cx="245" cy="285" r="4"/><circle cx="115" cy="327" r="4"/><circle cx="245" cy="327" r="4"/></g>
+            <text class="svg-text" x="380" y="182" text-anchor="middle" font-size="12" fill="#63717a">Lines are illustrative; the relationship’s rules define its allowed associations.</text>
+            <text class="svg-text" x="380" y="386" text-anchor="middle" font-size="12" fill="#63717a">The cardinality comes from the real-world rule, not from the entity names.</text>
+          </svg>
+          <figcaption>Conceptual comparison of the four standard mapping cardinalities. Always state which direction the “one” and “many” constraints refer to.</figcaption>
+        </figure>
+        <p><strong>Advisor example:</strong> if each student can have only one instructor as an advisor while an instructor can advise several students, <code>advisor</code> is one-to-many from instructor to student. If students can be jointly advised by multiple instructors, the relationship is many-to-many.</p>
+
+        <h3>Participation: total versus partial</h3>
+        <div class="grid-2">
+          <div class="mini-card"><span class="tag">Total participation</span><h4>Every entity must participate</h4><p>Every entity in the set appears in at least one relationship instance. In the stated university example, every student is expected to have an advisor, so student participation in <code>advisor</code> is total.</p></div>
+          <div class="mini-card"><span class="tag">Partial participation</span><h4>Some entities may not participate</h4><p>Only some entities in the set need to appear in the relationship. An instructor may advise no students, so instructor participation in <code>advisor</code> can be partial.</p></div>
+        </div>
+        <p>Cardinality gives an upper bound or ratio; participation tells whether involvement is compulsory. Do not treat “at most one” as equivalent to “exactly one.”</p>
+        <h3>Reading cardinality limits</h3>
+        <p>A line may carry a minimum–maximum constraint written <code>l..h</code>:</p>
+        <div class="table-wrap"><table><thead><tr><th>Notation</th><th>Interpretation</th></tr></thead><tbody>
+          <tr><td><code>1..1</code></td><td>At least one and at most one: exactly one.</td></tr>
+          <tr><td><code>0..*</code></td><td>Zero or more; no upper limit is specified.</td></tr>
+          <tr><td><code>1..*</code></td><td>One or more; participation is mandatory, with no fixed maximum.</td></tr>
+        </tbody></table></div>
+        <p>In the chapter’s advisor example, the student edge is marked <code>1..1</code>, so each student must have exactly one advisor; the instructor edge is <code>0..*</code>, so an instructor may advise no students or many. Interpreting the edges backwards reverses the intended constraint.</p>
+      </section>
+
+      <section class="section" id="keys">
+        <div class="section-head"><span class="section-no">05</span><div><h2>Keys in entity and relationship sets</h2><p>Keys provide the formal way to distinguish modeled objects and associations.</p></div></div>
+        <h3>Entity-set keys</h3>
+        <p>Although entities are conceptually distinct, the database must express their distinction through attribute values. No two entities in one entity set may have identical values for all attributes.</p>
+        <div class="grid-3">
+          <div class="mini-card"><h4>Superkey</h4><p>A set of attributes that uniquely identifies every entity in the entity set.</p></div>
+          <div class="mini-card"><h4>Candidate key</h4><p>A minimal attribute set sufficient to identify every entity.</p></div>
+          <div class="mini-card"><h4>Primary key</h4><p>The candidate key selected as the main identifier for the entity set.</p></div>
+        </div>
+        <p>These definitions carry over from relation schemas to entity sets. In E–R diagrams, primary-key attributes are underlined.</p>
+        <h3>Keys for relationship sets</h3>
+        <p>Suppose relationship set <code>R</code> connects entity sets <code>E₁, E₂, …, Eₙ</code>. Write <code>PK(Eᵢ)</code> for the primary-key attributes of entity set <code>Eᵢ</code>.</p>
+        <div class="formula">K = PK(E₁) ∪ PK(E₂) ∪ … ∪ PK(Eₙ)</div>
+        <p>The union of participating entity primary keys forms a <strong>superkey</strong> for the relationship set. The source also gives the relationship-descriptive-attribute form as:</p>
+        <div class="formula">K′ = PK(E₁) ∪ … ∪ PK(Eₙ) ∪ {a₁, a₂, …, aₘ}</div>
+        <p>When primary-key attribute names overlap across entity sets, distinguish them by qualifying with the entity-set name. In a recursive relationship, use the role name to keep the participating key attributes distinct.</p>
+        <h4>How cardinality affects the chosen primary key</h4>
+        <div class="table-wrap"><table><thead><tr><th>Advisor relationship rule</th><th>Primary key of <code>advisor</code></th></tr></thead><tbody>
+          <tr><td>Many-to-many between instructor and student</td><td>Union of instructor PK and student PK.</td></tr>
+          <tr><td>Each student has at most one instructor (many-to-one from student to instructor)</td><td>Student PK alone is sufficient.</td></tr>
+          <tr><td>Each instructor is associated with at most one student (many-to-one from instructor to student)</td><td>Instructor PK alone is sufficient.</td></tr>
+          <tr><td>One-to-one</td><td>Either participating entity’s candidate key can be used.</td></tr>
+        </tbody></table></div>
+        <p>For a nonbinary relationship with no cardinality constraints, the union of all participating entity primary keys is the candidate key and is selected as primary key. The source notes that choosing keys for nonbinary relationships with cardinality constraints is more involved.</p>
+      </section>
+
+      <section class="section" id="redundancy">
+        <div class="section-head"><span class="section-no">06</span><div><h2>Removing redundant attributes</h2><p>Represent an association as a relationship when it conveys a relationship between modeled things.</p></div></div>
+        <p>After entity sets and attributes are selected, relationship sets may make some attributes redundant. The E–R design should not keep the same connecting fact both as an entity attribute and as a separate relationship, unless there is a clear reason for doing so.</p>
+        <h3>Example A: instructor and department</h3>
+        <p>Suppose <code>instructor</code> initially has <code>ID</code>, <code>name</code>, <code>dept name</code>, and <code>salary</code>; <code>department</code> has <code>dept name</code>, <code>building</code>, and <code>budget</code>. If <code>inst dept</code> models the association between them, the department name in <code>instructor</code> is redundant in the E–R representation because it is already the key of the related department entity.</p>
+        <p>Using a relationship rather than embedding the department name makes the connection explicit and avoids prematurely assuming that every instructor is associated with at most one department. During relational mapping, <code>dept name</code> may be added back to the instructor relation if each instructor has at most one associated department; if multiple departments are possible, the association is recorded in a separate relation.</p>
+        <h3>Example B: section and time slot</h3>
+        <p>A <code>section</code> may initially list <code>course id</code>, <code>sec id</code>, <code>semester</code>, <code>year</code>, <code>building</code>, <code>room number</code> and <code>time slot id</code>, with <code>(course id, sec id, year, semester)</code> as its key. A <code>time slot</code> is identified by <code>time slot id</code> and has a multivalued composite meeting attribute containing <code>(day, start time, end time)</code>. When <code>sec time slot</code> connects section to time slot, the repeated <code>time slot id</code> is redundant in the E–R entity set <code>section</code>.</p>
+        <h3>Example C: section and classroom</h3>
+        <p>If <code>classroom</code> is identified by <code>(building, room number)</code> and has <code>capacity</code>, then the same building and room-number attributes are redundant in <code>section</code> once <code>sec class</code> represents the association between a section and a classroom.</p>
+        <div class="callout sage"><strong>Design rule:</strong> first model entities and relationships clearly. Then remove attributes that merely duplicate information already captured by those relationships. The later relational mapping may reintroduce foreign-key attributes where the mapping rules require them.</div>
+        <h3>Clean university E–R entity sets</h3>
+        <div class="table-wrap"><table><thead><tr><th>Entity set</th><th>Attributes retained in the E–R design</th></tr></thead><tbody>
+          <tr><td><code>classroom</code></td><td><span class="key">building</span>, <span class="key">room number</span>, capacity</td></tr>
+          <tr><td><code>department</code></td><td><span class="key">dept name</span>, building, budget</td></tr>
+          <tr><td><code>course</code></td><td><span class="key">course id</span>, title, credits</td></tr>
+          <tr><td><code>instructor</code></td><td><span class="key">ID</span>, name, salary</td></tr>
+          <tr><td><code>section</code></td><td><span class="key">course id</span>, <span class="key">sec id</span>, <span class="key">semester</span>, <span class="key">year</span> in the initial entity-set version; later treated as weak in §8</td></tr>
+          <tr><td><code>student</code></td><td><span class="key">ID</span>, name, tot cred</td></tr>
+          <tr><td><code>time slot</code></td><td><span class="key">time slot id</span>, multivalued composite <code>{(day, start time, end time)}</code></td></tr>
+        </tbody></table></div>
+        <p class="small muted">In the later weak-entity treatment, <code>course id</code> is not an independent section attribute in the E–R diagram; it contributes to section’s full identifying key through the owning course. The relational schema eventually created can still contain <code>course id</code>.</p>
+        <h3>Relationship sets in the university design</h3>
+        <div class="table-wrap"><table><thead><tr><th>Relationship set</th><th>Entities / purpose</th></tr></thead><tbody>
+          <tr><td><code>inst dept</code></td><td>Instructor ↔ department</td></tr>
+          <tr><td><code>stud dept</code></td><td>Student ↔ department</td></tr>
+          <tr><td><code>teaches</code></td><td>Instructor ↔ section</td></tr>
+          <tr><td><code>takes</code></td><td>Student ↔ section; descriptive attribute <code>grade</code></td></tr>
+          <tr><td><code>course dept</code></td><td>Course ↔ department</td></tr>
+          <tr><td><code>sec course</code></td><td>Section ↔ course</td></tr>
+          <tr><td><code>sec class</code></td><td>Section ↔ classroom</td></tr>
+          <tr><td><code>sec time slot</code></td><td>Section ↔ time slot</td></tr>
+          <tr><td><code>advisor</code></td><td>Student ↔ instructor</td></tr>
+          <tr><td><code>prereq</code></td><td>Course ↔ prerequisite course, using two course roles</td></tr>
+        </tbody></table></div>
+        <p>These sets retain the university facts described in the earlier relational design, with several attributes represented as relationships in the E–R model. The supplied source states that this design contains no entity-set attribute made redundant by one of the listed relationships.</p>
+      </section>
+
+      <section class="section" id="diagram-notation">
+        <div class="section-head"><span class="section-no">07</span><div><h2>Reading E–R diagrams</h2><p>Learn the symbol system, then read the constraints attached to it.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Symbol / notation</th><th>Meaning</th></tr></thead><tbody>
+          <tr><td><strong>Rectangle</strong></td><td>Entity set; the textbook convention divides the rectangle into a name area and an attribute area.</td></tr>
+          <tr><td><strong>Diamond</strong></td><td>Relationship set.</td></tr>
+          <tr><td><strong>Underlined attribute</strong></td><td>Attribute that belongs to the entity set’s primary key.</td></tr>
+          <tr><td><strong>Relationship-attribute rectangle</strong></td><td>An attribute attached to a relationship set; it is linked to the relationship diamond by a dashed line.</td></tr>
+          <tr><td><strong>Double line</strong></td><td>Total participation of an entity set in a relationship set.</td></tr>
+          <tr><td><strong>Double diamond</strong></td><td>Identifying relationship for a weak entity set.</td></tr>
+          <tr><td><strong>Arrow to an entity set</strong></td><td>Constrains the relationship so an entity on the opposite side is associated with at most one entity on the arrow’s target side, under the textbook’s binary relationship convention.</td></tr>
+          <tr><td><strong><code>l..h</code> on an edge</strong></td><td>Minimum and maximum participation counts; <code>1</code> as minimum implies total participation, and <code>*</code> as maximum means no specified upper limit.</td></tr>
+        </tbody></table></div>
+        <h3>Relationship attributes in a diagram</h3>
+        <figure>
+          <svg viewBox="0 0 760 190" role="img" aria-labelledby="date-title date-desc">
+            <title id="date-title">Date attribute attached to advisor</title>
+            <desc id="date-desc">Instructor and student entity sets connect to the advisor diamond. A small date attribute box is connected to the diamond using a dashed line.</desc>
+            <rect x="24" y="52" width="170" height="76" rx="8" fill="#e9f0f8" stroke="#6e93ad" stroke-width="1.5"/><text class="svg-text" x="109" y="95" text-anchor="middle" font-size="17" font-weight="750" fill="#173b57">instructor</text>
+            <polygon points="380,52 436,91 380,130 324,91" fill="#e5f2ef" stroke="#287a78" stroke-width="1.6"/><text class="svg-text" x="380" y="96" text-anchor="middle" font-size="15" font-weight="750" fill="#205e5c">advisor</text>
+            <rect x="566" y="52" width="170" height="76" rx="8" fill="#edf3e9" stroke="#89a58d" stroke-width="1.5"/><text class="svg-text" x="651" y="95" text-anchor="middle" font-size="17" font-weight="750" fill="#365840">student</text>
+            <line x1="194" y1="90" x2="324" y2="90" stroke="#287a78" stroke-width="2"/><line x1="436" y1="90" x2="566" y2="90" stroke="#287a78" stroke-width="2"/>
+            <line x1="380" y1="52" x2="380" y2="27" stroke="#287a78" stroke-width="1.7" stroke-dasharray="5 4"/><rect x="337" y="5" width="86" height="25" rx="5" fill="#fffefa" stroke="#9bb3c2"/><text class="svg-text" x="380" y="22" text-anchor="middle" font-size="13" fill="#24313c">date</text>
+            <text class="svg-text" x="380" y="165" text-anchor="middle" font-size="12" fill="#63717a">The date describes the association, not either entity alone.</text>
+          </svg>
+          <figcaption>Example: the advising date belongs to the particular instructor–student relationship, so it attaches to the relationship set.</figcaption>
+        </figure>
+        <h3>Roles and nonbinary cardinality</h3>
+        <p>In a recursive relationship, line labels identify the roles played by the same entity set. For <code>prereq</code>, the roles may be labeled <code>course_id</code> and <code>prereq_id</code>.</p>
+        <p>For a ternary relationship such as <code>proj guide</code>, an arrow pointing to <code>instructor</code> can express that a student has at most one instructor guiding them on a given project. The chapter permits at most one arrow out of a nonbinary relationship set because multiple arrows can be interpreted in two different ways: either one combination on one side determines a combination on the other side, or every other-side combination determines at most one entity at each arrowed set. The source reserves the precise distinction for the treatment of functional dependencies in Chapter 8.</p>
+      </section>
+
+      <section class="section" id="weak-entities">
+        <div class="section-head"><span class="section-no">08</span><div><h2>Weak entity sets</h2><p>When an entity cannot be uniquely identified without its owner, use the owner’s key plus a discriminator.</p></div></div>
+        <p>A <strong>strong entity set</strong> has enough attributes to form a primary key. A <strong>weak entity set</strong> does not. It depends on an identifying (or owner) entity set, and each weak entity must be associated with an owner to exist in the modeled enterprise.</p>
+        <h3>Why section can be modeled as weak</h3>
+        <p>Initially, a section can be identified by <code>course id</code>, <code>sec id</code>, <code>year</code> and <code>semester</code>. If we remove <code>course id</code> as a standalone attribute so that the association to <code>course</code> is expressed by <code>sec course</code>, then <code>sec id</code>, <code>year</code> and <code>semester</code> alone are not globally unique: sections of different courses may share those values. The relationship to the owning course supplies the missing identifying information.</p>
+        <figure>
+          <svg viewBox="0 0 760 245" role="img" aria-labelledby="weak-title weak-desc">
+            <title id="weak-title">Weak entity section identified by course</title>
+            <desc id="weak-desc">The strong entity course connects to the double-diamond identifying relationship sec_course, which connects with a double line to the weak entity section. Course ID is the owner key, and section ID, semester and year form the discriminator.</desc>
+            <rect x="30" y="53" width="205" height="140" rx="5" fill="#e9f0f8" stroke="#6e93ad" stroke-width="1.7"/><rect x="36" y="59" width="193" height="128" rx="2" fill="none" stroke="#6e93ad" stroke-width="1"/>
+            <text class="svg-text" x="132" y="81" text-anchor="middle" font-size="18" font-weight="750" fill="#173b57">course</text><line x1="51" y1="94" x2="214" y2="94" stroke="#9bb3c2"/><text class="svg-text" x="56" y="120" font-size="15" fill="#24313c" text-decoration="underline">course_id</text><text class="svg-text" x="56" y="146" font-size="15" fill="#24313c">title</text><text class="svg-text" x="56" y="172" font-size="15" fill="#24313c">credits</text>
+            <polygon points="380,58 451,122 380,186 309,122" fill="#e5f2ef" stroke="#287a78" stroke-width="1.6"/><polygon points="380,67 441,122 380,177 319,122" fill="none" stroke="#287a78" stroke-width="1.1"/><text class="svg-text" x="380" y="117" text-anchor="middle" font-size="14" font-weight="750" fill="#205e5c">sec_course</text><text class="svg-text" x="380" y="136" text-anchor="middle" font-size="11" fill="#205e5c">identifies</text>
+            <rect x="525" y="53" width="205" height="140" rx="5" fill="#fbf1dd" stroke="#c49c56" stroke-width="1.7"/><rect x="531" y="59" width="193" height="128" rx="2" fill="none" stroke="#c49c56" stroke-width="1"/>
+            <text class="svg-text" x="627" y="81" text-anchor="middle" font-size="18" font-weight="750" fill="#805818">section</text><line x1="546" y1="94" x2="709" y2="94" stroke="#d4b982"/><text class="svg-text" x="551" y="120" font-size="15" fill="#24313c" text-decoration="underline" stroke-dasharray="3 2">sec_id</text><text class="svg-text" x="551" y="146" font-size="15" fill="#24313c" text-decoration="underline" stroke-dasharray="3 2">semester</text><text class="svg-text" x="551" y="172" font-size="15" fill="#24313c" text-decoration="underline" stroke-dasharray="3 2">year</text>
+            <line x1="235" y1="122" x2="309" y2="122" stroke="#287a78" stroke-width="2"/><line x1="451" y1="120" x2="525" y2="120" stroke="#287a78" stroke-width="2"/><line x1="451" y1="126" x2="525" y2="126" stroke="#287a78" stroke-width="2"/>
+            <text class="svg-text" x="380" y="222" text-anchor="middle" font-size="12" fill="#63717a">Full identifying key for section = course_id + sec_id + semester + year</text>
+          </svg>
+          <figcaption>The section discriminator is (sec_id, semester, year); combined with the course primary key, it uniquely identifies one section.</figcaption>
+        </figure>
+        <h3>Weak-entity vocabulary and rules</h3>
+        <div class="table-wrap"><table><thead><tr><th>Term</th><th>Meaning in the chapter</th></tr></thead><tbody>
+          <tr><td><strong>Owner / identifying entity set</strong></td><td>The strong entity set on which the weak entity depends; here, <code>course</code>.</td></tr>
+          <tr><td><strong>Identifying relationship</strong></td><td>The relationship connecting weak entity to owner; here, <code>sec course</code>.</td></tr>
+          <tr><td><strong>Discriminator / partial key</strong></td><td>Attributes that distinguish weak entities belonging to the same owner; here, <code>(sec id, year, semester)</code>.</td></tr>
+          <tr><td><strong>Weak entity primary key</strong></td><td>Owner’s primary key together with the weak entity’s discriminator.</td></tr>
+        </tbody></table></div>
+        <ul>
+          <li>The identifying relationship is many-to-one from weak entity to identifying entity.</li>
+          <li>Weak-entity participation in the identifying relationship is total: every section must be related to a course.</li>
+          <li>The identifying relationship should not have descriptive attributes; such attributes can instead be associated with the weak entity set.</li>
+          <li>In E–R notation, a weak entity uses a double rectangle; the identifying relationship uses a double diamond; the discriminator is underlined with a dashed line.</li>
+        </ul>
+        <p>Even if <code>sec id</code> were made globally unique, a section would still be conceptually dependent on a course. The weak-entity representation makes that existence dependence explicit.</p>
+        <h3>When is an attribute a better model than a weak entity?</h3>
+        <p>A weak entity may instead be represented as a multivalued composite attribute of its owner when it participates only in the identifying relationship and has few attributes. A weak entity set is usually more suitable when it has several attributes or participates in additional relationships. The chapter treats <code>section</code> as a weak entity because it also participates in relationships such as <code>sec time slot</code>.</p>
+        <p>A weak entity can itself own another weak entity, and it may have more than one identifying entity set. In that case, its primary key consists of the union of the primary keys of all identifying entity sets plus its discriminator.</p>
+      </section>
+
+      <section class="section" id="university-model">
+        <div class="section-head"><span class="section-no">09</span><div><h2>Putting the university E–R model together</h2><p>Read the schema as a connected model, not as a list of isolated tables.</p></div></div>
+        <p>The chapter’s final university design gathers the entity sets, relationships and additional constraints into one conceptual view. Section is treated as a weak entity, and the diagram expresses several total-participation and at-most-one constraints.</p>
+        <figure>
+          <svg viewBox="0 0 790 530" role="img" aria-labelledby="univ-title univ-desc">
+            <title id="univ-title">Relationship map for the university E–R model</title>
+            <desc id="univ-desc">Ten separate relationship rows show the principal links between instructor, student, section, course, department, time slot and classroom. Repeated entity labels refer to the same conceptual entity set.</desc>
+            <defs>
+              <style>
+                .u-entity { stroke-width: 1.2; }
+                .u-rel { fill: #e5f2ef; stroke: #287a78; stroke-width: 1.2; }
+                .u-line { stroke: #287a78; stroke-width: 1.4; }
+                .u-text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; }
+              </style>
+            </defs>
+            <text class="u-text" x="20" y="17" fill="#63717a" font-size="10.5">ENTITY SET</text><text class="u-text" x="395" y="17" text-anchor="middle" fill="#63717a" font-size="10.5">RELATIONSHIP SET</text><text class="u-text" x="565" y="17" fill="#63717a" font-size="10.5">ENTITY SET</text>
+            <g transform="translate(0,42)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#173b57" font-weight="700">instructor</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">inst_dept</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#edf3e9" stroke="#89a58d"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#365840" font-weight="700">department</text></g>
+            <g transform="translate(0,91)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#173b57" font-weight="700">student</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">stud_dept</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#edf3e9" stroke="#89a58d"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#365840" font-weight="700">department</text></g>
+            <g transform="translate(0,140)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#173b57" font-weight="700">course</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">course_dept</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#edf3e9" stroke="#89a58d"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#365840" font-weight="700">department</text></g>
+            <g transform="translate(0,189)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#173b57" font-weight="700">instructor</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">teaches</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#fbf1dd" stroke="#c49c56"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#805818" font-weight="700">section (weak)</text></g>
+            <g transform="translate(0,238)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#173b57" font-weight="700">student</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">takes · grade</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#fbf1dd" stroke="#c49c56"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#805818" font-weight="700">section (weak)</text></g>
+            <g transform="translate(0,287)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#fbf1dd" stroke="#c49c56"/><rect x="24" y="-12" width="167" height="24" rx="4" fill="none" stroke="#c49c56"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#805818" font-weight="700">section (weak)</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><polygon points="395,-12 428,0 395,12 362,0" fill="none" stroke="#287a78" stroke-width="1"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="10.5">sec_course</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#173b57" font-weight="700">course</text></g>
+            <g transform="translate(0,336)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#fbf1dd" stroke="#c49c56"/><rect x="24" y="-12" width="167" height="24" rx="4" fill="none" stroke="#c49c56"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#805818" font-weight="700">section (weak)</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="10.5">sec_time_slot</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#edf3e9" stroke="#89a58d"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#365840" font-weight="700">time_slot</text></g>
+            <g transform="translate(0,385)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#fbf1dd" stroke="#c49c56"/><rect x="24" y="-12" width="167" height="24" rx="4" fill="none" stroke="#c49c56"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#805818" font-weight="700">section (weak)</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">sec_class</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#edf3e9" stroke="#89a58d"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#365840" font-weight="700">classroom</text></g>
+            <g transform="translate(0,434)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#173b57" font-weight="700">course · course_id</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">prereq</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#173b57" font-weight="700">course · prereq_id</text></g>
+            <g transform="translate(0,483)"><rect class="u-entity" x="20" y="-16" width="175" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="107" y="4" text-anchor="middle" fill="#173b57" font-weight="700">student</text><line class="u-line" x1="195" y1="0" x2="345" y2="0"/><polygon class="u-rel" points="395,-18 445,0 395,18 345,0"/><text class="u-text" x="395" y="4" text-anchor="middle" fill="#205e5c" font-size="11">advisor</text><line class="u-line" x1="445" y1="0" x2="565" y2="0"/><rect class="u-entity" x="565" y="-16" width="200" height="32" rx="6" fill="#e9f0f8" stroke="#6e93ad"/><text class="u-text" x="665" y="4" text-anchor="middle" fill="#173b57" font-weight="700">instructor</text></g>
+          </svg>
+          <figcaption>Relationship map for revision. Each row shows one association; repeated entity labels refer to the same entity set, not separate sets. The full model also applies the cardinality, participation and key constraints described above.</figcaption>
+        </figure>
+        <h3>Constraints explicitly described in the chapter’s final model</h3>
+        <ul>
+          <li>Each instructor must be associated with exactly one department: total instructor participation in <code>inst dept</code>, and an at-most-one constraint toward department.</li>
+          <li>Course and student participate totally in <code>course dept</code> and <code>stud dept</code>, respectively, as described for the final diagram.</li>
+          <li>Section participates totally in <code>sec time slot</code> and is also modeled as a weak entity identified through <code>sec course</code>.</li>
+          <li><code>takes</code> has the descriptive attribute <code>grade</code>.</li>
+          <li>Each student has at most one advisor in the final figure’s stated constraints.</li>
+          <li>The section discriminator is <code>(sec id, semester, year)</code>; its identifying relationship is <code>sec course</code>, which connects it to the strong entity set <code>course</code>.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="relational-reduction">
+        <div class="section-head"><span class="section-no">10</span><div><h2>From E–R design to relational schemas</h2><p>The bridge from conceptual structure to implementation.</p></div></div>
+        <p>The chapter introduces <strong>reduction to relational schemas</strong> as the next step: the E–R diagram is used to derive the relation schemas that represent the university database. This is the transition from logical conceptual modelling to a relational implementation model.</p>
+        <div class="workflow" aria-label="Conceptual to relational transformation overview">
+          <div class="workflow-step"><span class="n">INPUT</span><strong>Entity sets</strong><span>Identify entities and their attributes.</span></div>
+          <div class="workflow-step"><span class="n">INPUT</span><strong>Relationship sets</strong><span>Record how entities are associated.</span></div>
+          <div class="workflow-step"><span class="n">CHECK</span><strong>Constraints & keys</strong><span>Use keys, cardinality and participation.</span></div>
+          <div class="workflow-step"><span class="n">MAP</span><strong>Relational schema</strong><span>Translate the conceptual design into relations.</span></div>
+          <div class="workflow-step"><span class="n">LATER</span><strong>Physical design</strong><span>Choose storage organisation and indexes.</span></div>
+        </div>
+        <div class="callout amber"><strong>Coverage boundary:</strong> the supplied textbook extract ends just as Section 7.6 begins. It states that the E–R diagram will be used to derive the relation schemas, but it does not include the actual reduction rules. Those rules are therefore not invented or presented here as if they came from the supplied source.</div>
+      </section>
+
+      <section class="section" id="exam-revision">
+        <div class="section-head"><span class="section-no">11</span><div><h2>Exam revision map</h2><p>High-yield definitions, distinctions and self-checks.</p></div></div>
+        <div class="revision-list">
+          <div class="revision-item"><strong>Entity vs entity set</strong>An entity is one distinguishable object; an entity set groups entities of the same type. The extension is the current collection of members.</div>
+          <div class="revision-item"><strong>Relationship vs relationship set</strong>A relationship is one association among entities; a relationship set collects associations of the same type.</div>
+          <div class="revision-item"><strong>Cardinality vs participation</strong>Cardinality constrains the number of associations; participation says whether involvement is mandatory.</div>
+          <div class="revision-item"><strong>Composite vs multivalued</strong>Composite means one value has components; multivalued means one entity may have several values of an attribute.</div>
+          <div class="revision-item"><strong>Stored vs derived</strong>A stored/base value is kept; a derived value is calculated from other values or relationships.</div>
+          <div class="revision-item"><strong>Strong vs weak entity</strong>A strong entity set has a primary key of its own; a weak entity needs its owner’s key plus a discriminator.</div>
+          <div class="revision-item"><strong>Redundancy vs incompleteness</strong>Redundancy repeats facts and risks inconsistency; incompleteness prevents representing some valid enterprise states.</div>
+          <div class="revision-item"><strong>Conceptual vs logical vs physical</strong>Conceptual captures meaning, logical maps to the implementation model, and physical specifies storage and access structures.</div>
+        </div>
+        <h3>Self-check questions</h3>
+        <details><summary>1. Why should course and section be separate entity sets?</summary><p>Separating them avoids repeating course facts for every offering and lets the database represent a course even when it has not yet been offered.</p></details>
+        <details><summary>2. How does a ternary relationship add meaning that binary relationships may lose?</summary><p><code>proj guide</code> associates instructor, student and project in one combination, recording which instructor guides which student on a particular project. Separate student–instructor links would not capture the project-specific context by themselves.</p></details>
+        <details><summary>3. What is the difference between “at most one” and “exactly one”?</summary><p>“At most one” permits zero or one association. “Exactly one” requires at least one and at most one; it combines a maximum of one with mandatory participation.</p></details>
+        <details><summary>4. Why is section weak in the final E–R model?</summary><p>The section discriminator <code>(sec id, semester, year)</code> identifies a section only within a course. The course key is required as part of the full key, and every section depends on its owning course.</p></details>
+        <details><summary>5. Why can a department name be removed from instructor in the E–R design but reappear in a relational schema?</summary><p>The E–R relationship <code>inst dept</code> already represents the association. During relational mapping, the department key may be stored with instructor as a foreign-key attribute when each instructor has at most one department; if multiple departments are allowed, a separate relation can represent the association.</p></details>
+        <details><summary>6. What are three different meanings of NULL in this discussion?</summary><p>Not applicable, a value that exists but is missing, and an unknown value or unknown existence of a value.</p></details>
+        <div class="callout sage"><strong>One-line chapter logic:</strong> understand requirements → model entity sets and relationships → assign attributes and keys → express cardinality and participation → remove redundant attributes → read the complete E–R diagram → map the validated conceptual schema to relations.</div>
+      </section>
+    </main>
+  </div>
+  <footer class="footer">
+    <div class="footer-rule">Prepared from the supplied Chapter 7 extract, <em>Database Design and the E–R Model</em>. The supplied text covers Sections 7.1–7.5.7 and only introduces Section 7.6. This study document reorganises the material for learning and revision while retaining the chapter’s terminology and examples.</div>
+    <a class="backtop" href="#top">Back to top ↑</a>
+  </footer>
+</div>
+<script>
+(function () {
+  const root = document.documentElement;
+  const button = document.getElementById('themeToggle');
+  function updateButton() {
+    const isDark = root.dataset.theme === 'dark';
+    button.textContent = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+    button.setAttribute('aria-pressed', String(isDark));
+  }
+  button.addEventListener('click', function () {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    updateButton();
+  });
+  updateButton();
+})();
+</script>
+</body>
+</html>

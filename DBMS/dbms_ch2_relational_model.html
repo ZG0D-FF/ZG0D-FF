@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Introduction to the Relational Model — DBMS Revision Notes</title>
+<style>
+:root{
+  --bg:#f7f3ea; --paper:#fffdf8; --ink:#1f2a37; --muted:#58626f; --line:#e3dccb;
+  --navy:#1b2f4b; --teal:#1f6f74; --blue:#32649c; --sage:#4f7d5c; --amber:#8a5a12;
+  --navy-s:#e8edf4; --teal-s:#e5f1f1; --blue-s:#e8f0f9; --sage-s:#e9f2ea; --amber-s:#fbf0da;
+  --code-bg:#f1eee5;
+  --sans:"Inter","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --serif:"Source Serif 4",Charter,Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.7}
+a{color:var(--blue);text-underline-offset:2px}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:3px}
+main,header.top,footer{max-width:900px;margin:0 auto;padding:0 22px}
+header.top{padding-top:44px;padding-bottom:6px}
+.eyebrow{font-family:var(--sans);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600}
+h1,h2,h3,h4{font-family:var(--sans);color:var(--navy);line-height:1.25;font-weight:650}
+h1{font-size:2.15rem;margin:.25em 0 .35em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-bottom:.3em;border-bottom:2px solid var(--line)}
+h2 .n{color:var(--teal);margin-right:.35em}
+h3{font-size:1.15rem;margin:1.9em 0 .4em;color:var(--teal)}
+h4{font-size:1rem;margin:1.4em 0 .3em}
+p{margin:.7em 0}
+.lede{color:var(--muted);font-size:1.02rem;max-width:60ch}
+ul,ol{padding-left:1.3em;margin:.6em 0}
+li{margin:.25em 0}
+code,.mono{font-family:var(--mono);font-size:.88em}
+code{background:var(--code-bg);padding:.08em .35em;border-radius:4px}
+/* semantic colour */
+.t{color:var(--teal);font-weight:600}            /* key technical term */
+.rel{font-family:var(--mono);font-size:.88em;color:var(--navy);font-weight:600;background:none;padding:0}  /* relation names */
+.at{font-family:var(--mono);font-size:.88em;color:var(--blue);background:none;padding:0}                  /* attribute names */
+.pk{text-decoration:underline;text-underline-offset:3px}
+mark.key{background:var(--amber-s);color:inherit;padding:0 .2em;border-radius:3px}
+.xref{font-family:var(--sans);font-size:.72rem;background:var(--navy-s);color:var(--navy);padding:.1em .5em;border-radius:99px;white-space:nowrap;font-weight:600}
+/* TOC */
+nav.toc{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:16px 22px;margin:22px 0}
+nav.toc h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;border:0;margin:0 0 6px;padding:0;color:var(--muted)}
+nav.toc ol{columns:2;column-gap:32px;font-family:var(--sans);font-size:.93rem;margin:0;padding-left:1.2em}
+nav.toc li{break-inside:avoid}
+/* callouts */
+.callout{border-left:4px solid var(--teal);background:var(--teal-s);padding:10px 16px 10px 14px;border-radius:0 6px 6px 0;margin:1.2em 0;font-size:.98rem}
+.callout>.lab{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin-bottom:2px}
+.callout p:first-of-type{margin-top:.2em}.callout p:last-child,.callout ul:last-child{margin-bottom:.2em}
+.callout svg.i{width:16px;height:16px;flex:none}
+.callout.def{border-color:var(--navy);background:var(--navy-s)}.def .lab{color:var(--navy)}
+.callout.ex{border-color:var(--blue);background:var(--blue-s)}.ex .lab{color:var(--blue)}
+.callout.warn{border-color:var(--amber);background:var(--amber-s)}.warn .lab{color:var(--amber)}
+.callout.take{border-color:var(--sage);background:var(--sage-s)}.take .lab{color:var(--sage)}
+.callout.note .lab{color:var(--teal)}
+svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* tables */
+.tw{overflow-x:auto;margin:1em 0;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;font-family:var(--sans);font-size:.88rem;background:var(--paper)}
+table caption{caption-side:bottom;text-align:left;font-size:.8rem;color:var(--muted);padding-top:6px;font-family:var(--sans)}
+th,td{border:1px solid var(--line);padding:5px 12px;text-align:left;vertical-align:top}
+thead th{background:var(--navy);color:#fff;font-weight:600;border-color:var(--navy)}
+tbody tr:nth-child(even){background:#faf6ec}
+table.cmp td:first-child,table.cmp th:first-child{white-space:nowrap}
+table.data{width:auto;min-width:50%}
+table.data td{font-family:var(--mono);font-size:.82rem}
+td.hl,th.hl{background:var(--amber-s)!important;color:var(--ink)}
+/* figures */
+figure{margin:1.6em 0;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 14px 10px}
+figure .sv{overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;margin:0 auto}
+figcaption{font-family:var(--sans);font-size:.85rem;color:var(--muted);margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+figcaption b{color:var(--navy)}
+/* svg text */
+svg text{font-family:var(--sans);fill:var(--ink)}
+.s-lab{font-size:13px}.s-sm{font-size:11.5px;fill:var(--muted)}.s-b{font-weight:700}
+.s-mono{font-family:var(--mono)!important;font-size:12px}
+.bx{fill:#fff;stroke:var(--navy);stroke-width:1.4}.hd{fill:var(--navy)}
+.ht{fill:#fff!important;font-size:13px;font-weight:700}
+.sa{font-family:var(--mono)!important;font-size:12px}
+.sa.pk{text-decoration:underline}
+.edge{stroke:var(--teal);stroke-width:1.6;fill:none}
+.edge.dash{stroke-dasharray:6 4;stroke:var(--amber)}
+.lnk rect{transition:fill .15s}.lnk:hover rect{fill:var(--teal-s)}
+/* code */
+pre{background:#17263a;color:#e8eef6;padding:14px 18px;border-radius:8px;overflow-x:auto;font-family:var(--mono);font-size:.84rem;line-height:1.6;margin:1em 0}
+pre .k{color:#7fd1c9;font-weight:600}pre .c{color:#9fb0c3;font-style:italic}pre .s{color:#f2c879}
+/* revision */
+details{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:.55em 0;font-size:.97rem}
+summary{cursor:pointer;font-family:var(--sans);font-weight:600;color:var(--navy)}
+details[open] summary{margin-bottom:.3em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.src{font-size:.84rem;color:var(--muted);font-family:var(--sans)}
+footer{padding-top:30px;padding-bottom:60px;color:var(--muted);font-family:var(--sans);font-size:.82rem}
+@media (max-width:720px){
+  body{font-size:17px}h1{font-size:1.7rem}h2{font-size:1.3rem}
+  nav.toc ol,.two{columns:1;grid-template-columns:1fr}
+  main,header.top,footer{padding-left:16px;padding-right:16px}
+}
+@media print{
+  :root{--bg:#fff}body{font-size:11pt;line-height:1.5}
+  main,header.top,footer{max-width:none;padding:0}
+  nav.toc{break-after:page}
+  figure,.callout,table,pre,details{break-inside:avoid}
+  h2,h3{break-after:avoid}
+  .tw,figure .sv{overflow:visible}
+  pre{background:#f1eee5;color:#111;border:1px solid #ccc}pre .k{color:#0b5a5e}pre .c{color:#555}pre .s{color:#7a4b00}
+  details{border:1px solid #ccc}details>*{display:block}
+  a{color:inherit;text-decoration:none}
+}
+</style>
+</head>
+<body>
+
+<!-- icon sprite (decorative; notes remain understandable without it) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/><path d="M12 10v5"/><path d="M12 18v.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.01"/></symbol>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#1f6f74"/></marker>
+  <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#8a5a12"/></marker>
+</svg>
+
+<header class="top">
+  <div class="eyebrow">Database Management Systems · Chapter 2</div>
+  <h1>Introduction to the Relational Model</h1>
+  <p class="lede">Revision notes reorganised from the textbook chapter: structure of relational databases, schema vs instance, keys and referential integrity, schema diagrams, and query-language families. Running example: a university database.</p>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#overview">Big picture and concept map</a></li>
+      <li><a href="#structure">Structure of relational databases</a></li>
+      <li><a href="#schema">Database schema vs instance</a></li>
+      <li><a href="#keys">Keys and referential integrity</a></li>
+      <li><a href="#diagrams">Schema diagrams</a></li>
+      <li><a href="#query">Relational query languages</a></li>
+      <li><a href="#operations">Relational operations (select, project, join, set operations)</a></li>
+      <li><a href="#revision">Revision: distinctions, pitfalls, self-check</a></li>
+      <li><a href="#source-notes">Notes on the source text</a></li>
+    </ol>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ 0. OVERVIEW ============ -->
+<section id="overview" aria-labelledby="h-overview">
+  <h2 id="h-overview"><span class="n">0</span>Big picture and concept map</h2>
+  <p>The <span class="t">relational model</span> is today the primary data model for commercial data-processing applications. It won that position because of its <b>simplicity</b>, which eases the programmer's job compared with earlier models such as the <i>network</i> and <i>hierarchical</i> models.</p>
+  <p>The chapter has one storyline: <b>data is stored in tables</b> (§1) → <b>a schema describes them, an instance holds the current data</b> (§2) → <b>keys make tuples identifiable and link tables</b> (§3) → <b>diagrams summarise the design</b> (§4) → <b>query languages retrieve the data</b> (§5) → <b>relational operations are what those languages compute</b> (<a href="#operations">§6</a>). Click any box to jump.</p>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 900 330" role="img" aria-labelledby="cm-t cm-d" style="min-width:640px">
+      <title id="cm-t">Concept map of the chapter</title>
+      <desc id="cm-d">The relational model at the centre, linked to structure, schema and instance, keys, schema diagrams, and query languages.</desc>
+      <g class="edge" stroke-width="1.4"><path d="M300 90 L370 140"/><path d="M300 250 L370 190"/><path d="M600 90 L530 140"/><path d="M610 165 L530 165" /><path d="M600 250 L530 190"/></g>
+      <a href="#overview" class="lnk"><g><rect x="370" y="135" width="160" height="62" rx="8" fill="#1b2f4b"/><text x="450" y="162" text-anchor="middle" class="s-b" style="fill:#fff;font-size:15px">Relational model</text><text x="450" y="182" text-anchor="middle" style="fill:#cfd9e6;font-size:11.5px">tables of tuples</text></g></a>
+      <a href="#structure" class="lnk"><g><rect x="20" y="40" width="280" height="96" rx="8" fill="#e5f1f1" stroke="#1f6f74"/><text x="34" y="64" class="s-b s-lab">1 · Structure</text><text x="34" y="85" class="s-sm">relation = table · tuple = row</text><text x="34" y="102" class="s-sm">attribute = column · domain (atomic)</text><text x="34" y="119" class="s-sm">null value</text></g></a>
+      <a href="#schema" class="lnk"><g><rect x="20" y="200" width="280" height="96" rx="8" fill="#e8f0f9" stroke="#32649c"/><text x="34" y="224" class="s-b s-lab">2 · Schema and instance</text><text x="34" y="245" class="s-sm">schema = logical design (type)</text><text x="34" y="262" class="s-sm">instance = snapshot of data (value)</text><text x="34" y="279" class="s-sm">common attributes link relations</text></g></a>
+      <a href="#keys" class="lnk"><g><rect x="600" y="40" width="280" height="96" rx="8" fill="#fbf0da" stroke="#8a5a12"/><text x="614" y="64" class="s-b s-lab">3 · Keys</text><text x="614" y="85" class="s-sm">superkey ⊇ candidate key ⊇ primary key</text><text x="614" y="102" class="s-sm">foreign key · referential integrity</text></g></a>
+      <a href="#diagrams" class="lnk"><g><rect x="600" y="147" width="280" height="40" rx="8" fill="#e9f2ea" stroke="#4f7d5c"/><text x="614" y="172" class="s-b s-lab">4 · Schema diagrams</text></g></a>
+      <a href="#query" class="lnk"><g><rect x="600" y="200" width="280" height="96" rx="8" fill="#e8edf4" stroke="#1b2f4b"/><text x="614" y="224" class="s-b s-lab">5 · Query languages</text><text x="614" y="245" class="s-sm">procedural vs nonprocedural</text><text x="614" y="262" class="s-sm">relational algebra · calculus · SQL</text></g></a>
+    </svg></div>
+    <figcaption><b>Figure 0.</b> Concept map. Notice that <b>keys</b> and <b>schema diagrams</b> both depend on the schema (§2): keys are constraints on a schema, and a schema diagram draws the schema together with its foreign-key arrows.</figcaption>
+  </figure>
+
+  <h3>Where the textbook sends you next</h3>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Topic touched here</th><th>Developed later in</th></tr></thead>
+    <tbody>
+      <tr><td>Domains and SQL definition of relations</td><td>Chapter 3 (SQL data-definition language)</td></tr>
+      <tr><td>Effect of <code>null</code> on operations</td><td>Section 3.6</td></tr>
+      <tr><td>SQL query language</td><td>Chapters 3–5</td></tr>
+      <tr><td>Relational algebra, tuple and domain relational calculus</td><td>Chapter 6</td></tr>
+      <tr><td>Entity–relationship diagrams, schema diagrams in depth</td><td>Chapter 7</td></tr>
+      <tr><td>Good relational schema design (appropriateness of structures)</td><td>Chapters 7–8</td></tr>
+      <tr><td>Efficient query processing</td><td>Chapters 12–13</td></tr>
+      <tr><td>Nonatomic domains (extensions to the model)</td><td>Chapter 22</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 1. STRUCTURE ============ -->
+<section id="structure" aria-labelledby="h-structure">
+  <h2 id="h-structure"><span class="n">1</span>Structure of relational databases</h2>
+
+  <h3 id="tables">1.1 A database is a collection of uniquely named tables</h3>
+  <p><b>Intuition.</b> Picture a spreadsheet-like table for each kind of thing you want to record. Each table has a name, a fixed set of column headers, and one row per recorded fact.</p>
+  <p><b>Formal meaning.</b> A <span class="t">relational database</span> is a collection of tables, each assigned a <mark class="key">unique name</mark>. In the university example:</p>
+  <ul>
+    <li><span class="rel">instructor</span> (Fig. 2.1) has four columns: <span class="at">ID</span>, <span class="at">name</span>, <span class="at">dept_name</span>, <span class="at">salary</span>. Each row records one instructor, who is identified by the value of <span class="at">ID</span>.</li>
+    <li><span class="rel">course</span> (Fig. 2.2) has <span class="at">course_id</span>, <span class="at">title</span>, <span class="at">dept_name</span>, <span class="at">credits</span>. Each course is identified by <span class="at">course_id</span>.</li>
+    <li><span class="rel">prereq</span> (Fig. 2.3) has <span class="at">course_id</span> and <span class="at">prereq_id</span>. Each row is a pair of course identifiers where the <i>second</i> course is a prerequisite for the <i>first</i>.</li>
+  </ul>
+
+  <div class="tw"><table class="data">
+    <caption>Figure 2.1 — the <span class="rel">instructor</span> relation (12 tuples).</caption>
+    <thead><tr><th>ID</th><th>name</th><th>dept_name</th><th>salary</th></tr></thead>
+    <tbody>
+      <tr><td>10101</td><td>Srinivasan</td><td>Comp. Sci.</td><td>65000</td></tr>
+      <tr><td>12121</td><td>Wu</td><td>Finance</td><td>90000</td></tr>
+      <tr><td>15151</td><td>Mozart</td><td>Music</td><td>40000</td></tr>
+      <tr><td>22222</td><td>Einstein</td><td>Physics</td><td>95000</td></tr>
+      <tr><td>32343</td><td>El Said</td><td>History</td><td>60000</td></tr>
+      <tr><td>33456</td><td>Gold</td><td>Physics</td><td>87000</td></tr>
+      <tr><td>45565</td><td>Katz</td><td>Comp. Sci.</td><td>75000</td></tr>
+      <tr><td>58583</td><td>Califieri</td><td>History</td><td>62000</td></tr>
+      <tr><td>76543</td><td>Singh</td><td>Finance</td><td>80000</td></tr>
+      <tr><td>76766</td><td>Crick</td><td>Biology</td><td>72000</td></tr>
+      <tr><td>83821</td><td>Brandt</td><td>Comp. Sci.</td><td>92000</td></tr>
+      <tr><td>98345</td><td>Kim</td><td>Elec. Eng.</td><td>80000</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="two">
+    <div class="tw"><table class="data">
+      <caption>Figure 2.2 — the <span class="rel">course</span> relation.</caption>
+      <thead><tr><th>course_id</th><th>title</th><th>dept_name</th><th>credits</th></tr></thead>
+      <tbody>
+        <tr><td>BIO-101</td><td>Intro. to Biology</td><td>Biology</td><td>4</td></tr>
+        <tr><td>BIO-301</td><td>Genetics</td><td>Biology</td><td>4</td></tr>
+        <tr><td>BIO-399</td><td>Computational Biology</td><td>Biology</td><td>3</td></tr>
+        <tr><td>CS-101</td><td>Intro. to Computer Science</td><td>Comp. Sci.</td><td>4</td></tr>
+        <tr><td>CS-190</td><td>Game Design</td><td>Comp. Sci.</td><td>4</td></tr>
+        <tr><td>CS-315</td><td>Robotics</td><td>Comp. Sci.</td><td>3</td></tr>
+        <tr><td>CS-319</td><td>Image Processing</td><td>Comp. Sci.</td><td>3</td></tr>
+        <tr><td>CS-347</td><td>Database System Concepts</td><td>Comp. Sci.</td><td>3</td></tr>
+        <tr><td>EE-181</td><td>Intro. to Digital Systems</td><td>Elec. Eng.</td><td>3</td></tr>
+        <tr><td>FIN-201</td><td>Investment Banking</td><td>Finance</td><td>3</td></tr>
+        <tr><td>HIS-351</td><td>World History</td><td>History</td><td>3</td></tr>
+        <tr><td>MU-199</td><td>Music Video Production</td><td>Music</td><td>3</td></tr>
+        <tr><td>PHY-101</td><td>Physical Principles</td><td>Physics</td><td>4</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tw"><table class="data">
+      <caption>Figure 2.3 — the <span class="rel">prereq</span> relation. Read row 1 as: BIO-101 is a prerequisite for BIO-301.</caption>
+      <thead><tr><th>course_id</th><th>prereq_id</th></tr></thead>
+      <tbody>
+        <tr><td>BIO-301</td><td>BIO-101</td></tr>
+        <tr><td>BIO-399</td><td>BIO-101</td></tr>
+        <tr><td>CS-190</td><td>CS-101</td></tr>
+        <tr><td>CS-315</td><td>CS-101</td></tr>
+        <tr><td>CS-319</td><td>CS-101</td></tr>
+        <tr><td>CS-347</td><td>CS-101</td></tr>
+        <tr><td>EE-181</td><td>PHY-101</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <h3 id="terminology">1.2 Why it is called “relational”: table, row, column → relation, tuple, attribute</h3>
+  <p>A row represents a <b>relationship among a set of values</b>. A row of <span class="rel">prereq</span> relates two course identifiers. A row of <span class="rel">instructor</span> relates one <span class="at">ID</span> to its <span class="at">name</span>, <span class="at">dept_name</span> and <span class="at">salary</span>. A table is a collection of such relationships, so it corresponds closely to the mathematical concept of a <span class="t">relation</span>, which gives the model its name. Mathematically, a <span class="t">tuple</span> is simply a sequence (list) of values; a relationship between <i>n</i> values is an <b>n-tuple</b>, and it corresponds to one row.</p>
+
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Everyday word</th><th>Relational-model term</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>table</td><td><span class="t">relation</span></td><td>A set of tuples; the model's basic structure.</td></tr>
+      <tr><td>row</td><td><span class="t">tuple</span></td><td>An n-tuple of values, one per attribute.</td></tr>
+      <tr><td>column</td><td><span class="t">attribute</span></td><td>A named column of the relation. <span class="rel">instructor</span> has 4: <span class="at">ID, name, dept_name, salary</span>.</td></tr>
+      <tr><td>the rows present right now</td><td><span class="t">relation instance</span></td><td>A specific set of rows. The instance in Fig. 2.1 has 12 tuples, one per instructor.</td></tr>
+      <tr><td>allowed values of a column</td><td><span class="t">domain</span></td><td>Set of permitted values for an attribute (§1.4).</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 780 250" role="img" aria-labelledby="an-t an-d" style="min-width:600px">
+      <title id="an-t">Anatomy of a relation</title>
+      <desc id="an-d">The instructor relation with its attributes labelled above the header, one row labelled as a tuple, and the salary column labelled with its domain.</desc>
+      <text x="180" y="38" class="s-lab s-b" style="fill:#1f6f74">attributes (columns)</text>
+      <path d="M180 48h450" stroke="#1f6f74" stroke-width="1.6"/><path d="M180 48v8M630 48v8" stroke="#1f6f74" stroke-width="1.6"/>
+      <g class="s-mono">
+        <rect x="180" y="60" width="90" height="34" fill="#1b2f4b"/><rect x="270" y="60" width="130" height="34" fill="#1b2f4b"/><rect x="400" y="60" width="130" height="34" fill="#1b2f4b"/><rect x="530" y="60" width="100" height="34" fill="#1b2f4b"/>
+        <text x="192" y="82" style="fill:#fff">ID</text><text x="282" y="82" style="fill:#fff">name</text><text x="412" y="82" style="fill:#fff">dept_name</text><text x="542" y="82" style="fill:#fff">salary</text>
+        <g fill="#fffdf8" stroke="#e3dccb"><rect x="180" y="94" width="450" height="34"/><rect x="180" y="128" width="450" height="34" fill="#fbf0da" stroke="#8a5a12"/><rect x="180" y="162" width="450" height="34"/></g>
+        <text x="192" y="116">10101</text><text x="282" y="116">Srinivasan</text><text x="412" y="116">Comp. Sci.</text><text x="542" y="116">65000</text>
+        <text x="192" y="150">12121</text><text x="282" y="150">Wu</text><text x="412" y="150">Finance</text><text x="542" y="150">90000</text>
+        <text x="192" y="184">15151</text><text x="282" y="184">Mozart</text><text x="412" y="184">Music</text><text x="542" y="184">40000</text>
+      </g>
+      <text x="360" y="214" class="s-sm">… 12 tuples in total</text>
+      <path d="M706 145H636" stroke="#8a5a12" stroke-width="1.6" marker-end="url(#arr2)" transform="translate(0,0)" />
+      <text x="712" y="141" class="s-lab s-b" style="fill:#8a5a12">tuple</text><text x="712" y="157" class="s-sm">(a row = 4-tuple)</text>
+      <path d="M580 200v10" stroke="#32649c" stroke-width="1.6"/><path d="M530 210h100" stroke="#32649c" stroke-width="1.6"/>
+      <text x="470" y="232" class="s-sm" style="fill:#32649c">domain of salary = all possible salary values</text>
+      <text x="14" y="136" class="s-lab s-b" style="fill:#1b2f4b">relation</text><text x="14" y="152" class="s-mono" style="font-size:12px">instructor</text>
+      <path d="M92 144h82" stroke="#1b2f4b" stroke-width="1.6" marker-end="url(#arr)"/>
+    </svg></div>
+    <figcaption><b>Figure 1.</b> Anatomy of a relation. The whole grid is the <b>relation instance</b>; the header names are <b>attributes</b>; each highlighted row is a <b>tuple</b>; each column draws its values from a <b>domain</b>.</figcaption>
+  </figure>
+
+  <p><span class="src">Scope note (source):</span> the chapter uses only part of a real university's data, to keep the presentation simple. The appropriateness of relational structures is judged by design criteria covered in Chapters 7 and 8.</p>
+
+  <h3 id="instance">1.3 A relation is a set of tuples, so order is irrelevant</h3>
+  <p>Because a relation is a <b>set</b> of tuples, the order in which tuples are listed carries no meaning. Figure 2.1 (sorted by <span class="at">ID</span>) and Figure 2.4 (unsorted) are the <b>same relation</b>: they contain the same set of tuples. The notes usually show relations sorted by their first attribute for ease of reading.</p>
+  <details>
+    <summary>Show Figure 2.4 — unsorted display of <span class="rel">instructor</span></summary>
+    <div class="tw"><table class="data">
+      <thead><tr><th>ID</th><th>name</th><th>dept_name</th><th>salary</th></tr></thead>
+      <tbody>
+        <tr><td>22222</td><td>Einstein</td><td>Physics</td><td>95000</td></tr>
+        <tr><td>12121</td><td>Wu</td><td>Finance</td><td>90000</td></tr>
+        <tr><td>32343</td><td>El Said</td><td>History</td><td>60000</td></tr>
+        <tr><td>45565</td><td>Katz</td><td>Comp. Sci.</td><td>75000</td></tr>
+        <tr><td>98345</td><td>Kim</td><td>Elec. Eng.</td><td>80000</td></tr>
+        <tr><td>76766</td><td>Crick</td><td>Biology</td><td>72000</td></tr>
+        <tr><td>10101</td><td>Srinivasan</td><td>Comp. Sci.</td><td>65000</td></tr>
+        <tr><td>58583</td><td>Califieri</td><td>History</td><td>62000</td></tr>
+        <tr><td>83821</td><td>Brandt</td><td>Comp. Sci.</td><td>92000</td></tr>
+        <tr><td>15151</td><td>Mozart</td><td>Music</td><td>40000</td></tr>
+        <tr><td>33456</td><td>Gold</td><td>Physics</td><td>87000</td></tr>
+        <tr><td>76543</td><td>Singh</td><td>Finance</td><td>80000</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+
+  <h3 id="domains">1.4 Domains and atomicity</h3>
+  <p><b>Definition.</b> For each attribute there is a set of permitted values, its <span class="t">domain</span>. The domain of <span class="at">salary</span> is the set of all possible salaries; the domain of <span class="at">name</span> is the set of all possible instructor names.</p>
+  <div class="callout def"><div class="lab"><svg class="i"><use href="#i-book"/></svg>Definition</div>
+    <p>A domain is <span class="t">atomic</span> if its elements are considered <b>indivisible units</b>. The model <b>requires the domains of all attributes of every relation to be atomic</b> (first-form requirement of the model as presented in Chapters 2–6).</p></div>
+
+  <p><b>The subtle point:</b> atomicity is about <i>how we use</i> the values, not about what the values “really are”. Take a hypothetical attribute <span class="at">phone_number</span> in <span class="rel">instructor</span>:</p>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>How <span class="at">phone_number</span> is used</th><th>Atomic?</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Stores a <i>set</i> of phone numbers for an instructor</td><td><b>No</b></td><td>Each value is a set, which has subparts (the individual numbers).</td></tr>
+      <tr><td>Stores a single number, but we split it into country code, area code, local number</td><td><b>No</b></td><td>We are treating the value as having subparts.</td></tr>
+      <tr><td>Stores a single number, treated as one indivisible unit</td><td><b>Yes</b></td><td>No subparts are used.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Chapters 3–6 assume all attributes have atomic domains; Chapter 22 discusses extensions that permit nonatomic domains. The precise definition of each domain is deferred to SQL (Chapter 3).</p>
+
+  <h3 id="nulls">1.5 The null value</h3>
+  <p>The <span class="t">null</span> value is a special value signifying that a value is <b>unknown or does not exist</b>. If <span class="rel">instructor</span> had <span class="at">phone_number</span>, an instructor might have no phone at all, or an unlisted one; both would be recorded as null.</p>
+  <div class="callout warn"><div class="lab"><svg class="i"><use href="#i-alert"/></svg>Pitfall</div>
+    <p>Nulls cause a number of difficulties when accessing or updating the database, so they should be <b>eliminated if at all possible</b>. The source assumes nulls are absent at first; their effect on each operation is described in Section 3.6.</p></div>
+
+  <div class="callout take"><div class="lab"><svg class="i"><use href="#i-check"/></svg>Key takeaway</div>
+    <p>Table = <b>relation</b>, row = <b>tuple</b>, column = <b>attribute</b>. A relation is an <b>unordered set</b> of tuples over <b>atomic</b> domains; <span class="t">null</span> is the special “unknown or nonexistent” value to avoid where possible.</p></div>
+</section>
+
+<!-- ============ 2. SCHEMA ============ -->
+<section id="schema" aria-labelledby="h-schema">
+  <h2 id="h-schema"><span class="n">2</span>Database schema vs instance</h2>
+
+  <h3 id="schema-vs-instance">2.1 Two things that change at different speeds</h3>
+  <p><b>Intuition.</b> The <i>blueprint</i> of a database rarely changes; the <i>contents</i> change all the time.</p>
+  <div class="callout def"><div class="lab"><svg class="i"><use href="#i-book"/></svg>Definitions</div>
+    <ul>
+      <li><span class="t">Database schema</span> — the <b>logical design</b> of the database.</li>
+      <li><span class="t">Database instance</span> — a <b>snapshot</b> of the data in the database at a given instant.</li>
+      <li><span class="t">Relation schema</span> — a list of attributes and their corresponding domains.</li>
+      <li><span class="t">Relation instance</span> — the particular set of tuples the relation holds at some time.</li>
+    </ul></div>
+
+  <p>The analogy with programming languages makes this concrete:</p>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Database concept</th><th>Programming-language analogue</th><th>Changes over time?</th></tr></thead>
+    <tbody>
+      <tr><td>relation (instance)</td><td>the <i>value</i> of a variable</td><td>Yes, whenever the relation is updated</td></tr>
+      <tr><td>relation schema</td><td>a <i>type definition</i></td><td>Generally no</td></tr>
+    </tbody>
+  </table></div>
+  <p>In practice the same name (e.g. <span class="rel">instructor</span>) is used for both the schema and the instance. Where it matters, say “the <i>instructor schema</i>” or “an <i>instance</i> of the <i>instructor</i> relation”. Schemas are written as the relation name followed by its attributes:</p>
+  <p style="text-align:center"><span class="rel">department</span> (<span class="at pk">dept_name</span>, <span class="at">building</span>, <span class="at">budget</span>)</p>
+
+  <div class="tw"><table class="data">
+    <caption>Figure 2.5 — the <span class="rel">department</span> relation.</caption>
+    <thead><tr><th>dept_name</th><th>building</th><th>budget</th></tr></thead>
+    <tbody>
+      <tr><td>Biology</td><td>Watson</td><td>90000</td></tr>
+      <tr><td>Comp. Sci.</td><td>Taylor</td><td>100000</td></tr>
+      <tr><td>Elec. Eng.</td><td>Taylor</td><td>85000</td></tr>
+      <tr><td>Finance</td><td>Painter</td><td>120000</td></tr>
+      <tr><td>History</td><td>Painter</td><td>50000</td></tr>
+      <tr><td>Music</td><td>Packard</td><td>80000</td></tr>
+      <tr><td>Physics</td><td>Watson</td><td>70000</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="common-attrs">2.2 Common attributes link relations</h3>
+  <p><b>Why it matters.</b> The attribute <span class="at">dept_name</span> appears in both the <span class="rel">instructor</span> and <span class="rel">department</span> schemas. This is deliberate: <mark class="key">using common attributes in relation schemas is one way of relating tuples of distinct relations</mark>. (This idea is formalised as the <a href="#foreign">foreign key</a> in §3.)</p>
+
+  <div class="callout ex"><div class="lab"><svg class="i"><use href="#i-table"/></svg>Worked example: instructors in the Watson building</div>
+    <p><b>Goal:</b> find all instructors whose department is housed in Watson. <b>Mechanism:</b> look in <span class="rel">department</span> for departments with <span class="at">building</span> = Watson, then for each such <span class="at">dept_name</span> look in <span class="rel">instructor</span>.</p></div>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 760 160" role="img" aria-labelledby="w-t w-d" style="min-width:620px">
+      <title id="w-t">Watson-building lookup across two relations</title>
+      <desc id="w-d">Four steps: filter department by building, obtain dept_name values Biology and Physics, match them in instructor, and obtain Crick, Einstein, Gold.</desc>
+      <g>
+        <rect class="bx" x="5" y="30" width="160" height="90" rx="8"/><text x="85" y="56" text-anchor="middle" class="s-lab s-b">1 · department</text><text x="85" y="76" text-anchor="middle" class="s-sm">keep rows where</text><text x="85" y="92" text-anchor="middle" class="s-mono">building = Watson</text>
+        <rect class="bx" x="215" y="30" width="160" height="90" rx="8" style="fill:#e9f2ea"/><text x="295" y="56" text-anchor="middle" class="s-lab s-b">2 · dept_name values</text><text x="295" y="82" text-anchor="middle" class="s-mono">Biology</text><text x="295" y="100" text-anchor="middle" class="s-mono">Physics</text>
+        <rect class="bx" x="425" y="30" width="160" height="90" rx="8"/><text x="505" y="56" text-anchor="middle" class="s-lab s-b">3 · instructor</text><text x="505" y="76" text-anchor="middle" class="s-sm">keep rows whose</text><text x="505" y="92" text-anchor="middle" class="s-sm">dept_name is in that set</text>
+        <rect class="bx" x="635" y="30" width="120" height="90" rx="8" style="fill:#fbf0da"/><text x="695" y="56" text-anchor="middle" class="s-lab s-b">4 · result</text><text x="695" y="78" text-anchor="middle" class="s-mono">Crick</text><text x="695" y="94" text-anchor="middle" class="s-mono">Einstein</text><text x="695" y="110" text-anchor="middle" class="s-mono">Gold</text>
+      </g>
+      <g class="edge"><path d="M165 75H213" marker-end="url(#arr)"/><path d="M375 75H423" marker-end="url(#arr)"/><path d="M585 75H633" marker-end="url(#arr)"/></g>
+    </svg></div>
+    <figcaption><b>Figure 2.</b> Two relations are related through the shared attribute <span class="at">dept_name</span>. Using the data of Figs. 2.1 and 2.5: Biology → Crick; Physics → Einstein and Gold.</figcaption>
+  </figure>
+
+  <p><span class="src">Supplementary preview of Chapter 3 (not in the source).</span> The same lookup in SQL, assuming the tables of Figs. 2.1 and 2.5:</p>
+<pre><code><span class="k">SELECT</span> i.ID, i.name, i.dept_name
+<span class="k">FROM</span>   instructor i
+<span class="k">JOIN</span>   department d <span class="k">ON</span> i.dept_name = d.dept_name
+<span class="k">WHERE</span>  d.building = <span class="s">'Watson'</span>;</code></pre>
+  <div class="tw"><table class="data">
+    <caption>Result on the sample data (row order is not guaranteed by SQL).</caption>
+    <thead><tr><th>ID</th><th>name</th><th>dept_name</th></tr></thead>
+    <tbody><tr><td>22222</td><td>Einstein</td><td>Physics</td></tr><tr><td>33456</td><td>Gold</td><td>Physics</td></tr><tr><td>76766</td><td>Crick</td><td>Biology</td></tr></tbody>
+  </table></div>
+  <p class="src">Clause by clause: <code>JOIN … ON</code> pairs each instructor with the department sharing its <code>dept_name</code>; <code>WHERE</code> keeps only Watson departments; <code>SELECT</code> chooses the output columns. Concept demonstrated: relating tuples of distinct relations through common attributes.</p>
+
+  <h3 id="university">2.3 The running example: a university database</h3>
+  <p>A <b>course</b> may be offered many times, across semesters or even within one semester. Each individual offering is a <span class="t">section</span>, so we need a relation to describe it, and another to say which instructors teach which sections.</p>
+  <ul>
+    <li><span class="rel">section</span> (<span class="at pk">course_id</span>, <span class="at pk">sec_id</span>, <span class="at pk">semester</span>, <span class="at pk">year</span>, <span class="at">building</span>, <span class="at">room_number</span>, <span class="at">time_slot_id</span>)</li>
+    <li><span class="rel">teaches</span> (<span class="at pk">ID</span>, <span class="at pk">course_id</span>, <span class="at pk">sec_id</span>, <span class="at pk">semester</span>, <span class="at pk">year</span>) — the association between instructors and the sections they teach.</li>
+  </ul>
+
+  <div class="tw"><table class="data">
+    <caption>Figure 2.6 — the <span class="rel">section</span> relation.</caption>
+    <thead><tr><th>course_id</th><th>sec_id</th><th>semester</th><th>year</th><th>building</th><th>room_number</th><th>time_slot_id</th></tr></thead>
+    <tbody>
+      <tr><td>BIO-101</td><td>1</td><td>Summer</td><td>2009</td><td>Painter</td><td>514</td><td>B</td></tr>
+      <tr><td>BIO-301</td><td>1</td><td>Summer</td><td>2010</td><td>Painter</td><td>514</td><td>A</td></tr>
+      <tr><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td><td>Packard</td><td>101</td><td>H</td></tr>
+      <tr><td>CS-101</td><td>1</td><td>Spring</td><td>2010</td><td>Packard</td><td>101</td><td>F</td></tr>
+      <tr><td>CS-190</td><td>1</td><td>Spring</td><td>2009</td><td>Taylor</td><td>3128</td><td>E</td></tr>
+      <tr><td>CS-190</td><td>2</td><td>Spring</td><td>2009</td><td>Taylor</td><td>3128</td><td>A</td></tr>
+      <tr><td>CS-315</td><td>1</td><td>Spring</td><td>2010</td><td>Watson</td><td>120</td><td>D</td></tr>
+      <tr><td>CS-319</td><td>1</td><td>Spring</td><td>2010</td><td>Watson</td><td>100</td><td>B</td></tr>
+      <tr><td>CS-319</td><td>2</td><td>Spring</td><td>2010</td><td>Taylor</td><td>3128</td><td>C</td></tr>
+      <tr><td>CS-347</td><td>1</td><td>Fall</td><td>2009</td><td>Taylor</td><td>3128</td><td>A</td></tr>
+      <tr><td>EE-181</td><td>1</td><td>Spring</td><td>2009</td><td>Taylor</td><td>3128</td><td>C</td></tr>
+      <tr><td>FIN-201</td><td>1</td><td>Spring</td><td>2010</td><td>Packard</td><td>101</td><td>B</td></tr>
+      <tr><td>HIS-351</td><td>1</td><td>Spring</td><td>2010</td><td>Painter</td><td>514</td><td>C</td></tr>
+      <tr><td>MU-199</td><td>1</td><td>Spring</td><td>2010</td><td>Packard</td><td>101</td><td>D</td></tr>
+      <tr><td>PHY-101</td><td>1</td><td>Fall</td><td>2009</td><td>Watson</td><td>100</td><td>A</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="tw"><table class="data">
+    <caption>Figure 2.7 — the <span class="rel">teaches</span> relation. Note CS-190 section 1 and 2 are both taught by 83821.</caption>
+    <thead><tr><th>ID</th><th>course_id</th><th>sec_id</th><th>semester</th><th>year</th></tr></thead>
+    <tbody>
+      <tr><td>10101</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td></tr>
+      <tr><td>10101</td><td>CS-315</td><td>1</td><td>Spring</td><td>2010</td></tr>
+      <tr><td>10101</td><td>CS-347</td><td>1</td><td>Fall</td><td>2009</td></tr>
+      <tr><td>12121</td><td>FIN-201</td><td>1</td><td>Spring</td><td>2010</td></tr>
+      <tr><td>15151</td><td>MU-199</td><td>1</td><td>Spring</td><td>2010</td></tr>
+      <tr><td>22222</td><td>PHY-101</td><td>1</td><td>Fall</td><td>2009</td></tr>
+      <tr><td>32343</td><td>HIS-351</td><td>1</td><td>Spring</td><td>2010</td></tr>
+      <tr><td>45565</td><td>CS-101</td><td>1</td><td>Spring</td><td>2010</td></tr>
+      <tr><td>45565</td><td>CS-319</td><td>1</td><td>Spring</td><td>2010</td></tr>
+      <tr><td>76766</td><td>BIO-101</td><td>1</td><td>Summer</td><td>2009</td></tr>
+      <tr><td>76766</td><td>BIO-301</td><td>1</td><td>Summer</td><td>2010</td></tr>
+      <tr><td>83821</td><td>CS-190</td><td>1</td><td>Spring</td><td>2009</td></tr>
+      <tr><td>83821</td><td>CS-190</td><td>2</td><td>Spring</td><td>2009</td></tr>
+      <tr><td>83821</td><td>CS-319</td><td>2</td><td>Spring</td><td>2010</td></tr>
+      <tr><td>98345</td><td>EE-181</td><td>1</td><td>Spring</td><td>2009</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>The complete university schema (Figure 2.9)</h4>
+  <p>Besides <span class="rel">instructor</span>, <span class="rel">department</span>, <span class="rel">course</span>, <span class="rel">section</span>, <span class="rel">prereq</span> and <span class="rel">teaches</span>, the text uses <span class="rel">student</span>, <span class="rel">advisor</span>, <span class="rel">takes</span>, <span class="rel">classroom</span> and <span class="rel">time_slot</span>. Primary-key attributes are underlined; this notation corresponds to the way relations are defined in SQL DDL (Chapter 3).</p>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Relation schema</th></tr></thead>
+    <tbody>
+      <tr><td><span class="rel">classroom</span>(<span class="at pk">building</span>, <span class="at pk">room_number</span>, <span class="at">capacity</span>)</td></tr>
+      <tr><td><span class="rel">department</span>(<span class="at pk">dept_name</span>, <span class="at">building</span>, <span class="at">budget</span>)</td></tr>
+      <tr><td><span class="rel">course</span>(<span class="at pk">course_id</span>, <span class="at">title</span>, <span class="at">dept_name</span>, <span class="at">credits</span>)</td></tr>
+      <tr><td><span class="rel">instructor</span>(<span class="at pk">ID</span>, <span class="at">name</span>, <span class="at">dept_name</span>, <span class="at">salary</span>)</td></tr>
+      <tr><td><span class="rel">section</span>(<span class="at pk">course_id</span>, <span class="at pk">sec_id</span>, <span class="at pk">semester</span>, <span class="at pk">year</span>, <span class="at">building</span>, <span class="at">room_number</span>, <span class="at">time_slot_id</span>)</td></tr>
+      <tr><td><span class="rel">teaches</span>(<span class="at pk">ID</span>, <span class="at pk">course_id</span>, <span class="at pk">sec_id</span>, <span class="at pk">semester</span>, <span class="at pk">year</span>)</td></tr>
+      <tr><td><span class="rel">student</span>(<span class="at pk">ID</span>, <span class="at">name</span>, <span class="at">dept_name</span>, <span class="at">tot_cred</span>)</td></tr>
+      <tr><td><span class="rel">takes</span>(<span class="at pk">ID</span>, <span class="at pk">course_id</span>, <span class="at pk">sec_id</span>, <span class="at pk">semester</span>, <span class="at pk">year</span>, <span class="at">grade</span>)</td></tr>
+      <tr><td><span class="rel">advisor</span>(<span class="at pk">s_ID</span>, <span class="at">i_ID</span>)</td></tr>
+      <tr><td><span class="rel">time_slot</span>(<span class="at pk">time_slot_id</span>, <span class="at pk">day</span>, <span class="at pk">start_time</span>, <span class="at">end_time</span>)</td></tr>
+      <tr><td><span class="rel">prereq</span>(<span class="at pk">course_id</span>, <span class="at pk">prereq_id</span>)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">The underlines were lost when the text was pasted; they are restored here from the standard textbook schema (see <a href="#source-notes">Notes on the source</a>).</p>
+
+  <div class="callout take"><div class="lab"><svg class="i"><use href="#i-check"/></svg>Key takeaway</div>
+    <p><b>Schema = type, instance = value.</b> The schema is stable; instances change as data is updated. Shared attributes such as <span class="at">dept_name</span> are what let tuples in different relations refer to each other.</p></div>
+</section>
+
+<!-- ============ 3. KEYS ============ -->
+<section id="keys" aria-labelledby="h-keys">
+  <h2 id="h-keys"><span class="n">3</span>Keys and referential integrity</h2>
+
+  <h3 id="need-keys">3.1 Why keys exist</h3>
+  <p><b>Intuition.</b> If a table could hold two indistinguishable rows, we could not say which one to update or refer to. So we need a way to <b>distinguish tuples within a relation</b>, expressed in terms of their attributes: the values of a tuple's attributes must identify it uniquely. In other words, <mark class="key">no two tuples in a relation may have exactly the same value for all attributes</mark>.</p>
+
+  <h3 id="superkey">3.2 Superkey</h3>
+  <div class="callout def"><div class="lab"><svg class="i"><use href="#i-book"/></svg>Definition</div>
+    <p>A <span class="t">superkey</span> is a set of one or more attributes that, taken collectively, allows us to <b>identify uniquely</b> a tuple in the relation.</p></div>
+  <ul>
+    <li><span class="at">ID</span> is a superkey of <span class="rel">instructor</span> (it distinguishes one instructor tuple from another).</li>
+    <li><span class="at">name</span> alone is <b>not</b> a superkey: several instructors might share a name.</li>
+    <li>A superkey may contain <b>extraneous attributes</b>: {<span class="at">ID</span>, <span class="at">name</span>} is a superkey. In general, <i>if K is a superkey, so is any superset of K</i>.</li>
+  </ul>
+  <p><b>Formal statement.</b> Let <i>R</i> be the set of attributes of relation <i>r</i>. A subset <i>K</i> ⊆ <i>R</i> is a superkey for <i>r</i> if we restrict attention to instances of <i>r</i> in which no two distinct tuples agree on all attributes in <i>K</i>:</p>
+  <p style="text-align:center"><span class="mono">for all t₁, t₂ in r:&nbsp; t₁ ≠ t₂ &nbsp;⇒&nbsp; t₁.K ≠ t₂.K</span></p>
+  <p class="src">The pasted text shows “t1 = t2, then t1.K = t2.K”, which is a text-extraction slip (the ≠ signs were lost); the formula above is the intended meaning.</p>
+
+  <h3 id="candidate">3.3 Candidate key</h3>
+  <div class="callout def"><div class="lab"><svg class="i"><use href="#i-book"/></svg>Definition</div>
+    <p>A <span class="t">candidate key</span> is a <b>minimal superkey</b>: a superkey no proper subset of which is itself a superkey.</p></div>
+  <p>Several distinct attribute sets can be candidate keys. Suppose {<span class="at">name</span>, <span class="at">dept_name</span>} is enough to distinguish instructors. Then both {<span class="at">ID</span>} and {<span class="at">name</span>, <span class="at">dept_name</span>} are candidate keys. Yet {<span class="at">ID</span>, <span class="at">name</span>} is <b>not</b> a candidate key, because its proper subset {<span class="at">ID</span>} is already a superkey.</p>
+
+  <h3 id="primary">3.4 Primary key</h3>
+  <div class="callout def"><div class="lab"><svg class="i"><use href="#i-book"/></svg>Definition</div>
+    <p>A <span class="t">primary key</span> is the candidate key <b>chosen by the database designer</b> as the principal means of identifying tuples in a relation.</p></div>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 760 310" role="img" aria-labelledby="k-t k-d" style="min-width:600px">
+      <title id="k-t">Superkeys, candidate keys and primary key as nested sets</title>
+      <desc id="k-d">The primary key is inside the set of candidate keys, which is inside the set of superkeys.</desc>
+      <rect x="10" y="10" width="740" height="290" rx="18" fill="#e8f0f9" stroke="#32649c" stroke-width="1.6"/>
+      <text x="30" y="40" class="s-lab s-b" style="fill:#32649c">Superkeys: any attribute set that uniquely identifies tuples</text>
+      <text x="30" y="60" class="s-sm s-mono">e.g. {ID} · {ID, name} · {ID, name, salary} · {name, dept_name}</text>
+      <rect x="30" y="80" width="520" height="200" rx="14" fill="#e9f2ea" stroke="#4f7d5c" stroke-width="1.6"/>
+      <text x="48" y="108" class="s-lab s-b" style="fill:#4f7d5c">Candidate keys: minimal superkeys</text>
+      <text x="48" y="128" class="s-sm s-mono">e.g. {ID} · {name, dept_name} (if that suffices)</text>
+      <rect x="50" y="150" width="270" height="108" rx="12" fill="#fbf0da" stroke="#8a5a12" stroke-width="1.6"/>
+      <text x="66" y="178" class="s-lab s-b" style="fill:#8a5a12">Primary key</text>
+      <text x="66" y="198" class="s-sm">the one candidate key the designer picks</text>
+      <text x="66" y="226" class="s-mono s-b">{ID}</text>
+      <text x="575" y="130" class="s-lab s-b" style="fill:#8a5a12">Not a candidate key</text>
+      <text x="575" y="150" class="s-mono">{ID, name}</text>
+      <text x="575" y="170" class="s-sm">{ID} alone already</text><text x="575" y="186" class="s-sm">identifies tuples, so</text><text x="575" y="202" class="s-sm">the pair is not minimal.</text>
+    </svg></div>
+    <figcaption><b>Figure 3.</b> Nested sets. Every primary key is a candidate key; every candidate key is a superkey; the converse directions fail. Superkeys here are for <span class="rel">instructor</span>.</figcaption>
+  </figure>
+
+  <h4>Properties and conventions</h4>
+  <ul>
+    <li>A key (primary, candidate or super) is a <b>property of the entire relation</b>, not of individual tuples. Any two tuples are prohibited from having the same value on the key attributes at the same time.</li>
+    <li>Designating a key represents a <b>constraint in the real-world enterprise</b> being modelled.</li>
+    <li>Primary-key attributes are listed <b>first</b> in the schema and are <u>underlined</u> (e.g. <span class="at pk">dept_name</span> in <span class="rel">department</span>).</li>
+  </ul>
+
+  <h4>Choosing a primary key well</h4>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Question</th><th>Guidance from the source</th></tr></thead>
+    <tbody>
+      <tr><td>Is a person's <span class="at">name</span> enough?</td><td>No — many people share a name.</td></tr>
+      <tr><td>Social-security number?</td><td>A candidate key in the United States, but non-U.S. residents usually lack one, so international enterprises must generate their own unique identifiers (or use a unique combination of other attributes).</td></tr>
+      <tr><td>Should values change?</td><td>The chosen key's values should <b>never, or very rarely, change</b>. An <span class="at">address</span> should not be part of a primary key because it is likely to change.</td></tr>
+      <tr><td>Enterprise-generated identifiers?</td><td>Generally stable. Exception: when two enterprises merge, both may have issued the same identifier, and a reallocation may be required to keep them unique.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="foreign">3.5 Foreign key</h3>
+  <div class="callout def"><div class="lab"><svg class="i"><use href="#i-book"/></svg>Definition</div>
+    <p>If relation <i>r</i><sub>1</sub> includes among its attributes the <b>primary key of another relation</b> <i>r</i><sub>2</sub>, that attribute set is a <span class="t">foreign key</span> from <i>r</i><sub>1</sub>, <b>referencing</b> <i>r</i><sub>2</sub>.</p>
+    <ul><li><i>r</i><sub>1</sub> is the <span class="t">referencing relation</span> of the foreign-key dependency.</li><li><i>r</i><sub>2</sub> is the <span class="t">referenced relation</span>.</li></ul></div>
+  <p><b>Example.</b> <span class="at">dept_name</span> in <span class="rel">instructor</span> is a foreign key from <span class="rel">instructor</span> referencing <span class="rel">department</span>, because <span class="at">dept_name</span> is the primary key of <span class="rel">department</span>. <b>The condition:</b> in any database instance, for any tuple <i>t</i><sub>a</sub> of <span class="rel">instructor</span> there must be some tuple <i>t</i><sub>b</sub> in <span class="rel">department</span> whose primary-key value equals <i>t</i><sub>a</sub>’s <span class="at">dept_name</span>.</p>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 760 230" role="img" aria-labelledby="f-t f-d" style="min-width:600px">
+      <title id="f-t">Foreign key from instructor to department</title>
+      <desc id="f-d">An arrow from the dept_name cell of an instructor row to the matching dept_name primary-key cell in department.</desc>
+      <text x="20" y="14" class="s-lab s-b" style="fill:#1b2f4b">instructor (referencing)</text>
+      <g class="s-mono">
+        <rect x="20" y="20" width="80" height="30" fill="#1b2f4b"/><rect x="100" y="20" width="80" height="30" fill="#1b2f4b"/><rect x="180" y="20" width="100" height="30" fill="#8a5a12"/><rect x="280" y="20" width="80" height="30" fill="#1b2f4b"/>
+        <text x="30" y="40" style="fill:#fff">ID</text><text x="110" y="40" style="fill:#fff">name</text><text x="190" y="40" style="fill:#fff">dept_name</text><text x="290" y="40" style="fill:#fff">salary</text>
+        <g fill="#fffdf8" stroke="#e3dccb"><rect x="20" y="50" width="340" height="30"/><rect x="20" y="80" width="340" height="30"/></g>
+        <rect x="180" y="50" width="100" height="30" fill="#fbf0da" stroke="#8a5a12"/>
+        <text x="30" y="70">76766</text><text x="110" y="70">Crick</text><text x="190" y="70">Biology</text><text x="290" y="70">72000</text>
+        <text x="30" y="100">22222</text><text x="110" y="100">Einstein</text><text x="190" y="100">Physics</text><text x="290" y="100">95000</text>
+      </g>
+      <text x="300" y="134" class="s-lab s-b" style="fill:#1b2f4b">department (referenced)</text>
+      <g class="s-mono">
+        <rect x="300" y="140" width="110" height="30" fill="#8a5a12"/><rect x="410" y="140" width="100" height="30" fill="#1b2f4b"/><rect x="510" y="140" width="90" height="30" fill="#1b2f4b"/>
+        <text x="310" y="160" style="fill:#fff;text-decoration:underline">dept_name</text><text x="420" y="160" style="fill:#fff">building</text><text x="520" y="160" style="fill:#fff">budget</text>
+        <g fill="#fffdf8" stroke="#e3dccb"><rect x="300" y="170" width="300" height="30"/><rect x="300" y="200" width="300" height="30"/></g>
+        <rect x="300" y="170" width="110" height="30" fill="#fbf0da" stroke="#8a5a12"/>
+        <text x="310" y="190">Biology</text><text x="420" y="190">Watson</text><text x="520" y="190">90000</text>
+        <text x="310" y="220">Physics</text><text x="420" y="220">Watson</text><text x="520" y="220">70000</text>
+      </g>
+      <path class="edge" d="M230 82V185H298" marker-end="url(#arr2)" style="stroke:#8a5a12"/>
+      <text x="400" y="100" class="s-sm">Each instructor’s dept_name must match</text><text x="400" y="116" class="s-sm">some primary-key value in department.</text>
+    </svg></div>
+    <figcaption><b>Figure 4.</b> A foreign key. The highlighted <span class="at">dept_name</span> value in <span class="rel">instructor</span> (Biology) points to the department tuple whose primary key is Biology. The arrow runs from <b>referencing</b> to <b>referenced</b>.</figcaption>
+  </figure>
+
+  <h3 id="refint">3.6 Referential integrity (and why it is more general than a foreign key)</h3>
+  <div class="callout def"><div class="lab"><svg class="i"><use href="#i-book"/></svg>Definition</div>
+    <p>A <span class="t">referential integrity constraint</span> requires that the values appearing in specified attributes of any tuple in the <b>referencing relation</b> also appear in specified attributes of <b>at least one tuple</b> in the <b>referenced relation</b>.</p></div>
+  <p><b>The section–teaches case.</b> It is reasonable to require that every section that exists is taught by at least one instructor (possibly several). To enforce it, every (<span class="at">course_id</span>, <span class="at">sec_id</span>, <span class="at">semester</span>, <span class="at">year</span>) combination in <span class="rel">section</span> must also appear in <span class="rel">teaches</span>. But that combination is <b>not a primary key of <span class="rel">teaches</span></b>, because more than one instructor may teach the same section. Hence:</p>
+  <ul>
+    <li>We <b>cannot</b> declare a foreign key from <span class="rel">section</span> to <span class="rel">teaches</span>.</li>
+    <li>We <b>can</b> declare a foreign key in the other direction, from <span class="rel">teaches</span> to <span class="rel">section</span>.</li>
+    <li>The section → teaches requirement is still a legitimate <b>referential integrity constraint</b>: a foreign key is only the special case where the referenced attributes form the primary key.</li>
+  </ul>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 760 210" role="img" aria-labelledby="r-t r-d" style="min-width:600px">
+      <title id="r-t">Foreign key versus referential integrity between section and teaches</title>
+      <desc id="r-d">A solid arrow from teaches to section represents a foreign key; a dashed arrow from section to teaches represents a referential integrity constraint that is not a foreign key.</desc>
+      <rect class="bx" x="20" y="40" width="210" height="120" rx="8"/><rect class="hd" x="20" y="40" width="210" height="28" rx="8"/><text x="125" y="60" text-anchor="middle" class="ht">section</text>
+      <text x="34" y="92" class="sa pk">course_id</text><text x="34" y="110" class="sa pk">sec_id</text><text x="34" y="128" class="sa pk">semester</text><text x="34" y="146" class="sa pk">year</text>
+      <rect class="bx" x="530" y="40" width="210" height="120" rx="8"/><rect class="hd" x="530" y="40" width="210" height="28" rx="8"/><text x="635" y="60" text-anchor="middle" class="ht">teaches</text>
+      <text x="544" y="92" class="sa pk">ID, course_id, sec_id,</text><text x="544" y="110" class="sa pk">semester, year</text><text x="544" y="136" class="s-sm">primary key has 5 attributes</text>
+      <path class="edge" d="M528 80H234" marker-end="url(#arr)"/>
+      <text x="380" y="68" text-anchor="middle" class="s-sm s-b" style="fill:#1f6f74">foreign key (allowed)</text>
+      <path class="edge dash" d="M232 130H526" marker-end="url(#arr2)"/>
+      <text x="380" y="152" text-anchor="middle" class="s-sm s-b" style="fill:#8a5a12">referential integrity only</text>
+      <text x="380" y="168" text-anchor="middle" class="s-sm">(not a foreign key)</text>
+    </svg></div>
+    <figcaption><b>Figure 5.</b> Every <span class="rel">teaches</span> tuple names an existing section (foreign key, solid). Every section must also be taught by someone (referential integrity, dashed), but the section’s four attributes do not form the primary key of <span class="rel">teaches</span>.</figcaption>
+  </figure>
+
+  <h3 id="key-summary">3.7 Key types at a glance</h3>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Concept</th><th>Core idea</th><th>Example (university schema)</th></tr></thead>
+    <tbody>
+      <tr><td><span class="t">Superkey</span></td><td>Any attribute set that uniquely identifies tuples; may have extra attributes</td><td>{ID}, {ID, name}</td></tr>
+      <tr><td><span class="t">Candidate key</span></td><td>Minimal superkey</td><td>{ID}; possibly {name, dept_name}</td></tr>
+      <tr><td><span class="t">Primary key</span></td><td>Candidate key chosen by the designer</td><td>ID in <span class="rel">instructor</span>; dept_name in <span class="rel">department</span></td></tr>
+      <tr><td><span class="t">Foreign key</span></td><td>Attributes in r<sub>1</sub> that are the primary key of r<sub>2</sub>; values must exist in r<sub>2</sub></td><td>instructor.dept_name → department</td></tr>
+      <tr><td><span class="t">Referential integrity</span></td><td>Values in referencing attributes must appear in referenced attributes</td><td>every section must appear in teaches</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><span class="src">Supplementary preview of Chapter 3 (not in the source; column types are assumptions).</span> How the <span class="rel">department</span>/<span class="rel">instructor</span> keys are declared in SQL:</p>
+<pre><code><span class="k">CREATE TABLE</span> department (
+  dept_name <span class="k">VARCHAR</span>(20),
+  building  <span class="k">VARCHAR</span>(15),
+  budget    <span class="k">NUMERIC</span>(12,2),
+  <span class="k">PRIMARY KEY</span> (dept_name)
+);
+<span class="k">CREATE TABLE</span> instructor (
+  ID        <span class="k">VARCHAR</span>(5),
+  name      <span class="k">VARCHAR</span>(20) <span class="k">NOT NULL</span>,
+  dept_name <span class="k">VARCHAR</span>(20),
+  salary    <span class="k">NUMERIC</span>(8,2),
+  <span class="k">PRIMARY KEY</span> (ID),
+  <span class="k">FOREIGN KEY</span> (dept_name) <span class="k">REFERENCES</span> department (dept_name)
+);</code></pre>
+  <p class="src"><code>PRIMARY KEY</code> declares the chosen candidate key; <code>FOREIGN KEY … REFERENCES</code> declares the referencing → referenced dependency of Figure 4. A DBMS then rejects an instructor row whose <code>dept_name</code> has no matching department.</p>
+
+  <div class="callout take"><div class="lab"><svg class="i"><use href="#i-check"/></svg>Key takeaway</div>
+    <p>Keys say <b>how to identify</b> a tuple; foreign keys say <b>how tuples in one relation point to tuples in another</b>. Referential integrity generalises the foreign-key idea and is what keeps those pointers valid.</p></div>
+</section>
+
+<!-- ============ 4. SCHEMA DIAGRAMS ============ -->
+<section id="diagrams" aria-labelledby="h-diagrams">
+  <h2 id="h-diagrams"><span class="n">4</span>Schema diagrams</h2>
+  <p>A database schema, together with its primary-key and foreign-key dependencies, can be drawn as a <span class="t">schema diagram</span> (Fig. 2.8 for the university). Drawing conventions:</p>
+  <ul>
+    <li>Each <b>relation</b> is a <b>box</b>, with the relation name at the top (in blue in the textbook) and the attributes listed inside.</li>
+    <li><b>Primary-key attributes</b> are <u>underlined</u>.</li>
+    <li><b>Foreign-key dependencies</b> are <b>arrows</b> from the foreign-key attributes of the referencing relation to the primary key of the referenced relation.</li>
+  </ul>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 960 670" role="img" aria-labelledby="sd-t sd-d" style="min-width:820px">
+      <title id="sd-t">Schema diagram of the university database</title>
+      <desc id="sd-d">Eleven relation boxes with arrows for foreign-key dependencies: instructor, student and course reference department; teaches references instructor and section; takes references student and section; advisor references student and instructor; prereq and section reference course; section references classroom and time_slot.</desc>
+      <!-- edges -->
+      <g class="edge">
+        <path d="M190 60H268" marker-end="url(#arr)"/>
+        <path d="M520 60H442" marker-end="url(#arr)"/>
+        <path d="M355 180V118" marker-end="url(#arr)"/>
+        <path d="M520 210H442" marker-end="url(#arr)"/>
+        <path d="M355 340V286" marker-end="url(#arr)"/>
+        <path d="M105 340V136" marker-end="url(#arr)"/>
+        <path d="M190 380H268" marker-end="url(#arr)"/>
+        <path d="M520 380H462" marker-end="url(#arr)"/>
+        <path d="M690 410H730V99H692" marker-end="url(#arr)"/>
+        <path d="M770 50H692" marker-end="url(#arr)"/>
+        <path d="M855 30V10H105V28" marker-end="url(#arr)"/>
+        <path d="M355 498V548" marker-end="url(#arr)"/>
+        <path d="M430 498V520H605V548" marker-end="url(#arr)"/>
+      </g>
+      <!-- instructor -->
+      <g transform="translate(20,30)"><rect class="bx" width="170" height="104" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">instructor</text><text class="sa pk" x="10" y="40">ID</text><text class="sa" x="10" y="58">name</text><text class="sa" x="10" y="76">dept_name</text><text class="sa" x="10" y="94">salary</text></g>
+      <!-- department -->
+      <g transform="translate(270,30)"><rect class="bx" width="170" height="86" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">department</text><text class="sa pk" x="10" y="40">dept_name</text><text class="sa" x="10" y="58">building</text><text class="sa" x="10" y="76">budget</text></g>
+      <!-- student -->
+      <g transform="translate(520,30)"><rect class="bx" width="170" height="104" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">student</text><text class="sa pk" x="10" y="40">ID</text><text class="sa" x="10" y="58">name</text><text class="sa" x="10" y="76">dept_name</text><text class="sa" x="10" y="94">tot_cred</text></g>
+      <!-- advisor -->
+      <g transform="translate(770,30)"><rect class="bx" width="170" height="68" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">advisor</text><text class="sa pk" x="10" y="40">s_id</text><text class="sa" x="10" y="58">i_id</text></g>
+      <!-- course -->
+      <g transform="translate(270,180)"><rect class="bx" width="170" height="104" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">course</text><text class="sa pk" x="10" y="40">course_id</text><text class="sa" x="10" y="58">title</text><text class="sa" x="10" y="76">dept_name</text><text class="sa" x="10" y="94">credits</text></g>
+      <!-- prereq -->
+      <g transform="translate(520,180)"><rect class="bx" width="170" height="68" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">prereq</text><text class="sa pk" x="10" y="40">course_id</text><text class="sa pk" x="10" y="58">prereq_id</text></g>
+      <!-- teaches -->
+      <g transform="translate(20,340)"><rect class="bx" width="170" height="122" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">teaches</text><text class="sa pk" x="10" y="40">ID</text><text class="sa pk" x="10" y="58">course_id</text><text class="sa pk" x="10" y="76">sec_id</text><text class="sa pk" x="10" y="94">semester</text><text class="sa pk" x="10" y="112">year</text></g>
+      <!-- section -->
+      <g transform="translate(270,340)"><rect class="bx" width="190" height="158" rx="4"/><rect class="hd" width="190" height="26" rx="4"/><text class="ht" x="10" y="18">section</text><text class="sa pk" x="10" y="40">course_id</text><text class="sa pk" x="10" y="58">sec_id</text><text class="sa pk" x="10" y="76">semester</text><text class="sa pk" x="10" y="94">year</text><text class="sa" x="10" y="112">building</text><text class="sa" x="10" y="130">room_no</text><text class="sa" x="10" y="148">time_slot_id</text></g>
+      <!-- takes -->
+      <g transform="translate(520,340)"><rect class="bx" width="170" height="140" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">takes</text><text class="sa pk" x="10" y="40">ID</text><text class="sa pk" x="10" y="58">course_id</text><text class="sa pk" x="10" y="76">sec_id</text><text class="sa pk" x="10" y="94">semester</text><text class="sa pk" x="10" y="112">year</text><text class="sa" x="10" y="130">grade</text></g>
+      <!-- classroom -->
+      <g transform="translate(270,550)"><rect class="bx" width="170" height="86" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">classroom</text><text class="sa pk" x="10" y="40">building</text><text class="sa pk" x="10" y="58">room_no</text><text class="sa" x="10" y="76">capacity</text></g>
+      <!-- time_slot -->
+      <g transform="translate(520,550)"><rect class="bx" width="170" height="104" rx="4"/><rect class="hd" width="170" height="26" rx="4"/><text class="ht" x="10" y="18">time_slot</text><text class="sa pk" x="10" y="40">time_slot_id</text><text class="sa pk" x="10" y="58">day</text><text class="sa pk" x="10" y="76">start_time</text><text class="sa" x="10" y="94">end_time</text></g>
+    </svg></div>
+    <figcaption><b>Figure 6.</b> Schema diagram of the university database (after Fig. 2.8). Boxes are relations, underlined names are primary-key attributes, arrows run from a foreign key to the primary key it references. <b>Look for</b> the hubs: <span class="rel">department</span> is referenced by three relations, <span class="rel">section</span> is the centre of the teaching/enrolment side. The arrows here are reconstructed from the schema, since the pasted figure lost them.</figcaption>
+  </figure>
+
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Referencing relation</th><th>Foreign-key attributes</th><th>Referenced relation</th></tr></thead>
+    <tbody>
+      <tr><td>instructor, student, course</td><td>dept_name</td><td>department</td></tr>
+      <tr><td>section</td><td>course_id</td><td>course</td></tr>
+      <tr><td>section</td><td>building, room_no</td><td>classroom</td></tr>
+      <tr><td>section</td><td>time_slot_id</td><td>time_slot</td></tr>
+      <tr><td>teaches</td><td>ID</td><td>instructor</td></tr>
+      <tr><td>teaches, takes</td><td>(course_id, sec_id, semester, year)</td><td>section</td></tr>
+      <tr><td>takes</td><td>ID</td><td>student</td></tr>
+      <tr><td>advisor</td><td>s_id → student; i_id → instructor</td><td>student, instructor</td></tr>
+      <tr><td>prereq</td><td>course_id, prereq_id</td><td>course</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn"><div class="lab"><svg class="i"><use href="#i-alert"/></svg>Limitation</div>
+    <p>Referential integrity constraints <b>other than foreign keys are not shown</b> in schema diagrams (for example, section → teaches from §3.6). The <span class="t">entity–relationship diagram</span> (Chapter 7) can represent several kinds of constraints, including general referential integrity constraints. Many database systems offer graphical design tools for drawing schema diagrams.</p></div>
+</section>
+
+<!-- ============ 5. QUERY LANGUAGES ============ -->
+<section id="query" aria-labelledby="h-query">
+  <h2 id="h-query"><span class="n">5</span>Relational query languages</h2>
+  <p>A <span class="t">query language</span> is a language in which a user requests information from the database. These languages are usually at a <b>higher level</b> than a standard programming language, and fall into two families:</p>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Family</th><th>What the user does</th><th>“Pure” language</th></tr></thead>
+    <tbody>
+      <tr><td><span class="t">Procedural</span></td><td>Instructs the system to perform a <b>sequence of operations</b> to compute the result</td><td>Relational algebra</td></tr>
+      <tr><td><span class="t">Nonprocedural</span></td><td>Describes the <b>desired information</b> without giving a specific procedure for obtaining it</td><td>Tuple relational calculus; domain relational calculus</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 760 270" role="img" aria-labelledby="q-t q-d" style="min-width:600px">
+      <title id="q-t">Taxonomy of query languages</title>
+      <desc id="q-d">Query languages split into procedural (relational algebra) and nonprocedural (tuple and domain relational calculus).</desc>
+      <rect class="bx" x="270" y="10" width="220" height="44" rx="8" style="fill:#1b2f4b"/><text x="380" y="37" text-anchor="middle" class="ht" style="font-size:14px">Query languages</text>
+      <g class="edge"><path d="M380 54V74H180V92"/><path d="M380 74H560V92"/></g>
+      <rect class="bx" x="40" y="94" width="280" height="62" rx="8" style="fill:#e5f1f1"/><text x="180" y="120" text-anchor="middle" class="s-lab s-b">Procedural</text><text x="180" y="140" text-anchor="middle" class="s-sm">“do these operations, in this order”</text>
+      <rect class="bx" x="440" y="94" width="280" height="62" rx="8" style="fill:#e8f0f9"/><text x="580" y="120" text-anchor="middle" class="s-lab s-b">Nonprocedural</text><text x="580" y="140" text-anchor="middle" class="s-sm">“I want data with these properties”</text>
+      <g class="edge"><path d="M180 156V190"/><path d="M580 156V176H490V190"/><path d="M580 176H670V190"/></g>
+      <rect class="bx" x="80" y="192" width="200" height="50" rx="8"/><text x="180" y="222" text-anchor="middle" class="s-lab s-b">Relational algebra</text>
+      <rect class="bx" x="390" y="192" width="200" height="50" rx="8"/><text x="490" y="214" text-anchor="middle" class="s-lab s-b">Tuple relational</text><text x="490" y="231" text-anchor="middle" class="s-lab s-b">calculus</text>
+      <rect class="bx" x="610" y="192" width="130" height="50" rx="8"/><text x="675" y="214" text-anchor="middle" class="s-lab s-b">Domain relational</text><text x="675" y="231" text-anchor="middle" class="s-lab s-b">calculus</text>
+    </svg></div>
+    <figcaption><b>Figure 7.</b> The three “pure” languages. <b>Notice</b> that the algebra is the only procedural one. Commercial languages such as SQL mix both styles.</figcaption>
+  </figure>
+
+  <ul>
+    <li><b>Practice vs theory.</b> Languages used in practice include elements of <i>both</i> approaches. The widely used <span class="t">SQL</span> is studied in Chapters 3–5.</li>
+    <li><b>Why study “pure” languages?</b> They are terse and formal and lack the “syntactic sugar” of commercial languages, but they illustrate the <i>fundamental techniques</i> for extracting data (examined in Chapter 6).</li>
+    <li><span class="t">Relational algebra</span>: a set of operations that take <b>one or two relations</b> as input and produce a <b>new relation</b> as the result. The main operations are outlined in <a href="#operations">§6</a>.</li>
+    <li><span class="t">Relational calculus</span> (tuple and domain versions): uses <b>predicate logic</b> to define the desired result without giving an algebraic procedure for obtaining it.</li>
+  </ul>
+  <div class="callout take"><div class="lab"><svg class="i"><use href="#i-check"/></svg>Key takeaway</div>
+    <p>Algebra says <b>how</b> (a pipeline of operations on relations); calculus says <b>what</b> (a logical condition on the result). Both consume relations and produce relations, which is why relational operations can be composed.</p></div>
+</section>
+
+<!-- ============ 6. OPERATIONS ============ -->
+<section id="operations" aria-labelledby="h-operations">
+  <h2 id="h-operations"><span class="n">6</span>Relational operations</h2>
+
+  <h3 id="closure">6.1 Operations that take relations and return a relation</h3>
+  <p><b>Intuition.</b> Every procedural relational query language offers a small toolbox of operations. Each one is applied to <b>a single relation or a pair of relations</b>, and each one hands back <b>one relation</b>.</p>
+  <p><b>Why it matters.</b> Because the result of a relational query is itself a relation, operations can be applied to the <i>results of queries</i> as well as to the stored relations. That is what lets us <mark class="key">combine several operations in a modular way</mark> (<a href="#compose">§6.7</a>). The exact notation differs between languages, but all fit the framework below; the SQL forms appear in Chapter 3.</p>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 780 220" role="img" aria-labelledby="op-t op-d" style="min-width:640px">
+      <title id="op-t">Shapes of selection, projection and join</title>
+      <desc id="op-d">Selection keeps horizontal slices (rows) of a table, projection keeps vertical slices (columns), and join merges matching row pairs from two tables into wider rows.</desc>
+      <text x="25" y="24" class="s-lab s-b" style="fill:#1f6f74">σ  Selection of tuples</text>
+      <g transform="translate(25,36)">
+        <rect x="0" y="0" width="180" height="22" fill="#1b2f4b"/>
+        <rect x="0" y="22" width="180" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <rect x="0" y="44" width="180" height="22" fill="#fbf0da" stroke="#8a5a12"/>
+        <rect x="0" y="66" width="180" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <rect x="0" y="88" width="180" height="22" fill="#fbf0da" stroke="#8a5a12"/>
+        <rect x="0" y="110" width="180" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <path d="M45 0V132M90 0V132M135 0V132" stroke="#9fb0c3" stroke-width="1"/>
+      </g>
+      <text x="25" y="190" class="s-sm">keeps the rows that satisfy</text><text x="25" y="206" class="s-sm">a predicate (fewer rows)</text>
+
+      <text x="285" y="24" class="s-lab s-b" style="fill:#1f6f74">Π  Selection of attributes</text>
+      <g transform="translate(285,36)">
+        <rect x="0" y="0" width="180" height="132" fill="#fffdf8" stroke="#e3dccb"/>
+        <rect x="0" y="0" width="180" height="22" fill="#1b2f4b"/>
+        <rect x="0" y="22" width="45" height="110" fill="#fbf0da" stroke="#8a5a12"/>
+        <rect x="135" y="22" width="45" height="110" fill="#fbf0da" stroke="#8a5a12"/>
+        <rect x="0" y="0" width="45" height="22" fill="#8a5a12"/>
+        <rect x="135" y="0" width="45" height="22" fill="#8a5a12"/>
+        <path d="M45 0V132M90 0V132M135 0V132" stroke="#9fb0c3" stroke-width="1"/>
+        <path d="M0 44H180M0 66H180M0 88H180M0 110H180" stroke="#e3dccb" stroke-width="1"/>
+      </g>
+      <text x="285" y="190" class="s-sm">keeps the chosen columns</text><text x="285" y="206" class="s-sm">(fewer columns)</text>
+
+      <text x="535" y="24" class="s-lab s-b" style="fill:#1f6f74">⋈  Join</text>
+      <g transform="translate(535,36)">
+        <rect x="0" y="0" width="60" height="22" fill="#1b2f4b"/>
+        <rect x="0" y="22" width="60" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <rect x="0" y="44" width="60" height="22" fill="#fbf0da" stroke="#8a5a12"/>
+        <rect x="0" y="66" width="60" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <path d="M20 0V88M40 0V88" stroke="#9fb0c3" stroke-width="1"/>
+        <rect x="72" y="0" width="40" height="22" fill="#1b2f4b"/>
+        <rect x="72" y="22" width="40" height="22" fill="#fbf0da" stroke="#8a5a12"/>
+        <rect x="72" y="44" width="40" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <rect x="72" y="66" width="40" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <path d="M92 0V88" stroke="#9fb0c3" stroke-width="1"/>
+        <path d="M116 44H138" class="edge" marker-end="url(#arr)"/>
+        <rect x="142" y="0" width="80" height="22" fill="#1b2f4b"/>
+        <rect x="142" y="22" width="80" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <rect x="142" y="44" width="80" height="22" fill="#fbf0da" stroke="#8a5a12"/>
+        <rect x="142" y="66" width="80" height="22" fill="#fffdf8" stroke="#e3dccb"/>
+        <path d="M162 0V88M182 0V88M202 0V88" stroke="#9fb0c3" stroke-width="1"/>
+      </g>
+      <text x="535" y="190" class="s-sm">merges matching pairs of rows</text><text x="535" y="206" class="s-sm">from two tables (wider rows)</text>
+    </svg></div>
+    <figcaption><b>Figure 8.</b> The geometry of the basic operations. <b>Selection</b> slices the table horizontally, <b>projection</b> slices it vertically, <b>join</b> glues rows from two tables side by side. Each output is again a table.</figcaption>
+  </figure>
+
+  <h3 id="selection">6.2 Selection of tuples (rows)</h3>
+  <p>The most frequent operation selects <b>specific tuples from a single relation</b> that satisfy a <span class="t">predicate</span>. The result is a new relation that is a <b>subset</b> of the original. Example: from <span class="rel">instructor</span> (Fig. 2.1), select the tuples whose salary is greater than $85,000.</p>
+  <div class="tw"><table class="data">
+    <caption>Figure 2.10 — result of selecting <span class="rel">instructor</span> tuples with salary greater than $85000.</caption>
+    <thead><tr><th>ID</th><th>name</th><th>dept_name</th><th>salary</th></tr></thead>
+    <tbody>
+      <tr><td>12121</td><td>Wu</td><td>Finance</td><td>90000</td></tr>
+      <tr><td>22222</td><td>Einstein</td><td>Physics</td><td>95000</td></tr>
+      <tr><td>33456</td><td>Gold</td><td>Physics</td><td>87000</td></tr>
+      <tr><td>83821</td><td>Brandt</td><td>Comp. Sci.</td><td>92000</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="projection">6.3 Selection of attributes (columns)</h3>
+  <p>Another frequent operation picks <b>certain attributes</b> from a relation. The result is a new relation containing only those attributes; each result tuple is derived from one input tuple, with only the chosen attributes kept. Example: a list of instructor <span class="at">ID</span> and <span class="at">salary</span> without <span class="at">name</span> and <span class="at">dept_name</span>.</p>
+  <div class="tw"><table class="data">
+    <caption>Figure 2.11 — result of selecting attributes <span class="at">ID</span> and <span class="at">salary</span> from <span class="rel">instructor</span>.</caption>
+    <thead><tr><th>ID</th><th>salary</th></tr></thead>
+    <tbody>
+      <tr><td>10101</td><td>65000</td></tr><tr><td>12121</td><td>90000</td></tr><tr><td>15151</td><td>40000</td></tr><tr><td>22222</td><td>95000</td></tr>
+      <tr><td>32343</td><td>60000</td></tr><tr><td>33456</td><td>87000</td></tr><tr><td>45565</td><td>75000</td></tr><tr><td>58583</td><td>62000</td></tr>
+      <tr><td>76543</td><td>80000</td></tr><tr><td>76766</td><td>72000</td></tr><tr><td>83821</td><td>92000</td></tr><tr><td>98345</td><td>80000</td></tr>
+    </tbody>
+  </table></div>
+  <h3 id="join">6.4 Join and Cartesian product (combining two relations)</h3>
+  <p><b>Join.</b> The <span class="t">join</span> operation combines two relations by merging <b>pairs of tuples, one from each relation</b>, into a single tuple. There are several kinds of join (Chapter 3). The form below is the <span class="t">natural join</span>: a tuple of <span class="rel">instructor</span> matches a tuple of <span class="rel">department</span> if their <span class="at">dept_name</span> values are the same, and <b>all such matching pairs</b> appear in the result. In general, a natural join matches tuples whose values agree on <b>all attribute names common to both relations</b>.</p>
+  <p>Intuitively this answers “for each instructor, show me their department's details”: every instructor tuple is paired with the one department tuple for that instructor's department. This is the operation behind the Watson-building lookup of <a href="#common-attrs">§2.2</a>.</p>
+
+  <div class="tw"><table class="data">
+    <caption>Figure 2.12 — result of the natural join of <span class="rel">instructor</span> and <span class="rel">department</span>. The common attribute <span class="at">dept_name</span> appears once.</caption>
+    <thead><tr><th>ID</th><th>name</th><th>salary</th><th>dept_name</th><th>building</th><th>budget</th></tr></thead>
+    <tbody>
+      <tr><td>10101</td><td>Srinivasan</td><td>65000</td><td>Comp. Sci.</td><td>Taylor</td><td>100000</td></tr>
+      <tr><td>12121</td><td>Wu</td><td>90000</td><td>Finance</td><td>Painter</td><td>120000</td></tr>
+      <tr><td>15151</td><td>Mozart</td><td>40000</td><td>Music</td><td>Packard</td><td>80000</td></tr>
+      <tr><td>22222</td><td>Einstein</td><td>95000</td><td>Physics</td><td>Watson</td><td>70000</td></tr>
+      <tr><td>32343</td><td>El Said</td><td>60000</td><td>History</td><td>Painter</td><td>50000</td></tr>
+      <tr><td>33456</td><td>Gold</td><td>87000</td><td>Physics</td><td>Watson</td><td>70000</td></tr>
+      <tr><td>45565</td><td>Katz</td><td>75000</td><td>Comp. Sci.</td><td>Taylor</td><td>100000</td></tr>
+      <tr><td>58583</td><td>Califieri</td><td>62000</td><td>History</td><td>Painter</td><td>50000</td></tr>
+      <tr><td>76543</td><td>Singh</td><td>80000</td><td>Finance</td><td>Painter</td><td>120000</td></tr>
+      <tr><td>76766</td><td>Crick</td><td>72000</td><td>Biology</td><td>Watson</td><td>90000</td></tr>
+      <tr><td>83821</td><td>Brandt</td><td>92000</td><td>Comp. Sci.</td><td>Taylor</td><td>100000</td></tr>
+      <tr><td>98345</td><td>Kim</td><td>80000</td><td>Elec. Eng.</td><td>Taylor</td><td>85000</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><b>Cartesian product.</b> The <span class="t">Cartesian product</span> also combines tuples from two relations, but unlike a join its result contains <b>all pairs</b> of tuples, <i>regardless of whether their attribute values match</i>.</p>
+  <div class="callout ex"><div class="lab"><svg class="i"><use href="#i-table"/></svg>Worked comparison (derived from the sample data)</div>
+    <p><span class="rel">instructor</span> has 12 tuples and <span class="rel">department</span> has 7, so their Cartesian product has 12 × 7 = <b>84</b> pairs. Only the <b>12</b> pairs whose <span class="at">dept_name</span> values agree survive in the natural join of Fig. 2.12 (each instructor has exactly one department). A natural join therefore behaves like a Cartesian product followed by keeping only the matching pairs.</p></div>
+
+  <h3 id="setops">6.5 Set operations</h3>
+  <p>Because relations are <b>sets</b>, ordinary set operations apply to them. The <span class="t">union</span> operation forms the set union of two <b>“similarly structured”</b> tables, for example a table of all graduate students and a table of all undergraduate students, giving all students in a department. <span class="t">Intersection</span> and <span class="t">set difference</span> can be performed as well.</p>
+
+  <h4>Duplicates: sets versus bags</h4>
+  <p>A query result can contain <b>duplicate tuples</b>. Selecting <span class="at">dept_name</span> from <span class="rel">instructor</span> repeats several values; “Comp. Sci.” shows up three times. Languages differ:</p>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Approach</th><th>Behaviour</th><th>Trade-off</th></tr></thead>
+    <tbody>
+      <tr><td>Strictly set-based</td><td>Removes duplicates</td><td>Faithful to the mathematical definition of a set, but removal needs considerable processing on large results.</td></tr>
+      <tr><td>Duplicate-retaining</td><td>Keeps duplicates</td><td>Cheaper, but the results are then not truly relations in the pure mathematical sense.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tw"><table class="data">
+    <caption>Supplementary count (derived from Fig. 2.1): occurrences of each <span class="at">dept_name</span> value among the 12 instructors.</caption>
+    <thead><tr><th>dept_name</th><th>Comp. Sci.</th><th>Finance</th><th>History</th><th>Physics</th><th>Biology</th><th>Elec. Eng.</th><th>Music</th></tr></thead>
+    <tbody><tr><td>occurrences</td><td>3</td><td>2</td><td>2</td><td>2</td><td>1</td><td>1</td><td>1</td></tr></tbody>
+  </table></div>
+  <p class="src">Pure projection keeps 7 distinct values; a duplicate-retaining language returns all 12 rows.</p>
+
+  <h3 id="updates">6.6 Changing the data: updates</h3>
+  <p>Data must change over time. A relation can be updated by <b>inserting</b> new tuples, <b>deleting</b> existing tuples, or <b>modifying</b> tuples by changing the values of certain attributes. Entire relations can be deleted and new ones created. Queries and updates in SQL are covered in Chapters 3–5.</p>
+  <h3 id="compose">6.7 Composing operations</h3>
+  <p><b>How it works.</b> Since every operation returns a relation, the output of one can feed the next. To find the <span class="at">ID</span> and <span class="at">salary</span> of instructors earning more than $85,000, first <b>select</b> the tuples with salary &gt; 85000 from <span class="rel">instructor</span>, then <b>select the attributes</b> <span class="at">ID</span> and <span class="at">salary</span> from that intermediate result.</p>
+
+  <figure>
+    <div class="sv"><svg viewBox="0 0 780 170" role="img" aria-labelledby="pl-t pl-d" style="min-width:640px">
+      <title id="pl-t">Composing selection and projection</title>
+      <desc id="pl-d">The instructor relation passes through selection on salary above 85000, producing a four-tuple relation, then through projection on ID and salary, producing the result of Figure 2.13.</desc>
+      <rect class="bx" x="10" y="40" width="150" height="80" rx="8"/><text x="85" y="68" text-anchor="middle" class="s-lab s-b">instructor</text><text x="85" y="88" text-anchor="middle" class="s-sm">12 tuples, 4 attributes</text><text x="85" y="104" text-anchor="middle" class="s-sm">(Fig. 2.1)</text>
+      <rect class="bx" x="210" y="50" width="130" height="60" rx="30" style="fill:#e5f1f1"/><text x="275" y="76" text-anchor="middle" class="s-lab s-b">σ  select rows</text><text x="275" y="94" text-anchor="middle" class="s-mono">salary &gt; 85000</text>
+      <rect class="bx" x="390" y="40" width="150" height="80" rx="8" style="fill:#e8f0f9"/><text x="465" y="68" text-anchor="middle" class="s-lab s-b">intermediate</text><text x="465" y="88" text-anchor="middle" class="s-sm">4 tuples, 4 attributes</text><text x="465" y="104" text-anchor="middle" class="s-sm">(Fig. 2.10)</text>
+      <rect class="bx" x="590" y="50" width="110" height="60" rx="30" style="fill:#e5f1f1"/><text x="645" y="76" text-anchor="middle" class="s-lab s-b">Π  columns</text><text x="645" y="94" text-anchor="middle" class="s-mono">ID, salary</text>
+      <g class="edge"><path d="M160 80H208" marker-end="url(#arr)"/><path d="M340 80H388" marker-end="url(#arr)"/><path d="M540 80H588" marker-end="url(#arr)"/><path d="M700 80H722" marker-end="url(#arr)"/></g>
+      <rect class="bx" x="724" y="40" width="50" height="80" rx="8" style="fill:#fbf0da"/><text x="749" y="76" text-anchor="middle" class="s-lab s-b">2.13</text><text x="749" y="94" text-anchor="middle" class="s-sm">4 × 2</text>
+      <text x="10" y="150" class="s-sm">Every box between the arrows is a relation, so the next operation can consume it.</text>
+    </svg></div>
+    <figcaption><b>Figure 9.</b> A two-step query as a pipeline. <b>Notice</b> that the intermediate result is an ordinary relation, which is exactly why operations compose.</figcaption>
+  </figure>
+
+  <div class="tw"><table class="data">
+    <caption>Figure 2.13 — <span class="at">ID</span> and <span class="at">salary</span> of instructors with salary greater than $85,000.</caption>
+    <thead><tr><th>ID</th><th>salary</th></tr></thead>
+    <tbody><tr><td>12121</td><td>90000</td></tr><tr><td>22222</td><td>95000</td></tr><tr><td>33456</td><td>87000</td></tr><tr><td>83821</td><td>92000</td></tr></tbody>
+  </table></div>
+
+  <div class="callout warn"><div class="lab"><svg class="i"><use href="#i-alert"/></svg>Does the order matter?</div>
+    <p>In this example the two operations could be done <b>in either order</b>, but the source stresses that this is <b>not true in all situations</b>. A supplementary illustration: selecting on <span class="at">dept_name</span> after first keeping only <span class="at">ID</span> and <span class="at">salary</span> is impossible, because the column the predicate needs has already been discarded.</p></div>
+
+  <h3 id="algebra">6.8 Relational algebra: the operations as symbols</h3>
+  <p>The <span class="t">relational algebra</span> defines operations on relations, paralleling how addition or multiplication operate on numbers: numbers in, a number out, versus <b>one or two relations in, a relation out</b>. It is covered in detail in Chapter 6; the notation below is an outline.</p>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Symbol</th><th>Name</th><th>Example</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><b>σ</b></td><td>Selection</td><td class="mono">σ<sub>salary&gt;=85000</sub>(instructor)</td><td>Return rows of the input relation that satisfy the predicate.</td></tr>
+      <tr><td><b>Π</b></td><td>Projection</td><td class="mono">Π<sub>ID,salary</sub>(instructor)</td><td>Output the specified attributes from all rows; <b>remove duplicate tuples</b> from the output.</td></tr>
+      <tr><td><b>⋈</b></td><td>Natural join</td><td class="mono">instructor ⋈ department</td><td>Output pairs of rows from the two inputs that have the same value on all attributes with the same name.</td></tr>
+      <tr><td><b>×</b></td><td>Cartesian product</td><td class="mono">instructor × department</td><td>Output all pairs of rows from the two inputs, whether or not they agree on common attributes.</td></tr>
+      <tr><td><b>∪</b></td><td>Union</td><td class="mono">Π<sub>name</sub>(instructor) ∪ Π<sub>name</sub>(student)</td><td>Output the union of tuples from the two input relations.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">The Greek symbols were lost in the paste and are restored from the standard notation. Note the source's pure-algebra projection removes duplicates, matching the “set” approach in §6.5.</p>
+
+  <p><span class="src">Supplementary preview of Chapter 3 (not in the source).</span> The same operations in SQL, on the sample data:</p>
+<pre><code><span class="c">-- selection (Fig. 2.10)</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> instructor <span class="k">WHERE</span> salary &gt; 85000;
+
+<span class="c">-- projection (Fig. 2.11)</span>
+<span class="k">SELECT</span> ID, salary <span class="k">FROM</span> instructor;
+
+<span class="c">-- natural join (Fig. 2.12)</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> instructor <span class="k">NATURAL JOIN</span> department;
+
+<span class="c">-- composed: select then project (Fig. 2.13)</span>
+<span class="k">SELECT</span> ID, salary <span class="k">FROM</span> instructor <span class="k">WHERE</span> salary &gt; 85000;
+
+<span class="c">-- SQL keeps duplicates unless told otherwise</span>
+<span class="k">SELECT</span> <span class="k">DISTINCT</span> dept_name <span class="k">FROM</span> instructor;</code></pre>
+  <p class="src"><code>WHERE</code> plays the role of selection σ; the column list after <code>SELECT</code> plays the role of projection Π; <code>NATURAL JOIN</code> is ⋈. The last query returns the 7 distinct departments; without <code>DISTINCT</code> it would return 12 rows (Comp. Sci. three times). Result tables are exactly Figs. 2.10–2.13 above. Dialect note: standard SQL.</p>
+
+  <div class="callout take"><div class="lab"><svg class="i"><use href="#i-check"/></svg>Key takeaway</div>
+    <p>Selection trims <b>rows</b>, projection trims <b>columns</b>, join and product <b>combine two relations</b>, and set operations treat relations as <b>sets</b>. All return a relation, so they chain into expressions. Practical languages like SQL are <b>based on</b> the relational algebra but add useful syntactic features.</p></div>
+</section>
+
+<!-- ============ 7. REVISION ============ -->
+
+<section id="revision" aria-labelledby="h-revision">
+  <h2 id="h-revision"><span class="n">7</span>Revision: distinctions, pitfalls, self-check</h2>
+
+  <h3>Important distinctions</h3>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Pair</th><th>Difference</th><th>Section</th></tr></thead>
+    <tbody>
+      <tr><td>Schema vs instance</td><td>Logical design (type, stable) vs snapshot of data (value, changing)</td><td><a href="#schema-vs-instance">§2.1</a></td></tr>
+      <tr><td>Superkey vs candidate key</td><td>Any unique-identifying set vs a <i>minimal</i> one</td><td><a href="#candidate">§3.3</a></td></tr>
+      <tr><td>Candidate vs primary key</td><td>Any minimal key vs the one chosen by the designer</td><td><a href="#primary">§3.4</a></td></tr>
+      <tr><td>Foreign key vs referential integrity</td><td>FK targets a <i>primary key</i>; referential integrity needs only that values exist in the referenced attributes</td><td><a href="#refint">§3.6</a></td></tr>
+      <tr><td>Referencing vs referenced relation</td><td>The one holding the FK vs the one whose primary key is pointed to</td><td><a href="#foreign">§3.5</a></td></tr>
+      <tr><td>Procedural vs nonprocedural</td><td>Sequence of operations vs description of the result</td><td><a href="#query">§5</a></td></tr>
+      <tr><td>Selection (σ) vs projection (Π)</td><td>Keeps <i>rows</i> meeting a predicate vs keeps chosen <i>columns</i></td><td><a href="#selection">§6.2</a>, <a href="#projection">§6.3</a></td></tr>
+      <tr><td>Natural join vs Cartesian product</td><td>Only pairs that agree on common attributes vs <i>all</i> pairs</td><td><a href="#join">§6.4</a></td></tr>
+      <tr><td>Set-based vs duplicate-retaining</td><td>Duplicates removed (pure relation) vs kept (cheaper, not a pure relation)</td><td><a href="#setops">§6.5</a></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Common misconceptions</h3>
+  <div class="callout warn"><div class="lab"><svg class="i"><use href="#i-alert"/></svg>Check yourself against these</div>
+    <ul>
+      <li><b>“Row order matters.”</b> No. A relation is a set of tuples; Fig. 2.1 and 2.4 are the same relation (<a href="#instance">§1.3</a>).</li>
+      <li><b>“A set-valued attribute is fine if it is just one column.”</b> No. Domains must be atomic; atomicity depends on how values are used (<a href="#domains">§1.4</a>).</li>
+      <li><b>“Names make good keys.”</b> No. Several people can share a name; keys must be (very nearly) unchanging (<a href="#primary">§3.4</a>).</li>
+      <li><b>“{ID, name} is a candidate key because it identifies tuples.”</b> No. It is a superkey but not minimal.</li>
+      <li><b>“A key belongs to a tuple.”</b> No. It is a property of the whole relation.</li>
+      <li><b>“Nulls are harmless.”</b> No. They complicate access and update and should be eliminated where possible (<a href="#nulls">§1.5</a>).</li>
+      <li><b>“Schema diagrams show every constraint.”</b> No. Only primary keys and foreign keys (<a href="#diagrams">§4</a>).</li>
+      <li><b>“A join is just a Cartesian product.”</b> No. The product keeps every pair; the natural join keeps only pairs that match on common attributes (<a href="#join">§6.4</a>).</li>
+      <li><b>“Operations must be applied in a fixed order.”</b> Not always interchangeable: a projection can discard an attribute a later selection needs (<a href="#compose">§6.7</a>).</li>
+      <li><b>“Every query result is a true relation.”</b> Only if duplicates are removed; duplicate-retaining languages return results that are not relations in the pure sense (<a href="#setops">§6.5</a>).</li>
+    </ul></div>
+
+  <h3 id="selfcheck">Self-check questions</h3>
+  <details><summary>1. What do “table”, “row” and “column” correspond to in the relational model?</summary><p>Relation, tuple, attribute respectively. A relation instance is the set of tuples present at a given time.</p></details>
+  <details><summary>2. Why does the order of tuples not matter?</summary><p>Because a relation is a set of tuples; two displays with the same tuples are the same relation.</p></details>
+  <details><summary>3. A <span class="at">phone_number</span> attribute stores one number, but queries split off the area code. Is the domain atomic?</summary><p>No. Treating the value as having a country code, area code and local number means we use it as divisible. It is atomic only if each number is treated as a single indivisible unit.</p></details>
+  <details><summary>4. Distinguish a relation schema from a relation instance with a programming analogy.</summary><p>Schema ≈ type definition (rarely changes); instance ≈ value of a variable (changes as data is updated).</p></details>
+  <details><summary>5. Given that {ID} and {name, dept_name} are both candidate keys of <span class="rel">instructor</span>, is {ID, name} a candidate key? Is it a superkey?</summary><p>Not a candidate key, since {ID} ⊂ {ID, name} is already a superkey (so it is not minimal). It is a superkey, because any superset of a superkey is a superkey.</p></details>
+  <details><summary>6. Why can we declare a foreign key from <span class="rel">teaches</span> to <span class="rel">section</span> but not from <span class="rel">section</span> to <span class="rel">teaches</span>?</summary><p>A foreign key must reference the referenced relation's primary key. The section attributes are the primary key of <span class="rel">section</span>, but not of <span class="rel">teaches</span>, as several instructors may teach one section. The section → teaches requirement is still a referential integrity constraint.</p></details>
+  <details><summary>7. Which language family is relational algebra, and which are the calculi?</summary><p>Algebra is procedural; tuple and domain relational calculus are nonprocedural.</p></details>
+
+  <details><summary>8. Why can relational operations be chained?</summary><p>Each takes one or two relations and returns a single relation, so the result of one operation is a valid input to the next (<a href="#closure">§6.1</a>).</p></details>
+  <details><summary>9. Which rows does selecting instructors with salary &gt; 85000 return?</summary><p>Wu (90000), Einstein (95000), Gold (87000), Brandt (92000) — Fig. 2.10.</p></details>
+  <details><summary>10. What does the natural join of <span class="rel">instructor</span> and <span class="rel">department</span> match on, and how many tuples result?</summary><p>On their common attribute <span class="at">dept_name</span>; 12 tuples (one per instructor, Fig. 2.12). Their Cartesian product would have 12 × 7 = 84.</p></details>
+  <details><summary>11. Projecting <span class="at">dept_name</span> from <span class="rel">instructor</span> gives “Comp. Sci.” three times. Is the output a true relation?</summary><p>Only if the language removes duplicates. Languages that retain them, to avoid the processing cost, give results that are not truly relations in the mathematical sense.</p></details>
+  <details><summary>12. When does union apply?</summary><p>To two “similarly structured” tables, such as all graduate students and all undergraduate students.</p></details>
+
+  <h3 id="review-terms">Review terms and where each is covered</h3>
+  <div class="tw"><table class="cmp">
+    <thead><tr><th>Group</th><th>Terms</th></tr></thead>
+    <tbody>
+      <tr><td>Structure</td><td>table, relation, tuple, attribute (<a href="#terminology">§1.2</a>); domain, atomic domain (<a href="#domains">§1.4</a>); null value (<a href="#nulls">§1.5</a>)</td></tr>
+      <tr><td>Schema vs instance</td><td>database schema, database instance, relation schema, relation instance (<a href="#schema-vs-instance">§2.1</a>)</td></tr>
+      <tr><td>Keys</td><td>superkey (<a href="#superkey">§3.2</a>), candidate key (<a href="#candidate">§3.3</a>), primary key (<a href="#primary">§3.4</a>), foreign key with referencing and referenced relation (<a href="#foreign">§3.5</a>), referential integrity constraint (<a href="#refint">§3.6</a>)</td></tr>
+      <tr><td>Diagrams</td><td>schema diagram (<a href="#diagrams">§4</a>)</td></tr>
+      <tr><td>Query languages</td><td>query language, procedural vs nonprocedural (<a href="#query">§5</a>)</td></tr>
+      <tr><td>Operations</td><td>selection of tuples (<a href="#selection">§6.2</a>), selection of attributes (<a href="#projection">§6.3</a>), natural join, Cartesian product (<a href="#join">§6.4</a>), set operations (<a href="#setops">§6.5</a>), relational algebra (<a href="#algebra">§6.8</a>)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="recap">Final conceptual recap</h3>
+  <ol>
+    <li>The relational model stores data in <b>uniquely named tables</b> (relations) of tuples over atomic domains; it dominates because it is <b>simple</b>.</li>
+    <li>A <b>schema</b> is the stable logical design; an <b>instance</b> is the changing snapshot of the data.</li>
+    <li><b>Keys</b> (super → candidate → primary) identify tuples; <b>foreign keys</b> and <b>referential integrity</b> keep references between relations valid.</li>
+    <li><b>Schema diagrams</b> show relations, primary keys and foreign-key arrows; ER diagrams (Ch. 7) show more constraints.</li>
+    <li><b>Queries</b> are written in procedural (algebra) or nonprocedural (calculus) styles; SQL blends both.</li>
+    <li>A <b>relation schema</b> includes its attributes and, optionally, attribute types and constraints such as primary and foreign keys; the schema and instance of a whole database are defined the same way.</li>
+    <li>The <b>operations</b> (selection, projection, natural join, Cartesian product, set operations) all take relations and return a relation, so they combine into expressions. Practical languages such as SQL build on the relational algebra and add syntactic features.</li>
+    <li>Users can <b>query</b> the tables and <b>insert, delete and modify</b> tuples.</li>
+  </ol>
+</section>
+
+<!-- ============ NOTES ON SOURCE ============ -->
+<section id="source-notes" aria-labelledby="h-source">
+  <h2 id="h-source"><span class="n">8</span>Notes on the source text</h2>
+  <div class="callout note"><div class="lab"><svg class="i"><use href="#i-info"/></svg>Corrections and assumptions</div>
+    <ul>
+      <li><b>Identifier spelling.</b> The paste shows names such as “dept name” and “course id”; these are written with underscores (<span class="at">dept_name</span>, <span class="at">course_id</span>), matching the textbook's schema diagram (Fig. 2.8).</li>
+      <li><b>Superkey formula.</b> The pasted “t1 = t2, then t1.K = t2.K” lost its ≠ signs; the intended statement is t₁ ≠ t₂ ⇒ t₁.K ≠ t₂.K.</li>
+      <li><b>Lost underlines and arrows.</b> Primary-key underlining (Fig. 2.9) and the arrows of Fig. 2.8 did not survive the paste. They are restored from the standard textbook schema, and the relations whose keys the text states explicitly (<span class="rel">instructor</span>, <span class="rel">course</span>, <span class="rel">department</span>, <span class="rel">section</span>) are consistent with it.</li>
+      <li><b>Supplementary material.</b> The two SQL snippets (labelled as such) and the Watson-building result are additions for understanding; the result was derived directly from Figs. 2.1 and 2.5. Column types in the <code>CREATE TABLE</code> example are assumptions.</li>
+      <li><b>Operations table.</b> The source's example for selection shows <span class="mono">salary&gt;=85000</span>, while the surrounding text says “greater than $85,000”. On the sample data both give the same four tuples (no salary equals 85000), so Fig. 2.10 is unaffected; SQL examples here use <code>&gt;</code> to match the prose.</li>
+      <li><b>Derived figures.</b> The 12 × 7 = 84 product size, the department occurrence counts and the “order not interchangeable” illustration are derived from the sample data or added for understanding, not stated in the source.</li>
+      <li><b>Page artefacts.</b> Repeated “Apago PDF Enhancer” watermark text and page headers in the paste were removed.</li>
+    </ul></div>
+</section>
+
+</main>
+<footer>Source: textbook Chapter 2, “Introduction to the Relational Model”. Reorganised as revision notes; diagrams are original inline SVG.</footer>
+</body>
+</html>

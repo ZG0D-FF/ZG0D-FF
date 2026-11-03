@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 1: DBMS Foundations, ER Modeling & Relational Model | DBMS Master Guide</title>
+  <link rel="stylesheet" href="dbms_theme.css">
+</head>
+<body>
+
+  <!-- Master Top Navigation -->
+  <nav class="master-nav" aria-label="Master Suite Navigation">
+    <div class="master-nav-inner">
+      <a href="index.html" class="master-brand">
+        <span>DBMS Hub</span> Master Study Suite
+      </a>
+      <div class="master-links">
+        <a href="master_dbms_foundations.html" class="active">1. Foundations &amp; ER/Relational</a>
+        <a href="master_sql_ch3.html">2. Chapter 3: SQL Fundamentals</a>
+        <a href="master_sql_ch4.html">3. Chapter 4: Intermediate SQL</a>
+        <a href="master_dbms_internals_lab.html">4. Internals &amp; Lab Practice</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="kicker">Module 1 · Theory &amp; Exam Solutions</span>
+      <h1>Database Systems, ER Modeling &amp; The Relational Model</h1>
+      <p class="lead">
+        A comprehensive, lucid textbook guide unifying database architecture, 3-schema data independence, phased ER design, mathematical relational theory, integrity constraints, relational algebra, and complete worked exam solutions.
+      </p>
+      <div class="hero-meta">
+        <span class="pill">Textbooks: Silberschatz Ch 1, 2, 7 &middot; Elmasri &amp; Navathe Ch 1, 2, 3, 5</span>
+        <span class="pill">Syllabus: PCCEC504 Module 1 &amp; 2</span>
+        <span class="pill">Hover glossary enabled</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Layout with Sticky TOC -->
+  <div class="layout">
+    <aside class="toc" aria-label="Table of Contents">
+      <h2>Module Contents</h2>
+      <ol>
+        <li><a href="#sec-dbms-overview">1. Core DBMS Concepts vs. Files</a></li>
+        <li><a href="#sec-architecture">2. 3-Schema Architecture &amp; Independence</a></li>
+        <li><a href="#sec-er-phases">3. Phased ER Database Design</a></li>
+        <li><a href="#sec-relational-model">4. The Relational Model Formalisms</a></li>
+        <li><a href="#sec-keys-integrity">5. Keys &amp; Integrity Constraints</a></li>
+        <li><a href="#sec-relational-algebra">6. Relational Algebra Operations</a></li>
+        <li><a href="#sec-er-mapping">7. ER-to-Relational Mapping Rules</a></li>
+        <li><a href="#sec-concept-maps">8. Visual Reasoning &amp; Exam Maps</a></li>
+        <li><a href="#sec-practice-solutions">9. Worked Exam &amp; Exercise Bank</a></li>
+      </ol>
+    </aside>
+
+    <main>
+      <!-- Section 1 -->
+      <section id="sec-dbms-overview">
+        <h2>1. Core DBMS Concepts vs. File-Processing Systems</h2>
+        <p>
+          A <dfn data-term="dbms">database management system</dfn> is general-purpose system software that facilitates defining, constructing, manipulating, sharing, and protecting data for various applications. It emerged to solve the severe limitations of early file-processing systems where each application maintained its own private, isolated files.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Feature / Dimension</th>
+                <th>Traditional File-Processing System</th>
+                <th>Database Management System (DBMS)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Data &amp; Program Independence</strong></td>
+                <td>Tight coupling: File formats are hardcoded directly into application code. Any format change breaks programs.</td>
+                <td><dfn data-term="data independence">Program-data independence</dfn>: Metadata is stored in a centralized catalog; access is mediated through conceptual schemas.</td>
+              </tr>
+              <tr>
+                <td><strong>Redundancy &amp; Consistency</strong></td>
+                <td>Uncontrolled redundancy: Multiple departments duplicate the same data, leading to conflicting records and storage waste.</td>
+                <td>Controlled redundancy: Data is logically unified and normalized; physical denormalization is synchronized by the engine.</td>
+              </tr>
+              <tr>
+                <td><strong>Concurrency &amp; Sharing</strong></td>
+                <td>Inadequate concurrency: Simultaneous writes overwrite each other or lock whole files, degrading performance.</td>
+                <td>Robust concurrency control: Transactions guarantee ACID <dfn data-term="isolation">isolation</dfn> through row-level locking or multi-versioning.</td>
+              </tr>
+              <tr>
+                <td><strong>Integrity &amp; Security</strong></td>
+                <td>Enforced in ad-hoc code: Each programmer writes custom checks, leaving high risk of corrupted or unauthorized data.</td>
+                <td>Declarative constraints: The DBMS automatically enforces entity integrity, referential integrity, and role-based permissions.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout key">
+          <strong>The Miniworld Concept:</strong> A database models a specific, bounded aspect of the real world—referred to in database literature as the <em>miniworld</em> or <em>Universe of Discourse (UoD)</em>. Changes in the miniworld are faithfully reflected as state updates in the database.
+        </div>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="sec-architecture">
+        <h2>2. Three-Schema Architecture &amp; Data Independence</h2>
+        <p>
+          Proposed by ANSI/SPARC, the <dfn data-term="three-schema architecture">three-schema architecture</dfn> separates user applications from physical storage structures. It provides three distinct levels of abstraction:
+        </p>
+
+        <div class="mapping-panel">
+          <p class="mapping-title">The Three Schema Levels and Their Mappings</p>
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>1. External Level</b>
+              <small>Individual user views (VDL). Hides irrelevant data; provides tailored representations for specific groups (e.g., student grade view vs. billing view).</small>
+            </div>
+            <div class="map-step">
+              <b>2. Conceptual Level</b>
+              <small>Enterprise-wide logical structure (DDL). Defines entities, data types, relationships, constraints, and business rules without storage details.</small>
+            </div>
+            <div class="map-step">
+              <b>3. Internal Level</b>
+              <small>Physical storage schema (SDL). Specifies file allocations, record layouts, clustering, B+ tree indexes, and data compression techniques.</small>
+            </div>
+          </div>
+        </div>
+
+        <h3>Physical vs. Logical Data Independence</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Independence Type</th>
+                <th>Definition &amp; Mechanism</th>
+                <th>Why It Matters / Difficulty</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong><dfn data-term="physical data independence">Physical Data Independence</dfn></strong></td>
+                <td>The capacity to alter the internal schema (e.g., rebuilding indexes, changing block sizes, migrating to SSDs) without changing the conceptual schema or external views.</td>
+                <td>Relatively straightforward to achieve because DBMS query engines rewrite low-level access paths transparently without affecting logical query semantics.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="logical data independence">Logical Data Independence</dfn></strong></td>
+                <td>The capacity to alter the conceptual schema (e.g., adding an attribute, splitting an entity) without modifying existing external schemas or breaking legacy user applications.</td>
+                <td>Significantly harder to achieve because changing logical enterprise structures requires complex view rewrites and updated mappings so existing queries remain valid.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="sec-er-phases">
+        <h2>3. Phased ER Database Design Lifecycle</h2>
+        <p>
+          Designing a robust database requires an orderly multi-phase lifecycle. Jumping directly to creating SQL tables frequently introduces update anomalies, missing relationships, and costly schema restructuring.
+        </p>
+
+        <div class="mapping-panel">
+          <p class="mapping-title">The Four Main Database Design Phases</p>
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>1. Requirements Analysis</b>
+              <small>Interviews with domain experts to document required data entities, attributes, transactions, and business policies in textual form.</small>
+            </div>
+            <div class="map-step">
+              <b>2. Conceptual Design</b>
+              <small>Creation of a high-level, DBMS-independent Entity-Relationship (ER) diagram representing entities, relationships, cardinalities, and constraints.</small>
+            </div>
+            <div class="map-step">
+              <b>3. Logical Design</b>
+              <small>Systematic mapping of the ER schema into the implementation data model (e.g., relational tables, primary keys, and foreign keys), followed by normalization.</small>
+            </div>
+            <div class="map-step">
+              <b>4. Physical Design</b>
+              <small>Selection of physical storage formats, indexes (B+ trees, hash indexes), file clustering, and access paths to optimize high-frequency queries.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout warning">
+          <strong>The Danger of Skipping Conceptual Modeling:</strong> Direct table creation leads to uncontrolled redundancy, awkward NULLs for inapplicable relationships, and severe late-stage refactoring costs once production software depends on fragile column definitions.
+        </div>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="sec-relational-model">
+        <h2>4. The Relational Model Formalisms</h2>
+        <p>
+          Formulated by Edgar F. Codd in 1970, the relational model represents all data uniformly as mathematical <dfn data-term="relation">relations</dfn>.
+        </p>
+
+        <ul>
+          <li><strong><dfn data-term="domain">Domain (D)</dfn>:</strong> A named set of atomic (indivisible) scalar values (e.g., valid department codes: <code>{'CS', 'EE', 'ME'}</code>).</li>
+          <li><strong><dfn data-term="attribute">Attribute (A)</dfn>:</strong> The role played by a domain in a relation schema, functioning as a named column.</li>
+          <li><strong><dfn data-term="relation">Relation Schema R(A<sub>1</sub>, A<sub>2</sub>, …, A<sub>n</sub>)</dfn>:</strong> The blueprint specifying the relation name <code>R</code> and its list of attributes with their associated domains.</li>
+          <li><strong><dfn data-term="degree">Degree (Arity)</dfn>:</strong> The number of attributes in the relation schema. A table with 6 columns has degree 6.</li>
+          <li><strong><dfn data-term="tuple">Tuple (t)</dfn>:</strong> An ordered list of values <code>&lt;v<sub>1</sub>, v<sub>2</sub>, …, v<sub>n</sub>&gt;</code> where each <code>v<sub>i</sub> &isin; dom(A<sub>i</sub>)</code> or is <dfn data-term="null">NULL</dfn>.</li>
+          <li><strong><dfn data-term="cardinality">Cardinality</dfn>:</strong> The current number of tuples populated in the relation instance.</li>
+          <li><strong><dfn data-term="state">Relation State r(R)</dfn>:</strong> A mathematical subset of the Cartesian product of the attribute domains: <code>r(R) &sube; dom(A<sub>1</sub>) &times; dom(A<sub>2</sub>) &times; … &times; dom(A<sub>n</sub>)</code>.</li>
+        </ul>
+
+        <div class="callout key">
+          <strong>Key Relational Properties:</strong>
+          <ol>
+            <li><strong>Tuples are unordered:</strong> Mathematically, a relation is a set of tuples; order has no formal meaning.</li>
+            <li><strong>No duplicate tuples:</strong> Set theory dictates every element in a set must be distinct.</li>
+            <li><strong>Attribute values are atomic:</strong> Under First Normal Form (1NF), composite or multivalued attributes are strictly prohibited in basic relational theory.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="sec-keys-integrity">
+        <h2>5. Keys &amp; Integrity Constraints</h2>
+        <p>
+          Integrity constraints guarantee that data modifications do not result in inconsistency or invalid application states.
+        </p>
+
+        <h3>The Hierarchy of Relational Keys</h3>
+        <div class="mapping-panel">
+          <div class="map-branch">
+            <div>
+              <b style="color:var(--navy);"><dfn data-term="superkey">Superkey (SK)</dfn></b>
+              Any set of attributes that uniquely identifies every tuple in a relation. May include unnecessary, redundant columns (e.g., <code>{ID, Name, Street}</code>).
+            </div>
+            <div>
+              <b style="color:var(--teal);"><dfn data-term="candidate key">Candidate Key (CK)</dfn></b>
+              A minimal superkey. Uniqueness holds, and removing any single attribute destroys the uniqueness guarantee (e.g., <code>{ID}</code> or <code>{SSN}</code>).
+            </div>
+            <div>
+              <b style="color:var(--blue);"><dfn data-term="primary key">Primary Key (PK)</dfn></b>
+              The designated candidate key officially chosen by the database designer to identify tuples and be referenced by foreign keys.
+            </div>
+          </div>
+        </div>
+
+        <h3>Core Relational Integrity Constraints</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Constraint Type</th>
+                <th>Formal Requirement</th>
+                <th>Violation Example &amp; DBMS Response</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Domain Constraint</strong></td>
+                <td>Every attribute value must belong to the specified data domain and type.</td>
+                <td>Inserting string text into an <code>INTEGER</code> credit column &rarr; <em>Rejected</em>.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="entity integrity">Entity Integrity</dfn></strong></td>
+                <td>No attribute participating in the primary key may ever be <dfn data-term="null">NULL</dfn>: <code>t[PK] &ne; NULL</code>.</td>
+                <td>Inserting a tuple with <code>NULL</code> in <code>student_id</code> &rarr; <em>Rejected</em>.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="referential integrity">Referential Integrity</dfn></strong></td>
+                <td>A <dfn data-term="foreign key">foreign key</dfn> <code>FK</code> in referencing relation <code>R<sub>1</sub></code> must either match an existing primary key in referenced relation <code>R<sub>2</sub></code>, or be entirely NULL.</td>
+                <td>Enrolling a student with <code>course_id = 'CS999'</code> when that course does not exist &rarr; <em>Rejected</em>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning">
+          <strong>Referential Action Policies on DELETE/UPDATE:</strong>
+          <ul>
+            <li><code>RESTRICT / NO ACTION</code>: Rejects the parent row deletion if child rows currently reference it.</li>
+            <li><code>CASCADE</code>: Deleting the parent automatically deletes all dependent referencing child tuples.</li>
+            <li><code>SET NULL</code>: Deleting the parent automatically sets the referencing foreign key attributes in children to <code>NULL</code>.</li>
+            <li><code>SET DEFAULT</code>: Resets referencing foreign key columns to a pre-configured default value.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="sec-relational-algebra">
+        <h2>6. Relational Algebra Operations</h2>
+        <p>
+          Relational algebra is a formal, procedural query language where operations take one or two relations as input and produce a new relation as output.
+        </p>
+
+        <h3>Core Operations Overview</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Symbol &amp; Syntax</th>
+                <th>Type</th>
+                <th>Purpose &amp; Semantics</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong><dfn data-term="selection">Selection</dfn></strong></td>
+                <td>&sigma;<sub>condition</sub>(R)</td>
+                <td>Unary</td>
+                <td>Filters rows: returns only tuples satisfying the Boolean condition.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="projection">Projection</dfn></strong></td>
+                <td>&Pi;<sub>A1, A2</sub>(R)</td>
+                <td>Unary</td>
+                <td>Filters columns: outputs only designated attributes; removes duplicate rows.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="cartesian product">Cartesian Product</dfn></strong></td>
+                <td>R &times; S</td>
+                <td>Binary</td>
+                <td>Combines every tuple of R with every tuple of S, yielding <code>|R| &times; |S|</code> rows.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="natural join">Natural Join</dfn></strong></td>
+                <td>R &nsub; S</td>
+                <td>Binary</td>
+                <td>Equi-join over all identically-named attributes, projecting common columns once.</td>
+              </tr>
+              <tr>
+                <td><strong>Set Difference</strong></td>
+                <td>R &minus; S</td>
+                <td>Binary</td>
+                <td>Returns tuples present in R that do not appear in S (requires union compatibility).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Worked Step-by-Step Relational Algebra Query</h3>
+        <div class="mapping-panel">
+          <p class="mapping-title">Query: "Find names of all employees living in Miami earning &gt; $100,000"</p>
+          <div class="algebra">
+            &Pi;<sub>person_name</sub>( &sigma;<sub>city = 'Miami'</sub>(employee) &nsub; &sigma;<sub>salary &gt; 100000</sub>(works) )
+          </div>
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>Step 1: Row Selection</b>
+              <small>Filter <code>employee</code> tuples where <code>city = 'Miami'</code>.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 2: Salary Filter</b>
+              <small>Filter <code>works</code> tuples where <code>salary &gt; 100000</code>.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 3: Natural Join (&nsub;)</b>
+              <small>Join filtered sets on the shared attribute <code>person_name</code>.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 4: Projection (&Pi;)</b>
+              <small>Extract the requested <code>person_name</code> column, eliminating duplicate rows.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 7 -->
+      <section id="sec-er-mapping">
+        <h2>7. ER-to-Relational Logical Mapping Algorithm</h2>
+        <p>
+          Transforming an ER conceptual diagram into a relational schema follows a rigorous 7-step algorithm:
+        </p>
+
+        <div class="mapping-panel">
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>Step 1: Regular Entities</b>
+              <small>Create relation <code>R</code> with all simple attributes. Choose key as PK.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 2: Weak Entities</b>
+              <small>Create relation <code>W</code>. Include all simple attributes + foreign key pointing to owner's PK. PK of <code>W</code> is <code>{Owner PK, Partial Key}</code>.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 3: 1:1 Relationships</b>
+              <small>Include foreign key in the relation having total participation (or merge tables if both are total).</small>
+            </div>
+            <div class="map-step">
+              <b>Step 4: 1:N Relationships</b>
+              <small>Place the primary key of the "1" side as a foreign key inside the relation on the "N" (many) side.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 5: M:N Relationships</b>
+              <small>Create a dedicated relationship relation <code>T</code>. PK of <code>T</code> is composite of both entity PKs as FKs.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 6: Multivalued Attributes</b>
+              <small>Create a new relation containing the attribute and the entity's PK as a foreign key.</small>
+            </div>
+            <div class="map-step">
+              <b>Step 7: N-ary Relationships</b>
+              <small>Create a relation containing the PKs of all participating entities as foreign keys.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 8 -->
+      <section id="sec-concept-maps">
+        <h2>8. Visual Reasoning &amp; Exam Concept Maps</h2>
+
+        <div class="mapping-panel">
+          <p class="mapping-title">Exam Map 1 · Primary Key Verification Algorithm</p>
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>1. Uniqueness Test</b>
+              <small>Could two distinct valid tuples ever share the exact same value in future valid database states?</small>
+            </div>
+            <div class="map-step">
+              <b>2. Minimality Test</b>
+              <small>Can any single attribute be removed from the key candidate while uniqueness still strictly holds?</small>
+            </div>
+            <div class="map-step">
+              <b>3. Non-Null Rule</b>
+              <small>Is any component attribute capable of taking a NULL value? If yes, it fails entity integrity.</small>
+            </div>
+            <div class="map-step">
+              <b>4. Final Designation</b>
+              <small>Declare as primary key; explicitly document data assumptions if domain constraints permit duplicates.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="mapping-panel">
+          <p class="mapping-title">Exam Map 2 · Classifying Constraint Violations</p>
+          <div class="map-branch">
+            <div>
+              <b style="color:var(--red);">Entity Integrity Violation</b>
+              Attempting to insert a tuple with a <code>NULL</code> primary key component.
+            </div>
+            <div>
+              <b style="color:var(--amber);">Referential Integrity Violation</b>
+              Child foreign key does not exist in parent table (on insert), or deleting parent while referenced (on delete).
+            </div>
+            <div>
+              <b style="color:var(--navy);">Key / Uniqueness Violation</b>
+              Inserting a duplicate value into a column designated as primary key or unique.
+            </div>
+            <div>
+              <b style="color:var(--teal);">Domain Constraint Violation</b>
+              Supplying data out of range, violating datatype, or failing <code>CHECK</code> predicate.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 9: Practice & Solutions -->
+      <section id="sec-practice-solutions">
+        <h2>9. Comprehensive Worked Exam &amp; Exercise Bank</h2>
+        <p>
+          Test your conceptual understanding using active recall. Click each exercise card to reveal verified solutions.
+        </p>
+
+        <!-- Silberschatz Chapter 1 Practice Exercises -->
+        <details class="practice-box">
+          <summary class="practice-summary">Practice 1.1 — Two Major Disadvantages of a Database System</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 1</span>
+            <h4>Question:</h4>
+            <p>What are two major disadvantages of utilizing a database system?</p>
+            <h4>Lucid Solution:</h4>
+            <ol>
+              <li>
+                <strong>High Upfront Cost and Overhead:</strong> Acquiring enterprise DBMS software, robust server hardware, specialized administration personnel, and operational migration represents substantial financial expenditure compared to rudimentary file scripts.
+              </li>
+              <li>
+                <strong>Complexity and Processing Overhead for Trivial Workloads:</strong> Enforcing ACID transactions, concurrency locking, logging, and security checks imposes measurable computational overhead. For tiny, single-user, read-only utilities, flat files are simpler and faster.
+              </li>
+            </ol>
+            <div class="callout exam">
+              <strong>Exam Takeaway:</strong> A DBMS delivers multi-user sharing, transactional safety, and integrity guarantees, but incurs financial, architectural, and operational overhead.
+            </div>
+          </div>
+        </details>
+
+        <details class="practice-box">
+          <summary class="practice-summary">Practice 1.2 — Java/C++ Type Declarations vs. Database DDL</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 1</span>
+            <h4>Question:</h4>
+            <p>List five ways programming language type systems (Java/C++) differ from database Data Definition Language (DDL).</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Programming Language Type Declarations</th>
+                    <th>Database DDL (Data Definition Language)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Specify transient in-memory structures bound to process execution.</td>
+                    <td>Specify persistent database catalog schemas surviving process lifetimes.</td>
+                  </tr>
+                  <tr>
+                    <td>Scoped to an individual program, module, or package.</td>
+                    <td>Globally cataloged and shared across heterogeneous enterprise applications.</td>
+                  </tr>
+                  <tr>
+                    <td>Structures disappear automatically upon process termination.</td>
+                    <td>Definitions and data remain permanently recorded on non-volatile storage.</td>
+                  </tr>
+                  <tr>
+                    <td>Cannot natively enforce cross-table relational constraints.</td>
+                    <td>Declaratively declares primary keys, foreign keys, and referential actions.</td>
+                  </tr>
+                  <tr>
+                    <td>Any structure change requires recompiling and redeploying code.</td>
+                    <td>Schema mappings and metadata provide program-data independence.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+
+        <details class="practice-box">
+          <summary class="practice-summary">Practice 1.5 — Video Platform: Actual Video Bytes vs. Video Metadata</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 1</span>
+            <h4>Question:</h4>
+            <p>Analyze how file processing vs. DBMS concerns apply to video payloads vs. structured metadata (title, tags, views).</p>
+            <h4>Lucid Solution:</h4>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Dimension</th>
+                    <th>Actual Video Media Payload (BLOB)</th>
+                    <th>Structured Metadata (Title, Uploader, Views, Tags)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Storage Strategy</strong></td>
+                    <td>Stored in optimized blob/object storage (e.g., S3/CDN); database holds immutable URI pointers.</td>
+                    <td>Stored in normalized relational tables with indexing on titles, categories, and tags.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Integrity &amp; Consistency</strong></td>
+                    <td>Validated via byte checksums and format codecs.</td>
+                    <td>Enforced via foreign keys (uploader must exist) and check constraints.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Concurrency &amp; Transactions</strong></td>
+                    <td>Read-heavy, append-only streams; cache-friendly.</td>
+                    <td>High-write concurrent counters (views, likes, comments) requiring transactional consistency.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+
+        <!-- Silberschatz Chapter 2 Exercises -->
+        <details class="practice-box">
+          <summary class="practice-summary">Exercise 2.1 — Identifying Primary Keys in Employee Database</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 2</span>
+            <h4>Question:</h4>
+            <p>Determine suitable primary keys for: <code>employee(person_name, street, city)</code>, <code>works(person_name, company_name, salary)</code>, <code>company(company_name, city)</code>, and <code>manages(person_name, manager_name)</code>.</p>
+            <h4>Lucid Solution:</h4>
+            <ul>
+              <li><code>employee</code>: <strong><code>person_name</code></strong> (assuming names are unique in the miniworld; otherwise an artificial <code>employee_id</code> is preferred).</li>
+              <li><code>works</code>: <strong><code>person_name</code></strong> if employees work for at most one company; <strong><code>(person_name, company_name)</code></strong> if multi-company employment is permitted.</li>
+              <li><code>company</code>: <strong><code>company_name</code></strong> (guaranteed unique enterprise identifier).</li>
+              <li><code>manages</code>: <strong><code>person_name</code></strong> assuming each employee reports to at most one direct supervisor.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="practice-box">
+          <summary class="practice-summary">Exercise 2.2 — Foreign Key Violation Scenarios</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 2</span>
+            <h4>Question:</h4>
+            <p>Give examples of insert and delete operations violating <code>instructor.dept_name &rarr; department.dept_name</code>.</p>
+            <h4>Lucid Solution:</h4>
+            <ol>
+              <li>
+                <strong>Insert Violation:</strong> Attempting to insert an instructor with <code>dept_name = 'Cybernetics'</code> when <code>'Cybernetics'</code> does not exist as a primary key in <code>department</code>.
+              </li>
+              <li>
+                <strong>Delete Violation:</strong> Attempting to delete the <code>'Computer Science'</code> department tuple while instructor records still reference <code>'Computer Science'</code> (under default <code>RESTRICT</code> mode).
+              </li>
+            </ol>
+          </div>
+        </details>
+
+        <details class="practice-box">
+          <summary class="practice-summary">Exercise 2.4 — Sample Rows vs. General Key Proof</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 2</span>
+            <h4>Question:</h4>
+            <p>If no two instructors in a sample table share a name, does that prove <code>name</code> is a candidate key?</p>
+            <h4>Lucid Solution:</h4>
+            <p>
+              <strong>No.</strong> A candidate key is a constraint on all <em>possible future valid states</em> of a relation, not merely a coincidence observed in a sample extension. Two instructors could easily share a name in the real world. A key must be guaranteed unique by structural enterprise rules.
+            </p>
+          </div>
+        </details>
+
+        <!-- Navathe Chapter 5 Exercise 5.11 -->
+        <details class="practice-box">
+          <summary class="practice-summary">Exercise 5.11 — COMPANY Database Constraint Verification</summary>
+          <div class="practice-content">
+            <span class="qtag">Navathe Ch 5</span>
+            <h4>Question:</h4>
+            <p>Evaluate whether each operation on the COMPANY database is Acceptable or Rejected, stating the violated constraint.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Operation</th>
+                    <th>Verdict</th>
+                    <th>Violated Constraint &amp; Justification</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Insert into <code>PROJECT</code> with non-existent <code>Dnum = 2</code></td>
+                    <td><strong style="color:var(--red);">Rejected</strong></td>
+                    <td><strong>Referential Integrity:</strong> Department 2 does not exist in <code>DEPARTMENT</code>.</td>
+                  </tr>
+                  <tr>
+                    <td>Insert into <code>DEPARTMENT</code> with existing <code>Dnumber = 4</code></td>
+                    <td><strong style="color:var(--red);">Rejected</strong></td>
+                    <td><strong>Primary Key / Uniqueness:</strong> Duplicate primary key value.</td>
+                  </tr>
+                  <tr>
+                    <td>Insert into <code>WORKS_ON</code> with <code>Pno = NULL</code></td>
+                    <td><strong style="color:var(--red);">Rejected</strong></td>
+                    <td><strong>Entity Integrity:</strong> <code>Pno</code> is part of the composite primary key <code>(Essn, Pno)</code>.</td>
+                  </tr>
+                  <tr>
+                    <td>Delete <code>WORKS_ON</code> tuples with <code>Essn = '333445555'</code></td>
+                    <td><strong style="color:var(--green);">Acceptable</strong></td>
+                    <td>Deleting from a referencing child table creates no orphaned foreign keys.</td>
+                  </tr>
+                  <tr>
+                    <td>Delete <code>EMPLOYEE</code> tuple referenced by <code>DEPARTMENT.Mgr_ssn</code></td>
+                    <td><strong style="color:var(--red);">Rejected</strong></td>
+                    <td><strong>Referential Integrity:</strong> Active manager record cannot be deleted under <code>RESTRICT</code>.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>DBMS Master Study Suite</strong> &middot; Module 1 of 4
+      </div>
+      <div>
+        <a href="master_sql_ch3.html">Next Module: Chapter 3 SQL Fundamentals &rarr;</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="dbms_glossary.js"></script>
+</body>
+</html>

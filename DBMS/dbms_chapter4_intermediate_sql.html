@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Exam-ready DBMS notes for Chapter 4: Intermediate SQL, covering join expressions and views from the supplied textbook excerpt.">
+<title>Chapter 4 — Intermediate SQL | DBMS Study Notes</title>
+<style>
+:root{
+  color-scheme:light;
+  --paper:#fbfaf6;--surface:#ffffff;--surface-soft:#f1f5f4;--ink:#202c3a;--muted:#5c6876;
+  --navy:#233b5d;--teal:#24766f;--blue:#3c6eaa;--sage:#4c775c;--amber:#9a641a;--red:#a64c43;
+  --line:#d9e0e3;--code:#182737;--code-ink:#edf4f7;--link:#1e625f;--shadow:0 8px 24px rgba(31,49,66,.055);
+  --radius:14px;--reading:1000px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.72}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--navy)}
+a:focus-visible,summary:focus-visible{outline:3px solid #d49b3f;outline-offset:3px;border-radius:4px}
+header.hero{background:var(--navy);color:#f8fbfc;padding:clamp(2rem,5vw,4rem) 1.25rem 2.5rem;border-bottom:5px solid var(--teal)}
+.hero-inner,.layout{width:min(calc(100% - 2rem),var(--reading));margin-inline:auto}
+.kicker{text-transform:uppercase;letter-spacing:.16em;font-size:.76rem;font-weight:800;color:#b7dcd7}
+h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.12;letter-spacing:-.035em;margin:.55rem 0 1rem;max-width:780px}
+.hero p{max-width:780px;color:#e0e8ee;font-size:1.06rem;margin:.4rem 0}
+.hero-meta{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1.3rem}
+.hero-meta span{border:1px solid #61768c;border-radius:999px;padding:.27rem .75rem;font-size:.8rem;color:#e3edf2}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:2rem;align-items:start;padding:2rem 0 4rem}
+aside.toc{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow)}
+.toc h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:.2rem 0 .65rem}
+.toc a{display:block;font-size:.9rem;text-decoration:none;padding:.38rem .5rem;border-radius:7px;color:var(--ink);line-height:1.4}
+.toc a:hover{background:var(--surface-soft);color:var(--link)}
+.toc .sub{padding-left:1.1rem;font-size:.84rem;color:var(--muted)}
+main{min-width:0}
+section{margin:0 0 2.6rem;scroll-margin-top:1rem}
+h2{font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.25;letter-spacing:-.02em;color:var(--navy);margin:0 0 1rem;padding-bottom:.55rem;border-bottom:1px solid var(--line)}
+h3{font-size:1.22rem;line-height:1.35;color:var(--teal);margin:1.7rem 0 .6rem}
+h4{font-size:1.02rem;color:var(--navy);margin:1.25rem 0 .4rem}
+p{margin:.65rem 0 1rem}
+.lead{font-size:1.08rem;color:#394b5c}
+.small{font-size:.9rem;color:var(--muted)}
+.eyebrow{display:inline-block;font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;font-weight:800;color:var(--teal);margin-bottom:.35rem}
+.callout{border-left:4px solid var(--teal);padding:.85rem 1rem;background:#edf5f3;border-radius:0 10px 10px 0;margin:1rem 0}
+.callout.warning{border-left-color:var(--amber);background:#fbf3e5}
+.callout.key{border-left-color:var(--blue);background:#edf3fa}
+.callout p:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0}
+.concept{background:var(--surface);border:1px solid var(--line);padding:1rem 1.1rem;border-radius:12px}
+.concept h3,.concept h4{margin-top:0}
+.concept p:last-child{margin-bottom:0}
+.table-wrap{overflow-x:auto;max-width:100%;margin:1rem 0 1.3rem;border:1px solid var(--line);border-radius:10px;background:white}
+table{border-collapse:collapse;width:100%;font-size:.91rem;line-height:1.5;min-width:480px}
+th,td{padding:.56rem .72rem;text-align:left;vertical-align:top;border-bottom:1px solid #e4e9eb}
+th{background:#eaf0f2;color:var(--navy);font-weight:750}
+tbody tr:nth-child(even){background:#fafcfc}
+tbody tr:last-child td{border-bottom:0}
+code,kbd{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+:not(pre)>code{font-size:.9em;color:#175b59;background:#edf3f2;border:1px solid #dce8e5;border-radius:4px;padding:.08rem .25rem;overflow-wrap:anywhere}
+pre{margin:1rem 0 1.2rem;background:var(--code);color:var(--code-ink);border-radius:12px;padding:1rem 1.1rem;overflow-x:auto;font-size:.9rem;line-height:1.62;border:1px solid #273f53;tab-size:2}
+pre code{white-space:pre}
+.sql-label{display:block;margin:.8rem 0 -.65rem;color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.flow{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;margin:1.2rem 0;box-shadow:var(--shadow)}
+.flow svg{display:block;width:100%;height:auto;max-width:760px;margin:auto}
+figcaption{font-size:.88rem;color:var(--muted);margin:.6rem .15rem .1rem}
+.pill{display:inline-block;padding:.12rem .5rem;border-radius:999px;font-size:.78rem;font-weight:800;background:#e5efed;color:#1e655f;vertical-align:middle}
+.pill.blue{background:#e8eff8;color:#315d90}.pill.amber{background:#fbefd9;color:#855513}.pill.red{background:#f8e9e6;color:#953d35}
+.steps{counter-reset:step;list-style:none;padding:0;margin:1rem 0}
+.steps li{counter-increment:step;position:relative;padding:.2rem 0 .95rem 2.7rem;margin:0 0 .4rem;border-bottom:1px solid #e6ebec}
+.steps li::before{content:counter(step);position:absolute;left:0;top:.05rem;width:1.9rem;height:1.9rem;border-radius:50%;display:grid;place-items:center;background:#e5efed;color:#175e58;font-weight:800}
+.details{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:1rem 0;overflow:hidden}
+.details summary{cursor:pointer;padding:.8rem 1rem;font-weight:750;color:var(--navy);background:#f3f6f5}
+.details .inside{padding:.2rem 1rem 1rem}
+.details .inside p:last-child{margin-bottom:0}
+.tagline{font-size:.82rem;color:var(--muted);margin-top:-.3rem}
+.rule{height:1px;background:var(--line);margin:1.4rem 0}
+footer{border-top:1px solid var(--line);padding:1.5rem 1rem 2.5rem;color:var(--muted);text-align:center;font-size:.88rem}
+footer p{margin:.2rem}
+@media(max-width:850px){.layout{grid-template-columns:1fr;gap:1rem;padding-top:1rem}aside.toc{position:relative;top:auto;max-height:none}.toc nav{columns:2;column-gap:1rem}.toc nav a{break-inside:avoid}.grid2{grid-template-columns:1fr}}
+@media(max-width:520px){body{font-size:15px}.hero-inner,.layout{width:min(calc(100% - 1.1rem),var(--reading))}.toc nav{columns:1}pre{font-size:.81rem;padding:.8rem}.table-wrap{margin-inline:-.05rem}}
+@media print{
+  :root{--paper:#fff;--surface:#fff;--ink:#111;--muted:#444;--navy:#172d45;--line:#bbb}
+  body{font-size:10.5pt;line-height:1.5;background:#fff;color:#111}
+  .hero{background:#fff!important;color:#111!important;padding:1rem 0!important;border-bottom:2px solid #333!important}
+  .hero p,.hero-meta span{color:#333!important}.hero-meta span{border-color:#aaa}
+  .layout{display:block;width:100%;padding:1rem 0}
+  aside.toc{position:static;max-height:none;box-shadow:none;break-after:page}
+  .toc nav{columns:2}
+  section{break-inside:auto;margin-bottom:1.5rem}h2,h3,h4{break-after:avoid}
+  .concept,.flow,.callout,.details{box-shadow:none;break-inside:avoid}
+  .details summary{background:#eee}.details .inside{display:block!important}
+  pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f3f4!important;color:#111!important;border:1px solid #aaa;print-color-adjust:exact}
+  a{color:#111;text-decoration:none}
+  .table-wrap{overflow:visible;border-color:#aaa}table{min-width:0;font-size:8.5pt}th,td{padding:.25rem .35rem}
+  footer{padding:1rem 0}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+ <div class="hero-inner">
+  <div class="kicker">Database Management Systems · Chapter 4</div>
+  <h1>Intermediate SQL</h1>
+  <p>Understand how SQL combines related rows, preserves unmatched rows, and exposes carefully shaped virtual relations through views.</p>
+  <div class="hero-meta"><span>Join expressions</span><span>Views &amp; materialization</span><span>Exam-oriented explanations</span><span>Based on supplied excerpt</span></div>
+ </div>
+</header>
+<div class="layout">
+ <aside class="toc" aria-label="Table of contents">
+  <h2>On this page</h2>
+  <nav>
+   <a href="#roadmap">Chapter roadmap</a>
+   <a href="#sample-data">Example relations</a>
+   <a href="#joins">4.1 Join expressions</a>
+   <a class="sub" href="#join-conditions">4.1.1 Join conditions</a>
+   <a class="sub" href="#outer-joins">4.1.2 Outer joins</a>
+   <a class="sub" href="#join-types">4.1.3 Join types &amp; conditions</a>
+   <a href="#views">4.2 Views</a>
+   <a class="sub" href="#view-definition">4.2.1 View definition</a>
+   <a class="sub" href="#using-views">4.2.2 Using views</a>
+   <a class="sub" href="#materialized">4.2.3 Materialized views</a>
+   <a class="sub" href="#update-view">4.2.4 Update of a view</a>
+   <a href="#revision">Exam revision</a>
+  </nav>
+ </aside>
+ <main>
+  <section id="roadmap">
+   <span class="eyebrow">How the chapter fits together</span>
+   <h2>Chapter roadmap</h2>
+   <p class="lead">This excerpt develops two related ideas: joining relations without accidentally losing required rows, and defining views that present only the information a user needs.</p>
+   <div class="flow">
+    <svg viewBox="0 0 720 226" role="img" aria-labelledby="roadmap-title roadmap-desc">
+     <title id="roadmap-title">Chapter 4 concept map</title><desc id="roadmap-desc">Join expressions combine relations using a matching condition and optionally preserve unmatched rows. Views define virtual relations over underlying tables, and materialized views store results that must be maintained.</desc>
+     <defs><marker id="arrow-road" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#718398"/></marker></defs>
+     <rect x="246" y="8" width="228" height="44" rx="11" fill="#233b5d"/><text x="360" y="35" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">Intermediate SQL</text>
+     <path d="M360 52 V74 H176 V91 M360 74 H544 V91" fill="none" stroke="#718398" stroke-width="2" marker-end="url(#arrow-road)"/>
+     <rect x="38" y="92" width="276" height="50" rx="10" fill="#e7f2f0" stroke="#8abcb5"/><text x="176" y="113" fill="#1d625c" font-size="15" font-weight="700" text-anchor="middle">Join expressions</text><text x="176" y="130" fill="#304b50" font-size="11" text-anchor="middle">Match rows · preserve unmatched rows</text>
+     <rect x="406" y="92" width="276" height="50" rx="10" fill="#edf2f9" stroke="#9db5d5"/><text x="544" y="113" fill="#2d5688" font-size="15" font-weight="700" text-anchor="middle">Views</text><text x="544" y="130" fill="#304b50" font-size="11" text-anchor="middle">Shape access · reuse query definitions</text>
+     <path d="M176 142 V165 M544 142 V165" stroke="#718398" stroke-width="2" marker-end="url(#arrow-road)"/>
+     <rect x="44" y="166" width="264" height="42" rx="9" fill="#fff" stroke="#d0d9de"/><text x="176" y="183" fill="#233b5d" font-size="12" font-weight="700" text-anchor="middle">ON / USING / NATURAL</text><text x="176" y="198" fill="#586777" font-size="11" text-anchor="middle">INNER · LEFT · RIGHT · FULL</text>
+     <rect x="412" y="166" width="264" height="42" rx="9" fill="#fff" stroke="#d0d9de"/><text x="544" y="183" fill="#233b5d" font-size="12" font-weight="700" text-anchor="middle">Virtual vs materialized</text><text x="544" y="198" fill="#586777" font-size="11" text-anchor="middle">Access control · update ambiguity</text>
+    </svg>
+    <figcaption>Concept map: join choice determines which row combinations survive; view design determines which derived relation a user sees and whether its result is stored.</figcaption>
+   </div>
+   <div class="callout key"><strong>Central distinction:</strong> A join combines rows from relations. A view names a query result as a virtual relation. A materialized view stores that result and introduces a maintenance requirement.</div>
+  </section>
+
+  <section id="sample-data">
+   <span class="eyebrow">Source figures 4.1 and 4.2</span>
+   <h2>Example relations: <code>student</code> and <code>takes</code></h2>
+   <p>The join examples use two university relations. <code>student</code> stores student information; <code>takes</code> records course sections taken by students. The shared attribute is <code>ID</code>.</p>
+   <div class="grid2">
+    <div class="concept"><h3><code>student</code></h3><p>Attributes: <code>ID</code>, <code>name</code>, <code>dept name</code>, <code>tot cred</code>.</p><p class="small">Source example: student Snow (ID <code>70557</code>) has no matching tuple in <code>takes</code>.</p></div>
+    <div class="concept"><h3><code>takes</code></h3><p>Attributes: <code>ID</code>, <code>course id</code>, <code>sec id</code>, <code>semester</code>, <code>year</code>, <code>grade</code>.</p><p class="small">The grade for Tanaka (ID <code>98988</code>) in <code>BIO-301</code>, Summer 2010, is <code>NULL</code> because the grade has not yet been awarded.</p></div>
+   </div>
+   <details class="details">
+    <summary>Open the source student relation (13 tuples)</summary>
+    <div class="inside"><div class="table-wrap"><table><thead><tr><th>ID</th><th>name</th><th>dept name</th><th>tot cred</th></tr></thead><tbody>
+     <tr><td>00128</td><td>Zhang</td><td>Comp. Sci.</td><td>102</td></tr><tr><td>12345</td><td>Shankar</td><td>Comp. Sci.</td><td>32</td></tr><tr><td>19991</td><td>Brandt</td><td>History</td><td>80</td></tr><tr><td>23121</td><td>Chavez</td><td>Finance</td><td>110</td></tr><tr><td>44553</td><td>Peltier</td><td>Physics</td><td>56</td></tr><tr><td>45678</td><td>Levy</td><td>Physics</td><td>46</td></tr><tr><td>54321</td><td>Williams</td><td>Comp. Sci.</td><td>54</td></tr><tr><td>55739</td><td>Sanchez</td><td>Music</td><td>38</td></tr><tr><td>70557</td><td>Snow</td><td>Physics</td><td>0</td></tr><tr><td>76543</td><td>Brown</td><td>Comp. Sci.</td><td>58</td></tr><tr><td>76653</td><td>Aoi</td><td>Elec. Eng.</td><td>60</td></tr><tr><td>98765</td><td>Bourikas</td><td>Elec. Eng.</td><td>98</td></tr><tr><td>98988</td><td>Tanaka</td><td>Biology</td><td>120</td></tr>
+    </tbody></table></div></div>
+   </details>
+   <details class="details">
+    <summary>Open the source takes relation (21 tuples)</summary>
+    <div class="inside"><div class="table-wrap"><table><thead><tr><th>ID</th><th>course id</th><th>sec id</th><th>semester</th><th>year</th><th>grade</th></tr></thead><tbody>
+     <tr><td>00128</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td><td>A</td></tr><tr><td>00128</td><td>CS-347</td><td>1</td><td>Fall</td><td>2009</td><td>A-</td></tr><tr><td>12345</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td><td>C</td></tr><tr><td>12345</td><td>CS-190</td><td>2</td><td>Spring</td><td>2009</td><td>A</td></tr><tr><td>12345</td><td>CS-315</td><td>1</td><td>Spring</td><td>2010</td><td>A</td></tr><tr><td>12345</td><td>CS-347</td><td>1</td><td>Fall</td><td>2009</td><td>A</td></tr><tr><td>19991</td><td>HIS-351</td><td>1</td><td>Spring</td><td>2010</td><td>B</td></tr><tr><td>23121</td><td>FIN-201</td><td>1</td><td>Spring</td><td>2010</td><td>C+</td></tr><tr><td>44553</td><td>PHY-101</td><td>1</td><td>Fall</td><td>2009</td><td>B-</td></tr><tr><td>45678</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td><td>F</td></tr><tr><td>45678</td><td>CS-101</td><td>1</td><td>Spring</td><td>2010</td><td>B+</td></tr><tr><td>45678</td><td>CS-319</td><td>1</td><td>Spring</td><td>2010</td><td>B</td></tr><tr><td>54321</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td><td>A-</td></tr><tr><td>54321</td><td>CS-190</td><td>2</td><td>Spring</td><td>2009</td><td>B+</td></tr><tr><td>55739</td><td>MU-199</td><td>1</td><td>Spring</td><td>2010</td><td>A-</td></tr><tr><td>76543</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td><td>A</td></tr><tr><td>76543</td><td>CS-319</td><td>2</td><td>Spring</td><td>2010</td><td>A</td></tr><tr><td>76653</td><td>EE-181</td><td>1</td><td>Spring</td><td>2009</td><td>C</td></tr><tr><td>98765</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td><td>C-</td></tr><tr><td>98765</td><td>CS-315</td><td>1</td><td>Spring</td><td>2010</td><td>B</td></tr><tr><td>98988</td><td>BIO-101</td><td>1</td><td>Summer</td><td>2009</td><td>A</td></tr><tr><td>98988</td><td>BIO-301</td><td>1</td><td>Summer</td><td>2010</td><td>NULL</td></tr>
+    </tbody></table></div></div>
+   </details>
+  </section>
+
+  <section id="joins">
+   <span class="eyebrow">Section 4.1</span>
+   <h2>Join expressions</h2>
+   <p>A join combines tuples from two relations according to a matching rule. Natural join was introduced in Chapter 3; this chapter adds explicit join predicates and joins that preserve unmatched tuples.</p>
+   <div class="flow">
+    <svg viewBox="0 0 720 170" role="img" aria-labelledby="join-overview-title join-overview-desc">
+     <title id="join-overview-title">Join expression workflow</title><desc id="join-overview-desc">Two input relations are combined using a join condition. An inner join returns matching pairs; an outer join additionally preserves unmatched rows by padding missing-side attributes with null.</desc>
+     <defs><marker id="arrow-join" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#718398"/></marker></defs>
+     <rect x="20" y="28" width="150" height="48" rx="9" fill="#edf2f9" stroke="#9db5d5"/><text x="95" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#2d5688">student</text><text x="95" y="64" text-anchor="middle" font-size="11" fill="#485a6d">left relation</text>
+     <rect x="20" y="96" width="150" height="48" rx="9" fill="#e7f2f0" stroke="#8abcb5"/><text x="95" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="#1d625c">takes</text><text x="95" y="132" text-anchor="middle" font-size="11" fill="#485a6d">right relation</text>
+     <path d="M170 52 H232 V78 H266 M170 120 H232 V94 H266" fill="none" stroke="#718398" stroke-width="2" marker-end="url(#arrow-join)"/>
+     <rect x="268" y="58" width="176" height="55" rx="11" fill="#233b5d"/><text x="356" y="80" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">JOIN</text><text x="356" y="97" text-anchor="middle" font-size="11" fill="#e3edf2">condition on ID</text>
+     <path d="M444 85 H484 V49 H510 M484 85 V121 H510" fill="none" stroke="#718398" stroke-width="2" marker-end="url(#arrow-join)"/>
+     <rect x="512" y="25" width="188" height="48" rx="9" fill="#edf2f9" stroke="#9db5d5"/><text x="606" y="45" text-anchor="middle" font-size="13" font-weight="700" fill="#2d5688">INNER JOIN</text><text x="606" y="61" text-anchor="middle" font-size="11" fill="#485a6d">matching pairs only</text>
+     <rect x="512" y="97" width="188" height="48" rx="9" fill="#fbf3e5" stroke="#d7b16e"/><text x="606" y="117" text-anchor="middle" font-size="13" font-weight="700" fill="#855513">OUTER JOIN</text><text x="606" y="133" text-anchor="middle" font-size="11" fill="#66543a">preserve unmatched rows</text>
+    </svg>
+    <figcaption>The join condition defines a match. The join type determines what happens to rows that have no match.</figcaption>
+   </div>
+   <div class="grid2">
+    <div class="concept"><h3>Join condition</h3><p>Specifies which tuple pairs match. SQL offers <code>NATURAL</code>, <code>USING</code>, and <code>ON</code> forms in the supplied excerpt.</p></div>
+    <div class="concept"><h3>Join type</h3><p>Specifies whether nonmatching rows are discarded (<code>INNER</code>) or preserved on the left, right, or both sides (<code>OUTER</code>).</p></div>
+   </div>
+  </section>
+
+  <section id="join-conditions">
+   <span class="eyebrow">Section 4.1.1</span>
+   <h2>Join conditions: <code>ON</code></h2>
+   <p>The <code>ON</code> condition allows a general predicate over the relations being joined. It is written like a <code>WHERE</code> predicate, but uses the keyword <code>ON</code> and appears at the end of the join expression.</p>
+   <span class="sql-label">Example: explicit join predicate</span>
+   <pre><code>SELECT *
+FROM student JOIN takes
+  ON student.ID = takes.ID;</code></pre>
+   <p>This joins a student tuple to each <code>takes</code> tuple with the same <code>ID</code>. The result contains two columns named <code>ID</code>—one from <code>student</code> and one from <code>takes</code>—even though those values must match.</p>
+   <p>The following query is equivalent for this inner-join example:</p>
+   <pre><code>SELECT *
+FROM student, takes
+WHERE student.ID = takes.ID;</code></pre>
+   <p>To display the ID only once, list the desired attributes explicitly:</p>
+   <pre><code>SELECT student.ID AS ID, name, dept name, tot cred,
+       course id, sec id, semester, year, grade
+FROM student JOIN takes
+  ON student.ID = takes.ID;</code></pre>
+   <div class="callout key"><strong>Why have <code>ON</code> if <code>WHERE</code> can express the same condition?</strong> The <code>ON</code> clause makes join logic easier to read, separating it from other filters. More importantly, <code>ON</code> and <code>WHERE</code> are not interchangeable in outer joins; see <a href="#outer-joins">Section 4.1.2</a>.</div>
+  </section>
+
+  <section id="outer-joins">
+   <span class="eyebrow">Section 4.1.2</span>
+   <h2>Outer joins</h2>
+   <p>An inner join discards tuples that do not match. An outer join preserves selected nonmatching tuples by adding a result row in which attributes from the missing side are <code>NULL</code>.</p>
+   <p>In the source data, Snow (ID <code>70557</code>) is present in <code>student</code> but has no tuple in <code>takes</code>. A natural inner join therefore omits Snow. A left outer join keeps Snow and fills the <code>takes</code>-only attributes with <code>NULL</code>.</p>
+   <div class="table-wrap"><table><thead><tr><th>Join type</th><th>What is preserved?</th><th>What happens to unmatched tuples?</th></tr></thead><tbody>
+    <tr><td><strong>INNER JOIN</strong></td><td>Only tuples with a match on both sides.</td><td>Discarded from the result.</td></tr>
+    <tr><td><strong>LEFT OUTER JOIN</strong></td><td>All tuples from the left relation, plus matches from the right.</td><td>Unmatched left tuples are retained; right-side attributes are padded with <code>NULL</code>.</td></tr>
+    <tr><td><strong>RIGHT OUTER JOIN</strong></td><td>All tuples from the right relation, plus matches from the left.</td><td>Unmatched right tuples are retained; left-side attributes are padded with <code>NULL</code>.</td></tr>
+    <tr><td><strong>FULL OUTER JOIN</strong></td><td>All tuples from both relations.</td><td>Unmatched tuples from either side are retained with missing-side attributes set to <code>NULL</code>.</td></tr>
+   </tbody></table></div>
+   <h3>Left outer join: retain all students</h3>
+   <pre><code>SELECT *
+FROM student NATURAL LEFT OUTER JOIN takes;</code></pre>
+   <p>The matching rows are returned as in a natural join. In addition, Snow appears with the student's values and <code>NULL</code> for <code>course id</code>, <code>sec id</code>, <code>semester</code>, <code>year</code>, and <code>grade</code>.</p>
+   <h3>Find students who have not taken a course</h3>
+   <pre><code>SELECT ID
+FROM student NATURAL LEFT OUTER JOIN takes
+WHERE course id IS NULL;</code></pre>
+   <p>Because a real matched <code>takes</code> row has a course identifier, <code>course id IS NULL</code> identifies student rows preserved without a matching course-taking record in this example.</p>
+   <h3>Right outer join: reverse the relation order</h3>
+   <pre><code>SELECT *
+FROM takes NATURAL RIGHT OUTER JOIN student;</code></pre>
+   <p>This preserves the tuples from <code>student</code>, like the previous left-outer-join expression, with the result attributes arranged according to the order of the relations and join form.</p>
+   <h3>Full outer join: preserve unmatched tuples from both inputs</h3>
+   <p>The chapter’s example asks for all Computer Science students and all sections offered in Spring 2009, including sections not taken by a Computer Science student. The query first forms two filtered relations, then full-outer-joins them.</p>
+   <pre><code>SELECT *
+FROM (SELECT *
+      FROM student
+      WHERE dept name = 'Comp. Sci.')
+NATURAL FULL OUTER JOIN
+     (SELECT *
+      FROM takes
+      WHERE semester = 'Spring' AND year = 2009);</code></pre>
+   <div class="callout warning"><strong>Exam point:</strong> Outer joins introduce <code>NULL</code>-padded tuples specifically for rows that did not contribute to the corresponding inner-join result. They do not simply mean “join, then keep every row regardless of later filters.”</div>
+   <h3>Why moving <code>ON</code> to <code>WHERE</code> can change the result</h3>
+   <p>Compare these two queries:</p>
+   <pre><code>-- A: the ID match is part of the left outer join
+SELECT *
+FROM student LEFT OUTER JOIN takes
+  ON student.ID = takes.ID;</code></pre>
+   <pre><code>-- B: join on TRUE, then filter in WHERE
+SELECT *
+FROM student LEFT OUTER JOIN takes ON TRUE
+WHERE student.ID = takes.ID;</code></pre>
+   <p>Query A preserves Snow with nulls on the <code>takes</code> side because Snow has no matching ID. In Query B, <code>ON TRUE</code> makes the join condition true for every pair, so no null-padded row is generated for Snow at the join stage. The later <code>WHERE</code> predicate then removes combinations whose IDs differ. Snow disappears.</p>
+   <div class="flow">
+    <svg viewBox="0 0 720 186" role="img" aria-labelledby="on-where-title on-where-desc">
+     <title id="on-where-title">ON versus WHERE with left outer join</title><desc id="on-where-desc">In query A, matching by ID occurs inside the outer join and a no-match student is preserved with null padding. In query B, joining on true produces pairs first and the where clause removes pairs with unequal IDs, so the no-match student disappears.</desc>
+     <defs><marker id="arrow-onwhere" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#718398"/></marker></defs>
+     <rect x="10" y="14" width="336" height="155" rx="12" fill="#eef5f2" stroke="#9bc6bd"/><text x="178" y="38" text-anchor="middle" font-size="15" font-weight="700" fill="#1d625c">Query A · ON ID match</text>
+     <rect x="35" y="55" width="286" height="38" rx="8" fill="#fff" stroke="#bdd4ce"/><text x="178" y="78" text-anchor="middle" font-size="12" fill="#253b45">LEFT OUTER JOIN ON student.ID = takes.ID</text>
+     <path d="M178 93 V112" stroke="#718398" stroke-width="2" marker-end="url(#arrow-onwhere)"/><rect x="35" y="116" width="286" height="36" rx="8" fill="#fff" stroke="#bdd4ce"/><text x="178" y="138" text-anchor="middle" font-size="12" font-weight="700" fill="#1d625c">Snow is preserved with NULLs</text>
+     <rect x="374" y="14" width="336" height="155" rx="12" fill="#fbf3e5" stroke="#d9bc86"/><text x="542" y="38" text-anchor="middle" font-size="15" font-weight="700" fill="#855513">Query B · ON TRUE then WHERE</text>
+     <rect x="399" y="55" width="286" height="38" rx="8" fill="#fff" stroke="#dfcca7"/><text x="542" y="78" text-anchor="middle" font-size="12" fill="#493e2b">Outer join on TRUE</text>
+     <path d="M542 93 V112" stroke="#718398" stroke-width="2" marker-end="url(#arrow-onwhere)"/><rect x="399" y="116" width="286" height="36" rx="8" fill="#fff" stroke="#dfcca7"/><text x="542" y="138" text-anchor="middle" font-size="12" font-weight="700" fill="#855513">WHERE removes Snow's pairs</text>
+    </svg>
+    <figcaption>Filter placement changes outer-join semantics: the join condition controls matching and null padding; the WHERE clause filters the already-produced rows.</figcaption>
+   </div>
+  </section>
+
+  <section id="join-types">
+   <span class="eyebrow">Section 4.1.3</span>
+   <h2>Join types and conditions</h2>
+   <p>SQL separates the <strong>join type</strong> from the <strong>join condition</strong>. The keyword <code>INNER</code> is optional: an ordinary join without an outer prefix is an inner join. Natural join is likewise equivalent to natural inner join.</p>
+   <div class="table-wrap"><table><thead><tr><th>Dimension</th><th>Available forms in this excerpt</th><th>Role</th></tr></thead><tbody>
+    <tr><td>Join type</td><td><code>INNER</code>, <code>LEFT OUTER</code>, <code>RIGHT OUTER</code>, <code>FULL OUTER</code></td><td>Determines which unmatched tuples survive.</td></tr>
+    <tr><td>Join condition</td><td><code>NATURAL</code>, <code>USING (A1, A2, ...)</code>, <code>ON predicate</code></td><td>Determines how tuples match.</td></tr>
+   </tbody></table></div>
+   <p>For example, these two expressions are equivalent:</p>
+   <pre><code>SELECT *
+FROM student JOIN takes USING (ID);</code></pre>
+   <pre><code>SELECT *
+FROM student INNER JOIN takes USING (ID);</code></pre>
+   <div class="callout"><strong>Remember:</strong> <code>NATURAL</code> automatically uses all same-named attributes as matching attributes; <code>USING</code> states exactly which same-named attributes to match; <code>ON</code> permits a general predicate.</div>
+  </section>
+
+  <section id="views">
+   <span class="eyebrow">Section 4.2</span>
+   <h2>Views</h2>
+   <p>A view is a virtual relation defined by a query. It lets a user work with a tailored representation of the data without needing direct access to every underlying relation or every attribute.</p>
+   <h3>Why use views?</h3>
+   <div class="grid2">
+    <div class="concept"><h4>Security</h4><p>A clerk may need an instructor's ID, name, and department, but should not see salary data. A view can expose only those permitted attributes.</p></div>
+    <div class="concept"><h4>Personalised data representation</h4><p>A user may need only Physics course sections in Fall 2009, with building and room details, rather than the complete logical model.</p></div>
+   </div>
+   <div class="callout warning"><strong>Why not store every query result as a normal relation?</strong> If the underlying instructor, course, or section data changes, a separately stored result can become stale. A normal view stores the query definition and computes the result when the view is used.</div>
+  </section>
+
+  <section id="view-definition">
+   <span class="eyebrow">Section 4.2.1</span>
+   <h2>View definition</h2>
+   <p>The general form of a view definition is:</p>
+   <pre><code>CREATE VIEW view_name AS
+&lt;query expression&gt;;</code></pre>
+   <p>The view name identifies the virtual relation; the query expression defines its contents.</p>
+   <h3>Example 1: hide instructor salaries</h3>
+   <pre><code>CREATE VIEW faculty AS
+SELECT ID, name, dept name
+FROM instructor;</code></pre>
+   <p>The <code>faculty</code> view conceptually contains the tuples produced by the query, but the normal view is not precomputed and stored. The database stores the defining query and computes the view relation when it is accessed.</p>
+   <h3>Example 2: Physics sections in Fall 2009</h3>
+   <pre><code>CREATE VIEW physics_fall_2009 AS
+SELECT course.course id, sec id, building, room number
+FROM course, section
+WHERE course.course id = section.course id
+  AND course.dept name = 'Physics'
+  AND section.semester = 'Fall'
+  AND section.year = 2009;</code></pre>
+   <p>This view combines course and section data, then restricts it to Physics offerings from Fall 2009.</p>
+   <h3>Give derived attributes meaningful names</h3>
+   <p>When a selected expression such as <code>SUM(salary)</code> has no convenient attribute name, a view can specify the view attribute names explicitly.</p>
+   <pre><code>CREATE VIEW departments_total_salary (dept name, total salary) AS
+SELECT dept name, SUM(salary)
+FROM instructor
+GROUP BY dept name;</code></pre>
+   <h3>Build a view from another view</h3>
+   <pre><code>CREATE VIEW physics_fall_2009_watson AS
+SELECT course id, room number
+FROM physics_fall_2009
+WHERE building = 'Watson';</code></pre>
+   <p>The definition reuses the earlier <code>physics_fall_2009</code> view. Conceptually, the database can substitute the defining query of that earlier view into the new view's definition.</p>
+   <div class="flow">
+    <svg viewBox="0 0 720 166" role="img" aria-labelledby="view-stack-title view-stack-desc">
+     <title id="view-stack-title">A view over underlying relations</title><desc id="view-stack-desc">The instructor relation feeds a stored view definition called faculty; when a user queries faculty, the definition is evaluated to produce the virtual result. The view definition is saved rather than the normal view result.</desc>
+     <defs><marker id="arrow-view" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#718398"/></marker></defs>
+     <rect x="16" y="48" width="180" height="54" rx="10" fill="#edf2f9" stroke="#9db5d5"/><text x="106" y="70" text-anchor="middle" font-size="14" font-weight="700" fill="#2d5688">instructor</text><text x="106" y="87" text-anchor="middle" font-size="11" fill="#485a6d">base relation</text>
+     <path d="M196 75 H263" stroke="#718398" stroke-width="2" marker-end="url(#arrow-view)"/>
+     <rect x="266" y="36" width="188" height="78" rx="10" fill="#e7f2f0" stroke="#8abcb5"/><text x="360" y="59" text-anchor="middle" font-size="14" font-weight="700" fill="#1d625c">faculty</text><text x="360" y="78" text-anchor="middle" font-size="11" fill="#304b50">stored query definition</text><text x="360" y="95" text-anchor="middle" font-size="11" fill="#304b50">not normally the result</text>
+     <path d="M454 75 H521" stroke="#718398" stroke-width="2" marker-end="url(#arrow-view)"/>
+     <rect x="524" y="48" width="180" height="54" rx="10" fill="#fff" stroke="#d0d9de"/><text x="614" y="70" text-anchor="middle" font-size="14" font-weight="700" fill="#233b5d">Virtual result</text><text x="614" y="87" text-anchor="middle" font-size="11" fill="#485a6d">computed on access</text>
+     <text x="360" y="145" text-anchor="middle" font-size="11" fill="#586777">Underlying changes are reflected when the view query is evaluated.</text>
+    </svg>
+    <figcaption>Normal view: the database stores the defining query rather than a permanent copy of its result.</figcaption>
+   </div>
+  </section>
+
+  <section id="using-views">
+   <span class="eyebrow">Section 4.2.2</span>
+   <h2>Using views in SQL queries</h2>
+   <p>A view name can be used wherever a relation name may appear. Querying a view is conceptually querying the relation returned by its defining query.</p>
+   <p>For example, to find Physics courses offered in the Watson building in Fall 2009:</p>
+   <pre><code>SELECT course id
+FROM physics_fall_2009
+WHERE building = 'Watson';</code></pre>
+   <p>The view's defining query supplies the relevant columns and rows; the outer query adds the building condition.</p>
+   <h3>How nested views connect</h3>
+   <ol class="steps">
+    <li><strong>Define the base view.</strong> <code>physics_fall_2009</code> joins course and section information and filters by department, semester, and year.</li>
+    <li><strong>Define the narrower view.</strong> <code>physics_fall_2009_watson</code> selects the course ID and room number for Watson-building rows from the first view.</li>
+    <li><strong>Evaluate when referenced.</strong> The view definition is expanded conceptually into the surrounding query; the result reflects the underlying data at evaluation time.</li>
+   </ol>
+   <div class="callout key"><strong>Exam phrase:</strong> A normal view is defined by a query; the system stores the view definition and recomputes the result when the view is accessed. Do not confuse this with a materialized view.</div>
+  </section>
+
+  <section id="materialized">
+   <span class="eyebrow">Section 4.2.3</span>
+   <h2>Materialized views</h2>
+   <p>A <strong>materialized view</strong> stores the result of a view query. If the underlying relations change, the stored result must be maintained so that it corresponds to the defining query.</p>
+   <p>For the view <code>departments_total_salary</code>, inserting or deleting an instructor—or changing an instructor's salary—can change the stored total for the relevant department.</p>
+   <h3>View maintenance strategies described in the source</h3>
+   <div class="table-wrap"><table><thead><tr><th>Strategy</th><th>When maintenance occurs</th><th>Implication</th></tr></thead><tbody>
+    <tr><td><strong>Immediate</strong></td><td>When an underlying relation is updated.</td><td>The materialized result is maintained at update time.</td></tr>
+    <tr><td><strong>Lazy</strong></td><td>When the view is accessed.</td><td>Maintenance work is deferred until use.</td></tr>
+    <tr><td><strong>Periodic recomputation</strong></td><td>At intervals selected by the system or administrator.</td><td>The stored result may be stale between refreshes.</td></tr>
+   </tbody></table></div>
+   <div class="grid2">
+    <div class="concept"><h3>Potential benefits</h3><p>Frequently used views may be faster when stored. Queries that aggregate large relations can be answered quickly from a much smaller stored aggregate result.</p></div>
+    <div class="concept"><h3>Costs and risks</h3><p>Materialization uses storage and adds overhead to updates. If refresh is periodic, the result may be stale and unsuitable when current data is required.</p></div>
+   </div>
+   <div class="callout warning"><strong>Standardisation note from the source:</strong> SQL does not define one standard way to declare a materialized view. Database systems may provide their own extensions and different maintenance policies.</div>
+  </section>
+
+  <section id="update-view">
+   <span class="eyebrow">Section 4.2.4</span>
+   <h2>Update of a view</h2>
+   <p>Queries through a view are often straightforward, but updates are harder: a change expressed against a virtual relation must be translated into changes to the actual underlying relations. Sometimes that translation is ambiguous or cannot produce the requested view result.</p>
+   <h3>Case 1: an insertion omits an underlying attribute</h3>
+   <p>Consider the <code>faculty</code> view that exposes ID, name, and department but not salary:</p>
+   <pre><code>CREATE VIEW faculty AS
+SELECT ID, name, dept name
+FROM instructor;</code></pre>
+   <p>A user attempts:</p>
+   <pre><code>INSERT INTO faculty
+VALUES ('30765', 'Green', 'Music');</code></pre>
+   <p>The underlying <code>instructor</code> relation also requires a salary value. The source describes two reasonable responses:</p>
+   <ul><li>Reject the insertion and return an error.</li><li>Insert <code>('30765', 'Green', 'Music', NULL)</code> into <code>instructor</code>.</li></ul>
+   <h3>Case 2: the requested view tuple cannot be represented by underlying rows</h3>
+   <p>The source defines a view combining instructor and department data:</p>
+   <pre><code>CREATE VIEW instructor_info AS
+SELECT ID, name, building
+FROM instructor, department
+WHERE instructor.dept name = department.dept name;</code></pre>
+   <p>Suppose a user inserts:</p>
+   <pre><code>INSERT INTO instructor_info
+VALUES ('69987', 'White', 'Taylor');</code></pre>
+   <p>If no instructor with ID <code>69987</code> exists and no department is in building <code>Taylor</code>, attempting to use <code>NULL</code> values in the underlying <code>instructor</code> and <code>department</code> relations still does not create the requested join result. The insertion cannot be translated into underlying tuples that make the intended row appear in the view.</p>
+   <div class="callout warning"><strong>Why updates are restricted:</strong> One row in a view may depend on more than one base relation, or omit attributes needed to create a valid base tuple. An apparently simple view change may not have a unique, correct translation.</div>
+   <h3>When does the source describe a view as updatable?</h3>
+   <p>The excerpt gives the following conditions for a view to be updatable in general:</p>
+   <ol class="steps">
+    <li>The <code>FROM</code> clause has only one database relation.</li>
+    <li>The <code>SELECT</code> clause contains only attribute names from that relation—no expressions, aggregates, or <code>DISTINCT</code>.</li>
+    <li>Every base-relation attribute omitted from the view can be set to <code>NULL</code>; it must not have a <code>NOT NULL</code> constraint and must not be part of a primary key.</li>
+    <li>The query has no <code>GROUP BY</code> or <code>HAVING</code> clause.</li>
+   </ol>
+   <p>The following view fits the stated pattern:</p>
+   <pre><code>CREATE VIEW history_instructors AS
+SELECT *
+FROM instructor
+WHERE dept name = 'History';</code></pre>
+   <h3>Use <code>WITH CHECK OPTION</code> to enforce the view condition</h3>
+   <p>Even when a view is updatable, an inserted row might fail the view's own filter. For example, the source notes that inserting a Biology instructor into the <code>history_instructors</code> view could place the tuple in <code>instructor</code> without making it appear in the view. By default, the source says SQL would allow this operation.</p>
+   <pre><code>CREATE VIEW history_instructors AS
+SELECT *
+FROM instructor
+WHERE dept name = 'History'
+WITH CHECK OPTION;</code></pre>
+   <p>With <code>WITH CHECK OPTION</code>, inserts are rejected if the inserted tuple does not satisfy the view's <code>WHERE</code> condition; updates are similarly rejected if their new values no longer satisfy it.</p>
+   <div class="callout key"><strong>Do not overgeneralise:</strong> These are the conditions and examples stated in the supplied excerpt. It also notes that SQL:1999 has more complex rules permitting updates through a broader class of views, and that database systems differ in their supported behaviour.</div>
+  </section>
+
+  <section id="revision">
+   <span class="eyebrow">Revision and retrieval</span>
+   <h2>Exam revision</h2>
+   <h3>High-value distinctions</h3>
+   <div class="table-wrap"><table><thead><tr><th>Compare</th><th>Remember</th></tr></thead><tbody>
+    <tr><td><code>ON</code> vs <code>WHERE</code></td><td>For an inner join, an equality match can often be expressed either way. For outer joins, moving a predicate from <code>ON</code> to <code>WHERE</code> can remove null-padded rows.</td></tr>
+    <tr><td>Inner vs outer join</td><td>Inner join returns matching rows; outer joins preserve unmatched rows from the specified side or both sides using <code>NULL</code> padding.</td></tr>
+    <tr><td>Normal vs materialized view</td><td>A normal view stores the query definition and computes its result when used. A materialized view stores the result and requires maintenance.</td></tr>
+    <tr><td>Querying vs updating a view</td><td>Querying asks the DBMS to evaluate a defining expression; updating requires translating the requested change into valid changes to underlying relations.</td></tr>
+    <tr><td>Updatable vs checked view</td><td>Updatability concerns whether a change can be mapped to base data. <code>WITH CHECK OPTION</code> additionally rejects changes that violate the view's filter.</td></tr>
+   </tbody></table></div>
+   <h3>Self-check questions</h3>
+   <details class="details"><summary>1. Why does Snow disappear from a natural inner join?</summary><div class="inside"><p>Snow has a tuple in <code>student</code> but no tuple in <code>takes</code> with the same ID, so there is no matching pair. An inner join includes only matching pairs.</p></div></details>
+   <details class="details"><summary>2. Which outer join preserves all rows from the left input?</summary><div class="inside"><p><code>LEFT OUTER JOIN</code>. An unmatched left-side tuple remains, with right-side attributes filled with <code>NULL</code>.</p></div></details>
+   <details class="details"><summary>3. Why can Query A and Query B in Section 4.1.2 return different rows?</summary><div class="inside"><p>In Query A, the ID match is the outer join's <code>ON</code> condition, so unmatched students receive null-padded rows. In Query B, joining on <code>TRUE</code> does not identify unmatched students; the later <code>WHERE</code> predicate removes unequal-ID pairs, including all combinations for Snow.</p></div></details>
+   <details class="details"><summary>4. Why might a materialized view become stale?</summary><div class="inside"><p>Its stored result may not yet have been refreshed after underlying data changes, especially when the system performs periodic rather than immediate maintenance.</p></div></details>
+   <details class="details"><summary>5. What does WITH CHECK OPTION add?</summary><div class="inside"><p>It rejects inserts or updates that would leave the resulting tuple outside the view's defining filter.</p></div></details>
+   <h3>One-minute mental model</h3>
+   <p><strong>Join:</strong> choose a match rule, then choose which unmatched rows survive. <strong>View:</strong> name a query result as a virtual relation. <strong>Materialized view:</strong> save the result, then maintain it as the source data changes. <strong>View update:</strong> check whether the requested change can be mapped unambiguously to base relations and whether it still satisfies the view definition.</p>
+   <p class="small">Coverage note: this document is based on the supplied Chapter 4 excerpt, covering the chapter introduction, Sections 4.1–4.1.3 and Sections 4.2–4.2.4. Further Chapter 4 topics were not included in the pasted material and have not been invented here.</p>
+  </section>
+ </main>
+</div>
+<footer><p><strong>DBMS · Chapter 4 — Intermediate SQL</strong></p><p>Standalone HTML · Responsive reading layout · Print-friendly · No build process or external libraries required</p></footer>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 2: Chapter 3 — Introduction to SQL | DBMS Master Guide</title>
+  <link rel="stylesheet" href="dbms_theme.css">
+</head>
+<body>
+
+  <!-- Master Top Navigation -->
+  <nav class="master-nav" aria-label="Master Suite Navigation">
+    <div class="master-nav-inner">
+      <a href="index.html" class="master-brand">
+        <span>DBMS Hub</span> Master Study Suite
+      </a>
+      <div class="master-links">
+        <a href="master_dbms_foundations.html">1. Foundations &amp; ER/Relational</a>
+        <a href="master_sql_ch3.html" class="active">2. Chapter 3: SQL Fundamentals</a>
+        <a href="master_sql_ch4.html">3. Chapter 4: Intermediate SQL</a>
+        <a href="master_dbms_internals_lab.html">4. Internals &amp; Lab Practice</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="kicker">Module 2 · SQL Query Engine Reference</span>
+      <h1>Chapter 3: Introduction to SQL Fundamentals</h1>
+      <p class="lead">
+        A concept-first textbook guide to SQL: schema creation (DDL), table constraints, the three-clause query structure, multi-relation joins, set operations, three-valued null logic, aggregation, nested subqueries, and safe database modification.
+      </p>
+      <div class="hero-meta">
+        <span class="pill">Textbook: Silberschatz Chapter 3</span>
+        <span class="pill">Syllabus: PCCEC504 Module 2 &middot; SQL Core</span>
+        <span class="pill">Hover glossary enabled</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Layout with Sticky TOC -->
+  <div class="layout">
+    <aside class="toc" aria-label="Table of contents">
+      <h2>Chapter 3 Navigation</h2>
+      <ol>
+        <li><a href="#sec-overview">3.1 SQL Architecture &amp; History</a></li>
+        <li><a href="#sec-ddl">3.2 SQL DDL &amp; Data Types</a></li>
+        <li><a href="#sec-basic-query">3.3 The Three-Clause Query Structure</a></li>
+        <li><a href="#sec-joins-cartesian">3.4 Joins &amp; Cartesian Products</a></li>
+        <li><a href="#sec-set-ops">3.5 Set Operations (UNION, INTERSECT, EXCEPT)</a></li>
+        <li><a href="#sec-nulls">3.6 NULLs &amp; Three-Valued Logic</a></li>
+        <li><a href="#sec-aggregates">3.7 Aggregation, GROUP BY &amp; HAVING</a></li>
+        <li><a href="#sec-subqueries">3.8 Nested Subqueries (IN, ALL, EXISTS)</a></li>
+        <li><a href="#sec-modification">3.9 DML Modification (INSERT, UPDATE, DELETE)</a></li>
+        <li><a href="#sec-exercises">3.10 Worked Practice Exercises (3.1–3.24)</a></li>
+      </ol>
+    </aside>
+
+    <main id="main-content">
+      <!-- 3.1 Overview -->
+      <section id="sec-overview">
+        <h2>3.1 SQL Architecture &amp; History</h2>
+        <p>
+          Originally developed by IBM at the San Jose Research Laboratory as <em>Sequel</em> for the System R project, <dfn data-term="rdbms">SQL</dfn> (Structured Query Language) is the standardized declarative language for managing relational databases.
+        </p>
+
+        <div class="mapping-panel">
+          <p class="mapping-title">The Functional Sublanguages of SQL</p>
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b><dfn data-term="ddl">DDL</dfn> (Data Definition)</b>
+              <small>Commands (CREATE, ALTER, DROP) that define relation schemas, integrity constraints, and physical storage indices.</small>
+            </div>
+            <div class="map-step">
+              <b><dfn data-term="dml">DML</dfn> (Data Manipulation)</b>
+              <small>Declarative commands (SELECT, INSERT, UPDATE, DELETE) for retrieving and modifying data tuples.</small>
+            </div>
+            <div class="map-step">
+              <b><dfn data-term="tcl">TCL</dfn> (Transaction Control)</b>
+              <small>Commands (COMMIT, ROLLBACK, SAVEPOINT) defining transaction boundaries and atomicity.</small>
+            </div>
+            <div class="map-step">
+              <b><dfn data-term="dcl">DCL</dfn> (Data Control)</b>
+              <small>Commands (GRANT, REVOKE) defining security policies and user privilege assignments.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3.2 DDL -->
+      <section id="sec-ddl">
+        <h2>3.2 SQL DDL &amp; Built-In Data Types</h2>
+        <p>
+          SQL <dfn data-term="ddl">Data Definition Language</dfn> provides declarative statements to establish table structures, data types, and integrity rules.
+        </p>
+
+        <h3>Core SQL Scalar Types</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>SQL Datatype</th><th>Characteristics</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>CHAR(n)</code></td><td>Fixed-length character string of length <em>n</em>. Short strings are padded with spaces.</td><td><code>CHAR(10)</code></td></tr>
+              <tr><td><code>VARCHAR(n)</code></td><td>Variable-length character string with maximum length <em>n</em>. No trailing space padding.</td><td><code>VARCHAR(50)</code></td></tr>
+              <tr><td><code>INT / INTEGER</code></td><td>Machine-dependent whole integer representation (usually 4 bytes).</td><td><code>42</code></td></tr>
+              <tr><td><code>SMALLINT</code></td><td>Small integer datatype (usually 2 bytes) for memory-constrained domains.</td><td><code>1024</code></td></tr>
+              <tr><td><code>NUMERIC(p, s)</code></td><td>Exact fixed-point decimal with <em>p</em> total precision digits and <em>s</em> decimal digits.</td><td><code>NUMERIC(8,2)</code> &rarr; <code>123456.78</code></td></tr>
+              <tr><td><code>FLOAT(n)</code></td><td>Floating-point number with precision of at least <em>n</em> binary digits.</td><td><code>3.14159</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Creating Tables with Integrity Constraints</h3>
+        <pre><code>CREATE TABLE department (
+    dept_name VARCHAR(20) PRIMARY KEY,
+    building VARCHAR(15),
+    budget NUMERIC(12,2) CHECK (budget &gt; 0)
+);
+
+CREATE TABLE instructor (
+    ID CHAR(5) PRIMARY KEY,
+    name VARCHAR(20) NOT NULL,
+    dept_name VARCHAR(20),
+    salary NUMERIC(8,2),
+    FOREIGN KEY (dept_name) REFERENCES department(dept_name)
+);</code></pre>
+
+        <div class="callout key">
+          <strong>DDL Table Lifecycle Commands:</strong>
+          <ul>
+            <li><code>DROP TABLE r;</code> completely removes the table schema and all its rows from the database catalog.</li>
+            <li><code>DELETE FROM r;</code> retains the table schema and columns, but deletes all stored data rows.</li>
+            <li><code>ALTER TABLE r ADD column_name datatype;</code> appends a new column (populated initially with NULLs) to an existing table.</li>
+            <li><code>ALTER TABLE r DROP COLUMN column_name;</code> drops an existing column and its data.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 3.3 Basic Query -->
+      <section id="sec-basic-query">
+        <h2>3.3 The Three-Clause Query Structure</h2>
+        <p>
+          The fundamental building block of SQL retrieval consists of three declarative clauses:
+        </p>
+        <pre><code>SELECT A1, A2, ..., An
+FROM r1, r2, ..., rm
+WHERE P;</code></pre>
+
+        <div class="mapping-panel">
+          <p class="mapping-title">Conceptual Execution Order of an SQL Query</p>
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>1. FROM Clause</b>
+              <small>Computes the Cartesian product of all relations listed: <code>r1 &times; r2 &times; ... &times; rm</code>.</small>
+            </div>
+            <div class="map-step">
+              <b>2. WHERE Clause</b>
+              <small>Applies the Boolean predicate <code>P</code> to filter surviving row combinations.</small>
+            </div>
+            <div class="map-step">
+              <b>3. SELECT Clause</b>
+              <small>Projects the requested attribute columns <code>A1, A2, ..., An</code> and computes expressions.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout warning">
+          <strong>Duplicates in SQL:</strong> Unlike pure relational algebra (which operates strictly on mathematical sets and removes duplicates automatically), SQL relations are <em>multisets (bags)</em>. The <code>SELECT</code> clause retains duplicate tuples unless explicitly commanded via <code>SELECT DISTINCT</code>.
+        </div>
+      </section>
+
+      <!-- 3.4 Joins & Cartesian Products -->
+      <section id="sec-joins-cartesian">
+        <h2>3.4 Multi-Relation Queries &amp; Joins</h2>
+        <p>
+          When multiple tables appear in the <code>FROM</code> clause, SQL forms the Cartesian product before filtering with the join predicate.
+        </p>
+        <pre><code>-- Find names of all instructors along with course ID they teach
+SELECT name, course_id
+FROM instructor, teaches
+WHERE instructor.ID = teaches.ID;</code></pre>
+
+        <h3>Natural Join vs. Explicit Join</h3>
+        <p>
+          A <dfn data-term="natural join">natural join</dfn> automatically equates all columns with matching names in both tables and eliminates duplicate attribute columns:
+        </p>
+        <pre><code>SELECT name, course_id
+FROM instructor NATURAL JOIN teaches;</code></pre>
+
+        <div class="callout warning">
+          <strong>The Danger of NATURAL JOIN:</strong> If two tables happen to share an attribute name with different semantic meanings (e.g., <code>student.dept_name</code> and <code>course.dept_name</code>), a natural join will inadvertently require both to match, silently eliminating legitimate records! Use <code>JOIN ... USING (attribute)</code> or explicit <code>ON</code> predicates instead.
+        </div>
+      </section>
+
+      <!-- 3.5 Set Operations -->
+      <section id="sec-set-ops">
+        <h2>3.5 Set Operations: UNION, INTERSECT &amp; EXCEPT</h2>
+        <p>
+          SQL supports mathematical set operations across two relations. Both input queries must be <em>union compatible</em>: they must possess the same number of columns, and corresponding column types must be compatible.
+        </p>
+        <ul>
+          <li><code>UNION</code>: Computes the set union, automatically eliminating duplicates (use <code>UNION ALL</code> to retain duplicates).</li>
+          <li><code>INTERSECT</code>: Computes the set intersection of rows appearing in both query results (use <code>INTERSECT ALL</code> for multisets).</li>
+          <li><code>EXCEPT</code>: Computes the set difference (tuples in query 1 not present in query 2).</li>
+        </ul>
+      </section>
+
+      <!-- 3.6 NULLs & Three-Valued Logic -->
+      <section id="sec-nulls">
+        <h2>3.6 NULL Values &amp; Three-Valued Logic</h2>
+        <p>
+          In SQL, <dfn data-term="null">NULL</dfn> represents a missing, unrecorded, or inapplicable attribute value. Comparisons involving NULL return the truth value <code>UNKNOWN</code> rather than <code>TRUE</code> or <code>FALSE</code>.
+        </p>
+
+        <h3>Three-Valued Truth Tables</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>P</th><th>Q</th><th>P AND Q</th><th>P OR Q</th><th>NOT P</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>TRUE</td><td>UNKNOWN</td><td>UNKNOWN</td><td>TRUE</td><td>FALSE</td></tr>
+              <tr><td>FALSE</td><td>UNKNOWN</td><td>FALSE</td><td>UNKNOWN</td><td>TRUE</td></tr>
+              <tr><td>UNKNOWN</td><td>UNKNOWN</td><td>UNKNOWN</td><td>UNKNOWN</td><td>UNKNOWN</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout key">
+          <strong>Filtering Behavior:</strong> A <code>WHERE</code> clause keeps a row <em>only if</em> the predicate evaluates strictly to <code>TRUE</code>. Any tuple where the condition evaluates to <code>FALSE</code> or <code>UNKNOWN</code> is discarded.
+        </div>
+      </section>
+
+      <!-- 3.7 Aggregates -->
+      <section id="sec-aggregates">
+        <h2>3.7 Aggregation, GROUP BY &amp; HAVING</h2>
+        <p>
+          SQL aggregate functions (<code>AVG</code>, <code>MIN</code>, <code>MAX</code>, <code>SUM</code>, <code>COUNT</code>) compute a single summary scalar over a collection of values.
+        </p>
+        <pre><code>-- Find average instructor salary per department for departments with avg &gt; 60000
+SELECT dept_name, AVG(salary) AS avg_salary
+FROM instructor
+GROUP BY dept_name
+HAVING AVG(salary) &gt; 60000;</code></pre>
+
+        <div class="callout warning">
+          <strong>The Difference Between WHERE and HAVING:</strong>
+          <ul>
+            <li><code>WHERE</code> filters individual tuples <em>before</em> grouping occurs.</li>
+            <li><code>HAVING</code> filters entire groups <em>after</em> grouping and aggregate computation have occurred.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 3.8 Nested Subqueries -->
+      <section id="sec-subqueries">
+        <h2>3.8 Nested Subqueries: IN, ALL, EXISTS &amp; UNIQUE</h2>
+        <p>
+          A nested subquery is a <code>SELECT-FROM-WHERE</code> expression embedded inside another query.
+        </p>
+        <ul>
+          <li><strong>Set Membership (<code>IN</code> / <code>NOT IN</code>):</strong> Tests if a value exists within the subquery's result set.</li>
+          <li><strong>Set Comparison (<code>&gt; SOME</code> / <code>&gt; ALL</code>):</strong> Compares a scalar against every value in a set (e.g., <code>&gt; ALL</code> tests if the scalar is strictly greater than the maximum value of the subquery).</li>
+          <li><strong>Empty Set Test (<code>EXISTS</code> / <code>NOT EXISTS</code>):</strong> Returns <code>TRUE</code> if the nested subquery produces at least one row. Often used in correlated subqueries.</li>
+        </ul>
+      </section>
+
+      <!-- 3.9 DML Modification -->
+      <section id="sec-modification">
+        <h2>3.9 Database Modification: INSERT, UPDATE &amp; DELETE</h2>
+        <p>
+          Data Manipulation Language (DML) statements alter the database state:
+        </p>
+        <ul>
+          <li><code>INSERT INTO table VALUES (...);</code> or <code>INSERT INTO table SELECT ...;</code></li>
+          <li><code>DELETE FROM table WHERE predicate;</code> deletes rows satisfying the predicate.</li>
+          <li><code>UPDATE table SET column = expr WHERE predicate;</code> modifies attribute values in surviving rows.</li>
+        </ul>
+      </section>
+
+      <!-- 3.10 Exercises -->
+      <section id="sec-exercises">
+        <h2>3.10 Worked Practice Exercises &amp; Solutions</h2>
+
+        <details class="practice-box">
+          <summary class="practice-summary">Exercise 3.1 — University SQL Queries (a, b, c)</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 3.1</span>
+            <h4>(a) Find titles of courses in Comp. Sci. with 3 credits:</h4>
+            <pre><code>SELECT title
+FROM course
+WHERE dept_name = 'Comp. Sci.' AND credits = 3;</code></pre>
+
+            <h4>(b) Find IDs of all students taught by instructor Einstein (no duplicates):</h4>
+            <pre><code>SELECT DISTINCT takes.ID
+FROM takes, teaches, instructor
+WHERE takes.course_id = teaches.course_id
+  AND takes.sec_id = teaches.sec_id
+  AND takes.semester = teaches.semester
+  AND takes.year = teaches.year
+  AND teaches.ID = instructor.ID
+  AND instructor.name = 'Einstein';</code></pre>
+
+            <h4>(c) Find highest salary of any instructor:</h4>
+            <pre><code>SELECT MAX(salary)
+FROM instructor;</code></pre>
+          </div>
+        </details>
+
+        <details class="practice-box">
+          <summary class="practice-summary">Exercise 3.2 — Grade Points &amp; GPA Calculation</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 3.2</span>
+            <h4>Question:</h4>
+            <p>Compute total grade points earned by student '12345' across all completed courses, multiplying course credits by letter-grade value (A=4, B=3, C=2, D=1, F=0).</p>
+            <h4>Lucid Solution:</h4>
+            <pre><code>SELECT SUM(course.credits * point_mapping.points) AS total_points
+FROM takes
+JOIN course ON takes.course_id = course.course_id
+JOIN (
+    VALUES ('A', 4), ('B', 3), ('C', 2), ('D', 1), ('F', 0)
+) AS point_mapping(grade, points) ON takes.grade = point_mapping.grade
+WHERE takes.ID = '12345';</code></pre>
+          </div>
+        </details>
+
+        <details class="practice-box">
+          <summary class="practice-summary">Exercise 3.3 — Salary Raises for Instructors</summary>
+          <div class="practice-content">
+            <span class="qtag">Silberschatz Ch 3.3</span>
+            <h4>Question:</h4>
+            <p>Give a 5% salary raise to instructors earning less than $100,000, and a 3% raise to all others.</p>
+            <h4>Lucid Solution:</h4>
+            <pre><code>UPDATE instructor
+SET salary = CASE
+    WHEN salary &lt; 100000 THEN salary * 1.05
+    ELSE salary * 1.03
+END;</code></pre>
+            <div class="callout key">
+              <strong>Order Dependency Warning:</strong> If coded as two independent <code>UPDATE</code> statements without a <code>CASE</code> construct, an instructor earning $98,000 might be raised to $102,900 by the first statement, and then mistakenly raised a second time by the subsequent statement! The <code>CASE</code> expression prevents this anomaly.
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>DBMS Master Study Suite</strong> &middot; Module 2 of 4
+      </div>
+      <div>
+        <a href="master_sql_ch4.html">Next Module: Chapter 4 Intermediate SQL &rarr;</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="dbms_glossary.js"></script>
+</body>
+</html>

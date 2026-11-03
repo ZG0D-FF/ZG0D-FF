@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Chapter 3 — Introduction to SQL | DBMS Study Notes</title>
+<style>
+:root{
+  --paper:#f7f6f1; --surface:#fffefa; --ink:#24313c; --muted:#5d6a73;
+  --navy:#18364c; --teal:#2e6c68; --teal-soft:#e5f1ed; --blue-soft:#eaf0f6;
+  --sage:#55765b; --sage-soft:#edf3e9; --amber:#8a5a15; --amber-soft:#fbf0d8;
+  --line:#d9ded9; --code:#edf1f2; --link:#246b76; --shadow:0 8px 24px rgba(24,54,76,.055);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:1.25rem}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--navy)}
+a:focus-visible,button:focus-visible{outline:3px solid #b47c27;outline-offset:3px}
+.skip-link{position:absolute;left:-9999px;top:1rem;background:white;padding:.65rem 1rem;z-index:10}
+.skip-link:focus{left:1rem}
+.site-header{background:var(--navy);color:#f7f8f4;padding:2.8rem 1.25rem 2.4rem;border-bottom:5px solid var(--teal)}
+.header-inner{max-width:1180px;margin:auto}
+.eyebrow{margin:0 0 .5rem;text-transform:uppercase;letter-spacing:.14em;font-size:.76rem;font-weight:750;color:#bcd9d3}
+h1,h2,h3,h4{line-height:1.23;letter-spacing:-.025em;color:var(--navy)}
+h1{font-size:clamp(2.1rem,5vw,3.55rem);font-weight:750;max-width:850px;margin:.2rem 0 .85rem;color:#fff}
+.site-header .intro{max-width:770px;color:#e3eceb;font-size:1.08rem;margin:0}
+.header-meta{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.35rem}
+.pill{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:.27rem .7rem;font-size:.78rem;color:#f3f5f1}
+.page{max-width:1180px;margin:0 auto;padding:2rem 1.25rem 4rem;display:grid;grid-template-columns:225px minmax(0,790px);gap:2.5rem;align-items:start}
+.toc{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto;padding:.95rem 1rem 1rem;background:rgba(255,254,250,.82);border:1px solid var(--line);border-radius:14px}
+.toc h2{font-size:.87rem;letter-spacing:.07em;text-transform:uppercase;margin:.1rem 0 .75rem;color:var(--muted)}
+.toc ol{padding-left:1.2rem;margin:0;font-size:.86rem;line-height:1.5}
+.toc li{margin:.43rem 0}
+.toc a{text-decoration:none;color:#3b5664}
+.toc a:hover{text-decoration:underline}
+main{min-width:0}
+section{margin:0 0 3.2rem;scroll-margin-top:1.3rem}
+h2{font-size:clamp(1.55rem,3vw,2.05rem);margin:0 0 1rem;padding-bottom:.55rem;border-bottom:1px solid var(--line)}
+h3{font-size:1.25rem;margin:1.8rem 0 .55rem}
+h4{font-size:1rem;margin:1.2rem 0 .4rem;letter-spacing:0}
+p{margin:.65rem 0 1rem}
+.lead{font-size:1.08rem;color:#334752}
+.kicker{font-size:.77rem;text-transform:uppercase;letter-spacing:.11em;color:var(--teal);font-weight:750;margin:0 0 .45rem}
+.small{font-size:.91rem;color:var(--muted)}
+strong{font-weight:750;color:#1e3444}
+mark{background:#f7e8b9;color:#4d3a16;padding:.02rem .2rem;border-radius:3px}
+hr{border:0;border-top:1px solid var(--line);margin:1.6rem 0}
+.card,.callout,.diagram,.table-wrap{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.card{padding:1rem 1.15rem;margin:1rem 0}
+.callout{padding:.9rem 1.1rem;margin:1rem 0;border-left:4px solid var(--teal)}
+.callout h3,.callout h4{margin:.05rem 0 .35rem;font-size:1.02rem}
+.callout p:last-child,.card p:last-child{margin-bottom:0}
+.callout.definition{background:var(--teal-soft);border-left-color:var(--teal)}
+.callout.warning{background:var(--amber-soft);border-left-color:var(--amber)}
+.callout.exam{background:var(--blue-soft);border-left-color:#507c9d}
+.callout.source{background:#f2f2ed;border-left-color:#81877e}
+.two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
+.mini{border:1px solid var(--line);border-radius:10px;padding:.9rem;background:var(--surface)}
+.mini h3,.mini h4{margin:0 0 .35rem;font-size:1rem}
+.mini p{font-size:.93rem;margin:.3rem 0}
+.diagram{padding:1rem;overflow:hidden;margin:1.2rem 0}
+.diagram svg{width:100%;height:auto;display:block}
+figcaption{font-size:.88rem;color:var(--muted);margin:.65rem .1rem 0}
+pre{overflow-x:auto;padding:1rem 1.1rem;background:var(--code);border:1px solid #d8dfe0;border-radius:10px;color:#21313d;font-size:.9rem;line-height:1.6;tab-size:4;margin:.75rem 0 1rem}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+p code,li code,td code{font-size:.91em;background:#edf1ef;padding:.1rem .3rem;border-radius:4px;color:#244b52;overflow-wrap:anywhere}
+.kw{color:#1c6072;font-weight:750}.str{color:#81551c}.num{color:#7254a1}.comment{color:#66766a;font-style:italic}
+.table-wrap{overflow-x:auto;margin:1rem 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem;line-height:1.48}
+caption{text-align:left;font-weight:750;color:var(--navy);padding:.85rem 1rem .3rem}
+th,td{padding:.62rem .78rem;text-align:left;vertical-align:top;border-bottom:1px solid #e2e6e1}
+thead th{background:#e9efeb;color:#254650;font-size:.82rem;letter-spacing:.02em}
+tbody tr:nth-child(even){background:#fafaf6}
+tbody tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+.inline-link{white-space:nowrap}
+.term{color:var(--teal);font-weight:750}
+.flow-list{counter-reset:step;list-style:none;padding:0;margin:1rem 0}
+.flow-list li{counter-increment:step;position:relative;padding:.75rem .85rem .75rem 3.15rem;border:1px solid var(--line);border-radius:9px;margin:.55rem 0;background:var(--surface)}
+.flow-list li:before{content:counter(step);position:absolute;left:.8rem;top:.72rem;width:1.65rem;height:1.65rem;border-radius:50%;background:var(--teal);color:white;display:grid;place-items:center;font-size:.82rem;font-weight:750}
+.tag{display:inline-block;font-size:.76rem;font-weight:750;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);margin-right:.35rem}
+.schema-note{font-size:.9rem;color:var(--muted)}
+.answer details{margin:.55rem 0;border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:.7rem .9rem}
+.answer summary{cursor:pointer;font-weight:700;color:var(--navy)}
+.answer details p{margin:.6rem 0 .1rem}
+footer{border-top:1px solid var(--line);padding-top:1.4rem;color:var(--muted);font-size:.88rem}
+@media(max-width:920px){.page{grid-template-columns:1fr;gap:1.3rem}.toc{position:static;max-height:none}.toc ol{columns:2;column-gap:2rem}.toc li{break-inside:avoid}}
+@media(max-width:600px){body{font-size:15.5px}.site-header{padding:2.1rem 1rem 1.8rem}.page{padding:1.2rem 1rem 3rem}.toc ol{columns:1}.two-col,.three-col{grid-template-columns:1fr}pre{font-size:.82rem;padding:.8rem}.table-wrap{margin-left:0;margin-right:0}th,td{padding:.55rem .62rem}}
+@media print{
+  :root{--paper:#fff;--surface:#fff;--ink:#111;--muted:#444;--line:#bbb;--code:#f3f3f3}
+  body{background:white;color:#111;font-size:10.5pt;line-height:1.48}
+  .site-header{background:white;color:#111;border-bottom:2px solid #333;padding:1rem 0}
+  h1,.site-header h1{color:#111;font-size:25pt}.site-header .intro,.eyebrow,.pill{color:#333}
+  .pill{border-color:#888}
+  .page{display:block;max-width:none;padding:.6rem 0}
+  .toc{position:static;max-height:none;margin:0 0 1rem;break-inside:avoid}
+  .toc ol{columns:3}
+  section{margin-bottom:1.4rem;break-inside:auto}
+  h2,h3{break-after:avoid}
+  .card,.callout,.diagram,.table-wrap,pre{break-inside:avoid;box-shadow:none}
+  a{color:#111;text-decoration:none}
+  pre{white-space:pre-wrap;overflow:visible;font-size:8.5pt}
+  .diagram svg{max-height:250px}
+  footer{margin-top:1rem}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to study notes</a>
+<header class="site-header">
+  <div class="header-inner">
+    <p class="eyebrow">Database Management Systems · Chapter 3</p>
+    <h1>Introduction to SQL</h1>
+    <p class="intro">A concept-first guide to SQL’s role, data definition, integrity constraints, and the logic behind single-table and multi-table queries.</p>
+    <div class="header-meta">
+      <span class="pill">Sections 3.1–3.3.3</span>
+      <span class="pill">DDL · DML · Query structure</span>
+      <span class="pill">Responsive · Print-ready</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="toc" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#chapter-map">Chapter map</a></li>
+      <li><a href="#overview">SQL overview and history</a></li>
+      <li><a href="#ddl">What DDL defines</a></li>
+      <li><a href="#types">Built-in data types</a></li>
+      <li><a href="#schema">Creating schemas and constraints</a></li>
+      <li><a href="#table-operations">Insert, delete, drop, alter</a></li>
+      <li><a href="#query-structure">The three-clause query</a></li>
+      <li><a href="#single-relation">Queries on one relation</a></li>
+      <li><a href="#multiple-relations">Queries across relations</a></li>
+      <li><a href="#cartesian-product">Cartesian product and filtering</a></li>
+      <li><a href="#natural-join">Natural join</a></li>
+      <li><a href="#join-using">Safer joins with USING</a></li>
+      <li><a href="#revision">Revision and self-check</a></li>
+    </ol>
+  </nav>
+
+  <main id="main-content">
+    <section id="chapter-map">
+      <p class="kicker">Start here</p>
+      <h2>Chapter map: what SQL does</h2>
+      <p class="lead">SQL is commonly called a query language, but querying is only one of its jobs. It can define the database structure, read and change stored data, enforce integrity rules, define views, control transactions, and specify access rights.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 760 300" role="img" aria-labelledby="sql-map-title sql-map-desc">
+          <title id="sql-map-title">Main parts of SQL</title>
+          <desc id="sql-map-desc">SQL connects to schema definition, data manipulation, integrity and views, transaction control, programming-language integration, and authorization.</desc>
+          <rect x="280" y="15" width="200" height="52" rx="10" fill="#18364c"/>
+          <text x="380" y="47" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">SQL</text>
+          <path d="M380 67 V88 H125 V111 M380 88 H380 V111 M380 88 H635 V111" fill="none" stroke="#7a9a9a" stroke-width="2"/>
+          <path d="M380 88 V208 H125 V225 M380 208 V225 M380 208 H635 V225" fill="none" stroke="#7a9a9a" stroke-width="2"/>
+          <rect x="20" y="111" width="210" height="62" rx="9" fill="#e5f1ed" stroke="#2e6c68"/>
+          <text x="125" y="136" text-anchor="middle" font-size="15" font-weight="700" fill="#214c4b">DDL</text>
+          <text x="125" y="155" text-anchor="middle" font-size="12" fill="#214c4b">Schemas and structure</text>
+          <rect x="275" y="111" width="210" height="62" rx="9" fill="#eaf0f6" stroke="#507c9d"/>
+          <text x="380" y="136" text-anchor="middle" font-size="15" font-weight="700" fill="#24465b">DML</text>
+          <text x="380" y="155" text-anchor="middle" font-size="12" fill="#24465b">Query and modify data</text>
+          <rect x="530" y="111" width="210" height="62" rx="9" fill="#fbf0d8" stroke="#b47c27"/>
+          <text x="635" y="136" text-anchor="middle" font-size="15" font-weight="700" fill="#704b18">Integrity and views</text>
+          <text x="635" y="155" text-anchor="middle" font-size="12" fill="#704b18">Rules and virtual relations</text>
+          <rect x="20" y="225" width="210" height="56" rx="9" fill="#f1f2ed" stroke="#9ca49b"/>
+          <text x="125" y="248" text-anchor="middle" font-size="14" font-weight="700" fill="#35434b">Transactions</text>
+          <text x="125" y="266" text-anchor="middle" font-size="12" fill="#35434b">Begin and end</text>
+          <rect x="275" y="225" width="210" height="56" rx="9" fill="#f1f2ed" stroke="#9ca49b"/>
+          <text x="380" y="248" text-anchor="middle" font-size="14" font-weight="700" fill="#35434b">Embedded / dynamic SQL</text>
+          <text x="380" y="266" text-anchor="middle" font-size="12" fill="#35434b">Use from C, C++, Java…</text>
+          <rect x="530" y="225" width="210" height="56" rx="9" fill="#f1f2ed" stroke="#9ca49b"/>
+          <text x="635" y="248" text-anchor="middle" font-size="14" font-weight="700" fill="#35434b">Authorization</text>
+          <text x="635" y="266" text-anchor="middle" font-size="12" fill="#35434b">Access rights</text>
+        </svg>
+        <figcaption>SQL is a family of related capabilities, not merely a way to retrieve rows. The chapter introduces basic DDL and DML first; other features are developed in later chapters of the source text.</figcaption>
+      </figure>
+      <div class="callout source">
+        <h3>Source coverage</h3>
+        <p>These notes cover the supplied excerpt: Chapter 3, Sections 3.1, 3.2, and 3.3 through 3.3.3 (“The Natural Join”), including the <code>JOIN ... USING</code> example. Topics only mentioned as later-chapter material are identified as such rather than expanded into unrelated coverage.</p>
+      </div>
+    </section>
+
+    <section id="overview">
+      <p class="kicker">3.1 · Overview</p>
+      <h2>SQL overview and history</h2>
+      <p>IBM developed the original version of SQL, first called <em>Sequel</em>, as part of the System R project in the early 1970s. The name evolved to <strong>SQL (Structured Query Language)</strong>, which became the standard language used with relational databases.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Standards chronology listed in the supplied textbook excerpt</caption>
+          <thead><tr><th>Standard</th><th>Year / sequence</th><th>Context</th></tr></thead>
+          <tbody>
+            <tr><td>SQL-86</td><td>1986</td><td>ANSI and ISO published an SQL standard.</td></tr>
+            <tr><td>SQL-89</td><td>1989</td><td>ANSI published an extended standard.</td></tr>
+            <tr><td>SQL-92</td><td>Next version</td><td>The excerpt identifies this as the next standard.</td></tr>
+            <tr><td>SQL:1999, SQL:2003, SQL:2006, SQL:2008</td><td>Later revisions listed in the excerpt</td><td>The excerpt’s timeline is publication-era context and ends at SQL:2008; it should not be read as a current standards-status list.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>The main parts of SQL</h3>
+      <div class="two-col">
+        <article class="mini">
+          <h4>Data-definition language (DDL)</h4>
+          <p>Defines relation schemas and can delete or modify them. It also supports integrity constraints, views, and authorization-related declarations.</p>
+        </article>
+        <article class="mini">
+          <h4>Data-manipulation language (DML)</h4>
+          <p>Queries information and inserts, deletes, or modifies tuples in the database.</p>
+        </article>
+        <article class="mini">
+          <h4>Transaction control</h4>
+          <p>Provides commands for specifying the beginning and ending of transactions.</p>
+        </article>
+        <article class="mini">
+          <h4>Embedded and dynamic SQL</h4>
+          <p>Defines how SQL statements can be embedded in general-purpose languages such as C, C++, and Java.</p>
+        </article>
+      </div>
+      <p>The excerpt also highlights SQL support for integrity constraints, view definition, and authorization. It says the chapter surveys basic DML and DDL features; Chapter 4 covers joins, views, transactions, integrity constraints, types, and authorization in more detail; Chapter 5 covers programming-language access, functions and procedures, triggers, recursive queries, advanced aggregation, and data-analysis features. Object-oriented extensions are mentioned for Chapter 22.</p>
+      <div class="callout warning">
+        <h3>Implementation differences matter</h3>
+        <p>SQL implementations may differ: a product can add nonstandard features and omit parts of the standard, especially advanced features. If a feature from the text does not work in a particular DBMS, consult that system’s documentation.</p>
+      </div>
+    </section>
+
+    <section id="ddl">
+      <p class="kicker">3.2 · SQL data definition</p>
+      <h2>What does DDL define?</h2>
+      <p>The database system must be told which relations exist through a <strong>data-definition language (DDL)</strong>. In the supplied text, SQL DDL can describe more than column names: it can record the schema and the operational rules for each relation.</p>
+      <div class="card">
+        <p class="term">Information that DDL can specify</p>
+        <ol>
+          <li>The schema for each relation.</li>
+          <li>The types of values associated with each attribute.</li>
+          <li>Integrity constraints that stored data must satisfy.</li>
+          <li>Indices to be maintained for each relation.</li>
+          <li>Security and authorization information for each relation.</li>
+          <li>The physical storage structure of each relation on disk.</li>
+        </ol>
+      </div>
+      <p>The excerpt focuses here on basic schema definition and types, deferring the remaining DDL features to later chapters.</p>
+    </section>
+
+    <section id="types">
+      <p class="kicker">3.2.1 · Basic types</p>
+      <h2>Choose a type that matches the attribute</h2>
+      <p>A column’s type defines what kind of values it can store and, for sized types, what range or representation is allowed.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Built-in types covered in the excerpt</caption>
+          <thead><tr><th>Type</th><th>Meaning</th><th>Important detail</th></tr></thead>
+          <tbody>
+            <tr><td><code>CHAR(n)</code> / <code>CHARACTER(n)</code></td><td>Fixed-length character string.</td><td>Values are padded to length <code>n</code>.</td></tr>
+            <tr><td><code>VARCHAR(n)</code> / <code>CHARACTER VARYING(n)</code></td><td>Variable-length character string.</td><td>Maximum length is <code>n</code>; no padding is added just to fill the declared length when storing a value.</td></tr>
+            <tr><td><code>INT</code> / <code>INTEGER</code></td><td>Integer.</td><td>A finite subset of integers, dependent on the machine/system.</td></tr>
+            <tr><td><code>SMALLINT</code></td><td>Small integer.</td><td>A machine-dependent subset of the integer type.</td></tr>
+            <tr><td><code>NUMERIC(p,d)</code></td><td>Fixed-point number.</td><td><code>p</code> is total digits; <code>d</code> of those digits are to the right of the decimal point.</td></tr>
+            <tr><td><code>REAL</code></td><td>Floating-point number.</td><td>Precision is machine-dependent.</td></tr>
+            <tr><td><code>DOUBLE PRECISION</code></td><td>Double-precision floating-point number.</td><td>Precision is machine-dependent.</td></tr>
+            <tr><td><code>FLOAT(n)</code></td><td>Floating-point number.</td><td>Precision of at least <code>n</code> digits, as described by the excerpt.</td></tr>
+            <tr><td><code>NVARCHAR</code></td><td>Character data for multilingual text using Unicode.</td><td>The excerpt notes that many databases also support Unicode (UTF-8 representation) in <code>VARCHAR</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout definition">
+        <h3>Reading <code>NUMERIC(p,d)</code></h3>
+        <p><code>NUMERIC(3,1)</code> has three digits in total and one digit after the decimal point. The source example says <code>44.5</code> can be stored exactly, whereas <code>444.5</code> and <code>0.32</code> cannot be stored exactly in that type: the first exceeds the total precision, and the second uses more fractional digits than specified.</p>
+      </div>
+      <h3>NULL: absent, unknown, or not applicable</h3>
+      <p>Each type may allow a special value called <code>NULL</code>. In the excerpt, it indicates an absent value that may exist but be unknown, or a value that may not exist at all. A schema can prohibit NULL for selected attributes; see <a href="#constraints">integrity constraints</a>.</p>
+      <h3><code>CHAR</code> versus <code>VARCHAR</code></h3>
+      <div class="two-col">
+        <article class="mini">
+          <h4><code>CHAR(10)</code></h4>
+          <p>Storing <code>'Avi'</code> adds seven spaces to make the stored string ten characters long.</p>
+        </article>
+        <article class="mini">
+          <h4><code>VARCHAR(10)</code></h4>
+          <p>Storing <code>'Avi'</code> does not add spaces merely to reach length ten.</p>
+        </article>
+      </div>
+      <p>When comparing two values of type <code>CHAR</code>, the shorter value is padded with spaces before comparison. Between a <code>CHAR</code> value and a <code>VARCHAR</code> value, padding behavior can depend on the database system. Therefore, the same displayed text in a <code>CHAR</code> field and a <code>VARCHAR</code> field may compare as unequal in some systems.</p>
+      <div class="callout exam">
+        <h3>Practical recommendation from the source</h3>
+        <p>The excerpt recommends using <code>VARCHAR</code> instead of <code>CHAR</code> to avoid these padding/comparison problems.</p>
+      </div>
+    </section>
+
+    <section id="schema">
+      <p class="kicker">3.2.2 · Basic schema definition</p>
+      <h2>Create a relation and state its rules</h2>
+      <p>Use <code>CREATE TABLE</code> to define a relation. For example, a department relation has three attributes and a primary key:</p>
+      <pre><code><span class="kw">CREATE TABLE</span> department (
+    dept_name <span class="kw">VARCHAR</span>(20),
+    building  <span class="kw">VARCHAR</span>(15),
+    budget    <span class="kw">NUMERIC</span>(12,2),
+    <span class="kw">PRIMARY KEY</span> (dept_name)
+);</code></pre>
+      <p>Here, <code>dept_name</code> can contain up to 20 characters, <code>building</code> up to 15, and <code>budget</code> is a fixed-point number with 12 digits in total, including two digits after the decimal point. <code>dept_name</code> is declared as the primary key.</p>
+      <div class="callout source">
+        <h3>Identifier formatting note</h3>
+        <p>The supplied extract’s text rendering shows several multiword identifiers with spaces (for example, “dept name”). They are written with underscores here (for example, <code>dept_name</code>) to make the SQL examples practical while preserving the intended attribute names and meanings.</p>
+      </div>
+      <h3>General form</h3>
+      <pre><code><span class="kw">CREATE TABLE</span> r (
+    A1 D1,
+    A2 D2,
+    ...,
+    An Dn,
+    integrity_constraint_1,
+    ...,
+    integrity_constraint_k
+);</code></pre>
+      <p><code>r</code> is the relation name; each <code>Ai</code> is an attribute name; and <code>Di</code> is its domain/type, optionally with constraints restricting permitted values. A semicolon at the end of SQL statements is optional in many implementations.</p>
+
+      <h3 id="constraints">Three essential integrity constraints</h3>
+      <div class="three-col">
+        <article class="mini">
+          <h4><code>PRIMARY KEY</code></h4>
+          <p>The specified attribute or attribute set must be unique and non-NULL. No two tuples can share all primary-key values.</p>
+        </article>
+        <article class="mini">
+          <h4><code>FOREIGN KEY</code></h4>
+          <p>Values in the referencing attribute(s) must match primary-key values in a referenced relation.</p>
+        </article>
+        <article class="mini">
+          <h4><code>NOT NULL</code></h4>
+          <p>The attribute cannot contain the NULL value.</p>
+        </article>
+      </div>
+      <p>A primary key may contain several attributes: <code>PRIMARY KEY (A1, A2, ...)</code>. A composite key is unique as a combination; each primary-key attribute must be non-NULL.</p>
+      <p>For a foreign key, every referenced value must correspond to a key value in the target relation. For example, a course’s <code>dept_name</code> must identify a department that actually exists. Without that constraint, a course could refer to a nonexistent department.</p>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 780 355" role="img" aria-labelledby="schema-graph-title schema-graph-desc">
+          <title id="schema-graph-title">University schema and foreign-key links</title>
+          <desc id="schema-graph-desc">Department is referenced by Course and Instructor. Course is referenced by Section. Instructor and Section are both referenced by Teaches.</desc>
+          <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#648b88"/></marker></defs>
+          <rect x="25" y="25" width="210" height="82" rx="9" fill="#e5f1ed" stroke="#2e6c68" stroke-width="1.5"/>
+          <text x="40" y="48" font-size="16" font-weight="700" fill="#214c4b">department</text>
+          <text x="40" y="69" font-size="12" fill="#214c4b">PK dept_name</text>
+          <text x="40" y="88" font-size="12" fill="#214c4b">building · budget</text>
+          <rect x="285" y="25" width="210" height="82" rx="9" fill="#eaf0f6" stroke="#507c9d" stroke-width="1.5"/>
+          <text x="300" y="48" font-size="16" font-weight="700" fill="#24465b">course</text>
+          <text x="300" y="69" font-size="12" fill="#24465b">PK course_id</text>
+          <text x="300" y="88" font-size="12" fill="#24465b">FK dept_name</text>
+          <rect x="25" y="155" width="210" height="82" rx="9" fill="#eaf0f6" stroke="#507c9d" stroke-width="1.5"/>
+          <text x="40" y="178" font-size="16" font-weight="700" fill="#24465b">instructor</text>
+          <text x="40" y="199" font-size="12" fill="#24465b">PK ID</text>
+          <text x="40" y="218" font-size="12" fill="#24465b">FK dept_name · name NOT NULL</text>
+          <rect x="285" y="155" width="210" height="82" rx="9" fill="#fbf0d8" stroke="#b47c27" stroke-width="1.5"/>
+          <text x="300" y="178" font-size="16" font-weight="700" fill="#704b18">section</text>
+          <text x="300" y="199" font-size="12" fill="#704b18">PK course_id, sec_id,</text>
+          <text x="300" y="216" font-size="12" fill="#704b18">semester, year · FK course_id</text>
+          <rect x="545" y="155" width="210" height="82" rx="9" fill="#edf3e9" stroke="#55765b" stroke-width="1.5"/>
+          <text x="560" y="178" font-size="16" font-weight="700" fill="#354f39">teaches</text>
+          <text x="560" y="199" font-size="12" fill="#354f39">PK ID + section key</text>
+          <text x="560" y="216" font-size="12" fill="#354f39">FK ID and section key</text>
+          <path d="M235 65 H285" fill="none" stroke="#648b88" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="260" y="55" text-anchor="middle" font-size="10" fill="#526b69">dept_name</text>
+          <path d="M130 107 V155" fill="none" stroke="#648b88" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="139" y="137" font-size="10" fill="#526b69">dept_name</text>
+          <path d="M390 107 V155" fill="none" stroke="#648b88" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="399" y="137" font-size="10" fill="#526b69">course_id</text>
+          <path d="M235 195 H545" fill="none" stroke="#648b88" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="390" y="185" text-anchor="middle" font-size="10" fill="#526b69">ID</text>
+          <path d="M495 216 H520 V254 H650 V237" fill="none" stroke="#648b88" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="565" y="269" text-anchor="middle" font-size="10" fill="#526b69">section key</text>
+        </svg>
+        <figcaption>Conceptual map of the five relations shown in the excerpt. “PK” means primary key and “FK” means foreign key. Arrows run from the referenced relation toward the relation that depends on its key.</figcaption>
+      </figure>
+
+      <h3>University database: SQL DDL from the excerpt</h3>
+      <p class="schema-note">The table names, attributes, declared types, key definitions, and constraints below follow the supplied figure. In particular, the excerpt uses <code>VARCHAR(8)</code> for <code>section.course_id</code> and <code>teaches.course_id</code>, while <code>course.course_id</code> is <code>VARCHAR(7)</code>; this declaration has been preserved as supplied.</p>
+      <pre><code><span class="kw">CREATE TABLE</span> department (
+    dept_name <span class="kw">VARCHAR</span>(20),
+    building  <span class="kw">VARCHAR</span>(15),
+    budget    <span class="kw">NUMERIC</span>(12,2),
+    <span class="kw">PRIMARY KEY</span> (dept_name)
+);
+
+<span class="kw">CREATE TABLE</span> course (
+    course_id <span class="kw">VARCHAR</span>(7),
+    title     <span class="kw">VARCHAR</span>(50),
+    dept_name <span class="kw">VARCHAR</span>(20),
+    credits   <span class="kw">NUMERIC</span>(2,0),
+    <span class="kw">PRIMARY KEY</span> (course_id),
+    <span class="kw">FOREIGN KEY</span> (dept_name) <span class="kw">REFERENCES</span> department
+);
+
+<span class="kw">CREATE TABLE</span> instructor (
+    ID        <span class="kw">VARCHAR</span>(5),
+    name      <span class="kw">VARCHAR</span>(20) <span class="kw">NOT NULL</span>,
+    dept_name <span class="kw">VARCHAR</span>(20),
+    salary    <span class="kw">NUMERIC</span>(8,2),
+    <span class="kw">PRIMARY KEY</span> (ID),
+    <span class="kw">FOREIGN KEY</span> (dept_name) <span class="kw">REFERENCES</span> department
+);
+
+<span class="kw">CREATE TABLE</span> section (
+    course_id    <span class="kw">VARCHAR</span>(8),
+    sec_id       <span class="kw">VARCHAR</span>(8),
+    semester     <span class="kw">VARCHAR</span>(6),
+    year         <span class="kw">NUMERIC</span>(4,0),
+    building     <span class="kw">VARCHAR</span>(15),
+    room_number  <span class="kw">VARCHAR</span>(7),
+    time_slot_id <span class="kw">VARCHAR</span>(4),
+    <span class="kw">PRIMARY KEY</span> (course_id, sec_id, semester, year),
+    <span class="kw">FOREIGN KEY</span> (course_id) <span class="kw">REFERENCES</span> course
+);
+
+<span class="kw">CREATE TABLE</span> teaches (
+    ID        <span class="kw">VARCHAR</span>(5),
+    course_id <span class="kw">VARCHAR</span>(8),
+    sec_id    <span class="kw">VARCHAR</span>(8),
+    semester  <span class="kw">VARCHAR</span>(6),
+    year      <span class="kw">NUMERIC</span>(4,0),
+    <span class="kw">PRIMARY KEY</span> (ID, course_id, sec_id, semester, year),
+    <span class="kw">FOREIGN KEY</span> (course_id, sec_id, semester, year) <span class="kw">REFERENCES</span> section,
+    <span class="kw">FOREIGN KEY</span> (ID) <span class="kw">REFERENCES</span> instructor
+);</code></pre>
+      <div class="callout warning">
+        <h3>What happens when a constraint is violated?</h3>
+        <p>SQL rejects updates that violate declared integrity constraints. For example, an inserted row cannot have a NULL or duplicate primary-key value; an instructor whose name is constrained by <code>NOT NULL</code> cannot have a NULL name; and a course cannot refer to a department that is absent from <code>department</code>.</p>
+      </div>
+    </section>
+
+    <section id="table-operations">
+      <p class="kicker">Data changes and schema changes</p>
+      <h2>Insert, delete, drop, and alter</h2>
+      <h3>Insert a tuple</h3>
+      <p>A newly created relation is empty. The excerpt inserts a Biology instructor named Smith, with ID 10211 and salary 66,000:</p>
+      <pre><code><span class="kw">INSERT INTO</span> instructor
+<span class="kw">VALUES</span> (10211, <span class="str">'Smith'</span>, <span class="str">'Biology'</span>, 66000);</code></pre>
+      <p>Values are supplied in the same order as attributes in the relation schema. The example’s <code>instructor.ID</code> is declared <code>VARCHAR(5)</code>; in a strictly type-aligned statement, quote the identifier as a string (<code>'10211'</code>). Acceptance of the unquoted form can depend on the DBMS.</p>
+      <h3>Delete tuples, or remove the table itself</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>Do not confuse deleting rows with dropping a relation</caption>
+          <thead><tr><th>Command</th><th>Effect</th><th>What remains?</th></tr></thead>
+          <tbody>
+            <tr><td><code>DELETE FROM student;</code></td><td>Deletes all tuples in <code>student</code> in the form shown.</td><td>The relation and its schema remain; rows can be inserted later.</td></tr>
+            <tr><td><code>DROP TABLE r;</code></td><td>Deletes all information about relation <code>r</code>.</td><td>The table schema is also removed. It must be recreated before new tuples can be inserted.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Alter the schema</h3>
+      <pre><code><span class="kw">ALTER TABLE</span> r <span class="kw">ADD</span> A D;
+
+<span class="kw">ALTER TABLE</span> r <span class="kw">DROP</span> A;</code></pre>
+      <p><code>ADD</code> introduces attribute <code>A</code> with type <code>D</code>; existing tuples receive <code>NULL</code> for the new attribute. <code>DROP A</code> removes attribute <code>A</code>. The excerpt notes that many database systems do not support dropping individual attributes, even though they support dropping an entire table.</p>
+    </section>
+
+    <section id="query-structure">
+      <p class="kicker">3.3 · Basic structure of SQL queries</p>
+      <h2>Three clauses, three jobs</h2>
+      <div class="three-col">
+        <article class="mini">
+          <h4><code>SELECT</code></h4>
+          <p>Lists the attributes or expressions wanted in the output.</p>
+        </article>
+        <article class="mini">
+          <h4><code>FROM</code></h4>
+          <p>Lists the relations to access while evaluating the query.</p>
+        </article>
+        <article class="mini">
+          <h4><code>WHERE</code></h4>
+          <p>Specifies the predicate that candidate tuples must satisfy.</p>
+        </article>
+      </div>
+      <pre><code><span class="kw">SELECT</span> A1, A2, ..., An
+<span class="kw">FROM</span> r1, r2, ..., rm
+<span class="kw">WHERE</span> P;</code></pre>
+      <p>Each <code>Ai</code> is an output attribute or expression, each <code>ri</code> is a relation, and <code>P</code> is a predicate. If <code>WHERE</code> is omitted, the predicate is treated as true.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 760 210" role="img" aria-labelledby="query-flow-title query-flow-desc">
+          <title id="query-flow-title">Conceptual evaluation order of a basic SQL query</title>
+          <desc id="query-flow-desc">Relations in FROM produce a Cartesian product, WHERE filters rows, and SELECT projects requested attributes or expressions into the result.</desc>
+          <defs><marker id="q-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6f8b91"/></marker></defs>
+          <rect x="14" y="48" width="165" height="86" rx="10" fill="#eaf0f6" stroke="#507c9d"/>
+          <text x="96" y="75" text-anchor="middle" font-size="14" font-weight="700" fill="#24465b">FROM</text>
+          <text x="96" y="96" text-anchor="middle" font-size="12" fill="#24465b">Choose relation(s)</text>
+          <text x="96" y="113" text-anchor="middle" font-size="12" fill="#24465b">Cartesian product</text>
+          <path d="M179 91 H211" stroke="#6f8b91" stroke-width="2" marker-end="url(#q-arrow)"/>
+          <rect x="216" y="48" width="157" height="86" rx="10" fill="#fbf0d8" stroke="#b47c27"/>
+          <text x="294" y="75" text-anchor="middle" font-size="14" font-weight="700" fill="#704b18">WHERE</text>
+          <text x="294" y="96" text-anchor="middle" font-size="12" fill="#704b18">Test predicate</text>
+          <text x="294" y="113" text-anchor="middle" font-size="12" fill="#704b18">Keep matching rows</text>
+          <path d="M373 91 H405" stroke="#6f8b91" stroke-width="2" marker-end="url(#q-arrow)"/>
+          <rect x="410" y="48" width="157" height="86" rx="10" fill="#e5f1ed" stroke="#2e6c68"/>
+          <text x="488" y="75" text-anchor="middle" font-size="14" font-weight="700" fill="#214c4b">SELECT</text>
+          <text x="488" y="96" text-anchor="middle" font-size="12" fill="#214c4b">Keep requested</text>
+          <text x="488" y="113" text-anchor="middle" font-size="12" fill="#214c4b">columns / expressions</text>
+          <path d="M567 91 H599" stroke="#6f8b91" stroke-width="2" marker-end="url(#q-arrow)"/>
+          <rect x="604" y="48" width="142" height="86" rx="10" fill="#18364c"/>
+          <text x="675" y="83" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">Result</text>
+          <text x="675" y="104" text-anchor="middle" font-size="12" fill="#e5eeec">Relation</text>
+          <text x="380" y="174" text-anchor="middle" font-size="13" fill="#5d6a73">Conceptual order: FROM → WHERE → SELECT</text>
+        </svg>
+        <figcaption>SQL is written in the order <code>SELECT</code>, <code>FROM</code>, <code>WHERE</code>, but the excerpt explains its meaning in the operational order FROM → WHERE → SELECT.</figcaption>
+      </figure>
+      <div class="callout source">
+        <h3>Meaning is not the same as execution strategy</h3>
+        <p>This conceptual sequence explains the query’s result, not necessarily what the database physically executes. A real SQL implementation may optimise the query and avoid generating all combinations in a large Cartesian product.</p>
+      </div>
+    </section>
+
+    <section id="single-relation">
+      <p class="kicker">3.3.1 · Queries on a single relation</p>
+      <h2>Select columns, keep or remove duplicates, compute expressions</h2>
+      <h3>Choose one attribute</h3>
+      <pre><code><span class="kw">SELECT</span> name
+<span class="kw">FROM</span> instructor;</code></pre>
+      <p>This returns a relation with one attribute named <code>name</code>. The sample names shown in the excerpt are:</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Illustrative result: instructor names</caption>
+          <thead><tr><th>name</th><th>name</th><th>name</th></tr></thead>
+          <tbody>
+            <tr><td>Srinivasan</td><td>Wu</td><td>Mozart</td></tr>
+            <tr><td>Einstein</td><td>El Said</td><td>Gold</td></tr>
+            <tr><td>Katz</td><td>Califieri</td><td>Singh</td></tr>
+            <tr><td>Crick</td><td>Brandt</td><td>Kim</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Duplicates are retained unless requested otherwise</h3>
+      <pre><code><span class="kw">SELECT</span> dept_name
+<span class="kw">FROM</span> instructor;</code></pre>
+      <div class="table-wrap">
+        <table>
+          <caption>Illustrative result shown in the excerpt: duplicate department names are retained</caption>
+          <thead><tr><th>dept_name</th></tr></thead>
+          <tbody>
+            <tr><td>Comp. Sci.</td></tr><tr><td>Finance</td></tr><tr><td>Music</td></tr>
+            <tr><td>Physics</td></tr><tr><td>History</td></tr><tr><td>Physics</td></tr>
+            <tr><td>Comp. Sci.</td></tr><tr><td>History</td></tr><tr><td>Finance</td></tr>
+            <tr><td>Biology</td></tr><tr><td>Comp. Sci.</td></tr><tr><td>Elec. Eng.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>More than one instructor may belong to the same department, so this query can return the same department name multiple times. The mathematical relational model treats relations as sets, but SQL permits duplicates in query results; eliminating duplicates can cost additional processing.</p>
+      <pre><code><span class="kw">SELECT DISTINCT</span> dept_name
+<span class="kw">FROM</span> instructor;</code></pre>
+      <p><code>DISTINCT</code> requests duplicate elimination, so each department name appears at most once. By contrast, <code>ALL</code> explicitly retains duplicates:</p>
+      <pre><code><span class="kw">SELECT ALL</span> dept_name
+<span class="kw">FROM</span> instructor;</code></pre>
+      <p>Duplicate retention is the default, so the <code>ALL</code> keyword is normally unnecessary. Use <code>DISTINCT</code> when the query specifically needs distinct values.</p>
+      <div class="callout exam">
+        <h3>Exam distinction</h3>
+        <p><code>SELECT</code> chooses the output attributes; it does not automatically make the output unique. In the SQL behavior described here, use <code>DISTINCT</code> to remove duplicate result rows/values.</p>
+      </div>
+      <h3>Expressions in the SELECT list</h3>
+      <pre><code><span class="kw">SELECT</span> ID, name, dept_name, salary * 1.1
+<span class="kw">FROM</span> instructor;</code></pre>
+      <p>The operators <code>+</code>, <code>-</code>, <code>*</code>, and <code>/</code> can form arithmetic expressions from constants and tuple attributes. The query displays each salary multiplied by 1.1—illustrating the effect of a 10% increase—but it <strong>does not update</strong> the stored salary values. The excerpt also mentions date types and arithmetic functions for dates, covered later in the source text.</p>
+      <h3>Filter rows with WHERE</h3>
+      <pre><code><span class="kw">SELECT</span> name
+<span class="kw">FROM</span> instructor
+<span class="kw">WHERE</span> dept_name = <span class="str">'Comp. Sci.'</span>
+  <span class="kw">AND</span> salary &gt; 70000;</code></pre>
+      <p>This asks for instructors in the Computer Science department whose salary is greater than 70,000. In the source’s sample data, the displayed result contains Katz and Brandt.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Result shown in the excerpt</caption>
+          <thead><tr><th>name</th></tr></thead>
+          <tbody><tr><td>Katz</td></tr><tr><td>Brandt</td></tr></tbody>
+        </table>
+      </div>
+      <p>The <code>WHERE</code> predicate can use <code>AND</code>, <code>OR</code>, and <code>NOT</code>. Comparison operators include <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>, <code>=</code>, and <code>&lt;&gt;</code>. The excerpt notes that these can compare strings, arithmetic expressions, and types such as dates.</p>
+    </section>
+
+    <section id="multiple-relations">
+      <p class="kicker">3.3.2 · Queries on multiple relations</p>
+      <h2>Combine information using matching attributes</h2>
+      <p>Information needed for an answer may be split across relations. For example, <code>instructor</code> stores an instructor’s department name, while <code>department</code> stores the building for that department. To return the instructor’s name, department, and building, the two relations must be matched on <code>dept_name</code>.</p>
+      <pre><code><span class="kw">SELECT</span> name, instructor.dept_name, building
+<span class="kw">FROM</span> instructor, department
+<span class="kw">WHERE</span> instructor.dept_name = department.dept_name;</code></pre>
+      <p>The prefix <code>instructor.</code> or <code>department.</code> disambiguates <code>dept_name</code>, because that attribute occurs in both relations. An attribute that appears in only one relation, such as <code>building</code> in this example, does not need a prefix. The excerpt notes that this naming convention assumes distinct relation names; renaming can help when two tuple instances from the same relation must be combined (covered later in the text).</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Result shown in the excerpt: instructor, department, and building</caption>
+          <thead><tr><th>name</th><th>dept_name</th><th>building</th></tr></thead>
+          <tbody>
+            <tr><td>Srinivasan</td><td>Comp. Sci.</td><td>Taylor</td></tr>
+            <tr><td>Wu</td><td>Finance</td><td>Painter</td></tr>
+            <tr><td>Mozart</td><td>Music</td><td>Packard</td></tr>
+            <tr><td>Einstein</td><td>Physics</td><td>Watson</td></tr>
+            <tr><td>El Said</td><td>History</td><td>Painter</td></tr>
+            <tr><td>Gold</td><td>Physics</td><td>Watson</td></tr>
+            <tr><td>Katz</td><td>Comp. Sci.</td><td>Taylor</td></tr>
+            <tr><td>Califieri</td><td>History</td><td>Painter</td></tr>
+            <tr><td>Singh</td><td>Finance</td><td>Painter</td></tr>
+            <tr><td>Crick</td><td>Biology</td><td>Watson</td></tr>
+            <tr><td>Brandt</td><td>Comp. Sci.</td><td>Taylor</td></tr>
+            <tr><td>Kim</td><td>Elec. Eng.</td><td>Taylor</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="cartesian-product">
+      <p class="kicker">The logic underneath a multi-relation query</p>
+      <h2>Cartesian product first, then filter</h2>
+      <p>A general query has the form:</p>
+      <pre><code><span class="kw">SELECT</span> A1, A2, ..., An
+<span class="kw">FROM</span> r1, r2, ..., rm
+<span class="kw">WHERE</span> P;</code></pre>
+      <p>Conceptually, <code>FROM</code> with multiple relations forms their <strong>Cartesian product</strong>: every tuple from the first relation is paired with every tuple from the second, then with every tuple from each remaining relation. Attributes from the input relations all appear in the product; if names overlap, relation prefixes distinguish them.</p>
+      <div class="diagram">
+        <svg viewBox="0 0 760 250" role="img" aria-labelledby="product-title product-desc">
+          <title id="product-title">Why a product needs a matching predicate</title>
+          <desc id="product-desc">Every instructor tuple initially pairs with every teaches tuple. The predicate that instructor ID equals teaches ID filters the combinations to matching instructor-course assignments.</desc>
+          <rect x="18" y="34" width="180" height="66" rx="9" fill="#eaf0f6" stroke="#507c9d"/>
+          <text x="108" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#24465b">instructor</text>
+          <text x="108" y="79" text-anchor="middle" font-size="12" fill="#24465b">one row per instructor</text>
+          <rect x="18" y="145" width="180" height="66" rx="9" fill="#e5f1ed" stroke="#2e6c68"/>
+          <text x="108" y="169" text-anchor="middle" font-size="15" font-weight="700" fill="#214c4b">teaches</text>
+          <text x="108" y="190" text-anchor="middle" font-size="12" fill="#214c4b">one row per assignment</text>
+          <path d="M198 67 H236 V111 H260 M198 178 H236 V133 H260" fill="none" stroke="#7b9998" stroke-width="2"/>
+          <rect x="260" y="78" width="185" height="88" rx="10" fill="#fbf0d8" stroke="#b47c27"/>
+          <text x="352" y="103" text-anchor="middle" font-size="14" font-weight="700" fill="#704b18">Cartesian product</text>
+          <text x="352" y="124" text-anchor="middle" font-size="12" fill="#704b18">all combinations</text>
+          <text x="352" y="143" text-anchor="middle" font-size="12" fill="#704b18">including unrelated pairs</text>
+          <path d="M445 122 H492" fill="none" stroke="#7b9998" stroke-width="2"/>
+          <path d="M484 116 L494 122 L484 128" fill="none" stroke="#7b9998" stroke-width="2"/>
+          <rect x="496" y="78" width="245" height="88" rx="10" fill="#e5f1ed" stroke="#2e6c68"/>
+          <text x="618" y="101" text-anchor="middle" font-size="14" font-weight="700" fill="#214c4b">WHERE filter</text>
+          <text x="618" y="123" text-anchor="middle" font-size="12" fill="#214c4b">instructor.ID = teaches.ID</text>
+          <text x="618" y="143" text-anchor="middle" font-size="12" fill="#214c4b">only related pairs remain</text>
+          <text x="380" y="235" text-anchor="middle" font-size="12" fill="#5d6a73">Conceptual model of the query’s meaning, not necessarily the DBMS’s execution plan.</text>
+        </svg>
+        <figcaption>The matching predicate is what turns a broad product into a meaningful combination. Omitting it can create a large relation of unrelated pairs.</figcaption>
+      </div>
+      <p>For the <code>instructor</code> and <code>teaches</code> relations, the excerpt gives the product schema as the attributes of both relations, including separately qualified <code>instructor.ID</code> and <code>teaches.ID</code>. It illustrates a product of 12 instructor tuples and 13 teaches tuples: <strong>12 × 13 = 156 tuples</strong>. In a more realistic example with 200 instructors and 600 <code>teaches</code> tuples, the product would have <strong>200 × 600 = 120,000 tuples</strong>.</p>
+      <h3>Join by an explicit WHERE condition</h3>
+      <pre><code><span class="kw">SELECT</span> name, course_id
+<span class="kw">FROM</span> instructor, teaches
+<span class="kw">WHERE</span> instructor.ID = teaches.ID;</code></pre>
+      <p>This returns instructor names with the course identifiers of courses they teach. Only instructors with matching tuples in <code>teaches</code> appear. The excerpt points out that Gold, Califieri, and Singh—who have not taught a course in its example data—are absent. An <strong>outer join</strong>, discussed in a later section of the source text, can retain such instructors.</p>
+      <p>Add another condition to restrict the instructors to Computer Science:</p>
+      <pre><code><span class="kw">SELECT</span> name, course_id
+<span class="kw">FROM</span> instructor, teaches
+<span class="kw">WHERE</span> instructor.ID = teaches.ID
+  <span class="kw">AND</span> instructor.dept_name = <span class="str">'Comp. Sci.'</span>;</code></pre>
+      <p>Because <code>dept_name</code> occurs only in <code>instructor</code> among these two relations, it could be written without the relation prefix.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Result shown in the excerpt: instructor names and course IDs</caption>
+          <thead><tr><th>name</th><th>course_id</th></tr></thead>
+          <tbody>
+            <tr><td>Srinivasan</td><td>CS-101</td></tr>
+            <tr><td>Srinivasan</td><td>CS-315</td></tr>
+            <tr><td>Srinivasan</td><td>CS-347</td></tr>
+            <tr><td>Wu</td><td>FIN-201</td></tr>
+            <tr><td>Mozart</td><td>MU-199</td></tr>
+            <tr><td>Einstein</td><td>PHY-101</td></tr>
+            <tr><td>El Said</td><td>HIS-351</td></tr>
+            <tr><td>Katz</td><td>CS-101</td></tr>
+            <tr><td>Katz</td><td>CS-319</td></tr>
+            <tr><td>Crick</td><td>BIO-101</td></tr>
+            <tr><td>Crick</td><td>BIO-301</td></tr>
+            <tr><td>Brandt</td><td>CS-190</td></tr>
+            <tr><td>Brandt</td><td>CS-190</td></tr>
+            <tr><td>Brandt</td><td>CS-319</td></tr>
+            <tr><td>Kim</td><td>EE-181</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout exam">
+        <h3>Conceptual meaning in three steps</h3>
+        <ol>
+          <li>Generate the Cartesian product of the relations in <code>FROM</code>.</li>
+          <li>Apply the predicates from <code>WHERE</code> to filter combinations.</li>
+          <li>For each remaining tuple, output the attributes or expressions in <code>SELECT</code>.</li>
+        </ol>
+        <p>Again, this sequence specifies the result’s meaning. A DBMS will normally optimise evaluation instead of blindly constructing every product row.</p>
+      </div>
+    </section>
+
+    <section id="natural-join">
+      <p class="kicker">3.3.3 · The natural join</p>
+      <h2>Join automatically on all common attribute names</h2>
+      <p>When two relations share an attribute name, a common use case is to match rows where the values of that attribute are equal. SQL’s <strong>natural join</strong> handles this case without writing a separate equality predicate.</p>
+      <pre><code><span class="kw">SELECT</span> name, course_id
+<span class="kw">FROM</span> instructor <span class="kw">NATURAL JOIN</span> teaches;</code></pre>
+      <p>This is equivalent, for the example shown, to the explicit condition <code>instructor.ID = teaches.ID</code>. Natural join keeps only tuple pairs that agree on all attributes whose names are present in both relation schemas.</p>
+      <div class="two-col">
+        <article class="mini">
+          <h4>What it does</h4>
+          <p>Matches equal values on every common attribute name. In the <code>instructor</code> and <code>teaches</code> example, the common attribute is <code>ID</code>.</p>
+        </article>
+        <article class="mini">
+          <h4>Output shape</h4>
+          <p>Common attributes appear only once. The excerpt orders columns as common attributes first, then attributes unique to the first relation, then attributes unique to the second.</p>
+        </article>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>Natural-join result shown in the excerpt</caption>
+          <thead><tr><th>ID</th><th>name</th><th>dept_name</th><th>salary</th><th>course_id</th><th>sec_id</th><th>semester</th><th>year</th></tr></thead>
+          <tbody>
+            <tr><td>10101</td><td>Srinivasan</td><td>Comp. Sci.</td><td>65000</td><td>CS-101</td><td>1</td><td>Fall</td><td>2009</td></tr>
+            <tr><td>10101</td><td>Srinivasan</td><td>Comp. Sci.</td><td>65000</td><td>CS-315</td><td>1</td><td>Spring</td><td>2010</td></tr>
+            <tr><td>10101</td><td>Srinivasan</td><td>Comp. Sci.</td><td>65000</td><td>CS-347</td><td>1</td><td>Fall</td><td>2009</td></tr>
+            <tr><td>12121</td><td>Wu</td><td>Finance</td><td>90000</td><td>FIN-201</td><td>1</td><td>Spring</td><td>2010</td></tr>
+            <tr><td>15151</td><td>Mozart</td><td>Music</td><td>40000</td><td>MU-199</td><td>1</td><td>Spring</td><td>2010</td></tr>
+            <tr><td>22222</td><td>Einstein</td><td>Physics</td><td>95000</td><td>PHY-101</td><td>1</td><td>Fall</td><td>2009</td></tr>
+            <tr><td>32343</td><td>El Said</td><td>History</td><td>60000</td><td>HIS-351</td><td>1</td><td>Spring</td><td>2010</td></tr>
+            <tr><td>45565</td><td>Katz</td><td>Comp. Sci.</td><td>75000</td><td>CS-101</td><td>1</td><td>Spring</td><td>2010</td></tr>
+            <tr><td>45565</td><td>Katz</td><td>Comp. Sci.</td><td>75000</td><td>CS-319</td><td>1</td><td>Spring</td><td>2010</td></tr>
+            <tr><td>76766</td><td>Crick</td><td>Biology</td><td>72000</td><td>BIO-101</td><td>1</td><td>Summer</td><td>2009</td></tr>
+            <tr><td>76766</td><td>Crick</td><td>Biology</td><td>72000</td><td>BIO-301</td><td>1</td><td>Summer</td><td>2010</td></tr>
+            <tr><td>83821</td><td>Brandt</td><td>Comp. Sci.</td><td>92000</td><td>CS-190</td><td>1</td><td>Spring</td><td>2009</td></tr>
+            <tr><td>83821</td><td>Brandt</td><td>Comp. Sci.</td><td>92000</td><td>CS-190</td><td>2</td><td>Spring</td><td>2009</td></tr>
+            <tr><td>83821</td><td>Brandt</td><td>Comp. Sci.</td><td>92000</td><td>CS-319</td><td>2</td><td>Spring</td><td>2010</td></tr>
+            <tr><td>98345</td><td>Kim</td><td>Elec. Eng.</td><td>80000</td><td>EE-181</td><td>1</td><td>Spring</td><td>2009</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The example result includes only instructor-course assignment matches; instructors without a matching <code>teaches</code> tuple are not shown.</p>
+      <div class="callout source">
+        <h3>Source consistency note</h3>
+        <p>The excerpt’s prose says this natural-join result has 13 tuples, while the displayed rows in its Figure 3.8 list 15 assignments. The table above follows the rows displayed in that figure; the discrepancy is retained here rather than silently reconciled.</p>
+      </div>
+
+      <h3>The natural-join trap: common names can mean too much</h3>
+      <p>Suppose the goal is to list instructor names and the titles of courses they teach. First join <code>instructor</code> and <code>teaches</code>, then match the course ID against <code>course</code>:</p>
+      <pre><code><span class="kw">SELECT</span> name, title
+<span class="kw">FROM</span> instructor <span class="kw">NATURAL JOIN</span> teaches, course
+<span class="kw">WHERE</span> teaches.course_id = course.course_id;</code></pre>
+      <p>The excerpt warns that this is <strong>not equivalent</strong> to:</p>
+      <pre><code><span class="kw">SELECT</span> name, title
+<span class="kw">FROM</span> instructor <span class="kw">NATURAL JOIN</span> teaches <span class="kw">NATURAL JOIN</span> course;</code></pre>
+      <p>Why? The first natural join yields attributes including <code>dept_name</code> and <code>course_id</code>. The <code>course</code> relation also contains both. A natural join with <code>course</code> therefore matches on <strong>both</strong> <code>course_id</code> and <code>dept_name</code>. It can wrongly omit an instructor-course pair when the instructor’s home department differs from the department offering the course.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 760 245" role="img" aria-labelledby="natural-risk-title natural-risk-desc">
+          <title id="natural-risk-title">Natural join matches every same-named column</title>
+          <desc id="natural-risk-desc">The instructor-teaches result and course share course_id and dept_name, so natural join automatically equates both. Joining using course_id restricts matching to the intended common key.</desc>
+          <rect x="15" y="28" width="220" height="74" rx="9" fill="#eaf0f6" stroke="#507c9d"/>
+          <text x="125" y="52" text-anchor="middle" font-size="14" font-weight="700" fill="#24465b">instructor NATURAL JOIN teaches</text>
+          <text x="125" y="74" text-anchor="middle" font-size="12" fill="#24465b">course_id · dept_name</text>
+          <rect x="15" y="139" width="220" height="74" rx="9" fill="#e5f1ed" stroke="#2e6c68"/>
+          <text x="125" y="166" text-anchor="middle" font-size="14" font-weight="700" fill="#214c4b">course</text>
+          <text x="125" y="188" text-anchor="middle" font-size="12" fill="#214c4b">course_id · dept_name</text>
+          <path d="M235 65 H272 V102 H292 M235 176 H272 V139 H292" fill="none" stroke="#7b9998" stroke-width="2"/>
+          <rect x="292" y="80" width="190" height="78" rx="9" fill="#fbf0d8" stroke="#b47c27"/>
+          <text x="387" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#704b18">NATURAL JOIN</text>
+          <text x="387" y="126" text-anchor="middle" font-size="12" fill="#704b18">matches both columns</text>
+          <text x="387" y="144" text-anchor="middle" font-size="12" fill="#704b18">course_id AND dept_name</text>
+          <path d="M482 119 H513" fill="none" stroke="#7b9998" stroke-width="2"/>
+          <path d="M505 113 L515 119 L505 125" fill="none" stroke="#7b9998" stroke-width="2"/>
+          <rect x="519" y="80" width="225" height="78" rx="9" fill="#f7e9e5" stroke="#b36e57"/>
+          <text x="631" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#7e3f31">Possible missing pairs</text>
+          <text x="631" y="126" text-anchor="middle" font-size="12" fill="#7e3f31">home department need not</text>
+          <text x="631" y="144" text-anchor="middle" font-size="12" fill="#7e3f31">equal course department</text>
+          <text x="380" y="235" text-anchor="middle" font-size="12" fill="#5d6a73">Natural join is convenient only when every shared column name is intended as a match.</text>
+        </svg>
+        <figcaption>Inspect the common attribute names before using <code>NATURAL JOIN</code>. A shared name creates an equality condition automatically.</figcaption>
+      </figure>
+    </section>
+
+    <section id="join-using">
+      <p class="kicker">Specify the intended match</p>
+      <h2>Use JOIN ... USING when only selected columns should match</h2>
+      <p>To retain the convenience of a join while avoiding accidental equality on every common name, the excerpt shows <code>JOIN ... USING</code>:</p>
+      <pre><code><span class="kw">SELECT</span> name, title
+<span class="kw">FROM</span> (instructor <span class="kw">NATURAL JOIN</span> teaches)
+     <span class="kw">JOIN</span> course <span class="kw">USING</span> (course_id);</code></pre>
+      <p><code>JOIN ... USING (A1, A2, ...)</code> requires the specified attribute names to occur in both inputs and matches rows when those named values agree. Unlike a natural join, it does <strong>not</strong> require other same-named attributes to be equal. Here, only <code>course_id</code> is used to match to <code>course</code>, so <code>dept_name</code> may differ between the instructor and the course.</p>
+      <div class="callout definition">
+        <h3>Decision rule</h3>
+        <p>Use <code>NATURAL JOIN</code> when all same-named attributes are intended match keys. Use <code>JOIN ... USING (course_id)</code> when you want to state explicitly that <code>course_id</code> is the match key and other shared names must not add conditions.</p>
+      </div>
+    </section>
+
+    <section id="revision">
+      <p class="kicker">Revision pass</p>
+      <h2>High-yield distinctions</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>Fast comparison for exam revision</caption>
+          <thead><tr><th>Distinction</th><th>Remember</th></tr></thead>
+          <tbody>
+            <tr><td>DDL vs DML</td><td>DDL defines or changes schema structure and constraints; DML queries and changes tuples.</td></tr>
+            <tr><td><code>CHAR</code> vs <code>VARCHAR</code></td><td><code>CHAR</code> is fixed length and pads stored values; <code>VARCHAR</code> is variable length.</td></tr>
+            <tr><td>Primary key vs foreign key</td><td>Primary key uniquely identifies a tuple and is non-NULL; foreign key values must match a key in the referenced relation.</td></tr>
+            <tr><td><code>DELETE FROM r</code> vs <code>DROP TABLE r</code></td><td>Delete removes tuples; drop removes tuples and the relation schema.</td></tr>
+            <tr><td><code>SELECT</code> vs <code>SELECT DISTINCT</code></td><td>Duplicates are retained by default; <code>DISTINCT</code> removes duplicates.</td></tr>
+            <tr><td><code>SELECT</code> arithmetic vs <code>UPDATE</code></td><td>An expression such as <code>salary * 1.1</code> changes the query output, not the stored relation.</td></tr>
+            <tr><td>Product + predicate vs product alone</td><td>The matching condition eliminates unrelated tuple combinations; omitting it can produce a huge result.</td></tr>
+            <tr><td><code>NATURAL JOIN</code> vs <code>JOIN ... USING</code></td><td>Natural join matches on every common attribute name; <code>USING</code> names exactly which attributes must match.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Self-check questions</h3>
+      <div class="answer">
+        <details>
+          <summary>1. Why is a primary key both unique and non-NULL?</summary>
+          <p>Uniqueness ensures no two tuples share all primary-key values; non-NULL ensures every tuple has a complete identifying key value.</p>
+        </details>
+        <details>
+          <summary>2. What does <code>DELETE FROM student;</code> preserve that <code>DROP TABLE student;</code> does not?</summary>
+          <p><code>DELETE</code> preserves the relation and its schema but removes all tuples. <code>DROP TABLE</code> removes the relation’s schema as well as its data.</p>
+        </details>
+        <details>
+          <summary>3. Why can a query on two relations return a huge number of rows?</summary>
+          <p>The <code>FROM</code> clause conceptually forms a Cartesian product. Without a suitable matching predicate, every tuple from one relation is paired with every tuple from the other.</p>
+        </details>
+        <details>
+          <summary>4. Does selecting <code>salary * 1.1</code> give each instructor a stored raise?</summary>
+          <p>No. It calculates a value for the query result only; it does not change the underlying <code>instructor</code> relation.</p>
+        </details>
+        <details>
+          <summary>5. Why can <code>NATURAL JOIN</code> unexpectedly omit rows?</summary>
+          <p>It matches on every attribute name common to both inputs. If an additional shared name such as <code>dept_name</code> is not intended to be a matching condition, rows with differing values are discarded. Specify the intended key with <code>JOIN ... USING</code>.</p>
+        </details>
+      </div>
+      <footer>
+        <p><strong>Study boundary:</strong> This document reorganises the supplied excerpt from Chapter 3, Introduction to SQL, through the discussion of <code>JOIN ... USING</code>. SQL behavior can vary by implementation, as emphasised in the source. Multiword attribute identifiers are shown with underscores for readable, usable SQL.</p>
+      </footer>
+    </section>
+  </main>
+</div>
+</body>
+</html>

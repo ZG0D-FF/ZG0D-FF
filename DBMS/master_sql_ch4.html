@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 3: Chapter 4 — Intermediate SQL | DBMS Master Guide</title>
+  <link rel="stylesheet" href="dbms_theme.css">
+</head>
+<body>
+
+  <!-- Master Top Navigation -->
+  <nav class="master-nav" aria-label="Master Suite Navigation">
+    <div class="master-nav-inner">
+      <a href="index.html" class="master-brand">
+        <span>DBMS Hub</span> Master Study Suite
+      </a>
+      <div class="master-links">
+        <a href="master_dbms_foundations.html">1. Foundations &amp; ER/Relational</a>
+        <a href="master_sql_ch3.html">2. Chapter 3: SQL Fundamentals</a>
+        <a href="master_sql_ch4.html" class="active">3. Chapter 4: Intermediate SQL</a>
+        <a href="master_dbms_internals_lab.html">4. Internals &amp; Lab Practice</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="kicker">Module 3 · Intermediate SQL Reference</span>
+      <h1>Intermediate SQL: Joins, Views, Transactions &amp; Security</h1>
+      <p class="lead">
+        A deep, publication-quality technical guide covering advanced join expressions, virtual vs. materialized views, view update ambiguities, ACID transactional guarantees, integrity constraints, user-defined types, and SQL role-based authorization.
+      </p>
+      <div class="hero-meta">
+        <span class="pill">Textbook: Silberschatz Chapter 4</span>
+        <span class="pill">Syllabus: PCCEC504 Module 2 &middot; Advanced SQL</span>
+        <span class="pill">Hover glossary enabled</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Layout with Sticky TOC -->
+  <div class="layout">
+    <aside class="toc" aria-label="Table of contents">
+      <h2>Chapter 4 Navigation</h2>
+      <ol>
+        <li><a href="#roadmap">Chapter Roadmap</a></li>
+        <li><a href="#sample-data">Example University Relations</a></li>
+        <li><a href="#joins">4.1 Join Expressions Overview</a></li>
+        <li><a href="#join-conditions">4.1.1 ON vs. WHERE Conditions</a></li>
+        <li><a href="#outer-joins">4.1.2 Outer Joins (LEFT, RIGHT, FULL)</a></li>
+        <li><a href="#views">4.2 Views &amp; Virtual Relations</a></li>
+        <li><a href="#materialized">4.2.3 Materialized Views &amp; Refresh</a></li>
+        <li><a href="#update-view">4.2.4 View Updatability Criteria</a></li>
+        <li><a href="#transactions">4.3 Transactions &amp; ACID Guarantees</a></li>
+        <li><a href="#constraints">4.4 Advanced Integrity Constraints</a></li>
+        <li><a href="#types-schemas">4.5 SQL Data Types &amp; Schemas</a></li>
+        <li><a href="#authorization">4.6 Authorization, GRANT &amp; REVOKE</a></li>
+      </ol>
+    </aside>
+
+    <main id="main-content">
+      <!-- Roadmap -->
+      <section id="roadmap">
+        <h2>Chapter Roadmap: How Intermediate SQL Fits Together</h2>
+        <p>
+          Intermediate SQL bridges basic table queries with multi-user enterprise database engineering. It systematically manages six interconnected dimensions:
+        </p>
+        <div class="mapping-panel">
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>1. Joins</b>
+              <small>Determine which tuple combinations survive through explicit matching conditions and outer-join null-padding.</small>
+            </div>
+            <div class="map-step">
+              <b>2. Views</b>
+              <small>Shape modular data access, encapsulate complex queries, and support specialized external schemas.</small>
+            </div>
+            <div class="map-step">
+              <b>3. Transactions</b>
+              <small>Guarantee ACID properties so multi-statement business workflows execute atomically and durably.</small>
+            </div>
+            <div class="map-step">
+              <b>4. Integrity</b>
+              <small>Enforce domain checks, unique constraints, and cascading referential integrity rules across tables.</small>
+            </div>
+            <div class="map-step">
+              <b>5. Types &amp; Schemas</b>
+              <small>Organize databases into distinct namespaces and user-defined domains to prevent semantic mixing.</small>
+            </div>
+            <div class="map-step">
+              <b>6. Authorization</b>
+              <small>Regulate authenticated access through granular privileges (GRANT, REVOKE) and reusable roles.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sample Data -->
+      <section id="sample-data">
+        <h2>Sample Relations: <code>student</code> and <code>takes</code></h2>
+        <p>
+          The join and view demonstrations throughout this guide use two standard university relations linked via the common attribute <code>ID</code>.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Relation</th><th>Attributes</th><th>Sample Key Behavior</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>student</code></td>
+                <td><code>ID, name, dept_name, tot_cred</code></td>
+                <td>Student <strong>Snow</strong> (ID <code>70557</code>) has enrolled in zero courses (no matching tuple in <code>takes</code>).</td>
+              </tr>
+              <tr>
+                <td><code>takes</code></td>
+                <td><code>ID, course_id, sec_id, semester, year, grade</code></td>
+                <td>Student <strong>Tanaka</strong> (ID <code>98988</code>) has a <code>NULL</code> grade in <code>BIO-301</code> because it has not yet been awarded.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 4.1 Joins -->
+      <section id="joins">
+        <h2>4.1 Join Expressions Overview</h2>
+        <p>
+          A join combines tuples from two relations according to an explicit condition. In SQL, join semantics are determined by two orthogonal choices:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Join Dimension</th><th>Available SQL Options</th><th>Operational Purpose</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Join Condition</strong></td>
+                <td><code>NATURAL</code>, <code>USING (A1, A2)</code>, <code>ON predicate</code></td>
+                <td>Defines which tuple pairs match across relations.</td>
+              </tr>
+              <tr>
+                <td><strong>Join Type</strong></td>
+                <td><code>INNER</code>, <code>LEFT OUTER</code>, <code>RIGHT OUTER</code>, <code>FULL OUTER</code></td>
+                <td>Determines whether unmatched non-participating tuples are discarded or preserved with <dfn data-term="null">NULL</dfn> padding.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 4.1.1 Join Conditions -->
+      <section id="join-conditions">
+        <h2>4.1.1 Join Conditions: ON vs. WHERE</h2>
+        <p>
+          The <code>ON</code> clause allows an explicit predicate over the relations being joined.
+        </p>
+        <pre><code>SELECT *
+FROM student JOIN takes
+  ON student.ID = takes.ID;</code></pre>
+        <p>
+          While for an <code>INNER JOIN</code> this yields the identical result as placing <code>student.ID = takes.ID</code> in a <code>WHERE</code> clause, the two behave fundamentally differently in outer joins!
+        </p>
+        <div class="callout warning">
+          <strong>Crucial Semantic Difference in Outer Joins:</strong>
+          The <code>ON</code> clause determines <em>which tuples match during the join step</em>, allowing unmatched rows from the preserved side to be generated with NULLs. In contrast, the <code>WHERE</code> clause executes <em>after</em> the join, filtering out rows from the final result set and discarding the very NULL-padded rows the outer join was designed to preserve!
+        </div>
+      </section>
+
+      <!-- 4.1.2 Outer Joins -->
+      <section id="outer-joins">
+        <h2>4.1.2 Outer Joins: LEFT, RIGHT, and FULL</h2>
+        <p>
+          An <dfn data-term="outer join">outer join</dfn> avoids data loss by preserving tuples that have no corresponding match in the joined relation.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Outer Join Type</th><th>Preserved Relation</th><th>Missing Attribute Treatment</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>LEFT OUTER JOIN</strong></td>
+                <td>All tuples from the <em>left</em> relation survive.</td>
+                <td>Right-side columns are padded with <code>NULL</code> if no match exists.</td>
+              </tr>
+              <tr>
+                <td><strong>RIGHT OUTER JOIN</strong></td>
+                <td>All tuples from the <em>right</em> relation survive.</td>
+                <td>Left-side columns are padded with <code>NULL</code> if no match exists.</td>
+              </tr>
+              <tr>
+                <td><strong>FULL OUTER JOIN</strong></td>
+                <td>All tuples from <em>both</em> relations survive.</td>
+                <td>Unmatched attributes from either relation are padded with <code>NULL</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Finding Students Not Enrolled in Any Course</h3>
+        <pre><code>SELECT student.ID, student.name
+FROM student LEFT OUTER JOIN takes
+  ON student.ID = takes.ID
+WHERE takes.course_id IS NULL;</code></pre>
+        <p>
+          Because an enrolled student has a valid non-NULL <code>course_id</code>, testing <code>takes.course_id IS NULL</code> reliably isolates students (such as Snow) who possess zero course registrations.
+        </p>
+      </section>
+
+      <!-- 4.2 Views -->
+      <section id="views">
+        <h2>4.2 Views: Virtual Relations</h2>
+        <p>
+          A <dfn data-term="view">view</dfn> is a virtual relation defined by a query over underlying base tables or other views.
+        </p>
+        <pre><code>CREATE VIEW faculty AS
+SELECT ID, name, dept_name
+FROM instructor;</code></pre>
+        <p>
+          In the standard case, the database does not compute and store a separate physical copy of the query result. Instead, it stores the view's query definition in the data catalog. Whenever a user executes a query referencing <code>faculty</code>, the DBMS query processor substitutes the view definition inline into the executing query tree.
+        </p>
+      </section>
+
+      <!-- 4.2.3 Materialized Views -->
+      <section id="materialized">
+        <h2>4.2.3 Materialized Views &amp; View Maintenance</h2>
+        <p>
+          A <dfn data-term="materialized view">materialized view</dfn> differs from a standard virtual view because its physical result set is computed and stored on disk.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Dimension</th><th>Standard Virtual View</th><th>Materialized View</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Storage Mechanism</strong></td>
+                <td>Stores only the SQL query text in the catalog; zero row storage on disk.</td>
+                <td>Stores the complete query result set physically on disk as a cached table.</td>
+              </tr>
+              <tr>
+                <td><strong>Query Execution Time</strong></td>
+                <td>Computed dynamically on demand; can be slow for multi-table joins or massive aggregations.</td>
+                <td>Extremely fast; reads pre-aggregated results directly without table joins.</td>
+              </tr>
+              <tr>
+                <td><strong>Data Freshness &amp; Maintenance</strong></td>
+                <td>Always 100% real-time and up-to-date with underlying base tables.</td>
+                <td>Subject to staleness unless refreshed immediately via triggers, log scans, or periodic batches.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout key">
+          <strong>View Maintenance:</strong> The automated process of refreshing a materialized view's stored rows when underlying base tables are modified. Systems often employ <em>incremental view maintenance</em>, computing only the mathematical delta rather than re-executing the entire query from scratch.
+        </div>
+      </section>
+
+      <!-- 4.2.4 View Updatability -->
+      <section id="update-view">
+        <h2>4.2.4 Updatability of Views</h2>
+        <p>
+          Modifying a database through a view (via <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code>) can lead to severe logical ambiguity because the change must translate unambiguously into updates on the underlying base tables.
+        </p>
+
+        <div class="callout warning">
+          <strong>SQL Standard Updatability Criteria:</strong>
+          A view is legally updatable only if all of the following conditions hold:
+          <ol>
+            <li>The <code>FROM</code> clause references exactly <strong>one</strong> base relation (no joins).</li>
+            <li>The <code>SELECT</code> clause contains only attribute names (no expressions, calculations, or aggregate functions like <code>SUM</code>, <code>AVG</code>, or <code>COUNT</code>).</li>
+            <li>Any attribute not listed in the <code>SELECT</code> clause can legally accept <code>NULL</code> values in the base table (or has a defined <code>DEFAULT</code>).</li>
+            <li>The query does not contain <code>GROUP BY</code> or <code>HAVING</code> clauses.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 4.3 Transactions -->
+      <section id="transactions">
+        <h2>4.3 Transactions &amp; ACID Guarantees</h2>
+        <p>
+          A <dfn data-term="transaction">transaction</dfn> is a logical unit of database work consisting of one or more SQL operations. A transaction begins implicitly with the first SQL statement and terminates with either:
+        </p>
+        <ul>
+          <li><code>COMMIT</code>: Persistently records all changes into the database.</li>
+          <li><code>ROLLBACK</code>: Completely undoes all modifications executed during the transaction, restoring the database to its pre-transaction state.</li>
+        </ul>
+
+        <h3>The ACID Principles</h3>
+        <div class="mapping-panel">
+          <div class="map-branch">
+            <div>
+              <b style="color:var(--navy);"><dfn data-term="atomicity">Atomicity</dfn></b>
+              "All or nothing": Either every operation in the transaction succeeds and commits, or all updates are rolled back with zero trace left behind.
+            </div>
+            <div>
+              <b style="color:var(--teal);"><dfn data-term="consistency">Consistency</dfn></b>
+              Execution of a transaction in isolation preserves database invariants and integrity constraints (e.g., total account balances remain balanced).
+            </div>
+            <div>
+              <b style="color:var(--blue);"><dfn data-term="isolation">Isolation</dfn></b>
+              Concurrent transactions execute without interfering with one another; intermediate uncommitted states remain invisible to other transactions.
+            </div>
+            <div>
+              <b style="color:var(--green);"><dfn data-term="durability">Durability</dfn></b>
+              Once a transaction successfully commits, its changes survive permanently on non-volatile storage, even during sudden hardware crashes.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4.4 Advanced Integrity Constraints -->
+      <section id="constraints">
+        <h2>4.4 Advanced Integrity Constraints</h2>
+        <p>
+          SQL provides declarative mechanisms to guarantee consistency across multi-table relationships:
+        </p>
+
+        <h3>1. Attribute and Tuple Constraints</h3>
+        <ul>
+          <li><code>NOT NULL</code>: Forbids insertion of NULL into designated attributes.</li>
+          <li><code>UNIQUE(A1, A2)</code>: Candidate key constraint ensuring no two tuples share identical values across the specified attribute combination (though NULLs are permitted in standard SQL).</li>
+          <li><code>CHECK (P)</code>: Evaluates arbitrary predicate <code>P</code> on every insert or update; rejected only if <code>P</code> evaluates strictly to <code>FALSE</code> (unknown/null passes).</li>
+        </ul>
+
+        <h3>2. Referential Integrity &amp; Cascading Actions</h3>
+        <pre><code>CREATE TABLE course (
+    course_id VARCHAR(8) PRIMARY KEY,
+    dept_name VARCHAR(20),
+    FOREIGN KEY (dept_name) REFERENCES department(dept_name)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);</code></pre>
+        <p>
+          If a department's name is renamed in <code>department</code>, <code>ON UPDATE CASCADE</code> automatically propagates the new name across all referencing <code>course</code> tuples. If a department is deleted, <code>ON DELETE SET NULL</code> resets the <code>dept_name</code> in dependent courses to NULL.
+        </p>
+      </section>
+
+      <!-- 4.5 Data Types & Schemas -->
+      <section id="types-schemas">
+        <h2>4.5 SQL Data Types &amp; Schemas</h2>
+        <p>
+          Beyond standard scalar types (<code>INT</code>, <code>VARCHAR</code>), intermediate SQL introduces temporal formats and user-defined domains:
+        </p>
+        <ul>
+          <li><strong>Temporal Types:</strong> <code>DATE</code> (year, month, day), <code>TIME</code> (hour, minute, second), and <code>TIMESTAMP</code> (date + time + fractional seconds).</li>
+          <li><strong>User-Defined Domains:</strong>
+            <pre><code>CREATE DOMAIN Dollars AS NUMERIC(12,2)
+    CHECK (VALUE &gt;= 0.0);</code></pre>
+            Domains allow attaching semantic validation rules and default values to reusable column types.
+          </li>
+          <li><strong>Distinct Types:</strong> <code>CREATE TYPE Dollars AS NUMERIC(12,2) FINAL;</code> creates a strictly typed scalar that cannot be accidentally compared against or added to another numeric type (like Euros) without explicit casting.</li>
+        </ul>
+      </section>
+
+      <!-- 4.6 Authorization -->
+      <section id="authorization">
+        <h2>4.6 SQL Authorization: GRANT, REVOKE &amp; Roles</h2>
+        <p>
+          Database security controls which authenticated users have privileges to execute specific DDL and DML operations.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Privilege</th><th>Granted Capability</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>SELECT</code></td><td>Allows reading and querying tuples from the relation.</td></tr>
+              <tr><td><code>INSERT</code></td><td>Allows inserting new rows; can be scoped to specific columns.</td></tr>
+              <tr><td><code>UPDATE</code></td><td>Allows modifying existing column values.</td></tr>
+              <tr><td><code>DELETE</code></td><td>Allows deleting tuples from the relation.</td></tr>
+              <tr><td><code>REFERENCES</code></td><td>Allows declaring foreign key constraints referencing the table's primary key.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Granting and Revoking Privileges</h3>
+        <pre><code>GRANT SELECT, UPDATE(salary) ON instructor TO dean;
+REVOKE SELECT ON instructor FROM dean;</code></pre>
+
+        <div class="callout warning">
+          <strong>Cascading Revocations:</strong>
+          If user A grants a privilege to user B <code>WITH GRANT OPTION</code>, and B subsequently grants it to C, revoking the privilege from B by default cascades, automatically revoking it from C as well (unless <code>RESTRICT</code> is specified).
+        </div>
+
+        <h3>Role-Based Access Control (RBAC)</h3>
+        <pre><code>CREATE ROLE teaching_assistant;
+GRANT SELECT ON takes TO teaching_assistant;
+GRANT teaching_assistant TO 'john_doe';</code></pre>
+        <p>
+          Roles simplify security administration by allowing privileges to be assigned to institutional responsibilities rather than maintained individually across hundreds of employee accounts.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>DBMS Master Study Suite</strong> &middot; Module 3 of 4
+      </div>
+      <div>
+        <a href="master_dbms_internals_lab.html">Next Module: Internals &amp; Lab Practice &rarr;</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="dbms_glossary.js"></script>
+</body>
+</html>

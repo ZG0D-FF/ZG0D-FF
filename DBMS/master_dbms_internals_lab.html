@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 4: Storage Internals, Indexing & Oracle Lab Workshop | DBMS Master Guide</title>
+  <link rel="stylesheet" href="dbms_theme.css">
+</head>
+<body>
+
+  <!-- Master Top Navigation -->
+  <nav class="master-nav" aria-label="Master Suite Navigation">
+    <div class="master-nav-inner">
+      <a href="index.html" class="master-brand">
+        <span>DBMS Hub</span> Master Study Suite
+      </a>
+      <div class="master-links">
+        <a href="master_dbms_foundations.html">1. Foundations &amp; ER/Relational</a>
+        <a href="master_sql_ch3.html">2. Chapter 3: SQL Fundamentals</a>
+        <a href="master_sql_ch4.html">3. Chapter 4: Intermediate SQL</a>
+        <a href="master_dbms_internals_lab.html" class="active">4. Internals &amp; Lab Practice</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="kicker">Module 4 · Systems &amp; Hands-On Lab</span>
+      <h1>File Organization, Indexing Structures &amp; Oracle SQL Lab</h1>
+      <p class="lead">
+        A dual-focus engineering guide: physical storage architecture, blocking factors, B/B+ tree indexing, followed by step-by-step Oracle SQL DDL lab workshops and hands-on query drills.
+      </p>
+      <div class="hero-meta">
+        <span class="pill">Textbook: Silberschatz Ch 11, 14 &middot; Elmasri Ch 16, 17</span>
+        <span class="pill">Syllabus: PCCEC504 Module 4 &middot; Storage Architecture &amp; Lab</span>
+        <span class="pill">Hover glossary enabled</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Layout with Sticky TOC -->
+  <div class="layout">
+    <aside class="toc" aria-label="Table of contents">
+      <h2>Module Contents</h2>
+      <ol>
+        <li><a href="#sec-storage-hierarchy">1. Storage Hierarchy: Blocks &amp; Records</a></li>
+        <li><a href="#sec-blocking-factor">2. Blocking Factor &amp; Spanned Records</a></li>
+        <li><a href="#sec-record-formats">3. Fixed vs. Variable-Length Records</a></li>
+        <li><a href="#sec-indexing-types">4. Single-Level Indexes (Primary, Cluster, Secondary)</a></li>
+        <li><a href="#sec-b-trees">5. B-Trees vs. B+ Trees</a></li>
+        <li><a href="#sec-oracle-lab">6. Oracle SQL DDL Lab Tasks (01–06)</a></li>
+        <li><a href="#sec-query-drills">7. Hands-on SQL Query Drills</a></li>
+      </ol>
+    </aside>
+
+    <main id="main-content">
+      <!-- Section 1 -->
+      <section id="sec-storage-hierarchy">
+        <h2>1. Physical Storage Hierarchy: Disks, Blocks &amp; Records</h2>
+        <p>
+          At the physical layer, databases manage the transition between volatile RAM and non-volatile block storage:
+        </p>
+        <div class="mapping-panel">
+          <p class="mapping-title">Physical Data Organization Hierarchy</p>
+          <div class="mapping-flow">
+            <div class="map-step">
+              <b>1. Database</b>
+              <small>Collection of interrelated logical tables and schemas managed by the DBMS engine.</small>
+            </div>
+            <div class="map-step">
+              <b>2. OS Files</b>
+              <small>Operating system files allocated on disk drives dedicated to tables or tablespaces.</small>
+            </div>
+            <div class="map-step">
+              <b>3. Disk Blocks (Pages)</b>
+              <small>Fixed-size hardware I/O units (typically 4 KB to 16 KB) transferred atomically to memory buffers.</small>
+            </div>
+            <div class="map-step">
+              <b>4. Records (Tuples)</b>
+              <small>Physical row representations stored contiguously within individual disk block frames.</small>
+            </div>
+            <div class="map-step">
+              <b>5. Fields (Attributes)</b>
+              <small>Binary bytes encoding scalar domain values (integers, floats, character bytes).</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="sec-blocking-factor">
+        <h2>2. Blocking Factor &amp; Spanned Organization</h2>
+        <p>
+          Disks read and write entire blocks, never individual bytes or rows. The <dfn data-term="bfr">blocking factor (bfr)</dfn> represents the number of whole records that fit into one physical disk block:
+        </p>
+        <div class="algebra">
+          bfr = &lfloor; B / R &rfloor;
+        </div>
+        <p>
+          Where <code>B</code> is the block size in bytes and <code>R</code> is the fixed record size in bytes.
+        </p>
+        <div class="callout key">
+          <strong>Worked Blocking Calculation:</strong>
+          Suppose a disk block size is <code>B = 4096</code> bytes and each fixed-length employee record occupies <code>R = 100</code> bytes:
+          <br>
+          <code>bfr = &lfloor; 4096 / 100 &rfloor; = 40 records per block</code>.
+          <br>
+          The remaining <code>4096 - (40 &times; 100) = 96 bytes</code> in each block is leftover unused space.
+        </div>
+
+        <h3>Unspanned vs. Spanned Organization</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Dimension</th><th>Unspanned Organization</th><th>Spanned Organization</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Record Boundaries</strong></td>
+                <td>A record never crosses a block boundary. If a record cannot fit in the remaining space of a block, it is placed in the next block.</td>
+                <td>A record exceeding block boundaries is split across blocks, connected via an internal pointer.</td>
+              </tr>
+              <tr>
+                <td><strong>I/O Performance</strong></td>
+                <td>Fast and predictable: reading one block guarantees retrieving complete records without multi-block stitching.</td>
+                <td>Requires multiple block I/O operations and pointer traversals to reassemble a single large record.</td>
+              </tr>
+              <tr>
+                <td><strong>Space Utilization</strong></td>
+                <td>Suffers from internal block fragmentation (wasted leftover bytes).</td>
+                <td>Zero wasted block space; optimal storage density for large rows.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="sec-record-formats">
+        <h2>3. Fixed vs. Variable-Length Record Architecture</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Aspect</th><th>Fixed-Length Records</th><th>Variable-Length Records</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Addressing Formula</strong></td>
+                <td>Direct mathematical offset: <code>Offset(Record i) = Start + (i &times; R)</code></td>
+                <td>Requires page slot directories (record offset and length pointers stored in the block header).</td>
+              </tr>
+              <tr>
+                <td><strong>Deletion Handling</strong></td>
+                <td>Simple deletion markers (tombstones) or linked free-slot chains.</td>
+                <td>Requires block compaction to eliminate internal holes and reclaim fragmented bytes.</td>
+              </tr>
+              <tr>
+                <td><strong>Optimal Workload</strong></td>
+                <td>Sensor telemetry, fixed numeric logs, uniform ID codes.</td>
+                <td>Text-heavy records, nullable columns, variable-length arrays.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="sec-indexing-types">
+        <h2>4. Single-Level Indexes: Primary, Cluster &amp; Secondary</h2>
+        <p>
+          An <dfn data-term="index">index</dfn> is an auxiliary data structure on disk that enables rapid location of tuples without scanning the entire relation from beginning to end.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Index Type</th><th>Built Upon</th><th>Physical File Ordering</th><th>Index Density</th><th>Number Allowed</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong><dfn data-term="primary index">Primary Index</dfn></strong></td>
+                <td>Primary Key</td>
+                <td>File is sorted physically by this primary key.</td>
+                <td><strong>Sparse:</strong> One entry per physical block (stores block anchor key).</td>
+                <td>At most <strong>1</strong> per file.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="clustering index">Clustering Index</dfn></strong></td>
+                <td>Non-Key Attribute</td>
+                <td>File is sorted physically by this non-key attribute.</td>
+                <td><strong>Sparse:</strong> One entry per distinct attribute value.</td>
+                <td>At most <strong>1</strong> per file.</td>
+              </tr>
+              <tr>
+                <td><strong><dfn data-term="unclustered index">Secondary Index</dfn></strong></td>
+                <td>Any Candidate Key or Non-Key</td>
+                <td>File is NOT sorted by this attribute.</td>
+                <td><strong>Dense:</strong> One index entry for every individual record in the file.</td>
+                <td><strong>Multiple</strong> allowed per file.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="sec-b-trees">
+        <h2>5. Dynamic Multilevel Indexes: B-Trees vs. B+ Trees</h2>
+        <p>
+          While static multilevel indexes degrade when insertions cause block overflow chains, dynamic self-balancing tree structures maintain uniform $O(\log_{fo} N)$ search depths through automated node splits and merges.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Structural Characteristic</th><th>B-Tree</th><th><dfn data-term="b+ tree">B+ Tree</dfn> (Industry Standard)</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Data Record Pointers</strong></td>
+                <td>Stored in <em>both</em> internal non-leaf nodes and leaf nodes.</td>
+                <td>Stored <strong>exclusively</strong> in leaf nodes. Internal nodes contain only search keys and child page pointers.</td>
+              </tr>
+              <tr>
+                <td><strong>Leaf Node Linking</strong></td>
+                <td>Leaves are isolated; no pointer connects consecutive leaves.</td>
+                <td>Leaves are linked sequentially as a doubly linked list, enabling ultra-fast range scans.</td>
+              </tr>
+              <tr>
+                <td><strong>Node Fan-Out</strong></td>
+                <td>Lower fan-out because data pointers consume internal node block space.</td>
+                <td>High fan-out: Internal nodes fit hundreds of keys per block, resulting in very short, shallow trees (height 3&ndash;4).</td>
+              </tr>
+              <tr>
+                <td><strong>Range Query Performance</strong></td>
+                <td>Slow: Requires in-order tree traversal traversing up and down levels.</td>
+                <td>Extremely fast: Locates starting leaf via root search, then walks the leaf sibling pointers directly.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 6: Oracle SQL DDL Lab -->
+      <section id="sec-oracle-lab">
+        <h2>6. Oracle SQL DDL Hands-On Lab Workshop</h2>
+        <p>
+          Verified DDL exercises executed in Oracle SQL environments (e.g., Oracle APEX / Live SQL).
+        </p>
+
+        <h3>Task 01: Create EMP Table with Primary Key &amp; Checks</h3>
+        <pre><code>CREATE TABLE EMP_01 (
+    Empno NUMBER(4) PRIMARY KEY,
+    Ename VARCHAR2(10) CHECK (Ename = UPPER(Ename)),
+    Job VARCHAR2(9),
+    Mgr NUMBER(4),
+    Hiredate DATE,
+    Sal NUMBER(7,2),
+    Comm NUMBER(7,2),
+    CONSTRAINT chk_sal_01 CHECK (Sal BETWEEN 1500 AND 50000)
+);</code></pre>
+        <p>
+          <strong>Technical Verification:</strong> <code>PRIMARY KEY</code> enforces uniqueness and NOT NULL on <code>Empno</code>. <code>CHECK (Ename = UPPER(Ename))</code> enforces strict uppercase lettering. <code>chk_sal_01</code> restricts wages between 1,500 and 50,000.
+        </p>
+
+        <h3>Task 02: Verify Structure with DESC</h3>
+        <pre><code>DESC EMP_01;</code></pre>
+
+        <h3>Task 03: Alter Table to Add Department Column</h3>
+        <pre><code>ALTER TABLE EMP_01 ADD DEPTNO INTEGER;</code></pre>
+
+        <h3>Task 04: Create Master Department Table</h3>
+        <pre><code>CREATE TABLE DEPT (
+    Deptno NUMBER(2) PRIMARY KEY,
+    Dname VARCHAR2(10) CHECK (Dname = UPPER(Dname)),
+    Location VARCHAR2(9) CHECK (Location IN ('KOL', 'MUM', 'DEL')),
+    City VARCHAR2(30)
+);</code></pre>
+
+        <h3>Task 05: Add Foreign Key Constraint Linking Tables</h3>
+        <pre><code>ALTER TABLE EMP_01
+ADD CONSTRAINT fk_deptno_01
+FOREIGN KEY (DEPTNO)
+REFERENCES DEPT(Deptno);</code></pre>
+
+        <h3>Task 06: Drop Redundant Column</h3>
+        <pre><code>ALTER TABLE DEPT DROP COLUMN City;</code></pre>
+      </section>
+
+      <!-- Section 7: Query Drills -->
+      <section id="sec-query-drills">
+        <h2>7. Hands-On SQL Query Drills</h2>
+
+        <div class="callout key">
+          <strong>Drill 1: Continent Join Filtering</strong>
+          <pre><code>SELECT CITY.NAME
+FROM CITY
+JOIN COUNTRY ON CITY.COUNTRYCODE = COUNTRY.CODE
+WHERE COUNTRY.CONTINENT = 'Africa';</code></pre>
+        </div>
+
+        <div class="callout key">
+          <strong>Drill 2: String Slicing &amp; Tie-Breaker Ordering</strong>
+          <p>Query names of students scoring &gt; 75, sorted by the last three letters of their name, breaking ties by ascending ID:</p>
+          <pre><code>SELECT Name
+FROM STUDENTS
+WHERE Marks &gt; 75
+ORDER BY SUBSTR(Name, -3) ASC, ID ASC;</code></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>DBMS Master Study Suite</strong> &middot; Module 4 of 4
+      </div>
+      <div>
+        <a href="index.html">&larr; Return to Central Hub Index</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="dbms_glossary.js"></script>
+</body>
+</html>

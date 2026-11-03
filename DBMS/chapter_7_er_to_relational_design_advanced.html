@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Exam-ready DBMS notes on reducing E–R designs to relational schemas, E–R design decisions, extended E–R features, UML notation, and practical database design concerns.">
+<title>DBMS Chapter 7 · Relational Mapping &amp; Extended E–R Design</title>
+<style>
+:root{
+ --page:#f6f5f0;--paper:#fffefa;--ink:#263544;--muted:#637181;--navy:#183653;--blue:#dceaf5;--teal:#d9eee8;--teal-ink:#176a60;--sage:#e5ecdc;--amber:#fff0d2;--amber-ink:#885c17;--rose:#f7e4df;--line:#d9dfdf;--code:#f1f4f5;--link:#176f78;--shadow:0 7px 25px rgba(29,49,66,.06);--radius:15px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:1.25rem}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.72 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.dark{--page:#151e26;--paper:#1e2a34;--ink:#e5edf3;--muted:#a9b7c3;--navy:#9fc8e6;--blue:#263c4d;--teal:#203e3b;--teal-ink:#92d9cc;--sage:#303b32;--amber:#483a25;--amber-ink:#f1cb83;--rose:#432f30;--line:#384753;--code:#17232c;--link:#83d9dd;--shadow:0 7px 25px rgba(0,0,0,.13)}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+button{font:inherit}
+:focus-visible{outline:3px solid #d99a38;outline-offset:3px}
+.skip{position:absolute;left:-9999px;top:auto}.skip:focus{left:1rem;top:1rem;z-index:20;background:var(--paper);padding:.6rem;border-radius:8px}
+.topbar{background:var(--paper);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1200px;margin:auto;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.brand{font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-ink)}
+.theme-btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:.45rem .85rem;cursor:pointer;font-size:.88rem}
+.hero{max-width:1200px;margin:0 auto;padding:3.2rem 1.5rem 2.2rem;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,.8fr);gap:2rem;align-items:center}
+.eyebrow{font-weight:800;letter-spacing:.14em;color:var(--teal-ink);font-size:.76rem;text-transform:uppercase}
+h1,h2,h3,h4{line-height:1.23;color:var(--navy);letter-spacing:-.025em}h1{font-size:clamp(2rem,4vw,3.25rem);margin:.55rem 0 1rem;max-width:800px}h2{font-size:1.65rem;margin:0 0 .8rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}h3{font-size:1.2rem;margin:1.7rem 0 .55rem}h4{font-size:1rem;margin:1.2rem 0 .4rem}
+.hero p{font-size:1.08rem;max-width:780px;color:var(--muted)}
+.hero-art{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:1rem;box-shadow:var(--shadow)}
+.hero-art svg,.diagram svg{display:block;width:100%;height:auto}
+.pills{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.1rem}.pill{font-size:.79rem;border:1px solid var(--line);border-radius:999px;padding:.25rem .65rem;background:var(--paper);color:var(--muted)}
+.layout{max-width:1200px;margin:0 auto;padding:0 1.5rem 4rem;display:grid;grid-template-columns:250px minmax(0,1fr);gap:2rem;align-items:start}
+aside{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto;padding:1.1rem;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
+aside h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;border:0;margin:0 0 .7rem;padding:0}aside ol{padding-left:1.2rem;margin:.2rem 0}aside li{margin:.34rem 0;font-size:.88rem;line-height:1.45}aside a{text-decoration:none;color:var(--ink)}aside a:hover{color:var(--link);text-decoration:underline}
+main{min-width:0}section{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(1.2rem,2.5vw,2rem);margin-bottom:1.25rem;box-shadow:var(--shadow);scroll-margin-top:1rem}.section-kicker{color:var(--teal-ink);font-weight:800;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem}
+p{margin:.65rem 0}ul,ol{padding-left:1.45rem}li{margin:.35rem 0}strong{color:var(--navy)}
+.definition,.exam,.caution,.example,.why{padding:.95rem 1rem;border-left:4px solid var(--link);background:var(--blue);border-radius:0 10px 10px 0;margin:1rem 0}.definition{border-color:var(--teal-ink);background:var(--teal)}.exam{border-color:#bc8626;background:var(--amber)}.caution{border-color:#b76655;background:var(--rose)}.example{border-color:#708d64;background:var(--sage)}.why{border-color:#547c99;background:var(--blue)}
+.callout-label{display:block;font-size:.76rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem;color:var(--muted)}.definition .callout-label{color:var(--teal-ink)}.exam .callout-label{color:var(--amber-ink)}
+.table-wrap{overflow-x:auto;margin:1rem 0;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;min-width:560px;font-size:.94rem;line-height:1.55}th,td{text-align:left;vertical-align:top;padding:.7rem .8rem;border-bottom:1px solid var(--line)}th{background:var(--blue);color:var(--navy);font-weight:800}tbody tr:nth-child(even){background:color-mix(in srgb,var(--paper) 84%,var(--blue))}tr:last-child td{border-bottom:0}
+code,.schema{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:.93em;background:var(--code);padding:.12rem .32rem;border-radius:5px;color:var(--ink)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--code);border:1px solid var(--line);border-radius:10px;padding:1rem;overflow-x:auto;font: .9rem/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}pre code{padding:0;background:transparent}
+.diagram{margin:1.1rem 0;padding:1rem;background:var(--page);border:1px solid var(--line);border-radius:12px}.diagram figcaption{font-size:.86rem;color:var(--muted);margin-top:.55rem}.mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem}.mini{padding:.9rem;border:1px solid var(--line);border-radius:10px}.mini h3{margin:.1rem 0 .35rem;font-size:1.05rem}.muted{color:var(--muted)}.small{font-size:.9rem}.tight li{margin:.2rem 0}.tag{display:inline-block;background:var(--teal);color:var(--teal-ink);font-size:.78rem;font-weight:800;padding:.12rem .45rem;border-radius:5px;white-space:nowrap}
+.rule-list{counter-reset:rule;list-style:none;padding:0}.rule-list li{counter-increment:rule;position:relative;padding:.65rem .8rem .65rem 3.1rem;border:1px solid var(--line);border-radius:10px;margin:.65rem 0}.rule-list li:before{content:counter(rule);position:absolute;left:.75rem;top:.63rem;display:grid;place-items:center;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--teal);color:var(--teal-ink);font-weight:900;font-size:.85rem}
+.footer{max-width:1200px;margin:auto;padding:0 1.5rem 2.5rem;color:var(--muted);font-size:.88rem}.end-links{display:flex;gap:.8rem;flex-wrap:wrap;padding-top:.5rem}
+@media(max-width:900px){.hero{grid-template-columns:1fr;padding-top:2.2rem}.hero-art{max-width:620px}.layout{grid-template-columns:1fr}.layout aside{position:static;max-height:none}.layout aside ol{columns:2;column-gap:2rem}.layout aside li{break-inside:avoid}}
+@media(max-width:560px){body{font-size:15px}.topbar-inner{padding:.8rem 1rem}.hero,.layout,.footer{padding-left:1rem;padding-right:1rem}.layout aside ol{columns:1}.mini-grid{grid-template-columns:1fr}section{padding:1.1rem}h2{font-size:1.4rem}}
+@media print{ :root{--page:#fff;--paper:#fff;--ink:#111;--muted:#444;--navy:#15324a;--line:#bbb;--blue:#eef3f7;--teal:#edf5f1;--teal-ink:#174f47;--sage:#f2f5ef;--amber:#fff5df;--amber-ink:#674710;--rose:#f9ece8;--code:#f6f6f6;--link:#164f65;--shadow:none}body{background:#fff;font-size:10.5pt}.topbar{display:none}.hero{padding:1rem 0;grid-template-columns:1fr}.hero-art{display:none}.layout{display:block;padding:0}.layout aside{display:none}section{box-shadow:none;break-inside:avoid-page;border:0;border-top:1px solid #bbb;border-radius:0;padding:1rem 0;margin:0}.diagram{break-inside:avoid}.table-wrap{overflow:visible}table{min-width:0;font-size:9pt}a{color:inherit;text-decoration:none}.footer{padding:1rem 0}h2,h3{break-after:avoid}pre{white-space:pre-wrap}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main-content">Skip to notes</a>
+<div class="topbar"><div class="topbar-inner"><div class="brand">DBMS · Chapter 7 continuation</div><button class="theme-btn" id="themeToggle" type="button" aria-pressed="false">Switch to dark mode</button></div></div>
+<header class="hero">
+ <div>
+  <div class="eyebrow">Exam-ready study notes · Sections 7.6–7.11</div>
+  <h1>From E–R Design to Relational Schemas</h1>
+  <p>A structured guide to schema-reduction rules, tricky E–R design decisions, extended E–R features, UML notation, and the practical concerns that shape a usable database.</p>
+  <div class="pills"><span class="pill">Source-faithful</span><span class="pill">Concept-mapped</span><span class="pill">Original SVG diagrams</span><span class="pill">Print-friendly</span></div>
+ </div>
+ <div class="hero-art" aria-label="Concept map from E-R design to relational implementation">
+  <svg viewBox="0 0 520 270" role="img" aria-labelledby="heroTitle heroDesc">
+   <title id="heroTitle">E–R to relational design pathway</title><desc id="heroDesc">Requirements become an E–R conceptual model, which is mapped into tables and constraints, then considered alongside usage, performance, and authorization.</desc>
+   <rect x="12" y="16" width="496" height="238" rx="16" fill="none" stroke="var(--line)" stroke-width="1.4"/>
+   <rect x="38" y="40" width="190" height="48" rx="9" fill="var(--blue)" stroke="#82a5c2"/><text x="133" y="60" text-anchor="middle" font-size="12" fill="var(--navy)" font-weight="700">E–R conceptual design</text><text x="133" y="76" text-anchor="middle" font-size="10" fill="var(--muted)">entities · relationships · constraints</text>
+   <path d="M228 64 H284" stroke="var(--teal-ink)" stroke-width="2"/><path d="M276 58 L284 64 L276 70" stroke="var(--teal-ink)" stroke-width="2" fill="none"/>
+   <rect x="286" y="40" width="190" height="48" rx="9" fill="var(--teal)" stroke="#6ea99d"/><text x="381" y="60" text-anchor="middle" font-size="12" fill="var(--teal-ink)" font-weight="700">Relational schemas</text><text x="381" y="76" text-anchor="middle" font-size="10" fill="var(--muted)">tables · keys · foreign keys</text>
+   <path d="M381 88 V120 H260 V142" stroke="var(--line)" stroke-width="1.8" fill="none"/><path d="M254 134 L260 142 L266 134" stroke="var(--line)" stroke-width="1.8" fill="none"/>
+   <rect x="92" y="144" width="336" height="42" rx="8" fill="var(--sage)" stroke="#9cab8a"/><text x="260" y="161" text-anchor="middle" font-size="12" fill="var(--navy)" font-weight="700">Integrity and design choices</text><text x="260" y="176" text-anchor="middle" font-size="10" fill="var(--muted)">redundancy · participation · specialization · aggregation</text>
+   <path d="M260 186 V206" stroke="var(--line)" stroke-width="1.8"/><path d="M254 199 L260 207 L266 199" stroke="var(--line)" stroke-width="1.8" fill="none"/>
+   <text x="260" y="226" text-anchor="middle" font-size="11" fill="var(--muted)">Implementation is also shaped by queries, workload,</text><text x="260" y="241" text-anchor="middle" font-size="11" fill="var(--muted)">performance, authorization, and evolving requirements.</text>
+  </svg>
+ </div>
+</header>
+<div class="layout">
+ <aside aria-label="Table of contents"><h2>On this page</h2><ol>
+  <li><a href="#mapping">Reduction to relational schemas</a></li>
+  <li><a href="#design-choices">E–R design decisions</a></li>
+  <li><a href="#extended">Specialization &amp; generalization</a></li>
+  <li><a href="#aggregation">Aggregation</a></li>
+  <li><a href="#notation">E–R notation &amp; UML</a></li>
+  <li><a href="#practical">Other design concerns</a></li>
+  <li><a href="#recap">Exam recap &amp; self-check</a></li>
+ </ol><p class="small muted">Follow the links inside the notes to connect each rule to its design consequence.</p></aside>
+ <main id="main-content">
+ <section id="mapping">
+  <div class="section-kicker">7.6 · Core conversion rules</div><h2>1. Reduction of an E–R design to relational schemas</h2>
+  <p>The E–R model describes the logical structure of an enterprise. A relational implementation represents that structure as relation schemas. In the textbook’s mapping approach, each entity set and relationship set initially yields a relation schema; primary-key and foreign-key constraints carry forward important E–R constraints.</p>
+  <figure class="diagram"><svg viewBox="0 0 740 150" role="img" aria-labelledby="mapTitle mapDesc"><title id="mapTitle">Mapping workflow</title><desc id="mapDesc">Identify entity and relationship sets, map their attributes, select primary keys, and add foreign keys and constraint-aware simplifications.</desc>
+   <defs><marker id="arrowMap" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#477e83"/></marker></defs>
+   <g font-family="system-ui" font-size="12" text-anchor="middle"><rect x="8" y="30" width="160" height="74" rx="10" fill="#dceaf5" stroke="#82a5c2"/><text x="88" y="55" fill="#183653" font-weight="700">1. Classify</text><text x="88" y="73" fill="#263544">entities &amp; relationships</text><text x="88" y="89" fill="#263544">strong / weak</text>
+   <path d="M168 67 H195" stroke="#477e83" stroke-width="2" marker-end="url(#arrowMap)"/>
+   <rect x="200" y="30" width="160" height="74" rx="10" fill="#d9eee8" stroke="#6ea99d"/><text x="280" y="55" fill="#176a60" font-weight="700">2. Map attributes</text><text x="280" y="73" fill="#263544">flatten composites;</text><text x="280" y="89" fill="#263544">separate multivalued</text>
+   <path d="M360 67 H387" stroke="#477e83" stroke-width="2" marker-end="url(#arrowMap)"/>
+   <rect x="392" y="30" width="150" height="74" rx="10" fill="#fff0d2" stroke="#c69a4b"/><text x="467" y="55" fill="#885c17" font-weight="700">3. Select keys</text><text x="467" y="73" fill="#263544">entity PKs, weak</text><text x="467" y="89" fill="#263544">discriminators</text>
+   <path d="M542 67 H569" stroke="#477e83" stroke-width="2" marker-end="url(#arrowMap)"/>
+   <rect x="574" y="30" width="158" height="74" rx="10" fill="#e5ecdc" stroke="#9cab8a"/><text x="653" y="55" fill="#183653" font-weight="700">4. Add constraints</text><text x="653" y="73" fill="#263544">FKs, cardinality-</text><text x="653" y="89" fill="#263544">aware merging</text></g>
+  </svg><figcaption>Read the conversion as a series of decisions: the E–R structure determines which attributes and constraints the relational representation must preserve.</figcaption></figure>
+
+  <h3>1.1 Strong entity sets with simple attributes</h3>
+  <div class="definition"><span class="callout-label">Rule</span> Create a relation schema with one attribute for each simple attribute of the strong entity set. The entity set’s primary key remains the relation’s primary key.</div>
+  <p>Example: <code>student(ID, name, tot_cred)</code>, where <code>ID</code> is the primary key. One tuple represents one student entity.</p>
+  <p>The textbook’s example includes these schemas:</p>
+  <pre><code>classroom(building, room_number, capacity)
+department(dept_name, building, budget)
+course(course_id, title, credits)
+instructor(ID, name, salary)
+student(ID, name, tot_cred)</code></pre>
+  <p>Notice that <code>instructor</code> and <code>student</code> do not include <code>dept_name</code> at this stage: department membership is represented as a relationship in the conceptual design. See <a href="#merge">schema combination</a> for when a relationship can later be folded into a table.</p>
+
+  <h3>1.2 Strong entity sets with complex attributes</h3>
+  <div class="table-wrap"><table><thead><tr><th>E–R attribute kind</th><th>Relational mapping</th><th>Reason / example</th></tr></thead><tbody>
+   <tr><td><strong>Composite</strong></td><td>Replace it with its component attributes; do not keep a separate column for the composite attribute.</td><td><code>name</code> becomes <code>first_name, middle_name, last_name</code>. A composite <code>street</code> can become <code>street_number, street_name, apt_number</code>.</td></tr>
+   <tr><td><strong>Multivalued</strong></td><td>Create a separate relation containing the owner’s primary-key attributes plus the attribute’s value.</td><td><code>instructor_phone(ID, phone_number)</code>.</td></tr>
+   <tr><td><strong>Derived</strong></td><td>Not explicitly represented as a stored relational attribute by this mapping.</td><td><code>age</code> can be computed from <code>date_of_birth</code> and the current date.</td></tr>
+  </tbody></table></div>
+  <p>A relational schema for the complex <code>instructor</code> example, excluding the multivalued phone number, is:</p>
+  <pre><code>instructor(
+  ID, first_name, middle_name, last_name,
+  street_number, street_name, apt_number,
+  city, state, zip_code, date_of_birth
+)</code></pre>
+  <div class="example"><span class="callout-label">Multivalued attribute example</span>
+   If instructor <code>22222</code> has phone numbers <code>555-1234</code> and <code>555-4321</code>, store two tuples in <code>instructor_phone(ID, phone_number)</code>: <code>(22222, 555-1234)</code> and <code>(22222, 555-4321)</code>. The primary key is the combination <code>(ID, phone_number)</code>, and <code>ID</code> is a foreign key referencing <code>instructor(ID)</code>.
+  </div>
+  <p>For a multivalued attribute relation, the general primary key is the union of the owner’s primary-key attributes and the value attribute. The foreign key points back to the relation representing the owner.</p>
+  <div class="caution"><span class="callout-label">Special time-slot case</span>
+   The textbook’s <code>time_slot</code> has key <code>time_slot_id</code> and one multivalued composite attribute <code>(day, start_time, end_time)</code>. Its resulting relation is <code>time_slot(time_slot_id, day, start_time, end_time)</code>. Because the source states that two meetings cannot share the same day and start time but end at different times, <code>end_time</code> is omitted from the key; the key is <code>(time_slot_id, day, start_time)</code>. Since the entity relation would contain only <code>time_slot_id</code>, it can be dropped as an optimization. The textbook flags a consequence: a relation such as <code>sec_time_slot</code> can no longer reference a single row by <code>time_slot_id</code>, because that value can appear in multiple meeting tuples or have no tuple at all.</div>
+
+  <h3>1.3 Weak entity sets</h3>
+  <div class="definition"><span class="callout-label">Rule</span> A weak entity’s relation contains its own attributes plus the primary key of the strong entity on which it depends. The primary key is the strong entity’s key combined with the weak entity’s discriminator. A foreign key references the strong entity.</div>
+  <p>Example: a <code>section</code> depends on a <code>course</code>. The section discriminator is <code>(sec_id, semester, year)</code>; <code>course_id</code> comes from the strong entity.</p>
+  <pre><code>course(course_id, title, credits)
+section(course_id, sec_id, semester, year)
+
+PRIMARY KEY(section) =
+  (course_id, sec_id, semester, year)
+FOREIGN KEY(section.course_id) REFERENCES course(course_id)
+ON DELETE CASCADE</code></pre>
+  <p>The <code>ON DELETE CASCADE</code> rule means that deleting a course also deletes the sections that depend on it. See <a href="#relationship-mapping">relationship mapping</a> for the general foreign-key pattern.</p>
+
+  <h3 id="relationship-mapping">1.4 Relationship sets</h3>
+  <p>A relationship relation starts with the primary-key attributes of all participating entity sets. Any descriptive attributes of the relationship are added as well. Attribute names may need role prefixes when the same-named key comes from different entity sets; in recursive relationships, role names distinguish the roles.</p>
+  <div class="table-wrap"><table><thead><tr><th>Relationship cardinality</th><th>Primary key of relationship relation</th></tr></thead><tbody>
+   <tr><td>Binary many-to-many</td><td>Union of the primary keys of both participating entity sets.</td></tr>
+   <tr><td>Binary one-to-one</td><td>Primary key of either entity set may be chosen.</td></tr>
+   <tr><td>Binary one-to-many / many-to-one</td><td>Primary key of the entity set on the <strong>many</strong> side.</td></tr>
+   <tr><td>N-ary, no arrow constraints</td><td>Union of the primary keys of every participating entity set.</td></tr>
+   <tr><td>N-ary, with one arrow</td><td>Primary keys of the participating entity sets <strong>not on the arrow side</strong>, following the source’s convention of at most one arrow out of the relationship set.</td></tr>
+  </tbody></table></div>
+  <p>For each participating entity set, add a foreign-key constraint from the relationship relation’s corresponding key attributes to the primary key of that entity’s relation.</p>
+  <div class="example"><span class="callout-label">University example schemas</span>
+   <pre><code>teaches(ID, course_id, sec_id, semester, year)
+takes(ID, course_id, sec_id, semester, year, grade)
+prereq(course_id, prereq_id)
+advisor(s_ID, i_ID)
+sec_course(course_id, sec_id, semester, year)
+sec_time_slot(course_id, sec_id, semester, year, time_slot_id)
+sec_class(course_id, sec_id, semester, year, building, room_number)
+inst_dept(ID, dept_name)
+stud_dept(ID, dept_name)
+course_dept(course_id, dept_name)</code></pre>
+   <p class="small">The <code>advisor</code> example uses <code>s_ID</code> and <code>i_ID</code> to distinguish student ID from instructor ID. Under the source’s assumption that each student has at most one advisor, <code>s_ID</code> is the primary key; both attributes are foreign keys. For <code>prereq</code>, the role indicators <code>course_id</code> and <code>prereq_id</code> distinguish the course from its prerequisite.</p>
+  </div>
+
+  <h3>1.5 Remove redundant schemas and combine schemas carefully</h3>
+  <div class="mini-grid"><div class="mini"><h3>Redundant relationship schema</h3><p>The relation for an identifying relationship between a weak entity and its strong owner is usually redundant when it has no descriptive attributes and is many-to-one. The weak entity relation already contains the owner key plus its discriminator.</p></div><div class="mini" id="merge"><h3>Combine a many-to-one relationship</h3><p>If every entity on the many side participates (total participation), the relationship relation can be merged into the many-side entity relation. Use the many-side primary key, and retain the foreign key to the other entity.</p></div></div>
+  <p>Examples from the chapter: <code>inst_dept</code> can be merged into <code>instructor</code>, <code>stud_dept</code> into <code>student</code>, <code>course_dept</code> into <code>course</code>, and <code>sec_class</code> and <code>sec_time_slot</code> into <code>section</code> when the stated constraints permit these combinations.</p>
+  <p>For a one-to-one relationship, the relationship schema may be merged with either participating entity schema. If participation is partial, merging is still possible but may require <code>NULL</code> values for entities with no associated counterpart.</p>
+  <div class="exam"><span class="callout-label">Remember the foreign-key adjustment</span> When a relationship schema is merged into one of its entity schemas, remove the foreign-key constraint that would reference that merged entity relation from the relationship relation (because that separate relation disappears) and preserve the foreign key to the other entity set. In the example, merging <code>inst_dept</code> into <code>instructor</code> leaves <code>instructor.dept_name</code> referencing <code>department</code>.</div>
+ </section>
+
+ <section id="design-choices">
+  <div class="section-kicker">7.7 · Modeling decisions</div><h2>2. E–R design issues: choosing the right representation</h2>
+  <p>There is rarely only one way to describe a real-world enterprise. Decide whether something should be an attribute, entity set, or relationship set by considering its meaning, the constraints that apply, and the extra information the database must preserve.</p>
+  <h3>2.1 Entity set versus attribute</h3>
+  <div class="table-wrap"><table><thead><tr><th>Choice</th><th>What it expresses</th><th>Example / when appropriate</th></tr></thead><tbody>
+   <tr><td>Phone number as a simple attribute</td><td>One value on each instructor.</td><td>Appropriate only when one phone number per instructor is enough.</td></tr>
+   <tr><td>Phone number as a multivalued attribute</td><td>Zero or more phone numbers per instructor.</td><td>Use when multiple values matter but phone-specific details do not.</td></tr>
+   <tr><td><code>phone</code> as an entity set plus <code>inst_phone</code></td><td>Phones can have their own properties and relationships.</td><td>Useful for location, type (mobile/IP/landline), or sharing a phone among people.</td></tr>
+  </tbody></table></div>
+  <p>The textbook treats <code>name</code> as a natural attribute of an instructor rather than an independent entity. The distinction depends on the real-world semantics; there is no universal rule that every noun should become an entity.</p>
+  <div class="caution"><span class="callout-label">Common modeling mistake</span> Do not model a related entity’s primary key as an ordinary attribute when the association itself should be explicit. For example, do not put student <code>ID</code> inside <code>instructor</code> to represent advising; model the <code>advisor</code> relationship. Likewise, do not list the participating entities’ keys as descriptive attributes of the E–R relationship—their identity is already implicit in the relationship. Those key attributes may appear later in the generated relational schema.</div>
+
+  <h3>2.2 Entity set versus relationship set</h3>
+  <p>In the university model, <code>takes</code> compactly represents a student taking a section. An alternative is an entity set <code>registration</code>, with relationships linking each registration to one student and one section.</p>
+  <div class="diagram"><svg viewBox="0 0 700 205" role="img" aria-labelledby="regTitle regDesc"><title id="regTitle">Two ways to model course registration</title><desc id="regDesc">Left: student and section linked directly by takes. Right: registration is an entity linked to a student and a section.</desc>
+   <g font-family="system-ui" text-anchor="middle"><text x="165" y="22" font-size="13" fill="var(--navy)" font-weight="700">Compact relationship</text><rect x="25" y="43" width="118" height="45" rx="7" fill="#dceaf5" stroke="#82a5c2"/><text x="84" y="70" fill="#183653" font-size="12">student</text><rect x="187" y="43" width="118" height="45" rx="7" fill="#dceaf5" stroke="#82a5c2"/><text x="246" y="70" fill="#183653" font-size="12">section</text><path d="M143 65 H187" stroke="#477e83" stroke-width="2"/><rect x="140" y="103" width="50" height="26" rx="5" fill="#d9eee8" stroke="#6ea99d"/><text x="165" y="120" font-size="10" fill="#176a60">takes</text><path d="M165 103 V88" stroke="#477e83" stroke-width="1.6"/>
+   <line x1="350" y1="30" x2="350" y2="185" stroke="var(--line)" stroke-dasharray="4 4"/><text x="530" y="22" font-size="13" fill="var(--navy)" font-weight="700">Registration as an entity</text><rect x="390" y="42" width="112" height="40" rx="7" fill="#dceaf5" stroke="#82a5c2"/><text x="446" y="66" font-size="12" fill="#183653">student</text><rect x="560" y="42" width="112" height="40" rx="7" fill="#dceaf5" stroke="#82a5c2"/><text x="616" y="66" font-size="12" fill="#183653">section</text><rect x="478" y="122" width="106" height="42" rx="7" fill="#d9eee8" stroke="#6ea99d"/><text x="531" y="147" font-size="12" fill="#176a60">registration</text><path d="M446 82 V102 H505 V122" stroke="#477e83" stroke-width="1.7" fill="none"/><path d="M616 82 V102 H557 V122" stroke="#477e83" stroke-width="1.7" fill="none"/><text x="530" y="186" font-size="10" fill="var(--muted)">Two links; registration participates totally</text></g>
+  </svg><figcaption>Both structures can represent the same association. Making registration an entity becomes useful when the registration record has additional information or identity of its own; the direct <code>takes</code> relationship is more compact when it does not.</figcaption></div>
+  <p>A useful starting guideline is to use a relationship set to describe an action or association occurring between entities. Promote the association to an entity when it needs its own details, identity, or further relationships.</p>
+
+  <h3>2.3 Binary versus n-ary relationships</h3>
+  <p>Some nonbinary relationships can be replaced with binary relationships without losing useful meaning. The parent example can use separate <code>mother</code> and <code>father</code> relationships so a child’s mother can be recorded even when the father is unknown, instead of leaving part of a ternary <code>parent</code> relationship incomplete.</p>
+  <p>More generally, a ternary relationship <code>R(A,B,C)</code> can be transformed into a new entity set <code>E</code> plus three binary relationships <code>R_A</code>, <code>R_B</code>, and <code>R_C</code>. Each original tuple becomes an <code>E</code> entity; relationship attributes move to <code>E</code>, and an identifying attribute is needed.</p>
+  <div class="caution"><span class="callout-label">Why not always split?</span> The new entity plus relationships increase complexity and storage. A ternary relationship makes it explicit that all participating entities form one association, and constraints on the original n-ary relationship may not be expressible by cardinality constraints on the binary replacements.</div>
+  <p>The chapter’s <code>proj_guide(instructor, student, project)</code> example is important: separate instructor–project and instructor–student links cannot show exactly which student is guided by which instructor on which project. Preserve the ternary relationship unless a replacement can retain the required combinations and constraints.</p>
+
+  <h3>2.4 Where should relationship attributes go?</h3>
+  <div class="table-wrap"><table><thead><tr><th>Cardinality</th><th>Placement rule</th><th>Advisor-date example</th></tr></thead><tbody>
+   <tr><td>One-to-many</td><td>A relationship attribute can be placed on the entity set on the <strong>many</strong> side.</td><td>If one instructor advises many students and each student has at most one advisor, <code>date</code> could be stored with <code>student</code>.</td></tr>
+   <tr><td>One-to-one</td><td>The attribute may be placed on either participating entity.</td><td>The associated date can be stored on either side if the one-to-one assumptions hold.</td></tr>
+   <tr><td>Many-to-many</td><td>Keep it on the relationship when its value depends on a particular pair of participating entities.</td><td>The date that a particular instructor became a particular student’s advisor belongs to <code>advisor</code>, not solely to either entity.</td></tr>
+  </tbody></table></div>
+  <p>Even when moving a one-to-many relationship attribute is equivalent under the constraints, keeping it on the relationship may communicate its semantics more clearly—for example, the advising date is not the student’s university admission date.</p>
+ </section>
+
+ <section id="extended">
+  <div class="section-kicker">7.8 · Extended E–R model</div><h2>3. Specialization, generalization, and inheritance</h2>
+  <p>Extended E–R (EER) features express distinctions that the basic entity–relationship constructs can represent less naturally. The central idea is a higher-level entity set with shared properties and lower-level entity sets with additional, distinctive properties.</p>
+  <figure class="diagram"><svg viewBox="0 0 720 300" role="img" aria-labelledby="isaTitle isaDesc"><title id="isaTitle">Example specialization hierarchy</title><desc id="isaDesc">Person is specialized into employee and student. Employee is specialized into instructor and secretary. Student can be specialized into graduate and undergraduate. Lower levels inherit higher-level attributes.</desc>
+   <g font-family="system-ui" text-anchor="middle"><rect x="270" y="12" width="180" height="45" rx="8" fill="#dceaf5" stroke="#82a5c2"/><text x="360" y="31" font-size="13" font-weight="700" fill="#183653">person</text><text x="360" y="46" font-size="10" fill="#263544">ID, name, address</text>
+   <path d="M360 57 V80 H195 V100 M360 80 H525 V100" stroke="#6f9b9a" stroke-width="1.8" fill="none"/><path d="M189 94 L195 100 L201 94 M519 94 L525 100 L531 94" stroke="#6f9b9a" stroke-width="1.8" fill="none"/>
+   <rect x="100" y="100" width="190" height="48" rx="8" fill="#d9eee8" stroke="#6ea99d"/><text x="195" y="120" font-size="13" font-weight="700" fill="#176a60">employee</text><text x="195" y="136" font-size="10" fill="#263544">inherits person; salary</text>
+   <rect x="430" y="100" width="190" height="48" rx="8" fill="#d9eee8" stroke="#6ea99d"/><text x="525" y="120" font-size="13" font-weight="700" fill="#176a60">student</text><text x="525" y="136" font-size="10" fill="#263544">inherits person; tot_cred</text>
+   <path d="M195 148 V177 H95 V194 M195 177 H270 V194 M525 148 V177 H450 V194 M525 177 H625 V194" stroke="#6f9b9a" stroke-width="1.8" fill="none"/><path d="M89 188 L95 194 L101 188 M264 188 L270 194 L276 188 M444 188 L450 194 L456 188 M619 188 L625 194 L631 188" stroke="#6f9b9a" stroke-width="1.8" fill="none"/>
+   <rect x="25" y="194" width="140" height="48" rx="8" fill="#fff0d2" stroke="#c69a4b"/><text x="95" y="214" font-size="12" font-weight="700" fill="#885c17">instructor</text><text x="95" y="230" font-size="10" fill="#263544">rank</text>
+   <rect x="200" y="194" width="140" height="48" rx="8" fill="#fff0d2" stroke="#c69a4b"/><text x="270" y="214" font-size="12" font-weight="700" fill="#885c17">secretary</text><text x="270" y="230" font-size="10" fill="#263544">hours_per_week</text>
+   <rect x="380" y="194" width="140" height="48" rx="8" fill="#fff0d2" stroke="#c69a4b"/><text x="450" y="214" font-size="12" font-weight="700" fill="#885c17">graduate</text><text x="450" y="230" font-size="10" fill="#263544">office_number</text>
+   <rect x="555" y="194" width="140" height="48" rx="8" fill="#fff0d2" stroke="#c69a4b"/><text x="625" y="214" font-size="12" font-weight="700" fill="#885c17">undergraduate</text><text x="625" y="230" font-size="10" fill="#263544">residential_college</text>
+   <text x="360" y="276" font-size="11" fill="var(--muted)">The hierarchy is illustrative: overlap/disjointness and total/partial</text><text x="360" y="291" font-size="11" fill="var(--muted)">membership are separate design constraints.</text></g>
+  </svg><figcaption>A lower-level entity inherits attributes and relationship participation from every applicable higher-level entity set. The diagram separates shared attributes from subclass-specific attributes.</figcaption></figure>
+  <h3>3.1 Specialization and generalization</h3>
+  <div class="table-wrap"><table><thead><tr><th>Concept</th><th>Design direction</th><th>Textbook example</th></tr></thead><tbody>
+   <tr><td><strong>Specialization</strong></td><td>Top-down: refine a broad entity set into subgroups distinguished by attributes or roles.</td><td><code>person → employee, student</code>; <code>employee → instructor, secretary</code>.</td></tr>
+   <tr><td><strong>Generalization</strong></td><td>Bottom-up: combine entity sets that share attributes and relationships into a common higher-level entity set.</td><td><code>instructor</code> and <code>secretary</code> can share common ID/name/salary properties in <code>employee</code>.</td></tr>
+  </tbody></table></div>
+  <p>The resulting structure is a superclass–subclass relationship, commonly called <strong>ISA</strong> (“is a”). An instructor ISA employee; employee ISA person. A person may be an employee, a student, both, or neither unless constraints state otherwise.</p>
+  <div class="definition"><span class="callout-label">Attribute and relationship inheritance</span> A lower-level entity inherits the attributes of its higher-level entity sets and inherits participation in their relationship sets. In the hierarchy above, an <code>instructor</code> inherits <code>ID</code>, <code>name</code>, and <code>address</code> from <code>person</code>, plus <code>salary</code> from <code>employee</code>, and adds <code>rank</code>.</div>
+  <p>A hierarchy gives each entity set at most one immediate superclass (single inheritance). If an entity set is a lower-level set in more than one ISA relationship, the structure has multiple inheritance and is called a lattice.</p>
+
+  <h3>3.2 Membership and generalization constraints</h3>
+  <div class="table-wrap"><table><thead><tr><th>Constraint dimension</th><th>Option</th><th>Meaning</th><th>Source example</th></tr></thead><tbody>
+   <tr><td>How membership is decided</td><td><strong>Condition-defined</strong></td><td>Membership follows a predicate, often an attribute condition; when the same attribute determines membership, it is attribute-defined.</td><td><code>student_type = 'graduate'</code> places a student in <code>graduate_student</code>.</td></tr>
+   <tr><td>How membership is decided</td><td><strong>User-defined</strong></td><td>A user explicitly assigns an entity; no automatic membership condition controls it.</td><td>Employees are assigned to work teams after three months.</td></tr>
+   <tr><td>Can an entity belong to multiple lower-level sets?</td><td><strong>Disjoint</strong></td><td>An entity belongs to at most one lower-level set within the generalization.</td><td>A student is graduate or undergraduate, not both.</td></tr>
+   <tr><td>Can an entity belong to multiple lower-level sets?</td><td><strong>Overlapping</strong></td><td>An entity may belong to more than one lower-level set.</td><td>A person can be both student and employee; an employee may be on multiple teams.</td></tr>
+   <tr><td>Must every higher-level entity be classified?</td><td><strong>Total</strong></td><td>Every higher-level entity belongs to at least one lower-level set.</td><td>Every student is either graduate or undergraduate.</td></tr>
+   <tr><td>Must every higher-level entity be classified?</td><td><strong>Partial</strong></td><td>Some higher-level entities may belong to no lower-level set. Partial is the default in the source.</td><td>An employee may not yet belong to a work team.</td></tr>
+  </tbody></table></div>
+  <div class="exam"><span class="callout-label">Do not confuse the two dimensions</span> Disjointness asks whether one entity may belong to multiple subclasses. Completeness asks whether every superclass entity must belong to some subclass. They are independent: a design may be total-disjoint, partial-disjoint, total-overlapping, or partial-overlapping.</div>
+  <p>These constraints have operational consequences. With total completeness, inserting a higher-level entity requires inserting it into at least one lower-level set. Condition-defined membership requires all entities satisfying the condition to be included. Deleting a higher-level entity also deletes its associated lower-level representations.</p>
+
+  <h3>3.3 Mapping generalization into relations</h3>
+  <p>The source describes two approaches. The first is the more general method and avoids the main representational problems of the alternative.</p>
+  <ol class="rule-list">
+   <li><strong>Superclass plus subclass relations.</strong> Create a relation for the higher-level entity and one for each lower-level entity. The subclass relation contains its own attributes plus the superclass primary key, which is also its primary key and a foreign key to the superclass relation.</li>
+   <li><strong>Subclass-only relations.</strong> If the generalization is both disjoint and complete, omit the superclass relation and place the superclass attributes in each subclass relation. Each subclass uses the superclass key as its key.</li>
+  </ol>
+  <pre><code>-- Method 1: superclass plus subclasses
+person(ID, name, street, city)
+employee(ID, salary)       -- ID PK and FK → person(ID)
+student(ID, tot_cred)      -- ID PK and FK → person(ID)
+
+-- Method 2: disjoint + complete only
+employee(ID, name, street, city, salary)
+student(ID, name, street, city, tot_cred)</code></pre>
+  <p>The subclass-only method has drawbacks: foreign keys referring to the superclass have no single superclass relation to target; overlapping subclasses duplicate shared attributes; and partial generalization leaves higher-level entities that fit no subclass unrepresented. Adding a separate superclass relation to address these issues leads back toward method 1.</p>
+ </section>
+
+ <section id="aggregation">
+  <div class="section-kicker">7.8.5–7.8.6 · Relating relationships</div><h2>4. Aggregation</h2>
+  <div class="definition"><span class="callout-label">Definition</span> Aggregation is an abstraction in which a relationship set, together with its participating entity sets, is treated as a higher-level entity that can participate in another relationship.</div>
+  <p>Basic E–R constructs do not directly express a relationship between relationships. In the source example, <code>proj_guide</code> connects instructor, student, and project. Each particular guiding combination may have a monthly evaluation report, represented by <code>evaluation</code>.</p>
+  <figure class="diagram"><svg viewBox="0 0 700 290" role="img" aria-labelledby="aggTitle aggDesc"><title id="aggTitle">Aggregation of project guidance</title><desc id="aggDesc">Instructor, student, and project form the proj_guide relationship. The combined relationship is treated as a higher-level unit connected to evaluation by eval_for.</desc>
+   <g font-family="system-ui" text-anchor="middle"><rect x="18" y="24" width="664" height="238" rx="14" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="42" y="48" text-anchor="start" font-size="11" fill="var(--muted)">Aggregated unit: a specific guidance relationship</text>
+   <rect x="42" y="78" width="130" height="43" rx="7" fill="#dceaf5" stroke="#82a5c2"/><text x="107" y="104" font-size="12" fill="#183653">instructor</text>
+   <rect x="285" y="78" width="130" height="43" rx="7" fill="#dceaf5" stroke="#82a5c2"/><text x="350" y="104" font-size="12" fill="#183653">student</text>
+   <rect x="528" y="78" width="130" height="43" rx="7" fill="#dceaf5" stroke="#82a5c2"/><text x="593" y="104" font-size="12" fill="#183653">project</text>
+   <path d="M107 121 V145 H350 V121 M593 121 V145 H350" stroke="#477e83" stroke-width="1.7" fill="none"/><path d="M350 145 V164" stroke="#477e83" stroke-width="1.7"/><rect x="270" y="164" width="160" height="39" rx="7" fill="#d9eee8" stroke="#6ea99d"/><text x="350" y="188" font-size="12" font-weight="700" fill="#176a60">proj_guide</text>
+   <path d="M430 183 H500" stroke="#477e83" stroke-width="1.8"/><path d="M492 177 L500 183 L492 189" fill="none" stroke="#477e83" stroke-width="1.8"/><rect x="500" y="164" width="150" height="39" rx="7" fill="#fff0d2" stroke="#c69a4b"/><text x="575" y="188" font-size="12" font-weight="700" fill="#885c17">eval_for</text>
+   <path d="M575 203 V221" stroke="#477e83" stroke-width="1.8"/><path d="M569 213 L575 221 L581 213" fill="none" stroke="#477e83" stroke-width="1.8"/><rect x="500" y="221" width="150" height="28" rx="7" fill="#fff0d2" stroke="#c69a4b"/><text x="575" y="239" font-size="11" fill="#885c17">evaluation</text></g>
+  </svg><figcaption>Conceptual view: the evaluation refers to one particular instructor–student–project guidance combination, not merely to a student or project alone.</figcaption></figure>
+  <p>A four-way relationship linking instructor, student, project, and evaluation could represent the combination, but it creates redundant information: every evaluation combination must already be a valid <code>proj_guide</code> combination. The relationships should not simply be collapsed, because some guidance combinations may not yet have an evaluation. A multivalued attribute is also unsuitable when an evaluation is an entity that may relate to other entities, such as a secretary processing it.</p>
+  <h3>Mapping aggregation to relations</h3>
+  <p>Map the relationship set that links the aggregation to another entity using the usual relationship-set rules. Its schema includes the primary-key attributes of the aggregated relationship’s participants, the primary key of the other entity, and any descriptive attributes of the linking relationship. The aggregation’s primary key is the primary key of its defining relationship; no extra relation is required solely for the aggregation itself. Continue mapping the entities and relationships inside the aggregation using the usual rules.</p>
+ </section>
+
+ <section id="notation">
+  <div class="section-kicker">7.9 · Diagram languages</div><h2>5. Alternative E–R notation and UML</h2>
+  <p>Diagram notation supports communication between data-modeling specialists and domain experts. Different textbooks and tools may use different symbols, so interpret the legend rather than assuming every diagram follows the same convention.</p>
+  <div class="table-wrap"><table><thead><tr><th>Notation / construct</th><th>Typical representation</th><th>Useful distinction</th></tr></thead><tbody>
+   <tr><td>Textbook E–R notation used in the source</td><td>Entity-set rectangles with attributes inside; relationship diamonds; underlined key attributes; double lines for total participation; double diamonds for identifying relationships.</td><td>Compact layout; relationship attributes are linked to the relationship with a dashed line.</td></tr>
+   <tr><td>Chen’s notation</td><td>Attributes shown in ovals attached to entity rectangles or relationship diamonds; key attributes underlined.</td><td>Recognizable original-style E–R notation.</td></tr>
+   <tr><td>Crow’s-foot notation / IDEF1X family</td><td>Relationships represented as lines; crow’s feet indicate “many”; bars and circles help express participation.</td><td>In the described alternative, a crow’s foot on both ends indicates many-to-many; on one end indicates many-to-one in the corresponding direction. Participation markers are placed at the opposite endpoint to the entity whose participation they describe.</td></tr>
+   <tr><td>UML class diagrams</td><td>Classes as boxes, associations as lines, cardinality bounds such as <code>0..*</code> and <code>0..1</code>.</td><td>Models classes/objects, attributes, and methods; supports visibility symbols.</td></tr>
+  </tbody></table></div>
+  <h3>5.1 UML in relation to E–R diagrams</h3>
+  <p>The Unified Modeling Language (UML), developed under the Object Management Group (OMG), models several aspects of a software system, not only data. The source lists:</p>
+  <ul><li><strong>Class diagrams:</strong> structure of classes and their relationships.</li><li><strong>Use-case diagrams:</strong> interactions between users and the system, such as withdrawing money or registering for a course.</li><li><strong>Activity diagrams:</strong> flow of tasks among system components.</li><li><strong>Implementation diagrams:</strong> software and hardware components and their interconnections.</li></ul>
+  <p>UML objects resemble E–R entities but additionally expose methods. UML class diagrams can show attributes and methods, using <code>+</code> for public, <code>-</code> for private, and <code>#</code> for protected access. UML derived attributes correspond to methods requiring no parameters; UML does not directly support E–R composite or multivalued attributes in the same way.</p>
+  <div class="caution"><span class="callout-label">A notation trap</span> The placement of cardinality bounds on UML association edges is the reverse of the placement described for the textbook’s E–R diagrams. In UML, a bound shown near one class describes how many instances at that end may be associated with one instance at the opposite end. The source’s example states that <code>0..*</code> on the <code>E2</code> side and <code>0..1</code> on the <code>E1</code> side means many-to-one from <code>E2</code> to <code>E1</code>.</div>
+  <p>Since UML 1.3, nonbinary relationships can be represented directly with the diamond notation; ordinary binary associations are commonly drawn as lines. Do not confuse E–R <em>aggregation</em> (treating a relationship as a higher-level entity) with UML’s separate use of a small diamond to express containment.</p>
+ </section>
+
+ <section id="practical">
+  <div class="section-kicker">7.10 · Designing for real use</div><h2>6. Other aspects of database design</h2>
+  <p>A sound conceptual schema is only one part of the overall application. Constraints, workload, performance, permissions, workflows, and anticipated change influence relational and physical design.</p>
+  <h3>6.1 Data constraints and relational design</h3>
+  <ul><li>SQL can express primary-key, foreign-key, and check constraints, as well as assertions and triggers.</li><li>Explicit constraints let the DBMS enforce consistency centrally instead of relying on every application program to enforce the same rule.</li><li>Known constraints help identify and link information correctly across relations. A unique identifier can link records; a non-unique property such as eye colour cannot uniquely identify a person.</li><li>Constraint checking can add cost to updates: the DBMS must test constraints and reject invalid changes or run applicable triggers. The cost depends on the type and frequency of updates and on schema design.</li></ul>
+  <h3>6.2 Usage requirements and performance</h3>
+  <div class="mini-grid"><div class="mini"><h3>Throughput</h3><p>The number of queries or updates (transactions) processed on average per unit of time. Important for high-volume batch processing.</p></div><div class="mini"><h3>Response time</h3><p>The time one transaction takes from start to finish, measured as an average or worst case. Important in interactive and time-critical systems.</p></div></div>
+  <p>Throughput and response time are not the same. Better utilization may delay individual transactions while the system runs work efficiently, improving throughput while hurting response time.</p>
+  <p>Expected query patterns inform index design. Joins generally use more resources than queries without joins; indexes can help joins and selection predicates commonly found in <code>WHERE</code> clauses. But indexes also slow updates because they must be maintained. The read/update mix therefore matters.</p>
+  <h3>6.3 Authorization requirements</h3>
+  <p>Access rights may influence the logical schema. An employee record can combine payroll, job-function, and medical-benefit data, even though separate administrative groups may need different access. Splitting data across relations can make permissions easier to manage; views are another way to control access when data remain in one relation. These concerns become more important when data are distributed across systems.</p>
+  <h3>6.4 Data flow and workflow</h3>
+  <div class="definition"><span class="callout-label">Definition</span> A workflow is the combination of data and tasks involved in an organisational process as it moves among users and systems.</div>
+  <figure class="diagram"><svg viewBox="0 0 700 145" role="img" aria-labelledby="workTitle workDesc"><title id="workTitle">Example workflow for an expense report</title><desc id="workDesc">An employee creates a report, managers review it, and accounting processes payment, with database queries and updates along the way.</desc>
+   <g font-family="system-ui" text-anchor="middle"><rect x="8" y="33" width="145" height="62" rx="9" fill="#dceaf5" stroke="#82a5c2"/><text x="80" y="57" font-size="12" font-weight="700" fill="#183653">Employee</text><text x="80" y="75" font-size="10" fill="#263544">creates report</text>
+   <path d="M153 64 H190" stroke="#477e83" stroke-width="2"/><path d="M182 58 L190 64 L182 70" fill="none" stroke="#477e83" stroke-width="2"/>
+   <rect x="194" y="33" width="145" height="62" rx="9" fill="#d9eee8" stroke="#6ea99d"/><text x="266" y="57" font-size="12" font-weight="700" fill="#176a60">Manager(s)</text><text x="266" y="75" font-size="10" fill="#263544">review / approve</text>
+   <path d="M339 64 H376" stroke="#477e83" stroke-width="2"/><path d="M368 58 L376 64 L368 70" fill="none" stroke="#477e83" stroke-width="2"/>
+   <rect x="380" y="33" width="145" height="62" rx="9" fill="#fff0d2" stroke="#c69a4b"/><text x="452" y="57" font-size="12" font-weight="700" fill="#885c17">Accounting</text><text x="452" y="75" font-size="10" fill="#263544">processes payment</text>
+   <path d="M525 64 H562" stroke="#477e83" stroke-width="2"/><path d="M554 58 L562 64 L554 70" fill="none" stroke="#477e83" stroke-width="2"/><rect x="566" y="33" width="126" height="62" rx="9" fill="#e5ecdc" stroke="#9cab8a"/><text x="629" y="57" font-size="12" font-weight="700" fill="#183653">Database</text><text x="629" y="75" font-size="10" fill="#263544">queries + updates</text>
+   <text x="350" y="122" font-size="11" fill="var(--muted)">Tasks, data, routing, and updates together form the workflow.</text></g>
+  </svg><figcaption>Another source example is a CAD system that retrieves database data, processes it with a designer, and writes updates back. The database may also store workflow tasks and routing rules.</figcaption></figure>
+  <p>Enterprise modeling should capture both the meaning of the data and the business processes that use it: workflows can imply sequences of queries and updates relevant to design.</p>
+  <h3>6.5 Evolving requirements and cross-system data</h3>
+  <p>Database design is not a one-time activity. Requirements and stored data change, potentially affecting conceptual, logical, and physical schemas and application code. Distinguish fundamental constraints likely to remain stable (for example, an instructor ID uniquely identifying one instructor) from policies that may change (for example, whether an instructor may have only one department).</p>
+  <p>A design should anticipate plausible changes and minimize disruption. When organisations exchange data, different schemas must interoperate; the source notes XML as a widely used data model for representing data exchanged between applications. User needs and domain experts’ knowledge also remain central throughout design and deployment.</p>
+ </section>
+
+ <section id="recap">
+  <div class="section-kicker">Revision · exam focus</div><h2>7. Exam recap and self-check</h2>
+  <h3>7.1 High-yield rules in one place</h3>
+  <ul class="tight">
+   <li><strong>Strong entity:</strong> one relation; entity key remains the relation key.</li>
+   <li><strong>Composite attribute:</strong> flatten to components. <strong>Multivalued attribute:</strong> separate relation with owner key + value; owner key is a foreign key.</li>
+   <li><strong>Weak entity:</strong> primary key = owner’s primary key + discriminator; foreign key to owner; the example uses delete cascade.</li>
+   <li><strong>Relationship relation:</strong> include participating entity keys + descriptive attributes. Primary key depends on cardinality.</li>
+   <li><strong>Redundant identifying relationship:</strong> often drop it when the weak entity table already includes the strong key and the relationship has no descriptive attributes.</li>
+   <li><strong>Merge rules:</strong> one-to-many relationship attributes can move to the many side; one-to-one attributes can move to either side; many-to-many attributes usually stay on the relationship if they depend on the pair.</li>
+   <li><strong>Specialization/generalization:</strong> top-down versus bottom-up; lower-level sets inherit attributes and relationship participation.</li>
+   <li><strong>Disjoint/overlapping</strong> describes subclass membership overlap; <strong>total/partial</strong> describes completeness. These dimensions are independent.</li>
+   <li><strong>Aggregation:</strong> treat a relationship and its participating entities as a higher-level unit that can join another relationship.</li>
+   <li><strong>Performance:</strong> throughput counts transactions per unit time; response time measures the duration of one transaction. Indexes can accelerate reads but make updates more expensive.</li>
+  </ul>
+  <h3>7.2 Check your understanding</h3>
+  <ol>
+   <li>Why does a multivalued attribute normally require a separate relation? What is its primary key and which attribute(s) act as a foreign key?</li>
+   <li>A weak <code>section</code> depends on <code>course</code>. Explain why <code>course_id</code> belongs in the section primary key.</li>
+   <li>For a binary many-to-one relationship, which entity set’s primary key becomes the relationship relation’s primary key?</li>
+   <li>When can a relationship relation be merged into an entity relation? What changes if participation is partial?</li>
+   <li>Why can the ternary <code>proj_guide</code> relationship not be represented faithfully by independent instructor–student and instructor–project links?</li>
+   <li>Contrast condition-defined membership with user-defined membership.</li>
+   <li>Give examples of total-disjoint and partial-overlapping specializations, then explain why totality and disjointness are separate constraints.</li>
+   <li>What modeling problem does aggregation solve in the evaluation-report example?</li>
+   <li>State one limitation of the subclass-only mapping of a generalization.</li>
+   <li>Why might a database designer avoid adding indexes to every searchable attribute?</li>
+  </ol>
+  <details><summary><strong>Reveal compact answer cues</strong></summary>
+   <ol>
+    <li>One entity can have multiple values; each value needs a distinct tuple. The key is owner primary key + value; owner-key attributes reference the owner relation.</li>
+    <li>The section discriminator is unique only within a course; the owner key completes identification across courses.</li>
+    <li>The key of the entity set on the many side.</li>
+    <li>Merge a compatible many-to-one relationship into the many-side schema; partial participation may require NULLs for missing counterparts.</li>
+    <li>The independent binary links lose which exact instructor–student–project triples exist.</li>
+    <li>Condition-defined: student type determines graduate/undergraduate. User-defined: a user assigns employees to teams.</li>
+    <li>Total-disjoint: all students are either graduate or undergraduate, never both. Partial-overlapping: employees may or may not yet belong to teams and can belong to multiple teams.</li>
+    <li>It lets an evaluation refer to a particular guidance relationship rather than merely to one of its participating entities.</li>
+    <li>Overlapping subclasses duplicate common attributes; partial membership leaves superclass instances unrepresented; foreign keys lack one superclass target relation.</li>
+    <li>Indexes improve reads but require maintenance during updates and consume resources.</li>
+   </ol>
+  </details>
+  <h3>7.3 Source review vocabulary</h3>
+  <p class="small">Entity–relationship model; entity/entity set; domain; simple, composite, single-valued, multivalued, null, and derived attributes; superkey, candidate key, primary key; relationship/relationship set; binary and n-ary degree; descriptive attributes; role and recursive relationship; mapping cardinality; total and partial participation; strong and weak entity sets; discriminator; identifying relationship; specialization, generalization, superclass, subclass, inheritance; single and multiple inheritance; condition-defined and user-defined membership; disjoint and overlapping; total and partial generalization; aggregation; UML and UML class diagram.</p>
+  <div class="end-links"><a href="#mapping">↑ Return to schema mapping</a><a href="#extended">Review EER constraints</a><a href="#practical">Review practical design factors</a></div>
+ </section>
+ </main>
+</div>
+<footer class="footer"><p><strong>Source scope:</strong> based on the supplied textbook extract for Chapter 7, Sections 7.6–7.11. The notes reorganize the source for revision and use original vector diagrams; they do not reproduce the source page by page. No external image assets are required.</p><p>Tip: use your browser’s Print command to save a clean PDF copy.</p></footer>
+<script>
+(() => {
+ const button = document.getElementById('themeToggle');
+ if (!button) return;
+ button.addEventListener('click', () => {
+   const dark = document.body.classList.toggle('dark');
+   button.setAttribute('aria-pressed', String(dark));
+   button.textContent = dark ? 'Switch to light mode' : 'Switch to dark mode';
+ });
+})();
+</script>
+</body>
+</html>
