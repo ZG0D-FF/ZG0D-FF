@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ITC Midterm 2 – Study Notes</title>
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+:root{--bg:#fafaf8;--ink:#1d1f23;--mute:#5d636b;--line:#dcdcd6;--card:#f1f1ed;--acc:#1c4fa0;--accbg:#e8eef8;--warn:#9a4a00;--warnbg:#fbf0e3;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16181b;--ink:#e6e7e9;--mute:#9aa0a8;--line:#2d3136;--card:#1e2125;--acc:#7aa5f0;--accbg:#1c2638;--warn:#e5a463;--warnbg:#2a2218;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16181b;--ink:#e6e7e9;--mute:#9aa0a8;--line:#2d3136;--card:#1e2125;--acc:#7aa5f0;--accbg:#1c2638;--warn:#e5a463;--warnbg:#2a2218;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 Georgia,"Times New Roman",serif}
+.wrap{display:flex;max-width:1080px;margin:0 auto;padding:0 20px;gap:48px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);align-self:flex-start;width:180px;flex:none;padding:32px 0;font:14px/1.4 system-ui,sans-serif}
+nav a{display:block;color:var(--mute);text-decoration:none;padding:6px 0}
+nav a:hover{color:var(--acc)}
+main{min-width:0;flex:1;max-width:720px;padding:32px 0 96px}
+h1{font-size:2rem;margin:0 0 4px;line-height:1.2}
+h2{font-size:1.5rem;margin:64px 0 8px;padding-top:24px;border-top:1px solid var(--line)}
+h3{font:600 1rem system-ui,sans-serif;margin:28px 0 6px}
+p{margin:10px 0}
+.sub{color:var(--mute);margin:0 0 24px}
+.ans,.fix{padding:10px 16px;margin:16px 0;border-left:3px solid var(--acc);background:var(--accbg);border-radius:0 6px 6px 0}
+.fix{border-color:var(--warn);background:var(--warnbg)}
+.ans b:first-child,.fix b:first-child{display:block;font:600 12px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);margin-bottom:2px}
+.fix b:first-child{color:var(--warn)}
+.ans p,.fix p{margin:4px 0}
+table{border-collapse:collapse;font:15px system-ui,sans-serif;margin:12px 0}
+th,td{border-bottom:1px solid var(--line);padding:6px 14px;text-align:left}
+th{color:var(--mute);font-weight:600}
+code{font:.9em ui-monospace,Menlo,Consolas,monospace;background:var(--card);padding:1px 5px;border-radius:3px}
+details{border:1px solid var(--line);border-radius:6px;padding:4px 16px;margin:14px 0}
+summary{cursor:pointer;font:600 15px system-ui,sans-serif;padding:8px 0}
+.scroll{overflow-x:auto;max-width:100%}
+canvas{width:100%;height:260px;display:block;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.cap{font:13px system-ui,sans-serif;color:var(--mute);margin:6px 0 16px}
+pre.mermaid{margin:16px 0}
+@media(max-width:820px){nav{display:none}.wrap{padding:0 16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+<a href="#fix">Corrections</a><a href="#s1">1 · Coding basics</a><a href="#s2">2 · Cyclic codes</a><a href="#s3">3 · BCH codes</a><a href="#s4">4 · Convolutional</a><a href="#s5">5 · Cryptography</a><a href="#s6">6 · Practice answers</a><a href="#s7">7 · BCH in depth</a><a href="#s8">8 · Convolutional in depth</a><a href="#s9">9 · Cryptography in depth</a><a href="#s10">10 · Coding fundamentals in depth</a><a href="#s11">11 · Cyclic codes in depth</a>
+</nav>
+<main>
+<h1>ITC Midterm 2</h1>
+<p class="sub">Each topic has a short exam answer first, then the working. All numbers below were recomputed.</p>
+
+<div class="fix" id="fix"><b>Errors found in the source notes</b>
+<p>1. Q2: the Hamming distance is 3, not 4 (position 6 matches). 2. \(g(x)=x^4+1\) with \(n=4\) gives \(k=0\), so the 4×4 matrix is not a valid generator matrix. 3. BCH example: the divisor was written as 100010101; \(x^8+x^7+x^6+x^4+1\) is 111010001. 4. The convolutional state table is wrong for states 01 and 11, and so is the output sequence. 5. The notes leave the BCH remainder blank; it is computed below.</p></div>
+
+<h2 id="s1">1 · Error control coding</h2>
+<div class="ans"><b>Exam answer</b>
+<p>Error control coding adds structured redundancy so a receiver can detect and often correct channel errors. Code rate \(R=k/n\); lower rate means more protection and less throughput. A code with minimum Hamming distance \(d_{min}\) detects up to \(d_{min}-1\) errors and corrects up to \(\lfloor (d_{min}-1)/2\rfloor\).</p></div>
+
+<h3>Hamming distance</h3>
+<p>Count the positions where two equal-length words differ. <code>10110</code> vs <code>10011</code> differ in positions 3 and 5, so \(d=2\). \(d_{min}\) is the smallest distance over all pairs of distinct codewords.</p>
+<canvas id="gl"></canvas>
+<p class="cap">Each corner is a 3-bit word and each edge flips one bit. Highlighted: 000 and 111, the two codewords of the repetition code, at distance 3.</p>
+
+<p>With codewords 000 and 111, a received 001 is distance 1 from 000 and 2 from 111, so it decodes to 000.</p>
+<table><tr><th>\(d_{min}\)</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+<tr><td>Detect</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+<tr><td>Correct</td><td>0</td><td>1</td><td>1</td><td>2</td><td>2</td><td>3</td></tr></table>
+<p>Detection needs only that no valid word is reached; correction needs the received word to be strictly closer to the sent word than to any other, hence the division by 2.</p>
+
+<h2 id="s2">2 · Cyclic codes</h2>
+<div class="ans"><b>Exam answer</b>
+<p>A cyclic code is a linear block code in which every cyclic shift of a codeword is a codeword. It is generated by \(g(x)\) of degree \(n-k\) that divides \(x^n-1\). Encoding: \(c(x)=m(x)g(x)\), or \(c=mG\) with \(G\) a \(k\times n\) matrix of shifted copies of \(g\).</p></div>
+
+<h3>GF(2) arithmetic</h3>
+<p>Coefficients are 0 or 1, addition is XOR (\(1+1=0\)), subtraction equals addition, so equal powers cancel: \(x^3+x^3=0\). Squaring simply doubles exponents: \((a+b)^2=a^2+b^2\).</p>
+
+<h3>Generator matrix, (7,4) with \(g(x)=x^3+x+1\)</h3>
+<p>Coefficients low to high: \([1,1,0,1]\). Degree \(3=n-k=7-4\). Put them in row 1 and shift right once per row, \(k=4\) rows:</p>
+<div class="scroll">\[G=\begin{bmatrix}1&1&0&1&0&0&0\\0&1&1&0&1&0&0\\0&0&1&1&0&1&0\\0&0&0&1&1&0&1\end{bmatrix}\]</div>
+<details open><summary>Encode m = 1011 (Q9)</summary>
+<p>Low to high, \(m=[1\,1\,0\,1]\), so XOR rows 1, 2 and 4:</p>
+\[1101000\oplus0110100\oplus0001101=1010001\ \text{(low→high)}\]
+<p>Reversed to highest degree first: <code>1000101</code>. Check by polynomials: \((x^3+x+1)^2=x^6+x^2+1\).</p></details>
+
+<h3>Systematic form</h3>
+<p>Row-reduce with XOR until \(G=[I_k\,|\,P]\). Same code, but the message bits appear unchanged in the codeword, followed by parity.</p>
+<div class="fix"><b>Notes example: \(g(x)=x^4-1\), \(n=4\)</b>
+<p>In GF(2) this is \(x^4+1\), degree 4, so \(k=n-\deg g=0\). A (4,0) code holds only the zero word and needs zero rows. Do not reproduce the 4×4 matrix as an answer. Method to write instead: coefficients of \(g\), degree, \(k=n-\deg g\), \(k\) shifted rows, check \(g\mid x^n-1\).</p></div>
+
+<h2 id="s3">3 · BCH codes</h2>
+<div class="ans"><b>Exam answer</b>
+<p>BCH codes are cyclic codes designed to correct a chosen \(t\) errors. For any \(m,t\): \(n=2^m-1\), at most \(mt\) parity bits. \(g(x)\) is the LCM of the minimal polynomials of \(\alpha,\alpha^2,\dots,\alpha^{2t}\) over GF(\(2^m\)). Hamming codes are the \(t=1\) case.</p></div>
+<p>Systematic encoding: \(c(x)=m(x)x^{n-k}+\big[m(x)x^{n-k}\bmod g(x)\big]\), so \(c(x)\) is divisible by \(g(x)\).</p>
+
+<details open><summary>Worked example: M = 1111011, g(x) = x⁸+x⁷+x⁶+x⁴+1</summary>
+<p>\(m(x)=x^6+x^5+x^4+x^3+x+1\). \(\deg g=8\), so \(n-k=8\) and \(k=7\), \(n=15\). Divisor bits \(x^8\dots x^0\): <code>111010001</code>. Dividend: <code>111101100000000</code>.</p>
+<table>
+<tr><th>Step</th><th>Window (9 bits)</th><th>XOR 111010001</th></tr>
+<tr><td>1</td><td>111101100</td><td>000111101</td></tr>
+<tr><td>2</td><td>111101000</td><td>000111001</td></tr>
+<tr><td>3</td><td>111001000</td><td>000011001</td></tr></table>
+<p>Remainder (low 8 bits) = <code>00011001</code>, i.e. \(x^4+x^3+1\). Codeword: <code>1111011 00011001</code>, 15 bits, \((15,7)\), \(t=2\).</p></details>
+
+<h2 id="s4">4 · Convolutional codes</h2>
+<div class="ans"><b>Exam answer</b>
+<p>Outputs depend on the current input and a memory of earlier inputs. Constraint length \(K=\)memory elements \(+1\). States \(=2^{\text{memory}}\). Rate \(R=k/n\). Flush bits (zeros, one per memory element) return the encoder to state 00 so the Viterbi decoder has a known end state.</p></div>
+<p>Encoder \(g_1=1+D+D^2,\ g_2=1+D^2\), \(K=3\), state \((s_{n-1}s_{n-2})\):
+\(v_1=u\oplus s_{n-1}\oplus s_{n-2},\quad v_2=u\oplus s_{n-2}\). Next state is \((u\,s_{n-1})\).</p>
+<table>
+<tr><th>State</th><th>Input</th><th>Output v₁v₂</th><th>Next</th></tr>
+<tr><td>00</td><td>0 / 1</td><td>00 / 11</td><td>00 / 10</td></tr>
+<tr><td>10</td><td>0 / 1</td><td>10 / 01</td><td>01 / 11</td></tr>
+<tr><td>01</td><td>0 / 1</td><td>11 / 00</td><td>00 / 10</td></tr>
+<tr><td>11</td><td>0 / 1</td><td>01 / 10</td><td>01 / 11</td></tr></table>
+<pre class="mermaid">
+stateDiagram-v2
+  direction LR
+  state "00" as S00
+  state "10" as S10
+  state "01" as S01
+  state "11" as S11
+  S00 --> S00: 0/00
+  S00 --> S10: 1/11
+  S10 --> S01: 0/10
+  S10 --> S11: 1/01
+  S01 --> S00: 0/11
+  S01 --> S10: 1/00
+  S11 --> S01: 0/01
+  S11 --> S11: 1/10
+</pre>
+<p class="cap">Edge label is input/output. Self-loops at 00 and 11.</p>
+<details open><summary>Encode 1011 with two flush zeros</summary>
+<table><tr><th>Step</th><th>u</th><th>State</th><th>Output</th><th>Next</th></tr>
+<tr><td>1</td><td>1</td><td>00</td><td>11</td><td>10</td></tr>
+<tr><td>2</td><td>0</td><td>10</td><td>10</td><td>01</td></tr>
+<tr><td>3</td><td>1</td><td>01</td><td>00</td><td>10</td></tr>
+<tr><td>4</td><td>1</td><td>10</td><td>01</td><td>11</td></tr>
+<tr><td>5</td><td>0</td><td>11</td><td>01</td><td>01</td></tr>
+<tr><td>6</td><td>0</td><td>01</td><td>11</td><td>00</td></tr></table>
+<p>Output: <code>11 10 00 01 01 11</code>, ending at state 00. (The notes’ sequence 11 10 01 01 01 10 is wrong.)</p></details>
+
+<h2 id="s5">5 · Cryptography</h2>
+<div class="ans"><b>Exam answer</b>
+<p>A one-way hash maps any-length input to a fixed-length digest. Pre-image resistance: given \(h\), infeasible to find \(m\) with \(H(m)=h\). Second pre-image resistance: given \(m_1\), infeasible to find \(m_2\ne m_1\) with the same hash. Collision resistance: infeasible to find any \(m_1\ne m_2\) with \(H(m_1)=H(m_2)\).</p></div>
+<h3>RSA</h3>
+<p>Pick primes \(p,q\); \(n=pq\); \(\varphi(n)=(p-1)(q-1)\); choose \(e\) with \(\gcd(e,\varphi)=1\); \(d\equiv e^{-1}\pmod{\varphi}\). Public \((e,n)\), private \((d,n)\). \(C=M^e\bmod n\), \(M=C^d\bmod n\).</p>
+<p>Example: \(p=3,q=11\): \(n=33,\varphi=20\), \(e=7\), \(d=3\) since \(21\equiv1\). \(M=2\): \(C=2^7\bmod33=128-99=29\); \(29^3=24389=33\cdot739+2\), so \(M=2\). ✓</p>
+
+<h2 id="s6">6 · Practice answers</h2>
+<table>
+<tr><th>Q</th><th>Answer</th></tr>
+<tr><td>1</td><td>\(R=k/n=11/15\approx0.733\)</td></tr>
+<tr><td>2</td><td>Differences at positions 2, 5, 7 → \(d=3\). Detects 2, corrects 1. (Notes say 4: wrong.)</td></tr>
+<tr><td>3</td><td>\(g(x)\) generates all codewords as multiples; it must divide \(x^n-1\) so every cyclic shift stays in the code.</td></tr>
+<tr><td>4</td><td>Hamming codes are BCH with \(t=1\); BCH lets the designer pick any \(t\).</td></tr>
+<tr><td>5</td><td>\(K=3+1=4\); states \(=2^3=8\).</td></tr>
+<tr><td>6</td><td>Block: fixed blocks, independent, syndrome decoding. Convolutional: continuous stream with memory, Viterbi decoding.</td></tr>
+<tr><td>7</td><td>\(n=55,\ \varphi=40,\ d=27\) (\(3\cdot27=81=2\cdot40+1\)). Public (3,55), private (27,55).</td></tr>
+<tr><td>8</td><td>Pre-image resistance doesn’t stop an attacker finding two messages with equal hashes, letting a signature on one be reused for the other. Collision resistance is needed.</td></tr>
+<tr><td>9</td><td>\(c(x)=(x^3+x+1)^2=x^6+x^2+1\) → <code>1000101</code></td></tr>
+<tr><td>10</td><td>Flush zeros reset the register to 00, giving the decoder a known end state, at a small rate cost.</td></tr>
+</table>
+<h2 id="s7">7 · BCH in depth</h2>
+<p class="sub">Extra material for section 3: where the parameters come from, and why the encoding method works.</p>
+
+<div class="ans"><b>Exam answer</b>
+<p>BCH stands for Bose–Chaudhuri–Hocquenghem. It lets the designer choose the number of correctable errors \(t\) first and then builds a cyclic code guaranteeing \(d_{min}\ge 2t+1\). Hamming codes are the \(t=1\) case.</p></div>
+
+<h3>From \(t\) to minimum distance</h3>
+<p>Correcting \(t\) errors requires \(t=\lfloor (d_{min}-1)/2\rfloor\), which gives</p>
+\[d_{min}\ge 2t+1\]
+<table><tr><th>Correct</th><th>1 error</th><th>2 errors</th><th>3 errors</th><th>4 errors</th></tr>
+<tr><td>\(d_{min}\) at least</td><td>3</td><td>5</td><td>7</td><td>9</td></tr></table>
+
+<h3>Parameters</h3>
+<table><tr><th>Symbol</th><th>Meaning</th></tr>
+<tr><td>\(m\)</td><td>Integer that fixes the length: \(n=2^m-1\)</td></tr>
+<tr><td>\(t\)</td><td>Designed number of correctable errors</td></tr>
+<tr><td>\(n-k\)</td><td>Parity bits, at most \(mt\)</td></tr></table>
+<p>Example: \(m=4\) gives \(n=15\). With \(t=2\), parity is at most \(4\times2=8\), so \(k=15-8=7\) and the code is \((15,7)\), the one in the worked example above. Its \(d_{min}\) is 5, so \(t=2\).</p>
+
+<h3>Where \(g(x)\) comes from</h3>
+<p>These are construction ideas, not something to compute in the exam numerical.</p>
+<table><tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>\(GF(2^m)\)</td><td>An extended field with \(2^m\) elements, used only while building the code. It is not the alphabet of the transmitted bits.</td></tr>
+<tr><td>Primitive element \(\alpha\)</td><td>An element whose powers \(\alpha^1,\dots,\alpha^{2^m-1}\) run through every non-zero element of the field, then return to 1.</td></tr>
+<tr><td>Minimal polynomial</td><td>The lowest-degree polynomial with coefficients in GF(2) that has a given field element as a root.</td></tr>
+<tr><td>LCM</td><td>Least common multiple, taken over polynomials instead of numbers.</td></tr></table>
+<p>\(g(x)\) is the LCM of the minimal polynomials of \(\alpha,\alpha^2,\dots,\alpha^{2t}\). For \(t=2\) that is four consecutive powers. Those roots are what guarantee the distance.</p>
+
+<canvas id="gl-gf16-3d"></canvas>
+<p class="cap">Figure 7.1: 3D Galois Field \(GF(2^4)\) Primitive Element Orbit. The 15 non-zero elements form a closed 3D cyclic group generated by powers of \(\alpha\) (\(\alpha^{15} = 1\)). The highlighted roots \(\alpha, \alpha^2, \alpha^3, \alpha^4\) define the minimal polynomials for \(t=2\) BCH error correction.</p>
+
+<h3>Encoding procedure</h3>
+<pre class="mermaid">
+flowchart LR
+  A["Message m(x)"] --> B["Shift: multiply by x^(n-k)"]
+  B --> C["Divide by g(x), mod 2"]
+  C --> D["Remainder r(x)"]
+  D --> E["Codeword = shifted message + r(x)"]
+</pre>
+
+<details open><summary>The same division, written as aligned XOR steps</summary>
+<p>Dividend \(m(x)x^8\) = <code>111101100000000</code>, divisor <code>111010001</code>, shifted so its leading 1 meets the leading 1 of what remains.</p>
+<div class="scroll"><pre>  111101100000000
+⊕ 111010001000000   (divisor shifted 6)
+  ---------------
+  000111101000000
+⊕ 000111010001000   (divisor shifted 3)
+  ---------------
+  000000111001000
+⊕ 000000111010001   (divisor shifted 0)
+  ---------------
+  000000000011001</pre></div>
+<p>What remains, <code>11001</code>, has degree 4, below 8, so the division stops. Padded to 8 bits: \(r(x)=\) <code>00011001</code>. Codeword: <code>111101100011001</code>.</p></details>
+
+<h3>Why appending the remainder works</h3>
+<p>Division gives \(m(x)x^8=q(x)g(x)+r(x)\). Then</p>
+\[c(x)=m(x)x^8+r(x)=q(x)g(x)+r(x)+r(x)=q(x)g(x)\]
+<p>because \(r(x)+r(x)=0\) in GF(2). The codeword is an exact multiple of \(g(x)\), which is the defining property of a valid codeword.</p>
+
+<h3>BCH vs Hamming</h3>
+<table><tr><th></th><th>Hamming</th><th>BCH</th></tr>
+<tr><td>Errors corrected</td><td>1</td><td>Chosen \(t\)</td></tr>
+<tr><td>Minimum distance</td><td>3</td><td>At least \(2t+1\)</td></tr>
+<tr><td>Relation</td><td>Special case, \(t=1\)</td><td>General family</td></tr></table>
+
+<h3>Quick reference</h3>
+<table><tr><th>Item</th><th>Value</th></tr>
+<tr><td>Length</td><td>\(n=2^m-1\)</td></tr>
+<tr><td>Parity bits</td><td>at most \(mt\)</td></tr>
+<tr><td>Distance</td><td>\(d_{min}\ge 2t+1\)</td></tr>
+<tr><td>Generator</td><td>LCM of minimal polynomials of \(2t\) consecutive powers of \(\alpha\)</td></tr>
+<tr><td>Encoding</td><td>Shift, divide mod 2, append remainder</td></tr></table>
+
+<details><summary>Self-test (answers inside)</summary>
+<p>1. Codeword length for \(m=5\)? <b>31</b>, since \(2^5-1\).</p>
+<p>2. Minimum distance to correct 3 errors? <b>7</b>, since \(2\cdot3+1\).</p>
+<p>3. Maximum parity bits for \(t=2,\ m=4\)? <b>8</b>, since \(mt=4\cdot2\).</p>
+<p>4. Why append the remainder? <b>So the codeword is divisible by \(g(x)\).</b></p></details>
+<h2 id="s8">8 · Convolutional codes in depth</h2>
+<p class="sub">Complete mechanics of convolutional encoders: shift registers, state spaces, 8-transition FSM, Trellis lattice, tail-bit termination physics, and full numerical verification.</p>
+
+<div class="ans"><b>Exam summary</b>
+<p>Unlike block codes (cyclic, BCH) that map isolated blocks \(m \to c\), a convolutional encoder processes a continuous bit stream \(u_n\) with internal memory stages. Output bits depend on both the current bit and previous bits stored in flip-flops. Code rate \(R=k/n\), constraint length \(K=m+1\) (bits influencing each output cycle), and state count \(=2^m\) with state vector \(\mathbf{s}=(s_{n-1}, s_{n-2})\). Transitions update as \(\text{Next state}=(u_n, s_{n-1})\). Terminating the sequence requires \(m\) flush zeros to force the encoder back to state \(00\), fixing boundary conditions for Viterbi decoding.</p></div>
+
+<h3>8.1 Continuous stream processing vs block codes</h3>
+<p>Block codes partition information into disjoint blocks of \(k\) bits and encode each block independently without remembering preceding inputs. A convolutional encoder treats information as a continuous sequence, updating an internal history across successive clock cycles.</p>
+<table>
+<tr><th>Feature</th><th>Block codes (Cyclic / BCH)</th><th>Convolutional codes</th></tr>
+<tr><td>Input processing</td><td>Fixed-size blocks of \(k\) bits</td><td>Continuous serial stream of bits</td></tr>
+<tr><td>Memory</td><td>Memoryless between blocks</td><td>Shift register stores \(m\) past inputs</td></tr>
+<tr><td>Codeword structure</td><td>\(n\) bits per independent block</td><td>\(n\) parity bits generated per \(k\) input bits</td></tr>
+<tr><td>Decoding approach</td><td>Syndrome calculation / algebraic roots</td><td>Trellis maximum-likelihood (Viterbi)</td></tr>
+</table>
+
+<h3>8.2 Shift register mechanics & delay operator \(D\)</h3>
+<p>Memory is implemented using a tapped shift register of flip-flops. The delay operator \(D\) represents a latency of one bit interval (\(z^{-1}\)), and \(D^2\) represents two bit intervals. On each clock tick, input \(u_n\) enters the first stage, old \(s_{n-1}\) moves to the second stage \(s_{n-2}\), and the oldest bit leaves.</p>
+
+<table>
+<tr><th>Clock cycle</th><th>Current input \(u_n\)</th><th>First stage \(s_{n-1}\) (\(D\))</th><th>Second stage \(s_{n-2}\) (\(D^2\))</th><th>State \((s_{n-1}s_{n-2})\)</th></tr>
+<tr><td>Initial</td><td>—</td><td>0</td><td>0</td><td>00</td></tr>
+<tr><td>Bit 1 = 1</td><td>1</td><td>1</td><td>0</td><td>10</td></tr>
+<tr><td>Bit 2 = 0</td><td>0</td><td>0</td><td>1</td><td>01</td></tr>
+<tr><td>Bit 3 = 1</td><td>1</td><td>1</td><td>0</td><td>10</td></tr>
+<tr><td>Bit 4 = 1</td><td>1</td><td>1</td><td>1</td><td>11</td></tr>
+</table>
+
+<canvas id="gl-shiftreg"></canvas>
+<p class="cap">Figure 8.1: 3D WebGL shift-register logic chassis. Perspective projection of flip-flop storage cells \(u_n, D, D^2\) with 3D conduit buses and floating XOR parity rings \(\oplus\). Clocked pulses shift through delay stages in real time.</p>
+
+<h3>8.3 Constraint length \(K\), code rate \(R\) & algebraic state formulation</h3>
+<p>Code rate measures transmission efficiency:</p>
+\[R = \frac{k}{n}\]
+<p>For standard single-input encoders (\(k=1\)) yielding two output bits (\(n=2\)), \(R = 1/2\).</p>
+
+<p>Constraint length \(K\) defines the total number of input bits that directly influence each output cycle:</p>
+\[\boxed{K = m + 1 = 1 + \text{number of memory elements}}\]
+<p>The \(+1\) accounts for the current input bit \(u_n\). When \(m=2\), the output is influenced by three bits: \(\{u_n, s_{n-1}, s_{n-2}\}\), so \(K = 3\).</p>
+
+<p>With \(m\) memory elements, the encoder has \(2^m\) distinct internal states:</p>
+<table>
+<tr><th>Memory elements \(m\)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+<tr><th>Constraint length \(K\)</th><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+<tr><th>Internal states \(2^m\)</th><td>2</td><td>4</td><td>8</td><td>16</td><td>32</td></tr>
+</table>
+
+<p>Algebraically, the state update is expressed as a matrix transition over GF(2):</p>
+<div class="scroll">
+\[\mathbf{s}_{n+1} = \begin{bmatrix} s_n \\ s_{n-1} \end{bmatrix} = \begin{bmatrix} 0 & 0 \\ 1 & 0 \end{bmatrix} \begin{bmatrix} s_{n-1} \\ s_{n-2} \end{bmatrix} \oplus \begin{bmatrix} 1 \\ 0 \end{bmatrix} u_n\]
+</div>
+
+<h3>8.4 Generator polynomials & hardware realization</h3>
+<p>Unlike cyclic codes where \(g(x)\) divides \(x^n-1\), convolutional generator polynomials indicate the hardware tap connections from the shift register to modulo-2 adders (XOR gates).</p>
+
+<p><b>Encoder A (Standard lecture example):</b></p>
+\[g_1(D) = 1 + D \implies v_1 = u_n \oplus s_{n-1}\]
+\[g_2(D) = 1 + D^2 \implies v_2 = u_n \oplus s_{n-2}\]
+<p>Matrix formulation:</p>
+<div class="scroll">
+\[\begin{bmatrix} v_1 \\ v_2 \end{bmatrix} = \begin{bmatrix} 1 & 1 & 0 \\ 1 & 0 & 1 \end{bmatrix} \begin{bmatrix} u_n \\ s_{n-1} \\ s_{n-2} \end{bmatrix} \pmod 2\]
+</div>
+
+<p>Example calculation: If current input \(u_n=1\) and state is \((s_{n-1}, s_{n-2}) = (0, 1)\):</p>
+\[v_1 = 1 \oplus 0 = 1, \quad v_2 = 1 \oplus 1 = 0 \implies \text{Output} = 10\]
+
+<p><b>Encoder B (Used in the full numerical):</b></p>
+\[g_1(D) = 1 + D + D^2 \implies v_1 = u_n \oplus s_{n-1} \oplus s_{n-2}\]
+\[g_2(D) = 1 + D^2 \implies v_2 = u_n \oplus s_{n-2}\]
+<div class="scroll">
+\[\begin{bmatrix} v_1 \\ v_2 \end{bmatrix} = \begin{bmatrix} 1 & 1 & 1 \\ 1 & 0 & 1 \end{bmatrix} \begin{bmatrix} u_n \\ s_{n-1} \\ s_{n-2} \end{bmatrix} \pmod 2\]
+</div>
+
+<pre class="mermaid">
+flowchart LR
+    IN["Input uₙ"] --> FF1["Delay D (sₙ₋₁)"]
+    FF1 --> FF2["Delay D² (sₙ₋₂)"]
+    IN --> XOR1(("⊕"))
+    FF1 --> XOR1
+    FF2 --> XOR1
+    XOR1 --> OUT1["v₁ = uₙ ⊕ sₙ₋₁ ⊕ sₙ₋₂"]
+    IN --> XOR2(("⊕"))
+    FF2 --> XOR2
+    XOR2 --> OUT2["v₂ = uₙ ⊕ sₙ₋₂"]
+</pre>
+<p class="cap">Figure 8.2: Hardware circuit for Encoder B (\(g_1 = 1+D+D^2,\ g_2 = 1+D^2\)).</p>
+
+<h3>8.5 State machine & 8-transition table</h3>
+<p>With 4 states and 2 binary input options per state, there are \(4 \times 2 = 8\) valid state transitions. The next state is always \((u_n, s_{n-1})\).</p>
+
+<table>
+<tr><th>Current state \((s_{n-1}s_{n-2})\)</th><th>Input \(u_n\)</th><th>Vector \([u_n\,s_{n-1}\,s_{n-2}]\)</th><th>Encoder A: \(v_1v_2\)</th><th>Encoder B: \(v_1v_2\)</th><th>Next state \((u_n\,s_{n-1})\)</th></tr>
+<tr><td>00</td><td>0</td><td>0 0 0</td><td>00</td><td>00</td><td>00</td></tr>
+<tr><td>00</td><td>1</td><td>1 0 0</td><td>11</td><td>11</td><td>10</td></tr>
+<tr><td>10</td><td>0</td><td>0 1 0</td><td>10</td><td>10</td><td>01</td></tr>
+<tr><td>10</td><td>1</td><td>1 1 0</td><td>01</td><td>01</td><td>11</td></tr>
+<tr><td>01</td><td>0</td><td>0 0 1</td><td>01</td><td>11</td><td>00</td></tr>
+<tr><td>01</td><td>1</td><td>1 0 1</td><td>10</td><td>00</td><td>10</td></tr>
+<tr><td>11</td><td>0</td><td>0 1 1</td><td>11</td><td>01</td><td>01</td></tr>
+<tr><td>11</td><td>1</td><td>1 1 1</td><td>00</td><td>10</td><td>11</td></tr>
+</table>
+
+<details><summary>Walkthrough of transition from state 10 with input u = 1 (Encoder A)</summary>
+<p>Given current state 10: \(s_{n-1}=1,\ s_{n-2}=0\). Input \(u_n=1\).</p>
+\[v_1 = u_n \oplus s_{n-1} = 1 \oplus 1 = 0\]
+\[v_2 = u_n \oplus s_{n-2} = 1 \oplus 0 = 1\]
+<p>Output pair is <code>01</code>. Next state is \((u_n, s_{n-1}) = (1, 1) = 11\). Written as:</p>
+\[10 \xrightarrow{1/01} 11\]
+</details>
+
+<canvas id="gl-statecube"></canvas>
+<p class="cap">Figure 8.2: 3D State-Space Hypercube. The 8 vertices represent all binary tuples \((u_n, s_{n-1}, s_{n-2})\). Directed 3D edges map the 8 encoder state transitions with parity outputs. The active transition rotates dynamically.</p>
+
+<h3>8.6 Trellis diagram & time-expansion lattice</h3>
+<p>The state diagram captures all transitions statically, but does not depict progression over time. The <b>Trellis diagram</b> unrolls the state machine across discrete clock cycles \(t_0, t_1, t_2, \dots\), forming a directed lattice.</p>
+
+<table>
+<tr><th>Attribute</th><th>State diagram</th><th>Trellis diagram</th></tr>
+<tr><td>Time representation</td><td>Static (no time axis)</td><td>Unfolded along horizontal time steps \(t_k\)</td></tr>
+<tr><td>Topological structure</td><td>Directed cyclic graph (4 nodes, 8 edges)</td><td>Multi-stage bipartite lattice</td></tr>
+<tr><td>Path representation</td><td>Arbitrary cycles</td><td>Unique continuous path from left to right</td></tr>
+<tr><td>Decoding utility</td><td>Explains local transition rules</td><td>Enables Viterbi path metric accumulation</td></tr>
+</table>
+
+<canvas id="gl-trellis"></canvas>
+<p class="cap">Figure 8.3: 3D Cylindrical Trellis Ribbon. The 4 encoder states occupy the circumference of a 3D cylinder unrolled through time steps \(t_0 \to t_6\). The glowing 3D trajectory traces the exact encoding path of sequence <code>1011</code> terminating at state \(00\).</p>
+
+<h3>8.7 The Big Numerical: Step-by-step encoding of 1011</h3>
+<p><b>Problem specification:</b></p>
+<p>Rate \(R=1/2\), \(g_1(D) = 1+D+D^2\), \(g_2(D) = 1+D^2\). Message \(\mathbf{m} = [1, 0, 1, 1]\). Encoder starts at state \(00\). Append flush zeros to terminate.</p>
+
+<p><b>Step 1: Output equations & parameters</b></p>
+\[v_1 = u_n \oplus s_{n-1} \oplus s_{n-2}, \quad v_2 = u_n \oplus s_{n-2}\]
+<p>Constraint length \(K = 2 + 1 = 3\). States \(= 2^2 = 4\). Flush bits \(= m = 2\) zeros. Extended input sequence: <code>1 0 1 1 0 0</code> (length 6).</p>
+
+<p><b>Step 2: Cycle-by-cycle execution</b></p>
+<table>
+<tr><th>Step</th><th>Bit \(u_n\)</th><th>State before \((s_{n-1}s_{n-2})\)</th><th>\(v_1 = u_n\oplus s_{n-1}\oplus s_{n-2}\)</th><th>\(v_2 = u_n\oplus s_{n-2}\)</th><th>Output \(v_1v_2\)</th><th>State after \((u_n s_{n-1})\)</th></tr>
+<tr><td>1</td><td>1</td><td>00</td><td>\(1\oplus0\oplus0 = 1\)</td><td>\(1\oplus0 = 1\)</td><td><b>11</b></td><td>10</td></tr>
+<tr><td>2</td><td>0</td><td>10</td><td>\(0\oplus1\oplus0 = 1\)</td><td>\(0\oplus0 = 0\)</td><td><b>10</b></td><td>01</td></tr>
+<tr><td>3</td><td>1</td><td>01</td><td>\(1\oplus0\oplus1 = 0\)</td><td>\(1\oplus1 = 0\)</td><td><b>00</b></td><td>10</td></tr>
+<tr><td>4</td><td>1</td><td>10</td><td>\(1\oplus1\oplus0 = 0\)</td><td>\(1\oplus0 = 1\)</td><td><b>01</b></td><td>11</td></tr>
+<tr><td>5 (flush)</td><td>0</td><td>11</td><td>\(0\oplus1\oplus1 = 0\)</td><td>\(0\oplus1 = 1\)</td><td><b>01</b></td><td>01</td></tr>
+<tr><td>6 (flush)</td><td>0</td><td>01</td><td>\(0\oplus0\oplus1 = 1\)</td><td>\(0\oplus1 = 1\)</td><td><b>11</b></td><td>00</td></tr>
+</table>
+
+<p>Final output codeword sequence:</p>
+\[\boxed{\mathbf{C} = 11\ 10\ 00\ 01\ 01\ 11}\]
+<p>Total input bits: 6 (4 message + 2 flush). Total output bits: 12. Final state: <code>00</code> (terminated).</p>
+
+<div class="fix"><b>Critical exam alert: Errors in student notes</b>
+<p>The raw notes list the output as <code>11 10 01 01 01 10</code>. This is mathematically incorrect in two places:</p>
+<p>1. <b>Step 3:</b> State is 01, input is 1. \(v_1 = 1\oplus0\oplus1 = 0\) and \(v_2 = 1\oplus1 = 0\), producing <code>00</code> (the notes wrote <code>01</code>).</p>
+<p>2. <b>Step 6:</b> State is 01, input is 0. \(v_1 = 0\oplus0\oplus1 = 1\) and \(v_2 = 0\oplus1 = 1\), producing <code>11</code> (the notes wrote <code>10</code>).</p>
+<p>Always apply the XOR equations strictly during exams rather than relying on flawed transcriptions.</p></div>
+
+<h3>8.8 Flush bits & termination physics</h3>
+<p>After encoding message <code>1011</code>, the encoder sits in state <code>11</code>. Appending \(m=2\) zeros forces the shift register to empty:</p>
+\[11 \xrightarrow{\text{input } 0} 01 \xrightarrow{\text{input } 0} 00\]
+<p><b>Why required:</b> In Viterbi decoding, the decoder determines the most likely transmitted path by comparing survivor metrics at the final time step. Terminating at a known state (conventionally \(00\)) eliminates ambiguity: the decoder needs to compare metrics only for paths ending at \(00\), improving error performance.</p>
+
+<p><b>Rate overhead:</b> Appending \(m\) flush zeros expands an \(L\)-bit message to \(L+m\) bits, slightly reducing the effective code rate:</p>
+\[R_{\text{eff}} = \frac{L}{n(L + m)} = \frac{4}{2(4 + 2)} = \frac{4}{12} = \frac{1}{3} \approx 0.333\]
+<p>For long packets (\(L \gg m\)), \(R_{\text{eff}} \to k/n = 1/2\).</p>
+
+<h3>8.9 Viterbi decoding fundamentals</h3>
+<p>The Viterbi algorithm implements Maximum Likelihood Sequence Estimation (MLSE). It finds the path through the trellis that minimizes total distance (Hamming distance for hard decisions, Euclidean distance for soft decisions) from the received sequence.</p>
+<div class="scroll">
+<pre class="mermaid">
+flowchart LR
+    A["Branch Metric (BM)<br>Compute Hamming dist for each edge"] --> B["Path Metric (PM)<br>Accumulate sum: PM_prev + BM"]
+    B --> C["Add-Compare-Select (ACS)<br>At each state, pick smaller incoming metric"]
+    C --> D["Traceback<br>Follow surviving path backward from state 00"]
+</pre>
+</div>
+
+<canvas id="gl-viterbi"></canvas>
+<p class="cap">Figure 8.4: 3D Viterbi Path Metric Funnel. Rotating 3D trellis visualization of Add-Compare-Select (ACS). Suboptimal competing paths are pruned into 3D depth, while the minimum-metric survivor path converges to state \(00\) at time \(t_6\).</p>
+
+<h3>8.10 Practice question model answers</h3>
+<table>
+<tr><th>Question</th><th>Model examination solution</th></tr>
+<tr><td><b>Q5.</b> Constraint length & states for \(m=3\)</td><td>\(K = m + 1 = 3 + 1 = \mathbf{4}\). Number of states \(= 2^m = 2^3 = \mathbf{8}\) states (\(000\) to \(111\)).</td></tr>
+<tr><td><b>Q6.</b> Two differences between block and convolutional codes</td><td>1. <i>Memory:</i> Block codes are memoryless between independent blocks; convolutional codes maintain internal shift-register memory across bits.<br>2. <i>Decoding:</i> Block codes use algebraic/syndrome decoding; convolutional codes use trellis-based Viterbi decoding.</td></tr>
+<tr><td><b>Q10.</b> Why append flush bits?</td><td>Flush bits (zeros equal to memory order \(m\)) clear the register, returning the encoder to the known all-zero state \(00\dots0\). This anchors the Viterbi decoder to a known termination node, ensuring reliable traceback.</td></tr>
+</table>
+
+<h3>8.11 Formula reference sheet</h3>
+<table>
+<tr><th>Concept</th><th>Formula / Rule</th><th>Notes</th></tr>
+<tr><td>Code rate</td><td>\(R = k/n\)</td><td>\(k=\) input bits/cycle, \(n=\) output bits/cycle</td></tr>
+<tr><td>Constraint length</td><td>\(K = m + 1\)</td><td>\(m=\) number of delay flip-flops</td></tr>
+<tr><td>Internal states</td><td>\(2^m\)</td><td>State vector \(\mathbf{s}_n = (s_{n-1}, \dots, s_{n-m})\)</td></tr>
+<tr><td>Next state</td><td>\(\text{Next} = (u_n, s_{n-1}, \dots, s_{n-m+1})\)</td><td>Incoming bit shifts into MSB; oldest drops</td></tr>
+<tr><td>Branch outputs</td><td>\(v_i = \sum \oplus (\text{taps})\)</td><td>Modulo-2 sum (XOR) determined by \(g_i(D)\)</td></tr>
+<tr><td>Flush bit count</td><td>\(m\) zeros</td><td>Drives state to all-zero termination</td></tr>
+<tr><td>Effective rate</td><td>\(R_{\text{eff}} = \frac{L}{n(L+m)}\)</td><td>Rate penalty diminishes as packet length \(L\) grows</td></tr>
+</table>
+
+<details><summary>Self-test (answers inside)</summary>
+<p>1. An encoder has 2 memory elements. Its constraint length is? <b>3</b> (\(K=2+1\)).</p>
+<p>2. How many states are possible with 3 memory elements? <b>8</b> (\(2^3=8\)).</p>
+<p>3. What happens when two flush zeros are appended to a two-memory encoder? <b>It resets the shift register to state 00.</b></p>
+<p>4. For \(g_1(D)=1+D+D^2\) and current register state \(01\) with input \(1\), what is the first output bit? <b>0</b> (\(1\oplus 0\oplus 1 = 0\)).</p>
+</details>
+
+<h2 id="s9">9 · Cryptography (Hash & RSA) in depth</h2>
+<p class="sub">Complete foundations: one-way hash mechanics, pre-image & collision resistance, asymmetric RSA algebra, totient function derivations, and full step-by-step numerical verification.</p>
+
+<div class="ans"><b>Core exam summary</b>
+<p>Cryptography ensures confidentiality, data integrity, and authenticity. A <b>one-way hash function</b> \(H(m)\) maps arbitrary-length messages to a fixed-length digest; it is characterized by pre-image resistance (cannot invert digest), second pre-image resistance (cannot find alternative input with equal hash), and collision resistance (cannot find any two inputs with identical hashes). <b>RSA</b> is an asymmetric cryptosystem based on the integer factorization problem: key generation chooses primes \(p,q\), computes modulus \(n=pq\) and totient \(\phi(n)=(p-1)(q-1)\), selects public exponent \(e\) coprime to \(\phi(n)\), and calculates private exponent \(d\equiv e^{-1}\pmod{\phi(n)}\). Encryption evaluates \(C=M^e\bmod n\) and decryption recovers \(M=C^d\bmod n\) via Euler's Totient Theorem.</p></div>
+
+<h3>9.1 The cryptographic paradigm & asymmetric security</h3>
+<p>Unlike error-control coding (which protects against stochastic channel noise), cryptography defends against intelligent adversarial manipulation. Classical symmetric cryptography relies on a single shared secret key for both encryption and decryption. Asymmetric (public-key) cryptography decouples this into two distinct keys:</p>
+
+<table>
+<tr><th>Key type</th><th>Accessibility</th><th>Primary function</th><th>Mathematical role</th></tr>
+<tr><td><b>Public key \((e, n)\)</b></td><td>Publicly published to everyone</td><td>Encrypts plaintext into ciphertext</td><td>Evaluates \(C = M^e \bmod n\)</td></tr>
+<tr><td><b>Private key \((d, n)\)</b></td><td>Kept strictly secret by recipient</td><td>Decrypts ciphertext back to plaintext</td><td>Evaluates \(M = C^d \bmod n\)</td></tr>
+</table>
+
+<h3>9.2 One-way hash functions & the compression principle</h3>
+<p>A cryptographic hash function \(H\) is a deterministic mathematical mapping:</p>
+\[h = H(m)\]
+<p>It possesses two structural properties:</p>
+<p>1. <b>Arbitrary input length:</b> Accepts inputs \(m \in \{0, 1\}^*\) ranging from a single character to gigabytes of data.</p>
+<p>2. <b>Fixed output length:</b> Produces a digest \(h \in \{0, 1\}^L\) of predetermined bit-length \(L\) (e.g., 256 bits for SHA-256).</p>
+
+<p><b>One-Wayness:</b> Computing \(h\) from \(m\) is computationally trivial (low polynomial time \(\mathcal{O}(|m|)\)), but given only \(h\), discovering any valid pre-image \(m\) is computationally infeasible. Hashing is fundamentally distinct from encryption: there is no private decryption key that reverses a hash.</p>
+
+<canvas id="gl-hash3d"></canvas>
+<p class="cap">Figure 9.1: 3D Hash State Avalanche & Compression Funnel. Perspective 3D simulation of a cryptographic hash engine. A 1-bit perturbation in the arbitrary-length input generates an exponential 3D diffusion wave across internal state cells, condensing into a fixed-length 3D digest ring.</p>
+
+<h3>9.3 Security properties: Pre-image vs Collision resistance</h3>
+<p>The security of hash functions rests on three mathematically distinct resistance levels:</p>
+
+<table>
+<tr><th>Property</th><th>Known to attacker</th><th>Attacker's target</th><th>Brute-force complexity</th></tr>
+<tr><td><b>Pre-image resistance</b> (One-way)</td><td>A specific hash digest \(h\)</td><td>Find any message \(m\) such that \(H(m) = h\)</td><td>\(\approx 2^L\) trials</td></tr>
+<tr><td><b>Second pre-image resistance</b> (Weak collision)</td><td>A known message \(m_1\)</td><td>Find \(m_2 \ne m_1\) such that \(H(m_2) = H(m_1)\)</td><td>\(\approx 2^L\) trials</td></tr>
+<tr><td><b>Collision resistance</b> (Strong collision)</td><td>Only the hash algorithm \(H\)</td><td>Find any two distinct messages \(m_1 \ne m_2\) with \(H(m_1) = H(m_2)\)</td><td>\(\approx 2^{L/2}\) trials (Birthday Paradox)</td></tr>
+</table>
+
+<div class="fix"><b>Exam memory rule</b>
+<p>• <b>Pre-image:</b> Given digest, find input.</p>
+<p>• <b>Second pre-image:</b> Given one input, find a twin input matching its hash.</p>
+<p>• <b>Collision:</b> Find any matching pair from scratch (much easier due to the Birthday Bound \(\mathcal{O}(2^{L/2})\)).</p></div>
+
+<canvas id="gl-collision3d"></canvas>
+<p class="cap">Figure 9.2: 3D Collision Manifold & Birthday Paradox. Two distinct message trajectories \(m_1 \ne m_2\) intersect at an identical digest node on the rotating 3D hash sphere. Demonstrates why digital signatures require collision resistance rather than pre-image resistance alone.</p>
+
+<h3>9.4 Real-world applications of hash functions</h3>
+<table>
+<tr><th>Application</th><th>Mechanism</th><th>Primary objective</th></tr>
+<tr><td><b>Digital signatures</b></td><td>Sender hashes document \(m\) and encrypts only digest \(H(m)\) with their private key.</td><td>Efficiency (signing 256 bits vs gigabytes) and non-repudiation.</td></tr>
+<tr><td><b>Password storage</b></td><td>Authentication database stores \(\text{Hash}(\text{password} \,\|\, \text{salt})\) instead of plaintext.</td><td>Prevents credential leakage if the database is compromised.</td></tr>
+<tr><td><b>Data integrity</b></td><td>Recipient computes hash of downloaded file and compares it to publisher's published digest.</td><td>Detects accidental bit corruption or malicious tampering.</td></tr>
+</table>
+
+<h3>9.5 RSA Cryptosystem architecture</h3>
+<p>The Rivest–Shamir–Adleman (RSA) cryptosystem relies on the asymmetry between prime multiplication (easy) and prime factorization of large composite integers (hard).</p>
+
+<pre class="mermaid">
+flowchart LR
+    A["Plaintext M<br>(0 ≤ M &lt; n)"] --> B["Encryption<br>C = M^e mod n"]
+    B --> C["Ciphertext C<br>(Insecure Channel)"]
+    C --> D["Decryption<br>M = C^d mod n"]
+    D --> E["Recovered M"]
+    PUB["Public Key (e, n)"] -.-> B
+    PRIV["Private Key (d, n)"] -.-> D
+</pre>
+<p class="cap">Figure 9.3: Asymmetric RSA encryption and decryption lifecycle.</p>
+
+<h3>9.6 RSA key generation: Six rigorous steps</h3>
+<p><b>Step 1: Choose two distinct prime numbers</b></p>
+\[p = 3, \quad q = 11\]
+
+<p><b>Step 2: Compute the modulus \(n\)</b></p>
+\[n = p \times q = 3 \times 11 = 33\]
+<p>The modulus \(n\) is shared across both public and private keys. All arithmetic operates within the integer residue ring \(\mathbb{Z}_n\), requiring plaintext messages to satisfy \(0 \le M < n\).</p>
+
+<p><b>Step 3: Compute Euler's Totient Function \(\phi(n)\)</b></p>
+\[\phi(n) = (p - 1)(q - 1) = (3 - 1)(11 - 1) = 2 \times 10 = \mathbf{20}\]
+<details><summary>Why \(\phi(n) = (p-1)(q-1)\)? (Derivation)</summary>
+<p>Euler's totient function \(\phi(n)\) counts integers in \(\{1, 2, \dots, n\}\) that are coprime to \(n\) (\(\gcd(k, n) = 1\)). Out of \(pq\) integers, multiples of \(p\) are \(\{p, 2p, \dots, qp\}\) (\(q\) multiples), and multiples of \(q\) are \(\{q, 2q, \dots, pq\}\) (\(p\) multiples). Only \(pq\) is counted twice. Therefore:</p>
+\[\phi(pq) = pq - p - q + 1 = (p - 1)(q - 1)\]
+</details>
+
+<p><b>Step 4: Select public exponent \(e\)</b></p>
+<p>Conditions: \(1 < e < \phi(n)\) and \(\gcd(e, \phi(n)) = 1\).</p>
+<p>With \(\phi(n) = 20\), choose \(e = 7\). Factors of 7: \(\{1, 7\}\); factors of 20: \(\{1, 2, 4, 5, 10, 20\}\). \(\gcd(7, 20) = 1\). Valid!</p>
+
+<p><b>Step 5: Compute private exponent \(d\) (Modular Inverse)</b></p>
+\[d \times e \equiv 1 \pmod{\phi(n)} \implies 7d \equiv 1 \pmod{20}\]
+<table>
+<tr><th>Candidate \(d\)</th><th>\(7d\)</th><th>\(7d \bmod 20\)</th><th>Status</th></tr>
+<tr><td>1</td><td>7</td><td>7</td><td>Invalid</td></tr>
+<tr><td>2</td><td>14</td><td>14</td><td>Invalid</td></tr>
+<tr><td><b>3</b></td><td><b>21</b></td><td><b>1</b> (\(21 = 20\times1 + 1\))</td><td><b>Valid solution: \(d = 3\)</b></td></tr>
+</table>
+
+<p><b>Step 6: Assemble key pairs</b></p>
+<p>• <b>Public key:</b> \((e, n) = \mathbf{(7, 33)}\)</p>
+<p>• <b>Private key:</b> \((d, n) = \mathbf{(3, 33)}\)</p>
+
+<h3>9.7 Step-by-step RSA encryption & decryption numerical</h3>
+<p><b>A. Encryption:</b> Plaintext message \(M = 2\), Public key \((e, n) = (7, 33)\):</p>
+\[C = M^e \bmod n = 2^7 \bmod 33\]
+\[2^7 = 128 = 33 \times 3 + 29 \implies \boxed{C = 29}\]
+
+<p><b>B. Decryption:</b> Ciphertext \(C = 29\), Private key \((d, n) = (3, 33)\):</p>
+\[M = C^d \bmod n = 29^3 \bmod 33\]
+\[29^3 = 24389 = 33 \times 739 + 2 \implies \boxed{M = 2}\]
+<p>The decrypted plaintext matches the original input message \(M=2\) exactly.</p>
+
+<canvas id="gl-rsa3d"></canvas>
+<p class="cap">Figure 9.4: 3D RSA Modular Orbit (\(n = 33\)). Perspective 3D circular lattice representing residue classes modulo 33. The luminous trajectory traces encryption \(M = 2 \longrightarrow C = 29\) via \(e = 7\), followed by private-key decryption \(29 \longrightarrow 2\) via \(d = 3\).</p>
+
+<details><summary>Why RSA decryption works (Euler's Totient Theorem)</summary>
+<p>By construction, \(ed \equiv 1 \pmod{\phi(n)} \implies ed = 1 + k\phi(n)\). By Euler's Totient Theorem, for any \(M\) coprime to \(n\):</p>
+\[M^{\phi(n)} \equiv 1 \pmod n\]
+<p>Therefore:</p>
+\[M' = C^d \equiv (M^e)^d = M^{ed} = M^{1 + k\phi(n)} = M \cdot (M^{\phi(n)})^k \equiv M \cdot (1)^k \equiv M \pmod n\]
+</details>
+
+<h3>9.8 Examination practice problem Q7</h3>
+<p><b>Problem:</b> In RSA, given \(p=5, q=11, e=3\). Calculate \(n\), \(\phi(n)\), and private exponent \(d\).</p>
+<div class="scroll">
+<table>
+<tr><th>Step</th><th>Parameter</th><th>Mathematical working</th><th>Result</th></tr>
+<tr><td>1</td><td>Modulus \(n\)</td><td>\(n = p \times q = 5 \times 11\)</td><td><b>55</b></td></tr>
+<tr><td>2</td><td>Totient \(\phi(n)\)</td><td>\(\phi(n) = (5 - 1)(11 - 1) = 4 \times 10\)</td><td><b>40</b></td></tr>
+<tr><td>3</td><td>Coprime check</td><td>\(\gcd(e, \phi(n)) = \gcd(3, 40)\)</td><td><b>1 (Valid)</b></td></tr>
+<tr><td>4</td><td>Private exponent \(d\)</td><td>\(3d \equiv 1 \pmod{40} \implies 3 \times 27 = 81 = 40 \times 2 + 1\)</td><td><b>d = 27</b></td></tr>
+<tr><td>5</td><td>Public key</td><td>\((e, n)\)</td><td><b>(3, 55)</b></td></tr>
+<tr><td>6</td><td>Private key</td><td>\((d, n)\)</td><td><b>(27, 55)</b></td></tr>
+</table>
+</div>
+
+<h3>9.9 Examination practice problem Q8</h3>
+<p><b>Question:</b> Why is pre-image resistance alone not enough for digital signatures?</p>
+<div class="fix"><b>Model exam solution</b>
+<p>Pre-image resistance guarantees that given a hash \(h\), an adversary cannot recover the original message \(m\). However, in digital signatures, the signer signs the hash \(H(m_1)\) of a legitimate contract \(m_1\) (e.g., "Pay ₹100").</p>
+<p>If the hash function lacks <b>collision resistance</b>, an attacker can discover two entirely different documents \(m_1 \ne m_2\) (where \(m_2\) is "Pay ₹900") that evaluate to the identical hash \(H(m_1) = H(m_2)\). The attacker tricks the victim into signing legitimate document \(m_1\), then attaches that valid signature to fraudulent document \(m_2\). Because \(H(m_1) = H(m_2)\), the cryptographic verification algorithm accepts the forged document as valid. Thus, collision resistance is strictly required.</p></div>
+
+<h3>9.10 Master cryptography formula sheet</h3>
+<table>
+<tr><th>Topic</th><th>Parameter / Law</th><th>Mathematical Formula</th></tr>
+<tr><td rowspan="3"><b>Hash functions</b></td><td>One-way mapping</td><td>\(h = H(m), \quad m \in \{0, 1\}^*, \ h \in \{0, 1\}^L\)</td></tr>
+<tr><td>Pre-image resistance</td><td>Given \(h\), computationally infeasible to find \(m\) with \(H(m)=h\)</td></tr>
+<tr><td>Collision resistance</td><td>Infeasible to find any \(m_1 \ne m_2\) with \(H(m_1)=H(m_2)\)</td></tr>
+<tr><td rowspan="5"><b>RSA cryptosystem</b></td><td>Modulus</td><td>\(n = p \times q\)</td></tr>
+<tr><td>Euler's totient</td><td>\(\phi(n) = (p - 1)(q - 1)\)</td></tr>
+<tr><td>Public exponent</td><td>\(1 < e < \phi(n), \quad \gcd(e, \phi(n)) = 1\)</td></tr>
+<tr><td>Private exponent</td><td>\(d \equiv e^{-1} \pmod{\phi(n)} \iff ed \equiv 1 \pmod{\phi(n)}\)</td></tr>
+<tr><td>Encryption / Decryption</td><td>\(C = M^e \bmod n, \quad M = C^d \bmod n\)</td></tr>
+</table>
+
+<details><summary>Cryptography checkpoint test (answers inside)</summary>
+<p>1. Given a hash digest \(h\), which property prevents finding an input message? <b>Pre-image resistance.</b></p>
+<p>2. For RSA with \(p=5\) and \(q=11\), what is the modulus \(n\)? <b>55</b> (\(5 \times 11\)).</p>
+<p>3. In RSA with \(e=3\) and \(\phi(n)=40\), what is the private key exponent \(d\)? <b>27</b> (\(3 \times 27 = 81 = 40 \times 2 + 1\)).</p>
+<p>4. Two distinct messages generating an identical hash is called what? <b>A hash collision.</b></p>
+</details>
+
+<h2 id="s10">10 · Error control coding fundamentals in depth</h2>
+<p class="sub">First-principles mechanics: noisy channel models, structured redundancy, code rate trade-offs, Hamming distance derivations, and nearest-codeword decision spheres.</p>
+
+<div class="ans"><b>Core exam summary</b>
+<p>Error control coding introduces structured mathematical redundancy to protect data against noisy channel corruption. Defined by code rate \(R=k/n\), Hamming distance \(d(\mathbf{x},\mathbf{y})\) (number of differing positions), and minimum distance \(d_{\min}\). A linear block code detects up to \(d_{\min}-1\) errors and corrects up to \(t = \lfloor(d_{\min}-1)/2\rfloor\) errors via nearest-codeword decoding.</p></div>
+
+<h3>10.1 The physical communication channel failure model</h3>
+<p>Consider transmitting message <code>1011</code> across an imperfect physical channel (wireless RF link, optical fiber, or copper cable). Channel noise or thermal interference flips the third bit from <code>1</code> to <code>0</code>:</p>
+\[\text{Transmitted: } 1011 \xrightarrow{\text{Channel Noise}} \text{Received: } 1001\]
+<p>Without redundancy, the receiver cannot know whether <code>1001</code> was the intended transmission or a corrupted sequence. Error control coding embeds structural rules that render corrupt patterns detectably invalid.</p>
+
+<h3>10.2 Structured redundancy & repetition code intuition</h3>
+<p>Redundancy represents intentional extra information. In a 3-bit repetition code, sending a single bit <code>1</code> transmits <code>111</code>. If the channel corrupts one bit to yield <code>101</code>, majority voting reliably restores <code>1</code>.</p>
+
+<table>
+<tr><th>Coding term</th><th>Formal technical meaning</th><th>Physical interpretation</th></tr>
+<tr><td><b>Message (\(m\))</b></td><td>Uncoded payload of \(k\) information bits</td><td>Raw user data to be communicated</td></tr>
+<tr><td><b>Redundancy</b></td><td>\(n-k\) additional parity bits</td><td>Safety margins engineered to catch noise</td></tr>
+<tr><td><b>Codeword (\(c\))</b></td><td>Encoded binary sequence of length \(n\)</td><td>The actual bit pattern transmitted over the channel</td></tr>
+<tr><td><b>Error detection</b></td><td>Recognizing that a received vector is not a valid codeword</td><td>Receiver knows data is damaged</td></tr>
+<tr><td><b>Error correction</b></td><td>Identifying exact error locations and inverting corrupted bits</td><td>Receiver restores original data without retransmission</td></tr>
+</table>
+
+<h3>10.3 Code rate \(R = k/n\) & bandwidth trade-off</h3>
+<p>Code rate quantifies transmission throughput efficiency:</p>
+\[\boxed{R = \frac{k}{n} = \frac{\text{Useful information bits}}{\text{Total transmitted bits}}}\]
+<p>For a message of \(k=4\) bits encoded with 4 parity bits into \(n=8\) bits, \(R = 4/8 = 1/2 = 0.5\). Each input bit generates two transmitted bits.</p>
+
+<table>
+<tr><th>Code rate \(R\)</th><th>Information fraction</th><th>Redundancy fraction</th><th>Channel overhead / Protection profile</th></tr>
+<tr><td><b>Rate 1</b></td><td>100%</td><td>0%</td><td>Zero protection; maximum throughput; vulnerable to any error</td></tr>
+<tr><td><b>Rate 1/2</b></td><td>50%</td><td>50%</td><td>Balanced robustness; doubles required channel bandwidth</td></tr>
+<tr><td><b>Rate 1/4</b></td><td>25%</td><td>75%</td><td>Extreme protection; high redundancy for severe deep-space noise</td></tr>
+</table>
+
+<h3>10.4 Hamming distance mechanics</h3>
+<p>The Hamming distance \(d(\mathbf{x}, \mathbf{y})\) between two binary words of equal length is the count of bit positions where their symbols differ:</p>
+
+<table>
+<tr><th>Bit position</th><th>Word 1: <code>10110</code></th><th>Word 2: <code>10011</code></th><th>Comparison</th></tr>
+<tr><td>1, 2, 4</td><td>1, 0, 1</td><td>1, 0, 1</td><td>Identical</td></tr>
+<tr><td>3, 5</td><td>1, 0</td><td>0, 1</td><td><b>Different (2 positions)</b></td></tr>
+<tr><td colspan="4"><b>Result:</b> \(d(10110, 10011) = \mathbf{2}\)</td></tr>
+</table>
+
+<div class="fix"><b>Exam correction: Notes mistake in practice question Q2</b>
+<p>The raw notes claimed differences at positions 2, 5, 6, and 7 between <code>11010110</code> and <code>10011100</code>. Position 6 contains <code>1</code> in both words. The true differences occur at positions 2, 5, and 7, so \(d = \mathbf{3}\), not 4.</p></div>
+
+<h3>10.5 Minimum Hamming distance \(d_{\min}\) & nearest-codeword geometry</h3>
+<p>The minimum distance \(d_{\min}\) is the smallest Hamming distance between any pair of distinct valid codewords in code \(\mathcal{C}\):</p>
+\[d_{\min} = \min_{\mathbf{c}_i \ne \mathbf{c}_j} d(\mathbf{c}_i, \mathbf{c}_j)\]
+<p>For valid codewords <code>000</code> and <code>111</code>, \(d_{\min}=3\). A received vector <code>001</code> has \(d(001, 000)=1\) and \(d(001, 111)=2\). Nearest-codeword decoding maps <code>001</code> to <code>000</code>.</p>
+
+<canvas id="gl-packing3d"></canvas>
+<p class="cap">Figure 10.1: 3D Hamming Sphere Packing & Decision Regions. Codewords 000 and 111 act as sphere centers separated by \(d_{\min} = 3\). Disjoint 3D decision spheres of radius \(t = 1\) ensure any received vector with a 1-bit error snaps back to the correct center.</p>
+
+<h3>10.6 Detection vs correction mathematical limits</h3>
+<p>• <b>Maximum detectable errors:</b> \(\mathbf{d_{\min} - 1}\). A transmission requires at least \(d_{\min}\) bit inversions to transform one valid codeword into a different valid codeword. Any pattern of \(\le d_{\min}-1\) errors lands outside valid code space and is caught.</p>
+<p>• <b>Maximum correctable errors:</b> \(\mathbf{t = \lfloor(d_{\min} - 1)/2\rfloor}\). To unambiguously correct errors, the Hamming spheres of radius \(t\) centered on valid codewords must not overlap: \(2t + 1 \le d_{\min}\).</p>
+
+<table>
+<tr><th>\(d_{\min}\)</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+<tr><th>Detect (\(d_{\min}-1\))</th><td>1 error</td><td>2 errors</td><td>3 errors</td><td>4 errors</td><td>5 errors</td><td>6 errors</td></tr>
+<tr><th>Correct (\(\lfloor(d_{\min}-1)/2\rfloor\))</th><td>0 errors</td><td>1 error</td><td>1 error</td><td>2 errors</td><td>2 errors</td><td>3 errors</td></tr>
+</table>
+
+<details><summary>Coding fundamentals checkpoint (answers inside)</summary>
+<p>1. A code has \(d_{\min}=5\). How many errors can it detect? <b>4 errors</b> (\(5-1\)).</p>
+<p>2. A code has \(d_{\min}=5\). How many errors can it correct? <b>2 errors</b> (\(\lfloor(5-1)/2\rfloor\)).</p>
+<p>3. Why is error detection capability always strictly greater than or equal to error correction? <b>Detecting an invalid vector requires only that it fall off the codebook, whereas correction requires unambiguous proximity to a unique center.</b></p>
+</details>
+
+<h2 id="s11">11 · Cyclic codes in depth</h2>
+<p class="sub">Complete mechanical & algebraic breakdown: cyclic shift rotation, generator polynomial g(x), GF(2) arithmetic cancellation, step-by-step generator matrix construction, and systematic encoding.</p>
+
+<div class="ans"><b>Core exam summary</b>
+<p>A cyclic code is a linear block code where every cyclic shift of a valid codeword is also a valid codeword. Characterized by generator polynomial \(g(x)\) of degree \(n-k\) dividing \(x^n-1\) over GF(2). Encoded via \(c(x)=m(x)g(x)\) or matrix equation \(\mathbf{c}=\mathbf{m}\mathbf{G}\). Systematic generator matrices take the partitioned form \(\mathbf{G}=[\mathbf{I}_k \mid \mathbf{P}]\), preserving plaintext bits directly in the codeword.</p></div>
+
+<h3>11.1 The physical cyclic shift property</h3>
+<p>A cyclic shift rotates bits end-around without dropping symbols. For codeword <code>10110</code>, shifting right by 1 position wraps the trailing 0 to the front:</p>
+\[10110 \xrightarrow{\text{Cyclic right shift}} 01011\]
+<p>In a cyclic code, this rotated sequence is guaranteed to be a valid codeword belonging to the same code space.</p>
+
+<canvas id="gl-cyclic3d"></canvas>
+<p class="cap">Figure 11.1: 3D Cyclic Shift Rotor & Codeword Manifold. The 7 bit positions form a closed 3D circular rotor. Rotating the rotor continuously maps valid codewords onto valid cyclic shifts across the 3D subspace, physically illustrating \(x^n \equiv 1\).</p>
+
+<h3>11.2 Generator polynomial \(g(x)\) foundations</h3>
+<p>Binary polynomial coefficients map directly to bit strings. For \(g(x) = x^3 + x + 1\), explicit powers are:</p>
+\[g(x) = 1\cdot x^0 + 1\cdot x^1 + 0\cdot x^2 + 1\cdot x^3 \iff \text{Coefficients (low to high): } [1, 1, 0, 1]\]
+<p>• <b>Degree:</b> The highest power of \(x\) with non-zero coefficient: \(\deg(g) = n - k = \text{number of parity bits}\).</p>
+<p>• <b>Divisibility condition:</b> \(g(x) \mid (x^n - 1)\). Because shifting by one position corresponds to polynomial multiplication by \(x\), wrapping position \(n\) back to position 0 requires \(x^n \equiv 1 \pmod{x^n-1}\). Exact divisibility guarantees all cyclic shifts stay inside the code.</p>
+
+<h3>11.3 GF(2) arithmetic & identical-power cancellation</h3>
+<p>Galois Field GF(2) uses binary symbols \(\{0, 1\}\) under modulo-2 arithmetic:</p>
+\[0 \oplus 0 = 0, \quad 0 \oplus 1 = 1, \quad 1 \oplus 0 = 1, \quad 1 \oplus 1 = 0\]
+<p>Subtraction is mathematically identical to addition: \(1 - 1 = 1 + 1 = 0\). Equal powers cancel completely:</p>
+\[x^3 + x^3 = 0, \quad x^4 + x^4 = 0, \quad (x^3 + x + 1) + (x^3 + x + 1) = 0\]
+
+<h3>11.4 Step-by-step generator matrix construction</h3>
+<p>For a \((7,4)\) cyclic code with \(g(x) = x^3 + x + 1\) (\(k=4\) message rows, \(n=7\) columns), place coefficients in row 1 and shift right once per row:</p>
+<div class="scroll">
+\[\mathbf{G} = \begin{bmatrix}
+1 & 1 & 0 & 1 & 0 & 0 & 0 \\
+0 & 1 & 1 & 0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 1 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 & 1 & 0 & 1
+\end{bmatrix}\]
+</div>
+
+<p><b>Encoding message \(m = 1011\) via \(\mathbf{c} = \mathbf{m}\mathbf{G}\):</b></p>
+<p>Low-to-high message vector: \(\mathbf{m} = [1, 1, 0, 1]\). Select and XOR rows 1, 2, and 4:</p>
+\[\begin{array}{r@{\quad}l}
+& 1\,1\,0\,1\,0\,0\,0 \quad (\text{Row 1}) \\
+\oplus & 0\,1\,1\,0\,1\,0\,0 \quad (\text{Row 2}) \\
+\hline
+& 1\,0\,1\,1\,1\,0\,0 \\
+\oplus & 0\,0\,0\,1\,1\,0\,1 \quad (\text{Row 4}) \\
+\hline
+= & \mathbf{1\,0\,1\,0\,0\,0\,1} \quad (\text{Low-to-high})
+\end{array}\]
+<p>Reversing to standard high-to-low degree representation yields codeword: <code>1000101</code> (Practice Question Q9 verified).</p>
+
+<h3>11.5 Systematic generator matrix \(\mathbf{G} = [\mathbf{I}_k \mid \mathbf{P}]\)</h3>
+<p>By performing elementary row operations (Gaussian elimination via XOR), \(\mathbf{G}\) can be reduced so the first \(k\) columns form identity matrix \(\mathbf{I}_k\). For message <code>1011</code>, the systematic codeword takes the form <code>1011 | parity</code>, leaving raw message bits directly accessible without decoding circuitry.</p>
+
+<div class="fix"><b>Exam alert: Notes flawed example \(g(x) = x^4 - 1, n=4\)</b>
+<p>In GF(2), \(g(x) = x^4 + 1\) has degree 4. With \(n=4\), \(k = n - \deg(g) = 4 - 4 = 0\). A \((4,0)\) code carries zero information bits and contains only the trivial zero codeword. A \(4 \times 4\) generator matrix cannot exist for \(k=0\). Always state: \(\deg(g) = n-k \implies k = 0\), matrix has zero rows.</p></div>
+
+<details><summary>Cyclic codes checkpoint (answers inside)</summary>
+<p>1. For a cyclic code with parameters \((15, 11)\), what is the degree of its generator polynomial? <b>4</b> (\(n-k = 15-11 = 4\)).</p>
+<p>2. What algebraic property ensures that shifting a codeword produces another valid codeword? <b>Divisibility of \(x^n-1\) by \(g(x)\) over GF(2).</b></p>
+<p>3. In GF(2), what is the result of \((x^5 + x^2) \oplus (x^5 + x + 1)\)? <b>\(x^2 + x + 1\)</b> (the \(x^5\) terms cancel: \(1\oplus1=0\)).</p>
+</details>
+</main>
+</div>
+
+<script>
+(function(){
+var c=document.getElementById('gl'),gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+var E=[];for(var i=0;i<8;i++)for(var b=0;b<3;b++){var j=i^(1<<b);if(i<j)E.push([i,j])}
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches,
+  ln=d?[.55,.58,.64,1]:[.55,.58,.62,1],ac=d?[.48,.65,.94,1]:[.11,.31,.63,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+ var a=t/4000,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(.5),sb=Math.sin(.5),V=[];
+ for(var i=0;i<8;i++){
+  var x=i&1?1:-1,y=i&2?1:-1,z=i&4?1:-1,
+   x1=x*ca+z*sa,z1=-x*sa+z*ca,y1=y*cb-z1*sb,z2=y*sb+z1*cb,s=1/(4-z2);
+  V.push([x1*s*2.6*h/w,y1*s*2.6,z2*.1]);
+ }
+ var L=[];E.forEach(function(e){L.push.apply(L,V[e[0]]);L.push.apply(L,V[e[1]])});
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(L),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,L.length/3);
+ for(var k=0;k<8;k++){
+  var hi=k==0||k==7;
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(V[k]),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),hi?ac:ln);gl.uniform1f(U('r'),1);gl.uniform1f(U('s'),(hi?16:9)*dpr);
+  gl.drawArrays(gl.POINTS,0,1);
+ }
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+</script>
+
+<script>
+// 1. 3D WebGL Shift Register & Parity Logic Chassis
+(function(){
+var c=document.getElementById('gl-shiftreg');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var boxCenters=[[-1.1,0,0],[0,0,0],[1.1,0,0]];
+var dx=0.32, dy=0.22, dz=0.22;
+var static3DLines=[];
+
+boxCenters.forEach(function(ctr){
+  var cx=ctr[0], cy=ctr[1], cz=ctr[2];
+  for(var i=0;i<8;i++)for(var b=0;b<3;b++){
+    var j=i^(1<<b);
+    if(i<j){
+      static3DLines.push(
+        cx+(i&1?dx:-dx), cy+(i&2?dy:-dy), cz+(i&4?dz:-dz),
+        cx+(j&1?dx:-dx), cy+(j&2?dy:-dy), cz+(j&4?dz:-dz)
+      );
+    }
+  }
+});
+
+static3DLines.push(
+  -1.8,0,0, -1.42,0,0,
+  -0.78,0,0, -0.32,0,0,
+  0.32,0,0,  0.78,0,0,
+  1.42,0,0,  1.8,0,0
+);
+
+static3DLines.push(
+  -1.1,0.22,0, -1.1,0.85,0,
+  -1.1,0.85,0, -0.15,0.85,0,
+  0,0.22,0,    0,0.7,0,
+  1.1,0.22,0,  1.1,0.85,0,
+  1.1,0.85,0,  0.15,0.85,0,
+  0.15,0.85,0, 1.8,0.85,0
+);
+
+static3DLines.push(
+  -1.1,-0.22,0, -1.1,-0.85,0,
+  -1.1,-0.85,0, -0.15,-0.85,0,
+  1.1,-0.22,0,  1.1,-0.85,0,
+  1.1,-0.85,0,  0.15,-0.85,0,
+  0.15,-0.85,0, 1.8,-0.85,0
+);
+
+function addOcta(cx,cy,cz,r){
+  var pts=[[cx+r,cy,cz],[cx-r,cy,cz],[cx,cy+r,cz],[cx,cy-r,cz],[cx,cy,cz+r],[cx,cy,cz-r]];
+  var edges=[[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[4,3],[3,5],[5,2]];
+  edges.forEach(function(e){
+    static3DLines.push(pts[e[0]][0],pts[e[0]][1],pts[e[0]][2], pts[e[1]][0],pts[e[1]][1],pts[e[1]][2]);
+  });
+}
+addOcta(0, 0.85, 0, 0.12);
+addOcta(0, -0.85, 0, 0.12);
+
+function project(x, y, z, ca, sa, cb, sb, w, h){
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.0-z2);
+  return [x1*s*2.5*(h/w), y1*s*2.5, z2*0.1, s];
+}
+
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches;
+ var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+ var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+ var ln=isDark?[.45,.48,.54,1]:[.65,.68,.72,1];
+ var hi=isDark?[.90,.64,.39,1]:[.60,.29,.00,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+ var a=Math.sin(t/2800)*0.45;
+ var ca=Math.cos(a), sa=Math.sin(a);
+ var cb=Math.cos(0.35), sb=Math.sin(0.35);
+
+ var P=[];
+ for(var i=0;i<static3DLines.length;i+=3){
+   var pt=project(static3DLines[i],static3DLines[i+1],static3DLines[i+2],ca,sa,cb,sb,w,h);
+   P.push(pt[0],pt[1],pt[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(P),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,P.length/3);
+
+ var pulseT=(t%2400)/2400;
+ var rawPulses=[];
+ rawPulses.push(-1.8+pulseT*3.6, 0, 0);
+ if(pulseT<0.5){
+   rawPulses.push(-1.1, 0.22+pulseT*2*(0.85-0.22), 0);
+   rawPulses.push(0, 0.22+pulseT*2*(0.7-0.22), 0);
+   rawPulses.push(1.1, 0.22+pulseT*2*(0.85-0.22), 0);
+ } else {
+   rawPulses.push(-1.1+(pulseT-0.5)*2*1.1, 0.85, 0);
+   rawPulses.push(0.15+(pulseT-0.5)*2*(1.8-0.15), 0.85, 0);
+ }
+ if(pulseT<0.5){
+   rawPulses.push(-1.1, -0.22-pulseT*2*(0.85-0.22), 0);
+   rawPulses.push(1.1, -0.22-pulseT*2*(0.85-0.22), 0);
+ } else {
+   rawPulses.push(0.15+(pulseT-0.5)*2*(1.8-0.15), -0.85, 0);
+ }
+
+ for(var k=0;k<rawPulses.length;k+=3){
+   var pp=project(rawPulses[k],rawPulses[k+1],rawPulses[k+2],ca,sa,cb,sb,w,h);
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pp[0],pp[1],pp[2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),hi);gl.uniform1f(U('r'),1);gl.uniform1f(U('s'),9*dpr*pp[3]*3.5);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 2. 3D WebGL State Space Hypercube & Transition Manifold
+(function(){
+var c=document.getElementById('gl-statecube');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var V3=[];
+for(var i=0;i<8;i++){
+  V3.push([(i&1)?1:-1, (i&2)?1:-1, (i&4)?1:-1]);
+}
+
+var cubeEdges=[];
+for(var i=0;i<8;i++)for(var b=0;b<3;b++){
+  var j=i^(1<<b);
+  if(i<j)cubeEdges.push([i,j]);
+}
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0]*0.9, y=v[1]*0.9, z=v[2]*0.9;
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(3.8-z2);
+  return [x1*s*2.5*(h/w), y1*s*2.5, z2*0.1, s];
+}
+
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches;
+ var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+ var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+ var ln=isDark?[.40,.44,.50,1]:[.70,.73,.77,1];
+ var hi=isDark?[.90,.64,.39,1]:[.60,.29,.00,1];
+ var pt=isDark?[.60,.63,.70,1]:[.40,.43,.48,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+ var a=t/3600;
+ var ca=Math.cos(a), sa=Math.sin(a);
+ var cb=Math.cos(0.52), sb=Math.sin(0.52);
+
+ var projV=[];
+ for(var i=0;i<8;i++) projV.push(project(V3[i], ca, sa, cb, sb, w, h));
+
+ var L=[];
+ cubeEdges.forEach(function(e){
+   L.push(projV[e[0]][0],projV[e[0]][1],projV[e[0]][2], projV[e[1]][0],projV[e[1]][1],projV[e[1]][2]);
+ });
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(L),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,L.length/3);
+
+ var activeIdx=Math.floor((t/1100)%8);
+ var nextIdx=((activeIdx>>1)&3) | ((activeIdx&1)<<2);
+ var actL=[
+   projV[activeIdx][0], projV[activeIdx][1], projV[activeIdx][2],
+   projV[nextIdx][0], projV[nextIdx][1], projV[nextIdx][2]
+ ];
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(actL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),hi);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,2);
+
+ for(var k=0;k<8;k++){
+   var isAct=(k===activeIdx||k===nextIdx);
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([projV[k][0],projV[k][1],projV[k][2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),isAct?hi:pt);gl.uniform1f(U('r'),1);
+   gl.uniform1f(U('s'),(isAct?14:8)*dpr*projV[k][3]*3.5);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 3. 3D WebGL Cylindrical Trellis Ribbon Visualizer
+(function(){
+var c=document.getElementById('gl-trellis');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var R=0.75;
+var angles=[0, Math.PI/2, Math.PI, 3*Math.PI/2];
+function getX(t){return -1.6 + t*(3.2/6)}
+
+var V_trellis=[];
+for(var t=0;t<=6;t++){
+  var x=getX(t);
+  for(var s=0;s<4;s++){
+    var y=R*Math.cos(angles[s]);
+    var z=R*Math.sin(angles[s]);
+    V_trellis.push([x,y,z]);
+  }
+}
+
+var next0=[0, 2, 0, 2];
+var next1=[1, 3, 1, 3];
+var bgEdges=[];
+for(var t=0;t<6;t++){
+  for(var s=0;s<4;s++){
+    var idx=t*4+s;
+    bgEdges.push(idx, (t+1)*4+next0[s]);
+    bgEdges.push(idx, (t+1)*4+next1[s]);
+  }
+}
+
+var ringEdges=[];
+for(var t=0;t<=6;t++){
+  var base=t*4;
+  ringEdges.push(base,base+1, base+1,base+2, base+2,base+3, base+3,base);
+}
+
+var path=[0, 1, 2, 1, 3, 2, 0];
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0], y=v[1], z=v[2];
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.3-z2);
+  return [x1*s*2.6*(h/w), y1*s*2.6, z2*0.1, s];
+}
+
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches;
+ var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+ var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+ var ln=isDark?[.28,.32,.38,1]:[.78,.80,.84,1];
+ var ringCol=isDark?[.20,.24,.30,1]:[.86,.88,.90,1];
+ var ac=isDark?[.48,.65,.94,1]:[.11,.31,.63,1];
+ var hi=isDark?[.90,.64,.39,1]:[.60,.29,.00,1];
+ var pt=isDark?[.50,.54,.60,1]:[.50,.52,.56,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+ var a=t/4200;
+ var ca=Math.cos(a), sa=Math.sin(a);
+ var cb=Math.cos(0.42), sb=Math.sin(0.42);
+
+ var P=[];
+ for(var i=0;i<V_trellis.length;i++) P.push(project(V_trellis[i], ca, sa, cb, sb, w, h));
+
+ var RL=[];
+ for(var i=0;i<ringEdges.length;i+=2){
+   var p1=P[ringEdges[i]], p2=P[ringEdges[i+1]];
+   RL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(RL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ringCol);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,RL.length/3);
+
+ var BL=[];
+ for(var i=0;i<bgEdges.length;i+=2){
+   var p1=P[bgEdges[i]], p2=P[bgEdges[i+1]];
+   BL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(BL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,BL.length/3);
+
+ var AL=[];
+ for(var i=0;i<6;i++){
+   var p1=P[i*4+path[i]], p2=P[(i+1)*4+path[i+1]];
+   AL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(AL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ac);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,AL.length/3);
+
+ for(var k=0;k<P.length;k++){
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([P[k][0],P[k][1],P[k][2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),pt);gl.uniform1f(U('r'),1);
+   gl.uniform1f(U('s'),5*dpr*P[k][3]*4.0);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ for(var i=0;i<=6;i++){
+   var pk=P[i*4+path[i]];
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pk[0],pk[1],pk[2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),ac);gl.uniform1f(U('r'),1);
+   gl.uniform1f(U('s'),10*dpr*pk[3]*4.0);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ var cycle=(t/950)%6;
+ var seg=Math.floor(cycle);
+ var frac=cycle-seg;
+ var vA=V_trellis[seg*4+path[seg]], vB=V_trellis[(seg+1)*4+path[seg+1]];
+ var cur3D=[vA[0]*(1-frac)+vB[0]*frac, vA[1]*(1-frac)+vB[1]*frac, vA[2]*(1-frac)+vB[2]*frac];
+ var curP=project(cur3D, ca, sa, cb, sb, w, h);
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([curP[0],curP[1],curP[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),hi);gl.uniform1f(U('r'),1);
+ gl.uniform1f(U('s'),15*dpr*curP[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 4. 3D WebGL Viterbi Survivor Funnel & Metric Landscape
+(function(){
+var c=document.getElementById('gl-viterbi');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var stateY=[0.65, 0.22, -0.22, -0.65];
+function getX(t){return -1.6 + t*(3.2/6)}
+
+var survPath=[0, 1, 2, 1, 3, 2, 0];
+var survV=[];
+for(var t=0;t<=6;t++){
+  survV.push([getX(t), stateY[survPath[t]], -0.4]);
+}
+
+var prunedLines=[
+  getX(1), stateY[0], 0.4,  getX(2), stateY[0], 0.7,
+  getX(1), stateY[0], 0.4,  getX(2), stateY[1], 0.6,
+  getX(2), stateY[3], 0.5,  getX(3), stateY[2], 0.8,
+  getX(3), stateY[0], 0.6,  getX(4), stateY[1], 0.9,
+  getX(4), stateY[2], 0.4,  getX(5), stateY[3], 0.7,
+  getX(5), stateY[1], 0.5,  getX(6), stateY[2], 0.8
+];
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0], y=v[1], z=v[2];
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.3-z2);
+  return [x1*s*2.6*(h/w), y1*s*2.6, z2*0.1, s];
+}
+
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches;
+ var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+ var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+ var pruneCol=isDark?[.65,.35,.35,.7]:[.80,.40,.40,.6];
+ var ac=isDark?[.48,.65,.94,1]:[.11,.31,.63,1];
+ var hi=isDark?[.90,.64,.39,1]:[.60,.29,.00,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+ var a=Math.sin(t/3000)*0.45;
+ var ca=Math.cos(a), sa=Math.sin(a);
+ var cb=Math.cos(0.38), sb=Math.sin(0.38);
+
+ var PL=[];
+ for(var i=0;i<prunedLines.length;i+=3){
+   var pt=project([prunedLines[i],prunedLines[i+1],prunedLines[i+2]], ca, sa, cb, sb, w, h);
+   PL.push(pt[0],pt[1],pt[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(PL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),pruneCol);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,PL.length/3);
+
+ var SL=[];
+ var SP=[];
+ for(var i=0;i<survV.length;i++){
+   SP.push(project(survV[i], ca, sa, cb, sb, w, h));
+ }
+ for(var i=0;i<6;i++){
+   SL.push(SP[i][0],SP[i][1],SP[i][2], SP[i+1][0],SP[i+1][1],SP[i+1][2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(SL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ac);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,SL.length/3);
+
+ for(var i=0;i<=6;i++){
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([SP[i][0],SP[i][1],SP[i][2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),ac);gl.uniform1f(U('r'),1);
+   gl.uniform1f(U('s'),10*dpr*SP[i][3]*4.0);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ var traceCycle=6 - ((t/800)%6);
+ var tSeg=Math.floor(traceCycle);
+ var tFrac=traceCycle-tSeg;
+ var pA=survV[tSeg], pB=survV[Math.min(6,tSeg+1)];
+ var trace3D=[pA[0]*(1-tFrac)+pB[0]*tFrac, pA[1]*(1-tFrac)+pB[1]*tFrac, pA[2]*(1-tFrac)+pB[2]*tFrac];
+ var traceP=project(trace3D, ca, sa, cb, sb, w, h);
+
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([traceP[0],traceP[1],traceP[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),hi);gl.uniform1f(U('r'),1);
+ gl.uniform1f(U('s'),16*dpr*traceP[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+</script>
+
+<script>
+// 5. 3D WebGL Hash Avalanche & Compression Funnel
+(function(){
+var c=document.getElementById('gl-hash3d');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var coords=[-0.65, 0.0, 0.65];
+var stateNodes=[];
+for(var ix=0;ix<3;ix++)for(var iy=0;iy<3;iy++)for(var iz=0;iz<3;iz++){
+  stateNodes.push([coords[ix], coords[iy]+0.25, coords[iz]]);
+}
+
+var latticeEdges=[];
+for(var i=0;i<27;i++){
+  var ix=Math.floor(i/9), iy=Math.floor((i%9)/3), iz=i%3;
+  if(ix<2) latticeEdges.push(i, i+9);
+  if(iy<2) latticeEdges.push(i, i+3);
+  if(iz<2) latticeEdges.push(i, i+1);
+}
+
+var ringNodes=[];
+var ringEdges=[];
+var R_ring=0.75, Y_ring=-0.95;
+for(var k=0;k<16;k++){
+  var th=2*Math.PI*k/16;
+  ringNodes.push([R_ring*Math.cos(th), Y_ring, R_ring*Math.sin(th)]);
+  ringEdges.push(k, (k+1)%16);
+}
+
+var funnelLines=[];
+for(var k=0;k<9;k++){
+  var src=stateNodes[k];
+  var dst=ringNodes[k*2 % 16];
+  funnelLines.push(src[0],src[1],src[2], dst[0],dst[1],dst[2]);
+}
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0], y=v[1], z=v[2];
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.2-z2);
+  return [x1*s*2.5*(h/w), y1*s*2.5, z2*0.1, s];
+}
+
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches;
+ var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+ var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+ var ln=isDark?[.32,.36,.42,1]:[.72,.75,.80,1];
+ var fnl=isDark?[.24,.28,.35,1]:[.82,.85,.88,1];
+ var ac=isDark?[.48,.65,.94,1]:[.11,.31,.63,1];
+ var hi=isDark?[.90,.64,.39,1]:[.60,.29,.00,1];
+ var pt=isDark?[.55,.58,.64,1]:[.45,.48,.52,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+ var a=t/3400;
+ var ca=Math.cos(a), sa=Math.sin(a);
+ var cb=Math.cos(0.48), sb=Math.sin(0.48);
+
+ var FL=[];
+ for(var i=0;i<funnelLines.length;i+=3){
+   var p0=project([funnelLines[i],funnelLines[i+1],funnelLines[i+2]], ca, sa, cb, sb, w, h);
+   FL.push(p0[0],p0[1],p0[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(FL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),fnl);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,FL.length/3);
+
+ var LL=[];
+ for(var i=0;i<latticeEdges.length;i+=2){
+   var p1=project(stateNodes[latticeEdges[i]], ca, sa, cb, sb, w, h);
+   var p2=project(stateNodes[latticeEdges[i+1]], ca, sa, cb, sb, w, h);
+   LL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(LL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,LL.length/3);
+
+ var RL=[];
+ for(var i=0;i<ringEdges.length;i+=2){
+   var p1=project(ringNodes[ringEdges[i]], ca, sa, cb, sb, w, h);
+   var p2=project(ringNodes[ringEdges[i+1]], ca, sa, cb, sb, w, h);
+   RL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(RL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ac);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,RL.length/3);
+
+ var waveT=(t%2200)/2200;
+ var waveRad=waveT*2.2;
+ for(var i=0;i<27;i++){
+   var node=stateNodes[i];
+   var dist=Math.sqrt(node[0]*node[0] + (node[1]-0.9)*(node[1]-0.9) + node[2]*node[2]);
+   var isHot=Math.abs(dist - waveRad) < 0.45;
+   var pp=project(node, ca, sa, cb, sb, w, h);
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pp[0],pp[1],pp[2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),isHot?hi:pt);gl.uniform1f(U('r'),1);
+   gl.uniform1f(U('s'),(isHot?12:6)*dpr*pp[3]*4.0);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ for(var i=0;i<16;i++){
+   var pp=project(ringNodes[i], ca, sa, cb, sb, w, h);
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pp[0],pp[1],pp[2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),ac);gl.uniform1f(U('r'),1);
+   gl.uniform1f(U('s'),8*dpr*pp[3]*4.0);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 6. 3D WebGL Collision Manifold & Birthday Paradox
+(function(){
+var c=document.getElementById('gl-collision3d');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var R=0.85;
+var sphereLines=[];
+for(var lat=-2;lat<=2;lat++){
+  var y=R*Math.sin(lat*Math.PI/6);
+  var rLat=R*Math.cos(lat*Math.PI/6);
+  for(var k=0;k<18;k++){
+    var th1=2*Math.PI*k/18, th2=2*Math.PI*(k+1)/18;
+    sphereLines.push(rLat*Math.cos(th1),y,rLat*Math.sin(th1), rLat*Math.cos(th2),y,rLat*Math.sin(th2));
+  }
+}
+for(var lon=0;lon<6;lon++){
+  var th=lon*Math.PI/6;
+  for(var k=0;k<18;k++){
+    var ph1=2*Math.PI*k/18, ph2=2*Math.PI*(k+1)/18;
+    sphereLines.push(
+      R*Math.cos(ph1)*Math.cos(th), R*Math.sin(ph1), R*Math.cos(ph1)*Math.sin(th),
+      R*Math.cos(ph2)*Math.cos(th), R*Math.sin(ph2), R*Math.cos(ph2)*Math.sin(th)
+    );
+  }
+}
+
+var colTarget=[R*Math.cos(Math.PI/4)*Math.cos(Math.PI/4), R*Math.sin(Math.PI/4), R*Math.cos(Math.PI/4)*Math.sin(Math.PI/4)];
+var msg1=[-1.8, 1.4, -0.6];
+var msg2=[1.7, -1.3, 0.8];
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0], y=v[1], z=v[2];
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.3-z2);
+  return [x1*s*2.5*(h/w), y1*s*2.5, z2*0.1, s];
+}
+
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches;
+ var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+ var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+ var ln=isDark?[.26,.30,.36,1]:[.80,.82,.86,1];
+ var ray1=isDark?[.48,.65,.94,1]:[.11,.31,.63,1];
+ var ray2=isDark?[.85,.45,.45,1]:[.75,.25,.25,1];
+ var hi=isDark?[.90,.64,.39,1]:[.60,.29,.00,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+ var a=t/3800;
+ var ca=Math.cos(a), sa=Math.sin(a);
+ var cb=Math.cos(0.40), sb=Math.sin(0.40);
+
+ var SL=[];
+ for(var i=0;i<sphereLines.length;i+=3){
+   var pp=project([sphereLines[i],sphereLines[i+1],sphereLines[i+2]], ca, sa, cb, sb, w, h);
+   SL.push(pp[0],pp[1],pp[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(SL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,SL.length/3);
+
+ var pTarget=project(colTarget, ca, sa, cb, sb, w, h);
+ var pMsg1=project(msg1, ca, sa, cb, sb, w, h);
+ var pMsg2=project(msg2, ca, sa, cb, sb, w, h);
+
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pMsg1[0],pMsg1[1],pMsg1[2], pTarget[0],pTarget[1],pTarget[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ray1);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,2);
+
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pMsg2[0],pMsg2[1],pMsg2[2], pTarget[0],pTarget[1],pTarget[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ray2);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,2);
+
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pMsg1[0],pMsg1[1],pMsg1[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ray1);gl.uniform1f(U('r'),1);gl.uniform1f(U('s'),10*dpr*pMsg1[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pMsg2[0],pMsg2[1],pMsg2[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ray2);gl.uniform1f(U('r'),1);gl.uniform1f(U('s'),10*dpr*pMsg2[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ var pulseT=(t%1600)/1600;
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([pTarget[0],pTarget[1],pTarget[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),hi);gl.uniform1f(U('r'),1);
+ gl.uniform1f(U('s'),(14 + pulseT*16)*dpr*pTarget[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 7. 3D WebGL RSA Modular Exponentiation Orbit (n = 33)
+(function(){
+var c=document.getElementById('gl-rsa3d');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var N=33, R=0.92;
+var ringNodes=[];
+for(var i=0;i<N;i++){
+  var th=2*Math.PI*i/N;
+  ringNodes.push([R*Math.cos(th), 0, R*Math.sin(th)]);
+}
+
+var encSteps=[2, 4, 8, 16, 32, 31, 29];
+var decSteps=[29, 16, 2];
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0], y=v[1], z=v[2];
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.2-z2);
+  return [x1*s*2.6*(h/w), y1*s*2.6, z2*0.1, s];
+}
+
+function draw(t){
+ var d=matchMedia('(prefers-color-scheme: dark)').matches;
+ var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+ var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+ var ln=isDark?[.28,.32,.38,1]:[.80,.82,.86,1];
+ var encCol=isDark?[.48,.65,.94,1]:[.11,.31,.63,1];
+ var decCol=isDark?[.90,.64,.39,1]:[.60,.29,.00,1];
+ var pt=isDark?[.45,.48,.54,1]:[.65,.68,.72,1];
+ var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+ if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+ gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+ var a=t/4100;
+ var ca=Math.cos(a), sa=Math.sin(a);
+ var cb=Math.cos(0.48), sb=Math.sin(0.48);
+
+ var P=[];
+ for(var i=0;i<N;i++) P.push(project(ringNodes[i], ca, sa, cb, sb, w, h));
+
+ var RL=[];
+ for(var i=0;i<N;i++){
+   var p1=P[i], p2=P[(i+1)%N];
+   RL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(RL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+ gl.drawArrays(gl.LINES,0,RL.length/3);
+
+ var EL=[];
+ for(var i=0;i<encSteps.length-1;i++){
+   var p1=P[encSteps[i]], p2=P[encSteps[i+1]];
+   EL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(EL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),encCol);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,EL.length/3);
+
+ var DL=[];
+ for(var i=0;i<decSteps.length-1;i++){
+   var p1=P[decSteps[i]], p2=P[decSteps[i+1]];
+   DL.push(p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]);
+ }
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(DL),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),decCol);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),2);
+ gl.drawArrays(gl.LINES,0,DL.length/3);
+
+ for(var i=0;i<N;i++){
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([P[i][0],P[i][1],P[i][2]]),gl.DYNAMIC_DRAW);
+   gl.uniform4fv(U('c'),pt);gl.uniform1f(U('r'),1);
+   gl.uniform1f(U('s'),5*dpr*P[i][3]*4.0);
+   gl.drawArrays(gl.POINTS,0,1);
+ }
+
+ var p2=P[2], p29=P[29];
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([p2[0],p2[1],p2[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),encCol);gl.uniform1f(U('r'),1);
+ gl.uniform1f(U('s'),13*dpr*p2[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([p29[0],p29[1],p29[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),decCol);gl.uniform1f(U('r'),1);
+ gl.uniform1f(U('s'),13*dpr*p29[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ var fullCycle=[2,4,8,16,32,31,29, 16,2];
+ var cycle=(t/600)%fullCycle.length;
+ var seg=Math.floor(cycle);
+ var frac=cycle-seg;
+ var vA=ringNodes[fullCycle[seg]], vB=ringNodes[fullCycle[(seg+1)%fullCycle.length]];
+ var cur3D=[vA[0]*(1-frac)+vB[0]*frac, vA[1]*(1-frac)+vB[1]*frac, vA[2]*(1-frac)+vB[2]*frac];
+ var curP=project(cur3D, ca, sa, cb, sb, w, h);
+
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([curP[0],curP[1],curP[2]]),gl.DYNAMIC_DRAW);
+ gl.uniform4fv(U('c'),(seg<6)?encCol:decCol);gl.uniform1f(U('r'),1);
+ gl.uniform1f(U('s'),16*dpr*curP[3]*4.0);
+ gl.drawArrays(gl.POINTS,0,1);
+
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 9. 3D WebGL GF(2^4) Primitive Element Group Ring & Conjugate Roots
+(function(){
+var c=document.getElementById('gl-gf16-3d');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var R_ring = 1.35;
+var r_ring = 0.35;
+var ringNodes = [];
+for(var i=0; i<15; i++){
+  var th = (i * 2.0 * Math.PI) / 15.0;
+  var ph = 2.0 * th;
+  var x = (R_ring + r_ring * Math.cos(ph)) * Math.cos(th);
+  var y = (R_ring + r_ring * Math.cos(ph)) * Math.sin(th);
+  var z = r_ring * Math.sin(ph);
+  ringNodes.push([x, y, z]);
+}
+
+var cycleEdges = [];
+for(var i=0; i<15; i++){
+  cycleEdges.push(i, (i+1)%15);
+}
+
+var conj1Edges = [ [1,2], [2,4], [4,8], [8,1] ];
+var conj2Edges = [ [3,6], [6,12], [12,9], [9,3] ];
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0]*0.9, y=v[1]*0.9, z=v[2]*0.9;
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.4-z2);
+  return [x1*s*2.7*(h/w), y1*s*2.7, z2*0.1, s];
+}
+
+function draw(t){
+  var d=matchMedia('(prefers-color-scheme: dark)').matches;
+  var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+  var ln=isDark?[.35,.38,.45,1]:[.75,.78,.82,1];
+  var m1Col=isDark?[.95,.55,.35,1]:[.85,.30,.10,1];
+  var m3Col=isDark?[.40,.80,.95,1]:[.15,.50,.85,1];
+  var ptCol=isDark?[.60,.63,.70,1]:[.45,.48,.53,1];
+  var hi=isDark?[1.0,.90,.40,1]:[.95,.65,.00,1];
+  var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+  if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+  gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+  var a=t/3800;
+  var ca=Math.cos(a), sa=Math.sin(a);
+  var cb=Math.cos(0.55), sb=Math.sin(0.55);
+
+  var P=[];
+  for(var i=0;i<15;i++) P.push(project(ringNodes[i], ca, sa, cb, sb, w, h));
+
+  var L=[];
+  for(var k=0; k<cycleEdges.length; k+=2){
+    var u=cycleEdges[k], v=cycleEdges[k+1];
+    L.push(P[u][0],P[u][1],P[u][2], P[v][0],P[v][1],P[v][2]);
+  }
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(L),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+  gl.drawArrays(gl.LINES,0,L.length/3);
+
+  var Lc1=[];
+  conj1Edges.forEach(function(e){
+    Lc1.push(P[e[0]][0],P[e[0]][1],P[e[0]][2], P[e[1]][0],P[e[1]][1],P[e[1]][2]);
+  });
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(Lc1),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),m1Col);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1.5);
+  gl.drawArrays(gl.LINES,0,Lc1.length/3);
+
+  var Lc2=[];
+  conj2Edges.forEach(function(e){
+    Lc2.push(P[e[0]][0],P[e[0]][1],P[e[0]][2], P[e[1]][0],P[e[1]][1],P[e[1]][2]);
+  });
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(Lc2),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),m3Col);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1.5);
+  gl.drawArrays(gl.LINES,0,Lc2.length/3);
+
+  for(var i=0;i<15;i++){
+    var col = ptCol;
+    var size = 7;
+    if(i===1||i===2||i===4||i===8){ col=m1Col; size=10; }
+    else if(i===3||i===6||i===9||i===12){ col=m3Col; size=10; }
+    else if(i===0){ size=8; }
+
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([P[i][0],P[i][1],P[i][2]]),gl.DYNAMIC_DRAW);
+    gl.uniform4fv(U('c'),col);gl.uniform1f(U('r'),1);
+    gl.uniform1f(U('s'),size*dpr*P[i][3]*4.0);
+    gl.drawArrays(gl.POINTS,0,1);
+  }
+
+  var orbitTime = (t / 800) % 4;
+  var seg = Math.floor(orbitTime);
+  var frac = orbitTime - seg;
+  var oPairs = [[1,2],[2,4],[4,8],[8,1]];
+  var curPair = oPairs[seg];
+  var pA = ringNodes[curPair[0]], pB = ringNodes[curPair[1]];
+  var curPos = [pA[0]*(1-frac)+pB[0]*frac, pA[1]*(1-frac)+pB[1]*frac, pA[2]*(1-frac)+pB[2]*frac];
+  var projPulse = project(curPos, ca, sa, cb, sb, w, h);
+
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([projPulse[0],projPulse[1],projPulse[2]]),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),hi);gl.uniform1f(U('r'),1);
+  gl.uniform1f(U('s'),13*dpr*projPulse[3]*4.0);
+  gl.drawArrays(gl.POINTS,0,1);
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 10. 3D WebGL Hamming Sphere Packing & Decision Regions
+(function(){
+var c=document.getElementById('gl-packing3d');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var V=[];
+for(var i=0;i<8;i++){
+  V.push([(i&1)?1:-1, (i&2)?1:-1, (i&4)?1:-1]);
+}
+var cubeEdges=[];
+for(var i=0;i<8;i++)for(var b=0;b<3;b++){
+  var j=i^(1<<b);
+  if(i<j)cubeEdges.push([i,j]);
+}
+
+var sphereR = 0.72;
+var ringSegs = 24;
+var ring0 = [], ring1 = [];
+for(var k=0;k<3;k++){
+  for(var s=0;s<ringSegs;s++){
+    var th1 = (s * 2 * Math.PI) / ringSegs;
+    var th2 = ((s+1) * 2 * Math.PI) / ringSegs;
+    var ca1=Math.cos(th1)*sphereR, sa1=Math.sin(th1)*sphereR;
+    var ca2=Math.cos(th2)*sphereR, sa2=Math.sin(th2)*sphereR;
+    if(k===0){
+      ring0.push([-1+ca1, -1+sa1, -1], [-1+ca2, -1+sa2, -1]);
+      ring1.push([1+ca1, 1+sa1, 1], [1+ca2, 1+sa2, 1]);
+    } else if(k===1){
+      ring0.push([-1+ca1, -1, -1+sa1], [-1+ca2, -1, -1+sa2]);
+      ring1.push([1+ca1, 1, 1+sa1], [1+ca2, 1, 1+sa2]);
+    } else {
+      ring0.push([-1, -1+ca1, -1+sa1], [-1, -1+ca2, -1+sa2]);
+      ring1.push([1, 1+ca1, 1+sa1], [1, 1+ca2, 1+sa2]);
+    }
+  }
+}
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0]*0.9, y=v[1]*0.9, z=v[2]*0.9;
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.2-z2);
+  return [x1*s*2.6*(h/w), y1*s*2.6, z2*0.1, s];
+}
+
+function draw(t){
+  var d=matchMedia('(prefers-color-scheme: dark)').matches;
+  var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+  var ln=isDark?[.35,.38,.44,1]:[.75,.78,.82,1];
+  var c0Col=isDark?[.38,.72,.98,1]:[.12,.44,.85,1];
+  var c1Col=isDark?[.98,.62,.32,1]:[.88,.38,.08,1];
+  var errCol=isDark?[.98,.38,.45,1]:[.85,.20,.28,1];
+  var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+  if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+  gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+  var a=t/3600;
+  var ca=Math.cos(a), sa=Math.sin(a);
+  var cb=Math.cos(0.52), sb=Math.sin(0.52);
+
+  var PV=[];
+  for(var i=0;i<8;i++) PV.push(project(V[i], ca, sa, cb, sb, w, h));
+
+  var L=[];
+  cubeEdges.forEach(function(e){
+    L.push(PV[e[0]][0],PV[e[0]][1],PV[e[0]][2], PV[e[1]][0],PV[e[1]][1],PV[e[1]][2]);
+  });
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(L),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+  gl.drawArrays(gl.LINES,0,L.length/3);
+
+  var Ls0=[];
+  for(var i=0;i<ring0.length;i++){
+    var p0=project(ring0[i],ca,sa,cb,sb,w,h);
+    Ls0.push(p0[0],p0[1],p0[2]);
+  }
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(Ls0),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),[c0Col[0],c0Col[1],c0Col[2],0.35]);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+  gl.drawArrays(gl.LINES,0,Ls0.length/3);
+
+  var Ls1=[];
+  for(var i=0;i<ring1.length;i++){
+    var p1=project(ring1[i],ca,sa,cb,sb,w,h);
+    Ls1.push(p1[0],p1[1],p1[2]);
+  }
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(Ls1),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),[c1Col[0],c1Col[1],c1Col[2],0.35]);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+  gl.drawArrays(gl.LINES,0,Ls1.length/3);
+
+  for(var i=0;i<8;i++){
+    var col, sz;
+    if(i===0){ col=c0Col; sz=14; }
+    else if(i===7){ col=c1Col; sz=14; }
+    else if(i===1||i===2||i===4){ col=[c0Col[0],c0Col[1],c0Col[2],0.75]; sz=8; }
+    else { col=[c1Col[0],c1Col[1],c1Col[2],0.75]; sz=8; }
+
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([PV[i][0],PV[i][1],PV[i][2]]),gl.DYNAMIC_DRAW);
+    gl.uniform4fv(U('c'),col);gl.uniform1f(U('r'),1);
+    gl.uniform1f(U('s'),sz*dpr*PV[i][3]*3.6);
+    gl.drawArrays(gl.POINTS,0,1);
+  }
+
+  var animT = (t / 600) % 6;
+  var step = Math.floor(animT);
+  var f = animT - step;
+  var curPos;
+  var pCol = errCol;
+  if(step === 0){
+    curPos = [V[0][0]*(1-f)+V[1][0]*f, V[0][1]*(1-f)+V[1][1]*f, V[0][2]*(1-f)+V[1][2]*f];
+  } else if(step === 1){
+    curPos = V[1];
+  } else if(step === 2){
+    curPos = [V[1][0]*(1-f)+V[0][0]*f, V[1][1]*(1-f)+V[0][1]*f, V[1][2]*(1-f)+V[0][2]*f];
+    pCol = c0Col;
+  } else if(step === 3){
+    curPos = [V[7][0]*(1-f)+V[6][0]*f, V[7][1]*(1-f)+V[6][1]*f, V[7][2]*(1-f)+V[6][2]*f];
+  } else if(step === 4){
+    curPos = V[6];
+  } else {
+    curPos = [V[6][0]*(1-f)+V[7][0]*f, V[6][1]*(1-f)+V[7][1]*f, V[6][2]*(1-f)+V[7][2]*f];
+    pCol = c1Col;
+  }
+
+  var projP = project(curPos, ca, sa, cb, sb, w, h);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([projP[0],projP[1],projP[2]]),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),pCol);gl.uniform1f(U('r'),1);
+  gl.uniform1f(U('s'),15*dpr*projP[3]*3.6);
+  gl.drawArrays(gl.POINTS,0,1);
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+
+// 11. 3D WebGL Cyclic Shift Rotor & Codeword Manifold
+(function(){
+var c=document.getElementById('gl-cyclic3d');
+if(!c)return;
+var gl=c.getContext('webgl');
+if(!gl){c.style.display='none';return}
+function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+var p=gl.createProgram();
+gl.attachShader(p,sh(gl.VERTEX_SHADER,'attribute vec3 a;uniform float s;void main(){gl_Position=vec4(a,1.);gl_PointSize=s;}'));
+gl.attachShader(p,sh(gl.FRAGMENT_SHADER,'precision mediump float;uniform vec4 c;uniform float r;void main(){if(r>0.&&length(gl_PointCoord-.5)>.5)discard;gl_FragColor=c;}'));
+gl.linkProgram(p);gl.useProgram(p);
+var buf=gl.createBuffer(),loc=gl.getAttribLocation(p,'a');
+gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+var U=function(n){return gl.getUniformLocation(p,n)};
+
+var N = 7;
+var R = 1.25;
+var H = 0.35;
+var rimTop = [], rimBot = [];
+for(var i=0; i<N; i++){
+  var th = (i * 2.0 * Math.PI) / N;
+  var x = R * Math.cos(th), y = R * Math.sin(th);
+  rimTop.push([x, y, H]);
+  rimBot.push([x, y, -H]);
+}
+
+var baseCodeword = [1, 0, 1, 0, 0, 0, 1];
+var shifts = [];
+for(var s=0; s<N; s++){
+  var cur = [];
+  for(var i=0; i<N; i++){
+    cur.push(baseCodeword[(i - s + N * 10) % N]);
+  }
+  shifts.push(cur);
+}
+
+function project(v, ca, sa, cb, sb, w, h){
+  var x=v[0]*0.9, y=v[1]*0.9, z=v[2]*0.9;
+  var x1=x*ca+z*sa, z1=-x*sa+z*ca;
+  var y1=y*cb-z1*sb, z2=y*sb+z1*cb;
+  var s=1.0/(4.3-z2);
+  return [x1*s*2.6*(h/w), y1*s*2.6, z2*0.1, s];
+}
+
+function draw(t){
+  var d=matchMedia('(prefers-color-scheme: dark)').matches;
+  var rootDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var isDark=rootDark||(d&&document.documentElement.getAttribute('data-theme')!=='light');
+  var ln=isDark?[.35,.38,.45,1]:[.75,.78,.82,1];
+  var bitOn=isDark?[.98,.62,.32,1]:[.88,.36,.06,1];
+  var bitOff=isDark?[.50,.54,.60,1]:[.45,.48,.52,1];
+  var hubCol=isDark?[.45,.75,.95,1]:[.15,.50,.85,1];
+  var dpr=devicePixelRatio||1,w=c.clientWidth*dpr,h=c.clientHeight*dpr;
+  if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+  gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+
+  var a = t / 3600;
+  var ca=Math.cos(a), sa=Math.sin(a);
+  var cb=Math.cos(0.55), sb=Math.sin(0.55);
+
+  var PT=[], PB=[];
+  for(var i=0;i<N;i++){
+    PT.push(project(rimTop[i], ca, sa, cb, sb, w, h));
+    PB.push(project(rimBot[i], ca, sa, cb, sb, w, h));
+  }
+  var pCenter = project([0,0,0], ca, sa, cb, sb, w, h);
+
+  var L=[];
+  for(var i=0;i<N;i++){
+    var j=(i+1)%N;
+    L.push(PT[i][0],PT[i][1],PT[i][2], PT[j][0],PT[j][1],PT[j][2]);
+    L.push(PB[i][0],PB[i][1],PB[i][2], PB[j][0],PB[j][1],PB[j][2]);
+    L.push(PT[i][0],PT[i][1],PT[i][2], PB[i][0],PB[i][1],PB[i][2]);
+    L.push(pCenter[0],pCenter[1],pCenter[2], PT[i][0],PT[i][1],PT[i][2]);
+  }
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(L),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),ln);gl.uniform1f(U('r'),0);gl.uniform1f(U('s'),1);
+  gl.drawArrays(gl.LINES,0,L.length/3);
+
+  var shiftIdx = Math.floor((t / 1400) % N);
+  var activeBits = shifts[shiftIdx];
+
+  for(var i=0;i<N;i++){
+    var isOn = activeBits[i] === 1;
+    var col = isOn ? bitOn : bitOff;
+    var sz = isOn ? 14 : 7;
+
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([PT[i][0],PT[i][1],PT[i][2]]),gl.DYNAMIC_DRAW);
+    gl.uniform4fv(U('c'),col);gl.uniform1f(U('r'),1);
+    gl.uniform1f(U('s'),sz*dpr*PT[i][3]*3.6);
+    gl.drawArrays(gl.POINTS,0,1);
+  }
+
+  var wrapTime = (t / 700) % 1;
+  var thA = (6 * 2.0 * Math.PI) / N;
+  var thB = (7 * 2.0 * Math.PI) / N;
+  var thWrap = thA * (1 - wrapTime) + thB * wrapTime;
+  var rWrap = R + 0.15 * Math.sin(wrapTime * Math.PI);
+  var wrapPos = [rWrap * Math.cos(thWrap), rWrap * Math.sin(thWrap), H + 0.2 * Math.sin(wrapTime * Math.PI)];
+  var projWrap = project(wrapPos, ca, sa, cb, sb, w, h);
+
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([projWrap[0],projWrap[1],projWrap[2]]),gl.DYNAMIC_DRAW);
+  gl.uniform4fv(U('c'),hubCol);gl.uniform1f(U('r'),1);
+  gl.uniform1f(U('s'),12*dpr*projWrap[3]*3.6);
+  gl.drawArrays(gl.POINTS,0,1);
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+</script>
+
+<!--claude-mermaid-runtime-begin:3477-->
+<style>.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js"></script>
+<script>(function(){
+var CFG={"palettes":{"light":{"surface":"#f4efe4","text":"#42392e","line":"#8a7f6d","border":"#7a6c52","bg":"#fffdf8"},"dark":{"surface":"#262b34","text":"#f2f3f5","line":"#a8adb8","border":"#9aa4b8","bg":"#1f232b"}}};
+if(typeof mermaid==='undefined')return;
+var pres=Array.prototype.slice.call(document.querySelectorAll('pre.mermaid')).filter(function(p){if(p.hasAttribute('data-claude-mermaid-claimed'))return false;p.setAttribute('data-claude-mermaid-claimed','1');return true;});
+if(!pres.length)return;
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+var root=document.documentElement;
+var items=pres.map(function(pre){
+var mount=document.createElement('div');mount.className='mermaid-diagram';
+return {pre:pre,mount:mount,src:pre.textContent||''};
+});
+var seq=0;
+var renderGen=0;
+var lastKey='';
+function pageBg(fallback){
+var els=[document.body,document.documentElement];
+for(var i=0;i<els.length;i++){
+var c=els[i]&&getComputedStyle(els[i]).backgroundColor;
+if(c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)')return c;
+}
+return fallback;
+}
+function render(){
+var theme=root.getAttribute('data-theme');
+var dark=theme==='dark'||(!!(mq&&mq.matches)&&theme!=='light');
+var pal=dark?CFG.palettes.dark:CFG.palettes.light;
+var bg=pageBg(pal.bg);
+var key=(dark?'d':'l')+'|'+bg;
+if(key===lastKey)return;
+lastKey=key;
+var gen=++renderGen;
+var font=getComputedStyle(document.body).fontFamily||'sans-serif';
+var nat={useMaxWidth:false};
+mermaid.initialize({
+startOnLoad:false,securityLevel:'strict',theme:'base',
+flowchart:nat,sequence:nat,er:nat,state:nat,class:nat,pie:nat,
+gantt:nat,journey:nat,timeline:nat,gitGraph:nat,mindmap:nat,xyChart:nat,
+quadrantChart:nat,sankey:nat,c4:nat,requirement:nat,block:nat,
+packet:nat,kanban:nat,architecture:nat,radar:nat,
+themeVariables:{background:bg,mainBkg:pal.surface,primaryColor:pal.surface,
+primaryTextColor:pal.text,lineColor:pal.line,primaryBorderColor:pal.border,
+nodeBorder:pal.border,clusterBorder:pal.border,edgeLabelBackground:bg,
+clusterBkg:'rgba(127,127,127,0.07)',titleColor:pal.text,
+darkMode:dark,rowOdd:bg,rowEven:'rgba(127,127,127,0.07)',
+attributeBackgroundColorOdd:bg,attributeBackgroundColorEven:'rgba(127,127,127,0.07)',
+fontSize:'16px',fontFamily:font},
+themeCSS:'.node rect, .node circle, .node polygon, .node path, .cluster rect { stroke-width: 2px; }'
+});
+items.forEach(function(it){
+var id='claude-mermaid-'+seq++;
+mermaid.render(id,it.src).then(function(r){
+if(gen!==renderGen)return;
+var prev=it.pre.previousElementSibling;
+if(prev&&prev.className==='mermaid-diagram'&&prev!==it.mount)return;
+it.mount.innerHTML=r.svg;
+if(!it.mount.parentNode)it.pre.parentNode.insertBefore(it.mount,it.pre);
+it.pre.style.display='none';
+},function(){
+var scratch=document.getElementById(id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+scratch=document.getElementById('d'+id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+if(gen!==renderGen)return;
+if(it.mount.parentNode)it.mount.parentNode.removeChild(it.mount);
+it.pre.style.display='';
+});
+});
+}
+render();
+if(mq&&mq.addEventListener)mq.addEventListener('change',render);
+if(typeof MutationObserver!=='undefined')new MutationObserver(render).observe(root,{attributes:true,attributeFilter:['data-theme']});
+})();</script>
+<!--claude-mermaid-runtime-end-->
+</body>
+</html>
