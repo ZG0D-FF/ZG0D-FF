@@ -149,13 +149,15 @@
 
         /* Contextual Hover Term */
         .sql-term {
-            border-bottom: 1px dotted #86868b;
+            border-bottom: 1px dotted rgba(255, 255, 255, 0.4);
             cursor: help;
-            transition: color 0.15s;
+            transition: all 0.15s ease-in-out;
+            border-radius: 2px;
         }
         .sql-term:hover {
-            color: #ffffff;
-            border-bottom-color: #ffffff;
+            color: #ffffff !important;
+            background-color: rgba(41, 151, 255, 0.18);
+            border-bottom-color: #2997ff !important;
         }
 
         /* Apple Glass Floating Tooltip Capsule */
@@ -190,22 +192,38 @@
             padding-bottom: 4px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
-        #apple-tooltip .tt-sym {
+        #apple-tooltip .tt-title {
             font-size: 13px;
             font-weight: 600;
-            color: #f5f5f7;
-            font-family: serif;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
         }
-        #apple-tooltip .tt-tag {
+        #apple-tooltip .tt-cat {
             font-size: 9px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             background: #2c2c2e;
-            color: #86868b;
-            padding: 1px 6px;
+            color: #2997ff;
+            padding: 1.5px 6px;
             border-radius: 4px;
             border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        #apple-tooltip .tt-rule {
+            margin-top: 6px;
+            padding: 6px 8px;
+            background: #111113;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 10.5px;
+            color: #ffd60a;
+        }
+        #apple-tooltip .tt-trap {
+            margin-top: 6px;
+            font-size: 10.5px;
+            color: #ff453a;
+            font-weight: 500;
         }
 
         /* Apple 3D Viewport */
@@ -230,14 +248,12 @@
     <!-- Apple-Style Contextual Tooltip Capsule -->
     <div id="apple-tooltip">
         <div class="tt-header">
-            <span class="tt-sym" id="tt-sym">σ</span>
-            <span class="tt-tag" id="tt-tag">Relational Operator</span>
+            <span class="tt-title" id="tt-title">SELECT</span>
+            <span class="tt-cat" id="tt-cat">DQL Query</span>
         </div>
-        <div id="tt-title" class="font-bold text-white text-xs mb-1">Selection Operator</div>
-        <div id="tt-body" class="text-slate-300">Filters rows based on a Boolean condition predicate.</div>
-        <div id="tt-sql" class="mt-2 text-[10px] text-cyan-300 font-mono bg-slate-900/60 p-1.5 rounded border border-white/5">
-            SQL: <span class="font-bold text-rose-400">WHERE</span> condition
-        </div>
+        <div id="tt-def" class="text-[#d1d1d6] leading-relaxed">Retrieves stored row tuples from relations.</div>
+        <div id="tt-rule" class="tt-rule">SELECT col FROM tbl;</div>
+        <div id="tt-trap" class="tt-trap hidden"></div>
     </div>
 
     <!-- Top Sticky Header -->
@@ -2571,200 +2587,269 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
         }
 
         // ==========================================
-        // APPLE GLASS INTERACTIVE TOOLTIP HOVER ENGINE
+        // APPLE GLASS INTERACTIVE TOOLTIP HOVER ENGINE (UNIVERSAL GLOBAL)
         // ==========================================
         const TOOLTIP_DATA = {
-            select: {
-                sym: "σ (Sigma)",
-                tag: "Unary Operator",
-                title: "Selection Operator",
-                body: "Filters relation tuples horizontally, retaining only rows where the Boolean condition evaluates to TRUE.",
-                sql: "WHERE predicate"
-            },
-            project: {
-                sym: "π (Pi)",
-                tag: "Unary Operator",
-                title: "Projection Operator",
-                body: "Extracts vertical attribute columns, dropping non-specified attributes. In mathematical set theory, duplicate rows are eliminated.",
-                sql: "SELECT col1, col2"
-            },
-            join: {
-                sym: "⋈ (Bowtie)",
-                tag: "Binary Operator",
-                title: "Natural Relational Join",
-                body: "Combines tuples from two relations having identical values across all identically-named attributes, projecting shared keys once.",
-                sql: "JOIN table2 ON t1.id = t2.id"
-            },
-            aggregate: {
-                sym: "γ (Gamma)",
-                tag: "Aggregate Operator",
-                title: "Aggregation & Grouping",
-                body: "Clusters tuples by grouping attributes and applies scalar summary accumulators (SUM, AVG, COUNT, MIN, MAX).",
-                sql: "GROUP BY col, AGG(val)"
-            },
-            sort: {
-                sym: "τ (Tau)",
-                tag: "Order Operator",
-                title: "Sorting Operator",
-                body: "Imposes a strict deterministic ordering over result tuples based on primary and secondary key sequences.",
-                sql: "ORDER BY col1 ASC, col2 DESC"
-            },
-            dedup: {
-                sym: "δ (Delta)",
-                tag: "Set Operator",
-                title: "Deduplication Operator",
-                body: "Converts a multiset (bag) into a pure mathematical set by purging redundant identical records via sorting or hashing.",
-                sql: "SELECT DISTINCT"
-            },
-            rename: {
-                sym: "ρ (Rho)",
-                tag: "Unary Operator",
-                title: "Rename Operator",
-                body: "Assigns temporary aliases to relations or individual attributes, enabling self-joins on identical tables.",
-                sql: "FROM Table AS alias"
-            },
-            // SQL Statements
-            'select': {
-                sym: "SELECT",
-                tag: "SQL Clause",
-                title: "Relational Projection",
-                body: "Specifies which attributes/columns to project into the final output relation.",
-                sql: "SELECT attribute_list"
-            },
-            'from': {
-                sym: "FROM",
-                tag: "SQL Clause",
-                title: "Cartesian Base Product",
-                body: "Declares source relations to be queried and establishes working Cartesian coordinate product.",
-                sql: "FROM relation_name"
-            },
-            'where': {
-                sym: "WHERE",
-                tag: "SQL Clause",
-                title: "Pre-Aggregation Filter",
-                body: "Evaluates predicate filters on individual rows *before* grouping occurs.",
-                sql: "WHERE boolean_expression"
-            },
-            'join': {
-                sym: "JOIN",
-                tag: "Relational Linking",
-                title: "Relational Equi-Join",
-                body: "Links tuples from two tables satisfying the referential foreign key condition.",
-                sql: "JOIN table ON t1.fk = t2.pk"
-            },
-            'between': {
-                sym: "BETWEEN",
-                tag: "Range Operator",
-                title: "Inclusive Boundary Filter",
-                body: "Evaluates whether an expression falls within an inclusive continuous range [low, high].",
-                sql: "col BETWEEN min AND max"
-            },
-            'group by': {
-                sym: "GROUP BY",
-                tag: "Aggregation",
-                title: "Group Consolidation",
-                body: "Partitions the relation into disjoint equivalence classes sharing identical group keys.",
-                sql: "GROUP BY column_list"
-            },
-            'distinct': {
-                sym: "DISTINCT",
-                tag: "Set Theory",
-                title: "Duplicate Suppression",
-                body: "Enforces relational set semantics by hashing/sorting to prune duplicate tuples.",
-                sql: "SELECT DISTINCT column"
-            },
-            'floor': {
-                sym: "FLOOR()",
-                tag: "Scalar Math",
-                title: "Mathematical Round Down",
-                body: "Truncates fractional decimal values downward to the nearest whole integer (e.g. FLOOR(124.9) = 124).",
-                sql: "FLOOR(numeric_expression)"
-            },
-            'case': {
-                sym: "CASE",
-                tag: "Condition",
-                title: "Conditional Evaluation",
-                body: "ANSI SQL standard scalar branching logic: evaluates conditions sequentially and returns matched THEN clause.",
-                sql: "CASE WHEN cond THEN a ELSE b END"
-            },
-            'substr': {
-                sym: "SUBSTR()",
-                tag: "String Function",
-                title: "Substring Extraction",
-                body: "Extracts character sequence. In Oracle, negative start index counts backward from string end (e.g. SUBSTR(str, -3)).",
-                sql: "SUBSTR(string, start, length)"
-            },
-            'relation': {
-                sym: "Relation",
-                tag: "DBMS Concept",
-                title: "Relational Table",
-                body: "A mathematical set of distinct tuples adhering to a shared schema definition.",
-                sql: "CREATE TABLE name (...)"
-            }
+            // Relational Algebra Operators
+            select: { sym: "σ (Sigma)", cat: "Unary Relational Operator", def: "Filters relation tuples horizontally, retaining only rows where the Boolean condition evaluates to TRUE.", rule: "σ_Predicate(Relation)", trap: "⚠️ Commutative: σ_A(σ_B(R)) ≡ σ_B(σ_A(R)). Pushed down before joins by RDBMS optimizer." },
+            project: { sym: "π (Pi)", cat: "Unary Relational Operator", def: "Extracts vertical attribute columns, dropping non-specified attributes and pruning duplicate tuples in pure set theory.", rule: "π_A1,A2(Relation)", trap: "⚠️ In SQL (multiset/bag algebra), SELECT retains duplicates unless DISTINCT is explicitly supplied." },
+            join: { sym: "⋈ (Bowtie)", cat: "Binary Relational Operator", def: "Natural Join: combines tuples from two relations having identical values across all identically-named attributes, projecting shared keys once.", rule: "R1 ⋈ R2 ≡ π(σ_JoinCond(R1 × R2))", trap: "⚠️ If relations share no common attributes, Natural Join degrades into full Cartesian Cross-Product ($|R1| × |R2|$)." },
+            aggregate: { sym: "γ (Gamma)", cat: "Aggregation Operator", def: "Clusters tuples by grouping attributes and applies scalar summary accumulators (SUM, AVG, COUNT, MIN, MAX).", rule: "γ_GroupCols, AggFn(Col)(Relation)", trap: "⚠️ Any column in output must either appear in group list or be wrapped in an aggregation function." },
+            sort: { sym: "τ (Tau)", cat: "Ordering Operator", def: "Imposes a strict deterministic ordering over result tuples based on primary and secondary key sequences.", rule: "τ_Col1 ASC, Col2 DESC(Relation)", trap: "⚠️ Operates as the very last step in query execution pipeline (after SELECT projection)." },
+            dedup: { sym: "δ (Delta)", cat: "Set Deduplication", def: "Converts a multiset (bag) into a pure mathematical set by purging redundant identical records via sorting or hashing.", rule: "δ(Relation) ≡ SELECT DISTINCT", trap: "⚠️ Requires PGA sort/hash space; ~5x slower than retaining multiset rows." },
+            rename: { sym: "ρ (Rho)", cat: "Unary Relational Operator", def: "Assigns temporary aliases to relations or individual attributes, enabling self-joins on identical tables.", rule: "ρ_NewName(Relation)", trap: "⚠️ Necessary to disambiguate identical column names in recursive and self-referential relations." },
+            relation: { sym: "Relation", cat: "DBMS Concept", def: "A mathematical set of distinct tuples adhering to a shared schema definition.", rule: "CREATE TABLE name (...)", trap: "⚠️ First Normal Form requires all attribute values to be atomic and indivisible." },
+
+            // Universal SQL Glossary
+            'CREATE TABLE': { cat: 'DDL Definition', def: 'Creates a new persistent relation schema in Oracle data dictionary.', rule: 'CREATE TABLE name (col type [constraints]...);', trap: '⚠️ Implicit COMMIT: Cannot be rolled back via ROLLBACK.' },
+            'ALTER TABLE': { cat: 'DDL Modification', def: 'Modifies table schema definition, column definitions, or integrity constraints.', rule: 'ALTER TABLE name ADD / MODIFY / DROP ...;', trap: '⚠️ Requires exclusive table lock (TM lock); cannot decrease column size if data overflows.' },
+            'DROP TABLE': { cat: 'DDL Deletion', def: 'Removes table definition and extents completely from the database.', rule: 'DROP TABLE name [CASCADE CONSTRAINTS] [PURGE];', trap: '⚠️ In Oracle 11g, enters RECYCLEBIN unless PURGE is passed; fails if child FK exists without CASCADE.' },
+            'DROP COLUMN': { cat: 'DDL Column Drop', def: 'Removes column definition and metadata from table descriptor.', rule: 'ALTER TABLE name DROP COLUMN col_name;', trap: '⚠️ Irreversible operation. All data in that column is permanently lost immediately.' },
+            'DROP CONSTRAINT': { cat: 'DDL Constraint Removal', def: 'Drops an existing named integrity constraint from table definition.', rule: 'ALTER TABLE tbl DROP CONSTRAINT c_name;', trap: '⚠️ Cannot be undone via ROLLBACK. Requires exclusive table lock.' },
+            'ADD CONSTRAINT': { cat: 'Integrity Constraint', def: 'Appends a named out-of-line table constraint (PK, FK, CHECK, UNIQUE).', rule: 'ALTER TABLE tbl ADD CONSTRAINT c_name FOREIGN KEY (c) REFERENCES p(c);', trap: '⚠️ Fails with ORA-02298 if existing table rows already violate the constraint.' },
+            'CASCADE CONSTRAINTS': { cat: 'DDL Referential Cascade', def: 'Drops all referential integrity constraints that refer to the table or unique/primary key being dropped.', rule: 'DROP TABLE tbl CASCADE CONSTRAINTS;', trap: '⚠️ Orphan child tables lose their FK definitions completely.' },
+            'FOREIGN KEY': { cat: 'Referential Integrity', def: 'Designates child column as a pointer to a parent table unique/primary key.', rule: 'FOREIGN KEY (deptno) REFERENCES DEPT(deptno)', trap: '⚠️ Child insert fails (ORA-02291) if parent key missing. Parent delete fails (ORA-02292) without CASCADE.' },
+            'PRIMARY KEY': { cat: 'Entity Integrity', def: 'Enforces unique, non-null identity for each tuple in the relation. Creates unique B-Tree index.', rule: 'col NUMBER PRIMARY KEY / PRIMARY KEY (c1, c2)', trap: '⚠️ Fails with ORA-01400 on NULL, or ORA-00001 on duplicate key.' },
+            'NOT NULL': { cat: 'Column Constraint', def: 'Forbids column from containing missing/null values.', rule: 'col datatype NOT NULL', trap: '⚠️ In Oracle, empty string \'\' evaluates to NULL, violating NOT NULL!' },
+            'NOT IN': { cat: 'Logical Membership Predicate', def: 'Evaluates TRUE if expression matches NO element in list or subquery.', rule: 'WHERE col NOT IN (10, 20)', trap: '⚠️ 3-Valued Logic Trap: If list or subquery contains even ONE NULL, entire predicate returns UNKNOWN (0 rows)!' },
+            'INSERT INTO': { cat: 'DML Ingestion', def: 'Appends new tuple records into the table segment.', rule: 'INSERT INTO tbl [(cols)] VALUES (vals);', trap: '⚠️ Omitting column list requires providing values in exact physical column order.' },
+            'AS SELECT': { cat: 'CTAS Clause', def: 'Creates new table structure and populates rows from the result of a SELECT query.', rule: 'CREATE TABLE t2 AS SELECT * FROM t1;', trap: '⚠️ CTAS inherits datatypes and NOT NULL, but drops PK, FK, and CHECK constraints!' },
+            'GROUP BY': { cat: 'Relational Aggregation', def: 'Partitions row tuples into summary buckets sharing identical group keys.', rule: 'GROUP BY col1, col2', trap: '⚠️ Every non-aggregated column in SELECT must appear in the GROUP BY clause.' },
+            'ORDER BY': { cat: 'Tuple Sorting', def: 'Sorts final result set tuples in ASC (default) or DESC order.', rule: 'ORDER BY col [ASC | DESC] [NULLS FIRST | LAST]', trap: '⚠️ Oracle sorts NULLs LAST in ASC, and NULLS FIRST in DESC by default.' },
+            'UNION ALL': { cat: 'Set Operator', def: 'Concatenates result sets without deduplication, skipping temp disk sorting.', rule: 'query1 UNION ALL query2;', trap: '⚠️ Retains duplicate rows; ~5x faster than UNION.' },
+            'IS NULL': { cat: 'Logical Predicate', def: 'Tests whether an attribute contains no data value (unknown/absent).', rule: 'WHERE col IS NULL;', trap: '⚠️ Never use col = NULL; in 3-valued logic, col = NULL evaluates to UNKNOWN, returning 0 rows.' },
+            'IS NOT NULL': { cat: 'Logical Predicate', def: 'Tests whether an attribute contains a known, non-null value.', rule: 'WHERE col IS NOT NULL;', trap: '⚠️ Crucial in subqueries with NOT IN to prevent 3-valued logic zero-row traps.' },
+            'CREATE OR REPLACE VIEW': { cat: 'Virtual Relation', def: 'Creates or replaces a stored named query definition in data dictionary.', rule: 'CREATE OR REPLACE VIEW v_name AS SELECT ...;', trap: '⚠️ Simple 1-to-1 views are updatable via DML; complex views with GROUP BY/JOIN are not.' },
+            'LEFT JOIN': { cat: 'Outer Join', def: 'Returns all tuples from left relation, padding right-relation attributes with NULL when no match exists.', rule: 'FROM t1 LEFT JOIN t2 ON t1.id = t2.id', trap: '⚠️ Filtering right table columns in WHERE converts outer join into INNER JOIN!' },
+            'RIGHT JOIN': { cat: 'Outer Join', def: 'Returns all tuples from right relation, padding left-relation attributes with NULL when no match exists.', rule: 'FROM t1 RIGHT JOIN t2 ON t1.id = t2.id', trap: '⚠️ Equivalent to reversing table order in LEFT JOIN.' },
+
+            // Single DDL/DML Keywords
+            'CREATE': { cat: 'DDL Definition', def: 'Allocates a new persistent schema object in the Oracle data dictionary.', rule: 'CREATE TABLE name (cols...);', trap: '⚠️ Implicit COMMIT: Cannot be rolled back with ROLLBACK.' },
+            'TABLE': { cat: 'Schema Object', def: 'Primary two-dimensional relational container of tuples organized into fixed attributes.', rule: 'TABLE schema.table_name', trap: '⚠️ Oracle stores identifiers in UPPERCASE by default in USER_TABLES.' },
+            'ALTER': { cat: 'DDL Modification', def: 'Modifies column definitions, integrity constraints, or physical storage parameters of an existing table.', rule: 'ALTER TABLE name ADD / MODIFY / DROP ...;', trap: '⚠️ Requires exclusive dictionary lock (TM lock); cannot change datatype if column has non-empty incompatible data.' },
+            'ADD': { cat: 'DDL Clause', def: 'Appends new attribute column descriptors or out-of-line integrity constraints to an existing table.', rule: 'ALTER TABLE tbl ADD (col type [constraint]);', trap: '⚠️ New columns are populated with NULL for all existing rows unless DEFAULT is provided.' },
+            'MODIFY': { cat: 'DDL Clause', def: 'Alters datatype length, default value, or nullability constraint of an existing column.', rule: 'ALTER TABLE tbl MODIFY (col new_type);', trap: '⚠️ Decreasing column width fails if any existing row has data longer than new width.' },
+            'DROP': { cat: 'DDL Deletion', def: 'Completely removes an object definition and its data from the database catalog.', rule: 'DROP TABLE tbl [CASCADE CONSTRAINTS] [PURGE];', trap: '⚠️ In Oracle 11g, enters RECYCLEBIN unless PURGE is passed; fails if child FK exists without CASCADE.' },
+            'TRUNCATE': { cat: 'DDL Extent Deallocation', def: 'Instantly empties table by resetting High Water Mark (HWM) and releasing disk extents.', rule: 'TRUNCATE TABLE tbl;', trap: '⚠️ Implicit COMMIT. Fails with ORA-02266 if referenced by active child FK, even if child is empty.' },
+            'DELETE': { cat: 'DML Row Removal', def: 'Removes specific tuples row-by-row, recording before-images in UNDO tablespace.', rule: 'DELETE FROM tbl [WHERE condition];', trap: '⚠️ Can be ROLLEDBACK and fires triggers, but does NOT reset High Water Mark (HWM).' },
+            'INSERT': { cat: 'DML Ingestion', def: 'Appends one or more new tuples into the table segment.', rule: 'INSERT INTO tbl [(cols)] VALUES (vals);', trap: '⚠️ Omitting column list requires providing values matching exact physical column order.' },
+            'INTO': { cat: 'DML Target Clause', def: 'Specifies the target table receiving inserted tuples.', rule: 'INSERT INTO table_name', trap: '⚠️ Table must exist and user must possess INSERT privilege.' },
+            'VALUES': { cat: 'DML Data Clause', def: 'Supplies literal or expression values for inserted tuple attributes.', rule: 'VALUES (val1, val2, ...)', trap: '⚠️ Datatypes must match column types or support implicit conversion.' },
+            'UPDATE': { cat: 'DML Mutation', def: 'Modifies existing attribute values in matching row tuples.', rule: 'UPDATE tbl SET col = val [WHERE cond];', trap: '⚠️ Omitting WHERE clause updates EVERY single row tuple in the table!' },
+            'SET': { cat: 'DML Assignment', def: 'Assigns new expressions to designated columns in an UPDATE statement.', rule: 'SET col1 = val1, col2 = val2', trap: '⚠️ Columns cannot be assigned subqueries returning more than one row.' },
+            'SELECT': { cat: 'DQL Query', def: 'Retrieves stored row tuples from relations. Evaluated via projection and selection filters.', rule: 'SELECT [DISTINCT] col_list FROM table [WHERE cond];', trap: '⚠️ In Oracle, empty string \'\' evaluates identically to NULL.' },
+            'FROM': { cat: 'Query Clause', def: 'Specifies relation data sources (tables, views, inline subqueries).', rule: 'FROM table1 [JOIN table2 ON ...]', trap: '⚠️ Cartesian product (CROSS JOIN) occurs if join predicate is omitted.' },
+            'WHERE': { cat: 'Row Selection Filter', def: 'Filters individual tuples prior to grouping and aggregation.', rule: 'WHERE predicate_boolean_expression', trap: '⚠️ Cannot contain aggregate functions (SUM, AVG) — use HAVING instead!' },
+            'JOIN': { cat: 'Relational Join', def: 'Combines horizontal tuples from two relations based on a common matching predicate.', rule: 'FROM t1 JOIN t2 ON t1.key = t2.key', trap: '⚠️ Missing ON clause triggers accidental CROSS JOIN!' },
+            'ON': { cat: 'Join Condition', def: 'Specifies the Boolean equivalence condition linking attributes across relations.', rule: 'ON t1.deptno = t2.deptno', trap: '⚠️ Equi-join on indexed keys allows fast Hash or Nested Loop join access.' },
+            'RENAME': { cat: 'DDL Renaming', def: 'Changes the identifier of an existing table or column in the database catalog.', rule: 'RENAME old_name TO new_name;', trap: '⚠️ Automatically invalidates dependent views, procedures, and synonyms.' },
+            'TO': { cat: 'DDL Target Clause', def: 'Designates the replacement name in a RENAME operation.', rule: 'RENAME dept_dup TO dup_dept;', trap: '⚠️ Target identifier must not already exist in current schema.' },
+            'AS': { cat: 'Alias / Source Clause', def: 'Designates a column/table alias or query source in CTAS / View definitions.', rule: 'SELECT col AS alias / CREATE TABLE t AS SELECT ...', trap: '⚠️ Column aliases cannot be used in WHERE or HAVING clauses.' },
+            'DESC': { cat: 'SQL*Plus Utility', def: 'Describes the column names, datatypes, and nullability constraints of a table or view.', rule: 'DESC table_name;', trap: '⚠️ Client command; not standard SQL. Does not display CHECK constraints.' },
+            'ASC': { cat: 'Sort Ordering', def: 'Ascending order (smallest to largest). Default order in ORDER BY clause.', rule: 'ORDER BY col ASC', trap: '⚠️ In Oracle, NULL values sort LAST in ascending order.' },
+            'COMMIT': { cat: 'TCL Transaction Control', def: 'Permanently writes all pending DML mutations from Redo Log Buffer to disk Redo Logs.', rule: 'COMMIT;', trap: '⚠️ Releases row-level locks (TX locks) and makes changes visible to other sessions.' },
+            'ROLLBACK': { cat: 'TCL Transaction Control', def: 'Undoes all uncommitted DML mutations using before-images stored in UNDO tablespace.', rule: 'ROLLBACK;', trap: '⚠️ Cannot undo DDL statements (CREATE, ALTER, TRUNCATE, DROP).' },
+            'CONSTRAINT': { cat: 'Constraint Keyword', def: 'Declares an explicit system name for an integrity constraint in Oracle dictionary.', rule: 'CONSTRAINT chk_sal CHECK (sal > 0)', trap: '⚠️ Omitting constraint name causes Oracle to auto-generate SYS_C00xxxxx.' },
+            'FOREIGN': { cat: 'Constraint Keyword', def: 'Part of FOREIGN KEY constraint declaration linking to parent relation.', rule: 'FOREIGN KEY (col)', trap: '⚠️ Child column must match parent unique/primary key datatypes.' },
+            'KEY': { cat: 'Constraint Keyword', def: 'Denotes indexing and constraint integrity role (PRIMARY KEY / FOREIGN KEY).', rule: 'PRIMARY KEY / FOREIGN KEY', trap: '⚠️ PK creates unique index; FK does NOT auto-index child columns (must index manually for performance).' },
+            'PRIMARY': { cat: 'Constraint Keyword', def: 'Designates primary identifier for the relation.', rule: 'PRIMARY KEY (col)', trap: '⚠️ Table can have only ONE primary key.' },
+            'CHECK': { cat: 'Integrity Constraint', def: 'Enforces domain integrity by evaluating a Boolean predicate for every inserted/updated row tuple.', rule: 'CHECK (condition) - e.g. CHECK (is_veg IN (0,1))', trap: '⚠️ Cannot reference SYSDATE, CURRVAL/NEXTVAL, or subqueries. Throws ORA-02290 if violated.' },
+            'REFERENCES': { cat: 'Referential Integrity', def: 'Enforces foreign key relation to an existing PK/Unique key in parent table.', rule: 'col REFERENCES parent(pk) [ON DELETE CASCADE]', trap: '⚠️ Child insert fails with ORA-02291 if parent missing. Parent delete fails with ORA-02292 without CASCADE.' },
+            'UNIQUE': { cat: 'Integrity Constraint', def: 'Enforces that every value in column or set of columns is distinct.', rule: 'col VARCHAR2(50) UNIQUE', trap: '⚠️ In Oracle, UNIQUE constraints allow multiple NULL entries.' },
+            'HAVING': { cat: 'Group Summary Filter', def: 'Filters aggregated groups after GROUP BY evaluation.', rule: 'GROUP BY col HAVING aggregate_fn() > val', trap: '⚠️ Cannot use column aliases defined in SELECT list inside HAVING.' },
+            'UNION': { cat: 'Set Operator', def: 'Combines outputs of two compatible queries, executing temp disk sorting/hashing to eliminate duplicates.', rule: 'query1 UNION query2; columns and datatypes must align.', trap: '⚠️ ~5x slower than UNION ALL due to sorting cost; use UNION ALL if rows are already distinct.' },
+            'INTERSECT': { cat: 'Set Operator', def: 'Returns only common distinct tuples present in BOTH queries.', rule: 'query1 INTERSECT query2;', trap: '⚠️ Requires compatible datatypes across projected columns and executes sort deduplication.' },
+            'MINUS': { cat: 'Set Operator', def: 'Returns distinct tuples present in query1 that do NOT appear in query2 ($R - S$).', rule: 'query1 MINUS query2;', trap: '⚠️ Oracle keyword for ANSI EXCEPT. Strips duplicate tuples.' },
+            'DISTINCT': { cat: 'Deduplication Operator', def: 'Filters out duplicate tuples from query result set.', rule: 'SELECT DISTINCT col FROM table;', trap: '⚠️ Requires sort/hash operation in PGA temp memory.' },
+            'VIEW': { cat: 'Virtual Relation', def: 'Named query definition stored in data dictionary without physical data storage.', rule: 'CREATE [OR REPLACE] VIEW view_name AS SELECT ...', trap: '⚠️ Complex views with GROUP BY, DISTINCT, or JOIN are NOT directly updatable via DML.' },
+            'DEFAULT': { cat: 'Column Clause', def: 'Provides an automatic fallback value if an INSERT statement omits this column.', rule: 'order_date DATE DEFAULT SYSDATE', trap: '⚠️ Explicitly inserting NULL does NOT trigger DEFAULT; NULL will be stored!' },
+            'LIKE': { cat: 'Pattern Matching', def: 'Searches for matching string patterns using wildcards (% = multi-char, _ = single char).', rule: 'WHERE col LIKE \'S%\'', trap: '⚠️ Leading wildcards (e.g. LIKE \'%SON\') cannot use standard B-Tree index (triggers Full Table Scan).' },
+            'BETWEEN': { cat: 'Range Predicate', def: 'Filters values inclusive of lower and upper boundaries.', rule: 'WHERE col BETWEEN low AND high', trap: '⚠️ Strictly inclusive: equivalent to (col >= low AND col <= high).' },
+            'IN': { cat: 'Membership Predicate', def: 'Evaluates TRUE if expression matches any element in literal list or subquery.', rule: 'WHERE col IN (val1, val2...)', trap: '⚠️ If list contains NULL in NOT IN (val, NULL), entire predicate evaluates to UNKNOWN (0 rows)!' },
+            'NOT': { cat: 'Logical Negation', def: 'Inverts the truth value of a Boolean predicate (TRUE -> FALSE, FALSE -> TRUE).', rule: 'WHERE NOT (sal > 5000)', trap: '⚠️ NOT UNKNOWN evaluates to UNKNOWN in 3-valued logic.' },
+            'AND': { cat: 'Logical Conjunction', def: 'Requires both Boolean operand conditions to evaluate to TRUE.', rule: 'WHERE cond1 AND cond2', trap: '⚠️ Evaluated left-to-right with short-circuiting in modern cost-based optimizer.' },
+            'OR': { cat: 'Logical Disjunction', def: 'Requires at least one Boolean operand condition to evaluate to TRUE.', rule: 'WHERE cond1 OR cond2', trap: '⚠️ Lower operator precedence than AND; always use parentheses when mixing!' },
+            'CASE': { cat: 'Conditional Expression', def: 'ANSI SQL conditional evaluation construct (searched or simple CASE).', rule: 'CASE WHEN cond THEN val ELSE default END', trap: '⚠️ Evaluates sequentially; stops at first TRUE branch.' },
+            'WHEN': { cat: 'Conditional Clause', def: 'Introduces a condition branch inside CASE expression.', rule: 'WHEN cond THEN result', trap: '⚠️ If condition evaluates to UNKNOWN (NULL), branch is skipped.' },
+            'THEN': { cat: 'Conditional Clause', def: 'Specifies result returned when preceding WHEN condition is TRUE.', rule: 'WHEN c THEN result', trap: '⚠️ All THEN return expressions must share compatible datatypes.' },
+            'ELSE': { cat: 'Conditional Clause', def: 'Fallback return value if no WHEN branch is satisfied.', rule: 'ELSE default_val', trap: '⚠️ If ELSE is omitted and no branch matches, CASE returns NULL!' },
+            'END': { cat: 'Conditional Clause', def: 'Closes a CASE statement or PL/SQL block.', rule: 'CASE ... END', trap: '⚠️ Missing END raises ORA-00905: missing keyword.' },
+            'ROWNUM': { cat: 'Oracle Pseudo-column', def: 'Numbers rows sequentially in the order they are retrieved before ORDER BY.', rule: 'WHERE ROWNUM <= 5', trap: '⚠️ WHERE ROWNUM = 2 returns 0 rows! ROWNUM is assigned only after a row passes WHERE.' },
+
+            // Datatypes
+            'NUMBER': { cat: 'Oracle DataType', def: 'Variable-length numeric representation (1 to 38 digits precision).', rule: 'NUMBER(p, s) - e.g. NUMBER(7,2) max 99999.99', trap: '⚠️ Oracle has no native BOOLEAN in SQL; NUMBER(1) is standard boolean substitute.' },
+            'VARCHAR2': { cat: 'Oracle DataType', def: 'Variable-length character string up to 4000 bytes in Oracle 11g.', rule: 'VARCHAR2(size [BYTE | CHAR])', trap: '⚠️ Always use VARCHAR2 not VARCHAR (Oracle reserves VARCHAR for future changes).' },
+            'CHAR': { cat: 'Oracle DataType', def: 'Fixed-length blank-padded character string up to 2000 bytes.', rule: 'CHAR(size) - e.g. CHAR(1) for gender', trap: '⚠️ Blank-pads short strings with spaces to reach declared size; causes exact string matching traps!' },
+            'INTEGER': { cat: 'Oracle DataType ANSI Alias', def: 'ANSI SQL synonym mapped internally in Oracle to NUMBER(38,0).', rule: 'deptno INTEGER', trap: '⚠️ Equivalent to NUMBER(38); takes full integer precision.' },
+            'DATE': { cat: 'Oracle DataType', def: 'Fixed 7-byte binary representation storing Century, Year, Month, Day, Hour, Minute, Second.', rule: 'Default display format is DD-MON-RR (e.g. \'17-DEC-80\').', trap: '⚠️ Always use TO_DATE() for string literals in production to prevent NLS_DATE_FORMAT mismatch.' },
+            'CLOB': { cat: 'Oracle DataType', def: 'Character Large Object storing single-byte or multi-byte text data up to 4GB.', rule: 'col CLOB', trap: '⚠️ Cannot be used directly in GROUP BY, ORDER BY, or DISTINCT.' },
+            'BLOB': { cat: 'Oracle DataType', def: 'Binary Large Object storing unformatted binary bitstreams (images, pdfs) up to 4GB.', rule: 'col BLOB', trap: '⚠️ Stored out-of-line in separate LOB segment if size exceeds 4000 bytes.' },
+
+            // Built-in Functions & Pseudo-columns
+            'ROUND': { cat: 'Numeric/Date Function', def: 'Rounds a number to specified decimal places, or a date to designated calendar unit.', rule: 'ROUND(AVG(sal), 2) / ROUND(num)', trap: '⚠️ If decimal places omitted, rounds to nearest whole integer.' },
+            'COUNT': { cat: 'Aggregate Function', def: 'Counts rows. COUNT(*) counts all rows; COUNT(col) ignores NULL values.', rule: 'COUNT(*) vs COUNT(comm)', trap: '⚠️ COUNT(comm) will return fewer rows than COUNT(*) if commission contains NULLs.' },
+            'SUM': { cat: 'Aggregate Function', def: 'Calculates the arithmetic total of non-null numeric values across grouped tuples.', rule: 'SUM(sal)', trap: '⚠️ Ignores NULL values; returns NULL if group has 0 qualifying rows.' },
+            'AVG': { cat: 'Aggregate Function', def: 'Computes the arithmetic mean of non-null values across grouped tuples.', rule: 'AVG(sal) = SUM(sal) / COUNT(sal)', trap: '⚠️ Ignores NULL values in the denominator!' },
+            'MIN': { cat: 'Aggregate Function', def: 'Finds the lowest scalar value in a column or expression across grouped rows.', rule: 'MIN(sal)', trap: '⚠️ Operates on numbers, strings (alphabetical), and dates (earliest).' },
+            'MAX': { cat: 'Aggregate Function', def: 'Finds the highest scalar value in a column or expression across grouped rows.', rule: 'MAX(sal)', trap: '⚠️ Operates on numbers, strings (alphabetical), and dates (latest).' },
+            'NVL': { cat: 'Null Substitution', def: 'Replaces a NULL value with a designated fallback scalar value of compatible type.', rule: 'NVL(comm, 0)', trap: '⚠️ Both arguments must share or implicitly convert to the same datatype.' },
+            'MONTHS_BETWEEN': { cat: 'Oracle Date Function', def: 'Calculates fractional or integer number of calendar months between date1 and date2.', rule: 'MONTHS_BETWEEN(d1, d2); positive if d1 > d2.', trap: '⚠️ If both dates are last day of month or have identical days, result is exact integer.' },
+            'NEXT_DAY': { cat: 'Oracle Date Function', def: 'Finds the first date of the specified weekday following given date.', rule: 'NEXT_DAY(date, \'FRIDAY\')', trap: '⚠️ Day name depends on session NLS_DATE_LANGUAGE setting.' },
+            'LAST_DAY': { cat: 'Oracle Date Function', def: 'Returns the date of the final calendar day of the month containing given date.', rule: 'LAST_DAY(hiredate)', trap: '⚠️ Preserves the exact time component of the input date.' },
+            'ADD_MONTHS': { cat: 'Oracle Date Function', def: 'Returns date plus integer number of calendar months.', rule: 'ADD_MONTHS(hiredate, 2)', trap: '⚠️ If original date is last day of month, result date will also be last day of destination month.' },
+            'SYSDATE': { cat: 'System Pseudo-column', def: 'Returns current database server system timestamp (date and time to the second).', rule: 'SELECT SYSDATE FROM DUAL;', trap: '⚠️ Returns OS server time, NOT client terminal time; cannot be used inside CHECK constraints.' },
+            'DUAL': { cat: 'Oracle System Table', def: 'Special one-row, one-column (DUMMY VARCHAR2(1)) table used for scalar function/expression evaluation.', rule: 'SELECT expression FROM DUAL;', trap: '⚠️ Owned by SYS; public synonym allows fast expression testing without scanning disk tables.' },
+            'UPPER': { cat: 'String Function', def: 'Converts character string to uppercase according to database character set rules.', rule: 'UPPER(str)', trap: '⚠️ Used in CHECK (ename = UPPER(ename)) to enforce capital letters.' },
+            'LOWER': { cat: 'String Function', def: 'Converts character string to lowercase characters.', rule: 'LOWER(str)', trap: '⚠️ Case conversions take CPU cycles; prefer functional index in large tables.' },
+            'SUBSTR': { cat: 'String Extraction Function', def: 'Extracts character substring from string. Negative start counts from string end.', rule: 'SUBSTR(str, pos, [len]) - e.g. SUBSTR(name, -3)', trap: '⚠️ 1-based indexing in SQL (unlike 0-based in C/Java/Python).' },
+            'LENGTH': { cat: 'String Length Function', def: 'Returns character count of a string expression.', rule: 'LENGTH(ename)', trap: '⚠️ In Oracle SQL, LENGTH(NULL) returns NULL, not 0.' },
+            'INSTR': { cat: 'String Search Function', def: 'Searches string for target pattern and returns character position (1-based).', rule: 'INSTR(str, substr, [start], [occurrence])', trap: '⚠️ Returns 0 if target substring is not found.' },
+            'TRIM': { cat: 'String Trimming Function', def: 'Removes leading, trailing, or both characters from string.', rule: 'TRIM(str) / TRIM(BOTH \'x\' FROM str)', trap: '⚠️ Standard removes leading and trailing spaces.' },
+            'FLOOR': { cat: 'Mathematical Rounding', def: 'Rounds down numeric value to the largest preceding integer.', rule: 'FLOOR(AVG(population))', trap: '⚠️ Always rounds toward negative infinity (FLOOR(-1.2) = -2).' },
+            'CEIL': { cat: 'Mathematical Rounding', def: 'Rounds up numeric value to the smallest succeeding integer.', rule: 'CEIL(val)', trap: '⚠️ Rounds toward positive infinity (CEIL(1.1) = 2).' },
+            'MOD': { cat: 'Mathematical Remainder', def: 'Returns modulus remainder after division of m by n.', rule: 'MOD(m, n) - e.g. MOD(id, 2) = 0', trap: '⚠️ In Oracle, MOD(m, 0) returns m.' },
+            'TO_DATE': { cat: 'Conversion Function', def: 'Converts formatted character string into binary Oracle DATE datatype.', rule: 'TO_DATE(\'2023-01-03\', \'YYYY-MM-DD\')', trap: '⚠️ Format mask must exactly match literal structure, including delimiters.' },
+            'TO_CHAR': { cat: 'Conversion Function', def: 'Formats a date or number into a human-readable formatted character string.', rule: 'TO_CHAR(hiredate, \'DD-MON-YYYY\')', trap: '⚠️ Useful for extracting month names or currency symbols.' }
         };
 
         function initHoverTooltipEngine() {
             const tooltip = document.getElementById('apple-tooltip');
-            const ttSym = document.getElementById('tt-sym');
-            const ttTag = document.getElementById('tt-tag');
             const ttTitle = document.getElementById('tt-title');
-            const ttBody = document.getElementById('tt-body');
-            const ttSql = document.getElementById('tt-sql');
+            const ttCat = document.getElementById('tt-cat');
+            const ttDef = document.getElementById('tt-def');
+            const ttRule = document.getElementById('tt-rule');
+            const ttTrap = document.getElementById('tt-trap');
 
-            function showTooltip(data, e) {
-                ttSym.innerHTML = data.sym;
-                ttTag.innerText = data.tag;
-                ttTitle.innerText = data.title;
-                ttBody.innerText = data.body;
-                ttSql.innerHTML = `SQL: <span class="text-rose-400 font-bold">${data.sql}</span>`;
+            if (!tooltip) return;
 
-                const pad = 15;
-                let x = e.clientX + pad;
-                let y = e.clientY + pad;
+            // 1. Recursive Span Tokenizer for pre code blocks
+            document.querySelectorAll('pre code span').forEach(el => {
+                if (el.classList.contains('sql-comment') || el.classList.contains('sql-string') || el.classList.contains('sql-term')) return;
 
-                if (x + 330 > window.innerWidth) x = e.clientX - 330;
-                if (y + 160 > window.innerHeight) y = e.clientY - 160;
+                const fullText = (el.textContent || '').trim().toUpperCase();
+                if (TOOLTIP_DATA[fullText]) {
+                    el.classList.add('sql-term');
+                    el.setAttribute('data-term', fullText);
+                    return;
+                }
 
-                tooltip.style.left = `${Math.max(10, x)}px`;
-                tooltip.style.top = `${Math.max(10, y)}px`;
-                tooltip.classList.add('show');
-            }
+                const tokens = (el.textContent || '').split(/(\s+|[(),;])/);
+                if (tokens.length > 1) {
+                    let modified = false;
+                    const newHTML = tokens.map(t => {
+                        const clean = t.trim().toUpperCase();
+                        if (clean && TOOLTIP_DATA[clean]) {
+                            modified = true;
+                            return `<span class="sql-term" data-term="${clean}">${t}</span>`;
+                        }
+                        return t;
+                    }).join('');
 
-            function hideTooltip() {
-                tooltip.classList.remove('show');
-            }
-
-            // Bind Relational Algebra hover elements (.ra-op)
-            document.querySelectorAll('.ra-op').forEach(el => {
-                const opKey = el.getAttribute('data-op');
-                if (TOOLTIP_DATA[opKey]) {
-                    el.addEventListener('mouseenter', e => showTooltip(TOOLTIP_DATA[opKey], e));
-                    el.addEventListener('mousemove', e => {
-                        let x = e.clientX + 15;
-                        let y = e.clientY + 15;
-                        if (x + 330 > window.innerWidth) x = e.clientX - 330;
-                        if (y + 160 > window.innerHeight) y = e.clientY - 160;
-                        tooltip.style.left = `${Math.max(10, x)}px`;
-                        tooltip.style.top = `${Math.max(10, y)}px`;
-                    });
-                    el.addEventListener('mouseleave', hideTooltip);
+                    if (modified) {
+                        el.innerHTML = newHTML;
+                    }
                 }
             });
 
-            // Bind SQL Terms (.sql-term)
-            document.querySelectorAll('.sql-term').forEach(el => {
-                const termKey = el.getAttribute('data-term')?.toLowerCase() || el.innerText.trim().toLowerCase();
-                if (TOOLTIP_DATA[termKey]) {
-                    el.addEventListener('mouseenter', e => showTooltip(TOOLTIP_DATA[termKey], e));
-                    el.addEventListener('mousemove', e => {
-                        let x = e.clientX + 15;
-                        let y = e.clientY + 15;
-                        if (x + 330 > window.innerWidth) x = e.clientX - 330;
-                        if (y + 160 > window.innerHeight) y = e.clientY - 160;
-                        tooltip.style.left = `${Math.max(10, x)}px`;
-                        tooltip.style.top = `${Math.max(10, y)}px`;
-                    });
-                    el.addEventListener('mouseleave', hideTooltip);
+            // 2. Bare text nodes scanner inside code blocks
+            document.querySelectorAll('pre code').forEach(codeBlock => {
+                Array.from(codeBlock.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue && node.nodeValue.trim()) {
+                        const tokens = node.nodeValue.split(/(\s+|[(),;])/);
+                        let modified = false;
+                        const frag = document.createDocumentFragment();
+                        tokens.forEach(t => {
+                            const clean = t.trim().toUpperCase();
+                            if (clean && TOOLTIP_DATA[clean]) {
+                                modified = true;
+                                const span = document.createElement('span');
+                                span.className = 'sql-term sql-keyword';
+                                span.setAttribute('data-term', clean);
+                                span.textContent = t;
+                                frag.appendChild(span);
+                            } else {
+                                frag.appendChild(document.createTextNode(t));
+                            }
+                        });
+                        if (modified) {
+                            codeBlock.replaceChild(frag, node);
+                        }
+                    }
+                });
+            });
+
+            function showTooltip(data, titleText, e) {
+                ttTitle.innerText = titleText || data.sym || 'SQL Keyword';
+                ttCat.innerText = data.cat || data.tag || 'Relational Concept';
+                ttDef.innerText = data.def || data.body || '';
+                
+                if (data.rule) {
+                    ttRule.innerText = data.rule;
+                    ttRule.classList.remove('hidden');
+                } else if (data.sql) {
+                    ttRule.innerText = `SQL: ${data.sql}`;
+                    ttRule.classList.remove('hidden');
+                } else {
+                    ttRule.classList.add('hidden');
+                }
+
+                if (data.trap) {
+                    ttTrap.innerText = data.trap;
+                    ttTrap.classList.remove('hidden');
+                } else {
+                    ttTrap.classList.add('hidden');
+                }
+
+                tooltip.classList.add('show');
+                positionTooltip(e, tooltip);
+            }
+
+            function positionTooltip(e, tt) {
+                const pad = 14;
+                let x = e.clientX + pad;
+                let y = e.clientY + pad;
+                const rect = tt.getBoundingClientRect();
+
+                if (x + rect.width > window.innerWidth - 12) {
+                    x = e.clientX - rect.width - pad;
+                }
+                if (y + rect.height > window.innerHeight - 12) {
+                    y = e.clientY - rect.height - pad;
+                }
+                tt.style.left = Math.max(10, x) + 'px';
+                tt.style.top = Math.max(10, y) + 'px';
+            }
+
+            // Global event listeners for hover
+            document.addEventListener('mouseover', (e) => {
+                const raTarget = e.target.closest('.ra-op');
+                if (raTarget) {
+                    const opKey = raTarget.getAttribute('data-op');
+                    if (TOOLTIP_DATA[opKey]) {
+                        showTooltip(TOOLTIP_DATA[opKey], TOOLTIP_DATA[opKey].sym, e);
+                        return;
+                    }
+                }
+
+                const sqlTarget = e.target.closest('.sql-term');
+                if (sqlTarget) {
+                    const termKey = (sqlTarget.getAttribute('data-term') || sqlTarget.textContent || '').trim().toUpperCase();
+                    const data = TOOLTIP_DATA[termKey] || TOOLTIP_DATA[termKey.toLowerCase()];
+                    if (data) {
+                        showTooltip(data, termKey, e);
+                    }
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (tooltip.classList.contains('show')) {
+                    positionTooltip(e, tooltip);
+                }
+            });
+
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest('.sql-term') || e.target.closest('.ra-op')) {
+                    tooltip.classList.remove('show');
                 }
             });
         }
