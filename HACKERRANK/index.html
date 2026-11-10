@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HackerRank SQL Mastery Dashboard | Study Snaps</title>
+    <!-- Console Log Filter: Suppress CDN production development warning -->
+    <script>
+        (function() {
+            const origWarn = console.warn;
+            console.warn = function(...args) {
+                if (typeof args[0] === 'string' && args[0].includes('Tailwind CSS in production')) return;
+                origWarn.apply(console, args);
+            };
+        })();
+    </script>
     <!-- Tailwind CSS 3 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -40,6 +50,16 @@
     <script type="text/javascript" id="MathJax-script" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
+    <!-- Babylon.js (Enterprise 3D WebGL Engine) -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script>
+        // Silence Babylon.js startup info and shader compilation greeting
+        if (typeof BABYLON !== 'undefined' && BABYLON.Logger) {
+            BABYLON.Logger.Log = function() {};
+            BABYLON.Logger.LogLevels = BABYLON.Logger.WarningLogLevel;
+        }
+    </script>
+
     <style>
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -52,22 +72,135 @@
         .sql-string { color: #a3e635; }
         .sql-number { color: #fbbf24; }
         .sql-comment { color: #64748b; font-style: italic; }
+
+        /* Apple Aesthetics: Relational Algebra Hover-Highlighter */
+        .ra-op {
+            display: inline-block;
+            padding: 1px 4px;
+            margin: 0 1px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            font-weight: bold;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .ra-op:hover {
+            background: rgba(56, 189, 248, 0.22);
+            border-color: rgba(56, 189, 248, 0.6);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Contextual Hover Term */
+        .sql-term {
+            border-bottom: 1px dotted rgba(56, 189, 248, 0.5);
+            cursor: help;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .sql-term:hover {
+            color: #38bdf8;
+            border-bottom-color: #38bdf8;
+        }
+
+        /* Apple Glass Floating Tooltip Capsule */
+        #apple-tooltip {
+            position: fixed;
+            z-index: 99999;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(6px) scale(0.98);
+            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 320px;
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #f1f5f9;
+            font-size: 11.5px;
+            line-height: 1.5;
+        }
+        #apple-tooltip.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        #apple-tooltip .tt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #apple-tooltip .tt-sym {
+            font-size: 14px;
+            font-weight: bold;
+            color: #38bdf8;
+            font-family: serif;
+        }
+        #apple-tooltip .tt-tag {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        /* Babylon Canvas Container */
+        #babylon-canvas {
+            width: 100%;
+            height: 420px;
+            border-radius: 12px;
+            background: #070b14;
+            outline: none;
+            touch-action: none;
+            cursor: grab;
+        }
+        #babylon-canvas:active {
+            cursor: grabbing;
+        }
     </style>
 </head>
 <body class="bg-[#0a0f1d] text-slate-200 min-h-screen font-sans flex flex-col antialiased">
 
+    <!-- Apple-Style Contextual Tooltip Capsule -->
+    <div id="apple-tooltip">
+        <div class="tt-header">
+            <span class="tt-sym" id="tt-sym">σ</span>
+            <span class="tt-tag" id="tt-tag">Relational Operator</span>
+        </div>
+        <div id="tt-title" class="font-bold text-white text-xs mb-1">Selection Operator</div>
+        <div id="tt-body" class="text-slate-300">Filters rows based on a Boolean condition predicate.</div>
+        <div id="tt-sql" class="mt-2 text-[10px] text-cyan-300 font-mono bg-slate-900/60 p-1.5 rounded border border-white/5">
+            SQL: <span class="font-bold text-rose-400">WHERE</span> condition
+        </div>
+    </div>
+
     <!-- Top Sticky Header -->
     <header class="sticky top-0 z-40 bg-[#0a0f1d]/90 backdrop-blur-md border-b border-[#1e293b] px-6 py-3.5 flex items-center justify-between">
         <div class="flex items-center space-x-4">
+            <a href="../notes.html" class="text-xs font-semibold px-2.5 py-1 rounded bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> Jarvis Notes Hub
+            </a>
             <a href="../index.html" class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-arrow-left"></i> Hub
+                Hub Root
             </a>
             <div class="h-4 w-px bg-slate-700"></div>
             <div>
                 <h1 class="text-lg font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
                     <i class="fa-solid fa-database text-cyan-400 text-base"></i> SQL Problem-Solving Mastery
                 </h1>
-                <p class="text-xs text-slate-400">10 HackerRank Core Drills • Schema Models • Live In-Memory VM • Relational Algebra • Exam Traps</p>
+                <p class="text-xs text-slate-400">16 HackerRank Core Drills • 3D Babylon.js Slicer • Relational Algebra Hover Engine • 12-Question Cert Quiz</p>
             </div>
         </div>
         <div class="flex items-center space-x-3">
@@ -91,12 +224,15 @@
             <div class="sticky top-20 bg-[#151e2e] border border-[#1e293b] rounded-xl p-4 max-h-[calc(100vh-6rem)] overflow-y-auto space-y-4">
                 <div class="text-xs font-bold uppercase tracking-wider text-slate-400 px-2 flex justify-between items-center">
                     <span>Curriculum Index</span>
-                    <span class="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-800 px-1.5 py-0.5 rounded font-mono">10 Modules</span>
+                    <span class="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-800 px-1.5 py-0.5 rounded font-mono">16 Problems</span>
                 </div>
 
                 <div class="space-y-1" id="sidebar-nav-links">
                     <a href="#schemas" class="nav-item block text-xs font-medium px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 transition flex items-center gap-2">
                         <i class="fa-solid fa-table-cells text-cyan-400 w-4"></i> Relational Schemas &amp; ER
+                    </a>
+                    <a href="#relational-3d-stage" class="nav-item block text-xs font-medium px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 transition flex items-center gap-2 bg-cyan-950/30 border border-cyan-800/40 text-cyan-300">
+                        <i class="fa-solid fa-cube text-cyan-400 w-4"></i> 3D Relational Slicer (Babylon)
                     </a>
                     <a href="#playground" class="nav-item block text-xs font-medium px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 transition flex items-center gap-2">
                         <i class="fa-solid fa-terminal text-emerald-400 w-4"></i> Live In-Memory SQL VM
@@ -112,13 +248,19 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 2. Japanese Cities' Names
                     </a>
                     <a href="#prob-revising-select" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 3. Revising the Select Query I
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 3. Revising Select Query I
                     </a>
                     <a href="#prob-select-all" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 4. Select All
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 4. Select All (CITY)
                     </a>
                     <a href="#prob-select-by-id" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 5. Select By ID
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 5. Select By ID (1661)
+                    </a>
+                    <a href="#prob-revising-select-2" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 11. Revising Select Query II
+                    </a>
+                    <a href="#prob-japanese-cities-attr" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 12. Japanese Cities' Attributes
                     </a>
 
                     <div class="pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2">Module 3: Deduplication &amp; Math</div>
@@ -129,9 +271,15 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 7. Weather Observation 3
                     </a>
 
-                    <div class="pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2">Module 4: Aggregations</div>
+                    <div class="pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2">Module 4: Aggregations &amp; Grouping</div>
                     <a href="#prob-count-func" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> 8. Count Function Drill
+                    </a>
+                    <a href="#prob-population-census" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> 13. Population Census (SUM)
+                    </a>
+                    <a href="#prob-avg-population-continent" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> 14. Average Population (FLOOR)
                     </a>
 
                     <div class="pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2">Module 5: String &amp; Sorting</div>
@@ -142,6 +290,14 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> 10. Employee Names
                     </a>
 
+                    <div class="pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2">Module 6: Non-Equi Joins &amp; Self-Links</div>
+                    <a href="#prob-the-report" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> 15. The Report (BETWEEN Join)
+                    </a>
+                    <a href="#prob-placements" class="nav-item block text-xs px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition pl-6 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> 16. Placements (Self-Join)
+                    </a>
+
                     <div class="pt-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2">Knowledge Vault</div>
                     <a href="#dialects" class="nav-item block text-xs px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 transition flex items-center gap-2">
                         <i class="fa-solid fa-code-compare text-indigo-400 w-4"></i> Dialects Matrix
@@ -150,7 +306,7 @@
                         <i class="fa-solid fa-triangle-exclamation text-rose-400 w-4"></i> Critical Exam Traps
                     </a>
                     <a href="#quiz" class="nav-item block text-xs px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 transition flex items-center gap-2">
-                        <i class="fa-solid fa-circle-question text-amber-400 w-4"></i> Knowledge Assessment
+                        <i class="fa-solid fa-circle-question text-amber-400 w-4"></i> Certification Assessment (12 Qs)
                     </a>
                 </div>
             </div>
@@ -166,32 +322,32 @@
                         <span>Curriculum Tables</span>
                         <i class="fa-solid fa-diagram-project text-cyan-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-white mt-1">5 Tables</div>
-                    <div class="text-[11px] text-cyan-400 mt-1 font-mono">CITY, COUNTRY, STATION, STUDENTS, Employee</div>
+                    <div class="text-2xl font-bold text-white mt-1">8 Tables</div>
+                    <div class="text-[11px] text-cyan-400 mt-1 font-mono">CITY, COUNTRY, STATION, STUDENTS, Employee, Grades, Friends, Packages</div>
                 </div>
                 <div class="bg-[#151e2e] border border-[#1e293b] rounded-xl p-4">
                     <div class="text-xs text-slate-400 flex items-center justify-between">
                         <span>Target Drills</span>
                         <i class="fa-solid fa-code text-blue-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-white mt-1">10 Solved</div>
+                    <div class="text-2xl font-bold text-white mt-1">16 Solved</div>
                     <div class="text-[11px] text-blue-400 mt-1">100% Exact PDF Specification Match</div>
                 </div>
                 <div class="bg-[#151e2e] border border-[#1e293b] rounded-xl p-4">
                     <div class="text-xs text-slate-400 flex items-center justify-between">
-                        <span>Supported Dialects</span>
+                        <span>3D WebGL Engine</span>
                         <i class="fa-solid fa-cubes text-emerald-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-white mt-1">4 Engines</div>
-                    <div class="text-[11px] text-emerald-400 mt-1">MySQL, Oracle 19c, Postgres, MS SQL</div>
+                    <div class="text-2xl font-bold text-white mt-1">Babylon.js</div>
+                    <div class="text-[11px] text-emerald-400 mt-1">Frosted Glass PBR Relational Slicer</div>
                 </div>
                 <div class="bg-[#151e2e] border border-[#1e293b] rounded-xl p-4">
                     <div class="text-xs text-slate-400 flex items-center justify-between">
-                        <span>Relational Sandbox</span>
-                        <i class="fa-solid fa-bolt text-amber-400"></i>
+                        <span>Certification Quiz</span>
+                        <i class="fa-solid fa-award text-amber-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-white mt-1">Live Engine</div>
-                    <div class="text-[11px] text-amber-400 mt-1">Interactive VM with Cost Trees</div>
+                    <div class="text-2xl font-bold text-white mt-1">12 Questions</div>
+                    <div class="text-[11px] text-amber-400 mt-1">Interactive Verification with Hints</div>
                 </div>
             </div>
 
@@ -304,71 +460,149 @@
                         </table>
                     </div>
 
-                    <!-- Table 4: STUDENTS -->
+                    <!-- Table 4: STUDENTS & Grades (Report Model) -->
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-2">
                         <div class="flex items-center justify-between border-b border-[#1e293b] pb-2">
-                            <span class="font-mono font-bold text-purple-400 text-sm">STUDENTS</span>
-                            <span class="text-[10px] bg-purple-950 text-purple-400 px-1.5 py-0.5 rounded font-mono">3 Columns</span>
+                            <span class="font-mono font-bold text-purple-400 text-sm">STUDENTS &amp; Grades</span>
+                            <span class="text-[10px] bg-purple-950 text-purple-400 px-1.5 py-0.5 rounded font-mono">Non-Equi Pair</span>
                         </div>
                         <table class="w-full text-xs font-mono">
                             <thead class="text-slate-500 border-b border-slate-800 text-left">
                                 <tr><th class="pb-1">Field</th><th class="pb-1">Type</th><th class="pb-1">Role</th></tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800/60 text-slate-300">
-                                <tr><td class="py-1 text-amber-400">ID</td><td>Integer</td><td class="text-amber-400">PK (Tie-break)</td></tr>
-                                <tr><td class="py-1 text-purple-400">Name</td><td>String</td><td>RIGHT(Name,3)</td></tr>
-                                <tr><td class="py-1">Marks</td><td>Integer</td><td>Filter (&gt; 75)</td></tr>
+                                <tr><td class="py-1 text-amber-400">STUDENTS.ID</td><td>Integer</td><td class="text-amber-400">PK</td></tr>
+                                <tr><td class="py-1">STUDENTS.Name</td><td>String</td><td>Conditional NULL</td></tr>
+                                <tr><td class="py-1 text-cyan-400">STUDENTS.Marks</td><td>Integer</td><td class="text-cyan-400">Between Join</td></tr>
+                                <tr><td class="py-1 text-rose-400">Grades.Grade</td><td>Integer</td><td>1–10 Range</td></tr>
+                                <tr><td class="py-1">Grades.Min_Mark / Max</td><td>Integer</td><td>Interval Bounds</td></tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Table 5: Employee -->
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-2 md:col-span-2">
+                    <!-- Table 5: Friends & Packages (Placements Model) -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-2">
+                        <div class="flex items-center justify-between border-b border-[#1e293b] pb-2">
+                            <span class="font-mono font-bold text-rose-400 text-sm">Friends &amp; Packages</span>
+                            <span class="text-[10px] bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded font-mono">Placements</span>
+                        </div>
+                        <table class="w-full text-xs font-mono">
+                            <thead class="text-slate-500 border-b border-slate-800 text-left">
+                                <tr><th class="pb-1">Field</th><th class="pb-1">Type</th><th class="pb-1">Role</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                                <tr><td class="py-1 text-amber-400">Friends.ID</td><td>Integer</td><td class="text-amber-400">Student FK</td></tr>
+                                <tr><td class="py-1 text-cyan-400">Friends.Friend_ID</td><td>Integer</td><td class="text-cyan-400">Best Friend FK</td></tr>
+                                <tr><td class="py-1 text-emerald-400">Packages.Salary</td><td>Float</td><td>$k/Month Comp</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table 6: Employee -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-2">
                         <div class="flex items-center justify-between border-b border-[#1e293b] pb-2">
                             <span class="font-mono font-bold text-rose-400 text-sm">Employee</span>
                             <span class="text-[10px] bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded font-mono">4 Columns</span>
                         </div>
                         <table class="w-full text-xs font-mono">
                             <thead class="text-slate-500 border-b border-slate-800 text-left">
-                                <tr><th class="pb-1">Field</th><th class="pb-1">Type</th><th class="pb-1">Description &amp; Constraints</th></tr>
+                                <tr><th class="pb-1">Field</th><th class="pb-1">Type</th><th class="pb-1">Role</th></tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800/60 text-slate-300">
-                                <tr><td class="py-1 text-amber-400">employee_id</td><td>Integer</td><td>Unique identifier for employee [PK]</td></tr>
-                                <tr><td class="py-1 text-rose-400">name</td><td>String</td><td>Employee full name (Alphabetical sort target)</td></tr>
-                                <tr><td class="py-1">months</td><td>Integer</td><td>Total tenure in months with the organization</td></tr>
-                                <tr><td class="py-1">salary</td><td>Integer</td><td>Monthly compensation in standard currency</td></tr>
+                                <tr><td class="py-1 text-amber-400">employee_id</td><td>Integer</td><td class="text-amber-400">PK</td></tr>
+                                <tr><td class="py-1">name</td><td>String</td><td>Alphabetical Sort</td></tr>
+                                <tr><td class="py-1">months / salary</td><td>Integer</td><td>Tenure / Comp</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+            </section>
 
-                <!-- Verified Schema Artifact Lightbox Trigger -->
-                <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div class="flex items-center gap-2 text-slate-400">
-                        <i class="fa-solid fa-camera text-cyan-400"></i>
-                        <span>Curriculum Master Diagrams: Inspect verified image captures from original source PDFs</span>
+            <!-- SECTION: 3D Babylon.js Relational Slicer & Operator Stage -->
+            <section id="relational-3d-stage" class="bg-[#151e2e] border border-[#1e293b] rounded-xl p-6 space-y-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1e293b] pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">BABYLON.JS PBR ENGINE</span>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-cube text-cyan-400"></i> 3D Relational Slicer &amp; Operator Rosetta Stone
+                            </h2>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Apple-aesthetic frosted glass tuple matrix. Select an algebraic operator to visually slice, project, join, or aggregate relational block structures in real time.</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="openLightbox('extracted_images/african-cities_p1_img1.jpeg', 'CITY Table Schema (HackerRank Master)')" 
-                            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono">
-                            CITY Schema
+                    <!-- 3D Controls -->
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button onclick="set3DMode('select')" class="b3d-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 transition flex items-center gap-1.5 active" id="btn-3d-select">
+                            <span>$\sigma$</span> Selection (Rows)
                         </button>
-                        <button onclick="openLightbox('extracted_images/african-cities_p1_img2.jpeg', 'COUNTRY Table Schema (HackerRank Master)')" 
-                            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono">
-                            COUNTRY Schema
+                        <button onclick="set3DMode('project')" class="b3d-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 transition flex items-center gap-1.5" id="btn-3d-project">
+                            <span>$\pi$</span> Projection (Cols)
                         </button>
-                        <button onclick="openLightbox('extracted_images/weather-observation-station-1_p1_img1.jpeg', 'STATION Table Schema')" 
-                            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono">
-                            STATION Schema
+                        <button onclick="set3DMode('join')" class="b3d-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 transition flex items-center gap-1.5" id="btn-3d-join">
+                            <span>$\bowtie$</span> Natural Join (Fuse)
                         </button>
-                        <button onclick="openLightbox('extracted_images/more-than-75-marks_p1_img1.png', 'STUDENTS Table Schema')" 
-                            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono">
-                            STUDENTS Schema
+                        <button onclick="set3DMode('aggregate')" class="b3d-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition flex items-center gap-1.5" id="btn-3d-aggregate">
+                            <span>$\gamma$</span> Group By (Collapse)
                         </button>
-                        <button onclick="openLightbox('extracted_images/name-of-employees_p1_img1.png', 'Employee Table Schema')" 
-                            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono">
-                            Employee Schema
+                        <button onclick="reset3DScene()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/60 hover:bg-slate-700 text-slate-400 border border-slate-700 transition">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
                         </button>
+                    </div>
+                </div>
+
+                <!-- 3D Canvas Viewport with Apple Glass HUD Overlay -->
+                <div class="relative overflow-hidden rounded-xl border border-[#1e293b]">
+                    <canvas id="babylon-canvas"></canvas>
+                    
+                    <!-- HUD Status Card Overlay -->
+                    <div class="absolute bottom-4 left-4 max-w-sm p-3.5 rounded-xl bg-slate-900/80 backdrop-blur-md border border-white/10 text-xs shadow-2xl pointer-events-none">
+                        <div class="flex items-center justify-between gap-3 text-[10px] font-mono text-cyan-400 uppercase tracking-wider mb-1">
+                            <span id="hud-op-name">$\sigma$ Selection Operator</span>
+                            <span id="hud-status" class="text-emerald-400">Active State</span>
+                        </div>
+                        <div id="hud-desc" class="text-slate-200 text-xs font-medium leading-relaxed">
+                            Horizontal plane slice: Filters individual tuples across all attributes where predicate evaluates to TRUE.
+                        </div>
+                        <div id="hud-sql" class="mt-2 text-[11px] font-mono text-slate-400">
+                            SQL Equivalent: <span class="text-rose-400 font-bold">WHERE</span> condition
+                        </div>
+                    </div>
+
+                    <!-- Orbit Hint -->
+                    <div class="absolute top-4 right-4 text-[10px] font-mono text-slate-400 px-2 py-1 rounded-md bg-slate-900/60 backdrop-blur border border-white/5 pointer-events-none">
+                        <i class="fa-solid fa-arrows-up-down-left-right text-cyan-400 mr-1"></i> Drag to Orbit • Scroll to Zoom
+                    </div>
+                </div>
+
+                <!-- Rosetta Stone Quick Symbols Strip -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-xs">
+                    <div class="p-2.5 rounded-lg bg-[#0a0f1d] border border-[#1e293b] flex items-center gap-2">
+                        <span class="text-base font-bold text-cyan-400 font-serif">$\sigma$</span>
+                        <div><div class="font-bold text-white text-[11px]">Selection</div><div class="text-[10px] text-slate-400">WHERE row filter</div></div>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-[#0a0f1d] border border-[#1e293b] flex items-center gap-2">
+                        <span class="text-base font-bold text-blue-400 font-serif">$\pi$</span>
+                        <div><div class="font-bold text-white text-[11px]">Projection</div><div class="text-[10px] text-slate-400">SELECT cols</div></div>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-[#0a0f1d] border border-[#1e293b] flex items-center gap-2">
+                        <span class="text-base font-bold text-emerald-400 font-serif">$\bowtie$</span>
+                        <div><div class="font-bold text-white text-[11px]">Natural Join</div><div class="text-[10px] text-slate-400">JOIN ON key</div></div>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-[#0a0f1d] border border-[#1e293b] flex items-center gap-2">
+                        <span class="text-base font-bold text-amber-400 font-serif">$\gamma$</span>
+                        <div><div class="font-bold text-white text-[11px]">Aggregate</div><div class="text-[10px] text-slate-400">GROUP BY</div></div>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-[#0a0f1d] border border-[#1e293b] flex items-center gap-2">
+                        <span class="text-base font-bold text-purple-400 font-serif">$\tau$</span>
+                        <div><div class="font-bold text-white text-[11px]">Sorting</div><div class="text-[10px] text-slate-400">ORDER BY</div></div>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-[#0a0f1d] border border-[#1e293b] flex items-center gap-2">
+                        <span class="text-base font-bold text-rose-400 font-serif">$\delta$</span>
+                        <div><div class="font-bold text-white text-[11px]">Deduplication</div><div class="text-[10px] text-slate-400">DISTINCT</div></div>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-[#0a0f1d] border border-[#1e293b] flex items-center gap-2">
+                        <span class="text-base font-bold text-indigo-400 font-serif">$\rho$</span>
+                        <div><div class="font-bold text-white text-[11px]">Rename</div><div class="text-[10px] text-slate-400">AS alias</div></div>
                     </div>
                 </div>
             </section>
@@ -396,6 +630,12 @@
                             <option value="count_func">8. Count Function (Population &gt; 100k)</option>
                             <option value="marks_75">9. Higher Than 75 Marks (RIGHT 3, ID)</option>
                             <option value="emp_names">10. Employee Names (Alphabetical)</option>
+                            <option value="revising_select_2">11. Revising Select Query II (USA &gt; 120k)</option>
+                            <option value="japanese_attr">12. Japanese Cities' Attributes (*)</option>
+                            <option value="asian_pop">13. Population Census (SUM in Asia)</option>
+                            <option value="avg_pop_continent">14. Average Population (FLOOR AVG)</option>
+                            <option value="the_report">15. The Report (Grade &gt;= 8, Marks ASC)</option>
+                            <option value="placements">16. Placements (Friend Salary &gt; Student)</option>
                         </select>
                         <button onclick="runQuery()" 
                             class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-600/30">
@@ -489,71 +729,39 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         </button>
                     </div>
 
-                    <!-- Problem Statement -->
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-2 text-xs">
                         <div class="font-bold text-slate-300">Curriculum Problem Statement:</div>
                         <p class="text-slate-300 leading-relaxed">
-                            Given the <code class="text-blue-400 font-bold">CITY</code> and <code class="text-emerald-400 font-bold">COUNTRY</code> tables, query the names of all cities where the <code class="text-purple-400 font-bold">CONTINENT</code> is <code class="text-amber-400 font-bold">'Africa'</code>.
+                            Given the <code class="text-blue-400 font-bold sql-term" data-term="relation">CITY</code> and <code class="text-emerald-400 font-bold sql-term" data-term="relation">COUNTRY</code> tables, query the names of all cities where the <code class="text-purple-400 font-bold">CONTINENT</code> is <code class="text-amber-400 font-bold">'Africa'</code>.
                         </p>
-                        <div class="p-2 bg-slate-900/70 border-l-2 border-cyan-400 text-slate-400 font-mono text-[11px]">
-                            Note: <span class="text-cyan-300">CITY.CountryCode</span> and <span class="text-cyan-300">COUNTRY.Code</span> are matching key columns.
-                        </div>
                     </div>
 
-                    <!-- Canonical SQL Solutions -->
                     <div class="space-y-2">
                         <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
-                            <span>Canonical SQL Queries:</span>
-                            <span class="text-[11px] font-mono text-slate-500">Relational Algebra: $\pi_{\text{CITY.NAME}}(\sigma_{\text{CONTINENT}='Africa'}(\text{CITY} \bowtie_{\text{CountryCode}=\text{Code}} \text{COUNTRY}))$</span>
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="project">$\pi_{\text{c.NAME}}$</span>(<span class="ra-op" data-op="select">$\sigma_{\text{co.CONTINENT}='Africa'}$</span>(CITY <span class="ra-op" data-op="join">$\bowtie_{\text{Key}}$</span> COUNTRY))
+                            </span>
                         </div>
                         <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-<pre><code><span class="sql-comment">-- ANSI SQL:1992 Standard INNER JOIN (Recommended Industry Standard)</span>
-<span class="sql-keyword">SELECT</span> <span class="text-blue-400">c.NAME</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">CITY</span> c
-<span class="sql-keyword">INNER JOIN</span> <span class="text-emerald-400">COUNTRY</span> co 
-    <span class="sql-keyword">ON</span> c.CountryCode = co.Code
-<span class="sql-keyword">WHERE</span> co.CONTINENT = <span class="sql-string">'Africa'</span>;
-
-<span class="sql-comment">-- Alternative: Implicit Comma Join (Valid logically, but prone to cartesian product errors)</span>
-<span class="sql-keyword">SELECT</span> <span class="text-blue-400">CITY.NAME</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">CITY</span>, <span class="text-emerald-400">COUNTRY</span>
-<span class="sql-keyword">WHERE</span> CITY.CountryCode = COUNTRY.Code 
-  <span class="sql-keyword">AND</span> COUNTRY.CONTINENT = <span class="sql-string">'Africa'</span>;</code></pre>
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="text-blue-400">c.NAME</span>
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span> c
+<span class="sql-keyword sql-term" data-term="join">JOIN</span> <span class="text-emerald-400">COUNTRY</span> co <span class="sql-keyword">ON</span> c.CountryCode = co.Code
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> co.CONTINENT = <span class="sql-string">'Africa'</span>;</code></pre>
                         </div>
                     </div>
 
-                    <!-- Lucid Understanding Drawer -->
                     <details class="bg-[#0a0f1d]/70 border border-[#1e293b] rounded-lg p-3 text-xs group">
                         <summary class="cursor-pointer font-bold text-cyan-400 flex items-center justify-between">
                             <span class="flex items-center gap-2">
-                                <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 Lucid Understanding: Physical Join Mechanics &amp; Cost Analysis
+                                <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 Lucid Understanding: Explicit vs. Implicit Joins
                             </span>
                             <i class="fa-solid fa-chevron-down text-slate-500 group-open:rotate-180 transition-transform"></i>
                         </summary>
                         <div class="mt-3 pt-3 border-t border-[#1e293b] space-y-2 text-slate-300 leading-relaxed">
-                            <p>
-                                <strong>1. Why Explicit <code>INNER JOIN</code> Beats Implicit Comma Join:</strong>
-                                While both produce identical result sets logically, an explicit <code>INNER JOIN ... ON ...</code> syntactically separates the <em>relational integrity linking condition</em> from the <em>tuple filtering predicate</em> (<code>WHERE</code>). Omitting the join predicate in comma notation creates an unintentional Cartesian Product ($|R| \times |S|$ rows) that exhausts buffer pools on large tables.
-                            </p>
-                            <p>
-                                <strong>2. Optimizer Join Algorithms:</strong>
-                                Depending on table statistics and indexes:
-                                <ul class="list-disc list-inside pl-2 space-y-1 mt-1 text-slate-400">
-                                    <li><strong class="text-slate-300">Nested Loop Join:</strong> Optimal when <code>COUNTRY.Code</code> has a unique B-Tree index and the filtered outer table has few rows. Cost: $\mathcal{O}(M \cdot \log N)$.</li>
-                                    <li><strong class="text-slate-300">Hash Join:</strong> Optimal for large unindexed joins. Builds an in-memory hash table on <code>COUNTRY (CONTINENT='Africa')</code>, then probes with <code>CITY</code>. Cost: $\mathcal{O}(M + N)$.</li>
-                                    <li><strong class="text-slate-300">Sort-Merge Join:</strong> Optimal when both relations are pre-sorted on the join key. Cost: $\mathcal{O}(M \log M + N \log N)$.</li>
-                                </ul>
-                            </p>
+                            <p>An explicit <code>JOIN ... ON</code> cleanly separates the table linking integrity predicate from the business filter <code>WHERE co.CONTINENT = 'Africa'</code>. Implicit comma joins (<code>FROM CITY, COUNTRY</code>) are hazardous on large datasets because accidentally omitting a where-condition causes an uncontrolled Cartesian explosion ($|R| \times |S|$ rows).</p>
                         </div>
                     </details>
-
-                    <!-- Exam Trap Callout -->
-                    <div class="p-3 rounded-lg bg-rose-950/20 border border-rose-900/50 text-xs text-rose-300 flex items-start gap-2.5">
-                        <i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5"></i>
-                        <div>
-                            <span class="font-bold">Exam Trap (Ambiguous Column Reference):</span> If you write <code>SELECT NAME</code> without specifying <code>CITY.NAME</code> or an alias <code>c.NAME</code>, the query will crash with an <code class="text-rose-200 font-mono">ORA-00918: column ambiguously defined</code> error because <strong>both</strong> <code>CITY</code> and <code>COUNTRY</code> contain a column named <code>NAME</code>!
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -561,7 +769,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
             <div class="module-group space-y-6">
                 <div class="flex items-center gap-3 border-l-4 border-blue-400 pl-3">
                     <h3 class="text-lg font-bold text-white">Module 2: Selection &amp; Relational Projections</h3>
-                    <span class="text-xs text-slate-400">4 Problems • B-Tree Index Scans • Point vs Range Filters • SARGability</span>
+                    <span class="text-xs text-slate-400">6 Problems • B-Tree Index Scans • Point vs Range Filters • SARGability</span>
                 </div>
 
                 <!-- Problem 2: Japanese Cities' Names -->
@@ -584,31 +792,22 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         Query the names of all the Japanese cities in the <code class="text-blue-400 font-bold">CITY</code> table. The <code class="text-amber-400 font-bold">COUNTRYCODE</code> for Japan is <code class="text-emerald-400 font-bold">'JPN'</code>.
                     </div>
 
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-<pre><code><span class="sql-keyword">SELECT</span> <span class="text-blue-400">NAME</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">CITY</span>
-<span class="sql-keyword">WHERE</span> COUNTRYCODE = <span class="sql-string">'JPN'</span>;</code></pre>
-                    </div>
-
-                    <details class="bg-[#0a0f1d]/70 border border-[#1e293b] rounded-lg p-3 text-xs group">
-                        <summary class="cursor-pointer font-bold text-blue-400 flex items-center justify-between">
-                            <span class="flex items-center gap-2">
-                                <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 Lucid Understanding: Projection Pruning &amp; String SARGability
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="project">$\pi_{\text{NAME}}$</span>(<span class="ra-op" data-op="select">$\sigma_{\text{COUNTRYCODE}='JPN'}$</span>(CITY))
                             </span>
-                            <i class="fa-solid fa-chevron-down text-slate-500 group-open:rotate-180 transition-transform"></i>
-                        </summary>
-                        <div class="mt-3 pt-3 border-t border-[#1e293b] space-y-2 text-slate-300 leading-relaxed">
-                            <p>
-                                <strong>1. Selective Projection Pruning:</strong> By selecting <code>NAME</code> instead of <code>*</code>, the database engine avoids reading unneeded columns from the storage blocks. If a composite index on <code>(COUNTRYCODE, NAME)</code> exists, the engine performs an <em>Index-Only Scan (Covering Index)</em> with 0 table heap lookups.
-                            </p>
-                            <p>
-                                <strong>2. SARGable Predicates:</strong> <code>WHERE COUNTRYCODE = 'JPN'</code> is Search Argument Able (SARGable). Wrapping the column in functions (e.g. <code>WHERE UPPER(COUNTRYCODE) = 'JPN'</code>) invalidates standard B-Tree indexing, forcing a full table scan $\mathcal{O}(N)$.
-                            </p>
                         </div>
-                    </details>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="text-blue-400">NAME</span>
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span>
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> COUNTRYCODE = <span class="sql-string">'JPN'</span>;</code></pre>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Problem 3: Revising the Select Query I -->
+                <!-- Problem 3: Revising Select Query I -->
                 <div id="prob-revising-select" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
                         <div>
@@ -616,7 +815,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                                 <span class="text-xs font-mono font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">PROBLEM 03</span>
                                 <h4 class="text-base font-bold text-white">Revising the Select Query I</h4>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-blue-300">revising-the-select-query-English.pdf</span> • Predicate: <span class="font-mono text-slate-300">COUNTRYCODE = 'USA' AND POPULATION &gt; 100000</span></p>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-blue-300">revising-the-select-query-English.pdf</span> • Filter: <span class="font-mono text-slate-300">USA &amp; Pop &gt; 100k</span></p>
                         </div>
                         <button onclick="loadAndRun('revising_select')" 
                             class="text-xs px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 border border-blue-600/50 hover:bg-blue-600/30 transition flex items-center gap-1">
@@ -625,77 +824,154 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                     </div>
 
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300">
-                        Query all columns for all American cities in the <code class="text-blue-400 font-bold">CITY</code> table with populations larger than <code class="text-amber-400 font-bold">100,000</code>. The <code class="text-emerald-400 font-bold">CountryCode</code> for America is <code class="text-emerald-400 font-bold">'USA'</code>.
+                        Query all columns for all American cities in the <code class="text-blue-400 font-bold">CITY</code> table with populations larger than <code class="text-amber-400 font-bold">100000</code>. CountryCode is <code class="text-emerald-400 font-bold">'USA'</code>.
                     </div>
 
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-<pre><code><span class="sql-keyword">SELECT</span> *
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">CITY</span>
-<span class="sql-keyword">WHERE</span> COUNTRYCODE = <span class="sql-string">'USA'</span> 
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="select">$\sigma_{\text{COUNTRYCODE}='USA' \land \text{POP} > 100k}$</span>(CITY)
+                            </span>
+                        </div>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> *
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span>
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> COUNTRYCODE = <span class="sql-string">'USA'</span>
   <span class="sql-keyword">AND</span> POPULATION > <span class="sql-number">100000</span>;</code></pre>
-                    </div>
-
-                    <!-- Exam Trap Callout -->
-                    <div class="p-3 rounded-lg bg-rose-950/20 border border-rose-900/50 text-xs text-rose-300 flex items-start gap-2.5">
-                        <i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5"></i>
-                        <div>
-                            <span class="font-bold">Exam Trap (Strict Inequality &amp; Numeric Commas):</span>
-                            Never write <code>POPULATION > 100,000</code>. In SQL, commas in numeric literals cause a syntax error (interpreted as an illegal expression separator). Always write pure digits: <code>100000</code>. Furthermore, the problem states <em>larger than</em>, which requires strict inequality <code>&gt;</code>, not <code>&gt;=</code>.
                         </div>
                     </div>
                 </div>
 
-                <!-- Problem 4 & 5 Grid: Select All & Select By ID -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Problem 4: Select All -->
-                    <div id="prob-select-all" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-4 space-y-3">
-                        <div class="flex items-center justify-between border-b border-[#1e293b] pb-2">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs font-mono font-bold bg-blue-950 text-blue-400 border border-blue-800 px-1.5 py-0.5 rounded">04</span>
-                                <h4 class="text-sm font-bold text-white">Select All</h4>
+                <!-- Problem 4: Select All -->
+                <div id="prob-select-all" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">PROBLEM 04</span>
+                                <h4 class="text-base font-bold text-white">Select All</h4>
                             </div>
-                            <button onclick="loadAndRun('select_all')" class="text-[11px] text-cyan-400 hover:underline">Run &rarr;</button>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-blue-300">select-all-sql.pdf</span> • Operation: <span class="font-mono text-slate-300">Full Table Scan</span></p>
                         </div>
-                        <p class="text-xs text-slate-400">Query all columns (attributes) for every row in the <code class="text-blue-400">CITY</code> table.</p>
-                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded p-2.5 font-mono text-xs text-slate-200">
-<pre><code><span class="sql-keyword">SELECT</span> * 
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">CITY</span>;</code></pre>
+                        <button onclick="loadAndRun('select_all')" 
+                            class="text-xs px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 border border-blue-600/50 hover:bg-blue-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> * <span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span>;</code></pre>
+                    </div>
+                </div>
+
+                <!-- Problem 5: Select By ID -->
+                <div id="prob-select-by-id" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">PROBLEM 05</span>
+                                <h4 class="text-base font-bold text-white">Select By ID</h4>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-blue-300">select-by-id.pdf</span> • Filter: <span class="font-mono text-slate-300">ID = 1661</span></p>
                         </div>
-                        <div class="text-[11px] text-slate-500 font-mono">
-                            Relational Algebra: $\text{CITY}$ (Complete relation instance)
+                        <button onclick="loadAndRun('select_id')" 
+                            class="text-xs px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 border border-blue-600/50 hover:bg-blue-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> * <span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span> <span class="sql-keyword sql-term" data-term="where">WHERE</span> ID = <span class="sql-number">1661</span>;</code></pre>
+                    </div>
+                </div>
+
+                <!-- Problem 11: Revising the Select Query II -->
+                <div id="prob-revising-select-2" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">PROBLEM 11</span>
+                                <h4 class="text-base font-bold text-white">Revising the Select Query II</h4>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-blue-300">revising-the-select-query-2-English.pdf</span> • Filter: <span class="font-mono text-slate-300">USA &amp; Pop &gt; 120,000</span></p>
+                        </div>
+                        <button onclick="loadAndRun('revising_select_2')" 
+                            class="text-xs px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 border border-blue-600/50 hover:bg-blue-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300">
+                        Query the <code class="text-blue-400 font-bold">NAME</code> field for all American cities in the <code class="text-blue-400 font-bold">CITY</code> table with populations larger than <code class="text-amber-400 font-bold">120000</code>. The CountryCode for America is <code class="text-emerald-400 font-bold">'USA'</code>.
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="project">$\pi_{\text{NAME}}$</span>(<span class="ra-op" data-op="select">$\sigma_{\text{COUNTRYCODE}='USA' \land \text{POP} > 120k}$</span>(CITY))
+                            </span>
+                        </div>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="text-blue-400">NAME</span>
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span>
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> COUNTRYCODE = <span class="sql-string">'USA'</span>
+  <span class="sql-keyword">AND</span> POPULATION > <span class="sql-number">120000</span>;</code></pre>
                         </div>
                     </div>
 
-                    <!-- Problem 5: Select By ID -->
-                    <div id="prob-select-by-id" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-4 space-y-3">
-                        <div class="flex items-center justify-between border-b border-[#1e293b] pb-2">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs font-mono font-bold bg-blue-950 text-blue-400 border border-blue-800 px-1.5 py-0.5 rounded">05</span>
-                                <h4 class="text-sm font-bold text-white">Select By ID</h4>
+                    <div class="p-3 rounded-lg bg-rose-950/20 border border-rose-900/50 text-xs text-rose-300 flex items-start gap-2.5">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold">Exam Trap (Projection Difference):</span> Unlike Problem 03 which requests all columns (<code>SELECT *</code>), Problem 11 specifically requires <strong>only the NAME attribute</strong> (<code>SELECT NAME</code>). Returning full tuples results in zero test score.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Problem 12: Japanese Cities' Attributes -->
+                <div id="prob-japanese-cities-attr" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">PROBLEM 12</span>
+                                <h4 class="text-base font-bold text-white">Japanese Cities' Attributes</h4>
                             </div>
-                            <button onclick="loadAndRun('select_id')" class="text-[11px] text-cyan-400 hover:underline">Run &rarr;</button>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-blue-300">japanese-cities-attributes-English.pdf</span> • Filter: <span class="font-mono text-slate-300">COUNTRYCODE = 'JPN' (*)</span></p>
                         </div>
-                        <p class="text-xs text-slate-400">Query all columns for a city in <code class="text-blue-400">CITY</code> with the ID <code class="text-amber-400 font-mono">1661</code>.</p>
-                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded p-2.5 font-mono text-xs text-slate-200">
-<pre><code><span class="sql-keyword">SELECT</span> * 
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">CITY</span> 
-<span class="sql-keyword">WHERE</span> ID = <span class="sql-number">1661</span>;</code></pre>
+                        <button onclick="loadAndRun('japanese_attr')" 
+                            class="text-xs px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 border border-blue-600/50 hover:bg-blue-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300">
+                        Query all attributes of every Japanese city in the <code class="text-blue-400 font-bold">CITY</code> table. The <code class="text-amber-400 font-bold">COUNTRYCODE</code> for Japan is <code class="text-emerald-400 font-bold">'JPN'</code>.
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="select">$\sigma_{\text{COUNTRYCODE}='JPN'}$</span>(CITY)
+                            </span>
                         </div>
-                        <div class="text-[11px] text-slate-500 font-mono">
-                            Relational Algebra: $\sigma_{\text{ID}=1661}(\text{CITY})$ [Point lookup via PK B-Tree]
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> *
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span>
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> COUNTRYCODE = <span class="sql-string">'JPN'</span>;</code></pre>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- MODULE 3: Deduplication & Math Filtering -->
+            <!-- MODULE 3: Deduplication & Math -->
             <div class="module-group space-y-6">
                 <div class="flex items-center gap-3 border-l-4 border-emerald-400 pl-3">
-                    <h3 class="text-lg font-bold text-white">Module 3: Deduplication &amp; Math Predicates</h3>
-                    <span class="text-xs text-slate-400">2 Problems • DISTINCT Deduplication • Modulo Parity Operations</span>
+                    <h3 class="text-lg font-bold text-white">Module 3: Deduplication &amp; Modulo Arithmetic</h3>
+                    <span class="text-xs text-slate-400">2 Problems • DISTINCT Deduplication • Mathematical Filter Predicates</span>
                 </div>
 
-                <!-- Problem 6: Weather Observation Station 1 -->
+                <!-- Problem 6: Weather Observation 1 -->
                 <div id="prob-weather-1" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
                         <div>
@@ -703,7 +979,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                                 <span class="text-xs font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded">PROBLEM 06</span>
                                 <h4 class="text-base font-bold text-white">Weather Observation Station 1</h4>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-emerald-300">weather-observation-station-1-English.pdf</span> • Table: <span class="font-mono text-slate-300">STATION</span></p>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-emerald-300">weather-observation-station-1.pdf</span></p>
                         </div>
                         <button onclick="loadAndRun('weather_1')" 
                             class="text-xs px-2.5 py-1 rounded bg-emerald-600/20 text-emerald-400 border border-emerald-600/50 hover:bg-emerald-600/30 transition flex items-center gap-1">
@@ -711,21 +987,12 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         </button>
                     </div>
 
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300">
-                        Query a list of <code class="text-amber-400 font-bold">CITY</code> and <code class="text-emerald-400 font-bold">STATE</code> from the <code class="text-blue-400 font-bold">STATION</code> table.
-                    </div>
-
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-<pre><code><span class="sql-keyword">SELECT</span> <span class="text-amber-400">CITY</span>, <span class="text-emerald-400">STATE</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">STATION</span>;</code></pre>
-                    </div>
-
-                    <div class="text-xs text-slate-400">
-                        <strong>Relational Bag Semantics:</strong> Standard SQL operations follow multiset (bag) semantics rather than pure set semantics. Without the <code>DISTINCT</code> keyword, duplicate pairs of <code>(CITY, STATE)</code> are retained.
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> CITY, STATE <span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-amber-400">STATION</span>;</code></pre>
                     </div>
                 </div>
 
-                <!-- Problem 7: Weather Observation Station 3 -->
+                <!-- Problem 7: Weather Observation 3 -->
                 <div id="prob-weather-3" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
                         <div>
@@ -733,7 +1000,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                                 <span class="text-xs font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded">PROBLEM 07</span>
                                 <h4 class="text-base font-bold text-white">Weather Observation Station 3</h4>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-emerald-300">weather-observation-station-3-English.pdf</span> • Filter: <span class="font-mono text-slate-300">EVEN ID &amp; DISTINCT CITY</span></p>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-emerald-300">station-3.pdf</span> • Filter: <span class="font-mono text-slate-300">DISTINCT CITY &amp; Even ID</span></p>
                         </div>
                         <button onclick="loadAndRun('weather_3')" 
                             class="text-xs px-2.5 py-1 rounded bg-emerald-600/20 text-emerald-400 border border-emerald-600/50 hover:bg-emerald-600/30 transition flex items-center gap-1">
@@ -741,59 +1008,38 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         </button>
                     </div>
 
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-                        Query a list of <code class="text-amber-400 font-bold">CITY</code> names from <code class="text-blue-400 font-bold">STATION</code> for cities that have an <strong>even ID number</strong>. Print the results in any order, but <strong>exclude duplicates</strong> from the answer.
-                    </div>
-
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-<pre><code><span class="sql-comment">-- Universal ANSI / Oracle / PostgreSQL / MySQL Standard Syntax</span>
-<span class="sql-keyword">SELECT DISTINCT</span> <span class="text-amber-400">CITY</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">STATION</span>
-<span class="sql-keyword">WHERE</span> <span class="sql-function">MOD</span>(ID, <span class="sql-number">2</span>) = <span class="sql-number">0</span>;
-
-<span class="sql-comment">-- Dialect Operator Alternative (MySQL / SQLite / SQL Server % operator)</span>
-<span class="sql-keyword">SELECT DISTINCT</span> <span class="text-amber-400">CITY</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">STATION</span>
-<span class="sql-keyword">WHERE</span> ID % <span class="sql-number">2</span> = <span class="sql-number">0</span>;</code></pre>
-                    </div>
-
-                    <details class="bg-[#0a0f1d]/70 border border-[#1e293b] rounded-lg p-3 text-xs group">
-                        <summary class="cursor-pointer font-bold text-emerald-400 flex items-center justify-between">
-                            <span class="flex items-center gap-2">
-                                <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 Lucid Understanding: Physical Deduplication (Sort vs Hash Aggregate)
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="dedup">$\delta$</span>(<span class="ra-op" data-op="project">$\pi_{\text{CITY}}$</span>(<span class="ra-op" data-op="select">$\sigma_{\text{ID} \pmod 2 = 0}$</span>(STATION)))
                             </span>
-                            <i class="fa-solid fa-chevron-down text-slate-500 group-open:rotate-180 transition-transform"></i>
-                        </summary>
-                        <div class="mt-3 pt-3 border-t border-[#1e293b] space-y-2 text-slate-300 leading-relaxed">
-                            <p>
-                                <strong>How <code>DISTINCT</code> Executes Under the Hood:</strong>
-                                Evaluating <code>DISTINCT</code> forces the database engine into one of two physical operators:
-                                <ul class="list-disc list-inside pl-2 space-y-1 mt-1 text-slate-400">
-                                    <li><strong class="text-slate-300">Sort Unique / Sort Deduplication:</strong> Sorts the projected attribute stream in $\mathcal{O}(N \log N)$, then scans linearly and discards adjacent duplicate values. If memory is tight, intermediate runs spill to disk temp tables.</li>
-                                    <li><strong class="text-slate-300">Hash Aggregate (Hash Table):</strong> Creates an in-memory hash set of seen keys in $\mathcal{O}(N)$ average time. Faster than sorting, but memory consumption scales with the number of unique city names.</li>
-                                </ul>
-                            </p>
                         </div>
-                    </details>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="sql-keyword sql-term" data-term="distinct">DISTINCT</span> CITY
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-amber-400">STATION</span>
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> <span class="sql-function">MOD</span>(ID, <span class="sql-number">2</span>) = <span class="sql-number">0</span>;</code></pre>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- MODULE 4: Aggregation & Counting -->
+            <!-- MODULE 4: Aggregations & Grouping -->
             <div class="module-group space-y-6">
                 <div class="flex items-center gap-3 border-l-4 border-amber-400 pl-3">
-                    <h3 class="text-lg font-bold text-white">Module 4: Aggregations &amp; Group Operations</h3>
-                    <span class="text-xs text-slate-400">1 Problem • COUNT(*) vs COUNT(column) • NULL Semantics</span>
+                    <h3 class="text-lg font-bold text-white">Module 4: Aggregations &amp; Continent Grouping</h3>
+                    <span class="text-xs text-slate-400">3 Problems • COUNT / SUM / AVG • FLOOR Mathematical Rounding</span>
                 </div>
 
-                <!-- Problem 8: Revising Aggregations - The Count Function -->
+                <!-- Problem 8: Count Function Drill -->
                 <div id="prob-count-func" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
                         <div>
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-mono font-bold bg-amber-950 text-amber-400 border border-amber-800 px-2 py-0.5 rounded">PROBLEM 08</span>
-                                <h4 class="text-base font-bold text-white">Revising Aggregations - The Count Function</h4>
+                                <h4 class="text-base font-bold text-white">Count Function Drill</h4>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-amber-300">revising-aggregations-the-count-function-English.pdf</span> • Filter: <span class="font-mono text-slate-300">POPULATION &gt; 100000</span></p>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-amber-300">revising-aggregations-the-count-function-English.pdf</span></p>
                         </div>
                         <button onclick="loadAndRun('count_func')" 
                             class="text-xs px-2.5 py-1 rounded bg-amber-600/20 text-amber-400 border border-amber-600/50 hover:bg-amber-600/30 transition flex items-center gap-1">
@@ -801,52 +1047,100 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         </button>
                     </div>
 
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300">
-                        Query a count of the number of cities in <code class="text-blue-400 font-bold">CITY</code> having a <code class="text-amber-400 font-bold">Population</code> larger than <code class="text-emerald-400 font-bold">100,000</code>.
-                    </div>
-
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-<pre><code><span class="sql-comment">-- Canonical Aggregation Query</span>
-<span class="sql-keyword">SELECT</span> <span class="sql-function">COUNT</span>(*)
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">CITY</span>
-<span class="sql-keyword">WHERE</span> POPULATION > <span class="sql-number">100000</span>;</code></pre>
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="sql-function">COUNT</span>(*)
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span>
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> POPULATION > <span class="sql-number">100000</span>;</code></pre>
+                    </div>
+                </div>
+
+                <!-- Problem 13: Population Census -->
+                <div id="prob-population-census" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-amber-950 text-amber-400 border border-amber-800 px-2 py-0.5 rounded">PROBLEM 13</span>
+                                <h4 class="text-base font-bold text-white">Population Census (Asia SUM)</h4>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-amber-300">asian-population-English.pdf</span> • Filter: <span class="font-mono text-slate-300">CONTINENT = 'Asia'</span></p>
+                        </div>
+                        <button onclick="loadAndRun('asian_pop')" 
+                            class="text-xs px-2.5 py-1 rounded bg-amber-600/20 text-amber-400 border border-amber-600/50 hover:bg-amber-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
                     </div>
 
-                    <details class="bg-[#0a0f1d]/70 border border-[#1e293b] rounded-lg p-3 text-xs group">
-                        <summary class="cursor-pointer font-bold text-amber-400 flex items-center justify-between">
-                            <span class="flex items-center gap-2">
-                                <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 Lucid Understanding: Deep Dive on COUNT(*), COUNT(col), and NULLs
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300">
+                        Given the <code class="text-blue-400 font-bold">CITY</code> and <code class="text-emerald-400 font-bold">COUNTRY</code> tables, query the sum of the populations of all cities where the <code class="text-purple-400 font-bold">CONTINENT</code> is <code class="text-emerald-400 font-bold">'Asia'</code>.
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="aggregate">$\gamma_{\text{SUM}(\text{c.POP})}$</span>(<span class="ra-op" data-op="select">$\sigma_{\text{co.CONT}='Asia'}$</span>(CITY <span class="ra-op" data-op="join">$\bowtie$</span> COUNTRY))
                             </span>
-                            <i class="fa-solid fa-chevron-down text-slate-500 group-open:rotate-180 transition-transform"></i>
-                        </summary>
-                        <div class="mt-3 pt-3 border-t border-[#1e293b] space-y-3 text-slate-300 leading-relaxed">
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-[11px]">
-                                <div class="p-2.5 bg-slate-900 border border-slate-800 rounded">
-                                    <div class="text-cyan-400 font-bold">COUNT(*)</div>
-                                    <div class="text-slate-400 mt-1">Counts every qualifying tuple, regardless of whether individual columns contain NULL. Allows covering index scans.</div>
-                                </div>
-                                <div class="p-2.5 bg-slate-900 border border-slate-800 rounded">
-                                    <div class="text-emerald-400 font-bold">COUNT(column)</div>
-                                    <div class="text-slate-400 mt-1">Counts ONLY rows where <code>column IS NOT NULL</code>. If a row has NULL in that attribute, count is skipped.</div>
-                                </div>
-                                <div class="p-2.5 bg-slate-900 border border-slate-800 rounded">
-                                    <div class="text-amber-400 font-bold">COUNT(DISTINCT col)</div>
-                                    <div class="text-slate-400 mt-1">Counts unique non-null values. Requires sort or hash dedup buffer before returning scalar count.</div>
-                                </div>
-                            </div>
-                            <p class="text-slate-400 text-xs">
-                                <strong>Execution Order Insight:</strong> <code>WHERE</code> executes <em>before</em> aggregation. Hence, rows with <code>POPULATION &le; 100000</code> are filtered out before reaching the aggregate accumulator. If the question required grouping by district, you would use <code>GROUP BY DISTRICT HAVING COUNT(*) > 5</code>.
-                            </p>
                         </div>
-                    </details>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="sql-function">SUM</span>(c.POPULATION)
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span> c
+<span class="sql-keyword sql-term" data-term="join">JOIN</span> <span class="text-emerald-400">COUNTRY</span> co <span class="sql-keyword">ON</span> c.CountryCode = co.Code
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> co.CONTINENT = <span class="sql-string">'Asia'</span>;</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Problem 14: Average Population of Each Continent -->
+                <div id="prob-avg-population-continent" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-amber-950 text-amber-400 border border-amber-800 px-2 py-0.5 rounded">PROBLEM 14</span>
+                                <h4 class="text-base font-bold text-white">Average Population of Each Continent</h4>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-amber-300">average-population-of-each-continent-English.pdf</span> • Function: <span class="font-mono text-slate-300">FLOOR(AVG())</span></p>
+                        </div>
+                        <button onclick="loadAndRun('avg_pop_continent')" 
+                            class="text-xs px-2.5 py-1 rounded bg-amber-600/20 text-amber-400 border border-amber-600/50 hover:bg-amber-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300">
+                        Query the names of all the continents (<code class="text-emerald-400 font-bold">COUNTRY.Continent</code>) and their respective average city populations (<code class="text-blue-400 font-bold">CITY.Population</code>) rounded down to the nearest integer.
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="aggregate">$\gamma_{\text{Continent}, \text{FLOOR}(\text{AVG}(\text{Pop}))}$</span>(CITY <span class="ra-op" data-op="join">$\bowtie$</span> COUNTRY)
+                            </span>
+                        </div>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> 
+    co.Continent, 
+    <span class="sql-function sql-term" data-term="floor">FLOOR</span>(<span class="sql-function">AVG</span>(c.Population))
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">CITY</span> c
+<span class="sql-keyword sql-term" data-term="join">JOIN</span> <span class="text-emerald-400">COUNTRY</span> co <span class="sql-keyword">ON</span> c.CountryCode = co.Code
+<span class="sql-keyword sql-term" data-term="group by">GROUP BY</span> co.Continent;</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-lg bg-rose-950/20 border border-rose-900/50 text-xs text-rose-300 flex items-start gap-2.5">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold">Exam Trap (FLOOR vs. ROUND):</span> The problem specification strictly demands &quot;rounded <strong>down</strong> to the nearest integer&quot;. Writing <code>ROUND(AVG(c.Population))</code> will round <code>124.6</code> up to <code>125</code>, failing the grader. You must use <code>FLOOR()</code> to truncate fractional decimals downward.
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- MODULE 5: String Manipulation & Multi-Level Sorting -->
+            <!-- MODULE 5: String Slicing & Sorting -->
             <div class="module-group space-y-6">
                 <div class="flex items-center gap-3 border-l-4 border-purple-400 pl-3">
-                    <h3 class="text-lg font-bold text-white">Module 5: String Manipulation &amp; Multi-Tier Sorting</h3>
-                    <span class="text-xs text-slate-400">2 Problems • RIGHT() vs SUBSTR() • Deterministic Composite Tie-Breaking</span>
+                    <h3 class="text-lg font-bold text-white">Module 5: String Functions &amp; Multi-Key Sorting</h3>
+                    <span class="text-xs text-slate-400">2 Problems • String Slicing • Secondary Tie-Breakers</span>
                 </div>
 
                 <!-- Problem 9: Higher Than 75 Marks -->
@@ -857,7 +1151,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                                 <span class="text-xs font-mono font-bold bg-purple-950 text-purple-400 border border-purple-800 px-2 py-0.5 rounded">PROBLEM 09</span>
                                 <h4 class="text-base font-bold text-white">Higher Than 75 Marks</h4>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-purple-300">more-than-75-marks-English.pdf</span> • Slicing: <span class="font-mono text-slate-300">RIGHT(Name, 3) ASC, ID ASC</span></p>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-purple-300">more-than-75-marks-English.pdf</span> • Slicing: <span class="font-mono text-slate-300">RIGHT(Name, 3)</span></p>
                         </div>
                         <button onclick="loadAndRun('marks_75')" 
                             class="text-xs px-2.5 py-1 rounded bg-purple-600/20 text-purple-400 border border-purple-600/50 hover:bg-purple-600/30 transition flex items-center gap-1">
@@ -865,88 +1159,22 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         </button>
                     </div>
 
-                    <!-- Problem Text & Sample Input/Output Grid -->
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-3 text-xs">
-                        <p class="text-slate-300 leading-relaxed">
-                            Query the <code class="text-purple-400 font-bold">Name</code> of any student in <code class="text-blue-400 font-bold">STUDENTS</code> who scored higher than <code class="text-amber-400 font-bold">75 Marks</code>. Order your output by the <strong>last three characters</strong> of each name. If two or more students both have names ending in the same last three characters (e.g., Bobby, Robby), <strong>secondary sort them by ascending ID</strong>.
-                        </p>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                            <!-- Sample Input Table -->
-                            <div class="bg-slate-900/80 border border-slate-800 rounded p-2.5 space-y-1.5">
-                                <div class="font-bold text-slate-400 flex items-center justify-between">
-                                    <span>Sample Input (STUDENTS):</span>
-                                    <span class="text-[10px] text-amber-400 font-mono">Samantha (75) excluded</span>
-                                </div>
-                                <table class="w-full font-mono text-[11px] text-slate-300">
-                                    <tr class="text-slate-500 border-b border-slate-800"><th class="text-left">ID</th><th class="text-left">Name</th><th class="text-left">Marks</th></tr>
-                                    <tr><td>1</td><td class="text-purple-300">Ashley</td><td>81</td></tr>
-                                    <tr class="opacity-40"><td>2</td><td>Samantha</td><td>75</td></tr>
-                                    <tr><td>4</td><td class="text-purple-300">Julia</td><td>76</td></tr>
-                                    <tr><td>3</td><td class="text-purple-300">Belvet</td><td>84</td></tr>
-                                </table>
-                            </div>
-
-                            <!-- Sample Output & Explanation -->
-                            <div class="bg-slate-900/80 border border-slate-800 rounded p-2.5 space-y-1.5">
-                                <div class="font-bold text-slate-400">Sample Output:</div>
-                                <div class="font-mono text-emerald-400 text-xs space-y-0.5 bg-black/40 p-2 rounded border border-slate-800">
-                                    <div>Ashley <span class="text-slate-500 text-[10px]">&lsqb;&apos;ley&apos;&rsqb;</span></div>
-                                    <div>Julia <span class="text-slate-500 text-[10px]">&lsqb;&apos;lia&apos;&rsqb;</span></div>
-                                    <div>Belvet <span class="text-slate-500 text-[10px]">&lsqb;&apos;vet&apos;&rsqb;</span></div>
-                                </div>
-                                <p class="text-[11px] text-slate-400 leading-tight">
-                                    <strong>Explanation:</strong> Marks &gt; 75 filters to Ashley, Julia, Belvet. Last 3 chars: <code>&apos;ley&apos; &lt; &apos;lia&apos; &lt; &apos;vet&apos;</code> (&apos;e&apos; &lt; &apos;i&apos; &lt; &apos;v&apos;).
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Multi-Dialect Code Tabs -->
                     <div class="space-y-2">
-                        <div class="text-xs font-bold text-slate-300">Multi-Dialect Solutions:</div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-                                <div class="text-[10px] text-cyan-400 font-bold mb-1.5 uppercase">MySQL &amp; MS SQL Server:</div>
-<pre><code><span class="sql-keyword">SELECT</span> <span class="text-purple-400">Name</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">STUDENTS</span>
-<span class="sql-keyword">WHERE</span> Marks > <span class="sql-number">75</span>
-<span class="sql-keyword">ORDER BY</span> 
-    <span class="sql-function">RIGHT</span>(Name, <span class="sql-number">3</span>) <span class="sql-keyword">ASC</span>, 
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="sort">$\tau_{\text{SUBSTR}\uparrow, \text{ID}\uparrow}$</span>(<span class="ra-op" data-op="project">$\pi_{\text{Name}}$</span>(<span class="ra-op" data-op="select">$\sigma_{\text{Marks} > 75}$</span>(STUDENTS)))
+                            </span>
+                        </div>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="text-purple-400">Name</span>
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">STUDENTS</span>
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> Marks > <span class="sql-number">75</span>
+<span class="sql-keyword sql-term" data-term="order by">ORDER BY</span> 
+    <span class="sql-function sql-term" data-term="substr">SUBSTR</span>(Name, -<span class="sql-number">3</span>) <span class="sql-keyword">ASC</span>, 
     ID <span class="sql-keyword">ASC</span>;</code></pre>
-                            </div>
-
-                            <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-                                <div class="text-[10px] text-emerald-400 font-bold mb-1.5 uppercase">Oracle 19c &amp; PostgreSQL:</div>
-<pre><code><span class="sql-keyword">SELECT</span> <span class="text-purple-400">Name</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">STUDENTS</span>
-<span class="sql-keyword">WHERE</span> Marks > <span class="sql-number">75</span>
-<span class="sql-keyword">ORDER BY</span> 
-    <span class="sql-function">SUBSTR</span>(Name, -<span class="sql-number">3</span>) <span class="sql-keyword">ASC</span>, 
-    ID <span class="sql-keyword">ASC</span>;</code></pre>
-                            </div>
                         </div>
                     </div>
-
-                    <details class="bg-[#0a0f1d]/70 border border-[#1e293b] rounded-lg p-3 text-xs group">
-                        <summary class="cursor-pointer font-bold text-purple-400 flex items-center justify-between">
-                            <span class="flex items-center gap-2">
-                                <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 Lucid Understanding: Deterministic Tie-Breaking &amp; Expression Indexes
-                            </span>
-                            <i class="fa-solid fa-chevron-down text-slate-500 group-open:rotate-180 transition-transform"></i>
-                        </summary>
-                        <div class="mt-3 pt-3 border-t border-[#1e293b] space-y-2 text-slate-300 leading-relaxed">
-                            <p>
-                                <strong>1. Why Secondary ID Ordering is Mandatory:</strong>
-                                Without <code>ID ASC</code> as the secondary tie-breaker, two names ending in the same suffix (e.g. <code>Bobby</code> and <code>Robby</code> both ending in <code>bby</code>) produce <em>non-deterministic sort order</em>. Relational engines do not guarantee arrival order. Adding unique primary key <code>ID</code> guarantees mathematical determinism across parallel execution threads.
-                            </p>
-                            <p>
-                                <strong>2. Performance (Function-Based Indexes):</strong>
-                                Standard B-Tree indexes on <code>Name</code> cannot accelerate <code>RIGHT(Name, 3)</code> because the comparison occurs on a transformed expression. To avoid an $\mathcal{O}(N \log N)$ sort step on a billion-row table, one must create an expression-based index:
-                                <code class="text-cyan-300 font-mono">CREATE INDEX idx_student_sub ON STUDENTS(SUBSTR(Name, -3), ID);</code>
-                            </p>
-                        </div>
-                    </details>
                 </div>
 
                 <!-- Problem 10: Employee Names -->
@@ -957,7 +1185,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                                 <span class="text-xs font-mono font-bold bg-purple-950 text-purple-400 border border-purple-800 px-2 py-0.5 rounded">PROBLEM 10</span>
                                 <h4 class="text-base font-bold text-white">Employee Names</h4>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-purple-300">name-of-employees-English.pdf</span> • Ordering: <span class="font-mono text-slate-300">ORDER BY name ASC</span></p>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-purple-300">name-of-employees-English.pdf</span></p>
                         </div>
                         <button onclick="loadAndRun('emp_names')" 
                             class="text-xs px-2.5 py-1 rounded bg-purple-600/20 text-purple-400 border border-purple-600/50 hover:bg-purple-600/30 transition flex items-center gap-1">
@@ -965,22 +1193,130 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         </button>
                     </div>
 
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
-                        Write a query that prints a list of employee names (i.e.: the <code class="text-rose-400 font-bold">name</code> attribute) from the <code class="text-blue-400 font-bold">Employee</code> table in alphabetical order.
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Query:</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="sort">$\tau_{\text{name}\uparrow}$</span>(<span class="ra-op" data-op="project">$\pi_{\text{name}}$</span>(Employee))
+                            </span>
+                        </div>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="text-rose-400">name</span>
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">Employee</span>
+<span class="sql-keyword sql-term" data-term="order by">ORDER BY</span> <span class="text-rose-400">name</span> <span class="sql-keyword">ASC</span>;</code></pre>
+                        </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
-<pre><code><span class="sql-keyword">SELECT</span> <span class="text-rose-400">name</span>
-<span class="sql-keyword">FROM</span> <span class="text-blue-400">Employee</span>
-<span class="sql-keyword">ORDER BY</span> <span class="text-rose-400">name</span> <span class="sql-keyword">ASC</span>;</code></pre>
-                    </div>
+            <!-- MODULE 6: Advanced Non-Equi Joins & Self-Links -->
+            <div class="module-group space-y-6">
+                <div class="flex items-center gap-3 border-l-4 border-rose-500 pl-3">
+                    <h3 class="text-lg font-bold text-white">Module 6: Advanced Non-Equi Joins &amp; Self-Referential Relational Models</h3>
+                    <span class="text-xs text-slate-400">2 Problems • BETWEEN Interval Joins • Conditional NULL Projections • Multi-Instance Self-Joins</span>
+                </div>
 
-                    <!-- Collation Insight Callout -->
-                    <div class="p-3 rounded-lg bg-indigo-950/20 border border-indigo-900/50 text-xs text-indigo-300 flex items-start gap-2.5">
-                        <i class="fa-solid fa-circle-info text-indigo-400 mt-0.5"></i>
+                <!-- Problem 15: The Report -->
+                <div id="prob-the-report" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
                         <div>
-                            <span class="font-bold">Collation &amp; Character Set Awareness:</span>
-                            In production databases, alphabetical order is governed by the table's <em>Collation</em> (e.g. <code>utf8mb4_general_ci</code> vs <code>utf8mb4_bin</code>). Binary collations sort uppercase letters before lowercase (ASCII 'Z' = 90 &lt; 'a' = 97). In Case-Insensitive collations (<code>_ci</code>), 'Angela' and 'angela' compare equally. HackerRank evaluates under standard case-insensitive ASCII ordering.
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-rose-950 text-rose-400 border border-rose-800 px-2 py-0.5 rounded">PROBLEM 15</span>
+                                <h4 class="text-base font-bold text-white">The Report (Ketty's Grade Report)</h4>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-rose-300">the-report-English.pdf</span> • Join: <span class="font-mono text-slate-300">Marks BETWEEN Min_Mark AND Max_Mark</span></p>
+                        </div>
+                        <button onclick="loadAndRun('the_report')" 
+                            class="text-xs px-2.5 py-1 rounded bg-rose-600/20 text-rose-400 border border-rose-600/50 hover:bg-rose-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-2 text-xs text-slate-300 leading-relaxed">
+                        <div class="font-bold text-slate-200">Curriculum Problem Statement:</div>
+                        <p>Generate a report containing three columns: <code class="text-purple-400 font-bold">Name</code>, <code class="text-amber-400 font-bold">Grade</code> and <code class="text-cyan-400 font-bold">Mark</code>.</p>
+                        <ul class="list-disc list-inside space-y-1 text-slate-400">
+                            <li>Ketty doesn't want names of students who received a grade lower than 8 (print <code class="text-rose-400 font-bold">'NULL'</code> as their name).</li>
+                            <li>Order by: <code class="text-slate-200 font-bold">Grade DESC</code> (higher grades entered first).</li>
+                            <li>If same grade (8–10): order those students alphabetically by <code class="text-slate-200 font-bold">Name ASC</code>.</li>
+                            <li>If grade &lt; 8: order those students by <code class="text-slate-200 font-bold">Marks ASC</code>.</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Solution (Cleanest ANSI Standard):</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="sort">$\tau_{\text{Grade}\downarrow, \text{Name}\uparrow, \text{Marks}\uparrow}$</span>(<span class="ra-op" data-op="project">$\pi_{\dots}$</span>(Students <span class="ra-op" data-op="join">$\bowtie_{\text{Marks} \in [\text{Min}, \text{Max}]}$</span> Grades))
+                            </span>
+                        </div>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> 
+    <span class="sql-keyword sql-term" data-term="case">CASE</span> 
+        <span class="sql-keyword">WHEN</span> g.Grade >= <span class="sql-number">8</span> <span class="sql-keyword">THEN</span> s.Name 
+        <span class="sql-keyword">ELSE</span> <span class="sql-keyword">NULL</span> 
+    <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> Name,
+    g.Grade,
+    s.Marks
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">Students</span> s
+<span class="sql-keyword sql-term" data-term="join">JOIN</span> <span class="text-emerald-400">Grades</span> g 
+    <span class="sql-keyword">ON</span> s.Marks <span class="sql-keyword sql-term" data-term="between">BETWEEN</span> g.Min_Mark <span class="sql-keyword">AND</span> g.Max_Mark
+<span class="sql-keyword sql-term" data-term="order by">ORDER BY</span> 
+    g.Grade <span class="sql-keyword">DESC</span>,
+    s.Name <span class="sql-keyword">ASC</span>,
+    s.Marks <span class="sql-keyword">ASC</span>;</code></pre>
+                        </div>
+                    </div>
+
+                    <details class="bg-[#0a0f1d]/70 border border-[#1e293b] rounded-lg p-3 text-xs group">
+                        <summary class="cursor-pointer font-bold text-rose-400 flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 Lucid Understanding: Why Compound Sort Order Naturally Cascades
+                            </span>
+                            <i class="fa-solid fa-chevron-down text-slate-500 group-open:rotate-180 transition-transform"></i>
+                        </summary>
+                        <div class="mt-3 pt-3 border-t border-[#1e293b] space-y-2 text-slate-300 leading-relaxed">
+                            <p><strong>How the Triple ORDER BY Works Effortlessly:</strong> Notice that for students with Grade &ge; 8, <code>s.Name</code> is a distinct string, so <code>s.Name ASC</code> resolves all ties immediately without looking at <code>s.Marks ASC</code>. For students with Grade &lt; 8, the projected name is <code>NULL</code> (or identical). Therefore, the <code>s.Name</code> sort key ties for all of them, causing the engine to naturally drop to the third sorting criterion: <code>s.Marks ASC</code>! You do not need complex conditional expressions inside the <code>ORDER BY</code> clause.</p>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Problem 16: Placements -->
+                <div id="prob-placements" class="drill-card bg-[#151e2e] border border-[#1e293b] rounded-xl p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold bg-rose-950 text-rose-400 border border-rose-800 px-2 py-0.5 rounded">PROBLEM 16</span>
+                                <h4 class="text-base font-bold text-white">Placements (Friends Salary Comparison)</h4>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Source: <span class="font-mono text-rose-300">placements-English.pdf</span> • Join: <span class="font-mono text-slate-300">Students ⋈ Friends ⋈ sp(Packages) ⋈ fp(Packages)</span></p>
+                        </div>
+                        <button onclick="loadAndRun('placements')" 
+                            class="text-xs px-2.5 py-1 rounded bg-rose-600/20 text-rose-400 border border-rose-600/50 hover:bg-rose-600/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-terminal text-[10px]"></i> Test in Console
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 space-y-2 text-xs text-slate-300 leading-relaxed">
+                        <div class="font-bold text-slate-200">Curriculum Problem Statement:</div>
+                        <p>Write a query to output the names of those students whose best friends got offered a higher salary than them. Names must be ordered by the salary amount offered to the best friends. It is guaranteed that no two students got same salary offer.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span>Canonical SQL Solution (Self-Join Pattern):</span>
+                            <span class="text-[11px] font-mono text-slate-500">
+                                <span class="ra-op" data-op="project">$\pi_{\text{s.Name}}$</span>(<span class="ra-op" data-op="select">$\sigma_{\text{fp.Sal} > \text{sp.Sal}}$</span>(Students <span class="ra-op" data-op="join">$\bowtie$</span> Friends <span class="ra-op" data-op="rename">$\bowtie \rho_{\text{sp}}$</span>(Pkg) <span class="ra-op" data-op="rename">$\bowtie \rho_{\text{fp}}$</span>(Pkg)))
+                            </span>
+                        </div>
+                        <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre><code><span class="sql-keyword sql-term" data-term="select">SELECT</span> <span class="text-blue-400">s.Name</span>
+<span class="sql-keyword sql-term" data-term="from">FROM</span> <span class="text-blue-400">Students</span> s
+<span class="sql-keyword sql-term" data-term="join">JOIN</span> <span class="text-cyan-400">Friends</span> f <span class="sql-keyword">ON</span> s.ID = f.ID
+<span class="sql-keyword sql-term" data-term="join">JOIN</span> <span class="text-emerald-400">Packages</span> sp <span class="sql-keyword">ON</span> s.ID = sp.ID
+<span class="sql-keyword sql-term" data-term="join">JOIN</span> <span class="text-emerald-400">Packages</span> fp <span class="sql-keyword">ON</span> f.Friend_ID = fp.ID
+<span class="sql-keyword sql-term" data-term="where">WHERE</span> fp.Salary > sp.Salary
+<span class="sql-keyword sql-term" data-term="order by">ORDER BY</span> fp.Salary <span class="sql-keyword">ASC</span>;</code></pre>
                         </div>
                     </div>
                 </div>
@@ -992,7 +1328,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                     <h3 class="text-lg font-bold text-white flex items-center gap-2">
                         <i class="fa-solid fa-code-compare text-indigo-400"></i> SQL Engine Multi-Dialect Compatibility Matrix
                     </h3>
-                    <p class="text-xs text-slate-400 mt-1">Comparison of syntax and built-in functions used across the 10 HackerRank challenges.</p>
+                    <p class="text-xs text-slate-400 mt-1">Comparison of syntax and built-in functions used across the 16 HackerRank challenges.</p>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -1007,6 +1343,20 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td class="p-3 font-bold text-slate-200">Floor (Round Down)</td>
+                                <td class="p-3 text-cyan-300">FLOOR(n)</td>
+                                <td class="p-3 text-rose-300">FLOOR(n) or TRUNC(n)</td>
+                                <td class="p-3 text-emerald-300">FLOOR(n)</td>
+                                <td class="p-3 text-amber-300">FLOOR(n)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-slate-200">Conditional Projection</td>
+                                <td class="p-3 text-cyan-300">IF(cond, a, b) / CASE</td>
+                                <td class="p-3 text-rose-300">CASE WHEN / DECODE</td>
+                                <td class="p-3 text-emerald-300">CASE WHEN ... THEN</td>
+                                <td class="p-3 text-amber-300">IIF(cond, a, b) / CASE</td>
+                            </tr>
                             <tr>
                                 <td class="p-3 font-bold text-slate-200">Substring from Right ($N$ chars)</td>
                                 <td class="p-3 text-cyan-300">RIGHT(str, 3)</td>
@@ -1027,20 +1377,6 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                                 <td class="p-3 text-rose-300">FETCH FIRST N ROWS ONLY</td>
                                 <td class="p-3 text-emerald-300">LIMIT N</td>
                                 <td class="p-3 text-amber-300">TOP (N)</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-bold text-slate-200">String Concatenation</td>
-                                <td class="p-3 text-cyan-300">CONCAT(a, b)</td>
-                                <td class="p-3 text-rose-300">a || b</td>
-                                <td class="p-3 text-emerald-300">a || b</td>
-                                <td class="p-3 text-amber-300">a + b or CONCAT()</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-bold text-slate-200">Case-Insensitive String Match</td>
-                                <td class="p-3 text-cyan-300">Collation-based (_ci)</td>
-                                <td class="p-3 text-rose-300">UPPER(col) = 'VAL'</td>
-                                <td class="p-3 text-emerald-300">col ILIKE 'val'</td>
-                                <td class="p-3 text-amber-300">Collation-based</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1080,7 +1416,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                             <i class="fa-solid fa-circle-xmark"></i> Trap 3: Strict Inequality vs Boundary Inclusion
                         </div>
                         <p class="text-slate-300 leading-relaxed">
-                            Phrasing like &quot;scored higher than 75&quot; or &quot;populations larger than 100,000&quot; requires <code>&gt;</code>. Writing <code>&gt;=</code> will pull boundary records (like Samantha with Marks = 75 in Problem 9), causing zero test case score.
+                            Phrasing like &quot;scored higher than 75&quot; or &quot;populations larger than 120,000&quot; requires strict <code>&gt;</code>. Writing <code>&gt;=</code> pulls boundary records into the result, causing zero test case score.
                         </p>
                     </div>
 
@@ -1089,28 +1425,28 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                             <i class="fa-solid fa-circle-xmark"></i> Trap 4: Non-Deterministic ORDER BY without Unique Key
                         </div>
                         <p class="text-slate-300 leading-relaxed">
-                            When sorting on non-unique columns (e.g. <code>RIGHT(Name, 3)</code>), two records with identical keys can appear in arbitrary order. Always append the primary key (e.g. <code>, ID ASC</code>) to ensure consistent test results.
+                            When sorting on non-unique columns, two records with identical keys can appear in arbitrary order across parallel threads. Always append a deterministic tie-breaker (e.g. <code>, ID ASC</code> or <code>s.Marks ASC</code>) to ensure consistent test grading.
                         </p>
                     </div>
                 </div>
             </section>
 
-            <!-- SECTION: Interactive Knowledge Assessment Quiz -->
+            <!-- SECTION: Interactive SQL Knowledge Assessment (Full 12-Question Certification Vault) -->
             <section id="quiz" class="bg-[#151e2e] border border-[#1e293b] rounded-xl p-6 space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-4">
                     <div>
                         <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-circle-question text-amber-400"></i> Interactive SQL Knowledge Assessment
+                            <i class="fa-solid fa-award text-amber-400"></i> Interactive SQL &amp; Relational Engine Certification Assessment
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1">Test your mastery of SQL execution semantics, joins, and string functions.</p>
+                        <p class="text-xs text-slate-400 mt-1">12 comprehensive questions covering execution semantics, non-equi joins, self-joins, SARGability, and relational algebra.</p>
                     </div>
-                    <div id="quiz-score-badge" class="text-xs font-mono px-3 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-lg">
-                        Score: 0 / 4
+                    <div id="quiz-score-badge" class="text-xs font-mono px-3 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-lg font-bold">
+                        Score: 0 / 12
                     </div>
                 </div>
 
                 <div class="space-y-4 text-xs" id="quiz-container">
-                    <!-- Question 1 -->
+                    <!-- Q1 -->
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
                         <div class="font-bold text-slate-200">
                             1. In the African Cities problem, what happens if the query selects <code>NAME</code> without qualifying <code>CITY.NAME</code> or <code>COUNTRY.NAME</code>?
@@ -1129,7 +1465,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         <div id="q1-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
                     </div>
 
-                    <!-- Question 2 -->
+                    <!-- Q2 -->
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
                         <div class="font-bold text-slate-200">
                             2. Which SQL clause is evaluated FIRST during physical query processing?
@@ -1151,7 +1487,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         <div id="q2-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
                     </div>
 
-                    <!-- Question 3 -->
+                    <!-- Q3 -->
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
                         <div class="font-bold text-slate-200">
                             3. Why does <code>SELECT DISTINCT CITY FROM STATION WHERE MOD(ID, 2) = 0</code> require an extra sorting or hashing operator in the execution plan?
@@ -1161,7 +1497,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                                 A) Because DISTINCT requires identifying and dropping identical tuple values across the entire result stream.
                             </button>
                             <button onclick="answerQuiz(3, 'B')" class="q3-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-                                B) Because MOD() changes the character set encoding.
+                                B) Because MOD() changes character set encoding.
                             </button>
                             <button onclick="answerQuiz(3, 'C')" class="q3-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
                                 C) DISTINCT automatically creates a clustered index on the disk.
@@ -1170,7 +1506,7 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         <div id="q3-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
                     </div>
 
-                    <!-- Question 4 -->
+                    <!-- Q4 -->
                     <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
                         <div class="font-bold text-slate-200">
                             4. In Oracle SQL, how do you extract the last 3 characters of a column named <code>Name</code>?
@@ -1188,26 +1524,162 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                         </div>
                         <div id="q4-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
                     </div>
+
+                    <!-- Q5: Non-Equi Joins -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            5. In Problem 15 (The Report), what kind of relational join matches a student's marks into their corresponding letter grade?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(5, 'A')" class="q5-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) Equi-Join (ON Students.Marks = Grades.Min_Mark)
+                            </button>
+                            <button onclick="answerQuiz(5, 'B')" class="q5-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) Non-Equi Range Join (ON Students.Marks BETWEEN Grades.Min_Mark AND Grades.Max_Mark)
+                            </button>
+                            <button onclick="answerQuiz(5, 'C')" class="q5-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) Natural Join without ON predicate
+                            </button>
+                        </div>
+                        <div id="q5-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
+
+                    <!-- Q6: Self-Join Pattern -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            6. In Problem 16 (Placements), why is the <code>Packages</code> table joined TWICE in the query?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(6, 'A')" class="q6-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) Once for the student's own salary and once for the friend's salary via their distinct IDs.
+                            </button>
+                            <button onclick="answerQuiz(6, 'B')" class="q6-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) To calculate the sum and average of salaries simultaneously.
+                            </button>
+                            <button onclick="answerQuiz(6, 'C')" class="q6-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) To bypass database lock contention on primary keys.
+                            </button>
+                        </div>
+                        <div id="q6-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
+
+                    <!-- Q7: FLOOR vs ROUND -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            7. If an average city population evaluates to <code>124.8</code>, what do <code>FLOOR(124.8)</code> and <code>ROUND(124.8)</code> return respectively?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(7, 'A')" class="q7-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) FLOOR: 124 | ROUND: 125
+                            </button>
+                            <button onclick="answerQuiz(7, 'B')" class="q7-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) FLOOR: 125 | ROUND: 124
+                            </button>
+                            <button onclick="answerQuiz(7, 'C')" class="q7-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) Both return 125
+                            </button>
+                        </div>
+                        <div id="q7-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
+
+                    <!-- Q8: NOT IN with NULL Trap -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            8. Why does <code>WHERE Dept_Id NOT IN (SELECT Dept_Id FROM Employee)</code> return ZERO rows if the subquery contains a single <code>NULL</code>?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(8, 'A')" class="q8-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) Because (x != NULL) evaluates to UNKNOWN, making the entire AND-chain of NOT IN evaluate to UNKNOWN.
+                            </button>
+                            <button onclick="answerQuiz(8, 'B')" class="q8-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) Because the engine immediately crashes with an arithmetic overflow.
+                            </button>
+                            <button onclick="answerQuiz(8, 'C')" class="q8-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) NULL values automatically convert to 0 and match row 0.
+                            </button>
+                        </div>
+                        <div id="q8-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
+
+                    <!-- Q9: WHERE vs HAVING with Aggregates -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            9. Why is <code>SELECT Dept, AVG(Sal) FROM EMP WHERE AVG(Sal) &gt; 2000 GROUP BY Dept</code> syntactically illegal?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(9, 'A')" class="q9-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) WHERE filters individual rows before grouping occurs; aggregate functions can only appear in HAVING or SELECT.
+                            </button>
+                            <button onclick="answerQuiz(9, 'B')" class="q9-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) Because AVG() only works on integer columns.
+                            </button>
+                            <button onclick="answerQuiz(9, 'C')" class="q9-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) SQL requires all aggregate queries to be written as subqueries.
+                            </button>
+                        </div>
+                        <div id="q9-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
+
+                    <!-- Q10: UNION vs UNION ALL -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            10. In Swiggy challenge Q63, why is <code>UNION ALL</code> significantly faster and more accurate than <code>UNION</code> when merging order logs?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(10, 'A')" class="q10-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) UNION ALL preserves duplicate identical orders and avoids an expensive sorting/hashing deduplication pass.
+                            </button>
+                            <button onclick="answerQuiz(10, 'B')" class="q10-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) UNION ALL automatically encrypts the resulting relation.
+                            </button>
+                            <button onclick="answerQuiz(10, 'C')" class="q10-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) UNION only works on tables with identical primary key names.
+                            </button>
+                        </div>
+                        <div id="q10-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
+
+                    <!-- Q11: CTAS Constraints -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            11. When executing <code>CREATE TABLE COPY_TAB AS SELECT * FROM ORIG_TAB;</code>, which integrity constraints are NOT inherited?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(11, 'A')" class="q11-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) Primary Keys, Foreign Keys, and Check constraints are dropped (only NOT NULL is retained).
+                            </button>
+                            <button onclick="answerQuiz(11, 'B')" class="q11-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) All constraints are always copied identically by default.
+                            </button>
+                            <button onclick="answerQuiz(11, 'C')" class="q11-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) CTAS only copies constraint definitions but drops the actual data.
+                            </button>
+                        </div>
+                        <div id="q11-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
+
+                    <!-- Q12: SARGability -->
+                    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-4 space-y-3">
+                        <div class="font-bold text-slate-200">
+                            12. In Problem 9, why can't a standard B-Tree index on <code>Name</code> accelerate <code>WHERE SUBSTR(Name, -3) = 'let'</code>?
+                        </div>
+                        <div class="space-y-1.5 font-mono">
+                            <button onclick="answerQuiz(12, 'A')" class="q12-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                A) Non-SARGable predicate: Wrapping the column in a function prevents direct root-to-leaf B-Tree key traversal without a function-based index.
+                            </button>
+                            <button onclick="answerQuiz(12, 'B')" class="q12-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                B) Because B-Trees can only index numeric integer values.
+                            </button>
+                            <button onclick="answerQuiz(12, 'C')" class="q12-opt block w-full text-left px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                C) The query planner refuses to execute SUBSTR on strings with less than 10 characters.
+                            </button>
+                        </div>
+                        <div id="q12-feedback" class="hidden p-2.5 rounded font-mono text-[11px]"></div>
+                    </div>
                 </div>
             </section>
 
         </main>
-    </div>
-
-    <!-- Lightbox Modal for High-Res Schemas -->
-    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4" onclick="closeLightbox()">
-        <div class="relative max-w-4xl max-h-[90vh] bg-[#151e2e] border border-[#1e293b] rounded-xl overflow-hidden shadow-2xl p-4 space-y-3" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between border-b border-[#1e293b] pb-2">
-                <h4 id="lightbox-title" class="text-sm font-bold text-white font-mono">Schema Image</h4>
-                <button onclick="closeLightbox()" class="text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div class="flex items-center justify-center overflow-auto max-h-[75vh]">
-                <img id="lightbox-img" src="" alt="Schema Preview" class="rounded-lg border border-slate-800 max-w-full max-h-[70vh] object-contain shadow-md cursor-zoom-in" onclick="toggleZoom(this)">
-            </div>
-            <div class="text-right text-[11px] text-slate-500 font-mono">Click image to toggle zoom • Esc or click outside to dismiss</div>
-        </div>
     </div>
 
     <!-- IN-MEMORY DATABASE & INTERACTIVE SQL ENGINE SCRIPT -->
@@ -1261,7 +1733,33 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                 { ID: 5, Name: 'Bobby', Marks: 88 },
                 { ID: 6, Name: 'Robby', Marks: 88 },
                 { ID: 7, Name: 'Eve', Marks: 70 },
-                { ID: 8, Name: 'Scarlet', Marks: 92 }
+                { ID: 8, Name: 'Scarlet', Marks: 92 },
+                { ID: 9, Name: 'Maria', Marks: 99 },
+                { ID: 10, Name: 'Jane', Marks: 81 }
+            ],
+            Grades: [
+                { Grade: 1, Min_Mark: 0, Max_Mark: 9 },
+                { Grade: 2, Min_Mark: 10, Max_Mark: 19 },
+                { Grade: 3, Min_Mark: 20, Max_Mark: 29 },
+                { Grade: 4, Min_Mark: 30, Max_Mark: 39 },
+                { Grade: 5, Min_Mark: 40, Max_Mark: 49 },
+                { Grade: 6, Min_Mark: 50, Max_Mark: 59 },
+                { Grade: 7, Min_Mark: 60, Max_Mark: 69 },
+                { Grade: 8, Min_Mark: 70, Max_Mark: 79 },
+                { Grade: 9, Min_Mark: 80, Max_Mark: 89 },
+                { Grade: 10, Min_Mark: 90, Max_Mark: 100 }
+            ],
+            Friends: [
+                { ID: 1, Friend_ID: 2 },
+                { ID: 2, Friend_ID: 4 },
+                { ID: 4, Friend_ID: 8 },
+                { ID: 8, Friend_ID: 1 }
+            ],
+            Packages: [
+                { ID: 1, Salary: 15.20 },
+                { ID: 2, Salary: 10.06 },
+                { ID: 4, Salary: 11.55 },
+                { ID: 8, Salary: 12.12 }
             ],
             Employee: [
                 { employee_id: 12228, name: 'Rose', months: 15, salary: 1968 },
@@ -1280,94 +1778,118 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
         // Preset Queries Dictionary
         const PRESETS = {
             african: {
-                query: "SELECT CITY.NAME\nFROM CITY\nJOIN COUNTRY ON CITY.COUNTRYCODE = COUNTRY.CODE\nWHERE COUNTRY.CONTINENT = 'Africa';",
+                query: "SELECT c.NAME\nFROM CITY c\nJOIN COUNTRY co ON c.CountryCode = co.Code\nWHERE co.CONTINENT = 'Africa';",
                 plan: [
-                    "1. Seq Scan on COUNTRY (Filter: CONTINENT = 'Africa') -> Cost: 1.05..2.10 (4 rows matched: EGY, MAR, KEN, ZAF)",
-                    "2. Hash Table built on COUNTRY.Code (Hash key: Code) -> Memory: 48 bytes",
-                    "3. Seq Scan on CITY -> Cost: 0.00..3.15 (15 rows scanned)",
-                    "4. Hash Join on CITY.COUNTRYCODE = COUNTRY.CODE -> 5 matches found",
-                    "5. Project CITY.NAME -> Final Output Stream (Cairo, Alexandria, Casablanca, Nairobi, Johannesburg)"
+                    "1. Seq Scan on COUNTRY (Filter: CONTINENT = 'Africa') -> 4 rows (EGY, MAR, KEN, ZAF)",
+                    "2. Hash Table built on COUNTRY.Code (Hash key: Code)",
+                    "3. Seq Scan on CITY -> Probed against Hash Table (5 matches)",
+                    "4. Project c.NAME (Cairo, Alexandria, Casablanca, Nairobi, Johannesburg)"
                 ],
-                algebra: "\\pi_{\\text{CITY.NAME}}(\\sigma_{\\text{CONTINENT}='Africa'}(\\text{CITY} \\bowtie_{\\text{CountryCode}=\\text{Code}} \\text{COUNTRY}))"
+                algebra: "\\pi_{\\text{c.NAME}}(\\sigma_{\\text{co.CONTINENT}='Africa'}(\\text{CITY} \\bowtie_{\\text{CountryCode}=\\text{Code}} \\text{COUNTRY}))"
             },
             japanese: {
                 query: "SELECT NAME\nFROM CITY\nWHERE COUNTRYCODE = 'JPN';",
                 plan: [
-                    "1. Index Scan or Filter on CITY (COUNTRYCODE = 'JPN') -> Cost: 0.00..1.20",
-                    "2. Heap Fetch / Tuple Pruning -> 3 rows matched (Sayama, Neyagawa, Ageo)",
-                    "3. Projection pruning to column [NAME]"
+                    "1. Index / Filter Scan on CITY (COUNTRYCODE = 'JPN') -> 3 rows matched",
+                    "2. Project column [NAME] (Sayama, Neyagawa, Ageo)"
                 ],
                 algebra: "\\pi_{\\text{NAME}}(\\sigma_{\\text{COUNTRYCODE}='JPN'}(\\text{CITY}))"
             },
             revising_select: {
                 query: "SELECT *\nFROM CITY\nWHERE COUNTRYCODE = 'USA' AND POPULATION > 100000;",
                 plan: [
-                    "1. Seq Scan on CITY with Compound Predicate (COUNTRYCODE = 'USA' AND POPULATION > 100000)",
-                    "2. Filter Evaluation: Scottsdale, Corona, Concord, Cedar Rapids, Coral Springs (5 rows passed)",
-                    "3. Project All Columns (*)"
+                    "1. Scan on CITY with Compound Filter (COUNTRYCODE = 'USA' AND POPULATION > 100000)",
+                    "2. 5 rows passed filter (Scottsdale, Corona, Concord, Cedar Rapids, Coral Springs)"
                 ],
                 algebra: "\\sigma_{\\text{COUNTRYCODE}='USA' \\land \\text{POPULATION} > 100000}(\\text{CITY})"
             },
             select_all: {
-                query: "SELECT *\nFROM CITY;",
-                plan: [
-                    "1. Full Relation Scan (Seq Scan) on CITY -> Cost: 0.00..1.15",
-                    "2. Project all 5 attributes for all 15 tuples"
-                ],
+                query: "SELECT * FROM CITY;",
+                plan: ["1. Full Relation Scan (Seq Scan) on CITY (15 tuples)"],
                 algebra: "\\text{CITY}"
             },
             select_id: {
-                query: "SELECT *\nFROM CITY\nWHERE ID = 1661;",
-                plan: [
-                    "1. Index Scan using PK_CITY_ID on CITY (Condition: ID = 1661) -> Cost: 0.00..0.15",
-                    "2. Single-tuple point return (Sayama, JPN, 162472)"
-                ],
+                query: "SELECT * FROM CITY WHERE ID = 1661;",
+                plan: ["1. Primary Key Point Lookup on ID = 1661 -> 1 tuple returned (Sayama)"],
                 algebra: "\\sigma_{\\text{ID}=1661}(\\text{CITY})"
             },
             weather_1: {
-                query: "SELECT CITY, STATE\nFROM STATION;",
-                plan: [
-                    "1. Sequential Table Scan on STATION",
-                    "2. Project attributes [CITY, STATE] across all 11 tuples"
-                ],
+                query: "SELECT CITY, STATE FROM STATION;",
+                plan: ["1. Scan on STATION -> Project [CITY, STATE] (11 tuples)"],
                 algebra: "\\pi_{\\text{CITY}, \\text{STATE}}(\\text{STATION})"
             },
             weather_3: {
-                query: "SELECT DISTINCT CITY\nFROM STATION\nWHERE MOD(ID, 2) = 0;",
-                plan: [
-                    "1. Sequential Scan on STATION (Filter: ID % 2 = 0) -> 6 tuples matched",
-                    "2. HashAggregate / Sort Unique on CITY -> Discards duplicate 'Albany'",
-                    "3. Output 5 unique city names (Addison, Aguanga, Albany, Alliance, Aloha, Amidon)"
-                ],
+                query: "SELECT DISTINCT CITY FROM STATION WHERE MOD(ID, 2) = 0;",
+                plan: ["1. Filter ID % 2 = 0 -> HashAggregate Deduplication -> 5 unique cities"],
                 algebra: "\\delta(\\pi_{\\text{CITY}}(\\sigma_{\\text{ID} \\pmod 2 = 0}(\\text{STATION})))"
             },
             count_func: {
-                query: "SELECT COUNT(*)\nFROM CITY\nWHERE POPULATION > 100000;",
-                plan: [
-                    "1. Filter Scan on CITY (POPULATION > 100000) -> 13 rows matched",
-                    "2. Aggregate Accumulator (COUNT) increments to 13",
-                    "3. Return scalar row [13]"
-                ],
+                query: "SELECT COUNT(*) FROM CITY WHERE POPULATION > 100000;",
+                plan: ["1. Filter POPULATION > 100000 (13 rows) -> Aggregate Accumulator increments to 13"],
                 algebra: "\\gamma_{\\text{COUNT}(*)}(\\sigma_{\\text{POPULATION} > 100000}(\\text{CITY}))"
             },
             marks_75: {
-                query: "SELECT Name\nFROM STUDENTS\nWHERE Marks > 75\nORDER BY RIGHT(Name, 3) ASC, ID ASC;",
-                plan: [
-                    "1. Sequential Scan on STUDENTS (Filter: Marks > 75) -> 7 rows passed",
-                    "2. Compute Sort Key: RIGHT(Name, 3)",
-                    "3. QuickSort / Top-N Sort by [RIGHT(Name, 3) ASC, ID ASC]",
-                    "4. Project Name -> Ashley ('ley'), Julia ('lia'), Belvet ('vet'), Bobby ('bby'), Robby ('bby'), Scarlet ('let')"
-                ],
-                algebra: "\\tau_{\\text{RIGHT}(Name, 3)\\uparrow, ID\\uparrow}(\\pi_{\\text{Name}}(\\sigma_{\\text{Marks} > 75}(\\text{STUDENTS})))"
+                query: "SELECT Name\nFROM STUDENTS\nWHERE Marks > 75\nORDER BY SUBSTR(Name, -3) ASC, ID ASC;",
+                plan: ["1. Filter Marks > 75 -> Top-N Sort on [SUBSTR(Name, -3) ASC, ID ASC]"],
+                algebra: "\\tau_{\\text{SUBSTR}(Name, -3)\\uparrow, ID\\uparrow}(\\pi_{\\text{Name}}(\\sigma_{\\text{Marks} > 75}(\\text{STUDENTS})))"
             },
             emp_names: {
-                query: "SELECT name\nFROM Employee\nORDER BY name ASC;",
-                plan: [
-                    "1. Full Table Scan on Employee (10 tuples)",
-                    "2. In-Memory QuickSort on [name ASC] (ASCII collation)",
-                    "3. Project [name] (Angela, Bonnie, Frank, Joe, Kimberly, Lisa, Michael, Patrick, Rose, Todd)"
-                ],
+                query: "SELECT name FROM Employee ORDER BY name ASC;",
+                plan: ["1. Full Scan on Employee -> In-memory ASCII Quicksort by [name ASC]"],
                 algebra: "\\tau_{\\text{name}\\uparrow}(\\pi_{\\text{name}}(\\text{Employee}))"
+            },
+            revising_select_2: {
+                query: "SELECT NAME\nFROM CITY\nWHERE COUNTRYCODE = 'USA'\n  AND POPULATION > 120000;",
+                plan: [
+                    "1. Filter on CITY: COUNTRYCODE = 'USA' AND POPULATION > 120000",
+                    "2. 4 rows matched: Scottsdale (202k), Corona (124k), Concord (121k), Cedar Rapids (120k)",
+                    "3. Project [NAME]"
+                ],
+                algebra: "\\pi_{\\text{NAME}}(\\sigma_{\\text{COUNTRYCODE}='USA' \\land \\text{POPULATION} > 120000}(\\text{CITY}))"
+            },
+            japanese_attr: {
+                query: "SELECT *\nFROM CITY\nWHERE COUNTRYCODE = 'JPN';",
+                plan: [
+                    "1. Filter Scan on CITY (COUNTRYCODE = 'JPN') -> 3 tuples",
+                    "2. Project all columns [ID, NAME, COUNTRYCODE, DISTRICT, POPULATION]"
+                ],
+                algebra: "\\sigma_{\\text{COUNTRYCODE}='JPN'}(\\text{CITY})"
+            },
+            asian_pop: {
+                query: "SELECT SUM(c.POPULATION)\nFROM CITY c\nJOIN COUNTRY co ON c.CountryCode = co.Code\nWHERE co.CONTINENT = 'Asia';",
+                plan: [
+                    "1. Filter COUNTRY on CONTINENT = 'Asia' (JPN matched)",
+                    "2. Hash Join with CITY on c.CountryCode = co.Code (3 Japanese cities matched)",
+                    "3. Aggregate SUM(c.POPULATION): 162472 + 257315 + 209442 = 629229"
+                ],
+                algebra: "\\gamma_{\\text{SUM}(\\text{c.POPULATION})}(\\sigma_{\\text{co.CONTINENT}='Asia'}(\\text{CITY} \\bowtie_{\\text{CountryCode}=\\text{Code}} \\text{COUNTRY}))"
+            },
+            avg_pop_continent: {
+                query: "SELECT co.Continent, FLOOR(AVG(c.Population))\nFROM CITY c\nJOIN COUNTRY co ON c.CountryCode = co.Code\nGROUP BY co.Continent;",
+                plan: [
+                    "1. Hash Join CITY with COUNTRY on CountryCode = Code",
+                    "2. Hash Aggregate: Group tuples by co.Continent",
+                    "3. Compute FLOOR(AVG(Population)) per bucket (Asia: 209743, Africa: 3336416, etc.)"
+                ],
+                algebra: "\\gamma_{\\text{co.Continent}, \\text{FLOOR}(\\text{AVG}(\\text{c.Population}))}(\\text{CITY} \\bowtie_{\\text{CountryCode}=\\text{Code}} \\text{COUNTRY})"
+            },
+            the_report: {
+                query: "SELECT \n    CASE WHEN g.Grade >= 8 THEN s.Name ELSE NULL END AS Name,\n    g.Grade,\n    s.Marks\nFROM Students s\nJOIN Grades g ON s.Marks BETWEEN g.Min_Mark AND g.Max_Mark\nORDER BY g.Grade DESC, s.Name ASC, s.Marks ASC;",
+                plan: [
+                    "1. Non-Equi Range Join on s.Marks BETWEEN g.Min_Mark AND g.Max_Mark",
+                    "2. Conditional Projection: Name (Grade >= 8 ? s.Name : NULL)",
+                    "3. Multi-Key Sort: Grade DESC -> s.Name ASC -> s.Marks ASC"
+                ],
+                algebra: "\\tau_{\\text{Grade}\\downarrow, \\text{Name}\\uparrow, \\text{Marks}\\uparrow}(\\pi_{\\dots}(\\text{Students} \\bowtie_{\\text{Marks} \\in [\\text{Min}, \\text{Max}]} \\text{Grades}))"
+            },
+            placements: {
+                query: "SELECT s.Name\nFROM Students s\nJOIN Friends f ON s.ID = f.ID\nJOIN Packages sp ON s.ID = sp.ID\nJOIN Packages fp ON f.Friend_ID = fp.ID\nWHERE fp.Salary > sp.Salary\nORDER BY fp.Salary ASC;",
+                plan: [
+                    "1. 4-Table Join: Students s -> Friends f -> Packages sp (Student) -> Packages fp (Friend)",
+                    "2. Filter Predicate: fp.Salary > sp.Salary",
+                    "3. Sort by fp.Salary ASC -> Project [s.Name] (Samantha, Julia, Scarlet)"
+                ],
+                algebra: "\\pi_{\\text{s.Name}}(\\sigma_{\\text{fp.Salary} > \\text{sp.Salary}}(\\text{Students} \\bowtie \\text{Friends} \\bowtie \\rho_{\\text{sp}}(\\text{Packages}) \\bowtie \\rho_{\\text{fp}}(\\text{Packages})))"
             }
         };
 
@@ -1407,8 +1929,81 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                 let planSteps = [];
                 let algebraText = "";
 
-                // Simple client-side relational VM engine
-                if (lowerSql.includes('city') && lowerSql.includes('country') && (lowerSql.includes('join') || lowerSql.includes(','))) {
+                // Interactive VM routing
+                if (lowerSql.includes('placements') || (lowerSql.includes('friends') && lowerSql.includes('packages'))) {
+                    // Placements Drill
+                    const matched = [];
+                    DB.Friends.forEach(f => {
+                        const student = DB.STUDENTS.find(s => s.ID === f.ID);
+                        const sPkg = DB.Packages.find(p => p.ID === f.ID);
+                        const fPkg = DB.Packages.find(p => p.ID === f.Friend_ID);
+                        if (student && sPkg && fPkg && fPkg.Salary > sPkg.Salary) {
+                            matched.push({ Name: student.Name, Student_Salary: '$' + sPkg.Salary.toFixed(2), Friend_Salary: '$' + fPkg.Salary.toFixed(2), _sort: fPkg.Salary });
+                        }
+                    });
+                    matched.sort((a, b) => a._sort - b._sort);
+                    rows = matched.map(m => ({ Name: m.Name, Student_Salary: m.Student_Salary, Friend_Salary: m.Friend_Salary }));
+                    planSteps = PRESETS.placements.plan;
+                    algebraText = PRESETS.placements.algebra;
+                } else if (lowerSql.includes('grades') && lowerSql.includes('between')) {
+                    // The Report Drill
+                    const report = [];
+                    DB.STUDENTS.forEach(s => {
+                        const g = DB.Grades.find(gr => s.Marks >= gr.Min_Mark && s.Marks <= gr.Max_Mark);
+                        if (g) {
+                            report.push({
+                                Name: g.Grade >= 8 ? s.Name : 'NULL',
+                                Grade: g.Grade,
+                                Marks: s.Marks,
+                                _rawName: s.Name
+                            });
+                        }
+                    });
+                    report.sort((a, b) => {
+                        if (b.Grade !== a.Grade) return b.Grade - a.Grade;
+                        if (a.Grade >= 8) return a._rawName.localeCompare(b._rawName);
+                        return a.Marks - b.Marks;
+                    });
+                    rows = report.map(r => ({ Name: r.Name, Grade: r.Grade, Marks: r.Marks }));
+                    planSteps = PRESETS.the_report.plan;
+                    algebraText = PRESETS.the_report.algebra;
+                } else if (lowerSql.includes('sum(c.population)') || (lowerSql.includes('sum') && lowerSql.includes('asia'))) {
+                    // Population Census
+                    let sum = 0;
+                    DB.CITY.forEach(c => {
+                        const co = DB.COUNTRY.find(cnt => cnt.CODE === c.COUNTRYCODE);
+                        if (co && co.CONTINENT === 'Asia') sum += c.POPULATION;
+                    });
+                    rows = [{ 'SUM(POPULATION)': sum }];
+                    planSteps = PRESETS.asian_pop.plan;
+                    algebraText = PRESETS.asian_pop.algebra;
+                } else if (lowerSql.includes('floor(avg') || (lowerSql.includes('group by') && lowerSql.includes('continent'))) {
+                    // Average Population of Each Continent
+                    const groups = {};
+                    DB.CITY.forEach(c => {
+                        const co = DB.COUNTRY.find(cnt => cnt.CODE === c.COUNTRYCODE);
+                        if (co) {
+                            if (!groups[co.CONTINENT]) groups[co.CONTINENT] = [];
+                            groups[co.CONTINENT].push(c.POPULATION);
+                        }
+                    });
+                    rows = Object.keys(groups).map(cont => {
+                        const avg = groups[cont].reduce((a, b) => a + b, 0) / groups[cont].length;
+                        return { Continent: cont, 'FLOOR(AVG(POPULATION))': Math.floor(avg) };
+                    });
+                    planSteps = PRESETS.avg_pop_continent.plan;
+                    algebraText = PRESETS.avg_pop_continent.algebra;
+                } else if (lowerSql.includes('120000')) {
+                    // Revising Select II
+                    rows = DB.CITY.filter(c => c.COUNTRYCODE === 'USA' && c.POPULATION > 120000).map(c => ({ NAME: c.NAME, POPULATION: c.POPULATION }));
+                    planSteps = PRESETS.revising_select_2.plan;
+                    algebraText = PRESETS.revising_select_2.algebra;
+                } else if (lowerSql.includes('select *') && lowerSql.includes('jpn')) {
+                    // Japanese Cities Attributes
+                    rows = DB.CITY.filter(c => c.COUNTRYCODE === 'JPN');
+                    planSteps = PRESETS.japanese_attr.plan;
+                    algebraText = PRESETS.japanese_attr.algebra;
+                } else if (lowerSql.includes('city') && lowerSql.includes('country') && (lowerSql.includes('join') || lowerSql.includes(','))) {
                     // African cities join
                     const joined = [];
                     DB.CITY.forEach(c => {
@@ -1524,55 +2119,533 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
             }
         }
 
-        // Lightbox Functions
-        function openLightbox(src, title) {
-            const modal = document.getElementById('lightbox-modal');
-            const img = document.getElementById('lightbox-img');
-            const titleEl = document.getElementById('lightbox-title');
-            img.src = src;
-            img.style.transform = 'scale(1)';
-            titleEl.innerText = title;
-            modal.classList.remove('hidden');
+        // ==========================================
+        // BABYLON.JS 3D RELATIONAL SLICER ENGINE
+        // ==========================================
+        let bEngine = null;
+        let bScene = null;
+        let bCamera = null;
+        let relationBlocks = [];
+        let joinTableBlocks = [];
+
+        function initBabylonRelationalSlicer() {
+            const canvas = document.getElementById('babylon-canvas');
+            if (!canvas || typeof BABYLON === 'undefined') return;
+
+            if (BABYLON.Logger) {
+                BABYLON.Logger.Log = function() {};
+                BABYLON.Logger.LogLevels = BABYLON.Logger.WarningLogLevel;
+            }
+
+            bEngine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+            bScene = new BABYLON.Scene(bEngine);
+            bScene.clearColor = new BABYLON.Color4(0.027, 0.043, 0.078, 1.0); // Apple dark background #070b14
+
+            // ArcRotate Camera with Apple-like smooth inertia
+            bCamera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2.8, Math.PI / 2.7, 13, new BABYLON.Vector3(0, 0, 0), bScene);
+            bCamera.attachControl(canvas, true);
+            bCamera.wheelPrecision = 40;
+            bCamera.lowerRadiusLimit = 7;
+            bCamera.upperRadiusLimit = 22;
+            bCamera.inertia = 0.85;
+
+            // Soft Apple Directional & Ambient Lighting
+            const hemiLight = new BABYLON.HemisphericLight("Hemi", new BABYLON.Vector3(0, 1, 0), bScene);
+            hemiLight.intensity = 0.75;
+            hemiLight.groundColor = new BABYLON.Color3(0.08, 0.12, 0.18);
+
+            const dirLight = new BABYLON.DirectionalLight("Dir", new BABYLON.Vector3(-1, -2, -1), bScene);
+            dirLight.position = new BABYLON.Vector3(10, 20, 10);
+            dirLight.intensity = 0.85;
+
+            // Build Relation Matrix (4 rows x 4 columns of frosted glass tuple blocks)
+            createRelationMatrix();
+
+            // Run Render Loop
+            bEngine.runRenderLoop(() => {
+                if (bScene) bScene.render();
+            });
+
+            window.addEventListener('resize', () => {
+                if (bEngine) bEngine.resize();
+            });
         }
 
-        function closeLightbox() {
-            document.getElementById('lightbox-modal').classList.add('hidden');
-        }
+        function createRelationMatrix() {
+            relationBlocks = [];
+            joinTableBlocks = [];
 
-        function toggleZoom(img) {
-            if (img.style.transform === 'scale(1.75)') {
-                img.style.transform = 'scale(1)';
-                img.classList.remove('cursor-zoom-out');
-                img.classList.add('cursor-zoom-in');
-            } else {
-                img.style.transform = 'scale(1.75)';
-                img.classList.remove('cursor-zoom-in');
-                img.classList.add('cursor-zoom-out');
+            // Primary Table (Matrix of 4 rows x 4 cols)
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const box = BABYLON.MeshBuilder.CreateBox(`block_${r}_${c}`, { width: 1.1, height: 0.35, depth: 1.1 }, bScene);
+                    box.position.x = (c - 1.5) * 1.35;
+                    box.position.y = (1.5 - r) * 0.65;
+                    box.position.z = 0;
+
+                    // Frosted Glass PBR Material
+                    const pbr = new BABYLON.PBRMaterial(`mat_${r}_${c}`, bScene);
+                    pbr.metallic = 0.15;
+                    pbr.roughness = 0.25;
+                    pbr.alpha = 0.88;
+                    pbr.albedoColor = new BABYLON.Color3(0.12, 0.22, 0.38); // Apple slate-blue
+                    pbr.emissiveColor = new BABYLON.Color3(0.02, 0.05, 0.12);
+                    box.material = pbr;
+
+                    box._origPos = box.position.clone();
+                    box._row = r;
+                    box._col = c;
+                    relationBlocks.push(box);
+                }
+            }
+
+            // Secondary Table for Natural Join Demo (offset to the right)
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 2; c++) {
+                    const box = BABYLON.MeshBuilder.CreateBox(`join_block_${r}_${c}`, { width: 1.1, height: 0.35, depth: 1.1 }, bScene);
+                    box.position.x = 4.2 + (c * 1.35);
+                    box.position.y = (1.5 - r) * 0.65;
+                    box.position.z = 0;
+                    box.setEnabled(false); // Hidden until JOIN triggered
+
+                    const pbr = new BABYLON.PBRMaterial(`join_mat_${r}_${c}`, bScene);
+                    pbr.metallic = 0.15;
+                    pbr.roughness = 0.25;
+                    pbr.alpha = 0.88;
+                    pbr.albedoColor = new BABYLON.Color3(0.1, 0.35, 0.25); // Emerald-teal
+                    pbr.emissiveColor = new BABYLON.Color3(0.01, 0.08, 0.05);
+                    box.material = pbr;
+
+                    box._origPos = box.position.clone();
+                    box._row = r;
+                    box._col = c;
+                    joinTableBlocks.push(box);
+                }
             }
         }
 
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeLightbox();
-        });
+        // Helper: Apple-like Smooth Non-Drifting Animation with CONSTANT Loop Mode
+        function animMeshProp(mesh, prop, toVal, frames = 22) {
+            if (!mesh || !bScene) return;
+            const ease = new BABYLON.CubicEase();
+            ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
+            let fromVal = mesh[prop];
+            if (prop.startsWith('position.')) {
+                fromVal = mesh.position[prop.split('.')[1]];
+            }
+            BABYLON.Animation.CreateAndStartAnimation(
+                mesh.name + "_" + prop.replace('.', '_'),
+                mesh,
+                prop,
+                60,
+                frames,
+                fromVal,
+                toVal,
+                BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
+                ease
+            );
+        }
 
-        // Quiz Logic
-        const quizAnswers = { 1: 'B', 2: 'C', 3: 'A', 4: 'B' };
+        function set3DMode(mode) {
+            document.querySelectorAll('.b3d-btn').forEach(b => b.classList.remove('bg-cyan-950', 'border-cyan-500', 'text-white'));
+            const activeBtn = document.getElementById(`btn-3d-${mode}`);
+            if (activeBtn) activeBtn.classList.add('bg-cyan-950', 'border-cyan-500', 'text-white');
+
+            const hudOp = document.getElementById('hud-op-name');
+            const hudDesc = document.getElementById('hud-desc');
+            const hudSql = document.getElementById('hud-sql');
+
+            // Stop any ongoing animations to prevent drift or race conditions
+            relationBlocks.forEach(b => bScene.stopAnimation(b));
+            joinTableBlocks.forEach(b => bScene.stopAnimation(b));
+
+            if (mode === 'select') {
+                hudOp.innerHTML = "$\\sigma$ Selection (Row Slicing)";
+                hudDesc.innerHTML = "Horizontal plane slicing: Rows satisfying condition (e.g. <code>Rows 1 &amp; 3</code>) pull forward in glowing cyan. Non-matching tuples fade back.";
+                hudSql.innerHTML = "SQL Equivalent: <span class='text-rose-400 font-bold'>WHERE</span> condition";
+
+                joinTableBlocks.forEach(b => {
+                    b.setEnabled(false);
+                    b._activeJoin = false;
+                });
+
+                relationBlocks.forEach(b => {
+                    const isMatch = (b._row === 0 || b._row === 2);
+                    animMeshProp(b, "position.x", b._origPos.x);
+                    animMeshProp(b, "position.y", b._origPos.y);
+                    animMeshProp(b, "position.z", isMatch ? 1.4 : -0.6);
+                    b.material.albedoColor = isMatch ? new BABYLON.Color3(0.05, 0.75, 0.95) : new BABYLON.Color3(0.08, 0.12, 0.18);
+                    b.material.alpha = isMatch ? 0.95 : 0.25;
+                });
+            } else if (mode === 'project') {
+                hudOp.innerHTML = "$\\pi$ Projection (Column Slicing)";
+                hudDesc.innerHTML = "Vertical column extraction: Slices out targeted attributes (e.g. <code>Col 1 &amp; Col 2</code>), discarding non-projected attributes into the background.";
+                hudSql.innerHTML = "SQL Equivalent: <span class='text-rose-400 font-bold'>SELECT</span> attribute1, attribute2";
+
+                joinTableBlocks.forEach(b => {
+                    b.setEnabled(false);
+                    b._activeJoin = false;
+                });
+
+                relationBlocks.forEach(b => {
+                    const isCol = (b._col === 0 || b._col === 1);
+                    animMeshProp(b, "position.x", b._origPos.x);
+                    animMeshProp(b, "position.y", b._origPos.y);
+                    animMeshProp(b, "position.z", isCol ? 1.4 : -0.8);
+                    b.material.albedoColor = isCol ? new BABYLON.Color3(0.2, 0.55, 0.95) : new BABYLON.Color3(0.08, 0.12, 0.18);
+                    b.material.alpha = isCol ? 0.95 : 0.2;
+                });
+            } else if (mode === 'join') {
+                hudOp.innerHTML = "$\\bowtie$ Natural Relational Join";
+                hudDesc.innerHTML = "Relational docking: Two distinct relations translate together in 3D space, fusing along matching key columns to produce wider joined tuples.";
+                hudSql.innerHTML = "SQL Equivalent: <span class='text-rose-400 font-bold'>JOIN</span> table2 <span class='text-rose-400 font-bold'>ON</span> table1.key = table2.key";
+
+                // Primary table translates slightly to the left
+                relationBlocks.forEach(b => {
+                    animMeshProp(b, "position.x", b._origPos.x - 1.2, 25);
+                    animMeshProp(b, "position.y", b._origPos.y, 25);
+                    animMeshProp(b, "position.z", 0, 25);
+                    b.material.albedoColor = new BABYLON.Color3(0.12, 0.35, 0.65);
+                    b.material.alpha = 0.92;
+                });
+
+                // Secondary table translates from right to dock seamlessly
+                joinTableBlocks.forEach(b => {
+                    b.setEnabled(true);
+                    if (!b._activeJoin) {
+                        b.position.x = 4.2 + (b._col * 1.35);
+                        b.position.y = b._origPos.y;
+                        b.position.z = 0;
+                        b._activeJoin = true;
+                    }
+                    const targetX = 2.175 + (b._col * 1.35);
+                    animMeshProp(b, "position.x", targetX, 25);
+                    animMeshProp(b, "position.y", b._origPos.y, 25);
+                    animMeshProp(b, "position.z", 0, 25);
+                    b.material.albedoColor = new BABYLON.Color3(0.1, 0.65, 0.45);
+                    b.material.alpha = 0.92;
+                });
+            } else if (mode === 'aggregate') {
+                hudOp.innerHTML = "$\\gamma$ Relational Aggregation (Group Collapse)";
+                hudDesc.innerHTML = "Group By Consolidation: Multiple individual row tuples collapse vertically along the Y-axis into single consolidated summary metrics.";
+                hudSql.innerHTML = "SQL Equivalent: <span class='text-rose-400 font-bold'>GROUP BY</span> col, <span class='text-rose-400 font-bold'>AVG()</span>, <span class='text-rose-400 font-bold'>SUM()</span>";
+
+                joinTableBlocks.forEach(b => {
+                    b.setEnabled(false);
+                    b._activeJoin = false;
+                });
+
+                relationBlocks.forEach(b => {
+                    animMeshProp(b, "position.x", b._origPos.x, 25);
+                    // Compact vertical consolidation stack without overlapping clipping
+                    animMeshProp(b, "position.y", (b._row - 1.5) * 0.12, 25);
+                    animMeshProp(b, "position.z", 0.6, 25);
+                    b.material.albedoColor = new BABYLON.Color3(0.95, 0.62, 0.15);
+                    b.material.alpha = 0.95;
+                });
+            }
+
+            if (window.MathJax) MathJax.typesetPromise([hudOp]);
+        }
+
+        function reset3DScene() {
+            document.querySelectorAll('.b3d-btn').forEach(b => b.classList.remove('bg-cyan-950', 'border-cyan-500', 'text-white'));
+            const hudOp = document.getElementById('hud-op-name');
+            const hudDesc = document.getElementById('hud-desc');
+            const hudSql = document.getElementById('hud-sql');
+
+            hudOp.innerHTML = "Relational Matrix (Idle)";
+            hudDesc.innerHTML = "Apple-aesthetic frosted glass tuple matrix. Select an algebraic operator to visually slice, project, join, or aggregate relational block structures in real time.";
+            hudSql.innerHTML = "SQL Equivalent: Standard normalized base table on disk";
+
+            // Stop animations on all blocks
+            relationBlocks.forEach(b => bScene.stopAnimation(b));
+            joinTableBlocks.forEach(b => {
+                bScene.stopAnimation(b);
+                b.setEnabled(false);
+                b._activeJoin = false;
+            });
+
+            // Smoothly animate relation blocks back to initial positions
+            relationBlocks.forEach(b => {
+                animMeshProp(b, "position.x", b._origPos.x, 20);
+                animMeshProp(b, "position.y", b._origPos.y, 20);
+                animMeshProp(b, "position.z", b._origPos.z, 20);
+                b.material.albedoColor = new BABYLON.Color3(0.12, 0.22, 0.38);
+                b.material.alpha = 0.88;
+            });
+
+            // Smoothly reset camera back to initial perspective
+            if (bCamera && bScene) {
+                bScene.stopAnimation(bCamera);
+                const ease = new BABYLON.CubicEase();
+                ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEOUT);
+                BABYLON.Animation.CreateAndStartAnimation("camAlpha", bCamera, "alpha", 60, 25, bCamera.alpha, -Math.PI / 2.8, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+                BABYLON.Animation.CreateAndStartAnimation("camBeta", bCamera, "beta", 60, 25, bCamera.beta, Math.PI / 2.7, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+                BABYLON.Animation.CreateAndStartAnimation("camRadius", bCamera, "radius", 60, 25, bCamera.radius, 13, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+                BABYLON.Animation.CreateAndStartAnimation("camTarX", bCamera, "target.x", 60, 25, bCamera.target.x, 0, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+                BABYLON.Animation.CreateAndStartAnimation("camTarY", bCamera, "target.y", 60, 25, bCamera.target.y, 0, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+                BABYLON.Animation.CreateAndStartAnimation("camTarZ", bCamera, "target.z", 60, 25, bCamera.target.z, 0, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, ease);
+            }
+
+            if (window.MathJax) MathJax.typesetPromise([hudOp]);
+        }
+
+        // ==========================================
+        // APPLE GLASS INTERACTIVE TOOLTIP HOVER ENGINE
+        // ==========================================
+        const TOOLTIP_DATA = {
+            select: {
+                sym: "σ (Sigma)",
+                tag: "Unary Operator",
+                title: "Selection Operator",
+                body: "Filters relation tuples horizontally, retaining only rows where the Boolean condition evaluates to TRUE.",
+                sql: "WHERE predicate"
+            },
+            project: {
+                sym: "π (Pi)",
+                tag: "Unary Operator",
+                title: "Projection Operator",
+                body: "Extracts vertical attribute columns, dropping non-specified attributes. In mathematical set theory, duplicate rows are eliminated.",
+                sql: "SELECT col1, col2"
+            },
+            join: {
+                sym: "⋈ (Bowtie)",
+                tag: "Binary Operator",
+                title: "Natural Relational Join",
+                body: "Combines tuples from two relations having identical values across all identically-named attributes, projecting shared keys once.",
+                sql: "JOIN table2 ON t1.id = t2.id"
+            },
+            aggregate: {
+                sym: "γ (Gamma)",
+                tag: "Aggregate Operator",
+                title: "Aggregation & Grouping",
+                body: "Clusters tuples by grouping attributes and applies scalar summary accumulators (SUM, AVG, COUNT, MIN, MAX).",
+                sql: "GROUP BY col, AGG(val)"
+            },
+            sort: {
+                sym: "τ (Tau)",
+                tag: "Order Operator",
+                title: "Sorting Operator",
+                body: "Imposes a strict deterministic ordering over result tuples based on primary and secondary key sequences.",
+                sql: "ORDER BY col1 ASC, col2 DESC"
+            },
+            dedup: {
+                sym: "δ (Delta)",
+                tag: "Set Operator",
+                title: "Deduplication Operator",
+                body: "Converts a multiset (bag) into a pure mathematical set by purging redundant identical records via sorting or hashing.",
+                sql: "SELECT DISTINCT"
+            },
+            rename: {
+                sym: "ρ (Rho)",
+                tag: "Unary Operator",
+                title: "Rename Operator",
+                body: "Assigns temporary aliases to relations or individual attributes, enabling self-joins on identical tables.",
+                sql: "FROM Table AS alias"
+            },
+            // SQL Statements
+            'select': {
+                sym: "SELECT",
+                tag: "SQL Clause",
+                title: "Relational Projection",
+                body: "Specifies which attributes/columns to project into the final output relation.",
+                sql: "SELECT attribute_list"
+            },
+            'from': {
+                sym: "FROM",
+                tag: "SQL Clause",
+                title: "Cartesian Base Product",
+                body: "Declares source relations to be queried and establishes working Cartesian coordinate product.",
+                sql: "FROM relation_name"
+            },
+            'where': {
+                sym: "WHERE",
+                tag: "SQL Clause",
+                title: "Pre-Aggregation Filter",
+                body: "Evaluates predicate filters on individual rows *before* grouping occurs.",
+                sql: "WHERE boolean_expression"
+            },
+            'join': {
+                sym: "JOIN",
+                tag: "Relational Linking",
+                title: "Relational Equi-Join",
+                body: "Links tuples from two tables satisfying the referential foreign key condition.",
+                sql: "JOIN table ON t1.fk = t2.pk"
+            },
+            'between': {
+                sym: "BETWEEN",
+                tag: "Range Operator",
+                title: "Inclusive Boundary Filter",
+                body: "Evaluates whether an expression falls within an inclusive continuous range [low, high].",
+                sql: "col BETWEEN min AND max"
+            },
+            'group by': {
+                sym: "GROUP BY",
+                tag: "Aggregation",
+                title: "Group Consolidation",
+                body: "Partitions the relation into disjoint equivalence classes sharing identical group keys.",
+                sql: "GROUP BY column_list"
+            },
+            'distinct': {
+                sym: "DISTINCT",
+                tag: "Set Theory",
+                title: "Duplicate Suppression",
+                body: "Enforces relational set semantics by hashing/sorting to prune duplicate tuples.",
+                sql: "SELECT DISTINCT column"
+            },
+            'floor': {
+                sym: "FLOOR()",
+                tag: "Scalar Math",
+                title: "Mathematical Round Down",
+                body: "Truncates fractional decimal values downward to the nearest whole integer (e.g. FLOOR(124.9) = 124).",
+                sql: "FLOOR(numeric_expression)"
+            },
+            'case': {
+                sym: "CASE",
+                tag: "Condition",
+                title: "Conditional Evaluation",
+                body: "ANSI SQL standard scalar branching logic: evaluates conditions sequentially and returns matched THEN clause.",
+                sql: "CASE WHEN cond THEN a ELSE b END"
+            },
+            'substr': {
+                sym: "SUBSTR()",
+                tag: "String Function",
+                title: "Substring Extraction",
+                body: "Extracts character sequence. In Oracle, negative start index counts backward from string end (e.g. SUBSTR(str, -3)).",
+                sql: "SUBSTR(string, start, length)"
+            },
+            'relation': {
+                sym: "Relation",
+                tag: "DBMS Concept",
+                title: "Relational Table",
+                body: "A mathematical set of distinct tuples adhering to a shared schema definition.",
+                sql: "CREATE TABLE name (...)"
+            }
+        };
+
+        function initHoverTooltipEngine() {
+            const tooltip = document.getElementById('apple-tooltip');
+            const ttSym = document.getElementById('tt-sym');
+            const ttTag = document.getElementById('tt-tag');
+            const ttTitle = document.getElementById('tt-title');
+            const ttBody = document.getElementById('tt-body');
+            const ttSql = document.getElementById('tt-sql');
+
+            function showTooltip(data, e) {
+                ttSym.innerHTML = data.sym;
+                ttTag.innerText = data.tag;
+                ttTitle.innerText = data.title;
+                ttBody.innerText = data.body;
+                ttSql.innerHTML = `SQL: <span class="text-rose-400 font-bold">${data.sql}</span>`;
+
+                const pad = 15;
+                let x = e.clientX + pad;
+                let y = e.clientY + pad;
+
+                if (x + 330 > window.innerWidth) x = e.clientX - 330;
+                if (y + 160 > window.innerHeight) y = e.clientY - 160;
+
+                tooltip.style.left = `${Math.max(10, x)}px`;
+                tooltip.style.top = `${Math.max(10, y)}px`;
+                tooltip.classList.add('show');
+            }
+
+            function hideTooltip() {
+                tooltip.classList.remove('show');
+            }
+
+            // Bind Relational Algebra hover elements (.ra-op)
+            document.querySelectorAll('.ra-op').forEach(el => {
+                const opKey = el.getAttribute('data-op');
+                if (TOOLTIP_DATA[opKey]) {
+                    el.addEventListener('mouseenter', e => showTooltip(TOOLTIP_DATA[opKey], e));
+                    el.addEventListener('mousemove', e => {
+                        let x = e.clientX + 15;
+                        let y = e.clientY + 15;
+                        if (x + 330 > window.innerWidth) x = e.clientX - 330;
+                        if (y + 160 > window.innerHeight) y = e.clientY - 160;
+                        tooltip.style.left = `${Math.max(10, x)}px`;
+                        tooltip.style.top = `${Math.max(10, y)}px`;
+                    });
+                    el.addEventListener('mouseleave', hideTooltip);
+                }
+            });
+
+            // Bind SQL Terms (.sql-term)
+            document.querySelectorAll('.sql-term').forEach(el => {
+                const termKey = el.getAttribute('data-term')?.toLowerCase() || el.innerText.trim().toLowerCase();
+                if (TOOLTIP_DATA[termKey]) {
+                    el.addEventListener('mouseenter', e => showTooltip(TOOLTIP_DATA[termKey], e));
+                    el.addEventListener('mousemove', e => {
+                        let x = e.clientX + 15;
+                        let y = e.clientY + 15;
+                        if (x + 330 > window.innerWidth) x = e.clientX - 330;
+                        if (y + 160 > window.innerHeight) y = e.clientY - 160;
+                        tooltip.style.left = `${Math.max(10, x)}px`;
+                        tooltip.style.top = `${Math.max(10, y)}px`;
+                    });
+                    el.addEventListener('mouseleave', hideTooltip);
+                }
+            });
+        }
+
+        // ==========================================
+        // 12-QUESTION INTERACTIVE CERTIFICATION QUIZ
+        // ==========================================
+        const quizAnswers = { 
+            1: 'B', 2: 'C', 3: 'A', 4: 'B', 
+            5: 'B', 6: 'A', 7: 'A', 8: 'A', 
+            9: 'A', 10: 'A', 11: 'A', 12: 'A' 
+        };
         const quizExplanations = {
             1: {
-                correct: 'Correct! Both CITY and COUNTRY declare a column named NAME. Omitting the table prefix causes ORA-00918: column ambiguously defined.',
-                wrong: 'Incorrect. Databases do not guess which table you intended. It throws a fatal ambiguous column definition error.'
+                correct: 'Correct! Both CITY and COUNTRY declare column NAME. Omitting prefix raises ORA-00918: column ambiguously defined.',
+                wrong: 'Incorrect. Databases do not guess which table was intended; an ambiguous column error halts compilation.'
             },
             2: {
-                correct: 'Correct! The execution sequence is FROM / JOIN -> WHERE -> GROUP BY -> HAVING -> SELECT -> DISTINCT -> ORDER BY -> LIMIT.',
-                wrong: 'Incorrect. FROM / JOIN executes first to establish the cartesian product / working relations.'
+                correct: 'Correct! Execution sequence: FROM/JOIN -> WHERE -> GROUP BY -> HAVING -> SELECT -> DISTINCT -> ORDER BY -> LIMIT.',
+                wrong: 'Incorrect. FROM/JOIN evaluates first to establish relational cross-product.'
             },
             3: {
-                correct: 'Correct! Identifying duplicate tuples requires hashing every seen key into a hash set or sorting the entire tuple stream.',
-                wrong: 'Incorrect. DISTINCT requires a Sort Unique or Hash Aggregate deduplication operator.'
+                correct: 'Correct! Deduplication requires a Sort Unique or Hash Aggregate operator to identify identical tuples.',
+                wrong: 'Incorrect. DISTINCT requires a hashing or sorting pass across tuple records.'
             },
             4: {
                 correct: 'Correct! Oracle does not support RIGHT(). It uses SUBSTR(Name, -3) with negative start indices to count from string end.',
-                wrong: 'Incorrect. Oracle SQL does not possess a RIGHT() function; SUBSTR(string, -N) is the canonical function.'
+                wrong: 'Incorrect. Oracle SQL does not possess a RIGHT() function; SUBSTR(col, -N) is standard.'
+            },
+            5: {
+                correct: 'Correct! Matching marks into grade brackets uses a Non-Equi Range Join with BETWEEN min AND max.',
+                wrong: 'Incorrect. An equi-join only checks exact equality (=), which fails on continuous intervals.'
+            },
+            6: {
+                correct: 'Correct! Packages is joined twice with aliases (sp = student package, fp = friend package) to compare two rows from the same table.',
+                wrong: 'Incorrect. A single table instance cannot simultaneously represent two different people\'s salaries.'
+            },
+            7: {
+                correct: 'Correct! FLOOR(124.8) strictly truncates downward to 124; ROUND(124.8) arithmetic rounds to 125.',
+                wrong: 'Incorrect. FLOOR always truncates toward negative infinity; ROUND rounds to closest integer.'
+            },
+            8: {
+                correct: 'Correct! Under Three-Valued Logic, (x != NULL) evaluates to UNKNOWN. An AND-chain with UNKNOWN never evaluates to TRUE.',
+                wrong: 'Incorrect. The query does not crash; it simply returns an empty result set due to UNKNOWN evaluation.'
+            },
+            9: {
+                correct: 'Correct! WHERE evaluates individual rows before clusters are formed. Aggregates are only permitted in HAVING or SELECT.',
+                wrong: 'Incorrect. WHERE filters rows before grouping; it cannot contain aggregate accumulators.'
+            },
+            10: {
+                correct: 'Correct! UNION ALL performs an O(1) concatenation without sorting, preserving distinct orders placed at identical timestamps.',
+                wrong: 'Incorrect. UNION ALL does not hash or sort for uniqueness, making it significantly faster.'
+            },
+            11: {
+                correct: 'Correct! CTAS copies column definitions and NOT NULL constraints, but drops Primary Keys, Foreign Keys, and Default triggers.',
+                wrong: 'Incorrect. CTAS intentionally avoids copying foreign and primary keys to avoid duplicate key violations.'
+            },
+            12: {
+                correct: 'Correct! Non-SARGable predicate: Wrapping indexed columns in functions (SUBSTR) invalidates direct B-Tree root-to-leaf searches.',
+                wrong: 'Incorrect. Function calls in WHERE clauses force a Full Table Scan unless a function-based index exists.'
             }
         };
 
@@ -1585,10 +2658,10 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
 
             const isCorrect = selected === quizAnswers[qNum];
             if (isCorrect) currentScore++;
-            document.getElementById('quiz-score-badge').innerText = `Score: ${currentScore} / 4`;
+            document.getElementById('quiz-score-badge').innerText = `Score: ${currentScore} / 12`;
 
             const feedbackEl = document.getElementById(`q${qNum}-feedback`);
-            feedbackEl.classList.remove('hidden');
+            if (feedbackEl) feedbackEl.classList.remove('hidden');
 
             const btns = document.querySelectorAll(`.q${qNum}-opt`);
             btns.forEach(btn => {
@@ -1599,12 +2672,14 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
                 }
             });
 
-            if (isCorrect) {
-                feedbackEl.className = 'p-2.5 rounded font-mono text-[11px] bg-emerald-950/40 border border-emerald-800 text-emerald-300';
-                feedbackEl.innerText = quizExplanations[qNum].correct;
-            } else {
-                feedbackEl.className = 'p-2.5 rounded font-mono text-[11px] bg-rose-950/40 border border-rose-800 text-rose-300';
-                feedbackEl.innerText = quizExplanations[qNum].wrong;
+            if (feedbackEl) {
+                if (isCorrect) {
+                    feedbackEl.className = 'p-2.5 rounded font-mono text-[11px] bg-emerald-950/40 border border-emerald-800 text-emerald-300';
+                    feedbackEl.innerText = quizExplanations[qNum].correct;
+                } else {
+                    feedbackEl.className = 'p-2.5 rounded font-mono text-[11px] bg-rose-950/40 border border-rose-800 text-rose-300';
+                    feedbackEl.innerText = quizExplanations[qNum].wrong;
+                }
             }
         }
 
@@ -1623,9 +2698,11 @@ WHERE COUNTRY.CONTINENT = 'Africa';</textarea>
             });
         });
 
-        // Initialize with default query on load
+        // Initialize Everything on Load
         window.addEventListener('DOMContentLoaded', () => {
             runQuery();
+            initBabylonRelationalSlicer();
+            initHoverTooltipEngine();
         });
     </script>
 </body>
