@@ -1,0 +1,1738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DBMS Assignment — Systems, ER, Algebra, Normalization &amp; Transactions</title>
+
+<!-- MathJax 3 for Crisp Mathematical Typesetting -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+:root{--bg:#f5f5f7;--tx:#1d1d1f;--tx2:#6e6e73;--ac:#0071e3;--card:rgba(255,255,255,.66);--bd:rgba(0,0,0,.06);--code:rgba(0,0,0,.045);--sh:0 8px 40px rgba(0,0,0,.06);--ln:#86868b;--fill:rgba(0,113,227,.08);--sf:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#0b0b0d;--tx:#f5f5f7;--tx2:#a1a1a6;--ac:#2997ff;--card:rgba(30,30,34,.62);--bd:rgba(255,255,255,.08);--code:rgba(255,255,255,.07);--sh:0 8px 40px rgba(0,0,0,.4);--ln:#8e8e93;--fill:rgba(41,151,255,.14);--sf:#2c2c30}}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--tx);font:17px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;outline:none;touch-action:none;pointer-events:none}
+nav{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:3px;padding:6px;border-radius:99px;background:var(--card);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--bd);box-shadow:var(--sh);max-width:96vw;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav a{color:var(--tx2);text-decoration:none;font-size:13px;font-weight:500;min-width:32px;text-align:center;padding:5px 10px;border-radius:99px;transition:.2s;white-space:nowrap}
+nav a:hover{color:var(--tx)}
+nav a.on{background:var(--ac);color:#fff}
+nav a.nav-hub{color:var(--ac);font-weight:600;padding:5px 12px;min-width:auto;display:inline-flex;align-items:center;gap:4px}
+nav a.nav-lab{color:#30d158;font-weight:600;padding:5px 12px;min-width:auto;display:inline-flex;align-items:center;gap:4px}
+nav a.nav-dbms{color:var(--tx2);font-weight:500;padding:5px 12px;min-width:auto}
+.nav-sep{width:1px;height:16px;background:var(--bd);margin:auto 4px;flex:none}
+
+/* Wide Responsive Container for Desktop, Mac & Mobile iOS */
+main{position:relative;z-index:1;max-width:1380px;width:95%;margin:0 auto;padding:0 clamp(16px,3vw,36px) 120px}
+.hero{min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.hero h1{font-size:clamp(40px,7vw,84px);font-weight:700;letter-spacing:-.035em;line-height:1.04}
+.hero p{margin-top:16px;color:var(--tx2);font-size:clamp(17px,2.2vw,23px)}
+.hero small{margin-top:40px;color:var(--tx2);font-size:13px;letter-spacing:.08em;text-transform:uppercase;animation:fl 2.6s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(6px);opacity:.5}}
+.q{margin:28px 0;padding:36px clamp(20px,3.5vw,44px);border-radius:28px;background:var(--card);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border:1px solid var(--bd);box-shadow:var(--sh);opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);scroll-margin-top:70px}
+.q.in{opacity:1;transform:none}
+.num{font-size:13px;font-weight:600;color:var(--ac);letter-spacing:.08em;text-transform:uppercase}
+h2{font-size:clamp(22px,3.2vw,30px);font-weight:650;letter-spacing:-.02em;line-height:1.25;margin:6px 0 20px}
+h3{font-size:18px;font-weight:620;margin:26px 0 10px}
+p{margin:10px 0;color:var(--tx)}
+.mut{color:var(--tx2);font-size:15px}
+ul,ol{padding-left:22px;margin:8px 0}li{margin:5px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top;min-width:120px}
+th{font-weight:600;color:var(--tx2);font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+pre,.m{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:14px}
+pre{background:var(--code);padding:16px 18px;border-radius:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:12px 0;line-height:1.6}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.88em;background:var(--code);padding:2px 7px;border-radius:7px}
+.chip{display:inline-block;background:var(--fill);color:var(--ac);padding:3px 11px;border-radius:99px;font-size:13px;font-weight:550;margin:2px 4px 2px 0}
+.ans{margin-top:16px;padding:16px 20px;border-radius:16px;background:var(--fill);font-weight:550;border-left:4px solid var(--ac)}
+
+/* Textbook Formula Container (MathJax Display) */
+.math-box{background:var(--code);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:16px;padding:18px 22px;margin:14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:0 4px 16px rgba(0,0,0,0.18)}
+.math-box .mjx-chtml{font-size:112% !important}
+
+/* Figures, Canvases & Mermaid */
+.fig{margin:18px 0;padding:14px;border-radius:22px;background:var(--code);overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--bd)}
+.fig svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.fig b.cap{display:block;text-align:center;font-weight:500;color:var(--tx2);font-size:13px;margin:4px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.fig pre.mermaid{background:none;padding:0;margin:0;text-align:center;font-family:inherit;font-size:14px;overflow:visible}
+.fig pre.mermaid svg{max-width:100%;height:auto}
+
+/* Mermaid Dark Mode Text & Contrast Invariant Fix */
+.fig pre.mermaid svg text, 
+.fig pre.mermaid svg .nodeLabel, 
+.fig pre.mermaid svg .label,
+.fig pre.mermaid svg .cluster-label,
+.fig pre.mermaid svg span,
+.fig pre.mermaid svg div {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+}
+.fig pre.mermaid svg .edgeLabel,
+.fig pre.mermaid svg .edgeLabel span {
+  color: #f5f5f7 !important;
+  fill: #f5f5f7 !important;
+  background-color: rgba(22,22,26,0.92) !important;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.fig pre.mermaid svg .edgePath path {
+  stroke: #86868b !important;
+  stroke-width: 2px !important;
+}
+
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;font-size:13px;color:var(--tx2);margin-top:10px}
+.leg b{color:var(--tx);font-weight:550}
+#tree3d{display:block;width:100%;height:420px;border-radius:16px;outline:none;touch-action:pan-y}
+.seg{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:5px;margin:12px auto 4px;width:max-content;max-width:100%;border-radius:99px;background:var(--code)}
+.seg button{all:unset;cursor:pointer;padding:6px 16px;border-radius:99px;font-size:14px;font-weight:500;color:var(--tx2);transition:.2s;touch-action:manipulation}
+.seg button.on{background:var(--ac);color:#fff}
+#t3cap{text-align:center;margin:6px 0 0;min-height:1.6em}
+.step{display:flex;gap:12px;margin:8px 0}.step i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;font:600 12px/24px sans-serif;text-align:center}
+footer{position:relative;z-index:1;text-align:center;color:var(--tx2);font-size:13px;padding:20px 0 60px}
+
+/* Apple Contextual Tooltip Capsule */
+#apple-tooltip{
+  position:fixed;
+  z-index:99999;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity 0.15s cubic-bezier(0.16,1,0.3,1),transform 0.15s cubic-bezier(0.16,1,0.3,1);
+  max-width:380px;
+  background:rgba(22,22,26,0.96);
+  backdrop-filter:saturate(180%) blur(22px);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);
+  border:1px solid rgba(255,255,255,0.15);
+  box-shadow:0 20px 50px rgba(0,0,0,0.9);
+  border-radius:12px;
+  padding:14px 16px;
+  color:#f5f5f7;
+  font-size:12.5px;
+  line-height:1.5;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,sans-serif;
+}
+#apple-tooltip.show{opacity:1;transform:translateY(0)}
+#apple-tooltip .tt-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.08)}
+#apple-tooltip .tt-title{font-size:13.5px;font-weight:700;color:#ffffff}
+#apple-tooltip .tt-cat{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:#2c2c2e;color:#2997ff;padding:2px 7px;border-radius:4px}
+#apple-tooltip .tt-rule{margin-top:6px;padding:6px 8px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-family:ui-monospace,"SF Mono",monospace;font-size:11.5px;color:#30d158}
+#apple-tooltip .tt-trap{margin-top:6px;font-size:11.5px;color:#ff9f0a}
+.tt-term{cursor:help;border-bottom:1px dotted var(--ac);font-weight:600;transition:color 0.15s}
+.tt-term:hover{color:var(--ac)}
+
+/* Mobile, Tablet & iOS Responsiveness */
+@media(max-width:768px){
+  nav{max-width:96vw;padding:4px;top:8px}
+  nav a{font-size:12px;padding:4px 7px;min-width:26px}
+  .q{padding:22px 16px;border-radius:20px;margin:18px 0}
+  .seg{flex-wrap:wrap;border-radius:18px}
+  .seg button{padding:5px 12px;font-size:12px}
+  table{font-size:13px}
+  th,td{padding:8px 10px}
+  .math-box{padding:12px 14px;font-size:14px}
+  #tree3d,#set3d,#er3d_q3,#er3d_q4,#serial3d{height:340px !important}
+}
+</style>
+</head>
+<body>
+
+<!-- Apple Contextual Tooltip Capsule -->
+<div id="apple-tooltip">
+  <div class="tt-header">
+    <span class="tt-title" id="tt-title">SELECT</span>
+    <span class="tt-cat" id="tt-cat">Relational Algebra</span>
+  </div>
+  <div id="tt-def" style="color:#d1d1d6;font-size:12px">Filters rows satisfying a predicate.</div>
+  <div id="tt-rule" class="tt-rule">Syntax: \sigma_{predicate}(Relation)</div>
+  <div id="tt-trap" class="tt-trap">Trap: Evaluates prior to projection and grouping.</div>
+</div>
+
+<canvas id="bg"></canvas>
+<nav id="nav">
+  <a href="../notes.html" class="nav-hub" style="color:#ffab00;" title="Jarvis Notes Hub">🏠 Jarvis Notes</a>
+  <a href="index.html" class="nav-hub" title="Assignments Hub">← Hub</a>
+  <a href="sem_lab.html" class="nav-lab" title="Semester Lab (Oracle XE &amp; APEX)">⚡ Lab</a>
+  <a href="../DBMS/index.html" class="nav-dbms" title="DBMS Master Hub">DBMS Hub</a>
+  <span class="nav-sep"></span>
+</nav>
+<main>
+<section class="hero">
+  <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:99px;background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--bd);font-size:12px;color:var(--tx2);margin-bottom:16px;">
+    <span style="color:var(--ac);font-weight:600">PCCEC504</span>
+    <span>·</span>
+    <span>15 Comprehensive Problems</span>
+    <span>·</span>
+    <span style="color:#30d158;font-weight:500">Curriculum Solved</span>
+  </div>
+  <h1>Database<br>Systems</h1>
+  <p>Assignment, solved — calmly.</p>
+  <small>Scroll</small>
+</section>
+
+<!-- Q1 -->
+<section class="q" id="q1"><div class="num">Question 1</div>
+<h2>Four significant differences between a file-processing system and a DBMS</h2>
+<table>
+<tr><th>Aspect</th><th>File-processing system</th><th>DBMS</th></tr>
+<tr><td><b>Redundancy &amp; consistency</b></td><td>Each application keeps its own files, so the same data is duplicated and copies drift apart (inconsistency).</td><td>Data is stored centrally; redundancy is controlled (e.g. via normalization) so one fact lives in one place.</td></tr>
+<tr><td><b>Data access &amp; isolation</b></td><td>Data is scattered in files of different formats; every new query needs a new application program.</td><td>Uniform data model and a query language (SQL) answer ad-hoc queries without writing new programs.</td></tr>
+<tr><td><b>Integrity &amp; atomicity</b></td><td>Constraints are buried in program code; a crash mid-update leaves the data half-changed.</td><td>Constraints are declared once (keys, checks, foreign keys); transactions are atomic with log-based recovery.</td></tr>
+<tr><td><b>Concurrency &amp; security</b></td><td>Simultaneous updates can overwrite each other; access control is all-or-nothing at file level.</td><td>Concurrency control (locking/MVCC) keeps results correct; fine-grained authorization per user, table or view.</td></tr>
+</table>
+<p class="mut">Bonus: a DBMS also gives <b>data independence</b> — the physical storage can change without rewriting applications.</p>
+</section>
+
+<!-- Q2 -->
+<section class="q" id="q2"><div class="num">Question 2</div>
+<h2>1:1, 1:M and M:N relationships with set diagrams</h2>
+<h3>One-to-one (1:1)</h3>
+<p>Each element of set A is related to at most one element of set B and vice versa. <span class="mut">Example: a Person holds one Passport.</span></p>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  subgraph A["Person"]
+    P1((P1))
+    P2((P2))
+    P3((P3))
+  end
+  subgraph B["Passport"]
+    X1((X1))
+    X2((X2))
+    X3((X3))
+  end
+  P1 --> X1
+  P2 --> X2
+  P3 --> X3
+</pre></div>
+<h3>One-to-many (1:M)</h3>
+<p>One element of A can relate to many elements of B, but each element of B relates to at most one element of A. <span class="mut">Example: a Department has many Employees.</span></p>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  subgraph A["Department"]
+    D1((D1))
+    D2((D2))
+  end
+  subgraph B["Employee"]
+    E1((E1))
+    E2((E2))
+    E3((E3))
+    E4((E4))
+  end
+  D1 --> E1
+  D1 --> E2
+  D2 --> E3
+  D2 --> E4
+</pre></div>
+<h3>Many-to-many (M:N)</h3>
+<p>Many elements of A relate to many elements of B and vice versa. <span class="mut">Example: Students enrol in many Courses; a Course has many Students.</span> Implemented with a junction table.</p>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  subgraph A["Student"]
+    S1((S1))
+    S2((S2))
+    S3((S3))
+  end
+  subgraph B["Course"]
+    C1((C1))
+    C2((C2))
+    C3((C3))
+  end
+  S1 --> C1
+  S1 --> C2
+  S2 --> C2
+  S2 --> C3
+  S3 --> C3
+  S3 --> C1
+</pre></div>
+<div id="set3d-wrap">
+<h3>Explore Cardinality Mappings in 3D</h3>
+<p class="mut">Drag to orbit. Toggle mapping modes to watch 3D set partitions and laser mapping vectors update.</p>
+<div class="fig">
+  <canvas id="set3d" style="display:block;width:100%;height:380px;border-radius:16px;outline:none;touch-action:pan-y"></canvas>
+  <div class="seg" id="seg-set3d">
+    <button class="on" data-m="11">1:1 (Person ↔ Passport)</button>
+    <button data-m="1m">1:M (Dept ↔ Employee)</button>
+    <button data-m="mn">M:N (Student ↔ Course)</button>
+  </div>
+  <p class="mut" id="set3d-cap" style="text-align:center;margin:6px 0 0;min-height:1.6em">1:1 Mapping: Every element of Set A maps to strictly at most one unique element of Set B.</p>
+</div>
+</div>
+</section>
+
+<!-- Q3 -->
+<section class="q" id="q3"><div class="num">Question 3</div>
+<h2>Online bookstore E-R diagram</h2>
+<h3>a. Entity sets and primary keys</h3>
+<table>
+<tr><th>Entity set</th><th>Attributes</th><th>Primary key</th></tr>
+<tr><td>author</td><td>name, address, URL</td><td><span class="chip">URL</span></td></tr>
+<tr><td>publisher</td><td>name, address, phone, URL</td><td><span class="chip">name</span></td></tr>
+<tr><td>book</td><td>ISBN, title, year, price</td><td><span class="chip">ISBN</span></td></tr>
+<tr><td>customer</td><td>email, name, address, phone</td><td><span class="chip">email</span></td></tr>
+<tr><td>shopping-basket</td><td>basketID</td><td><span class="chip">basketID</span></td></tr>
+<tr><td>warehouse</td><td>code, address, phone</td><td><span class="chip">code</span></td></tr>
+</table>
+<h3>b. Adding music cassettes and compact disks</h3>
+<p>The same music item can exist in two formats with different prices, so the item and its format are separated. <code>music_item</code> holds what is common to both formats; <code>music_format</code> is a <b>weak entity set</b> (partial key: <code>format</code>) that stores the format-specific <code>price</code>. It is specialised into <code>cassette</code> and <code>compact_disk</code>. Stocking is linked to the format, since each format is a physical product.</p>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef ent fill:#121e33,stroke:#2997ff,stroke-width:2px,color:#ffffff
+  classDef weak fill:#121e33,stroke:#2997ff,stroke-width:4px,color:#ffffff
+  classDef rel fill:#2a1b08,stroke:#ff9f0a,stroke-width:2px,color:#ffffff
+  classDef att fill:#1c1c1e,stroke:#8e8e93,stroke-width:1.5px,color:#ffffff
+  classDef isa fill:#221538,stroke:#bf5af2,stroke-width:2px,color:#ffffff
+
+  MI[music_item]:::ent
+  mid(["<u>music_id</u>"]):::att
+  title([title]):::att
+  artist([artist]):::att
+  MI --- mid
+  MI --- title
+  MI --- artist
+
+  HF{has_format}:::weak
+  MF[music_format]:::weak
+  MI ===|"1"| HF
+  HF ===|"N"| MF
+  fmt(["format<br/>(partial key)"]):::att
+  price([price]):::att
+  MF --- fmt
+  MF --- price
+
+  ISA{{ISA}}:::isa
+  CAS[cassette]:::ent
+  CD[compact_disk]:::ent
+  MF --- ISA
+  ISA --- CAS
+  ISA --- CD
+
+  ST{stocks}:::rel
+  WH[warehouse]:::ent
+  num([number]):::att
+  code(["<u>code</u>"]):::att
+  MF ---|"M"| ST
+  ST ---|"N"| WH
+  ST --- num
+  WH --- code
+</pre>
+<div class="leg"><span><b>Blue box</b> entity</span><span><b>Thick blue</b> weak entity</span><span><b>Orange diamond</b> relationship</span><span><b>Oval</b> attribute (underlined = key)</span><span><b>Purple hexagon</b> specialization</span><span><b>Thick line</b> total participation</span></div></div>
+<h3>c. Generalization for the shopping basket</h3>
+<p>Generalize <code>book</code>, <code>cassette</code> and <code>compact_disk</code> into a super-class <code>item</code> with common attributes (<code>itemID</code>, <code>title</code>, <code>price</code>). A basket now relates to <code>item</code>, so it may contain any combination of the three. The generalization is <b>disjoint</b> (an item is exactly one kind) and <b>total</b>.</p>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef ent fill:#121e33,stroke:#2997ff,stroke-width:2px,color:#ffffff
+  classDef rel fill:#2a1b08,stroke:#ff9f0a,stroke-width:2px,color:#ffffff
+  classDef att fill:#1c1c1e,stroke:#8e8e93,stroke-width:1.5px,color:#ffffff
+  classDef isa fill:#221538,stroke:#bf5af2,stroke-width:2px,color:#ffffff
+
+  SB[shopping_basket]:::ent
+  bid(["<u>basketID</u>"]):::att
+  SB --- bid
+  CT{contains}:::rel
+  num([number]):::att
+  SB ---|"M"| CT
+  CT ---|"N"| IT
+  CT --- num
+
+  IT[item]:::ent
+  iid(["<u>item_id</u>"]):::att
+  title([title]):::att
+  price([price]):::att
+  IT --- iid
+  IT --- title
+  IT --- price
+
+  ISA{{"ISA<br/>total, disjoint"}}:::isa
+  IT === ISA
+  BK[book]:::ent
+  CA[cassette]:::ent
+  CD[compact_disk]:::ent
+  ISA --- BK
+  ISA --- CA
+  ISA --- CD
+  isbn([ISBN]):::att
+  year([year]):::att
+  BK --- isbn
+  BK --- year
+</pre></div>
+<div id="er3d-wrap">
+<h3>Explore the Bookstore &amp; Music ER Model in 3D</h3>
+<p class="mut">Drag to orbit. Toggle presets to inspect weak entity binding, ISA specialization, and warehouse stock linkages.</p>
+<div class="fig">
+  <canvas id="er3d_q3" style="display:block;width:100%;height:400px;border-radius:16px;outline:none;touch-action:pan-y"></canvas>
+  <div class="seg" id="seg-er3d-q3">
+    <button class="on" data-m="all">Full Model</button>
+    <button data-m="weak">Weak Entity (has_format)</button>
+    <button data-m="isa">ISA Specialization</button>
+    <button data-m="basket">Shopping Basket</button>
+  </div>
+  <p class="mut" id="er3d-q3-cap" style="text-align:center;margin:6px 0 0;min-height:1.6em">Complete 3D ER Spatial Model: Blue boxes = Strong entities, Orange diamonds = Relationships, Purple prisms = ISA hierarchies.</p>
+</div>
+</div>
+</section>
+
+<!-- Q4 -->
+<section class="q" id="q4"><div class="num">Question 4</div>
+<h2>ER diagram for company and employee phones, with (min, max)</h2>
+<p>Entities: <code>EMPLOYEE</code> (<u>emp_id</u>, name), <code>DEPARTMENT</code> (<u>dept_id</u>, name), <code>PHONE</code> (<u>phone_no</u>). Each constraint is read as <b>(min, max)</b> next to the entity it describes.</p>
+<ul>
+<li><b>WORKS_IN</b>: an employee works in 0 to 2 departments → <code>(0,2)</code>; a department has any number of employees → <code>(0,N)</code>.</li>
+<li><b>HAS_PHONE</b> (department phones): every department has at least 1 and at most 3 numbers → <code>(1,3)</code>; a number is optional from the phone side → <code>(0,N)</code> because an employee's personal number may be reused as a department number.</li>
+<li><b>PERSONAL_PHONE</b>: an employee may have no personal phone, or at most one → <code>(0,1)</code>; a phone belongs to at most one employee → <code>(0,1)</code>.</li>
+</ul>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef ent fill:#121e33,stroke:#2997ff,stroke-width:2px,color:#ffffff
+  classDef rel fill:#2a1b08,stroke:#ff9f0a,stroke-width:2px,color:#ffffff
+  classDef att fill:#1c1c1e,stroke:#8e8e93,stroke-width:1.5px,color:#ffffff
+
+  EMP[EMPLOYEE]:::ent
+  eid(["<u>emp_id</u>"]):::att
+  ename([name]):::att
+  EMP --- eid
+  EMP --- ename
+
+  DEP[DEPARTMENT]:::ent
+  did(["<u>dept_id</u>"]):::att
+  dname([name]):::att
+  DEP --- did
+  DEP --- dname
+
+  PH[PHONE]:::ent
+  pno(["<u>phone_no</u>"]):::att
+  PH --- pno
+
+  WI{WORKS_IN}:::rel
+  EMP ---|"(0,2)"| WI
+  WI ---|"(0,N)"| DEP
+
+  PP{PERSONAL_PHONE}:::rel
+  EMP ---|"(0,1)"| PP
+  PP ---|"(0,1)"| PH
+
+  HP{HAS_PHONE}:::rel
+  DEP ---|"(1,3)"| HP
+  HP ---|"(0,N)"| PH
+</pre>
+<div class="leg"><span><b>Blue box</b> entity</span><span><b>Orange diamond</b> relationship</span><span><b>Oval</b> attribute (underlined = key)</span><span><b>(min,max)</b> sits on the line between an entity and a relationship</span></div></div>
+<p class="mut">The "up to three numbers including personal ones" rule is the (1,3) on DEPARTMENT; it counts both dedicated and personal numbers linked through HAS_PHONE.</p>
+<div id="er3d-q4-wrap">
+<h3>Explore (min, max) Phone Cardinalities in 3D</h3>
+<p class="mut">Drag to orbit. Toggle constraint filters to observe department multi-phone vs personal phone routes.</p>
+<div class="fig">
+  <canvas id="er3d_q4" style="display:block;width:100%;height:380px;border-radius:16px;outline:none;touch-action:pan-y"></canvas>
+  <div class="seg" id="seg-er3d-q4">
+    <button class="on" data-m="all">Full Diagram</button>
+    <button data-m="dept">Dept Phone (1,3)</button>
+    <button data-m="pers">Personal Phone (0,1)</button>
+    <button data-m="works">Works In (0,2)</button>
+  </div>
+  <p class="mut" id="er3d-q4-cap" style="text-align:center;margin:6px 0 0;min-height:1.6em">Complete ER Model with (min,max) structural constraints on edges.</p>
+</div>
+</div>
+</section>
+
+<!-- Q5 -->
+<section class="q" id="q5"><div class="num">Question 5</div>
+<h2>Relational algebra queries</h2>
+<p class="mut">Schema: <code>Branch(Branch_name, Branch_city, Assets)</code> · <code>Customer(Customer_name, Street, City)</code> · <code>Loan(Branch_name, Loan_no, Amount)</code> · <code>Borrower(Customer_name, Loan_no)</code> · <code>Account(Branch_name, Account_no, Balance)</code> · <code>Depositor(Customer_name, Account_no)</code></p>
+
+<h3>i. Customers with an account at Durgapur</h3>
+<p class="mut">Natural join between Depositor and Account, filter on branch 'Durgapur', project customer names.</p>
+<div class="math-box">$$\Pi_{\text{Customer\_name}} \left( \sigma_{\text{Branch\_name} = \text{'Durgapur'}} (\text{Depositor} \bowtie \text{Account}) \right)$$</div>
+
+<h3>ii. Customers with an account and no loan</h3>
+<p class="mut">Set difference ($R - S$): all depositors minus customers who appear as borrowers.</p>
+<div class="math-box">$$\Pi_{\text{Customer\_name}}(\text{Depositor}) \;-\; \Pi_{\text{Customer\_name}}(\text{Borrower})$$</div>
+
+<h3>iii. Customers with an account and a loan</h3>
+<p class="mut">Set intersection ($R \cap S$): customers who exist simultaneously in both depositor and borrower sets.</p>
+<div class="math-box">$$\Pi_{\text{Customer\_name}}(\text{Depositor}) \;\cap\; \Pi_{\text{Customer\_name}}(\text{Borrower})$$</div>
+
+<h3>iv. Customers living on the same street as Abhay Sharma</h3>
+<p class="mut">Renaming operator $\rho$ self-joins Customer relation against Abhay Sharma's street address.</p>
+<div class="math-box">$$\Pi_{\text{Customer.Customer\_name}} \left( \text{Customer} \bowtie_{\text{Customer.Street} = \text{T.Street}} \rho_T (\sigma_{\text{Customer\_name} = \text{'Abhay Sharma'}}(\text{Customer})) \right)$$</div>
+<p class="mut">Add predicate $\sigma_{\text{Customer.Customer\_name} \ne \text{'Abhay Sharma'}}$ if Abhay Sharma himself must be excluded.</p>
+</section>
+
+<!-- Q6 -->
+<section class="q" id="q6"><div class="num">Question 6</div>
+<h2>Tuple relational calculus equivalents</h2>
+<p class="mut">Relation schemas: $R = (A, B, C)$, $S = (D, E, F)$, active relations $r(R)$ and $s(S)$. Formatted in first-order predicate calculus notation $\{\, t \mid \phi(t) \,\}$.</p>
+
+<h3>iii. Projection $\Pi_A(r)$</h3>
+<p class="mut">There exists tuple $p$ in relation $r$ whose attribute $A$ matches result tuple $t[A]$.</p>
+<div class="math-box">$$\{\, t \mid \exists p \in r \; ( t[A] = p[A] ) \,\}$$</div>
+
+<h3>iv. Selection $\sigma_{B=17}(r)$</h3>
+<p class="mut">Tuple $t$ belongs to $r$ and attribute $B$ strictly evaluates to 17.</p>
+<div class="math-box">$$\{\, t \mid t \in r \land t[B] = 17 \,\}$$</div>
+
+<h3>v. Cartesian Product $r \times s$</h3>
+<p class="mut">Tuple $t$ is composed of concatenated attributes from independent tuples $p \in r$ and $q \in s$.</p>
+<div class="math-box">$$\begin{aligned}
+\{\, t \mid \exists p \in r, \, \exists q \in s \; ( & t[A]=p[A] \land t[B]=p[B] \land t[C]=p[C] \\
+{} \land {} & t[D]=q[D] \land t[E]=q[E] \land t[F]=q[F] ) \,\}
+\end{aligned}$$</div>
+
+<h3>vi. Projection with Theta-Selection $\Pi_{A,F}(\sigma_{C=D}(r \times s))$</h3>
+<p class="mut">Projects $A$ from $r$ and $F$ from $s$ under equijoin predicate $p[C] = q[D]$.</p>
+<div class="math-box">$$\{\, t \mid \exists p \in r, \, \exists q \in s \; ( t[A]=p[A] \land t[F]=q[F] \land p[C]=q[D] ) \,\}$$</div>
+</section>
+
+<!-- Q7 -->
+<section class="q" id="q7"><div class="num">Question 7</div>
+<h2>Create tables and SQL queries</h2>
+<h3>Table definitions</h3>
+<pre>CREATE TABLE Faculty (
+  fid     INT PRIMARY KEY,
+  fname   VARCHAR(50) NOT NULL,
+  deptid  INT
+);
+
+CREATE TABLE Student (
+  snum   INT PRIMARY KEY,
+  sname  VARCHAR(50) NOT NULL,
+  major  VARCHAR(50),
+  level  VARCHAR(10),
+  age    INT
+);
+
+CREATE TABLE Class (
+  name     VARCHAR(50) PRIMARY KEY,
+  meets_at VARCHAR(30),
+  room     VARCHAR(20),
+  fid      INT,
+  FOREIGN KEY (fid) REFERENCES Faculty(fid)
+);
+
+CREATE TABLE Enrolled (
+  snum   INT,
+  cname  VARCHAR(50),
+  PRIMARY KEY (snum, cname),
+  FOREIGN KEY (snum)  REFERENCES Student(snum),
+  FOREIGN KEY (cname) REFERENCES Class(name)
+);</pre>
+<h3>i. Junior students in a class taught by 'XYZ'</h3>
+<pre>SELECT DISTINCT s.sname
+FROM Student s
+JOIN Enrolled e ON s.snum  = e.snum
+JOIN Class c    ON e.cname = c.name
+JOIN Faculty f  ON c.fid   = f.fid
+WHERE s.level = 'Junior' AND f.fname = 'XYZ';</pre>
+<h3>ii. Age of the oldest History major</h3>
+<pre>SELECT MAX(age)
+FROM Student
+WHERE major = 'History';</pre>
+<h3>iii. Classes meeting in R1 or with five or more students</h3>
+<pre>SELECT c.name
+FROM Class c
+WHERE c.room = 'R1'
+   OR c.name IN (SELECT cname
+                 FROM Enrolled
+                 GROUP BY cname
+                 HAVING COUNT(*) &gt;= 5);</pre>
+</section>
+
+<!-- Q8 -->
+<section class="q" id="q8"><div class="num">Question 8</div>
+<h2>Compute B⁺ (attribute closure)</h2>
+<p class="mut">R = (A, B, C, D, E) with F = { A→BC, CD→E, B→D, E→A }</p>
+<div class="step"><i>1</i><div>Start: <code>result = {B}</code></div></div>
+<div class="step"><i>2</i><div><code>B → D</code> applies (B ⊆ result): <code>result = {B, D}</code></div></div>
+<div class="step"><i>3</i><div><code>A → BC</code> needs A — not in result. <code>CD → E</code> needs C — not in result. <code>E → A</code> needs E — not in result.</div></div>
+<div class="step"><i>4</i><div>No dependency adds anything new, so we stop.</div></div>
+<div class="ans">B⁺ = { B, D }</div>
+<p class="mut">Since B⁺ ≠ R, B is not a key.</p>
+</section>
+
+<!-- Q9 -->
+<section class="q" id="q9"><div class="num">Question 9</div>
+<h2>FD2 is covered by FD1, but FD1 is not covered by FD2</h2>
+<p class="mut">R(V, W, X, Y, Z) · FD1 = { W→X, WX→Y, Z→WY, Z→V } · FD2 = { W→XY, Z→WX }<br>"A is a subset of B" here means every FD of A is implied by B (A ⊆ B⁺).</p>
+<h3>Part 1: every FD in FD2 follows from FD1</h3>
+<table>
+<tr><th>FD2 dependency</th><th>Closure using FD1</th><th>Result</th></tr>
+<tr><td>W → XY</td><td>W⁺ = {W} → W→X gives {W,X} → WX→Y gives {W,X,Y}</td><td>XY ⊆ W⁺ ✓</td></tr>
+<tr><td>Z → WX</td><td>Z⁺ = {Z} → Z→WY gives {Z,W,Y} → W→X gives {Z,W,X,Y} → Z→V gives {Z,W,X,Y,V}</td><td>WX ⊆ Z⁺ ✓</td></tr>
+</table>
+<div class="ans">All FDs of FD2 are implied by FD1, so FD2 ⊆ FD1⁺.</div>
+<h3>Part 2: some FD in FD1 does not follow from FD2</h3>
+<table>
+<tr><th>FD1 dependency</th><th>Closure using FD2</th><th>Result</th></tr>
+<tr><td>W → X</td><td>W⁺ = {W,X,Y}</td><td>X ∈ W⁺ ✓</td></tr>
+<tr><td>WX → Y</td><td>(WX)⁺ = {W,X,Y}</td><td>Y ∈ (WX)⁺ ✓</td></tr>
+<tr><td>Z → WY</td><td>Z⁺ = {Z,W,X} → W→XY adds Y → {Z,W,X,Y}</td><td>WY ⊆ Z⁺ ✓</td></tr>
+<tr><td>Z → V</td><td>Z⁺ = {Z,W,X,Y}; no FD in FD2 produces V</td><td>V ∉ Z⁺ ✗</td></tr>
+</table>
+<div class="ans">Z → V is not implied by FD2, so FD1 ⊄ FD2⁺. Hence FD2 is a subset of FD1, but FD1 is not a subset of FD2.</div>
+</section>
+
+<!-- Q10 -->
+<section class="q" id="q10"><div class="num">Question 10</div>
+<h2>Normalize Professor up to BCNF</h2>
+<p class="mut">Professor(<u>PCode</u>, <u>Department</u>, HOD, Percent_of_time) · keys: (PCode, Department) and (PCode, HOD)<br>FDs: Department,PCode → HOD,Percent_of_time · Department → HOD · HOD,PCode → Department,Percent_of_time</p>
+<div class="step"><i>1</i><div><b>1NF:</b> all attributes are atomic, so the relation is in 1NF.</div></div>
+<div class="step"><i>2</i><div><b>2NF:</b> the only non-prime attribute is Percent_of_time, and it depends on the whole key (PCode, Department). No partial dependency on a non-prime attribute, so it is in 2NF.</div></div>
+<div class="step"><i>3</i><div><b>3NF:</b> Department → HOD has a prime attribute (HOD) on its right side, so 3NF is satisfied.</div></div>
+<div class="step"><i>4</i><div><b>BCNF:</b> Department → HOD violates BCNF because Department is not a superkey (the same HOD is repeated for each professor in a department).</div></div>
+<h3>Decomposition on Department → HOD</h3>
+<pre>R1 (Department, HOD)                          key: Department
+R2 (PCode, Department, Percent_of_time)       key: (PCode, Department)</pre>
+<p>Both relations are in BCNF: in R1 the only FD has a key on its left; in R2 the only FD is (PCode, Department) → Percent_of_time. The split is <b>lossless</b> because the common attribute Department is the key of R1.</p>
+<p class="mut">Note: HOD,PCode → Department,Percent_of_time can no longer be checked inside one table — the usual cost of BCNF (see Question 11).</p>
+</section>
+
+<!-- Q11 -->
+<section class="q" id="q11"><div class="num">Question 11</div>
+<h2>BCNF cannot always preserve dependencies</h2>
+<p><b>Example:</b> <code>R(Student, Course, Instructor)</code> with</p>
+<ul><li><code>Student, Course → Instructor</code> (a student has one instructor for a course)</li><li><code>Instructor → Course</code> (each instructor teaches only one course)</li></ul>
+<p>Candidate keys: (Student, Course) and (Student, Instructor).</p>
+<p><b>BCNF check:</b> Instructor → Course violates BCNF, since Instructor is not a superkey. The only decomposition on this FD is:</p>
+<pre>R1 (Instructor, Course)      holds  Instructor → Course
+R2 (Student, Instructor)     holds  only trivial FDs</pre>
+<p><b>Dependency check:</b> FDs visible in R1 ∪ R2 are just Instructor → Course. The closure of (Student, Course) using it is {Student, Course} — Instructor never appears. So <code>Student, Course → Instructor</code> is <b>lost</b>: enforcing it needs a join of R1 and R2.</p>
+<div class="ans">The BCNF decomposition is lossless but not dependency preserving. Here 3NF would keep R intact and preserve all FDs, at the price of some redundancy.</div>
+</section>
+
+<!-- Q12 -->
+<section class="q" id="q12"><div class="num">Question 12</div>
+<h2>Normal form of R{RN, POR, PI, PN, DATE, MA, MT}</h2>
+<p class="mut">F = { RN → POR ; PI → PN, RN ; (PI, DATE) → (MA, MT, POR) }</p>
+<div class="step"><i>1</i><div><b>Find the key.</b> (PI, DATE)⁺: PI→PN,RN gives PN, RN; RN→POR gives POR; (PI,DATE)→MA,MT. Result = all attributes, so <code>(PI, DATE)</code> is the candidate key.</div></div>
+<div class="step"><i>2</i><div><b>Prime:</b> PI, DATE. <b>Non-prime:</b> RN, POR, PN, MA, MT.</div></div>
+<div class="step"><i>3</i><div><b>2NF test:</b> <code>PI → PN, RN</code> has a proper subset of the key (PI) determining non-prime attributes: a <b>partial dependency</b>. So 2NF fails.</div></div>
+<div class="ans">The relation is in 1NF only (not 2NF). Also RN → POR is a transitive dependency, which would further violate 3NF.</div>
+</section>
+
+<!-- Q13 -->
+<section class="q" id="q13"><div class="num">Question 13</div>
+<h2>Precedence graph and serializability</h2>
+<h3>The schedule (top to bottom = time order)</h3>
+<table>
+<tr><th>Step</th><th>T1</th><th>T2</th><th>T3</th></tr>
+<tr><td>1</td><td></td><td></td><td class="m">R(y)</td></tr>
+<tr><td>2</td><td></td><td></td><td class="m">R(z)</td></tr>
+<tr><td>3</td><td class="m">R(x)</td><td></td><td></td></tr>
+<tr><td>4</td><td class="m">W(x)</td><td></td><td></td></tr>
+<tr><td>5</td><td></td><td></td><td class="m">W(y)</td></tr>
+<tr><td>6</td><td></td><td></td><td class="m">W(y)</td></tr>
+<tr><td>7</td><td></td><td class="m">R(z)</td><td></td></tr>
+<tr><td>8</td><td class="m">R(y)</td><td></td><td></td></tr>
+<tr><td>9</td><td class="m">W(y)</td><td></td><td></td></tr>
+<tr><td>10</td><td></td><td class="m">R(y)</td><td></td></tr>
+<tr><td>11</td><td></td><td class="m">W(y)</td><td></td></tr>
+<tr><td>12</td><td></td><td class="m">R(x)</td><td></td></tr>
+<tr><td>13</td><td></td><td class="m">W(x)</td><td></td></tr>
+</table>
+<h3>Conflicting pairs (same item, different transactions, at least one write)</h3>
+<table>
+<tr><th>Edge</th><th>Item</th><th>Conflicts (earlier → later)</th></tr>
+<tr><td><b>T3 → T1</b></td><td>y</td><td class="m">R3(y)→W1(y) · W3(y)→R1(y) · W3(y)→W1(y)</td></tr>
+<tr><td><b>T3 → T2</b></td><td>y</td><td class="m">R3(y)→W2(y) · W3(y)→R2(y) · W3(y)→W2(y)</td></tr>
+<tr><td><b>T1 → T2</b></td><td>x, y</td><td class="m">R1(x)→W2(x) · W1(x)→R2(x) · W1(x)→W2(x) · R1(y)→W2(y) · W1(y)→R2(y) · W1(y)→W2(y)</td></tr>
+</table>
+<p class="mut">z is only read (by T3 and T2), so it causes no conflict.</p>
+<h3>Precedence graph</h3>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  classDef t fill:#121e33,stroke:#2997ff,stroke-width:2px,color:#ffffff
+  T3((T3)):::t -->|"y"| T1((T1)):::t
+  T3 -->|"y"| T2((T2)):::t
+  T1 -->|"x, y"| T2
+</pre></div>
+<div class="ans">No cycle in the graph, so the schedule is conflict-serializable.<br>Equivalent serial schedule: T3 → T1 → T2</div>
+<div id="serial3d-wrap">
+<h3>Interactive 3D Conflict Serializability Precedence Graph</h3>
+<p class="mut">Drag to orbit. Observe conflict vectors between concurrent transactions; cycle-free graph proves conflict serializability.</p>
+<div class="fig">
+  <canvas id="serial3d" style="display:block;width:100%;height:380px;border-radius:16px;outline:none;touch-action:pan-y"></canvas>
+  <div class="seg" id="seg-serial3d">
+    <button class="on" data-m="all">Precedence Graph</button>
+    <button data-m="y">Item 'y' Conflicts (T3→T1, T3→T2, T1→T2)</button>
+    <button data-m="x">Item 'x' Conflicts (T1→T2)</button>
+    <button data-m="topo">Serial Order (T3 → T1 → T2)</button>
+  </div>
+  <p class="mut" id="serial3d-cap" style="text-align:center;margin:6px 0 0;min-height:1.6em">Precedence Graph: Directed edges show write-read, read-write, and write-write conflicts across transactions.</p>
+</div>
+</div>
+<p class="mut">Method: add edge Ti → Tj when an operation of Ti precedes a conflicting operation of Tj on the same item (different transactions, at least one is a write). The schedule is conflict-serializable iff the graph has no cycle; a topological order gives the equivalent serial schedule.</p>
+</section>
+
+<!-- Q14 -->
+<section class="q" id="q14"><div class="num">Question 14</div>
+<h2>B⁺-tree for 2, 3, 5, 7, 11, 17, 19, 23, 29, 31</h2>
+<p class="mut">Assumption (order not given): <b>n = 4</b> pointers per node, so a node holds at most 3 keys. Keys are inserted in the given ascending order; leaves are linked left to right.</p>
+<h3>Building the tree</h3>
+<div class="step"><i>1</i><div>Insert 2, 3, 5: single leaf <code>[2 3 5]</code>.</div></div>
+<div class="step"><i>2</i><div>Insert 7: leaf overflows → split <code>[2 3] [5 7]</code>; root <code>[5]</code>.</div></div>
+<div class="step"><i>3</i><div>Insert 11, 17: <code>[5 7 11]</code> overflows → <code>[5 7] [11 17]</code>; root <code>[5 11]</code>.</div></div>
+<div class="step"><i>4</i><div>Insert 19, 23: <code>[11 17 19 23]</code> overflows → <code>[11 17] [19 23]</code>; root <code>[5 11 19]</code>.</div></div>
+<div class="step"><i>5</i><div>Insert 29, 31: <code>[19 23 29 31]</code> overflows → <code>[19 23] [29 31]</code>, 29 moves up; root would hold 4 keys, so it splits and 19 becomes the new root.</div></div>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef node fill:#1c1c1e,stroke:#8e8e93,stroke-width:1.5px,color:#ffffff
+  classDef leaf fill:#121e33,stroke:#2997ff,stroke-width:1.5px,color:#ffffff
+  R["19"]:::node
+  I1["5 | 11"]:::node
+  I2["29"]:::node
+  L1["2 | 3"]:::leaf
+  L2["5 | 7"]:::leaf
+  L3["11 | 17"]:::leaf
+  L4["19 | 23"]:::leaf
+  L5["29 | 31"]:::leaf
+  R --> I1
+  R --> I2
+  I1 --> L1
+  I1 --> L2
+  I1 --> L3
+  I2 --> L4
+  I2 --> L5
+  L1 -.-> L2 -.-> L3 -.-> L4 -.-> L5
+</pre>
+<div class="leg"><span><b>Dark slate</b> internal nodes</span><span><b>Blue card</b> leaf nodes</span><span><b>Dotted arrows</b> leaf chain (left to right)</span></div></div>
+<div id="t3wrap">
+<h3>Explore it in 3D</h3>
+<p class="mut">Drag to rotate. Pick a query to light up its path, one step at a time.</p>
+<div class="fig"><canvas id="tree3d"></canvas>
+<div class="seg"><button class="on" data-m="reset">Tree</button><button data-m="a">Find 11</button><button data-m="b">Range 7–17</button></div>
+<p class="mut" id="t3cap">Root at the front, leaves at the back. Dotted blue arrows are the leaf chain.</p></div>
+</div>
+<h3>a. Find records with key 11</h3>
+<p>Root [19]: 11 &lt; 19, go left. Node [5 11]: 11 ≥ 11, follow the pointer to the right of 11. Leaf [11 17] contains 11 → fetch the record.</p>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef node fill:#1c1c1e,stroke:#8e8e93,stroke-width:1.5px,color:#ffffff
+  classDef leaf fill:#121e33,stroke:#2997ff,stroke-width:1.5px,color:#ffffff
+  classDef hit fill:#1d3968,stroke:#2997ff,stroke-width:4px,color:#ffffff
+  R["19"]:::hit
+  I1["5 | 11"]:::hit
+  I2["29"]:::node
+  L1["2 | 3"]:::leaf
+  L2["5 | 7"]:::leaf
+  L3["11 | 17"]:::hit
+  L4["19 | 23"]:::leaf
+  L5["29 | 31"]:::leaf
+  R ==> I1
+  R --> I2
+  I1 --> L1
+  I1 --> L2
+  I1 ==> L3
+  I2 --> L4
+  I2 --> L5
+  L1 -.-> L2 -.-> L3 -.-> L4 -.-> L5
+</pre>
+<div class="leg"><span><b>Thick glowing path</b> root → [5 | 11] → leaf [11 | 17], key 11 found</span></div></div>
+<h3>b. Find records with key between 7 and 17 inclusive</h3>
+<p>Root [19]: 7 &lt; 19, go left. Node [5 11]: 5 ≤ 7 &lt; 11, follow the middle pointer to leaf [5 7]. Scan the leaf chain: 7 ✓ → next leaf [11 17]: 11 ✓, 17 ✓ → next leaf starts at 19 &gt; 17, stop.</p>
+<div class="ans">Records found: 7, 11, 17</div>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef node fill:#1c1c1e,stroke:#8e8e93,stroke-width:1.5px,color:#ffffff
+  classDef leaf fill:#121e33,stroke:#2997ff,stroke-width:1.5px,color:#ffffff
+  classDef hit fill:#1d3968,stroke:#2997ff,stroke-width:4px,color:#ffffff
+  R["19"]:::hit
+  I1["5 | 11"]:::hit
+  I2["29"]:::node
+  L1["2 | 3"]:::leaf
+  L2["5 | 7"]:::hit
+  L3["11 | 17"]:::hit
+  L4["19 | 23"]:::leaf
+  L5["29 | 31"]:::leaf
+  R ==> I1
+  R --> I2
+  I1 --> L1
+  I1 ==> L2
+  I1 --> L3
+  I2 --> L4
+  I2 --> L5
+  L1 -.-> L2
+  L2 ==> L3
+  L3 -.-> L4 -.-> L5
+</pre>
+<div class="leg"><span><b>Thick path</b> root → [5 | 11] → leaf [5 | 7], then along the leaf chain to [11 | 17]; stop before 19</span></div></div>
+</section>
+
+<!-- Q15 -->
+<section class="q" id="q15"><div class="num">Question 15</div>
+<h2>Bucket overflow in hash file organization</h2>
+<h3>Causes</h3>
+<ul>
+<li><b>Insufficient buckets:</b> the number of buckets is too small for the number of records (n<sub>B</sub> &lt; n<sub>r</sub> / f<sub>r</sub>).</li>
+<li><b>Skew, from repeated keys:</b> many records share one search-key value, so they all land in the same bucket.</li>
+<li><b>Skew, from the hash function:</b> a function that is not uniform or random sends far more keys to some buckets than others.</li>
+</ul>
+<h3>Reducing overflows</h3>
+<ul>
+<li>Choose the number of buckets as <code>(n<sub>r</sub> / f<sub>r</sub>) × (1 + d)</code> with a fudge factor d ≈ 0.2, leaving about 20% spare space.</li>
+<li>Use a better hash function that spreads keys uniformly and randomly.</li>
+<li>Handle unavoidable overflow with <b>overflow chaining</b> (linked overflow buckets), or open addressing.</li>
+<li>Use <b>dynamic hashing</b> (extendable or linear hashing) so the bucket count grows as the file grows.</li>
+</ul>
+</section>
+
+</main>
+<footer>Database Systems · Assignment solutions</footer>
+<noscript><style>.q{opacity:1;transform:none}</style></noscript>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs@7/babylon.js"></script>
+<script>
+(()=>{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* nav + reveal */
+const nav=$('#nav');
+for(let i=1;i<=15;i++)nav.insertAdjacentHTML('beforeend',`<a href="#q${i}" data-q="q${i}">${i}</a>`);
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.08});
+$$('.q').forEach(q=>io.observe(q));
+const io2=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting && e.target.id){
+    $$('nav a[data-q]').forEach(a=>a.classList.toggle('on',a.dataset.q===e.target.id));
+    const a=$(`nav a[data-q="${e.target.id}"]`);
+    a&&a.scrollIntoView({inline:'center',block:'nearest'});
+    try{localStorage.setItem('dbms_assgn_last_q',e.target.id)}catch(err){}
+  }
+}),{rootMargin:'-35% 0px -55% 0px'});
+$$('.q').forEach(q=>io2.observe(q));
+
+// State Persistence: Restore last visited question if URL has no specific hash
+if(!window.location.hash){
+  try{
+    const lastQ=localStorage.getItem('dbms_assgn_last_q');
+    if(lastQ){
+      const targetEl=document.getElementById(lastQ);
+      if(targetEl){
+        setTimeout(()=>{
+          targetEl.scrollIntoView({behavior:'smooth'});
+          const activeA=$(`nav a[data-q="${lastQ}"]`);
+          activeA&&activeA.classList.add('on');
+        },200);
+      }
+    }
+  }catch(err){}
+}
+
+/* Mermaid diagrams */
+try{
+ const dark=matchMedia('(prefers-color-scheme:dark)').matches;
+ mermaid.initialize({startOnLoad:true,theme:dark?'dark':'neutral',securityLevel:'loose',
+  flowchart:{curve:'basis',padding:14,htmlLabels:true,nodeSpacing:32,rankSpacing:44,useMaxWidth:true},
+  themeVariables:{fontFamily:'-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,sans-serif',fontSize:'14px'}});
+}catch(e){}
+
+/* Babylon.js calm background */
+try{
+ if(typeof BABYLON==='undefined')throw 0;
+ const cv=$('#bg'),eng=new BABYLON.Engine(cv,true,{antialias:true,alpha:true}),sc=new BABYLON.Scene(eng);
+ sc.clearColor=new BABYLON.Color4(0,0,0,0);
+ const cam=new BABYLON.FreeCamera('c',new BABYLON.Vector3(0,0,-16),sc);cam.setTarget(BABYLON.Vector3.Zero());cam.fov=.8;
+ new BABYLON.HemisphericLight('h',new BABYLON.Vector3(0,1,-.4),sc).intensity=.95;
+ const dl=new BABYLON.DirectionalLight('d',new BABYLON.Vector3(-.5,-1,.8),sc);dl.intensity=.5;
+ const cols=['#a8c8ff','#c9b8ff','#ffc8dd','#b8f0e0','#ffe3b0'].map(h=>BABYLON.Color3.FromHexString(h));
+ const mats=cols.map((c,i)=>{const m=new BABYLON.StandardMaterial('m'+i,sc);m.diffuseColor=c;m.emissiveColor=c.scale(.38);m.specularColor=new BABYLON.Color3(.3,.3,.3);m.specularPower=48;m.alpha=.88;return m});
+ let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+ const items=[];
+ for(let i=0;i<30;i++){
+  const t=i%3,m=t===0?BABYLON.MeshBuilder.CreateSphere('s'+i,{diameter:1,segments:24},sc):t===1?BABYLON.MeshBuilder.CreateTorus('t'+i,{diameter:1,thickness:.34,tessellation:40},sc):BABYLON.MeshBuilder.CreateIcoSphere('i'+i,{radius:.5,subdivisions:3},sc);
+  const s=.8+rnd()*2.2,side=rnd()<.5?-1:1;
+  m.scaling.setAll(s);m.material=mats[i%5];
+  m.position.set(side*(4+rnd()*8),4-rnd()*70,rnd()*8-2);
+  items.push({m,y:m.position.y,p:rnd()*6.28,sp:.15+rnd()*.3});
+ }
+ const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+ let mx=0,sy=0,tx=0;
+ addEventListener('pointermove',e=>mx=(e.clientX/innerWidth-.5)*2,{passive:true});
+ sc.onBeforeRenderObservable.add(()=>{
+  const t=calm?0:performance.now()/1000;
+  items.forEach(o=>{o.m.position.y=o.y+Math.sin(t*o.sp+o.p)*.5;o.m.rotation.x=t*o.sp*.5+o.p;o.m.rotation.y=t*o.sp*.7});
+  sy+=(scrollY-sy)*.08;tx+=(mx-tx)*.04;
+  cam.position.y=-sy*.0055;cam.position.x=tx*.8;cam.setTarget(new BABYLON.Vector3(0,cam.position.y,0));
+ });
+ eng.runRenderLoop(()=>sc.render());
+ addEventListener('resize',()=>eng.resize());
+}catch(e){const c=$('#bg');c&&(c.style.display='none')}
+})();
+</script>
+
+<script>
+/* Interactive 3D B+-tree (Babylon.js) */
+(()=>{
+const cv=document.getElementById('tree3d'),wrap=document.getElementById('t3wrap');
+try{
+ if(!cv||typeof BABYLON==='undefined')throw 0;
+ const B=BABYLON,eng=new B.Engine(cv,true,{antialias:true,alpha:true}),sc=new B.Scene(eng);
+ sc.clearColor=new B.Color4(0,0,0,0);
+ const cam=new B.ArcRotateCamera('c',-Math.PI/2,1.2,19,new B.Vector3(1,-1.2,0),sc);
+ cam.lowerRadiusLimit=9;cam.upperRadiusLimit=30;cam.lowerBetaLimit=.3;cam.upperBetaLimit=Math.PI/2+.15;
+ cam.panningSensibility=0;cam.pinchPrecision=40;
+ cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+ cam.attachControl(cv,true);
+ new B.HemisphericLight('h',new B.Vector3(0,1,-.5),sc).intensity=1;
+
+ const C=h=>B.Color3.FromHexString(h),GRAY=C('#98a2b3'),ACC=C('#0071e3');
+ const D={
+  R:{k:[19],x:1,y:3,z:1.5,c:'#ffffff'},
+  I1:{k:[5,11],x:-4,y:0,z:0,c:'#ffffff'},I2:{k:[29],x:6,y:0,z:0,c:'#ffffff'},
+  L1:{k:[2,3],x:-8,y:-3,z:-1.5,c:'#dbe9ff'},L2:{k:[5,7],x:-4,y:-3,z:-1.5,c:'#dbe9ff'},
+  L3:{k:[11,17],x:0,y:-3,z:-1.5,c:'#dbe9ff'},L4:{k:[19,23],x:4,y:-3,z:-1.5,c:'#dbe9ff'},L5:{k:[29,31],x:8,y:-3,z:-1.5,c:'#dbe9ff'}};
+ const KID=[['R','I1'],['R','I2'],['I1','L1'],['I1','L2'],['I1','L3'],['I2','L4'],['I2','L5']];
+ const CHN=[['L1','L2'],['L2','L3'],['L3','L4'],['L4','L5']];
+ const W=id=>D[id].k.length*1.15,H=.95,DP=.45;
+
+ const paint=(id,hit=[],on=0)=>{
+  const o=D[id],n=o.k.length,w=n*140,h=115,x=o.tex.getContext();
+  x.clearRect(0,0,w,h);
+  x.fillStyle=on?'#cfe5ff':o.c;x.fillRect(0,0,w,h);
+  x.strokeStyle=on?'#0071e3':'#9aa3b2';x.lineWidth=on?9:5;x.strokeRect(3,3,w-6,h-6);
+  x.lineWidth=4;x.strokeStyle='#9aa3b2';
+  x.font='600 52px -apple-system,Inter,Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  o.k.forEach((k,i)=>{
+   if(i){x.beginPath();x.moveTo(i*140,12);x.lineTo(i*140,h-12);x.stroke()}
+   x.fillStyle=hit.includes(k)?'#0a63d8':'#1d1d1f';x.fillText(String(k),i*140+70,h/2+3)});
+  o.tex.update();
+ };
+
+ for(const id in D){
+  const o=D[id],n=o.k.length,w=W(id);
+  o.tex=new B.DynamicTexture('t'+id,{width:n*140,height:115},sc,true);
+  const fm=new B.StandardMaterial('fm'+id,sc);fm.diffuseTexture=o.tex;fm.emissiveTexture=o.tex;fm.disableLighting=true;fm.backFaceCulling=false;
+  const bm=new B.StandardMaterial('bm'+id,sc);bm.diffuseColor=C('#b9c3d3');bm.emissiveColor=C('#8e99ab');bm.specularColor=C('#222222');
+  const g=new B.TransformNode('n'+id,sc);g.position.set(o.x,o.y,o.z);o.g=g;
+  const body=B.MeshBuilder.CreateBox('b'+id,{width:w,height:H,depth:DP},sc);body.parent=g;body.material=bm;
+  const f=B.MeshBuilder.CreatePlane('f'+id,{width:w-.02,height:H-.02},sc);f.parent=g;f.position.z=-DP/2-.006;f.material=fm;
+  const b=B.MeshBuilder.CreatePlane('g'+id,{width:w-.02,height:H-.02},sc);b.parent=g;b.position.z=DP/2+.006;b.rotation.y=Math.PI;b.material=fm;
+  o.t=0;o.h=0;paint(id);
+ }
+
+ const edges=KID.map(([p,c])=>{
+  const P=D[p],Q=D[c],m=new B.StandardMaterial('em'+p+c,sc);m.emissiveColor=GRAY.clone();m.disableLighting=true;
+  const t=B.MeshBuilder.CreateTube('e'+p+c,{path:[new B.Vector3(P.x,P.y-H/2,P.z),new B.Vector3(Q.x,Q.y+H/2,Q.z)],radius:.045,tessellation:8},sc);
+  t.material=m;return{p,c,m,t:0,h:0};
+ });
+ const chain=CHN.map(([a,b])=>{
+  const A=D[a],Z=D[b],x1=A.x+W(a)/2+.05,x2=Z.x-W(b)/2-.3,y=A.y,z=A.z;
+  const ln=B.MeshBuilder.CreateDashedLines('c'+a+b,{points:[new B.Vector3(x1,y,z),new B.Vector3(x2,y,z)],dashSize:2,gapSize:1.5,dashNb:8},sc);
+  const m=new B.StandardMaterial('cm'+a+b,sc);m.emissiveColor=C('#7aa7e6');m.disableLighting=true;
+  const cone=B.MeshBuilder.CreateCylinder('k'+a+b,{diameterTop:0,diameterBottom:.26,height:.32,tessellation:12},sc);
+  cone.rotation.z=-Math.PI/2;cone.position.set(x2+.16,y,z);cone.material=m;
+  ln.color=C('#7aa7e6');return{a,b,ln,m,t:0,h:0};
+ });
+
+ let sway=true;cv.addEventListener('pointerdown',()=>sway=false);
+ const cap=document.getElementById('t3cap');
+ const BASE='Root at the front, leaves at the back. Dotted blue arrows are the leaf chain.';
+ const hi=new B.Color3(.0,.443,.89);
+ sc.onBeforeRenderObservable.add(()=>{
+  if(sway)cam.alpha=-Math.PI/2+Math.sin(performance.now()/2600)*.3;
+  for(const id in D){const o=D[id];o.h+=(o.t-o.h)*.16;o.g.scaling.setAll(1+o.h*.12)}
+  edges.forEach(e=>{e.h+=(e.t-e.h)*.16;e.m.emissiveColor=B.Color3.Lerp(GRAY,ACC,e.h)});
+  chain.forEach(c=>{c.h+=(c.t-c.h)*.16;const k=B.Color3.Lerp(C('#7aa7e6'),ACC,c.h);c.m.emissiveColor=k;c.ln.color=k});
+ });
+
+ let timers=[];
+ const reset=()=>{timers.forEach(clearTimeout);timers=[];for(const id in D){D[id].t=0;paint(id)}edges.forEach(e=>e.t=0);chain.forEach(c=>c.t=0)};
+ const run=(steps,text)=>{
+  reset();cap.textContent=text;
+  steps.forEach((s,i)=>timers.push(setTimeout(()=>{
+   if(s[0]==='n'){D[s[1]].t=1;paint(s[1],s[2]||[],1)}
+   else if(s[0]==='e')edges.find(e=>e.p===s[1]&&e.c===s[2]).t=1;
+   else chain.find(c=>c.a===s[1]&&c.b===s[2]).t=1;
+  },i*600)));
+ };
+ const Q={
+  reset:()=>{reset();cap.textContent=BASE},
+  a:()=>run([['n','R'],['e','R','I1'],['n','I1'],['e','I1','L3'],['n','L3',[11]]],'Root [19]: 11 < 19, go left. Node [5 | 11]: 11 ≥ 11, take the right-hand pointer. Leaf [11 | 17] holds 11: found.'),
+  b:()=>run([['n','R'],['e','R','I1'],['n','I1'],['e','I1','L2'],['n','L2',[7]],['c','L2','L3'],['n','L3',[11,17]]],'Down to leaf [5 | 7] (7 found), then along the leaf chain: 11 and 17 qualify. The next leaf starts at 19 > 17, so stop.')
+ };
+ const btns=document.querySelectorAll('#t3wrap .seg button');
+ btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));Q[b.dataset.m]();
+ });
+
+ let vis=false;
+ new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(cv);
+ eng.runRenderLoop(()=>{if(vis)sc.render()});
+ addEventListener('resize',()=>eng.resize());
+}catch(e){wrap&&(wrap.style.display='none')}
+})();
+</script>
+
+<script>
+/* Interactive 3D Set Cardinality Mappings (Babylon.js - Q2) */
+(()=>{
+const cv=document.getElementById('set3d'),wrap=document.getElementById('set3d-wrap');
+try{
+ if(!cv||typeof BABYLON==='undefined')throw 0;
+ const B=BABYLON,eng=new B.Engine(cv,true,{antialias:true,alpha:true}),sc=new B.Scene(eng);
+ sc.clearColor=new B.Color4(0,0,0,0);
+ const cam=new B.ArcRotateCamera('cSet',-Math.PI/2,1.25,16,new B.Vector3(0,0,0),sc);
+ cam.lowerRadiusLimit=9;cam.upperRadiusLimit=25;cam.lowerBetaLimit=.3;cam.upperBetaLimit=Math.PI/2+.2;
+ cam.panningSensibility=0;cam.pinchPrecision=40;
+ cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+ cam.attachControl(cv,true);
+ new B.HemisphericLight('hSet',new B.Vector3(0,1,-.5),sc).intensity=1;
+ const dl=new B.DirectionalLight('dSet',new B.Vector3(0,-1,1),sc);dl.intensity=.4;
+
+ const C=h=>B.Color3.FromHexString(h);
+ const ACC=C('#0071e3'),GRAY=C('#8e99ab'),WHITE=C('#ffffff');
+
+ const A_POS=[{x:-4.2,y:2.1,z:0},{x:-4.2,y:0,z:0},{x:-4.2,y:-2.1,z:0}];
+ const B_POS=[{x:4.2,y:2.1,z:0},{x:4.2,y:0,z:0},{x:4.2,y:-2.1,z:0}];
+
+ const MODES={
+  '11':{
+   cap:'1:1 Mapping: Each Person possesses at most one unique Passport. Bijective / injective pairing.',
+   A:['P1: Alice','P2: Bob','P3: Carol'],
+   B:['Pass #A101','Pass #B202','Pass #C303'],
+   links:[[0,0],[1,1],[2,2]]
+  },
+  '1m':{
+   cap:'1:M Mapping: Dept 1 (Eng) employs Dev 1 & Dev 2; Dept 2 (HR) employs Recruiter. One entity fans out to many.',
+   A:['Dept 1: Eng','Dept 2: HR','Dept 3: Ops'],
+   B:['Dev 1','Dev 2','Recruiter'],
+   links:[[0,0],[0,1],[1,2]]
+  },
+  'mn':{
+   cap:'M:N Mapping: Students enroll in multiple Courses, and Courses have multiple Students. Criss-cross association.',
+   A:['S1: Alice','S2: Bob','S3: Carol'],
+   B:['C1: DBMS','C2: Algo','C3: OS'],
+   links:[[0,0],[0,1],[1,1],[1,2],[2,0],[2,2]]
+  }
+ };
+
+ const createItem=(prefix,idx,pos,isLeft)=>{
+  const g=new B.TransformNode(prefix+idx,sc);g.position.set(pos.x,pos.y,pos.z);
+  const w=2.4,h=.85,d=.35;
+  const tex=new B.DynamicTexture('t'+prefix+idx,{width:320,height:110},sc,true);
+  const fm=new B.StandardMaterial('fm'+prefix+idx,sc);fm.diffuseTexture=tex;fm.emissiveTexture=tex;fm.disableLighting=true;fm.backFaceCulling=false;
+  const bm=new B.StandardMaterial('bm'+prefix+idx,sc);bm.diffuseColor=C('#dbe9ff');bm.emissiveColor=C('#9bb9df');
+  const box=B.MeshBuilder.CreateBox('b'+prefix+idx,{width:w,height:h,depth:d},sc);box.parent=g;box.material=bm;
+  const f=B.MeshBuilder.CreatePlane('f'+prefix+idx,{width:w-.02,height:h-.02},sc);f.parent=g;f.position.z=-d/2-.005;f.material=fm;
+  const b=B.MeshBuilder.CreatePlane('b'+prefix+idx,{width:w-.02,height:h-.02},sc);b.parent=g;b.position.z=d/2+.005;b.rotation.y=Math.PI;b.material=fm;
+  return {g,tex,box,fm,w,h,d,isLeft,text:'',highlight:0,targetH:0};
+ };
+
+ const itemsA=A_POS.map((p,i)=>createItem('A',i,p,true));
+ const itemsB=B_POS.map((p,i)=>createItem('B',i,p,false));
+
+ const drawItem=(item,text,highlight=0)=>{
+  const x=item.tex.getContext();
+  x.clearRect(0,0,320,110);
+  x.fillStyle=highlight?'#cfe5ff':'#ffffff';
+  x.fillRect(0,0,320,110);
+  x.strokeStyle=highlight?'#0071e3':'#a0aec0';
+  x.lineWidth=highlight?8:4;
+  x.strokeRect(3,3,314,104);
+  x.fillStyle=highlight?'#005bb5':'#1d1d1f';
+  x.font='bold 34px -apple-system,Inter,Arial,sans-serif';
+  x.textAlign='center';
+  x.textBaseline='middle';
+  x.fillText(text,160,56);
+  item.tex.update();
+ };
+
+ const makeBackdrop=(x,label)=>{
+  const col=B.MeshBuilder.CreateBox('col'+label,{width:3.2,height:6.8,depth:.1},sc);
+  col.position.set(x,0,-.3);
+  const m=new B.StandardMaterial('mCol'+label,sc);
+  m.diffuseColor=C('#eef4fb');m.alpha=.25;m.specularColor=C('#ffffff');
+  col.material=m;
+  const lTex=new B.DynamicTexture('tl'+label,{width:256,height:64},sc,true);
+  const lx=lTex.getContext();lx.font='bold 36px -apple-system,Inter,sans-serif';lx.fillStyle='#4a5568';lx.textAlign='center';lx.textBaseline='middle';lx.fillText(label,128,32);lTex.update();
+  const lm=new B.StandardMaterial('ml'+label,sc);lm.diffuseTexture=lTex;lm.emissiveTexture=lTex;lm.disableLighting=true;
+  const lp=B.MeshBuilder.CreatePlane('pl'+label,{width:2,height:.5},sc);lp.position.set(x,3.7,-.25);lp.material=lm;
+ };
+ makeBackdrop(-4.2,'Set A (Domain)');
+ makeBackdrop(4.2,'Set B (Codomain)');
+
+ const linksPool=[];
+ for(let i=0;i<3;i++){
+  for(let j=0;j<3;j++){
+   const pa=new B.Vector3(A_POS[i].x+1.2,A_POS[i].y,0);
+   const pb=new B.Vector3(B_POS[j].x-1.2,B_POS[j].y,0);
+   const m=new B.StandardMaterial('lm_'+i+'_'+j,sc);
+   m.emissiveColor=ACC;m.disableLighting=true;m.alpha=0;
+   const tube=B.MeshBuilder.CreateTube('tb_'+i+'_'+j,{path:[pa,pb],radius:.042,tessellation:8},sc);
+   tube.material=m;
+   const dir=pb.subtract(pa).normalize();
+   const mid=pb.subtract(dir.scale(.4));
+   const cone=B.MeshBuilder.CreateCylinder('cn_'+i+'_'+j,{diameterTop:0,diameterBottom:.22,height:.34,tessellation:10},sc);
+   cone.material=m;cone.position.copyFrom(mid);
+   cone.rotationQuaternion=B.Quaternion.FromLookDirectionRH(dir,B.Vector3.Up());
+   cone.rotate(B.Axis.X,Math.PI/2,B.Space.LOCAL);
+   linksPool.push({i,j,tube,cone,m,alpha:0,targetAlpha:0});
+  }
+ }
+
+ const capEl=document.getElementById('set3d-cap');
+ const applyMode=(mKey)=>{
+  const cfg=MODES[mKey];if(!cfg)return;
+  if(capEl)capEl.textContent=cfg.cap;
+  cfg.A.forEach((txt,i)=>{itemsA[i].text=txt;drawItem(itemsA[i],txt,1)});
+  cfg.B.forEach((txt,i)=>{itemsB[i].text=txt;drawItem(itemsB[i],txt,1)});
+  setTimeout(()=>{
+   cfg.A.forEach((txt,i)=>drawItem(itemsA[i],txt,0));
+   cfg.B.forEach((txt,i)=>drawItem(itemsB[i],txt,0));
+  },400);
+
+  linksPool.forEach(lk=>{
+   const active=cfg.links.some(([a,b])=>a===lk.i&&b===lk.j);
+   lk.targetAlpha=active?0.95:0;
+  });
+ };
+
+ applyMode('11');
+
+ const segBtns=document.querySelectorAll('#seg-set3d button');
+ segBtns.forEach(b=>b.onclick=()=>{
+  segBtns.forEach(x=>x.classList.toggle('on',x===b));
+  applyMode(b.dataset.m);
+ });
+
+ let sway=true;cv.addEventListener('pointerdown',()=>sway=false);
+ sc.onBeforeRenderObservable.add(()=>{
+  if(sway)cam.alpha=-Math.PI/2+Math.sin(performance.now()/2800)*.22;
+  linksPool.forEach(lk=>{
+   lk.alpha+=(lk.targetAlpha-lk.alpha)*.16;
+   lk.m.alpha=lk.alpha;
+   lk.tube.setEnabled(lk.alpha>0.02);
+   lk.cone.setEnabled(lk.alpha>0.02);
+  });
+ });
+
+ let vis=false;new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(cv);
+ eng.runRenderLoop(()=>{if(vis)sc.render()});
+ addEventListener('resize',()=>eng.resize());
+}catch(e){wrap&&(wrap.style.display='none')}
+})();
+</script>
+
+<script>
+/* Interactive 3D ER Model (Babylon.js - Q3 Bookstore & Music) */
+(()=>{
+const cv=document.getElementById('er3d_q3'),wrap=document.getElementById('er3d-wrap');
+try{
+ if(!cv||typeof BABYLON==='undefined')throw 0;
+ const B=BABYLON,eng=new B.Engine(cv,true,{antialias:true,alpha:true}),sc=new B.Scene(eng);
+ sc.clearColor=new B.Color4(0,0,0,0);
+ const cam=new B.ArcRotateCamera('cER3',-Math.PI/2,1.25,14,new B.Vector3(0.3,0.1,0),sc);
+ cam.lowerRadiusLimit=8;cam.upperRadiusLimit=24;cam.lowerBetaLimit=.3;cam.upperBetaLimit=Math.PI/2+.2;
+ cam.panningSensibility=0;cam.pinchPrecision=40;
+ cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+ cam.attachControl(cv,true);
+ new B.HemisphericLight('hER3',new B.Vector3(0,1,-.5),sc).intensity=1.1;
+ const dl=new B.DirectionalLight('dER3',new B.Vector3(0,-1,1),sc);dl.intensity=.45;
+
+ const C=h=>B.Color3.FromHexString(h);
+ const ACC=C('#0071e3'),GRAY=C('#8e99ab');
+
+ const NODES={
+  MI:{name:'music_item',type:'ent',x:-4.2,y:2.0,z:0,w:2.7,h:1.15,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'[music_id, title]'},
+  HF:{name:'has_format',type:'weak_rel',x:-1.3,y:2.0,z:0,w:2.3,h:1.15,d:.4,bg:'#ffffff',fg:'#f5a623',sub:'(identifying)'},
+  MF:{name:'music_format',type:'weak_ent',x:1.8,y:2.0,z:0,w:2.9,h:1.15,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'[format (pk), price]'},
+  ST:{name:'stocks',type:'rel',x:4.8,y:2.0,z:0,w:2.2,h:1.15,d:.4,bg:'#ffffff',fg:'#f5a623',sub:'[quantity]'},
+  WH:{name:'warehouse',type:'ent',x:4.8,y:-1.6,z:0,w:2.6,h:1.15,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'[code, address]'},
+  SB:{name:'shopping_basket',type:'ent',x:-4.2,y:-1.6,z:0,w:2.9,h:1.15,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'[basketID]'},
+  CT:{name:'contains',type:'rel',x:-1.5,y:-1.6,z:0,w:2.2,h:1.15,d:.4,bg:'#ffffff',fg:'#f5a623',sub:'[number]'},
+  ISA:{name:'ISA',type:'isa',x:1.8,y:0.2,z:0,w:2.0,h:1.05,d:.4,bg:'#ffffff',fg:'#7b61ff',sub:'total, disjoint'},
+  CAS:{name:'cassette',type:'ent',x:0.6,y:-1.6,z:0,w:2.3,h:1.1,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'sub-entity'},
+  CD:{name:'compact_disk',type:'ent',x:3.0,y:-1.6,z:0,w:2.5,h:1.1,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'sub-entity'}
+ };
+
+ const EDGES=[
+  {a:'MI',b:'HF',tag:'1',identifying:true},
+  {a:'HF',b:'MF',tag:'N',identifying:true},
+  {a:'MF',b:'ST',tag:'M'},
+  {a:'ST',b:'WH',tag:'N'},
+  {a:'MF',b:'ISA',tag:''},
+  {a:'ISA',b:'CAS',tag:''},
+  {a:'ISA',b:'CD',tag:''},
+  {a:'SB',b:'CT',tag:'M'},
+  {a:'CT',b:'CAS',tag:'N'}
+ ];
+
+ for(const k in NODES){
+  const o=NODES[k];
+  o.g=new B.TransformNode('g'+k,sc);o.g.position.set(o.x,o.y,o.z);
+  o.tex=new B.DynamicTexture('t'+k,{width:540,height:230},sc,true);
+  const fm=new B.StandardMaterial('fm'+k,sc);fm.diffuseTexture=o.tex;fm.emissiveTexture=o.tex;fm.disableLighting=true;fm.backFaceCulling=false;
+  o.fm=fm;
+  const bm=new B.StandardMaterial('bm'+k,sc);bm.diffuseColor=C('#dbe9ff');bm.emissiveColor=C('#a6bedd');
+  const body=B.MeshBuilder.CreateBox('b'+k,{width:o.w,height:o.h,depth:o.d},sc);body.parent=o.g;body.material=bm;
+  const f=B.MeshBuilder.CreatePlane('f'+k,{width:o.w-.02,height:o.h-.02},sc);f.parent=o.g;f.position.z=-o.d/2-.005;f.material=fm;
+  const b=B.MeshBuilder.CreatePlane('b'+k,{width:o.w-.02,height:o.h-.02},sc);b.parent=o.g;b.position.z=o.d/2+.005;b.rotation.y=Math.PI;b.material=fm;
+  o.t=0;o.h=0;
+ }
+
+ const drawNode=(k,hi=0)=>{
+  const o=NODES[k],x=o.tex.getContext();
+  x.clearRect(0,0,540,230);
+  x.fillStyle=hi?'#cfe5ff':'#ffffff';x.fillRect(0,0,540,230);
+  x.strokeStyle=hi?'#0071e3':o.fg;
+  x.lineWidth=hi?12:7;
+  if(o.type==='weak_ent'||o.type==='weak_rel'){
+   x.strokeRect(6,6,528,218);
+   x.strokeRect(18,18,504,194);
+  } else {
+   x.strokeRect(6,6,528,218);
+  }
+  x.fillStyle=hi?'#004fa3':'#09090b';
+  x.font='bold 46px -apple-system,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText(o.name,270,82);
+  x.fillStyle='#475467';
+  x.font='bold 28px -apple-system,Inter,sans-serif';
+  x.fillText(o.sub,270,160);
+  o.tex.update();
+ };
+
+ for(const k in NODES)drawNode(k,0);
+
+ const edgeMeshes=EDGES.map(e=>{
+  const A=NODES[e.a],Bnode=NODES[e.b];
+  const pa=new B.Vector3(A.x,A.y,A.z),pb=new B.Vector3(Bnode.x,Bnode.y,Bnode.z);
+  const m=new B.StandardMaterial('em_'+e.a+'_'+e.b,sc);
+  m.emissiveColor=e.identifying?ACC.clone():GRAY.clone();
+  m.disableLighting=true;
+  const rad=e.identifying?.07:.04;
+  const tube=B.MeshBuilder.CreateTube('tb_'+e.a+'_'+e.b,{path:[pa,pb],radius:rad,tessellation:8},sc);
+  tube.material=m;
+  return {e,tube,m,pa,pb,t:0,h:0};
+ });
+
+ const capElQ3=document.getElementById('er3d-q3-cap');
+ const applyFilter=(mode)=>{
+  const highNodes=[];
+  if(mode==='all'){
+   if(capElQ3)capElQ3.textContent='Complete 3D ER Spatial Model: Blue boxes = Strong entities, Double lines = Weak entity binding, Purple = Specialization.';
+   for(const k in NODES){NODES[k].t=0;drawNode(k,0)}
+   edgeMeshes.forEach(em=>em.t=0);
+   return;
+  }
+  if(mode==='weak'){
+   if(capElQ3)capElQ3.textContent='Weak Entity has_format: music_format has partial key (format). Requires music_item identifier for uniqueness.';
+   highNodes.push('MI','HF','MF');
+  } else if(mode==='isa'){
+   if(capElQ3)capElQ3.textContent='ISA Specialization: music_format decomposes into cassette and compact_disk with disjoint, total participation.';
+   highNodes.push('MF','ISA','CAS','CD');
+  } else if(mode==='basket'){
+   if(capElQ3)capElQ3.textContent='Shopping Basket: Generalized items (book, cassette, disk) allow a basket to contain any combination.';
+   highNodes.push('SB','CT','CAS','CD');
+  }
+
+  for(const k in NODES){
+   const isHi=highNodes.includes(k);
+   NODES[k].t=isHi?1:0;
+   drawNode(k,isHi?1:0);
+  }
+  edgeMeshes.forEach(em=>{
+   const isHi=highNodes.includes(em.e.a)&&highNodes.includes(em.e.b);
+   em.t=isHi?1:0;
+  });
+ };
+
+ const segBtnsQ3=document.querySelectorAll('#seg-er3d-q3 button');
+ segBtnsQ3.forEach(b=>b.onclick=()=>{
+  segBtnsQ3.forEach(x=>x.classList.toggle('on',x===b));
+  applyFilter(b.dataset.m);
+ });
+
+ let swayQ3=true;cv.addEventListener('pointerdown',()=>swayQ3=false);
+ sc.onBeforeRenderObservable.add(()=>{
+  if(swayQ3)cam.alpha=-Math.PI/2+Math.sin(performance.now()/2600)*.2;
+  for(const k in NODES){
+   const o=NODES[k];
+   o.h+=(o.t-o.h)*.16;
+   o.g.scaling.setAll(1+o.h*.1);
+  }
+  edgeMeshes.forEach(em=>{
+   em.h+=(em.t-em.h)*.16;
+   em.m.emissiveColor=B.Color3.Lerp(em.e.identifying?ACC:GRAY,ACC,em.h);
+  });
+ });
+
+ let vis=false;new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(cv);
+ eng.runRenderLoop(()=>{if(vis)sc.render()});
+ addEventListener('resize',()=>eng.resize());
+}catch(e){wrap&&(wrap.style.display='none')}
+})();
+</script>
+
+<script>
+/* Interactive 3D ER (min, max) Model (Babylon.js - Q4 Company & Phone) */
+(()=>{
+const cv=document.getElementById('er3d_q4'),wrap=document.getElementById('er3d-q4-wrap');
+try{
+ if(!cv||typeof BABYLON==='undefined')throw 0;
+ const B=BABYLON,eng=new B.Engine(cv,true,{antialias:true,alpha:true}),sc=new B.Scene(eng);
+ sc.clearColor=new B.Color4(0,0,0,0);
+ const cam=new B.ArcRotateCamera('cER4',-Math.PI/2,1.25,14,new B.Vector3(0,-0.4,0),sc);
+ cam.lowerRadiusLimit=8;cam.upperRadiusLimit=24;cam.lowerBetaLimit=.3;cam.upperBetaLimit=Math.PI/2+.2;
+ cam.panningSensibility=0;cam.pinchPrecision=40;
+ cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+ cam.attachControl(cv,true);
+ new B.HemisphericLight('hER4',new B.Vector3(0,1,-.5),sc).intensity=1.1;
+ const dl=new B.DirectionalLight('dER4',new B.Vector3(0,-1,1),sc);dl.intensity=.45;
+
+ const C=h=>B.Color3.FromHexString(h);
+ const ACC=C('#0071e3'),GRAY=C('#8e99ab');
+
+ const NODES={
+  EMP:{name:'EMPLOYEE',type:'ent',x:-5.0,y:.5,z:0,w:2.7,h:1.15,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'[emp_id, name]'},
+  DEP:{name:'DEPARTMENT',type:'ent',x:5.0,y:.5,z:0,w:2.8,h:1.15,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'[dept_id, name]'},
+  PH:{name:'PHONE',type:'ent',x:0,y:-3.2,z:0,w:2.6,h:1.15,d:.4,bg:'#ffffff',fg:'#0071e3',sub:'[phone_no]'},
+  WI:{name:'WORKS_IN',type:'rel',x:0,y:2.0,z:0,w:2.5,h:1.15,d:.4,bg:'#ffffff',fg:'#f5a623',sub:'(0,2) ↔ (0,N)'},
+  PP:{name:'PERSONAL_PHONE',type:'rel',x:-3.0,y:-1.6,z:0,w:2.6,h:1.15,d:.4,bg:'#ffffff',fg:'#f5a623',sub:'(0,1) ↔ (0,1)'},
+  HP:{name:'HAS_PHONE',type:'rel',x:3.0,y:-1.6,z:0,w:2.5,h:1.15,d:.4,bg:'#ffffff',fg:'#f5a623',sub:'(1,3) ↔ (0,N)'}
+ };
+
+ const EDGES=[
+  {a:'EMP',b:'WI',tag:'(0, 2)',cat:'works'},
+  {a:'WI',b:'DEP',tag:'(0, N)',cat:'works'},
+  {a:'EMP',b:'PP',tag:'(0, 1)',cat:'pers'},
+  {a:'PP',b:'PH',tag:'(0, 1)',cat:'pers'},
+  {a:'DEP',b:'HP',tag:'(1, 3)',cat:'dept'},
+  {a:'HP',b:'PH',tag:'(0, N)',cat:'dept'}
+ ];
+
+ for(const k in NODES){
+  const o=NODES[k];
+  o.g=new B.TransformNode('g4_'+k,sc);o.g.position.set(o.x,o.y,o.z);
+  o.tex=new B.DynamicTexture('t4_'+k,{width:540,height:230},sc,true);
+  const fm=new B.StandardMaterial('fm4_'+k,sc);fm.diffuseTexture=o.tex;fm.emissiveTexture=o.tex;fm.disableLighting=true;fm.backFaceCulling=false;
+  o.fm=fm;
+  const bm=new B.StandardMaterial('bm4_'+k,sc);bm.diffuseColor=C('#dbe9ff');bm.emissiveColor=C('#a6bedd');
+  const body=B.MeshBuilder.CreateBox('b4_'+k,{width:o.w,height:o.h,depth:o.d},sc);body.parent=o.g;body.material=bm;
+  const f=B.MeshBuilder.CreatePlane('f4_'+k,{width:o.w-.02,height:o.h-.02},sc);f.parent=o.g;f.position.z=-o.d/2-.005;f.material=fm;
+  const b=B.MeshBuilder.CreatePlane('b4_'+k,{width:o.w-.02,height:o.h-.02},sc);b.parent=o.g;b.position.z=o.d/2+.005;b.rotation.y=Math.PI;b.material=fm;
+  o.t=0;o.h=0;
+ }
+
+ const drawNode4=(k,hi=0)=>{
+  const o=NODES[k],x=o.tex.getContext();
+  x.clearRect(0,0,540,230);
+  x.fillStyle=hi?'#cfe5ff':'#ffffff';x.fillRect(0,0,540,230);
+  x.strokeStyle=hi?'#0071e3':o.fg;
+  x.lineWidth=hi?12:7;
+  x.strokeRect(6,6,528,218);
+  x.fillStyle=hi?'#004fa3':'#09090b';
+  x.font='bold 44px -apple-system,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText(o.name,270,80);
+  x.fillStyle='#475467';
+  x.font='bold 28px -apple-system,Inter,sans-serif';
+  x.fillText(o.sub,270,160);
+  o.tex.update();
+ };
+
+ for(const k in NODES)drawNode4(k,0);
+
+ const edgeMeshes=EDGES.map((e,idx)=>{
+  const A=NODES[e.a],Bnode=NODES[e.b];
+  const pa=new B.Vector3(A.x,A.y,A.z),pb=new B.Vector3(Bnode.x,Bnode.y,Bnode.z);
+  const m=new B.StandardMaterial('em4_'+idx,sc);m.emissiveColor=GRAY.clone();m.disableLighting=true;
+  const tube=B.MeshBuilder.CreateTube('tb4_'+idx,{path:[pa,pb],radius:.044,tessellation:8},sc);
+  tube.material=m;
+
+  const mid=pa.add(pb).scale(.5);
+  const tagTex=new B.DynamicTexture('tag4_'+idx,{width:220,height:80},sc,true);
+  const tx=tagTex.getContext();tx.fillStyle='#111827';tx.fillRect(0,0,220,80);
+  tx.strokeStyle='#38bdf8';tx.lineWidth=4;tx.strokeRect(3,3,214,74);
+  tx.fillStyle='#38bdf8';tx.font='bold 34px -apple-system,Inter,sans-serif';tx.textAlign='center';tx.textBaseline='middle';
+  tx.fillText(e.tag,110,40);tagTex.update();
+  const tm=new B.StandardMaterial('tm4_'+idx,sc);tm.diffuseTexture=tagTex;tm.emissiveTexture=tagTex;tm.disableLighting=true;
+  const badge=B.MeshBuilder.CreatePlane('bg4_'+idx,{width:1.1,height:.42},sc);
+  badge.position.set(mid.x,mid.y+.24,mid.z);badge.material=tm;badge.billboardMode=B.Mesh.BILLBOARDMODE_ALL;
+
+  return {e,tube,badge,m,t:0,h:0};
+ });
+
+ const capElQ4=document.getElementById('er3d-q4-cap');
+ const applyFilter4=(mode)=>{
+  const highNodes=[];
+  if(mode==='all'){
+   if(capElQ4)capElQ4.textContent='Complete company-phone ER schema with (min, max) structural constraints on edges.';
+   for(const k in NODES){NODES[k].t=0;drawNode4(k,0)}
+   edgeMeshes.forEach(em=>em.t=0);
+   return;
+  }
+  if(mode==='dept'){
+   if(capElQ4)capElQ4.textContent='DEPARTMENT (1,3): Must have at least 1 and at most 3 phone numbers. Links dedicated or personal phones.';
+   highNodes.push('DEP','HP','PH');
+  } else if(mode==='pers'){
+   if(capElQ4)capElQ4.textContent='EMPLOYEE (0,1): An employee may have 0 or at most 1 personal phone; personal phone belongs to at most 1 employee.';
+   highNodes.push('EMP','PP','PH');
+  } else if(mode==='works'){
+   if(capElQ4)capElQ4.textContent='WORKS_IN: Employee works in 0 to 2 departments (0,2); Department has 0 to N employees (0,N).';
+   highNodes.push('EMP','WI','DEP');
+  }
+
+  for(const k in NODES){
+   const isHi=highNodes.includes(k);
+   NODES[k].t=isHi?1:0;
+   drawNode4(k,isHi?1:0);
+  }
+  edgeMeshes.forEach(em=>{
+   const isHi=highNodes.includes(em.e.a)&&highNodes.includes(em.e.b);
+   em.t=isHi?1:0;
+  });
+ };
+
+ const segBtnsQ4=document.querySelectorAll('#seg-er3d-q4 button');
+ segBtnsQ4.forEach(b=>b.onclick=()=>{
+  segBtnsQ4.forEach(x=>x.classList.toggle('on',x===b));
+  applyFilter4(b.dataset.m);
+ });
+
+ let swayQ4=true;cv.addEventListener('pointerdown',()=>swayQ4=false);
+ sc.onBeforeRenderObservable.add(()=>{
+  if(swayQ4)cam.alpha=-Math.PI/2+Math.sin(performance.now()/2700)*.2;
+  for(const k in NODES){
+   const o=NODES[k];
+   o.h+=(o.t-o.h)*.16;
+   o.g.scaling.setAll(1+o.h*.1);
+  }
+  edgeMeshes.forEach(em=>{
+   em.h+=(em.t-em.h)*.16;
+   em.m.emissiveColor=B.Color3.Lerp(GRAY,ACC,em.h);
+   em.badge.scaling.setAll(1+em.h*.2);
+  });
+ });
+
+ let vis=false;new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(cv);
+ eng.runRenderLoop(()=>{if(vis)sc.render()});
+ addEventListener('resize',()=>eng.resize());
+}catch(e){wrap&&(wrap.style.display='none')}
+})();
+</script>
+
+<script>
+/* Interactive 3D Conflict Serializability Precedence Graph (Babylon.js - Q13) */
+(()=>{
+const cv=document.getElementById('serial3d'),wrap=document.getElementById('serial3d-wrap');
+try{
+ if(!cv||typeof BABYLON==='undefined')throw 0;
+ const B=BABYLON,eng=new B.Engine(cv,true,{antialias:true,alpha:true}),sc=new B.Scene(eng);
+ sc.clearColor=new B.Color4(0,0,0,0);
+ const cam=new B.ArcRotateCamera('cSer',-Math.PI/2,1.2,13.5,new B.Vector3(0,0,0),sc);
+ cam.lowerRadiusLimit=7;cam.upperRadiusLimit=22;cam.lowerBetaLimit=.3;cam.upperBetaLimit=Math.PI/2+.2;
+ cam.panningSensibility=0;cam.pinchPrecision=40;
+ cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+ cam.attachControl(cv,true);
+ new B.HemisphericLight('hSer',new B.Vector3(0,1,-.5),sc).intensity=1.1;
+ const dl=new B.DirectionalLight('dSer',new B.Vector3(0,-1,1),sc);dl.intensity=.45;
+
+ const C=h=>B.Color3.FromHexString(h);
+ const ACC=C('#0071e3'),GRAY=C('#8e99ab');
+
+ const NODES={
+  T3:{label:'T3',sub:'Earlier Tx',x:-4.2,y:1.2,z:0},
+  T1:{label:'T1',sub:'Middle Tx',x:0,y:2.4,z:0},
+  T2:{label:'T2',sub:'Later Tx',x:4.2,y:0,z:0}
+ };
+
+ for(const k in NODES){
+  const o=NODES[k];
+  o.g=new B.TransformNode('gS_'+k,sc);o.g.position.set(o.x,o.y,o.z);
+  o.tex=new B.DynamicTexture('tS_'+k,{width:360,height:360},sc,true);
+  const fm=new B.StandardMaterial('fmS_'+k,sc);fm.diffuseTexture=o.tex;fm.emissiveTexture=o.tex;fm.disableLighting=true;
+  const sph=B.MeshBuilder.CreateCylinder('sphS_'+k,{diameter:1.9,height:.42,tessellation:32},sc);
+  sph.rotation.x=Math.PI/2;sph.parent=o.g;sph.material=fm;
+  o.t=0;o.h=0;
+ }
+
+ const drawNodeS=(k,hi=0)=>{
+  const o=NODES[k],x=o.tex.getContext();
+  x.clearRect(0,0,360,360);
+  x.beginPath();x.arc(180,180,165,0,Math.PI*2);
+  x.fillStyle=hi?'#cfe5ff':'#ffffff';x.fill();
+  x.lineWidth=hi?16:9;x.strokeStyle=hi?'#0071e3':'#0071e3';x.stroke();
+  x.fillStyle='#09090b';
+  x.font='bold 82px -apple-system,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText(o.label,180,145);
+  x.font='bold 32px -apple-system,Inter,sans-serif';x.fillStyle='#475467';
+  x.fillText(o.sub,180,230);
+  o.tex.update();
+ };
+
+ for(const k in NODES)drawNodeS(k,0);
+
+ const EDGES=[
+  {from:'T3',to:'T1',item:'y',detail:'R3(y)→W1(y), W3(y)→R1(y), W3(y)→W1(y)'},
+  {from:'T3',to:'T2',item:'y',detail:'R3(y)→W2(y), W3(y)→R2(y), W3(y)→W2(y)'},
+  {from:'T1',to:'T2',item:'x, y',detail:'R1(x)→W2(x), W1(x)→R2(x), W1(x)→W2(x) & y conflicts'}
+ ];
+
+ const edgeMeshes=EDGES.map((e,idx)=>{
+  const p1=new B.Vector3(NODES[e.from].x,NODES[e.from].y,0);
+  const p2=new B.Vector3(NODES[e.to].x,NODES[e.to].y,0);
+  const dir=p2.subtract(p1).normalize();
+  const start=p1.add(dir.scale(1.05));
+  const end=p2.subtract(dir.scale(1.05));
+
+  const m=new B.StandardMaterial('mSE_'+idx,sc);m.emissiveColor=GRAY.clone();m.disableLighting=true;
+  const tube=B.MeshBuilder.CreateTube('tbS_'+idx,{path:[start,end],radius:.058,tessellation:10},sc);
+  tube.material=m;
+
+  const cone=B.MeshBuilder.CreateCylinder('cnS_'+idx,{diameterTop:0,diameterBottom:.3,height:.45,tessellation:12},sc);
+  cone.material=m;cone.position.copyFrom(end.subtract(dir.scale(.22)));
+  cone.rotationQuaternion=B.Quaternion.FromLookDirectionRH(dir,B.Vector3.Up());
+  cone.rotate(B.Axis.X,Math.PI/2,B.Space.LOCAL);
+
+  const mid=start.add(end).scale(.5);
+  const bTex=new B.DynamicTexture('btS_'+idx,{width:180,height:75},sc,true);
+  const bx=bTex.getContext();bx.fillStyle='#111827';bx.fillRect(0,0,180,75);
+  bx.strokeStyle='#38bdf8';bx.lineWidth=4;bx.strokeRect(3,3,174,69);
+  bx.fillStyle='#38bdf8';bx.font='bold 34px -apple-system,Inter,sans-serif';bx.textAlign='center';bx.textBaseline='middle';
+  bx.fillText(e.item,90,38);bTex.update();
+  const bm=new B.StandardMaterial('bmSE_'+idx,sc);bm.diffuseTexture=bTex;bm.emissiveTexture=bTex;bm.disableLighting=true;
+  const badge=B.MeshBuilder.CreatePlane('bgS_'+idx,{width:1.0,height:.44},sc);
+  badge.position.set(mid.x,mid.y+.26,0);badge.material=bm;badge.billboardMode=B.Mesh.BILLBOARDMODE_ALL;
+
+  const photon=B.MeshBuilder.CreateSphere('phS_'+idx,{diameter:.24},sc);
+  const pm=new B.StandardMaterial('pmS_'+idx,sc);pm.emissiveColor=C('#60a5fa');pm.disableLighting=true;
+  photon.material=pm;
+
+  return {e,tube,cone,badge,photon,m,start,end,dir,t:0,h:0,pulse:0};
+ });
+
+ const capElQ13=document.getElementById('serial3d-cap');
+ let topoTimer=null;
+
+ const applyFilterS=(mode)=>{
+  if(topoTimer){clearInterval(topoTimer);topoTimer=null}
+  if(mode==='all'){
+   if(capElQ13)capElQ13.textContent='Precedence Graph: Directed edges show write-read, read-write, and write-write conflicts across transactions.';
+   for(const k in NODES){NODES[k].t=0;drawNodeS(k,0)}
+   edgeMeshes.forEach(em=>em.t=0);
+   return;
+  }
+  if(mode==='y'){
+   if(capElQ13)capElQ13.textContent='Item y Conflicts: T3→T1, T3→T2, and T1→T2 all contend on data item y.';
+   for(const k in NODES)NODES[k].t=1,drawNodeS(k,1);
+   edgeMeshes.forEach(em=>em.t=em.e.item.includes('y')?1:0);
+  } else if(mode==='x'){
+   if(capElQ13)capElQ13.textContent='Item x Conflicts: Only T1 and T2 access item x, yielding conflict edge T1 → T2.';
+   for(const k in NODES)NODES[k].t=(k==='T1'||k==='T2')?1:0,drawNodeS(k,NODES[k].t);
+   edgeMeshes.forEach(em=>em.t=em.e.item.includes('x')?1:0);
+  } else if(mode==='topo'){
+   if(capElQ13)capElQ13.textContent='Topological Sort: T3 has in-degree 0, executes first. Then T1 (in-degree 0), then T2. Equivalent Serial Order: T3 → T1 → T2.';
+   let step=0;
+   const seq=['T3','T1','T2'];
+   const runStep=()=>{
+    for(const k in NODES){
+     const act=seq[step]===k;
+     NODES[k].t=act?1.2:0;drawNodeS(k,act?1:0);
+    }
+    edgeMeshes.forEach((em,idx)=>{
+     if(step===0)em.t=(em.e.from==='T3')?1:0;
+     else if(step===1)em.t=(em.e.from==='T1'&&em.e.to==='T2')?1:0;
+     else em.t=1;
+    });
+    step=(step+1)%3;
+   };
+   runStep();
+   topoTimer=setInterval(runStep,1100);
+  }
+ };
+
+ const segBtnsQ13=document.querySelectorAll('#seg-serial3d button');
+ segBtnsQ13.forEach(b=>b.onclick=()=>{
+  segBtnsQ13.forEach(x=>x.classList.toggle('on',x===b));
+  applyFilterS(b.dataset.m);
+ });
+
+ let swayQ13=true;cv.addEventListener('pointerdown',()=>swayQ13=false);
+ sc.onBeforeRenderObservable.add(()=>{
+  const now=performance.now()/1000;
+  if(swayQ13)cam.alpha=-Math.PI/2+Math.sin(now*.8)*.2;
+  for(const k in NODES){
+   const o=NODES[k];
+   o.h+=(o.t-o.h)*.16;
+   o.g.scaling.setAll(1+o.h*.12);
+  }
+  edgeMeshes.forEach((em,idx)=>{
+   em.h+=(em.t-em.h)*.16;
+   em.m.emissiveColor=B.Color3.Lerp(GRAY,ACC,em.h);
+   const prog=(now*.6+idx*.33)%1;
+   em.photon.position=B.Vector3.Lerp(em.start,em.end,prog);
+   em.photon.setEnabled(em.h>0.1||Boolean(capElQ13&&capElQ13.textContent.includes('Precedence')));
+  });
+ });
+
+ let vis=false;new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(cv);
+ eng.runRenderLoop(()=>{if(vis)sc.render()});
+ addEventListener('resize',()=>eng.resize());
+}catch(e){wrap&&(wrap.style.display='none')}
+})();
+</script>
+
+<script>
+/* Apple Contextual Hover Tooltip Engine */
+(()=>{
+const DBMS_GLOSSARY={
+ 'Π':{cat:'Relational Algebra',def:'Projection operator. Selects specified columns/attributes from a relation while eliminating duplicate tuples.',rule:'\\Pi_{attr1, attr2}(Relation)',trap:'Implicitly performs duplicate elimination in mathematical relational algebra.'},
+ 'PROJECT':{cat:'Relational Algebra',def:'Projection operator \\Pi. Extracts vertical columns from a relation.',rule:'\\Pi_{A, B}(R)',trap:'Produces a set (no duplicates) in pure relational algebra.'},
+ 'Σ':{cat:'Relational Algebra',def:'Selection operator. Filters horizontal tuples that satisfy a Boolean predicate.',rule:'\\sigma_{predicate}(Relation)',trap:'Cannot evaluate aggregate calculations (SUM, AVG) directly.'},
+ 'SELECT':{cat:'Relational Algebra / SQL',def:'Selection operator \\sigma in algebra, or data retrieval projection in SQL.',rule:'\\sigma_{condition}(R) / SELECT cols FROM table',trap:'Evaluates before projection in algebra; in SQL, WHERE evaluates before SELECT projection.'},
+ '⋈':{cat:'Relational Algebra',def:'Natural Join operator. Joins two relations on all attributes with identical names, retaining matching tuples.',rule:'R \\bowtie S',trap:'Omitting common attributes reduces operation to a Cartesian Product (R \\times S).'},
+ 'JOIN':{cat:'Relational Operation',def:'Combines tuples from two relations based on related column values.',rule:'FROM R JOIN S ON R.id = S.id',trap:'Missing join predicate creates accidental Cartesian product.'},
+ 'Ρ':{cat:'Relational Algebra',def:'Rename operator. Assigns a new alias to a relation or its attributes.',rule:'\\rho_S(R) \\text{ or } \\rho_{S(A1,A2)}(R)',trap:'Essential for self-joins to disambiguate identical table references.'},
+ 'RENAME':{cat:'Relational Algebra / DDL',def:'Rename operator \\rho in algebra, or RENAME table TO new_table in SQL.',rule:'\\rho_T(R) / RENAME old TO new',trap:'In SQL DDL, automatically invalidates dependent views and procedures.'},
+ '−':{cat:'Set Difference',def:'Set difference operator. Returns all tuples present in relation R that do NOT appear in relation S ($R - S$).',rule:'R - S',trap:'Relations must be union-compatible (same degree and compatible domain types).'},
+ '∩':{cat:'Set Intersection',def:'Intersection operator. Yields tuples that exist simultaneously in both relation R and relation S ($R \\cap S$).',rule:'R \\cap S',trap:'Can be derived using set difference: R - (R - S).'},
+ '∪':{cat:'Set Union',def:'Union operator. Combines all tuples from relations R and S without duplication ($R \\cup S$).',rule:'R \\cup S',trap:'Requires union-compatible relations.'},
+ '×':{cat:'Cartesian Product',def:'Cross product operator. Pairs every tuple of relation R with every tuple of relation S ($R \\times S$).',rule:'R \\times S',trap:'Result size is |R| \\times |S| tuples; causes massive memory bloat if unconstrained.'},
+ '∃':{cat:'Predicate Calculus',def:'Existential quantifier ("there exists at least one"). True if condition holds for at least one tuple.',rule:'\\exists p \\in r ( \\phi(p) )',trap:'Negation of \\exists is \\forall with inverted predicate: \\neg \\exists p \\equiv \\forall p \\neg.'},
+ '∀':{cat:'Predicate Calculus',def:'Universal quantifier ("for all / every"). True only if condition holds for every tuple.',rule:'\\forall p \\in r ( \\phi(p) )',trap:'If relation is empty, \\forall is vacuously TRUE.'},
+ '∧':{cat:'Boolean Logic',def:'Logical conjunction (AND). Evaluates to TRUE iff both conditions are simultaneously TRUE.',rule:'p \\land q',trap:'Follows three-valued logic in databases with NULL (TRUE \\land NULL = NULL).'},
+ '∨':{cat:'Boolean Logic',def:'Logical disjunction (OR). Evaluates to TRUE if at least one condition is TRUE.',rule:'p \\lor q',trap:'NULL \\lor TRUE = TRUE in short-circuit evaluation.'},
+ '∈':{cat:'Set Membership',def:'Set membership operator. Denotes that tuple t belongs to active relation r ($t \\in r$).',rule:'t \\in relation',trap:'Tuple relational calculus restricts variables to explicit relation domains for safety.'},
+ 'BCNF':{cat:'Boyce-Codd Normal Form',def:'Strict normal form where for every non-trivial functional dependency X → Y, X must be a superkey.',rule:'X \\to Y \\implies X \\text{ is superkey}',trap:'Lossless decomposition into BCNF is always possible, but dependency preservation is NOT guaranteed!'},
+ '3NF':{cat:'Third Normal Form',def:'Relational schema where for every non-trivial X → Y, either X is a superkey OR Y is a prime attribute.',rule:'X \\to Y \\implies X \\text{ superkey or } Y \\text{ prime}',trap:'Allows transitive dependencies if right-hand side is prime; always preserves all FDs.'},
+ '2NF':{cat:'Second Normal Form',def:'Requires 1NF and guarantees that no non-prime attribute is partially dependent on any candidate key.',rule:'No proper subset of candidate key determines non-prime attribute',trap:'Only relevant when candidate key is composite (multi-attribute).'},
+ '1NF':{cat:'First Normal Form',def:'Demands that all attribute domain values are atomic (indivisible scalars) with no repeating groups.',rule:'All domain values atomic scalars',trap:'Storing comma-separated lists or nested records directly violates 1NF.'},
+ 'CANDIDATE KEY':{cat:'Relational Constraint',def:'Minimal superkey: a minimal set of attributes that uniquely identifies every tuple in the relation.',rule:'K^+ = R \\text{ and no proper subset of K determines R}',trap:'A relation may have multiple candidate keys; one is chosen as primary key.'},
+ 'SUPERKEY':{cat:'Relational Constraint',def:'Any set of attributes containing a candidate key that uniquely identifies tuples in a relation.',rule:'SK^+ = R',trap:'Every candidate key is a superkey, but not every superkey is a candidate key.'},
+ 'PARTIAL DEPENDENCY':{cat:'Normalization Flaw',def:'Functional dependency where a proper subset of a composite candidate key determines a non-prime attribute.',rule:'A \\subset K \\implies A \\to non-prime',trap:'Violates 2NF; must be split into a separate parent relation.'},
+ 'TRANSITIVE DEPENDENCY':{cat:'Normalization Flaw',def:'Indirect dependency X → Z arising via an intermediate non-key attribute Y (X → Y and Y → Z).',rule:'X \\to Y \\land Y \\to Z \\implies X \\to Z',trap:'Violates 3NF if Z is non-prime and Y is not a superkey.'},
+ 'PRECEDENCE GRAPH':{cat:'Transaction Engine',def:'Directed serialization graph where nodes represent transactions and edges indicate conflicting operations.',rule:'T_i \\to T_j \\iff T_i \\text{ precedes } T_j \\text{ on conflicting item}',trap:'Schedule is conflict-serializable if and only if the precedence graph has NO directed cycles!'},
+ 'CONFLICT SERIALIZABILITY':{cat:'Transaction Engine',def:'A concurrent schedule that is conflict-equivalent to some serial execution schedule of the same transactions.',rule:'Precedence graph is a DAG (cycle-free)',trap:'Conflict serializability is strictly stronger than view serializability.'},
+ 'TOPOLOGICAL SORT':{cat:'Graph Algorithm',def:'Linear ordering of vertices in a directed acyclic graph (DAG) respecting all directional edge dependencies.',rule:'T_i \\to T_j \\implies T_i \\text{ precedes } T_j \\text{ in order}',trap:'Yields the equivalent serial execution order of concurrent transactions (e.g. T3 → T1 → T2).'},
+ 'B+ TREE':{cat:'Storage & Indexing',def:'Balanced search tree where all data records reside in leaves linked sequentially; internal nodes store routing keys.',rule:'All leaves at equal depth; root has \\ge 2 children',trap:'Range scans follow leaf chain without re-traversing internal root nodes.'},
+ 'WEAK ENTITY':{cat:'ER Modeling',def:'Entity set that cannot be uniquely identified by its own attributes alone; depends on an identifying owner entity.',rule:'Drawn with double rectangular border',trap:'Requires identifying relationship (double diamond) and foreign key to parent primary key.'},
+ 'IDENTIFYING RELATIONSHIP':{cat:'ER Modeling',def:'The relationship linking a weak entity set to its identifying owner strong entity set.',rule:'Drawn with double diamond border',trap:'Weak entity participation is always total (double line).'},
+ 'PARTIAL KEY':{cat:'ER Modeling',def:'Attribute that distinguishes weak entity instances of the same owner (discriminator).',rule:'Drawn with dashed underline',trap:'Primary key of weak entity is: Owner PK + Partial Key.'},
+ 'ISA':{cat:'ER Specialization',def:'Specialization / generalization hierarchy where sub-entities inherit attributes and relationships.',rule:'Disjoint vs Overlapping; Total vs Partial',trap:'Disjoint means an entity instance can belong to at most one sub-class.'},
+ '(MIN, MAX)':{cat:'Structural Constraint',def:'Specifies that each entity instance participates in at least min and at most max relationship instances.',rule:'(min, max) \\text{ on entity edge}',trap:'Reverses standard Arrow notation direction: (min,max) sits directly on the participating entity.'},
+ '4NF':{cat:'Fourth Normal Form',def:'Eliminates non-trivial multivalued dependencies (MVDs: X ↠ Y) that are not functional dependencies.',rule:'X \\twoheadrightarrow Y \\implies X \\text{ is superkey}',trap:'Arises when independent 1:M relationships are combined in a single relation.'},
+ '5NF':{cat:'Fifth Normal Form',def:'Project-Join Normal Form (PJNF): Guarantees relation cannot be decomposed into smaller relations that join back with loss.',rule:'Every join dependency (JD) is implied by candidate keys',trap:'Addresses cyclic symmetric dependencies that cannot be decomposed into binary joins.'},
+
+ // Question 12 Attribute Schema: R{RN, POR, PI, PN, DATE, MA, MT}
+ 'RN':{cat:'Relational Attribute',def:'Room Number / Registration Number: Attribute in university normalization exam schema R{RN, POR, PI, PN, DATE, MA, MT}. Non-prime attribute determined by PI (PI → PN, RN).',rule:'RN \\to POR \\text{ is a transitive dependency in R}',trap:'Because PI is a proper subset of candidate key (PI, DATE), PI → RN violates 2NF (partial dependency).'},
+ 'POR':{cat:'Relational Attribute',def:'Port of Origin / Point of Record / Room Type: Non-prime attribute functionally determined by RN (RN → POR).',rule:'RN \\to POR',trap:'Transitive dependency: RN is not a superkey and POR is non-prime, violating 3NF.'},
+ 'PI':{cat:'Relational Attribute',def:'Patient ID / Part ID / Product ID: Prime attribute component of composite candidate key (PI, DATE) in schema R{RN, POR, PI, PN, DATE, MA, MT}.',rule:'(PI, DATE)^+ = \\text{all attributes}',trap:'Determines PN and RN alone, creating partial key dependencies that violate 2NF.'},
+ 'PN':{cat:'Relational Attribute',def:'Patient Name / Part Name / Project Name: Non-prime attribute functionally determined by PI (PI → PN).',rule:'PI \\to PN, RN',trap:'Partial dependency on key subset PI drops relation into 1NF.'},
+ 'DATE':{cat:'Relational Key Attribute',def:'Date attribute; prime attribute component of composite candidate key (PI, DATE) in schema R{RN, POR, PI, PN, DATE, MA, MT}.',rule:'(PI, DATE) \\text{ forms candidate key}',trap:'Date alone cannot determine patient records; requires pair with PI.'},
+ 'MA':{cat:'Relational Attribute',def:'Medical Advice / Manufacturer Address: Non-prime attribute determined fully by composite key (PI, DATE) → (MA, MT, POR).',rule:'(PI, DATE) \\to MA',trap:'Full dependency on key satisfies 2NF for MA, but other partial dependencies violate 2NF.'},
+ 'MT':{cat:'Relational Attribute',def:'Medical Treatment / Material Type: Non-prime attribute determined fully by composite candidate key (PI, DATE) → (MA, MT, POR).',rule:'(PI, DATE) \\to MT',trap:'Full functional dependency on composite candidate key.'},
+
+ // Question 1: DBMS vs File-Processing System Concepts
+ 'REDUNDANCY':{cat:'Core DBMS Concept',def:'Uncontrolled duplication of identical data across separate files. DBMS eliminates uncontrolled redundancy via central schema normalization.',rule:'One fact lives in one place; updates propagate consistently across foreign keys.',trap:'In file systems, multiple copies of data drift apart, causing inconsistency.'},
+ 'CONSISTENCY':{cat:'Core DBMS Concept',def:'Integrity state ensuring data conforms to all defined enterprise constraints, domain rules, and referential keys.',rule:'Transactions transition database from one consistent valid state to another (ACID Consistency).',trap:'File systems lack transactional consistency: aborted writes leave corrupted data.'},
+ 'DATA ACCESS':{cat:'Core DBMS Concept',def:'Retrieval mechanism. In file systems, every new query requires custom application code. In DBMS, ad-hoc queries are answered via declarative SQL.',rule:'Declarative SQL specifies WHAT data to retrieve; query optimizer chooses HOW.',trap:'File-based queries require rewriting file parser programs whenever formats change.'},
+ 'ISOLATION':{cat:'ACID Property',def:'Guarantees concurrent execution of transactions produces the same state as if they were run serially one after another.',rule:'Managed via locks (TX/TM), MVCC before-images in UNDO, and isolation levels.',trap:'Simultaneous file updates in OS file systems overwrite each other without isolation.'},
+ 'INTEGRITY':{cat:'Core DBMS Concept',def:'Accuracy and correctness of data enforced via declarative constraints (PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, NOT NULL).',rule:'DBMS rejects any DML operation that violates declared integrity rules.',trap:'In file systems, constraints are buried in program code and easily bypassed.'},
+ 'ATOMICITY':{cat:'ACID Property',def:'All-or-nothing guarantee: Either all transaction statements commit permanently, or all roll back.',rule:'Enforced via UNDO logging; uncommitted operations are undone upon failure or ROLLBACK.',trap:'System crashes mid-file-write leave permanent half-written files in file processing.'},
+ 'CONCURRENCY':{cat:'Transaction Management',def:'Simultaneous access and modification of data by multiple users/sessions without interference or data corruption.',rule:'Achieved via Multi-Version Concurrency Control (MVCC) and Two-Phase Locking.',trap:'File systems use coarse file-level locking: one writer locks the whole file, stopping all other users.'},
+ 'SECURITY':{cat:'Database Administration',def:'Fine-grained access control restricting user actions to authorized schemas, tables, columns, or views via GRANT/REVOKE.',rule:'GRANT SELECT ON table TO user;',trap:'Operating system file permissions are all-or-nothing (Read/Write on entire file).'},
+ 'DATA INDEPENDENCE':{cat:'3-Schema Architecture',def:'Capacity to change database schema at physical storage level without altering application programs.',rule:'Physical Data Independence & Logical Data Independence.',trap:'File systems have zero data independence: changing disk layout breaks all compiled programs.'},
+ 'FILE-PROCESSING SYSTEM':{cat:'Architecture Comparison',def:'Legacy storage where individual application programs manage their own private data files on disk.',rule:'Precursor to DBMS; suffered from data redundancy, program-data dependence, and lack of concurrent security.',trap:'No transaction engine, no declarative constraints, and no crash recovery mechanisms.'},
+ 'DBMS':{cat:'Database Management System',def:'Software suite enabling users to define, construct, manipulate, and share persistent databases among various applications.',rule:'Provides ACID transactions, declarative query processing, data independence, and central concurrency control.',trap:'Requires dedicated shared memory (SGA) and background processes for durability.'},
+
+ // Question 8 & 9: Functional Dependencies & Keys
+ 'PRIME ATTRIBUTE':{cat:'Relational Theory',def:'An attribute that is a member of at least one candidate key of the relation schema.',rule:'In R(PI, DATE), both PI and DATE are prime attributes.',trap:'3NF allows FD X → Y if Y is prime, even if determinant X is not a superkey.'},
+ 'NON-PRIME ATTRIBUTE':{cat:'Relational Theory',def:'An attribute that does NOT belong to any candidate key of the relation schema.',rule:'In R{RN, POR, PI, PN, DATE, MA, MT}, non-prime attributes are {RN, POR, PN, MA, MT}.',trap:'Partial dependency occurs when a proper subset of candidate key determines a non-prime attribute (violates 2NF).'},
+ 'FUNCTIONAL DEPENDENCY':{cat:'Relational Constraint',def:'Integrity constraint X → Y stating that whenever two tuples agree on attribute values X, they must also agree on Y.',rule:'t1[X] = t2[X] \\implies t1[Y] = t2[Y]',trap:'Semantic rules of the real-world domain, not accidental patterns in sample data.'},
+ 'FD':{cat:'Relational Constraint',def:'Functional Dependency abbreviation (X → Y). Determinant X uniquely determines dependent attributes Y.',rule:'Reflexivity, Augmentation, Transitivity (Armstrong\'s Axioms).',trap:'Used to compute attribute closures (X⁺) and discover all candidate keys.'},
+ 'ATTRIBUTE CLOSURE':{cat:'Relational Theory',def:'The set of all attributes functionally determined by attribute set X under functional dependency set F (denoted X⁺).',rule:'X^+ \\text{ computed by repeatedly applying FDs until no new attributes added}',trap:'If X⁺ = R, then X is a superkey of relation R.'},
+ 'LOSSLESS DECOMPOSITION':{cat:'Relational Theory',def:'Property ensuring that natural join of decomposed relations exactly reconstructs original relation (R1 ⋈ R2 = R) without spurious tuples.',rule:'(R1 \\cap R2) \\to R1 \\text{ or } (R1 \\cap R2) \\to R2',trap:'A lossy decomposition creates phantom tuples that were never present in the original database.'},
+ 'DEPENDENCY PRESERVATION':{cat:'Relational Theory',def:'Property ensuring all original functional dependencies can be enforced using local keys in decomposed relations without joining tables.',rule:'(F1 \\cup F2 ... \\cup Fn)^+ = F^+',trap:'BCNF decomposition cannot always preserve all functional dependencies (3NF always can).'},
+
+ // Question 13: Concurrency, Precedence Graph & Locking
+ '2PL':{cat:'Concurrency Control',def:'Two-Phase Locking protocol: Growing phase (acquires locks) and Shrinking phase (releases locks).',rule:'Once a lock is released, no new locks can be acquired.',trap:'Strict 2PL holds all exclusive locks until transaction commit to avoid cascading rollbacks.'},
+ 'TWO-PHASE LOCKING':{cat:'Concurrency Control',def:'Full name for 2PL protocol: Growing phase acquires locks without releasing; Shrinking phase releases locks.',rule:'Theoretical foundation of relational DBMS locking engines.',trap:'Can lead to deadlocks if transactions request locks in conflicting orders.'},
+ 'DIRTY READ':{cat:'Concurrency Anomaly',def:'Reading uncommitted data written by another active transaction that might later roll back.',rule:'Forbidden in Read Committed and Serializable isolation levels.',trap:'Readers read uncommitted dirty data that never existed if writer aborts.'},
+ 'NON-REPEATABLE READ':{cat:'Concurrency Anomaly',def:'Re-reading a row within a transaction and finding attribute values changed by another committed transaction.',rule:'Prevented in Repeatable Read and Serializable levels.',trap:'Subsequent read within same transaction produces differing values.'},
+ 'PHANTOM READ':{cat:'Concurrency Anomaly',def:'Re-executing a range query and discovering newly inserted tuples committed by another session.',rule:'Prevented in Serializable isolation level.',trap:'Range count changes midway through transaction.'},
+ 'DEADLOCK':{cat:'Concurrency State',def:'Circular lock dependency where two or more transactions each wait for locks held by the other.',rule:'Detected via wait-for graph cycles.',trap:'Broken by selecting a victim transaction to abort and roll back.'},
+ 'WAL':{cat:'Durability Engine',def:'Write-Ahead Logging: Protocol requiring redo log entries to reach physical disk before dirty data blocks are written to datafiles.',rule:'Guarantees Durability and Crash Recovery.',trap:'DBWn cannot flush dirty data block to disk until LGWR has written the corresponding redo block.'},
+ 'WRITE-AHEAD LOGGING':{cat:'Durability Engine',def:'Full name for WAL: Durability principle implemented in DBMS engines via redo log buffer.',rule:'Redo flushed before data blocks.',trap:'Eliminates need to synchronously write dirty table data on commit.'},
+
+ // Question 14 & 15: Indexing & Storage
+ 'OVERFLOW CHAINING':{cat:'Hash File Organization',def:'Collision resolution technique where overflow records in a full hash bucket are linked into a separate overflow chain list.',rule:'Bucket overflow linked via pointers to overflow blocks.',trap:'Long overflow chains degrade hash lookup from O(1) toward linear O(k) search.'},
+ 'OPEN ADDRESSING':{cat:'Hash File Organization',def:'Collision resolution technique where colliding records are placed into the next contiguous free slot in the hash table.',rule:'Linear probing, quadratic probing, or double hashing.',trap:'Suffers from primary and secondary clustering as load factor approaches 1.0.'},
+
+ // Formal Query Languages
+ 'TRC':{cat:'Relational Calculus',def:'Tuple Relational Calculus: Declarative formal query language expressing queries as { t | \\phi(t) }.',rule:'\\{ t \\mid \\phi(t) \\}',trap:'Safe TRC expressions ensure queries do not generate infinite relations.'},
+ 'TUPLE RELATIONAL CALCULUS':{cat:'Relational Calculus',def:'Formal non-procedural query language where query specifies what information is desired rather than how to retrieve it.',rule:'\\{ t \\mid \\phi(t) \\}',trap:'Relational completeness: TRC has equivalent expressive power to Relational Algebra.'},
+ 'PROJECTION':{cat:'Relational Algebra',def:'Projection operation \\Pi. Extracts vertical attributes while eliminating duplicates.',rule:'\\Pi_{A, B}(R)',trap:'In SQL, duplicates are retained unless DISTINCT is specified.'},
+ 'SELECTION':{cat:'Relational Algebra',def:'Horizontal tuple filtering operation \\sigma preserving attributes but retaining qualifying rows.',rule:'\\sigma_{predicate}(R)',trap:'Corresponds to SQL WHERE clause, not SQL SELECT clause.'},
+ 'RHO':{cat:'Relational Algebra',def:'Rename operator \\rho. Assigns new alias to a relation or its attributes.',rule:'\\rho_S(R)',trap:'Crucial for self-joins and union compatibility.'},
+ 'CARTESIAN PRODUCT':{cat:'Relational Operator',def:'Cross product of relations ($R \\times S$) pairing every row of R with every row of S.',rule:'R \\times S',trap:'Unconstrained Cartesian product leads to severe memory explosion.'}
+};
+
+const tooltip=document.getElementById('apple-tooltip');
+const ttTitle=document.getElementById('tt-title');
+const ttCat=document.getElementById('tt-cat');
+const ttDef=document.getElementById('tt-def');
+const ttRule=document.getElementById('tt-rule');
+const ttTrap=document.getElementById('tt-trap');
+
+if(!tooltip)return;
+
+document.querySelectorAll('.chip, td b, th, .num, li b, table td, code, h2, h3, strong, p b, [data-db-term]').forEach(el=>{
+ const txt=(el.textContent||'').trim().toUpperCase();
+ for(const key in DBMS_GLOSSARY){
+  if(txt===key||txt.includes(' '+key+' ')||txt.startsWith(key+' ')||txt.endsWith(' '+key)){
+   el.classList.add('tt-term');
+   el.setAttribute('data-db-term',key);
+   break;
+  }
+ }
+});
+
+document.addEventListener('mouseover',e=>{
+ const target=e.target.closest('.tt-term, [data-db-term]');
+ if(!target)return;
+ const key=(target.getAttribute('data-db-term')||target.textContent||'').trim().toUpperCase();
+ const data=DBMS_GLOSSARY[key];
+ if(!data)return;
+
+ ttTitle.textContent=key;
+ ttCat.textContent=data.cat;
+ ttDef.textContent=data.def;
+ ttRule.textContent=data.rule;
+ ttTrap.textContent='⚠️ '+data.trap;
+
+ tooltip.classList.add('show');
+ positionTooltip(e);
+});
+
+document.addEventListener('mousemove',e=>{
+ if(tooltip.classList.contains('show'))positionTooltip(e);
+});
+
+document.addEventListener('mouseout',e=>{
+ if(e.target.closest('.tt-term, [data-db-term]')){
+  tooltip.classList.remove('show');
+ }
+});
+
+function positionTooltip(e){
+ const offset=14;
+ let x=e.clientX+offset;
+ let y=e.clientY+offset;
+ const rect=tooltip.getBoundingClientRect();
+ if(x+rect.width>window.innerWidth-12)x=e.clientX-rect.width-offset;
+ if(y+rect.height>window.innerHeight-12)y=e.clientY-rect.height-offset;
+ tooltip.style.left=Math.max(10,x)+'px';
+ tooltip.style.top=Math.max(10,y)+'px';
+}
+})();
+</script>
+</body>
+</html>

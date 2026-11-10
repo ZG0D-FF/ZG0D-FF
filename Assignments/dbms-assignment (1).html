@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DBMS Assignment</title>
+<style>
+:root{--bg:#f5f5f7;--tx:#1d1d1f;--tx2:#6e6e73;--ac:#0071e3;--card:rgba(255,255,255,.66);--bd:rgba(0,0,0,.06);--code:rgba(0,0,0,.045);--sh:0 8px 40px rgba(0,0,0,.06);--ln:#86868b;--fill:rgba(0,113,227,.08);--sf:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#0b0b0d;--tx:#f5f5f7;--tx2:#a1a1a6;--ac:#2997ff;--card:rgba(30,30,34,.62);--bd:rgba(255,255,255,.08);--code:rgba(255,255,255,.07);--sh:0 8px 40px rgba(0,0,0,.4);--ln:#8e8e93;--fill:rgba(41,151,255,.14);--sf:#2c2c30}}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font:17px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;outline:none;touch-action:none;pointer-events:none}
+nav{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:2px;padding:5px;border-radius:99px;background:var(--card);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--bd);box-shadow:var(--sh);max-width:94vw;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav a{color:var(--tx2);text-decoration:none;font-size:13px;font-weight:500;min-width:30px;text-align:center;padding:5px 9px;border-radius:99px;transition:.25s}
+nav a:hover{color:var(--tx)}
+nav a.on{background:var(--ac);color:#fff}
+main{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 20px 120px}
+.hero{min-height:88vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.hero h1{font-size:clamp(40px,8vw,84px);font-weight:700;letter-spacing:-.035em;line-height:1.04}
+.hero p{margin-top:16px;color:var(--tx2);font-size:clamp(17px,2.4vw,23px)}
+.hero small{margin-top:46px;color:var(--tx2);font-size:13px;letter-spacing:.08em;text-transform:uppercase;animation:fl 2.6s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(6px);opacity:.5}}
+.q{margin:28px 0;padding:36px clamp(20px,4vw,44px);border-radius:28px;background:var(--card);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border:1px solid var(--bd);box-shadow:var(--sh);opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);scroll-margin-top:70px}
+.q.in{opacity:1;transform:none}
+.num{font-size:13px;font-weight:600;color:var(--ac);letter-spacing:.08em;text-transform:uppercase}
+h2{font-size:clamp(22px,3.4vw,30px);font-weight:650;letter-spacing:-.02em;line-height:1.2;margin:6px 0 20px}
+h3{font-size:18px;font-weight:620;margin:26px 0 8px}
+p{margin:10px 0;color:var(--tx)}
+.mut{color:var(--tx2);font-size:15px}
+ul,ol{padding-left:22px;margin:8px 0}li{margin:5px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px;display:block;overflow-x:auto}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top;min-width:110px}
+th{font-weight:600;color:var(--tx2);font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+pre,.m{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:14px}
+pre{background:var(--code);padding:16px 18px;border-radius:16px;overflow-x:auto;margin:12px 0;line-height:1.6}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.88em;background:var(--code);padding:2px 7px;border-radius:7px}
+.chip{display:inline-block;background:var(--fill);color:var(--ac);padding:3px 11px;border-radius:99px;font-size:13px;font-weight:550;margin:2px 4px 2px 0}
+.ans{margin-top:16px;padding:14px 18px;border-radius:16px;background:var(--fill);font-weight:550}
+.fig{margin:16px 0;padding:10px;border-radius:20px;background:var(--code);overflow-x:auto}
+.fig svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.fig b.cap{display:block;text-align:center;font-weight:500;color:var(--tx2);font-size:13px;margin:4px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.fig pre.mermaid{background:none;padding:0;margin:0;text-align:center;font-family:inherit;font-size:14px;overflow:visible}
+.fig pre.mermaid svg{max-width:100%;height:auto}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;font-size:13px;color:var(--tx2);margin-top:8px}
+.leg b{color:var(--tx);font-weight:550}
+.step{display:flex;gap:12px;margin:8px 0}.step i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;font:600 12px/24px sans-serif;text-align:center}
+footer{position:relative;z-index:1;text-align:center;color:var(--tx2);font-size:13px;padding:20px 0 60px}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<nav id="nav"></nav>
+<main>
+<section class="hero"><h1>Database<br>Systems</h1><p>Assignment, solved — calmly.</p><small>Scroll</small></section>
+
+<!-- Q1 -->
+<section class="q" id="q1"><div class="num">Question 1</div>
+<h2>Four significant differences between a file-processing system and a DBMS</h2>
+<table>
+<tr><th>Aspect</th><th>File-processing system</th><th>DBMS</th></tr>
+<tr><td><b>Redundancy &amp; consistency</b></td><td>Each application keeps its own files, so the same data is duplicated and copies drift apart (inconsistency).</td><td>Data is stored centrally; redundancy is controlled (e.g. via normalization) so one fact lives in one place.</td></tr>
+<tr><td><b>Data access &amp; isolation</b></td><td>Data is scattered in files of different formats; every new query needs a new application program.</td><td>Uniform data model and a query language (SQL) answer ad-hoc queries without writing new programs.</td></tr>
+<tr><td><b>Integrity &amp; atomicity</b></td><td>Constraints are buried in program code; a crash mid-update leaves the data half-changed.</td><td>Constraints are declared once (keys, checks, foreign keys); transactions are atomic with log-based recovery.</td></tr>
+<tr><td><b>Concurrency &amp; security</b></td><td>Simultaneous updates can overwrite each other; access control is all-or-nothing at file level.</td><td>Concurrency control (locking/MVCC) keeps results correct; fine-grained authorization per user, table or view.</td></tr>
+</table>
+<p class="mut">Bonus: a DBMS also gives <b>data independence</b> — the physical storage can change without rewriting applications.</p>
+</section>
+
+<!-- Q2 -->
+<section class="q" id="q2"><div class="num">Question 2</div>
+<h2>1:1, 1:M and M:N relationships with set diagrams</h2>
+<h3>One-to-one (1:1)</h3>
+<p>Each element of set A is related to at most one element of set B and vice versa. <span class="mut">Example: a Person holds one Passport.</span></p>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  subgraph A["Person"]
+    P1((P1))
+    P2((P2))
+    P3((P3))
+  end
+  subgraph B["Passport"]
+    X1((X1))
+    X2((X2))
+    X3((X3))
+  end
+  P1 --> X1
+  P2 --> X2
+  P3 --> X3
+</pre></div>
+<h3>One-to-many (1:M)</h3>
+<p>One element of A can relate to many elements of B, but each element of B relates to at most one element of A. <span class="mut">Example: a Department has many Employees.</span></p>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  subgraph A["Department"]
+    D1((D1))
+    D2((D2))
+  end
+  subgraph B["Employee"]
+    E1((E1))
+    E2((E2))
+    E3((E3))
+    E4((E4))
+  end
+  D1 --> E1
+  D1 --> E2
+  D2 --> E3
+  D2 --> E4
+</pre></div>
+<h3>Many-to-many (M:N)</h3>
+<p>Many elements of A relate to many elements of B and vice versa. <span class="mut">Example: Students enrol in many Courses; a Course has many Students.</span> Implemented with a junction table.</p>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  subgraph A["Student"]
+    S1((S1))
+    S2((S2))
+    S3((S3))
+  end
+  subgraph B["Course"]
+    C1((C1))
+    C2((C2))
+    C3((C3))
+  end
+  S1 --> C1
+  S1 --> C2
+  S2 --> C2
+  S2 --> C3
+  S3 --> C3
+  S3 --> C1
+</pre></div>
+</section>
+
+<!-- Q3 -->
+<section class="q" id="q3"><div class="num">Question 3</div>
+<h2>Online bookstore E-R diagram</h2>
+<h3>a. Entity sets and primary keys</h3>
+<table>
+<tr><th>Entity set</th><th>Attributes</th><th>Primary key</th></tr>
+<tr><td>author</td><td>name, address, URL</td><td><span class="chip">URL</span></td></tr>
+<tr><td>publisher</td><td>name, address, phone, URL</td><td><span class="chip">name</span></td></tr>
+<tr><td>book</td><td>ISBN, title, year, price</td><td><span class="chip">ISBN</span></td></tr>
+<tr><td>customer</td><td>email, name, address, phone</td><td><span class="chip">email</span></td></tr>
+<tr><td>shopping-basket</td><td>basketID</td><td><span class="chip">basketID</span></td></tr>
+<tr><td>warehouse</td><td>code, address, phone</td><td><span class="chip">code</span></td></tr>
+</table>
+<h3>b. Adding music cassettes and compact disks</h3>
+<p>The same music item can exist in two formats with different prices, so the item and its format are separated. <code>music_item</code> holds what is common to both formats; <code>music_format</code> is a <b>weak entity set</b> (partial key: <code>format</code>) that stores the format-specific <code>price</code>. It is specialised into <code>cassette</code> and <code>compact_disk</code>. Stocking is linked to the format, since each format is a physical product.</p>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef ent fill:#e8f1ff,stroke:#0071e3,stroke-width:2px,color:#1d1d1f
+  classDef weak fill:#e8f1ff,stroke:#0071e3,stroke-width:4px,color:#1d1d1f
+  classDef rel fill:#fff4e0,stroke:#f5a623,stroke-width:2px,color:#1d1d1f
+  classDef att fill:#ffffff,stroke:#98989d,color:#1d1d1f
+  classDef isa fill:#eee9ff,stroke:#7b61ff,stroke-width:2px,color:#1d1d1f
+
+  MI[music_item]:::ent
+  mid(["<u>music_id</u>"]):::att
+  title([title]):::att
+  artist([artist]):::att
+  MI --- mid
+  MI --- title
+  MI --- artist
+
+  HF{has_format}:::weak
+  MF[music_format]:::weak
+  MI ===|"1"| HF
+  HF ===|"N"| MF
+  fmt(["format<br/>(partial key)"]):::att
+  price([price]):::att
+  MF --- fmt
+  MF --- price
+
+  ISA{{ISA}}:::isa
+  CAS[cassette]:::ent
+  CD[compact_disk]:::ent
+  MF --- ISA
+  ISA --- CAS
+  ISA --- CD
+
+  ST{stocks}:::rel
+  WH[warehouse]:::ent
+  num([number]):::att
+  code(["<u>code</u>"]):::att
+  MF ---|"M"| ST
+  ST ---|"N"| WH
+  ST --- num
+  WH --- code
+</pre>
+<div class="leg"><span><b>Blue box</b> entity</span><span><b>Thick blue</b> weak entity</span><span><b>Orange diamond</b> relationship</span><span><b>Oval</b> attribute (underlined = key)</span><span><b>Purple hexagon</b> specialization</span><span><b>Thick line</b> total participation</span></div></div>
+<h3>c. Generalization for the shopping basket</h3>
+<p>Generalize <code>book</code>, <code>cassette</code> and <code>compact_disk</code> into a super-class <code>item</code> with common attributes (<code>itemID</code>, <code>title</code>, <code>price</code>). A basket now relates to <code>item</code>, so it may contain any combination of the three. The generalization is <b>disjoint</b> (an item is exactly one kind) and <b>total</b>.</p>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef ent fill:#e8f1ff,stroke:#0071e3,stroke-width:2px,color:#1d1d1f
+  classDef rel fill:#fff4e0,stroke:#f5a623,stroke-width:2px,color:#1d1d1f
+  classDef att fill:#ffffff,stroke:#98989d,color:#1d1d1f
+  classDef isa fill:#eee9ff,stroke:#7b61ff,stroke-width:2px,color:#1d1d1f
+
+  SB[shopping_basket]:::ent
+  bid(["<u>basketID</u>"]):::att
+  SB --- bid
+  CT{contains}:::rel
+  num([number]):::att
+  SB ---|"M"| CT
+  CT ---|"N"| IT
+  CT --- num
+
+  IT[item]:::ent
+  iid(["<u>item_id</u>"]):::att
+  title([title]):::att
+  price([price]):::att
+  IT --- iid
+  IT --- title
+  IT --- price
+
+  ISA{{"ISA<br/>total, disjoint"}}:::isa
+  IT === ISA
+  BK[book]:::ent
+  CA[cassette]:::ent
+  CD[compact_disk]:::ent
+  ISA --- BK
+  ISA --- CA
+  ISA --- CD
+  isbn([ISBN]):::att
+  year([year]):::att
+  BK --- isbn
+  BK --- year
+</pre></div>
+</section>
+
+<!-- Q4 -->
+<section class="q" id="q4"><div class="num">Question 4</div>
+<h2>ER diagram for company and employee phones, with (min, max)</h2>
+<p>Entities: <code>EMPLOYEE</code> (<u>emp_id</u>, name), <code>DEPARTMENT</code> (<u>dept_id</u>, name), <code>PHONE</code> (<u>phone_no</u>). Each constraint is read as <b>(min, max)</b> next to the entity it describes.</p>
+<ul>
+<li><b>WORKS_IN</b>: an employee works in 0 to 2 departments → <code>(0,2)</code>; a department has any number of employees → <code>(0,N)</code>.</li>
+<li><b>HAS_PHONE</b> (department phones): every department has at least 1 and at most 3 numbers → <code>(1,3)</code>; a number is optional from the phone side → <code>(0,N)</code> because an employee's personal number may be reused as a department number.</li>
+<li><b>PERSONAL_PHONE</b>: an employee may have no personal phone, or at most one → <code>(0,1)</code>; a phone belongs to at most one employee → <code>(0,1)</code>.</li>
+</ul>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef ent fill:#e8f1ff,stroke:#0071e3,stroke-width:2px,color:#1d1d1f
+  classDef rel fill:#fff4e0,stroke:#f5a623,stroke-width:2px,color:#1d1d1f
+  classDef att fill:#ffffff,stroke:#98989d,color:#1d1d1f
+
+  EMP[EMPLOYEE]:::ent
+  eid(["<u>emp_id</u>"]):::att
+  ename([name]):::att
+  EMP --- eid
+  EMP --- ename
+
+  DEP[DEPARTMENT]:::ent
+  did(["<u>dept_id</u>"]):::att
+  dname([name]):::att
+  DEP --- did
+  DEP --- dname
+
+  PH[PHONE]:::ent
+  pno(["<u>phone_no</u>"]):::att
+  PH --- pno
+
+  WI{WORKS_IN}:::rel
+  EMP ---|"(0,2)"| WI
+  WI ---|"(0,N)"| DEP
+
+  PP{PERSONAL_PHONE}:::rel
+  EMP ---|"(0,1)"| PP
+  PP ---|"(0,1)"| PH
+
+  HP{HAS_PHONE}:::rel
+  DEP ---|"(1,3)"| HP
+  HP ---|"(0,N)"| PH
+</pre>
+<div class="leg"><span><b>Blue box</b> entity</span><span><b>Orange diamond</b> relationship</span><span><b>Oval</b> attribute (underlined = key)</span><span><b>(min,max)</b> sits on the line between an entity and a relationship</span></div></div>
+<p class="mut">The "up to three numbers including personal ones" rule is the (1,3) on DEPARTMENT; it counts both dedicated and personal numbers linked through HAS_PHONE.</p>
+</section>
+
+<!-- Q5 -->
+<section class="q" id="q5"><div class="num">Question 5</div>
+<h2>Relational algebra queries</h2>
+<p class="mut">Branch(Branch_name, Branch_city, Assets) · Customer(Customer_name, Street, City) · Loan(Branch_name, Loan_no, Amount) · Borrower(Customer_name, Loan_no) · Account(Branch_name, Account_no, Balance) · Depositor(Customer_name, Account_no)</p>
+<h3>i. Customers with an account at Durgapur</h3>
+<pre>Π Customer_name ( σ Branch_name = 'Durgapur' ( Depositor ⋈ Account ) )</pre>
+<h3>ii. Customers with an account and no loan</h3>
+<pre>Π Customer_name ( Depositor )  −  Π Customer_name ( Borrower )</pre>
+<h3>iii. Customers with an account and a loan</h3>
+<pre>Π Customer_name ( Depositor )  ∩  Π Customer_name ( Borrower )</pre>
+<h3>iv. Customers living on the same street as Abhay Sharma</h3>
+<pre>Π Customer.Customer_name (
+   Customer ⋈ Customer.Street = T.Street
+   ρ T ( σ Customer_name = 'Abhay Sharma' ( Customer ) ) )</pre>
+<p class="mut">Add a selection <code>Customer.Customer_name ≠ 'Abhay Sharma'</code> if he himself should be excluded.</p>
+</section>
+
+<!-- Q6 -->
+<section class="q" id="q6"><div class="num">Question 6</div>
+<h2>Tuple relational calculus equivalents</h2>
+<p class="mut">R = (A, B, C), S = (D, E, F), relations r(R) and s(S).</p>
+<h3>iii. Π<sub>A</sub>(r)</h3>
+<pre>{ t | ∃p ∈ r ( t[A] = p[A] ) }</pre>
+<h3>iv. σ<sub>B=17</sub>(r)</h3>
+<pre>{ t | t ∈ r ∧ t[B] = 17 }</pre>
+<h3>v. r × s</h3>
+<pre>{ t | ∃p ∈ r ∃q ∈ s ( t[A]=p[A] ∧ t[B]=p[B] ∧ t[C]=p[C]
+                      ∧ t[D]=q[D] ∧ t[E]=q[E] ∧ t[F]=q[F] ) }</pre>
+<h3>vi. Π<sub>A,F</sub>(σ<sub>C=D</sub>(r × s))</h3>
+<pre>{ t | ∃p ∈ r ∃q ∈ s ( t[A]=p[A] ∧ t[F]=q[F] ∧ p[C]=q[D] ) }</pre>
+</section>
+
+<!-- Q7 -->
+<section class="q" id="q7"><div class="num">Question 7</div>
+<h2>Create tables and SQL queries</h2>
+<h3>Table definitions</h3>
+<pre>CREATE TABLE Faculty (
+  fid     INT PRIMARY KEY,
+  fname   VARCHAR(50) NOT NULL,
+  deptid  INT
+);
+
+CREATE TABLE Student (
+  snum   INT PRIMARY KEY,
+  sname  VARCHAR(50) NOT NULL,
+  major  VARCHAR(50),
+  level  VARCHAR(10),
+  age    INT
+);
+
+CREATE TABLE Class (
+  name     VARCHAR(50) PRIMARY KEY,
+  meets_at VARCHAR(30),
+  room     VARCHAR(20),
+  fid      INT,
+  FOREIGN KEY (fid) REFERENCES Faculty(fid)
+);
+
+CREATE TABLE Enrolled (
+  snum   INT,
+  cname  VARCHAR(50),
+  PRIMARY KEY (snum, cname),
+  FOREIGN KEY (snum)  REFERENCES Student(snum),
+  FOREIGN KEY (cname) REFERENCES Class(name)
+);</pre>
+<h3>i. Junior students in a class taught by 'XYZ'</h3>
+<pre>SELECT DISTINCT s.sname
+FROM Student s
+JOIN Enrolled e ON s.snum  = e.snum
+JOIN Class c    ON e.cname = c.name
+JOIN Faculty f  ON c.fid   = f.fid
+WHERE s.level = 'Junior' AND f.fname = 'XYZ';</pre>
+<h3>ii. Age of the oldest History major</h3>
+<pre>SELECT MAX(age)
+FROM Student
+WHERE major = 'History';</pre>
+<h3>iii. Classes meeting in R1 or with five or more students</h3>
+<pre>SELECT c.name
+FROM Class c
+WHERE c.room = 'R1'
+   OR c.name IN (SELECT cname
+                 FROM Enrolled
+                 GROUP BY cname
+                 HAVING COUNT(*) &gt;= 5);</pre>
+</section>
+
+<!-- Q8 -->
+<section class="q" id="q8"><div class="num">Question 8</div>
+<h2>Compute B⁺ (attribute closure)</h2>
+<p class="mut">R = (A, B, C, D, E) with F = { A→BC, CD→E, B→D, E→A }</p>
+<div class="step"><i>1</i><div>Start: <code>result = {B}</code></div></div>
+<div class="step"><i>2</i><div><code>B → D</code> applies (B ⊆ result): <code>result = {B, D}</code></div></div>
+<div class="step"><i>3</i><div><code>A → BC</code> needs A — not in result. <code>CD → E</code> needs C — not in result. <code>E → A</code> needs E — not in result.</div></div>
+<div class="step"><i>4</i><div>No dependency adds anything new, so we stop.</div></div>
+<div class="ans">B⁺ = { B, D }</div>
+<p class="mut">Since B⁺ ≠ R, B is not a key.</p>
+</section>
+
+<!-- Q9 -->
+<section class="q" id="q9"><div class="num">Question 9</div>
+<h2>FD2 is covered by FD1, but FD1 is not covered by FD2</h2>
+<p class="mut">R(V, W, X, Y, Z) · FD1 = { W→X, WX→Y, Z→WY, Z→V } · FD2 = { W→XY, Z→WX }<br>"A is a subset of B" here means every FD of A is implied by B (A ⊆ B⁺).</p>
+<h3>Part 1: every FD in FD2 follows from FD1</h3>
+<table>
+<tr><th>FD2 dependency</th><th>Closure using FD1</th><th>Result</th></tr>
+<tr><td>W → XY</td><td>W⁺ = {W} → W→X gives {W,X} → WX→Y gives {W,X,Y}</td><td>XY ⊆ W⁺ ✓</td></tr>
+<tr><td>Z → WX</td><td>Z⁺ = {Z} → Z→WY gives {Z,W,Y} → W→X gives {Z,W,X,Y} → Z→V gives {Z,W,X,Y,V}</td><td>WX ⊆ Z⁺ ✓</td></tr>
+</table>
+<div class="ans">All FDs of FD2 are implied by FD1, so FD2 ⊆ FD1⁺.</div>
+<h3>Part 2: some FD in FD1 does not follow from FD2</h3>
+<table>
+<tr><th>FD1 dependency</th><th>Closure using FD2</th><th>Result</th></tr>
+<tr><td>W → X</td><td>W⁺ = {W,X,Y}</td><td>X ∈ W⁺ ✓</td></tr>
+<tr><td>WX → Y</td><td>(WX)⁺ = {W,X,Y}</td><td>Y ∈ (WX)⁺ ✓</td></tr>
+<tr><td>Z → WY</td><td>Z⁺ = {Z,W,X} → W→XY adds Y → {Z,W,X,Y}</td><td>WY ⊆ Z⁺ ✓</td></tr>
+<tr><td>Z → V</td><td>Z⁺ = {Z,W,X,Y}; no FD in FD2 produces V</td><td>V ∉ Z⁺ ✗</td></tr>
+</table>
+<div class="ans">Z → V is not implied by FD2, so FD1 ⊄ FD2⁺. Hence FD2 is a subset of FD1, but FD1 is not a subset of FD2.</div>
+</section>
+
+<!-- Q10 -->
+<section class="q" id="q10"><div class="num">Question 10</div>
+<h2>Normalize Professor up to BCNF</h2>
+<p class="mut">Professor(<u>PCode</u>, <u>Department</u>, HOD, Percent_of_time) · keys: (PCode, Department) and (PCode, HOD)<br>FDs: Department,PCode → HOD,Percent_of_time · Department → HOD · HOD,PCode → Department,Percent_of_time</p>
+<div class="step"><i>1</i><div><b>1NF:</b> all attributes are atomic, so the relation is in 1NF.</div></div>
+<div class="step"><i>2</i><div><b>2NF:</b> the only non-prime attribute is Percent_of_time, and it depends on the whole key (PCode, Department). No partial dependency on a non-prime attribute, so it is in 2NF.</div></div>
+<div class="step"><i>3</i><div><b>3NF:</b> Department → HOD has a prime attribute (HOD) on its right side, so 3NF is satisfied.</div></div>
+<div class="step"><i>4</i><div><b>BCNF:</b> Department → HOD violates BCNF because Department is not a superkey (the same HOD is repeated for each professor in a department).</div></div>
+<h3>Decomposition on Department → HOD</h3>
+<pre>R1 (Department, HOD)                          key: Department
+R2 (PCode, Department, Percent_of_time)       key: (PCode, Department)</pre>
+<p>Both relations are in BCNF: in R1 the only FD has a key on its left; in R2 the only FD is (PCode, Department) → Percent_of_time. The split is <b>lossless</b> because the common attribute Department is the key of R1.</p>
+<p class="mut">Note: HOD,PCode → Department,Percent_of_time can no longer be checked inside one table — the usual cost of BCNF (see Question 11).</p>
+</section>
+
+<!-- Q11 -->
+<section class="q" id="q11"><div class="num">Question 11</div>
+<h2>BCNF cannot always preserve dependencies</h2>
+<p><b>Example:</b> <code>R(Student, Course, Instructor)</code> with</p>
+<ul><li><code>Student, Course → Instructor</code> (a student has one instructor for a course)</li><li><code>Instructor → Course</code> (each instructor teaches only one course)</li></ul>
+<p>Candidate keys: (Student, Course) and (Student, Instructor).</p>
+<p><b>BCNF check:</b> Instructor → Course violates BCNF, since Instructor is not a superkey. The only decomposition on this FD is:</p>
+<pre>R1 (Instructor, Course)      holds  Instructor → Course
+R2 (Student, Instructor)     holds  only trivial FDs</pre>
+<p><b>Dependency check:</b> FDs visible in R1 ∪ R2 are just Instructor → Course. The closure of (Student, Course) using it is {Student, Course} — Instructor never appears. So <code>Student, Course → Instructor</code> is <b>lost</b>: enforcing it needs a join of R1 and R2.</p>
+<div class="ans">The BCNF decomposition is lossless but not dependency preserving. Here 3NF would keep R intact and preserve all FDs, at the price of some redundancy.</div>
+</section>
+
+<!-- Q12 -->
+<section class="q" id="q12"><div class="num">Question 12</div>
+<h2>Normal form of R{RN, POR, PI, PN, DATE, MA, MT}</h2>
+<p class="mut">F = { RN → POR ; PI → PN, RN ; (PI, DATE) → (MA, MT, POR) }</p>
+<div class="step"><i>1</i><div><b>Find the key.</b> (PI, DATE)⁺: PI→PN,RN gives PN, RN; RN→POR gives POR; (PI,DATE)→MA,MT. Result = all attributes, so <code>(PI, DATE)</code> is the candidate key.</div></div>
+<div class="step"><i>2</i><div><b>Prime:</b> PI, DATE. <b>Non-prime:</b> RN, POR, PN, MA, MT.</div></div>
+<div class="step"><i>3</i><div><b>2NF test:</b> <code>PI → PN, RN</code> has a proper subset of the key (PI) determining non-prime attributes: a <b>partial dependency</b>. So 2NF fails.</div></div>
+<div class="ans">The relation is in 1NF only (not 2NF). Also RN → POR is a transitive dependency, which would further violate 3NF.</div>
+</section>
+
+<!-- Q13 -->
+<section class="q" id="q13"><div class="num">Question 13</div>
+<h2>Precedence graph and serializability</h2>
+<h3>The schedule (top to bottom = time order)</h3>
+<table>
+<tr><th>Step</th><th>T1</th><th>T2</th><th>T3</th></tr>
+<tr><td>1</td><td></td><td></td><td class="m">R(y)</td></tr>
+<tr><td>2</td><td></td><td></td><td class="m">R(z)</td></tr>
+<tr><td>3</td><td class="m">R(x)</td><td></td><td></td></tr>
+<tr><td>4</td><td class="m">W(x)</td><td></td><td></td></tr>
+<tr><td>5</td><td></td><td></td><td class="m">W(y)</td></tr>
+<tr><td>6</td><td></td><td></td><td class="m">W(y)</td></tr>
+<tr><td>7</td><td></td><td class="m">R(z)</td><td></td></tr>
+<tr><td>8</td><td class="m">R(y)</td><td></td><td></td></tr>
+<tr><td>9</td><td class="m">W(y)</td><td></td><td></td></tr>
+<tr><td>10</td><td></td><td class="m">R(y)</td><td></td></tr>
+<tr><td>11</td><td></td><td class="m">W(y)</td><td></td></tr>
+<tr><td>12</td><td></td><td class="m">R(x)</td><td></td></tr>
+<tr><td>13</td><td></td><td class="m">W(x)</td><td></td></tr>
+</table>
+<h3>Conflicting pairs (same item, different transactions, at least one write)</h3>
+<table>
+<tr><th>Edge</th><th>Item</th><th>Conflicts (earlier → later)</th></tr>
+<tr><td><b>T3 → T1</b></td><td>y</td><td class="m">R3(y)→W1(y) · W3(y)→R1(y) · W3(y)→W1(y)</td></tr>
+<tr><td><b>T3 → T2</b></td><td>y</td><td class="m">R3(y)→W2(y) · W3(y)→R2(y) · W3(y)→W2(y)</td></tr>
+<tr><td><b>T1 → T2</b></td><td>x, y</td><td class="m">R1(x)→W2(x) · W1(x)→R2(x) · W1(x)→W2(x) · R1(y)→W2(y) · W1(y)→R2(y) · W1(y)→W2(y)</td></tr>
+</table>
+<p class="mut">z is only read (by T3 and T2), so it causes no conflict.</p>
+<h3>Precedence graph</h3>
+<div class="fig"><pre class="mermaid">
+flowchart LR
+  classDef t fill:#e8f1ff,stroke:#0071e3,stroke-width:2px,color:#1d1d1f
+  T3((T3)):::t -->|"y"| T1((T1)):::t
+  T3 -->|"y"| T2((T2)):::t
+  T1 -->|"x, y"| T2
+</pre></div>
+<div class="ans">No cycle in the graph, so the schedule is conflict-serializable.<br>Equivalent serial schedule: T3 → T1 → T2</div>
+<p class="mut">Method: add edge Ti → Tj when an operation of Ti precedes a conflicting operation of Tj on the same item (different transactions, at least one is a write). The schedule is conflict-serializable iff the graph has no cycle; a topological order gives the equivalent serial schedule.</p>
+</section>
+
+<!-- Q14 -->
+<section class="q" id="q14"><div class="num">Question 14</div>
+<h2>B⁺-tree for 2, 3, 5, 7, 11, 17, 19, 23, 29, 31</h2>
+<p class="mut">Assumption (order not given): <b>n = 4</b> pointers per node, so a node holds at most 3 keys. Keys are inserted in the given ascending order; leaves are linked left to right.</p>
+<h3>Building the tree</h3>
+<div class="step"><i>1</i><div>Insert 2, 3, 5: single leaf <code>[2 3 5]</code>.</div></div>
+<div class="step"><i>2</i><div>Insert 7: leaf overflows → split <code>[2 3] [5 7]</code>; root <code>[5]</code>.</div></div>
+<div class="step"><i>3</i><div>Insert 11, 17: <code>[5 7 11]</code> overflows → <code>[5 7] [11 17]</code>; root <code>[5 11]</code>.</div></div>
+<div class="step"><i>4</i><div>Insert 19, 23: <code>[11 17 19 23]</code> overflows → <code>[11 17] [19 23]</code>; root <code>[5 11 19]</code>.</div></div>
+<div class="step"><i>5</i><div>Insert 29, 31: <code>[19 23 29 31]</code> overflows → <code>[19 23] [29 31]</code>, 29 moves up; root would hold 4 keys, so it splits and 19 becomes the new root.</div></div>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef node fill:#ffffff,stroke:#98989d,stroke-width:1.5px,color:#1d1d1f
+  classDef leaf fill:#e8f1ff,stroke:#0071e3,stroke-width:1.5px,color:#1d1d1f
+  R["19"]:::node
+  I1["5 | 11"]:::node
+  I2["29"]:::node
+  L1["2 | 3"]:::leaf
+  L2["5 | 7"]:::leaf
+  L3["11 | 17"]:::leaf
+  L4["19 | 23"]:::leaf
+  L5["29 | 31"]:::leaf
+  R --> I1
+  R --> I2
+  I1 --> L1
+  I1 --> L2
+  I1 --> L3
+  I2 --> L4
+  I2 --> L5
+  L1 -.-> L2 -.-> L3 -.-> L4 -.-> L5
+</pre>
+<div class="leg"><span><b>White</b> internal nodes</span><span><b>Blue</b> leaf nodes</span><span><b>Dotted arrows</b> leaf chain (left to right)</span></div></div>
+<h3>a. Find records with key 11</h3>
+<p>Root [19]: 11 &lt; 19, go left. Node [5 11]: 11 ≥ 11, follow the pointer to the right of 11. Leaf [11 17] contains 11 → fetch the record.</p>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef node fill:#ffffff,stroke:#98989d,stroke-width:1.5px,color:#1d1d1f
+  classDef leaf fill:#e8f1ff,stroke:#0071e3,stroke-width:1.5px,color:#1d1d1f
+  classDef hit fill:#cfe5ff,stroke:#0071e3,stroke-width:4px,color:#1d1d1f
+  R["19"]:::hit
+  I1["5 | 11"]:::hit
+  I2["29"]:::node
+  L1["2 | 3"]:::leaf
+  L2["5 | 7"]:::leaf
+  L3["11 | 17"]:::hit
+  L4["19 | 23"]:::leaf
+  L5["29 | 31"]:::leaf
+  R ==> I1
+  R --> I2
+  I1 --> L1
+  I1 --> L2
+  I1 ==> L3
+  I2 --> L4
+  I2 --> L5
+  L1 -.-> L2 -.-> L3 -.-> L4 -.-> L5
+</pre>
+<div class="leg"><span><b>Thick path</b> root → [5 | 11] → leaf [11 | 17], key 11 found</span></div></div>
+<h3>b. Find records with key between 7 and 17 inclusive</h3>
+<p>Root [19]: 7 &lt; 19, go left. Node [5 11]: 5 ≤ 7 &lt; 11, follow the middle pointer to leaf [5 7]. Scan the leaf chain: 7 ✓ → next leaf [11 17]: 11 ✓, 17 ✓ → next leaf starts at 19 &gt; 17, stop.</p>
+<div class="ans">Records found: 7, 11, 17</div>
+<div class="fig"><pre class="mermaid">
+flowchart TB
+  classDef node fill:#ffffff,stroke:#98989d,stroke-width:1.5px,color:#1d1d1f
+  classDef leaf fill:#e8f1ff,stroke:#0071e3,stroke-width:1.5px,color:#1d1d1f
+  classDef hit fill:#cfe5ff,stroke:#0071e3,stroke-width:4px,color:#1d1d1f
+  R["19"]:::hit
+  I1["5 | 11"]:::hit
+  I2["29"]:::node
+  L1["2 | 3"]:::leaf
+  L2["5 | 7"]:::hit
+  L3["11 | 17"]:::hit
+  L4["19 | 23"]:::leaf
+  L5["29 | 31"]:::leaf
+  R ==> I1
+  R --> I2
+  I1 --> L1
+  I1 ==> L2
+  I1 --> L3
+  I2 --> L4
+  I2 --> L5
+  L1 -.-> L2
+  L2 ==> L3
+  L3 -.-> L4 -.-> L5
+</pre>
+<div class="leg"><span><b>Thick path</b> root → [5 | 11] → leaf [5 | 7], then along the leaf chain to [11 | 17]; stop before 19</span></div></div>
+</section>
+
+<!-- Q15 -->
+<section class="q" id="q15"><div class="num">Question 15</div>
+<h2>Bucket overflow in hash file organization</h2>
+<h3>Causes</h3>
+<ul>
+<li><b>Insufficient buckets:</b> the number of buckets is too small for the number of records (n<sub>B</sub> &lt; n<sub>r</sub> / f<sub>r</sub>).</li>
+<li><b>Skew, from repeated keys:</b> many records share one search-key value, so they all land in the same bucket.</li>
+<li><b>Skew, from the hash function:</b> a function that is not uniform or random sends far more keys to some buckets than others.</li>
+</ul>
+<h3>Reducing overflows</h3>
+<ul>
+<li>Choose the number of buckets as <code>(n<sub>r</sub> / f<sub>r</sub>) × (1 + d)</code> with a fudge factor d ≈ 0.2, leaving about 20% spare space.</li>
+<li>Use a better hash function that spreads keys uniformly and randomly.</li>
+<li>Handle unavoidable overflow with <b>overflow chaining</b> (linked overflow buckets), or open addressing.</li>
+<li>Use <b>dynamic hashing</b> (extendable or linear hashing) so the bucket count grows as the file grows.</li>
+</ul>
+</section>
+
+</main>
+<footer>Database Systems · Assignment solutions</footer>
+<noscript><style>.q{opacity:1;transform:none}</style></noscript>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs@7/babylon.js"></script>
+<script>
+(()=>{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* nav + reveal */
+const nav=$('#nav');
+for(let i=1;i<=15;i++)nav.insertAdjacentHTML('beforeend',`<a href="#q${i}" data-q="q${i}">${i}</a>`);
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.08});
+$$('.q').forEach(q=>io.observe(q));
+const io2=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){$$('nav a').forEach(a=>a.classList.toggle('on',a.dataset.q===e.target.id));const a=$(`nav a[data-q="${e.target.id}"]`);a&&a.scrollIntoView({inline:'center',block:'nearest'})}}),{rootMargin:'-35% 0px -55% 0px'});
+$$('.q').forEach(q=>io2.observe(q));
+
+/* Mermaid diagrams */
+try{
+ const dark=matchMedia('(prefers-color-scheme:dark)').matches;
+ mermaid.initialize({startOnLoad:true,theme:dark?'dark':'neutral',securityLevel:'loose',
+  flowchart:{curve:'basis',padding:14,htmlLabels:true,nodeSpacing:32,rankSpacing:44,useMaxWidth:true},
+  themeVariables:{fontFamily:'-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,sans-serif',fontSize:'14px'}});
+}catch(e){}
+
+/* Babylon.js calm background */
+try{
+ if(typeof BABYLON==='undefined')throw 0;
+ const cv=$('#bg'),eng=new BABYLON.Engine(cv,true,{antialias:true,alpha:true}),sc=new BABYLON.Scene(eng);
+ sc.clearColor=new BABYLON.Color4(0,0,0,0);
+ const cam=new BABYLON.FreeCamera('c',new BABYLON.Vector3(0,0,-16),sc);cam.setTarget(BABYLON.Vector3.Zero());cam.fov=.8;
+ new BABYLON.HemisphericLight('h',new BABYLON.Vector3(0,1,-.4),sc).intensity=.95;
+ const dl=new BABYLON.DirectionalLight('d',new BABYLON.Vector3(-.5,-1,.8),sc);dl.intensity=.5;
+ const cols=['#a8c8ff','#c9b8ff','#ffc8dd','#b8f0e0','#ffe3b0'].map(h=>BABYLON.Color3.FromHexString(h));
+ const mats=cols.map((c,i)=>{const m=new BABYLON.StandardMaterial('m'+i,sc);m.diffuseColor=c;m.emissiveColor=c.scale(.38);m.specularColor=new BABYLON.Color3(.3,.3,.3);m.specularPower=48;m.alpha=.88;return m});
+ let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+ const items=[];
+ for(let i=0;i<30;i++){
+  const t=i%3,m=t===0?BABYLON.MeshBuilder.CreateSphere('s'+i,{diameter:1,segments:24},sc):t===1?BABYLON.MeshBuilder.CreateTorus('t'+i,{diameter:1,thickness:.34,tessellation:40},sc):BABYLON.MeshBuilder.CreateIcoSphere('i'+i,{radius:.5,subdivisions:3},sc);
+  const s=.8+rnd()*2.2,side=rnd()<.5?-1:1;
+  m.scaling.setAll(s);m.material=mats[i%5];
+  m.position.set(side*(4+rnd()*8),4-rnd()*70,rnd()*8-2);
+  items.push({m,y:m.position.y,p:rnd()*6.28,sp:.15+rnd()*.3});
+ }
+ const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+ let mx=0,sy=0,tx=0;
+ addEventListener('pointermove',e=>mx=(e.clientX/innerWidth-.5)*2,{passive:true});
+ sc.onBeforeRenderObservable.add(()=>{
+  const t=calm?0:performance.now()/1000;
+  items.forEach(o=>{o.m.position.y=o.y+Math.sin(t*o.sp+o.p)*.5;o.m.rotation.x=t*o.sp*.5+o.p;o.m.rotation.y=t*o.sp*.7});
+  sy+=(scrollY-sy)*.08;tx+=(mx-tx)*.04;
+  cam.position.y=-sy*.0055;cam.position.x=tx*.8;cam.setTarget(new BABYLON.Vector3(0,cam.position.y,0));
+ });
+ eng.runRenderLoop(()=>sc.render());
+ addEventListener('resize',()=>eng.resize());
+}catch(e){const c=$('#bg');c&&(c.style.display='none')}
+})();
+</script>
+</body>
+</html>
