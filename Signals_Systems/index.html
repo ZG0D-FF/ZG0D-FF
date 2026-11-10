@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signals &amp; Systems &amp; Transform Theory — Academic Master Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    :root {
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --surface-secondary: #f5f5f7;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-focus: #0071e3;
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --callout-tip-bg: #f4fbf7;
+      --callout-tip-border: #34c759;
+      --callout-tip-text: #1b5e20;
+      --callout-warn-bg: #fffbf2;
+      --callout-warn-border: #ff9500;
+      --callout-warn-text: #b25e00;
+      --callout-danger-bg: #fff2f2;
+      --callout-danger-border: #ff3b30;
+      --callout-danger-text: #c41c13;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #161618;
+      --surface-secondary: #1c1c1e;
+      --border: rgba(255, 255, 255, 0.1);
+      --border-focus: #2997ff;
+      --text: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-tertiary: #6e6e73;
+      --accent: #2997ff;
+      --accent-soft: rgba(41, 151, 255, 0.12);
+      --callout-tip-bg: #0c1a12;
+      --callout-tip-border: #30d158;
+      --callout-tip-text: #7ee787;
+      --callout-warn-bg: #1c1608;
+      --callout-warn-border: #ff9f0a;
+      --callout-warn-text: #ffd166;
+      --callout-danger-bg: #1c0d0d;
+      --callout-danger-border: #ff453a;
+      --callout-danger-text: #ff8585;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 15px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Top Navigation Bar */
+    header.top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      background: rgba(251, 251, 253, 0.8);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    [data-theme="dark"] header.top-bar {
+      background: rgba(22, 22, 24, 0.8);
+    }
+
+    .top-left, .top-right { display: flex; align-items: center; gap: 14px; }
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 9px;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+    }
+    .back-link:hover { background: var(--accent-soft); }
+    .top-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .theme-toggle {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover { background: var(--surface); border-color: var(--text-tertiary); }
+
+    /* Layout */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      min-height: calc(100vh - 52px);
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-right: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .sidebar-header {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+      padding: 0 8px;
+    }
+    .nav-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .nav-item a:hover {
+      background: var(--surface-secondary);
+      color: var(--text);
+    }
+    .nav-item a.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      font-weight: 600;
+    }
+    .nav-item .ch-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: var(--surface-secondary);
+      color: var(--text-tertiary);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .nav-item a.active .ch-num {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Main Content */
+    main.content {
+      flex: 1;
+      padding: 40px 64px 100px;
+      max-width: 980px;
+    }
+
+    .hero-section {
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Section Cards */
+    section.chapter-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 40px;
+      margin-bottom: 48px;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 72px;
+    }
+    .chapter-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h2.chapter-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    h3.subhead {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 12px;
+    }
+    p { margin-bottom: 16px; color: var(--text); }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 18px 0 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    table.data-table th {
+      background: var(--surface-secondary);
+      padding: 10px 14px;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-sans);
+    }
+    table.data-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tr:hover td { background: var(--accent-soft); color: var(--text); }
+
+    /* Formulas & Code */
+    .formula-banner {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 16px 0 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+
+    /* Callout Boxes */
+    .callout {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .callout-header {
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .callout.tip {
+      background: var(--callout-tip-bg);
+      border-left: 4px solid var(--callout-tip-border);
+      color: var(--callout-tip-text);
+    }
+    .callout.warn {
+      background: var(--callout-warn-bg);
+      border-left: 4px solid var(--callout-warn-border);
+      color: var(--callout-warn-text);
+    }
+    .callout.danger {
+      background: var(--callout-danger-bg);
+      border-left: 4px solid var(--callout-danger-border);
+      color: var(--callout-danger-text);
+    }
+
+    /* Lucid Drawers */
+    details.lucid-drawer {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 20px 0;
+      transition: background 0.2s ease;
+    }
+    details.lucid-drawer[open] {
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    details.lucid-drawer summary {
+      font-weight: 600;
+      font-size: 13.5px;
+      cursor: pointer;
+      color: var(--accent);
+      user-select: none;
+      outline: none;
+    }
+    details.lucid-drawer .drawer-content {
+      padding-top: 14px;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* Footer */
+    footer.page-footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0 20px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 60px;
+    }
+
+    @media (max-width: 900px) {
+      aside.sidebar { display: none; }
+      main.content { padding: 24px 20px 60px; }
+      section.chapter-card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-bar">
+    <div class="top-left">
+      <a href="../notes1.html" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Notes Hub
+      </a>
+      <span style="color:var(--border);">/</span>
+      <span class="top-title">Signals &amp; Systems</span>
+      <span class="badge">Master Synthesis</span>
+    </div>
+    <div class="top-right">
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">
+        <span id="theme-icon">◐</span>
+        <span id="theme-label">Theme</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">Curriculum Modules</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="#ch1" class="active"><span class="ch-num">1</span> Signal &amp; System Classifications</a></li>
+        <li class="nav-item"><a href="#ch2"><span class="ch-num">2</span> LTI Systems &amp; Convolution</a></li>
+        <li class="nav-item"><a href="#ch3"><span class="ch-num">3</span> Continuous-Time Fourier Series</a></li>
+        <li class="nav-item"><a href="#ch4"><span class="ch-num">4</span> Continuous-Time Fourier Transform</a></li>
+        <li class="nav-item"><a href="#ch5"><span class="ch-num">5</span> The Sampling Theorem</a></li>
+        <li class="nav-item"><a href="#ch6"><span class="ch-num">6</span> Laplace, Z-Transform &amp; ROC</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      
+      <div class="hero-section">
+        <div class="hero-eyebrow">Core ECE · Mathematical Foundations</div>
+        <h1 class="hero-title">Signals, Systems &amp; Spectral Transforms</h1>
+        <p class="hero-desc">Exhaustive curriculum coverage of continuous and discrete-time signal spaces, Linear Time-Invariant (LTI) convolution mechanics, orthogonal harmonic Fourier series, continuous Fourier transforms, bandlimited Nyquist sampling, and complex $s$-domain / $z$-domain stability boundaries.</p>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 1: SIGNAL & SYSTEM CLASSIFICATIONS -->
+      <!-- ========================================== -->
+      <section id="ch1" class="chapter-card">
+        <span class="chapter-tag">Chapter 01</span>
+        <h2 class="chapter-title">Classification of Signals &amp; Systems</h2>
+        
+        <p>A signal is an information-bearing function of one or more independent variables. A system is a mathematical transformation or physical operator mapping an excitation input $x(t)$ (or $x[n]$) into an output response $y(t)$ (or $y[n]$): $y = \mathcal{T}\{x\}$.</p>
+
+        <h3 class="subhead">1.1 Standard Continuous-Time &amp; Discrete-Time Singularity Functions</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Function</th>
+                <th>Continuous-Time Formulation $x(t)$</th>
+                <th>Discrete-Time Formulation $x[n]$</th>
+                <th>Key Mathematical &amp; Sifting Properties</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Unit Impulse (Dirac / Kronecker)</strong></td>
+                <td>$\delta(t) = 0 \text{ for } t \neq 0, \quad \int_{-\infty}^{\infty} \delta(t)dt = 1$</td>
+                <td>$\delta[n] = \begin{cases} 1, & n = 0 \\ 0, & n \neq 0 \end{cases}$</td>
+                <td><strong>Sifting Property:</strong> $\int_{-\infty}^\infty x(t)\delta(t - t_0)dt = x(t_0)$<br><strong>Scaling:</strong> $\delta(at) = \frac{1}{|a|}\delta(t)$</td>
+              </tr>
+              <tr>
+                <td><strong>Unit Step (Heaviside)</strong></td>
+                <td>$u(t) = \begin{cases} 1, & t \ge 0 \\ 0, & t < 0 \end{cases}$</td>
+                <td>$u[n] = \begin{cases} 1, & n \ge 0 \\ 0, & n < 0 \end{cases}$</td>
+                <td>$\delta(t) = \frac{du(t)}{dt} \quad \Longleftrightarrow \quad u(t) = \int_{-\infty}^t \delta(\tau)d\tau$<br>$\delta[n] = u[n] - u[n-1]$</td>
+              </tr>
+              <tr>
+                <td><strong>Unit Ramp</strong></td>
+                <td>$r(t) = t \cdot u(t)$</td>
+                <td>$r[n] = n \cdot u[n]$</td>
+                <td>$r(t) = \int_{-\infty}^t u(\tau)d\tau, \quad u(t) = \frac{dr(t)}{dt}$</td>
+              </tr>
+              <tr>
+                <td><strong>Unit Parabola</strong></td>
+                <td>$p(t) = \frac{t^2}{2}u(t)$</td>
+                <td>$p[n] = \frac{n(n+1)}{2}u[n]$</td>
+                <td>$p(t) = \int_{-\infty}^t r(\tau)d\tau, \quad r(t) = \frac{dp(t)}{dt}$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">1.2 Energy vs. Power Signals &amp; Parseval Metrics</h3>
+        <p>A signal is classified based on its total energy $E$ and average power $P$ over infinite duration:</p>
+        <div class="formula-banner">
+          <strong>Continuous Energy:</strong> $E = \int_{-\infty}^\infty |x(t)|^2 dt \quad \Big( \text{Discrete: } E = \sum_{n=-\infty}^\infty |x[n]|^2 \Big)$<br>
+          <strong>Continuous Average Power:</strong> $P = \lim_{T \to \infty} \frac{1}{2T} \int_{-T}^{T} |x(t)|^2 dt \quad \Big( \text{Periodic: } P = \frac{1}{T_0} \int_{0}^{T_0} |x(t)|^2 dt \Big)$
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Classification</th>
+                <th>Energy $E$ Boundary</th>
+                <th>Power $P$ Boundary</th>
+                <th>Representative Waveforms</th>
+                <th>Time-Scaling &amp; Shifting Behavior</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Energy Signal</strong></td>
+                <td>$0 < E < \infty$</td>
+                <td>$P = 0$</td>
+                <td>Aperiodic decaying pulses: $e^{-at}u(t)$ ($a>0$), rectangular pulse $\text{rect}(t/T)$.</td>
+                <td>$E[x(t - t_0)] = E[x(t)]$;<br>$E[x(at)] = \frac{1}{|a|} E[x(t)]$.</td>
+              </tr>
+              <tr>
+                <td><strong>Power Signal</strong></td>
+                <td>$E = \infty$</td>
+                <td>$0 < P < \infty$</td>
+                <td>Periodic signals: $A\cos(\omega_0 t + \theta)$, complex exponentials $e^{j\omega_0 t}$, unit step $u(t)$ ($P = 0.5$).</td>
+                <td>$P[A\cos(\omega_0 t)] = \frac{A^2}{2}$;<br>$P[x(t - t_0)] = P[x(t)]$; $P[x(at)] = P[x(t)]$.</td>
+              </tr>
+              <tr>
+                <td><strong>Neither Energy nor Power (NENP)</strong></td>
+                <td>$E = \infty$</td>
+                <td>$P = \infty$</td>
+                <td>Growing signals: $r(t) = t \cdot u(t)$, $e^{at}u(t)$ ($a>0$), $t^2$.</td>
+                <td>Non-integrable over infinite bounds without convergence factor.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">1.3 System Classification Axioms</h3>
+        <ul>
+          <li><strong>Linearity (Superposition):</strong> $\mathcal{T}\{a x_1(t) + b x_2(t)\} = a \mathcal{T}\{x_1(t)\} + b \mathcal{T}\{x_2(t)\}$. Requires Additivity ($\mathcal{T}\{x_1+x_2\} = y_1+y_2$) and Homogeneity ($\mathcal{T}\{c \cdot x\} = c \cdot y$). Must satisfy zero-input response $\mathcal{T}\{0\} = 0$.</li>
+          <li><strong>Time-Invariance (Stationarity):</strong> If $x(t) \to y(t)$, then $x(t - t_0) \to y(t - t_0)$ for all $t_0$. Operators with explicit time dependencies ($t \cdot x(t)$) or time-scaling ($x(2t)$) are strictly Time-Variant.</li>
+          <li><strong>Causality (Non-anticipative):</strong> The output $y(t_0)$ depends only on current and past input values $x(t)$ for $t \le t_0$. A system is strictly non-causal if $y(t_0)$ depends on $x(t)$ for $t > t_0$.</li>
+          <li><strong>BIBO Stability (Bounded-Input Bounded-Output):</strong> If $|x(t)| \le M_x < \infty$ for all $t$, then $|y(t)| \le M_y < \infty$. For an LTI system, this requires absolute integrability of impulse response: $\int_{-\infty}^\infty |h(t)| dt < \infty$.</li>
+          <li><strong>Memory (Static vs. Dynamic):</strong> A static (memoryless) system depends solely on the current input sample $x(t)$. A dynamic system stores past/future energy (capacitors, inductors, sample delays $z^{-1}$).</li>
+        </ul>
+
+        <div class="callout danger">
+          <div class="callout-header">⚠️ Exam Trap: Linearity vs. Affine Offsets</div>
+          <p>A system governed by $y(t) = 2x(t) + 3$ is <strong>NOT linear</strong>.
+          <em>Test:</em> If $x(t) = 0$, $y(t) = 3 \neq 0$. Scaling input by $k$ yields $y'(t) = 2kx(t) + 3 \neq k[2x(t) + 3] = 2kx(t) + 3k$.
+          This is an <em>affine</em> system, failing the homogeneity axiom. It can be modeled as an incrementally linear system, but fails strict superposition.</p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 2: LTI SYSTEMS & CONVOLUTION -->
+      <!-- ========================================== -->
+      <section id="ch2" class="chapter-card">
+        <span class="chapter-tag">Chapter 02</span>
+        <h2 class="chapter-title">Continuous &amp; Discrete LTI Systems &amp; Convolution</h2>
+
+        <p>A Linear Time-Invariant (LTI) system is completely and uniquely characterized by its response to a unit impulse, denoted by $h(t)$ in continuous time and $h[n]$ in discrete time. Any arbitrary input excitation can be decomposed into an infinite continuum of scaled, shifted impulses.</p>
+
+        <h3 class="subhead">2.1 The Convolution Integral &amp; Convolution Sum</h3>
+        <div class="formula-banner">
+          <strong>Continuous-Time Convolution Integral:</strong>
+          $$y(t) = x(t) * h(t) = \int_{-\infty}^{\infty} x(\tau) h(t - \tau) d\tau = \int_{-\infty}^{\infty} h(\tau) x(t - \tau) d\tau$$
+          <strong>Discrete-Time Convolution Sum:</strong>
+          $$y[n] = x[n] * h[n] = \sum_{k=-\infty}^{\infty} x[k] h[n - k] = \sum_{k=-\infty}^{\infty} h[k] x[n - k]$$
+        </div>
+
+        <h3 class="subhead">2.2 Algebraic Properties of the Convolution Operator</h3>
+        <ul>
+          <li><strong>Commutative:</strong> $x(t) * h(t) = h(t) * x(t)$. (Input and system impulse response can be swapped without altering response).</li>
+          <li><strong>Distributive (Parallel Interconnections):</strong> $x(t) * [h_1(t) + h_2(t)] = x(t) * h_1(t) + x(t) * h_2(t)$.</li>
+          <li><strong>Associative (Cascade Interconnections):</strong> $x(t) * [h_1(t) * h_2(t)] = [x(t) * h_1(t)] * h_2(t)$. Total equivalent impulse response of two cascaded stages is $h_{eq}(t) = h_1(t) * h_2(t)$.</li>
+          <li><strong>Identity Element:</strong> $x(t) * \delta(t) = x(t)$. Convolving with a shifted impulse shifts the signal: $x(t) * \delta(t - t_0) = x(t - t_0)$.</li>
+          <li><strong>Shift Property:</strong> If $x_1(t) * x_2(t) = y(t)$, then $x_1(t - t_1) * x_2(t - t_2) = y(t - t_1 - t_2)$.</li>
+          <li><strong>Differentiation Property:</strong> $\frac{d}{dt}[x(t) * h(t)] = \frac{dx(t)}{dt} * h(t) = x(t) * \frac{dh(t)}{dt}$.</li>
+          <li><strong>Integration (Step Response):</strong> $s(t) = x(t) * u(t) = \int_{-\infty}^t h(\tau) d\tau \quad \Longleftrightarrow \quad h(t) = \frac{ds(t)}{dt}$.</li>
+        </ul>
+
+        <div class="callout tip">
+          <div class="callout-header">💡 Mechanical &amp; Intuitive Breakdown: The 4 Graphical Convolution Steps</div>
+          <p>Evaluating $y(t) = \int_{-\infty}^\infty x(\tau)h(t - \tau)d\tau$ mechanically follows 4 immutable geometric operations:
+          <ol>
+            <li><strong>Fold (Time-Reversal):</strong> Reflect $h(\tau)$ about the vertical axis to form $h(-\tau)$.</li>
+            <li><strong>Shift (Time-Displacement):</strong> Displace the folded function along the $\tau$-axis by $t$ to form $h(t - \tau) = h(-(\tau - t))$.</li>
+            <li><strong>Multiply:</strong> Take the point-by-point product of the stationary signal $x(\tau)$ and the moving window $h(t - \tau)$.</li>
+            <li><strong>Integrate:</strong> Compute the net area under the product curve over all overlap intervals $\tau \in (-\infty, \infty)$.</li>
+          </ol>
+          </p>
+        </div>
+
+        <h3 class="subhead">2.3 LTI System Stability &amp; Causality Theorems</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>LTI System Property</th>
+                <th>Continuous-Time Impulse Response Condition</th>
+                <th>Discrete-Time Impulse Response Condition</th>
+                <th>Transform-Domain Criterion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Causal</strong></td>
+                <td>$h(t) = 0 \quad \text{for all } t < 0$</td>
+                <td>$h[n] = 0 \quad \text{for all } n < 0$</td>
+                <td>ROC of $H(s)$ is a right-half plane $\text{Re}(s) > \sigma_{\max}$. ROC of $H(z)$ is exterior of circle $|z| > r_{\max}$.</td>
+              </tr>
+              <tr>
+                <td><strong>BIBO Stable</strong></td>
+                <td>$\int_{-\infty}^\infty |h(t)| dt < \infty$</td>
+                <td>$\sum_{n=-\infty}^\infty |h[n]| < \infty$</td>
+                <td>ROC of $H(s)$ must enclose the imaginary axis $j\omega$. ROC of $H(z)$ must enclose the unit circle $|z| = 1$.</td>
+              </tr>
+              <tr>
+                <td><strong>Causal &amp; Stable</strong></td>
+                <td>$h(t) = 0 \text{ for } t < 0 \text{ and } \int_0^\infty |h(t)|dt < \infty$</td>
+                <td>$h[n] = 0 \text{ for } n < 0 \text{ and } \sum_0^\infty |h[n]| < \infty$</td>
+                <td>All poles of $H(s)$ strictly in Open Left Half-Plane ($\text{Re}(p_i) < 0$). All poles of $H(z)$ strictly inside Unit Circle ($|p_i| < 1$).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 3: CONTINUOUS-TIME FOURIER SERIES -->
+      <!-- ========================================== -->
+      <section id="ch3" class="chapter-card">
+        <span class="chapter-tag">Chapter 03</span>
+        <h2 class="chapter-title">Continuous-Time Fourier Series (CTFS)</h2>
+
+        <p>Fourier Series represents any arbitrary periodic signal $x(t) = x(t + T_0)$ as a linear combination of harmonically related orthogonal basis functions (sinusoids or complex exponentials) with fundamental angular frequency $\omega_0 = \frac{2\pi}{T_0}$.</p>
+
+        <h3 class="subhead">3.1 Exponential &amp; Trigonometric Representations</h3>
+        <div class="formula-banner">
+          <strong>Exponential Fourier Series (Compact Form):</strong>
+          $$x(t) = \sum_{n=-\infty}^{\infty} C_n e^{j n \omega_0 t} \quad \text{where} \quad C_n = \frac{1}{T_0} \int_{T_0} x(t) e^{-j n \omega_0 t} dt$$
+          <strong>Trigonometric Fourier Series:</strong>
+          $$x(t) = a_0 + \sum_{n=1}^{\infty} \Big[ a_n \cos(n \omega_0 t) + b_n \sin(n \omega_0 t) \Big]$$
+          $$a_0 = C_0 = \frac{1}{T_0}\int_{T_0} x(t) dt, \quad a_n = \frac{2}{T_0}\int_{T_0} x(t)\cos(n\omega_0 t)dt, \quad b_n = \frac{2}{T_0}\int_{T_0} x(t)\sin(n\omega_0 t)dt$$
+          <strong>Coefficient Bridge:</strong> $C_n = \frac{a_n - j b_n}{2}, \quad C_{-n} = C_n^* = \frac{a_n + j b_n}{2} \quad (\text{for real } x(t))$.
+        </div>
+
+        <h3 class="subhead">3.2 Waveform Symmetries &amp; Spectral Harmonic Elimination</h3>
+        <p>Exploiting waveform symmetry allows engineers to immediately set entire subsets of Fourier coefficients to zero without evaluating integrals.</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Symmetry Type</th>
+                <th>Mathematical Condition</th>
+                <th>Trigonometric Coefficients Impact</th>
+                <th>Exponential $C_n$ Property</th>
+                <th>Harmonic Content</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Even (Mirror) Symmetry</strong></td>
+                <td>$x(-t) = x(t)$</td>
+                <td>$b_n = 0$ (all sine terms vanish); $a_n = \frac{4}{T_0}\int_0^{T_0/2} x(t)\cos(n\omega_0 t)dt$</td>
+                <td>$C_n$ is purely real and even: $C_n = C_{-n} = \text{Re}(C_n)$</td>
+                <td>DC component + Cosine harmonics only.</td>
+              </tr>
+              <tr>
+                <td><strong>Odd (Point) Symmetry</strong></td>
+                <td>$x(-t) = -x(t)$</td>
+                <td>$a_0 = 0$, $a_n = 0$ (all cosines vanish); $b_n = \frac{4}{T_0}\int_0^{T_0/2} x(t)\sin(n\omega_0 t)dt$</td>
+                <td>$C_n$ is purely imaginary and odd: $C_n = -C_{-n} = j\text{Im}(C_n)$</td>
+                <td>Zero DC + Sine harmonics only.</td>
+              </tr>
+              <tr>
+                <td><strong>Half-Wave Symmetry (HWS)</strong></td>
+                <td>$x(t \pm \frac{T_0}{2}) = -x(t)$</td>
+                <td>$a_0 = 0$; all even harmonics vanish: $a_{2k} = 0, b_{2k} = 0$</td>
+                <td>$C_n = 0$ for all even integers $n = 0, \pm 2, \pm 4 \dots$</td>
+                <td>Odd harmonics only ($n = 1, 3, 5, \dots$).</td>
+              </tr>
+              <tr>
+                <td><strong>Quarter-Wave Even</strong></td>
+                <td>$x(-t) = x(t)$ and HWS</td>
+                <td>$b_n = 0$, $a_{\text{even}} = 0$; $a_n = \frac{8}{T_0}\int_0^{T_0/4} x(t)\cos(n\omega_0 t)dt$</td>
+                <td>$C_n$ purely real; non-zero only for odd $n$</td>
+                <td>Odd cosine harmonics only.</td>
+              </tr>
+              <tr>
+                <td><strong>Quarter-Wave Odd</strong></td>
+                <td>$x(-t) = -x(t)$ and HWS</td>
+                <td>$a_n = 0$, $b_{\text{even}} = 0$; $b_n = \frac{8}{T_0}\int_0^{T_0/4} x(t)\sin(n\omega_0 t)dt$</td>
+                <td>$C_n$ purely imaginary; non-zero only for odd $n$</td>
+                <td>Odd sine harmonics only.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">3.3 Parseval's Power Theorem for Periodic Signals</h3>
+        <p>Parseval's relation dictates conservation of energy/power between time and frequency domains. The total average power $P_{avg}$ in periodic signal $x(t)$ equals the sum of the average powers of all its individual harmonic components:</p>
+        <div class="formula-banner">
+          $$P_{avg} = \frac{1}{T_0} \int_{T_0} |x(t)|^2 dt = \sum_{n=-\infty}^{\infty} |C_n|^2 = a_0^2 + \sum_{n=1}^{\infty} \frac{a_n^2 + b_n^2}{2} = a_0^2 + \sum_{n=1}^\infty \frac{A_n^2}{2}$$
+          Where $A_n = \sqrt{a_n^2 + b_n^2} = 2|C_n|$ represents the peak amplitude of the $n$-th harmonic sinusoid.
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-header">💡 Dirichlet Conditions for Fourier Series Convergence</div>
+          <p>A periodic signal $x(t)$ can be represented by a Fourier series that converges to $x(t)$ at all points of continuity (and to the midpoint $\frac{x(t^+) + x(t^-)}{2}$ at jump discontinuities) if it satisfies the <strong>Dirichlet Conditions</strong> over one period $T_0$:
+          <ol>
+            <li>$x(t)$ is absolutely integrable over the period: $\int_{T_0} |x(t)| dt < \infty$.</li>
+            <li>$x(t)$ has a finite number of maxima and minima within any single period.</li>
+            <li>$x(t)$ has a finite number of finite discontinuities within any single period (no infinite asymptotes).</li>
+          </ol>
+          </p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 4: CONTINUOUS-TIME FOURIER TRANSFORM -->
+      <!-- ========================================== -->
+      <section id="ch4" class="chapter-card">
+        <span class="chapter-tag">Chapter 04</span>
+        <h2 class="chapter-title">Continuous-Time Fourier Transform (CTFT)</h2>
+
+        <p>By taking the limiting condition of the Fourier series as the fundamental period tends to infinity ($T_0 \to \infty$), the discrete line spectrum merges into a continuous spectral density function $X(\omega)$, extending frequency-domain analysis to aperiodic energy signals.</p>
+
+        <h3 class="subhead">4.1 The CTFT Synthesis &amp; Analysis Pair</h3>
+        <div class="formula-banner">
+          <strong>Forward Fourier Transform (Analysis):</strong>
+          $$X(\omega) = \mathcal{F}\{x(t)\} = \int_{-\infty}^{\infty} x(t) e^{-j \omega t} dt$$
+          <strong>Inverse Fourier Transform (Synthesis):</strong>
+          $$x(t) = \mathcal{F}^{-1}\{X(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} X(\omega) e^{j \omega t} d\omega$$
+        </div>
+
+        <h3 class="subhead">4.2 Canonical Fourier Transform Properties</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Operational Property</th>
+                <th>Time Domain $x(t)$</th>
+                <th>Frequency Domain $X(\omega)$</th>
+                <th>Physical Meaning / Engineering Utility</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Linearity</strong></td>
+                <td>$a x_1(t) + b x_2(t)$</td>
+                <td>$a X_1(\omega) + b X_2(\omega)$</td>
+                <td>Superposition of frequency bands.</td>
+              </tr>
+              <tr>
+                <td><strong>Time Shifting</strong></td>
+                <td>$x(t - t_0)$</td>
+                <td>$e^{-j \omega t_0} X(\omega)$</td>
+                <td>Linear phase delay without altering magnitude $|X(\omega)|$.</td>
+              </tr>
+              <tr>
+                <td><strong>Frequency Shifting (Modulation)</strong></td>
+                <td>$e^{j \omega_0 t} x(t)$</td>
+                <td>$X(\omega - \omega_0)$</td>
+                <td>Heterodyne upconversion; basis of RF communication mixers.</td>
+              </tr>
+              <tr>
+                <td><strong>Time Scaling</strong></td>
+                <td>$x(at)$</td>
+                <td>$\frac{1}{|a|} X\left(\frac{\omega}{a}\right)$</td>
+                <td>Reciprocal scaling: time compression $\implies$ spectral expansion.</td>
+              </tr>
+              <tr>
+                <td><strong>Duality (Symmetry)</strong></td>
+                <td>$X(t)$</td>
+                <td>$2\pi x(-\omega)$</td>
+                <td>If $\text{rect}(t) \leftrightarrow \text{sinc}(\omega)$, then $\text{sinc}(t) \leftrightarrow \text{rect}(\omega)$.</td>
+              </tr>
+              <tr>
+                <td><strong>Time Differentiation</strong></td>
+                <td>$\frac{d^n x(t)}{dt^n}$</td>
+                <td>$(j\omega)^n X(\omega)$</td>
+                <td>High-pass filtering effect; amplifies high frequencies.</td>
+              </tr>
+              <tr>
+                <td><strong>Time Integration</strong></td>
+                <td>$\int_{-\infty}^t x(\tau) d\tau$</td>
+                <td>$\frac{X(\omega)}{j\omega} + \pi X(0)\delta(\omega)$</td>
+                <td>Low-pass filtering effect; accumulation adds DC impulse.</td>
+              </tr>
+              <tr>
+                <td><strong>Convolution in Time</strong></td>
+                <td>$x_1(t) * x_2(t)$</td>
+                <td>$X_1(\omega) \cdot X_2(\omega)$</td>
+                <td>Converts differential/convolution equations into algebraic multiplication.</td>
+              </tr>
+              <tr>
+                <td><strong>Multiplication in Time (Modulation)</strong></td>
+                <td>$x_1(t) \cdot x_2(t)$</td>
+                <td>$\frac{1}{2\pi} \Big[ X_1(\omega) * X_2(\omega) \Big]$</td>
+                <td>Windowing and amplitude modulation spectral convolution.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">4.3 Parseval's Energy Theorem &amp; Spectral Densities</h3>
+        <p>The total energy $E$ contained in an aperiodic signal $x(t)$ can be integrated directly across its Energy Spectral Density (ESD) $\psi(\omega) = |X(\omega)|^2$:</p>
+        <div class="formula-banner">
+          $$E = \int_{-\infty}^{\infty} |x(t)|^2 dt = \frac{1}{2\pi} \int_{-\infty}^{\infty} |X(\omega)|^2 d\omega = \int_{-\infty}^{\infty} |X(f)|^2 df$$
+          <strong>Area Relations:</strong>
+          $$X(0) = \int_{-\infty}^\infty x(t) dt \quad \Big( \text{Total area under time waveform equals DC spectral value} \Big)$$
+          $$x(0) = \frac{1}{2\pi} \int_{-\infty}^\infty X(\omega) d\omega \quad \Big( \text{Total area under frequency spectrum equals } 2\pi x(0) \Big)$$
+        </div>
+
+        <div class="callout danger">
+          <div class="callout-header">⚠️ Exam Trap: Fourier Transform of the Unit Step Function $u(t)$</div>
+          <p>Because $u(t)$ is not absolutely integrable ($\int_0^\infty 1 dt = \infty$), treating it as $\lim_{a \to 0} e^{-at}u(t)$ without distribution theory yields $\frac{1}{j\omega}$, which is <strong>incorrect</strong> because it omits the DC energy.
+          $$\mathcal{F}\{u(t)\} = \frac{1}{j\omega} + \pi \delta(\omega)$$
+          The term $\pi \delta(\omega)$ accounts for the infinite-duration DC component ($a_0 = 1/2$). Neglecting this impulse yields wrong answers when analyzing step responses of LTI integrators.</p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 5: THE SAMPLING THEOREM -->
+      <!-- ========================================== -->
+      <section id="ch5" class="chapter-card">
+        <span class="chapter-tag">Chapter 05</span>
+        <h2 class="chapter-title">The Sampling Theorem &amp; Reconstruction Theory</h2>
+
+        <p>The Nyquist-Shannon Sampling Theorem bridges the continuous physical domain and discrete computational domain, establishing the strict mathematical boundaries under which a continuous bandlimited signal can be perfectly reconstructed without loss of information.</p>
+
+        <h3 class="subhead">5.1 Mathematical Formulation of Ideal Impulse Sampling</h3>
+        <p>Ideal sampling of continuous signal $x(t)$ with a periodic Dirac impulse train $p(t) = \sum_{n=-\infty}^\infty \delta(t - n T_s)$ where $T_s$ is the sampling period ($f_s = 1/T_s$, $\omega_s = 2\pi/T_s$):</p>
+        <div class="formula-banner">
+          $$x_s(t) = x(t) \cdot \sum_{n=-\infty}^{\infty} \delta(t - n T_s) = \sum_{n=-\infty}^{\infty} x(n T_s) \delta(t - n T_s)$$
+          In the frequency domain, multiplication becomes convolution with $\mathcal{F}\{p(t)\} = \omega_s \sum_k \delta(\omega - k\omega_s)$:
+          $$X_s(\omega) = \frac{1}{2\pi} \Big[ X(\omega) * \omega_s \sum_{k=-\infty}^\infty \delta(\omega - k\omega_s) \Big] = \frac{1}{T_s} \sum_{k=-\infty}^{\infty} X(\omega - k \omega_s)$$
+          Sampling replicates the baseband spectrum $X(\omega)$ infinitely along the frequency axis at integer multiples of $\omega_s$, scaled by $1/T_s$.
+        </div>
+
+        <h3 class="subhead">5.2 The Nyquist Criterion &amp; Aliasing Regimes</h3>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Sampling Regime</th>
+                <th>Mathematical Condition</th>
+                <th>Spectral Separation</th>
+                <th>Reconstruction Feasibility &amp; Physical Consequence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Oversampling</strong></td>
+                <td>$\omega_s > 2 \omega_m \quad (f_s > 2 f_m)$</td>
+                <td>Guard band exists: $(\omega_s - \omega_m) > \omega_m$</td>
+                <td><strong>Exact reconstruction achievable.</strong> Relaxed practical analog anti-aliasing filter roll-off slopes.</td>
+              </tr>
+              <tr>
+                <td><strong>Critical (Nyquist) Sampling</strong></td>
+                <td>$\omega_s = 2 \omega_m \quad (f_s = 2 f_m)$</td>
+                <td>Zero guard band: adjacent spectral replicas touch at $\omega = \pm \omega_m$</td>
+                <td>Exact theoretical recovery requires an impossible "brick-wall" ideal filter ($H_{LPF}(\omega) = T_s \text{ for } |\omega| \le \omega_m$).</td>
+              </tr>
+              <tr>
+                <td><strong>Undersampling (Aliasing)</strong></td>
+                <td>$\omega_s < 2 \omega_m \quad (f_s < 2 f_m)$</td>
+                <td>Spectral overlap: adjacent replicas collide and fold into baseband</td>
+                <td><strong>Irreversible information destruction.</strong> High frequencies falsely disguise themselves as low frequencies ($f_{alias} = |f - k f_s|$).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-header">💡 Whittaker-Shannon Sinc Interpolation Formula</div>
+          <p>Feeding the ideally sampled signal $x_s(t)$ into an ideal low-pass filter with frequency response $H(\omega) = T_s \cdot \text{rect}\left(\frac{\omega}{2\omega_c}\right)$ with cutoff $\omega_c = \omega_s/2$ achieves exact continuous time reconstruction:
+          $$x(t) = x_s(t) * h(t) = \sum_{n=-\infty}^{\infty} x(n T_s) \cdot \text{sinc}\left( \frac{t - n T_s}{T_s} \right) = \sum_{n=-\infty}^\infty x(n T_s) \frac{\sin\left(\frac{\pi(t - nT_s)}{T_s}\right)}{\frac{\pi(t - nT_s)}{T_s}}$$
+          Each discrete sample acts as the weight of an orthogonal $\text{sinc}$ basis function centered at that instant.</p>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-header">⚠️ Exam Shortcut: Nyquist Rates for Arithmetic Signal Combinations</div>
+          <p>Let $x_1(t)$ have max frequency $f_1$ and $x_2(t)$ have max frequency $f_2$.
+          <ul>
+            <li><strong>Sum:</strong> $y(t) = x_1(t) + x_2(t) \implies f_{m} = \max(f_1, f_2) \implies f_s = 2 \max(f_1, f_2)$.</li>
+            <li><strong>Product:</strong> $y(t) = x_1(t) \cdot x_2(t) \implies Y(\omega) = \frac{1}{2\pi}[X_1 * X_2] \implies f_{m} = f_1 + f_2 \implies f_s = 2(f_1 + f_2)$.</li>
+            <li><strong>Convolution:</strong> $y(t) = x_1(t) * x_2(t) \implies Y(\omega) = X_1(\omega)X_2(\omega) \implies f_{m} = \min(f_1, f_2) \implies f_s = 2 \min(f_1, f_2)$.</li>
+            <li><strong>Power Operations:</strong> $y(t) = x_1^n(t) \implies f_m = n \cdot f_1 \implies f_s = 2n \cdot f_1$.</li>
+            <li><strong>Sinc Functions:</strong> $x(t) = \text{sinc}(a t) = \frac{\sin(\pi a t)}{\pi a t} \implies f_m = \frac{a}{2} \implies f_s = a\text{ Hz}$. For $\text{sinc}^2(a t) \implies f_m = a \implies f_s = 2a\text{ Hz}$.</li>
+          </ul>
+          </p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 6: LAPLACE, Z-TRANSFORM & ROC -->
+      <!-- ========================================== -->
+      <section id="ch6" class="chapter-card">
+        <span class="chapter-tag">Chapter 06</span>
+        <h2 class="chapter-title">Laplace Transform, Z-Transform &amp; ROC Dynamics</h2>
+
+        <p>The Laplace and Z-Transforms generalize Fourier analysis by introducing real damping factors ($\sigma$ and $r$), allowing rigorous mathematical treatment of unstable systems, transient responses, and differential/difference equations with non-zero initial boundary conditions.</p>
+
+        <h3 class="subhead">6.1 Definitions &amp; Convergence Mechanics</h3>
+        <div class="formula-banner">
+          <strong>Bilateral Laplace Transform:</strong>
+          $$X(s) = \mathcal{L}\{x(t)\} = \int_{-\infty}^{\infty} x(t) e^{-s t} dt \quad \text{where } s = \sigma + j\omega$$
+          $$X(s) = \mathcal{F}\{x(t) e^{-\sigma t}\} \implies \text{Fourier transform with exponential decay envelope } e^{-\sigma t}$$
+          <strong>Bilateral Z-Transform:</strong>
+          $$X(z) = \mathcal{Z}\{x[n]\} = \sum_{n=-\infty}^{\infty} x[n] z^{-n} \quad \text{where } z = r e^{j\omega}$$
+          $$X(z) = \mathcal{F}\{x[n] r^{-n}\} \implies \text{DTFT scaled by radial factor } r^{-n}$$
+          <strong>Mapping Relation:</strong> $z = e^{s T_s} = e^{(\sigma + j\omega) T_s} = e^{\sigma T_s} e^{j\omega T_s}$.<br>
+          • Imaginary axis in $s$-plane ($\sigma = 0$) maps directly to the <strong>Unit Circle</strong> in $z$-plane ($|z| = 1$).<br>
+          • Left Half of $s$-plane ($\sigma < 0$) maps to the <strong>Interior of Unit Circle</strong> ($|z| < 1$).<br>
+          • Right Half of $s$-plane ($\sigma > 0$) maps to the <strong>Exterior of Unit Circle</strong> ($|z| > 1$).
+        </div>
+
+        <h3 class="subhead">6.2 Region of Convergence (ROC) Core Properties</h3>
+        <p>The algebraic expression of $X(s)$ or $X(z)$ does not uniquely define a time-domain signal without specifying its Region of Convergence (ROC).</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time Domain Signal Nature</th>
+                <th>Laplace Transform ROC Shape ($s$-plane)</th>
+                <th>Z-Transform ROC Shape ($z$-plane)</th>
+                <th>Poles Boundary Rule</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Right-Sided (Causal: $t \ge 0$, $n \ge 0$)</strong></td>
+                <td>Right-Half Plane strip: $\text{Re}(s) > \sigma_{\max}$</td>
+                <td>Exterior of a circle: $|z| > r_{\max}$</td>
+                <td>ROC extends outward from the rightmost / outermost pole to infinity.</td>
+              </tr>
+              <tr>
+                <td><strong>Left-Sided (Anti-causal: $t \le 0$, $n \le 0$)</strong></td>
+                <td>Left-Half Plane strip: $\text{Re}(s) < \sigma_{\min}$</td>
+                <td>Interior of a circle: $|z| < r_{\min}$</td>
+                <td>ROC extends inward from the leftmost / innermost pole to zero.</td>
+              </tr>
+              <tr>
+                <td><strong>Two-Sided (Non-causal)</strong></td>
+                <td>Vertical strip: $\sigma_1 < \text{Re}(s) < \sigma_2$</td>
+                <td>Annular ring: $r_1 < |z| < r_2$</td>
+                <td>ROC is bounded by two poles; contains zero poles.</td>
+              </tr>
+              <tr>
+                <td><strong>Finite Duration</strong></td>
+                <td>Entire $s$-plane</td>
+                <td>Entire $z$-plane except possibly $z=0$ or $z=\infty$</td>
+                <td>Contains no poles in finite complex plane.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">6.3 Initial and Final Value Theorems</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Theorem</th>
+                <th>Continuous-Time Formulation (Laplace)</th>
+                <th>Discrete-Time Formulation (Z-Transform)</th>
+                <th>Strict Validity Condition</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Initial Value Theorem (IVT)</strong></td>
+                <td>$x(0^+) = \lim_{s \to \infty} s X(s)$</td>
+                <td>$x[0] = \lim_{z \to \infty} X(z)$</td>
+                <td>Signal must be strictly causal ($x(t) = 0$ for $t < 0$) with no impulses at origin.</td>
+              </tr>
+              <tr>
+                <td><strong>Final Value Theorem (FVT)</strong></td>
+                <td>$\lim_{t \to \infty} x(t) = \lim_{s \to 0} s X(s)$</td>
+                <td>$\lim_{n \to \infty} x[n] = \lim_{z \to 1} (z - 1) X(z)$</td>
+                <td><strong>Critical:</strong> The limit must exist! All poles of $sX(s)$ must lie strictly in the open left-half $s$-plane (or inside unit circle for $(z-1)X(z)$).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout danger">
+          <div class="callout-header">⚠️ Exam Trap: False Application of Final Value Theorem</div>
+          <p>Consider the oscillator signal $x(t) = \sin(\omega_0 t)u(t) \leftrightarrow X(s) = \frac{\omega_0}{s^2 + \omega_0^2}$.
+          Blindly applying the FVT formula yields:
+          $$\lim_{s \to 0} s X(s) = \lim_{s \to 0} \frac{s \omega_0}{s^2 + \omega_0^2} = 0 \quad \text{(COMPLETELY FALSE)}$$
+          In reality, $\lim_{t \to \infty} \sin(\omega_0 t)$ does not exist; it oscillates eternally between $-1$ and $+1$.
+          The FVT fails because $s X(s)$ has poles at $s = \pm j\omega_0$ on the imaginary axis, violating the stability precondition.</p>
+        </div>
+      </section>
+
+      <footer class="page-footer">
+        <p>Signals &amp; Systems &amp; Transform Theory · Core ECE Master Series</p>
+        <p style="margin-top:4px;">Engineered to Academic Parity Standards with Apple Minimalist Calmness · Zero Gimmicks</p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Theme Management
+    function initTheme() {
+      const saved = localStorage.getItem('site-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        updateThemeButton(true);
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        updateThemeButton(false);
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const targetDark = !isDark;
+      document.documentElement.setAttribute('data-theme', targetDark ? 'dark' : 'light');
+      localStorage.setItem('site-theme', targetDark ? 'dark' : 'light');
+      updateThemeButton(targetDark);
+    }
+
+    function updateThemeButton(isDark) {
+      const btn = document.getElementById('theme-btn');
+      const icon = document.getElementById('theme-icon');
+      const label = document.getElementById('theme-label');
+      if (isDark) {
+        icon.textContent = '☼';
+        label.textContent = 'Light';
+      } else {
+        icon.textContent = '☾';
+        label.textContent = 'Dark';
+      }
+    }
+
+    // Scroll spy for sidebar navigation
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+
+      const sections = document.querySelectorAll('section.chapter-card');
+      const navLinks = document.querySelectorAll('.nav-item a');
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            navLinks.forEach(link => {
+              if (link.getAttribute('href') === `#${id}`) {
+                link.classList.add('active');
+              } else {
+                link.classList.remove('active');
+              }
+            });
+          }
+        });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+
+      sections.forEach(sec => observer.observe(sec));
+    });
+  </script>
+</body>
+</html>

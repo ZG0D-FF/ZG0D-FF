@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Electronics & Logic Synthesis — Academic Master Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    :root {
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --surface-secondary: #f5f5f7;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-focus: #0071e3;
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --callout-tip-bg: #f4fbf7;
+      --callout-tip-border: #34c759;
+      --callout-tip-text: #1b5e20;
+      --callout-warn-bg: #fffbf2;
+      --callout-warn-border: #ff9500;
+      --callout-warn-text: #b25e00;
+      --callout-danger-bg: #fff2f2;
+      --callout-danger-border: #ff3b30;
+      --callout-danger-text: #c41c13;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #161618;
+      --surface-secondary: #1c1c1e;
+      --border: rgba(255, 255, 255, 0.1);
+      --border-focus: #2997ff;
+      --text: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-tertiary: #6e6e73;
+      --accent: #2997ff;
+      --accent-soft: rgba(41, 151, 255, 0.12);
+      --callout-tip-bg: #0c1a12;
+      --callout-tip-border: #30d158;
+      --callout-tip-text: #7ee787;
+      --callout-warn-bg: #1c1608;
+      --callout-warn-border: #ff9f0a;
+      --callout-warn-text: #ffd166;
+      --callout-danger-bg: #1c0d0d;
+      --callout-danger-border: #ff453a;
+      --callout-danger-text: #ff8585;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 15px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Top Navigation Bar */
+    header.top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      background: rgba(251, 251, 253, 0.8);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    [data-theme="dark"] header.top-bar {
+      background: rgba(22, 22, 24, 0.8);
+    }
+
+    .top-left, .top-right { display: flex; align-items: center; gap: 14px; }
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 9px;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+    }
+    .back-link:hover { background: var(--accent-soft); }
+    .top-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .theme-toggle {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover { background: var(--surface); border-color: var(--text-tertiary); }
+
+    /* Layout */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      min-height: calc(100vh - 52px);
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-right: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .sidebar-header {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+      padding: 0 8px;
+    }
+    .nav-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .nav-item a:hover {
+      background: var(--surface-secondary);
+      color: var(--text);
+    }
+    .nav-item a.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      font-weight: 600;
+    }
+    .nav-item .ch-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: var(--surface-secondary);
+      color: var(--text-tertiary);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .nav-item a.active .ch-num {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Main Content */
+    main.content {
+      flex: 1;
+      padding: 40px 64px 100px;
+      max-width: 980px;
+    }
+
+    .hero-section {
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Section Cards */
+    section.chapter-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 40px;
+      margin-bottom: 48px;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 72px;
+    }
+    .chapter-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h2.chapter-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    h3.subhead {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 12px;
+    }
+    p { margin-bottom: 16px; color: var(--text); }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 18px 0 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    table.data-table th {
+      background: var(--surface-secondary);
+      padding: 10px 14px;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-sans);
+    }
+    table.data-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tr:hover td { background: var(--accent-soft); color: var(--text); }
+
+    /* Formulas & Code */
+    .formula-banner {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 16px 0 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+
+    /* Callout Boxes */
+    .callout {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .callout-header {
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .callout.tip {
+      background: var(--callout-tip-bg);
+      border-left: 4px solid var(--callout-tip-border);
+      color: var(--callout-tip-text);
+    }
+    .callout.warn {
+      background: var(--callout-warn-bg);
+      border-left: 4px solid var(--callout-warn-border);
+      color: var(--callout-warn-text);
+    }
+    .callout.danger {
+      background: var(--callout-danger-bg);
+      border-left: 4px solid var(--callout-danger-border);
+      color: var(--callout-danger-text);
+    }
+
+    /* Lucid Drawers */
+    details.lucid-drawer {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 20px 0;
+      transition: background 0.2s ease;
+    }
+    details.lucid-drawer[open] {
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    details.lucid-drawer summary {
+      font-weight: 600;
+      font-size: 13.5px;
+      cursor: pointer;
+      color: var(--accent);
+      user-select: none;
+      outline: none;
+    }
+    details.lucid-drawer .drawer-content {
+      padding-top: 14px;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* SVG Diagrams */
+    .diagram-container {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .diagram-caption {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* Footer */
+    footer.page-footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0 20px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 60px;
+    }
+
+    @media (max-width: 900px) {
+      aside.sidebar { display: none; }
+      main.content { padding: 24px 20px 60px; }
+      section.chapter-card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-bar">
+    <div class="top-left">
+      <a href="../notes1.html" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Notes Hub
+      </a>
+      <span style="color:var(--border);">/</span>
+      <span class="top-title">Digital Electronics</span>
+      <span class="badge">Master Synthesis</span>
+    </div>
+    <div class="top-right">
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">
+        <span id="theme-icon">◐</span>
+        <span id="theme-label">Theme</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">Curriculum Modules</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="#ch1" class="active"><span class="ch-num">1</span> Logic Gates & Universal Synthesis</a></li>
+        <li class="nav-item"><a href="#ch2"><span class="ch-num">2</span> Boolean Algebra & K-Maps</a></li>
+        <li class="nav-item"><a href="#ch3"><span class="ch-num">3</span> Combinational Logic Circuits</a></li>
+        <li class="nav-item"><a href="#ch4"><span class="ch-num">4</span> Sequential Logic & Flip-Flops</a></li>
+        <li class="nav-item"><a href="#ch5"><span class="ch-num">5</span> Counters & Shift Registers</a></li>
+        <li class="nav-item"><a href="#ch6"><span class="ch-num">6</span> Number Systems & Converters</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      
+      <div class="hero-section">
+        <div class="hero-eyebrow">Core ECE · Academic Reference Architecture</div>
+        <h1 class="hero-title">Digital Electronics & Logic Synthesis</h1>
+        <p class="hero-desc">Exhaustive academic syllabus covering fundamental switching theory, universal logic gates, minimized canonical synthesis, synchronous/asynchronous sequential machines, race-around physical dynamics, and precision data conversion.</p>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 1: LOGIC GATES & UNIVERSAL SYNTHESIS -->
+      <!-- ========================================== -->
+      <section id="ch1" class="chapter-card">
+        <span class="chapter-tag">Chapter 01</span>
+        <h2 class="chapter-title">Logic Gates & Universal Synthesis</h2>
+        
+        <p>A logic gate is an idealized or physical electronic device implementing a Boolean function, performing a logical operation on one or more binary inputs and producing a single binary output. At the physical layer (CMOS / TTL), logic states are represented by defined voltage ranges.</p>
+
+        <h3 class="subhead">1.1 Standard Logic Gates & Electrical Truth Tables</h3>
+        <p>In standard positive logic convention, a higher potential represents <strong>Logic 1 (HIGH)</strong>, while a lower potential represents <strong>Logic 0 (LOW)</strong>.</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Gate Type</th>
+                <th>Standard Boolean Equation</th>
+                <th>A=0, B=0</th>
+                <th>A=0, B=1</th>
+                <th>A=1, B=0</th>
+                <th>A=1, B=1</th>
+                <th>Algebraic Behavior / Inversion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>AND</strong></td>
+                <td>$Y = A \cdot B$</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>1</td>
+                <td>Output HIGH only when all inputs are 1.</td>
+              </tr>
+              <tr>
+                <td><strong>OR</strong></td>
+                <td>$Y = A + B$</td>
+                <td>0</td>
+                <td>1</td>
+                <td>1</td>
+                <td>1</td>
+                <td>Output HIGH when at least one input is 1.</td>
+              </tr>
+              <tr>
+                <td><strong>NOT (Inverter)</strong></td>
+                <td>$Y = \bar{A}$</td>
+                <td>1 (A=0)</td>
+                <td>—</td>
+                <td>0 (A=1)</td>
+                <td>—</td>
+                <td>Bitwise complement; double negation $\bar{\bar{A}} = A$.</td>
+              </tr>
+              <tr>
+                <td><strong>NAND</strong></td>
+                <td>$Y = \overline{A \cdot B}$</td>
+                <td>1</td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                <td>Universal. Complement of AND.</td>
+              </tr>
+              <tr>
+                <td><strong>NOR</strong></td>
+                <td>$Y = \overline{A + B}$</td>
+                <td>1</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>Universal. Complement of OR.</td>
+              </tr>
+              <tr>
+                <td><strong>XOR (Modulo-2)</strong></td>
+                <td>$Y = A \oplus B = \bar{A}B + A\bar{B}$</td>
+                <td>0</td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                <td>Odd-detector. Output 1 when inputs differ.</td>
+              </tr>
+              <tr>
+                <td><strong>XNOR (Equivalence)</strong></td>
+                <td>$Y = A \odot B = AB + \bar{A}\bar{B}$</td>
+                <td>1</td>
+                <td>0</td>
+                <td>0</td>
+                <td>1</td>
+                <td>Even-detector. Output 1 when inputs are equal.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">1.2 Universal Gate Theorem & Minimum Synthesis Proofs</h3>
+        <p>A logic family is defined as <em>functionally complete</em> or <em>universal</em> if any arbitrary Boolean switching function can be synthesized using only that single gate type without requiring external inverters. Both <strong>NAND</strong> and <strong>NOR</strong> gates possess functional completeness.</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Target Gate Operation</th>
+                <th>Minimum NAND Count</th>
+                <th>NAND Synthesis Topology</th>
+                <th>Minimum NOR Count</th>
+                <th>NOR Synthesis Topology</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>NOT</strong> ($\bar{A}$)</td>
+                <td><strong>1</strong></td>
+                <td>$\overline{A \cdot A}$</td>
+                <td><strong>1</strong></td>
+                <td>$\overline{A + A}$</td>
+              </tr>
+              <tr>
+                <td><strong>AND</strong> ($A \cdot B$)</td>
+                <td><strong>2</strong></td>
+                <td>$\overline{(\overline{AB}) \cdot (\overline{AB})}$</td>
+                <td><strong>3</strong></td>
+                <td>$\overline{(\overline{A+A}) + (\overline{B+B})}$</td>
+              </tr>
+              <tr>
+                <td><strong>OR</strong> ($A + B$)</td>
+                <td><strong>3</strong></td>
+                <td>$\overline{(\overline{AA}) \cdot (\overline{BB})}$</td>
+                <td><strong>2</strong></td>
+                <td>$\overline{(\overline{A+B}) + (\overline{A+B})}$</td>
+              </tr>
+              <tr>
+                <td><strong>XOR</strong> ($A \oplus B$)</td>
+                <td><strong>4</strong></td>
+                <td>$\text{NAND}(A, \text{NAND}(A,B))$ &amp; $\text{NAND}(B, \text{NAND}(A,B))$ fed into final NAND</td>
+                <td><strong>5</strong></td>
+                <td>Requires 5 NOR gates ($A+B$, intermediate cross-terms)</td>
+              </tr>
+              <tr>
+                <td><strong>XNOR</strong> ($A \odot B$)</td>
+                <td><strong>5</strong></td>
+                <td>Invert output of 4-NAND XOR (or dual cross structure)</td>
+                <td><strong>4</strong></td>
+                <td>Symmetric 4-NOR topology (dual of 4-NAND XOR)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-header">💡 Mechanical &amp; Intuitive Breakdown: XOR Minimum 4-NAND Structure</div>
+          <p>To implement $Y = \bar{A}B + A\bar{B}$ with only 4 NANDs, define the shared intermediate term $T_1 = \overline{AB}$. Then branch $T_1$ to two second-stage gates: $T_2 = \overline{A \cdot T_1} = \overline{A \cdot \overline{AB}} = \bar{A} + AB = \bar{A} + B$, and $T_3 = \overline{B \cdot T_1} = \overline{B \cdot \overline{AB}} = \bar{B} + A$. Feeding $T_2$ and $T_3$ into the fourth NAND produces:
+          $$Y = \overline{T_2 \cdot T_3} = \overline{(\bar{A} + B)(\bar{B} + A)} = \overline{\bar{A}\bar{B} + AB} = A \oplus B$$
+          This single shared term $T_1$ eliminates the need for 5 gates.</p>
+        </div>
+
+        <div class="callout danger">
+          <div class="callout-header">⚠️ Exam Trap: Non-Associativity of Universal Gates</div>
+          <p>While AND, OR, XOR, and XNOR are strictly associative, <strong>NAND and NOR are NOT associative</strong>:
+          $$(A \text{ NAND } B) \text{ NAND } C \neq A \text{ NAND } (B \text{ NAND } C)$$
+          <em>Proof:</em> Let $A=0, B=0, C=0$.
+          LHS: $(\overline{0 \cdot 0}) \text{ NAND } 0 = 1 \text{ NAND } 0 = 1$.
+          RHS: $0 \text{ NAND } (\overline{0 \cdot 0}) = 0 \text{ NAND } 1 = 1$.
+          Now let $A=1, B=1, C=0$.
+          LHS: $(\overline{1 \cdot 1}) \text{ NAND } 0 = 0 \text{ NAND } 0 = 1$.
+          RHS: $1 \text{ NAND } (\overline{1 \cdot 0}) = 1 \text{ NAND } 1 = 0$.
+          Since $\text{LHS} \neq \text{RHS}$, cascading NAND or NOR gates without proper inversion logic yields invalid multi-input switching networks.</p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 2: BOOLEAN ALGEBRA & K-MAPS -->
+      <!-- ========================================== -->
+      <section id="ch2" class="chapter-card">
+        <span class="chapter-tag">Chapter 02</span>
+        <h2 class="chapter-title">Boolean Algebra, Canonical Forms &amp; Karnaugh Maps</h2>
+
+        <p>Boolean algebra provides the axiomatic mathematical framework for two-valued switching circuits. Minimizing switching functions directly reduces hardware silicon area, dynamic switching capacitance, and propagation latency.</p>
+
+        <h3 class="subhead">2.1 Fundamental Axioms &amp; Essential Theorems</h3>
+        <div class="formula-banner">
+          <strong>1. Idempotent Laws:</strong> $A + A = A \quad\Longleftrightarrow\quad A \cdot A = A$<br>
+          <strong>2. Boundedness (Dominance):</strong> $A + 1 = 1 \quad\Longleftrightarrow\quad A \cdot 0 = 0$<br>
+          <strong>3. Involution (Double Negation):</strong> $\overline{\overline{A}} = A$<br>
+          <strong>4. Absorption Laws:</strong> $A + AB = A \quad\Longleftrightarrow\quad A(A + B) = A$<br>
+          <strong>5. Elimination Law:</strong> $A + \bar{A}B = A + B \quad\Longleftrightarrow\quad A(\bar{A} + B) = AB$<br>
+          <strong>6. De Morgan's Laws:</strong> $\overline{A + B} = \bar{A} \cdot \bar{B} \quad\Longleftrightarrow\quad \overline{A \cdot B} = \bar{A} + \bar{B}$<br>
+          <strong>7. Consensus Theorem:</strong> $AB + \bar{A}C + BC = AB + \bar{A}C$<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<em>Dual:</em> $(A + B)(\bar{A} + C)(B + C) = (A + B)(\bar{A} + C)$
+        </div>
+
+        <details class="lucid-drawer">
+          <summary>💡 Rigorous Proof: Consensus Theorem ($AB + \bar{A}C + BC = AB + \bar{A}C$)</summary>
+          <div class="drawer-content">
+            <p>Expand the redundant term $BC$ using the complementary identity $(A + \bar{A}) = 1$:</p>
+            $$AB + \bar{A}C + BC = AB + \bar{A}C + BC(A + \bar{A})$$
+            $$= AB + \bar{A}C + ABC + \bar{A}BC$$
+            $$= (AB + ABC) + (\bar{A}C + \bar{A}BC)$$
+            $$= AB(1 + C) + \bar{A}C(1 + B)$$
+            Since $(1 + X) = 1$:
+            $$= AB(1) + \bar{A}C(1) = AB + \bar{A}C \quad \blacksquare$$
+            The term $BC$ is the <em>consensus</em> of $AB$ and $\bar{A}C$ and is completely redundant.
+          </div>
+        </details>
+
+        <h3 class="subhead">2.2 Canonical Forms: SOP ($\Sigma m$) vs POS ($\Pi M$)</h3>
+        <p>For $n$ binary variables, exactly $2^n$ distinct minterms and $2^n$ distinct maxterms exist. The total number of distinct switching functions possible with $n$ variables is $2^{2^n}$.</p>
+        <ul>
+          <li><strong>Minterm ($m_i$):</strong> A product term containing every variable in true or complemented form that evaluates to <strong>1</strong> for exactly one input combination.</li>
+          <li><strong>Maxterm ($M_i$):</strong> A sum term containing every variable in true or complemented form that evaluates to <strong>0</strong> for exactly one input combination.</li>
+          <li><strong>Fundamental Duality:</strong> $m_i = \overline{M_i}$ and $\sum m(k_1, k_2, \dots) = \prod M(k_{\text{remaining}})$.</li>
+        </ul>
+
+        <h3 class="subhead">2.3 Karnaugh Map (K-Map) Optimization &amp; Implicants</h3>
+        <p>A K-Map is an array of cells where each cell represents one minterm. Adjacency between adjacent cells corresponds to a <strong>Hamming distance of exactly 1 bit</strong>, enforced using <strong>Gray code</strong> sequencing ($00, 01, 11, 10$).</p>
+
+        <div class="callout tip">
+          <div class="callout-header">💡 Prime Implicants vs Essential Prime Implicants</div>
+          <p><strong>Implicant:</strong> Any group of $2^k$ ($1, 2, 4, 8, \dots$) adjacent cells containing 1s.<br>
+          <strong>Prime Implicant (PI):</strong> A maximal group of 1s that cannot be combined with any adjacent group to form a larger group of size $2^{k+1}$.<br>
+          <strong>Essential Prime Implicant (EPI):</strong> A Prime Implicant containing at least one '1' that is <em>not covered by any other Prime Implicant</em>. All EPIs must be included in the minimal sum.</p>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-header">⚠️ Exam Trap: Don't Care Conditions ($d$ or $X$)</div>
+          <p>Don't care terms represent input combinations that can never occur physically (e.g., states 1010–1111 in BCD code) or whose outputs do not affect circuit operation.
+          <strong>Rule:</strong> Treat $X$ as '1' <em>only</em> if it enlarges a group of 1s (halving gate inputs); never create a group consisting entirely of don't cares.</p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 3: COMBINATIONAL LOGIC CIRCUITS -->
+      <!-- ========================================== -->
+      <section id="ch3" class="chapter-card">
+        <span class="chapter-tag">Chapter 03</span>
+        <h2 class="chapter-title">Combinational Logic Circuits</h2>
+        
+        <p>Combinational circuits have outputs determined strictly by the present state of the inputs; they possess no feedback loops and no internal memory states.</p>
+
+        <h3 class="subhead">3.1 Arithmetic Blocks: Adders &amp; Subtractors</h3>
+        
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Circuit Block</th>
+                <th>Inputs</th>
+                <th>Outputs</th>
+                <th>Standard Boolean Equations</th>
+                <th>Gate Level Count &amp; Delays</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Half Adder (HA)</strong></td>
+                <td>$A, B$</td>
+                <td>$\text{Sum } S, \text{Carry } C$</td>
+                <td>$S = A \oplus B$<br>$C = AB$</td>
+                <td>1 XOR, 1 AND<br>$t_{pd} = \max(t_{XOR}, t_{AND})$</td>
+              </tr>
+              <tr>
+                <td><strong>Full Adder (FA)</strong></td>
+                <td>$A, B, C_{in}$</td>
+                <td>$\text{Sum } S, \text{Carry } C_{out}$</td>
+                <td>$S = A \oplus B \oplus C_{in}$<br>$C_{out} = AB + (A \oplus B)C_{in} = AB + BC_{in} + AC_{in}$</td>
+                <td>2 XOR, 2 AND, 1 OR (or 9 NANDs)<br>$t_{\text{Sum}} = 2 t_{XOR}$, $t_{\text{Carry}} = t_{XOR} + t_{AND} + t_{OR}$</td>
+              </tr>
+              <tr>
+                <td><strong>Half Subtractor (HS)</strong></td>
+                <td>$A, B$</td>
+                <td>$\text{Diff } D, \text{Borrow } B_{out}$</td>
+                <td>$D = A \oplus B$<br>$B_{out} = \bar{A}B$</td>
+                <td>1 XOR, 1 NOT, 1 AND</td>
+              </tr>
+              <tr>
+                <td><strong>Full Subtractor (FS)</strong></td>
+                <td>$A, B, B_{in}$</td>
+                <td>$\text{Diff } D, \text{Borrow } B_{out}$</td>
+                <td>$D = A \oplus B \oplus B_{in}$<br>$B_{out} = \bar{A}B + (\overline{A \oplus B})B_{in}$</td>
+                <td>2 XOR, 2 AND, 1 OR, 2 Inverters</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout danger">
+          <div class="callout-header">⚡ Ripple Carry Adder (RCA) Worst-Case Propagation Latency</div>
+          <p>In an $N$-bit Ripple Carry Adder constructed from $N$ cascaded Full Adders, the carry output $C_i$ of stage $i$ ripples to the carry input of stage $i+1$. The worst-case latency occurs when a carry generated in bit 0 propagates all the way to bit $N-1$:
+          $$t_{RCA} = t_{FA(carry\_init)} + (N - 1) \cdot t_{carry\_ripple}$$
+          For identical gate delays: $t_{RCA} = 2t_g + (N-1) \cdot 2t_g = 2N \cdot t_g$. For 32-bit addition with $t_g = 1\text{ ns}$, $t_{RCA} \approx 64\text{ ns}$, restricting clock frequencies to under $15\text{ MHz}$. Modern ALUs use <strong>Carry Lookahead Adders (CLA)</strong> where $C_i = G_i + P_i C_{i-1}$, generating carries in 2 gate levels independent of $N$.</p>
+        </div>
+
+        <h3 class="subhead">3.2 Multiplexers (Data Selectors) as Universal Function Generators</h3>
+        <p>A $2^n$-to-1 Multiplexer routes one of $2^n$ data inputs ($I_0 \dots I_{2^n-1}$) to a single output line $Y$, steered by $n$ select lines ($S_{n-1} \dots S_0$).</p>
+        <div class="formula-banner">
+          <strong>4:1 MUX Equation:</strong> $Y = \bar{S}_1\bar{S}_0 I_0 + \bar{S}_1 S_0 I_1 + S_1\bar{S}_0 I_2 + S_1 S_0 I_3$<br>
+          <strong>Tree Expansion:</strong> To build a $2^n$-to-1 MUX from $2:1$ MUX primitives requires exactly:
+          $$M = 2^n - 1 \quad \text{primitive 2:1 MUX units}$$
+          E.g., a 16:1 MUX requires $16 - 1 = 15$ two-to-one multiplexers.
+        </div>
+
+        <details class="lucid-drawer">
+          <summary>💡 Shannon's Expansion Theorem: Implementing Any $(n+1)$-Variable Function with $2^n:1$ MUX</summary>
+          <div class="drawer-content">
+            <p>Any Boolean function $F(A, B, C, D)$ of 4 variables can be implemented directly using an <strong>8:1 MUX</strong> without any external logic gates:</p>
+            <ol>
+              <li>Assign 3 variables ($A, B, C$) directly to select lines ($S_2, S_1, S_0$).</li>
+              <li>Express the 4th variable ($D$) on the data inputs ($I_0 \dots I_7$) in terms of $\{0, 1, D, \bar{D}\}$.</li>
+              <li>If an external inverter is prohibited, connect the complemented variable to an unused input channel configured as an inverter.</li>
+            </ol>
+          </div>
+        </details>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 4: SEQUENTIAL LOGIC & FLIP-FLOPS -->
+      <!-- ========================================== -->
+      <section id="ch4" class="chapter-card">
+        <span class="chapter-tag">Chapter 04</span>
+        <h2 class="chapter-title">Sequential Logic Fundamentals &amp; Flip-Flops</h2>
+
+        <p>Sequential circuits possess internal memory; their output is a function of both the current input vector and the past history of states stored in bistable memory elements.</p>
+
+        <h3 class="subhead">4.1 Latches vs. Flip-Flops</h3>
+        <ul>
+          <li><strong>Latch:</strong> Level-triggered, asynchronous. Transparent while the enable/clock is at an active level (changes on data inputs propagate directly to outputs).</li>
+          <li><strong>Flip-Flop:</strong> Edge-triggered, synchronous. Samples inputs and alters internal state <em>only</em> during a discrete voltage transition (positive or negative clock edge).</li>
+        </ul>
+
+        <h3 class="subhead">4.2 Characteristic Equations &amp; Excitation Tables</h3>
+        <p>The <strong>Characteristic Table</strong> defines next-state $Q^+$ given current state $Q$ and inputs. The <strong>Excitation Table</strong> reverses this mapping, defining the input vector required to force a transition from $Q_n \to Q_{n+1}$.</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Flip-Flop Type</th>
+                <th>Characteristic Equation</th>
+                <th>Transition $0 \to 0$</th>
+                <th>Transition $0 \to 1$</th>
+                <th>Transition $1 \to 0$</th>
+                <th>Transition $1 \to 1$</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>S-R</strong></td>
+                <td>$Q^+ = S + \bar{R}Q \quad (\text{Constraint: } SR = 0)$</td>
+                <td>$S=0, R=X$</td>
+                <td>$S=1, R=0$</td>
+                <td>$S=0, R=1$</td>
+                <td>$S=X, R=0$</td>
+              </tr>
+              <tr>
+                <td><strong>J-K</strong></td>
+                <td>$Q^+ = J\bar{Q} + \bar{K}Q$</td>
+                <td>$J=0, K=X$</td>
+                <td>$J=1, K=X$</td>
+                <td>$J=X, K=1$</td>
+                <td>$J=X, K=0$</td>
+              </tr>
+              <tr>
+                <td><strong>D (Delay)</strong></td>
+                <td>$Q^+ = D$</td>
+                <td>$D=0$</td>
+                <td>$D=1$</td>
+                <td>$D=0$</td>
+                <td>$D=1$</td>
+              </tr>
+              <tr>
+                <td><strong>T (Toggle)</strong></td>
+                <td>$Q^+ = T \oplus Q$</td>
+                <td>$T=0$</td>
+                <td>$T=1$</td>
+                <td>$T=1$</td>
+                <td>$T=0$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">4.3 Physical Breakdown: The Race-Around Condition &amp; Master-Slave Elimination</h3>
+        
+        <div class="callout danger">
+          <div class="callout-header">⚡ The Race-Around Condition Explained</div>
+          <p>In a level-triggered JK flip-flop, when $J = 1$ and $K = 1$, the device operates in toggle mode: $Q^+ = \bar{Q}$. If the clock pulse width ($t_w$) exceeds the internal propagation delay of the gates ($t_{pd}$):
+          $$t_w > t_{pd}$$
+          The output toggles $0 \to 1$. Because the clock remains HIGH, this new output feeds back to the gates, toggling it again $1 \to 0$, racing repeatedly back and forth throughout $t_w$. When the clock finally falls LOW, the terminal state of $Q$ is indeterminate (metastable oscillation).</p>
+        </div>
+
+        <details class="lucid-drawer" open>
+          <summary>💡 Master-Slave JK Architecture: How the Feedback Loop is Broken</summary>
+          <div class="drawer-content">
+            <p>The Master-Slave configuration cascades two distinct latches driven by complementary clock phases:</p>
+            <ul>
+              <li><strong>Phase 1: Clock = 1 (HIGH).</strong> The <em>Master</em> latch is active and samples inputs $J$ and $K$, updating internal node $Y$. The <em>Slave</em> latch is held disabled by an inverted clock ($\overline{\text{CLK}} = 0$). Output $Q$ remains completely stable; because $Q$ cannot change, no feedback reaches the Master.</li>
+              <li><strong>Phase 2: Clock = 0 (LOW).</strong> The <em>Master</em> latch is isolated and disabled ($\text{CLK} = 0$). The <em>Slave</em> latch becomes active ($\overline{\text{CLK}} = 1$) and copies the state from $Y$ to output $Q$.</li>
+            </ul>
+            <p><strong>Physical Guarantee:</strong> Because data is sampled on one clock phase and transferred to the output on the opposite phase, input-to-output feedthrough never exists simultaneously. The race condition is eliminated.</p>
+          </div>
+        </details>
+
+        <h3 class="subhead">4.4 Dynamic Switching Parameters: Setup &amp; Hold Times</h3>
+        <ul>
+          <li><strong>Setup Time ($t_s$):</strong> The minimum duration before the active clock transition during which data input $D$ must remain stable. Violating $t_s$ causes internal feedback transistors to fail to achieve saturation, trapping the flip-flop in a <em>metastable</em> state.</li>
+          <li><strong>Hold Time ($t_h$):</strong> The minimum duration after the active clock edge during which data must remain stable.</li>
+          <li><strong>Propagation Delay ($t_{PLH}, t_{PHL}$):</strong> Time elapsed between 50% point of clock transition and 50% point of output state change.</li>
+        </ul>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 5: COUNTERS & SHIFT REGISTERS -->
+      <!-- ========================================== -->
+      <section id="ch5" class="chapter-card">
+        <span class="chapter-tag">Chapter 05</span>
+        <h2 class="chapter-title">Sequential Machines: Counters &amp; Shift Registers</h2>
+
+        <p>Counters and registers form the backbone of processor timing units, memory addressing, frequency synthesis, and serial communications protocols.</p>
+
+        <h3 class="subhead">5.1 Asynchronous (Ripple) vs. Synchronous Counters</h3>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Design Metric</th>
+                <th>Asynchronous (Ripple) Counter</th>
+                <th>Synchronous Counter</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Clocking Topology</strong></td>
+                <td>First flip-flop clocked externally; subsequent FFs clocked by output ($Q$ or $\bar{Q}$) of preceding stage.</td>
+                <td>Common system clock connected simultaneously to the clock pin of every flip-flop.</td>
+              </tr>
+              <tr>
+                <td><strong>Maximum Operating Frequency</strong></td>
+                <td>Low: $f_{\max} = \frac{1}{N \cdot t_{pd} + t_s}$ (delays accumulate through $N$ stages).</td>
+                <td>High: $f_{\max} = \frac{1}{t_{pd\_FF} + t_{comb\_gate} + t_s}$ (independent of $N$).</td>
+              </tr>
+              <tr>
+                <td><strong>Decoding Glitches / Spikes</strong></td>
+                <td>Severe. Transient intermediate states appear during ripple transitions (e.g., $011 \to 010 \to 000 \to 100$).</td>
+                <td>Minimal. All flip-flops transition simultaneously within one clock period.</td>
+              </tr>
+              <tr>
+                <td><strong>Hardware Complexity</strong></td>
+                <td>Minimal. Requires zero additional combinational steering gates.</td>
+                <td>Moderate. Requires AND gating networks on $T$ or $J, K$ inputs to enable toggling.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">5.2 Ring Counter vs. Johnson (Twisted-Ring) Counter</h3>
+        <p>Both are shift-register based counters that do not require external decoding logic to identify individual states.</p>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Feature / Parameter</th>
+                <th>Ring Counter</th>
+                <th>Johnson Counter (Mobius / Twisted Ring)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Feedback Connection</strong></td>
+                <td>Output $Q$ of final stage fed back to $D$ of first stage ($D_0 = Q_{N-1}$).</td>
+                <td>Inverted output $\bar{Q}$ of final stage fed back to $D$ of first stage ($D_0 = \bar{Q}_{N-1}$).</td>
+              </tr>
+              <tr>
+                <td><strong>Number of Valid States</strong></td>
+                <td><strong>$N$ states</strong> (One-hot encoding: $1000 \to 0100 \to 0010 \to 0001$).</td>
+                <td><strong>$2N$ states</strong> (E.g., for $N=4$: 8 states: $0000 \to 1000 \to 1100 \dots$).</td>
+              </tr>
+              <tr>
+                <td><strong>Unused States</strong></td>
+                <td>$2^N - N$ unused states. Susceptible to lockup without self-correcting logic.</td>
+                <td>$2^N - 2N$ unused states. Requires single two-input gate for self-recovery.</td>
+              </tr>
+              <tr>
+                <td><strong>Decoding Hardware</strong></td>
+                <td>None: each output pin directly represents one decoded timing state.</td>
+                <td>Minimal: any state decoded using a single 2-input AND/NOR gate.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">5.3 Shift Register Topologies</h3>
+        <div class="formula-banner">
+          • <strong>SISO (Serial-In Serial-Out):</strong> Slowest transfer. Takes $N$ clocks to write $N$ bits, and $(N - 1)$ clocks to read out.<br>
+          • <strong>SIPO (Serial-In Parallel-Out):</strong> Takes $N$ clock pulses to load data; all $N$ bits read instantaneously in 0 clock cycles.<br>
+          • <strong>PISO (Parallel-In Serial-Out):</strong> Loaded in 1 clock pulse (or asynchronously via preset); read out serially over $(N - 1)$ clocks.<br>
+          • <strong>PIPO (Parallel-In Parallel-Out):</strong> Fastest transfer. 1 clock pulse writes all bits; instantaneous read.<br>
+          • <strong>Universal Shift Register (e.g., 74194):</strong> Controlled by mode select pins $S_1 S_0$:
+          $$S_1 S_0 = 00 \implies \text{Hold} \quad|\quad 01 \implies \text{Shift Right} \quad|\quad 10 \implies \text{Shift Left} \quad|\quad 11 \implies \text{Parallel Load}$$
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- CHAPTER 6: NUMBER SYSTEMS & CONVERTERS -->
+      <!-- ========================================== -->
+      <section id="ch6" class="chapter-card">
+        <span class="chapter-tag">Chapter 06</span>
+        <h2 class="chapter-title">Number Systems, Signed Arithmetic &amp; Data Converters</h2>
+
+        <p>Digital processors compute in binary domains, while physical sensor signals exist as continuous real-world analog potentials. Interfacing between them requires high-speed, high-resolution mixed-signal conversion.</p>
+
+        <h3 class="subhead">6.1 Signed Number Representations &amp; Arithmetic Overflow</h3>
+        <p>In an $n$-bit binary system, unsigned integers span $[0, 2^n - 1]$. Signed representations partition the numerical range:</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Representation</th>
+                <th>Numerical Range (for $n$ bits)</th>
+                <th>Zero Representations</th>
+                <th>Key Mathematical Property</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sign-Magnitude</strong></td>
+                <td>$-(2^{n-1} - 1) \dots +(2^{n-1} - 1)$</td>
+                <td>Two: $+0$ ($00\dots0$) and $-0$ ($10\dots0$)</td>
+                <td>MSB = sign bit ($0=+$, $1=-$); remaining $(n-1)$ bits indicate magnitude.</td>
+              </tr>
+              <tr>
+                <td><strong>1's Complement</strong></td>
+                <td>$-(2^{n-1} - 1) \dots +(2^{n-1} - 1)$</td>
+                <td>Two: $+0$ ($00\dots0$) and $-0$ ($11\dots1$)</td>
+                <td>Invert every bit. Requires end-around carry addition.</td>
+              </tr>
+              <tr>
+                <td><strong>2's Complement</strong></td>
+                <td>$-2^{n-1} \dots +(2^{n-1} - 1)$</td>
+                <td><strong>Single unique zero:</strong> $00\dots0$</td>
+                <td>Formed by: $(\text{1's Complement} + 1)$. Subtraction becomes pure addition without end-around carry.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-header">⚠️ Exam Trap: Signed Arithmetic Overflow Condition</div>
+          <p>Arithmetic overflow occurs when the result of adding two numbers of the same sign produces a result of the opposite sign (e.g., adding two positive numbers yields a negative sign bit).
+          <strong>Hardware Rule:</strong> In a 2's complement adder, overflow $V$ is detected by the exclusive-OR of the carry into the MSB ($C_{in}$) and the carry out of the MSB ($C_{out}$):
+          $$V = C_{\text{into MSB}} \oplus C_{\text{out of MSB}}$$
+          If $V = 1$, an arithmetic overflow has occurred, corrupting the sign bit.</p>
+        </div>
+
+        <h3 class="subhead">6.2 Digital-to-Analog Converters (DAC)</h3>
+        <p>A DAC converts an $n$-bit digital binary word $D = b_{n-1} 2^{n-1} + \dots + b_0 2^0$ into an equivalent analog output voltage $V_{out}$.</p>
+        <div class="formula-banner">
+          <strong>Step Size (Resolution):</strong> $\Delta V = \frac{V_{FS}}{2^n - 1} \quad (\text{or ideal } \frac{V_{ref}}{2^n})$<br>
+          <strong>Analog Output Voltage:</strong> $V_{out} = \Delta V \times D_{10}$<br>
+          <strong>Percentage Resolution:</strong> $\% \text{Resolution} = \frac{1}{2^n - 1} \times 100\%$
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>DAC Architecture</th>
+                <th>Circuit Schematic Principles</th>
+                <th>Component Spread Ratio</th>
+                <th>Practical Limitations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Binary Weighted Resistor</strong></td>
+                <td>Summing amplifier with input resistors weighted as $R, 2R, 4R, \dots, 2^{n-1}R$.</td>
+                <td>Severe: $\frac{R_{\max}}{R_{\min}} = 2^{n-1}$. For 12-bit DAC, ratio is $2048:1$.</td>
+                <td>Fabricating precision resistors over a $2048:1$ dynamic range on silicon is impossible due to temperature coefficient mismatches.</td>
+              </tr>
+              <tr>
+                <td><strong>R-2R Ladder Network</strong></td>
+                <td>Repetitive resistive ladder network using only two resistance values: $R$ and $2R$.</td>
+                <td><strong>Ideal: $2:1$ ratio only.</strong></td>
+                <td>Industry standard. Very easy to trim precisely on integrated circuit silicon.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">6.3 Analog-to-Digital Converters (ADC)</h3>
+        <p>ADCs perform sampling, quantization, and binary encoding of continuous real-world voltages.</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ADC Type</th>
+                <th>Conversion Time</th>
+                <th>Hardware Complexity</th>
+                <th>Key Advantages &amp; Ideal Use Cases</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Flash (Simultaneous)</strong></td>
+                <td>$1 \text{ clock cycle}$ ($t_{pd}$ of comparator)</td>
+                <td>Massive: $2^n - 1$ comparators and $2^n \times n$ priority encoder</td>
+                <td>Fastest possible. Used in gigahertz digital oscilloscopes, radar, and RF software-defined radio.</td>
+              </tr>
+              <tr>
+                <td><strong>Successive Approximation (SAR)</strong></td>
+                <td>Fixed: $n \text{ clock cycles}$</td>
+                <td>Moderate: 1 comparator, 1 DAC, and SAR logic</td>
+                <td>Excellent balance of speed, resolution (12–16 bits), and low power. Standard in microcontrollers (ATmega328P, STM32).</td>
+              </tr>
+              <tr>
+                <td><strong>Dual-Slope Integrating</strong></td>
+                <td>Variable: $2 \times 2^n \text{ clock cycles}$</td>
+                <td>Low: 1 integrator, 1 comparator, counter</td>
+                <td>Slowest, but highest accuracy and complete rejection of $50/60\text{ Hz}$ line noise. Standard in digital multimeters.</td>
+              </tr>
+              <tr>
+                <td><strong>Counter-Ramp (Tracking)</strong></td>
+                <td>Variable: up to $2^n \text{ clock cycles}$</td>
+                <td>Low: 1 counter, 1 DAC, 1 comparator</td>
+                <td>Slow for step inputs; conversion time depends directly on input voltage amplitude.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="page-footer">
+        <p>Digital Electronics &amp; Switching Theory · Core ECE Master Series</p>
+        <p style="margin-top:4px;">Engineered to Academic Parity Standards with Apple Minimalist Calmness · Zero Gimmicks</p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Theme Management
+    function initTheme() {
+      const saved = localStorage.getItem('site-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        updateThemeButton(true);
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        updateThemeButton(false);
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const targetDark = !isDark;
+      document.documentElement.setAttribute('data-theme', targetDark ? 'dark' : 'light');
+      localStorage.setItem('site-theme', targetDark ? 'dark' : 'light');
+      updateThemeButton(targetDark);
+    }
+
+    function updateThemeButton(isDark) {
+      const btn = document.getElementById('theme-btn');
+      const icon = document.getElementById('theme-icon');
+      const label = document.getElementById('theme-label');
+      if (isDark) {
+        icon.textContent = '☼';
+        label.textContent = 'Light';
+      } else {
+        icon.textContent = '☾';
+        label.textContent = 'Dark';
+      }
+    }
+
+    // Scroll spy for sidebar navigation
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+
+      const sections = document.querySelectorAll('section.chapter-card');
+      const navLinks = document.querySelectorAll('.nav-item a');
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            navLinks.forEach(link => {
+              if (link.getAttribute('href') === `#${id}`) {
+                link.classList.add('active');
+              } else {
+                link.classList.remove('active');
+              }
+            });
+          }
+        });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+
+      sections.forEach(sec => observer.observe(sec));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JARVIS — Notes Hub</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="color-scheme" content="light dark">
+<script>(function(){var t;try{t=localStorage.getItem('jarvis-theme')}catch(e){}document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')})()</script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs@7.30.0/babylon.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs-materials@7.30.0/babylonjs.materials.min.js"></script>
+<style>
+:root{
+  --bg:#f5f5f7;--text:#1d1d1f;--muted:#6e6e73;--faint:#86868b;--blue:#0071e3;
+  --line:rgba(0,0,0,0.08);--panel:rgba(255,255,255,0.72);--shadow:0 10px 40px rgba(0,0,0,0.08);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;
+  --panel-hi:rgba(255,255,255,0.9);--pill:rgba(255,255,255,0.7);--field:rgba(0,0,0,0.05);--hover:rgba(0,0,0,0.055);--scroll:rgba(0,0,0,0.15);color-scheme:light;
+}
+[data-theme=dark]{
+  --bg:#0a0a0c;--text:#f5f5f7;--muted:#a1a1a6;--faint:#8e8e93;--blue:#2997ff;
+  --line:rgba(255,255,255,0.1);--panel:rgba(28,28,30,0.66);--shadow:0 10px 40px rgba(0,0,0,0.5);
+  --panel-hi:rgba(44,44,46,0.88);--pill:rgba(255,255,255,0.08);--field:rgba(255,255,255,0.08);--hover:rgba(255,255,255,0.08);--scroll:rgba(255,255,255,0.2);color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:8px}
+.i{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+#scene{position:fixed;inset:0;width:100%;height:100%;outline:none;touch-action:none;display:block}
+
+.glass{background:var(--panel);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+
+/* TOP BAR */
+#topbar{position:fixed;top:12px;left:16px;right:16px;height:52px;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px 0 10px;border-radius:16px;background:var(--panel);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+.tb-left,.tb-right{display:flex;align-items:center;gap:14px}
+.back-btn{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:500;color:var(--blue);text-decoration:none;
+  padding:6px 10px 6px 6px;border-radius:10px;transition:background .2s}
+.back-btn:hover{background:rgba(0,113,227,0.08)}
+.title{font-size:17px;font-weight:600;letter-spacing:-0.01em}
+.status{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:99px;border:1px solid var(--line);
+  background:rgba(255,255,255,0.7);color:var(--text);font:500 13px var(--font);cursor:pointer;transition:background .2s,color .2s}
+.pill:hover{background:#fff}
+.pill.on{background:var(--text);color:#fff;border-color:var(--text)}
+
+/* NAV */
+#nav{position:fixed;top:76px;left:16px;bottom:16px;width:264px;z-index:20;display:flex;flex-direction:column;overflow:hidden;
+  border-radius:18px;background:var(--panel);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
+  border:1px solid var(--line);box-shadow:var(--shadow);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+#nav.collapsed{transform:translateX(-290px)}
+.search{position:relative;padding:12px}
+.search .i{position:absolute;left:24px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.search input{width:100%;height:34px;background:rgba(0,0,0,0.05);border:1px solid transparent;border-radius:10px;color:var(--text);
+  font:400 14px var(--font);padding:0 12px 0 34px;outline:none;transition:border-color .2s,background .2s}
+.search input:focus{background:#fff;border-color:rgba(0,113,227,0.5)}
+.search input::placeholder{color:var(--faint)}
+#nav-list{flex:1;overflow-y:auto;padding:0 8px 14px}
+.cat-label{font-size:11px;font-weight:600;letter-spacing:.06em;padding:16px 10px 6px;text-transform:uppercase;display:flex;align-items:center;gap:8px;color:var(--faint)}
+.cat-label i{width:6px;height:6px;border-radius:50%;display:inline-block}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 10px;margin:1px 0;cursor:pointer;text-decoration:none;
+  font-size:14px;font-weight:500;color:var(--text);border-radius:10px;transition:background .15s,opacity .2s}
+.nav-item:hover,.nav-item.hl{background:rgba(0,0,0,0.055)}
+.nav-item.dim{opacity:.28}
+.nav-item .ic{width:26px;height:26px;border-radius:7px;background:var(--c);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.nav-item .ic .i{width:15px;height:15px;stroke-width:1.8}
+.nav-item .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;letter-spacing:.01em}
+.badge.NEW{color:#0071e3;background:rgba(0,113,227,0.1)}
+.badge.HOT{color:#c93400;background:rgba(255,149,0,0.16)}
+.badge.EXAM{color:#8944ab;background:rgba(175,82,222,0.13)}
+#nav-toggle{position:fixed;left:16px;bottom:16px;z-index:21;display:none}
+
+/* INFO */
+#info{position:fixed;right:16px;top:76px;width:280px;z-index:20;padding:18px 20px;border-radius:18px;background:var(--panel);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);border:1px solid var(--line);box-shadow:var(--shadow);
+  opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .25s;pointer-events:none}
+#info.show{opacity:1;transform:none}
+#info .cat{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ic,var(--blue));margin-bottom:6px}
+#info .nm{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
+#info .path{font-size:12px;color:var(--faint);word-break:break-all;margin-bottom:12px}
+#info .go{font-size:13px;font-weight:500;color:var(--blue)}
+
+/* JARVIS */
+#bubble{position:fixed;bottom:16px;right:16px;width:250px;z-index:20;cursor:pointer}
+.bubble-inner{border-radius:16px;padding:14px 16px;background:var(--panel);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
+  border:1px solid var(--line);box-shadow:var(--shadow);transition:background .2s}
+.bubble-inner:hover{background:rgba(255,255,255,0.9)}
+.bubble-head{font-size:12px;font-weight:600;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#34c759;display:inline-block}
+#bubble-text{font-size:13px;color:var(--muted);line-height:1.5;min-height:38px}
+
+#hint{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:20;font-size:12px;color:var(--faint);pointer-events:none;white-space:nowrap}
+
+/* LOADER */
+#loader{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  transition:opacity .7s ease}
+#loader.done{opacity:0;pointer-events:none}
+.ld-title{font-size:30px;font-weight:600;letter-spacing:.14em;color:var(--text)}
+.ld-sub{font-size:13px;color:var(--faint)}
+
+@media(max-width:820px){
+  #nav{width:240px}
+  #nav-toggle{display:inline-flex}
+  #info,#bubble,#hint,.status{display:none}
+  .title{font-size:15px}
+}
+
+/* THEME + DECLUTTER OVERRIDES */
+::-webkit-scrollbar-thumb{background:var(--scroll)}
+.pill{background:var(--pill)}.pill:hover{background:var(--panel-hi)}.pill.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.search input{background:var(--field)}.search input:focus{background:var(--panel-hi)}
+.nav-item:hover,.nav-item.hl{background:var(--hover)}
+.bubble-inner:hover{background:var(--panel-hi)}
+[data-theme=dark] .badge.HOT{color:#ff9f0a;background:rgba(255,159,10,.16)}
+[data-theme=dark] .badge.EXAM{color:#bf5af2;background:rgba(191,90,242,.18)}
+.tb-right .pill{position:relative;width:32px;padding:0;justify-content:center}
+.tb-right .pill span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#bubble{width:220px}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+html,body,#topbar,#nav,#info,.bubble-inner,#loader{transition:background-color .5s,border-color .5s,color .5s}
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div id="loader">
+  <div class="ld-title">JARVIS</div>
+  <div class="ld-sub" id="ld-sub">Preparing your workspace</div>
+</div>
+
+<header id="topbar">
+  <div class="tb-left">
+    <a href="dashboard.html" class="back-btn"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Dashboard</a>
+    <div class="title">Notes Hub</div>
+  </div>
+  <div class="tb-right">
+    <div class="status"><span id="sb-count">0</span> modules · <span id="sb-time"></span></div>
+    <a href="notes_legacy.html" class="pill" id="btn-legacy" title="Switch to Classic 3D Hub" style="text-decoration:none; color:inherit;"><svg class="i" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>Classic</span></a>
+    <button class="pill on" id="btn-rotate"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg><span>Auto-orbit</span></button>
+    <button class="pill" id="btn-voice"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 9a4 4 0 0 1 0 6"/></svg><span>Voice off</span></button>
+    <button class="pill" id="btn-theme"><svg class="i" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span>Dark mode</span></button>
+  </div>
+</header>
+
+<nav id="nav">
+  <div class="search">
+    <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="search" type="text" placeholder="Search modules  ( / )" autocomplete="off">
+  </div>
+  <div id="nav-list"></div>
+</nav>
+<button class="pill" id="nav-toggle"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Modules</span></button>
+
+<div id="info"><div class="cat" id="i-cat"></div><div class="nm" id="i-nm"></div><div class="path" id="i-path"></div><div class="go">Click to open</div></div>
+
+<div id="bubble">
+  <div class="bubble-inner">
+    <div class="bubble-head"><span class="status-dot"></span>JARVIS</div>
+    <div id="bubble-text">Ready.<br>Select a module to open.</div>
+  </div>
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════
+   MODULE DATA  (links only)
+═══════════════════════════════════════ */
+const ICON_PATHS = {
+  cpu:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  magnet:'<path d="M6 3v8a6 6 0 0 0 12 0V3h-4v8a2 2 0 0 1-4 0V3z"/><path d="M6 7h4M14 7h4"/>',
+  sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  waves:'<path d="M2 8c2.5-2 5-2 7.5 0s5 2 7.5 0 3-1 5-1M2 14c2.5-2 5-2 7.5 0s5 2 7.5 0 3-1 5-1M2 20c2.5-2 5-2 7.5 0s5 2 7.5 0 3-1 5-1"/>',
+  atom:'<circle cx="12" cy="12" r="1.5"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/>',
+  layers:'<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>',
+  radio:'<circle cx="12" cy="12" r="2"/><path d="M7.5 7.5a6 6 0 0 0 0 9M16.5 7.5a6 6 0 0 1 0 9M4.5 4.5a10 10 0 0 0 0 15M19.5 4.5a10 10 0 0 1 0 15"/>',
+  hash:'<path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/>',
+  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  board:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h2v4H7zM12 10h5M12 14h5"/>',
+  database:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  cloud:'<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>',
+  terminal:'<path d="M4 17l6-5-6-5M12 19h8"/>',
+  branch:'<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 4-6 3-12 7"/>',
+  code:'<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+  book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6"/>',
+  sparkles:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
+  network:'<circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v5M12 12l-6 5M12 12l6 5"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  trend:'<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>',
+  map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/>',
+};
+function svgIcon(key){ return `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[key]||''}</svg>`; }
+
+const CATEGORIES = [
+  { id:'ece', name:'Core ECE', color:'#0a84ff', items:[
+    {name:'Analog',            icon:'waves',    href:'ADC/ADC.html',                       badge:'HOT'},
+    {name:'Graph Lab',         icon:'chart',    href:'Graph_lab_merged (1).html',           badge:'EXAM'},
+    {name:'EMT Theory',        icon:'magnet',   href:'EMT/index.html',                      badge:'EXAM'},
+    {name:'MOSFET Model',      icon:'sliders',  href:'mosfet_small_signal.html',            badge:'HOT'},
+    {name:'Semiconductors',    icon:'atom',     href:'First/index.html',                    badge:'NEW'},
+    {name:'VLSI Design',       icon:'layers',   href:'VLSI_Design/VLSI.html',               badge:'NEW'},
+    {name:'ITC Theory',        icon:'radio',    href:'ITC/index.html',                      badge:'NEW'},
+    {name:'ITC 2 & Conv',      icon:'hash',     href:'itc_midterm_2.html',                  badge:'EXAM'},
+    {name:'Digital Logic',     icon:'cpu',      href:'Digital_Electronics/index.html',      badge:'NEW'},
+    {name:'Signals & Systems', icon:'waves',    href:'Signals_Systems/index.html',          badge:'HOT'},
+  ]},
+  { id:'micro', name:'Micro & Embedded', color:'#ff9f0a', items:[
+    {name:'8085 Micro',        icon:'cpu',      href:'8085_Notes/index.html',             badge:'NEW'},
+    {name:'8086 Micro',        icon:'cpu',      href:'8086_Notes/index.html',             badge:'NEW'},
+    {name:'8051 Micro',        icon:'cpu',      href:'8051_Experiments/index.html',       badge:'NEW'},
+    {name:'Micro Assignments', icon:'file',     href:'Assignments/index.html',            badge:'NEW'},
+    {name:'Pico Notes',        icon:'board',    href:'RaspberryPi_Pico_Notes/index.html', badge:'NEW'},
+  ]},
+  { id:'dbms', name:'DBMS & SQL Suite', color:'#30d158', items:[
+    {name:'DBMS Portal',       icon:'database', href:'DBMS/index.html',                    badge:'HUB'},
+    {name:'DBMS Solved Q1–15', icon:'chart',    href:'Assignments/dbms-assignment-2.html', badge:'3D'},
+    {name:'Oracle XE Lab Exam',icon:'terminal', href:'Assignments/sem_lab.html',           badge:'79 TASKS'},
+    {name:'DBMS Foundations',  icon:'book',     href:'DBMS/master_dbms_foundations.html',  badge:'NEW'},
+    {name:'DBMS Internals Lab',icon:'sliders',  href:'DBMS/master_dbms_internals_lab.html',badge:'LAB'},
+    {name:'SQL Ch3 DDL & DML', icon:'code',     href:'DBMS/master_sql_ch3.html',           badge:'NEW'},
+    {name:'SQL Ch4 Intermed',  icon:'code',     href:'DBMS/master_sql_ch4.html',           badge:'NEW'},
+    {name:'SQL Practice Q&A',  icon:'hash',     href:'DBMS/sql_practice_qna.html',         badge:'EXAM'},
+    {name:'HackerRank SQL',    icon:'terminal', href:'HACKERRANK/index.html',              badge:'NEW'},
+  ]},
+  { id:'sw', name:'Software & Cloud', color:'#5e5ce6', items:[
+    {name:'GitHub Actions',    icon:'branch',   href:'GITHUB/index.html',                  badge:'NEW'},
+    {name:'Python & AWS',      icon:'cloud',    href:'aws_python_exam_notes.html',         badge:'EXAM'},
+    {name:'Java Reference',    icon:'book',     href:'Java/JAVA1.html',                    badge:'HOT'},
+    {name:'Java Code',         icon:'code',     href:'Java/JAVA2.html',                    badge:'HOT'},
+  ]},
+  { id:'ai', name:'AI & ML', color:'#af52de', items:[
+    {name:'AI Data',           icon:'chart',    href:'aidata/aidata.html',                 badge:'NEW'},
+    {name:'AI Exam Master',    icon:'sparkles', href:'AIML/AIML.html',                     badge:'HOT'},
+    {name:'Deep Learning',     icon:'network',  href:'deep leaning/DEEPIOT.html',          badge:'NEW'},
+  ]},
+  { id:'more', name:'General', color:'#32ade6', items:[
+    {name:'AIT Bootcamp',      icon:'globe',    href:'cysec/cysec.html',                           badge:'NEW'},
+    {name:'Engineering Eco',   icon:'trend',    href:'Engineering_Economics/index.html',           badge:'NEW'},
+    {name:'Digital Bharat',    icon:'map',      href:'Digital_Bharat/digital-bharat-explorer.html', badge:'NEW'},
+  ]},
+];
+
+const ALL = [];
+CATEGORIES.forEach(c => c.items.forEach(it => { it.cat = c; ALL.push(it); }));
+document.getElementById('sb-count').textContent = ALL.length;
+
+/* ═══════════════════════════════════════
+   HUD: NAV LIST
+═══════════════════════════════════════ */
+const navList = document.getElementById('nav-list');
+CATEGORIES.forEach(c => {
+  const lab = document.createElement('div');
+  lab.className = 'cat-label';
+  lab.innerHTML = `<i style="background:${c.color}"></i>${c.name}`;
+  navList.appendChild(lab);
+  c.items.forEach(it => {
+    const a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = encodeURI(it.href);
+    a.style.setProperty('--c', c.color);
+    a.innerHTML = `<span class="ic">${svgIcon(it.icon)}</span><span class="nm">${it.name}</span><span class="badge ${it.badge}">${it.badge[0] + it.badge.slice(1).toLowerCase()}</span>`;
+    a.addEventListener('mouseenter', () => setHover(it, true));
+    a.addEventListener('mouseleave', () => setHover(null));
+    it.navEl = a;
+    navList.appendChild(a);
+  });
+});
+
+/* ═══════════════════════════════════════
+   JARVIS VOICE + BUBBLE
+═══════════════════════════════════════ */
+let voiceOn = false;
+function speak(text){
+  if(!voiceOn || !window.speechSynthesis) return;
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(v => /David|Daniel|Google UK English Male/.test(v.name)) || voices[0];
+  const m = new SpeechSynthesisUtterance(text);
+  m.pitch = .55; m.rate = .92; m.volume = .7; if(v) m.voice = v;
+  speechSynthesis.cancel(); speechSynthesis.speak(m);
+}
+function setBubble(t){ document.getElementById('bubble-text').innerHTML = t.replace(/\n/g,'<br>'); }
+document.getElementById('bubble').addEventListener('click', () => {
+  speak(document.getElementById('bubble-text').innerText);
+});
+document.getElementById('btn-voice').addEventListener('click', e => {
+  voiceOn = !voiceOn;
+  const b = e.currentTarget;
+  b.querySelector('span').textContent = voiceOn ? 'Voice on' : 'Voice off';
+  b.classList.toggle('on', voiceOn);
+  if(voiceOn) speak('Voice systems online.'); else if(window.speechSynthesis) speechSynthesis.cancel();
+});
+document.getElementById('nav-toggle').addEventListener('click', () => {
+  document.getElementById('nav').classList.toggle('collapsed');
+});
+if (window.innerWidth <= 820) document.getElementById('nav').classList.add('collapsed');
+
+/* clock */
+setInterval(() => {
+  const t = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Asia/Kolkata'}) + ' IST';
+  document.getElementById('sb-time').textContent = t;
+}, 1000);
+
+/* info panel */
+const infoEl = document.getElementById('info');
+function showInfo(it){
+  if(!it){ infoEl.classList.remove('show'); return; }
+  infoEl.style.setProperty('--ic', it.cat.color);
+  document.getElementById('i-cat').textContent = it.cat.name;
+  document.getElementById('i-nm').textContent = it.name;
+  document.getElementById('i-path').textContent = './' + it.href;
+  infoEl.classList.add('show');
+}
+
+/* ═══════════════════════════════════════
+   BABYLON SCENE
+═══════════════════════════════════════ */
+let hovered = null;
+let setHover = () => {};
+
+/* theme: 0 = light, 1 = dark. The 3D scene crossfades toward this target. */
+let themeTarget = document.documentElement.dataset.theme === 'dark' ? 1 : 0;
+function setTheme(dark, save){
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  themeTarget = dark ? 1 : 0;
+  if (save) try { localStorage.setItem('jarvis-theme', dark ? 'dark' : 'light'); } catch(e){}
+}
+document.getElementById('btn-theme').addEventListener('click', () => setTheme(document.documentElement.dataset.theme !== 'dark', true));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  let s = null; try { s = localStorage.getItem('jarvis-theme'); } catch(_){}
+  if (!s) setTheme(e.matches, false);
+});
+document.querySelectorAll('.tb-right .pill').forEach(b => b.title = b.textContent.trim());
+
+const FONT_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Helvetica Neue", Arial, sans-serif';
+
+function boot(){
+  const canvas = document.getElementById('scene');
+  const loader = document.getElementById('loader');
+  const loaderSub = document.getElementById('ld-sub');
+  const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (typeof BABYLON === 'undefined' || !BABYLON.Engine.isSupported()) {
+    loaderSub.textContent = 'WebGL is unavailable. Use the module list.';
+    setTimeout(() => loader.classList.add('done'), 1800);
+    return;
+  }
+
+  /* ═════ QUALITY TIER: auto-picked once per device (override with ?quality=low|med|high) ═════ */
+  const TIER = (() => {
+    const n = navigator, o = new URLSearchParams(location.search).get('quality');
+    if (['low', 'med', 'high'].includes(o)) return o;
+    let gpu = '';
+    try { const g = document.createElement('canvas').getContext('webgl'), x = g.getExtension('WEBGL_debug_renderer_info'); gpu = x ? g.getParameter(x.UNMASKED_RENDERER_WEBGL) : ''; } catch(e){}
+    const cores = n.hardwareConcurrency || 4, mem = n.deviceMemory || 4;
+    let s = (cores >= 8 ? 2 : cores >= 4 ? 1 : 0) + (mem >= 8 ? 2 : mem >= 4 ? 1 : 0);
+    if (/Android|iPhone|iPad|Mobi/i.test(n.userAgent)) s -= 1;
+    if (/SwiftShader|llvmpipe|Software|Mali-[T4]|Adreno \(TM\) [23]\d\d|PowerVR/i.test(gpu)) s -= 3;
+    if (n.connection && n.connection.saveData) s -= 2;
+    if (RM) s -= 1;
+    return s >= 3 ? 'high' : s >= 1 ? 'med' : 'low';
+  })();
+  const Q = {
+    low:  { dpr: 1,   msaa: 1, bloom: false, shadow: 512,  pcf: false, dust: 0,    coat: false, tess: 48  },
+    med:  { dpr: 1.5, msaa: 2, bloom: false, shadow: 1024, pcf: false, dust: 400,  coat: true,  tess: 96  },
+    high: { dpr: 2,   msaa: 4, bloom: true,  shadow: 2048, pcf: true,  dust: 1500, coat: true,  tess: 160 }
+  }[TIER];
+  document.documentElement.dataset.tier = TIER;
+  console.info('[JARVIS] quality tier:', TIER);
+
+  const engine = new BABYLON.Engine(canvas, true, { stencil: true, antialias: TIER === 'high', powerPreference: 'high-performance' }, true);
+  let scale = 1 / Math.min(window.devicePixelRatio || 1, Q.dpr);
+  engine.setHardwareScalingLevel(scale);
+  const scene = new BABYLON.Scene(engine);
+  const BG_L = new BABYLON.Color3(0.961, 0.961, 0.969), BG_D = new BABYLON.Color3(0.039, 0.039, 0.047);
+  const BG = themeTarget ? BG_D.clone() : BG_L.clone();
+  const themed = [], orbitMats = [], labelDraws = [];
+  scene.clearColor = BABYLON.Color4.FromColor3(BG, 1);
+  scene.environmentIntensity = 0.9;
+  scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+  scene.fogColor = BG;
+  scene.fogDensity = 0.006;
+
+  const C3 = h => BABYLON.Color3.FromHexString(h);
+  CATEGORIES.forEach(c => c.hex = C3(c.color));
+
+  /* ── camera ── */
+  const camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2, 1.12, 32, BABYLON.Vector3.Zero(), scene);
+  camera.lowerRadiusLimit = 10;
+  camera.upperRadiusLimit = 52;
+  camera.lowerBetaLimit = 0.4;
+  camera.upperBetaLimit = Math.PI/2 + 0.25;
+  camera.wheelDeltaPercentage = 0.012; camera.pinchDeltaPercentage = 0.012;
+  camera.inertia = 0.9; camera.angularSensibilityX = camera.angularSensibilityY = 1200; camera.minZ = 0.5;
+  camera.panningSensibility = 0;
+  camera.attachControl(canvas, true);
+  function enableAuto(on){
+    camera.useAutoRotationBehavior = on;
+    const b = camera.autoRotationBehavior;
+    if (b){ b.idleRotationSpeed = 0.1; b.idleRotationWaitTime = 1500; b.idleRotationSpinupTime = 2500; }
+  }
+  enableAuto(true);
+  if (RM){ enableAuto(false); document.getElementById('btn-rotate').classList.remove('on'); }
+  document.getElementById('btn-rotate').addEventListener('click', e => {
+    const on = !camera.useAutoRotationBehavior;
+    enableAuto(on);
+    e.currentTarget.classList.toggle('on', on);
+  });
+
+  /* ── lighting: soft studio, shadow-based depth (no emissive glow) ── */
+  const hemi = new BABYLON.HemisphericLight('hemi', new BABYLON.Vector3(0, 1, 0), scene);
+  hemi.intensity = 0.95;
+  hemi.groundColor = new BABYLON.Color3(0.74, 0.76, 0.8);
+  hemi.specular = BABYLON.Color3.Black();
+  const sun = new BABYLON.DirectionalLight('sun', new BABYLON.Vector3(-0.45, -1, -0.35), scene);
+  sun.position = new BABYLON.Vector3(14, 40, 12);
+  sun.intensity = 0.5;
+  const sg = new BABYLON.ShadowGenerator(Q.shadow, sun);
+  if (Q.pcf){
+    sg.usePercentageCloserFiltering = true;
+    sg.filteringQuality = BABYLON.ShadowGenerator.QUALITY_HIGH;
+    sg.bias = 0.0008; sg.normalBias = 0.02;
+  } else {
+    sg.useBlurExponentialShadowMap = true;
+    sg.blurKernel = TIER === 'med' ? 20 : 8;
+  }
+
+  if (BABYLON.ShadowOnlyMaterial){
+    const ground = BABYLON.MeshBuilder.CreateGround('ground', { width: 180, height: 180 }, scene);
+    ground.position.y = -9;
+    ground.receiveShadows = true;
+    ground.isPickable = false;
+    const gm = new BABYLON.ShadowOnlyMaterial('gm', scene);
+    gm.activeLight = sun;
+    gm.alpha = 0.22;
+    ground.material = gm;
+  }
+
+  /* ── texture helpers ── */
+  function makeLabel(text, color, w, h, fs, weight){
+    const tex = new BABYLON.DynamicTexture('lbl_' + text, { width: w, height: h }, scene, true);
+    tex.hasAlpha = true;
+    const draw = col => {
+      const c = tex.getContext();
+      c.clearRect(0, 0, w, h);
+      c.font = `${weight} ${fs}px ${FONT_STACK}`;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      if ('letterSpacing' in c && weight >= 600 && fs > 60) c.letterSpacing = Math.round(fs * 0.14) + 'px';
+      c.fillStyle = col;
+      c.fillText(text, w / 2, h / 2);
+      tex.update();
+    };
+    draw(color); labelDraws.push(draw);
+    const mat = new BABYLON.StandardMaterial('lm_' + text, scene);
+    mat.diffuseColor = BABYLON.Color3.Black();
+    mat.emissiveTexture = tex;
+    mat.opacityTexture = tex;
+    mat.disableLighting = true;
+    mat.backFaceCulling = false;
+    mat.fogEnabled = false;
+    return mat;
+  }
+
+  const iconCache = {};
+  function iconMaterial(key){
+    if (iconCache[key]) return iconCache[key];
+    const S = 256;
+    const tex = new BABYLON.DynamicTexture('ico_' + key, { width: S, height: S }, scene, true);
+    tex.hasAlpha = true;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[key] || ''}</svg>`;
+    const img = new Image();
+    img.onload = () => { const c = tex.getContext(); c.clearRect(0, 0, S, S); c.drawImage(img, 0, 0, S, S); tex.update(); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    const mat = new BABYLON.StandardMaterial('icm_' + key, scene);
+    mat.diffuseColor = BABYLON.Color3.Black();
+    mat.emissiveTexture = tex;
+    mat.opacityTexture = tex;
+    mat.disableLighting = true;
+    mat.backFaceCulling = false;
+    mat.fogEnabled = false;
+    iconCache[key] = mat;
+    return mat;
+  }
+
+  /* ═════ CORE: matte gimbal (replaces the glowing orb) ═════ */
+  const core = new BABYLON.TransformNode('core', scene);
+  const gimbal = [];
+  let parent = core;
+  [[3.6, 0.06, '#1d1d1f'], [3.0, 0.045, '#8e8e93'], [2.4, 0.04, '#c7c7cc']].forEach(([r, th, col], i) => {
+    const ring = BABYLON.MeshBuilder.CreateTorus('g' + i, { diameter: r * 2, thickness: th * 2, tessellation: Q.tess }, scene);
+    const m = new BABYLON.PBRMaterial('gm' + i, scene);
+    m.albedoColor = C3(col); m.metallic = 0.9; m.roughness = 0.28;
+    m._l = C3(col); m._d = C3(['#f5f5f7', '#aeaeb2', '#636366'][i]); themed.push(m);
+    ring.material = m; ring.parent = parent; ring.isPickable = false;
+    sg.addShadowCaster(ring, false);
+    gimbal.push(ring); parent = ring;
+  });
+  gimbal[1].rotation.x = Math.PI / 2;
+  gimbal[2].rotation.z = Math.PI / 2;
+
+  const centre = BABYLON.MeshBuilder.CreateIcoSphere('centre', { radius: 0.8, subdivisions: 1, flat: true }, scene);
+  const cm = new BABYLON.PBRMaterial('cm', scene);
+  cm.albedoColor = C3('#2c2c2e'); cm.metallic = 0.6; cm.roughness = 0.35;
+  cm._l = C3('#2c2c2e'); cm._d = C3('#d1d1d6'); themed.push(cm);
+  centre.material = cm; centre.parent = core; centre.isPickable = false;
+  sg.addShadowCaster(centre, false);
+
+  const coreLabel = BABYLON.MeshBuilder.CreatePlane('coreLbl', { width: 6, height: 1.2 }, scene);
+  coreLabel.material = makeLabel('JARVIS', '#1d1d1f', 768, 154, 84, 600);
+  coreLabel.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+  coreLabel.position.y = 5.2; coreLabel.isPickable = false;
+
+  /* ═════ ORBITS + TILES ═════ */
+  function roundedRect(w, h, r, seg){
+    const pts = [], hw = w / 2, hh = h / 2;
+    [[hw - r, hh - r, 0], [-hw + r, hh - r, Math.PI / 2], [-hw + r, -hh + r, Math.PI], [hw - r, -hh + r, Math.PI * 1.5]].forEach(([cx, cy, a0]) => {
+      for (let i = 0; i <= seg; i++){
+        const a = a0 + (i / seg) * Math.PI / 2;
+        pts.push(new BABYLON.Vector3(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 0));
+      }
+    });
+    return pts;
+  }
+  const TILE_SHAPE = roundedRect(1.5, 1.5, 0.36, 7);
+  const TILE_PATH = [new BABYLON.Vector3(0, 0, -0.11), new BABYLON.Vector3(0, 0, 0.11)];
+
+  const nodes = [], rings = [];
+  const baseRadius = 8.5, step = 2.7;
+
+  CATEGORIES.forEach((cat, ci) => {
+    const radius = baseRadius + ci * step;
+    const ringNode = new BABYLON.TransformNode('ring_' + cat.id, scene);
+    ringNode.rotation.x = (ci % 2 === 0 ? 1 : -1) * (0.1 + ci * 0.03);
+    ringNode.rotation.z = (ci % 2 === 0 ? -1 : 1) * 0.05 * ci;
+    const baseSpeed = (ci % 2 === 0 ? 1 : -1) * (0.0028 - ci * 0.00035);
+    const rec = { node: ringNode, speed: RM ? 0 : baseSpeed, baseSpeed: RM ? 0 : baseSpeed };
+    rings.push(rec);
+
+    const orbit = BABYLON.MeshBuilder.CreateTorus('orbit_' + cat.id, { diameter: radius * 2, thickness: 0.03, tessellation: Q.tess }, scene);
+    const om = new BABYLON.StandardMaterial('om_' + cat.id, scene);
+    om.emissiveColor = C3('#c7c7cc'); om.diffuseColor = BABYLON.Color3.Black(); om.disableLighting = true; om.alpha = 0.85;
+    orbitMats.push(om); orbit.material = om; orbit.parent = ringNode; orbit.isPickable = false;
+
+    const n = cat.items.length;
+    cat.items.forEach((it, i) => {
+      const a = (i / n) * Math.PI * 2 + ci * 0.6;
+      const pivot = new BABYLON.TransformNode('pv_' + it.name, scene);
+      pivot.parent = ringNode;
+      pivot.position.set(Math.cos(a) * radius, Math.sin(a * 2 + ci) * 0.8, Math.sin(a) * radius);
+
+      const bb = new BABYLON.TransformNode('bb_' + it.name, scene);
+      bb.parent = pivot;
+      bb.billboardMode = BABYLON.TransformNode.BILLBOARDMODE_ALL;
+
+      const tile = BABYLON.MeshBuilder.ExtrudeShape('tile_' + it.name, {
+        shape: TILE_SHAPE, path: TILE_PATH, closeShape: true, cap: BABYLON.Mesh.CAP_ALL, sideOrientation: BABYLON.Mesh.DOUBLESIDE
+      }, scene);
+      const mat = new BABYLON.PBRMaterial('tm_' + it.name, scene);
+      mat.albedoColor = cat.hex;
+      mat.emissiveColor = cat.hex.scale(0.2);
+      mat.metallic = 0.05; mat.roughness = 0.32;
+      mat.clearCoat.isEnabled = Q.coat; mat.clearCoat.intensity = 0.8; mat.clearCoat.roughness = 0.08;
+      mat.backFaceCulling = false;
+      tile.material = mat;
+      tile.parent = bb;
+      sg.addShadowCaster(tile, false);
+
+      /* icon decals on both faces so the glyph always faces the viewer */
+      const im = iconMaterial(it.icon);
+      const front = BABYLON.MeshBuilder.CreatePlane('if_' + it.name, { size: 0.86 }, scene);
+      front.material = im; front.parent = tile; front.position.z = -0.118; front.isPickable = false;
+      const back = BABYLON.MeshBuilder.CreatePlane('ib_' + it.name, { size: 0.86 }, scene);
+      back.material = im; back.parent = tile; back.position.z = 0.118; back.rotation.y = Math.PI; back.isPickable = false;
+
+      const label = BABYLON.MeshBuilder.CreatePlane('lbl_' + it.name, { width: 3.8, height: 0.62 }, scene);
+      label.material = makeLabel(it.name, '#1d1d1f', 760, 124, 56, 500);
+      label.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+      label.parent = pivot; label.position.y = -1.3; label.isPickable = false;
+      label.visibility = 0.72;
+
+      const r = { item: it, pivot, tile, mat, label, icons: [front, back], ring: rec,
+                  scale: RM ? 1 : 0, target: 1, lift: 0, phase: Math.random() * 6.28,
+                  delay: nodes.length * 0.035, match: true };
+      tile.metadata = { item: it };
+      it.rec = r;
+      nodes.push(r);
+    });
+  });
+
+  /* ═════ POST-PROCESSING: MSAA + FXAA, bloom + vignette fade in with dark mode ═════ */
+  const pipe = new BABYLON.DefaultRenderingPipeline('pipe', true, scene, [camera]);
+  pipe.samples = Q.msaa; pipe.fxaaEnabled = Q.msaa < 4;
+  pipe.bloomEnabled = Q.bloom; pipe.bloomThreshold = 0.7; pipe.bloomWeight = 0; pipe.bloomKernel = 64; pipe.bloomScale = 0.5;
+  const ip = pipe.imageProcessing;
+  ip.vignetteEnabled = true; ip.vignetteWeight = 0; ip.vignetteStretch = 0.4; ip.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
+
+  /* ═════ AMBIENT DUST (GPU particles, falls back to CPU) ═════ */
+  if (!RM && Q.dust){
+    const ptex = new BABYLON.DynamicTexture('pt', 64, scene, true);
+    const pc = ptex.getContext(), pg = pc.createRadialGradient(32, 32, 0, 32, 32, 32);
+    pg.addColorStop(0, 'rgba(255,255,255,1)'); pg.addColorStop(1, 'rgba(255,255,255,0)');
+    pc.fillStyle = pg; pc.fillRect(0, 0, 64, 64); ptex.update();
+    const GPU = BABYLON.GPUParticleSystem.IsSupported;
+    const dust = GPU ? new BABYLON.GPUParticleSystem('dust', { capacity: Q.dust }, scene) : new BABYLON.ParticleSystem('dust', Math.min(Q.dust, 500), scene);
+    dust.particleTexture = ptex; dust.emitter = BABYLON.Vector3.Zero();
+    dust.createSphereEmitter(40).radiusRange = 0;
+    dust.minSize = 0.05; dust.maxSize = 0.16; dust.minLifeTime = 8; dust.maxLifeTime = 16;
+    dust.emitRate = GPU ? 120 : 40; dust.minEmitPower = 0.05; dust.maxEmitPower = 0.2;
+    dust.color1 = new BABYLON.Color4(0.55, 0.6, 0.75, 0.35); dust.color2 = new BABYLON.Color4(0.7, 0.75, 0.9, 0.2);
+    dust.colorDead = new BABYLON.Color4(0.6, 0.65, 0.8, 0);
+    dust.start();
+  }
+
+  /* ═════ THEME CROSSFADE ═════ */
+  const lerpC = (a, b, k) => BABYLON.Color3.Lerp(a, b, k);
+  const OL = C3('#c7c7cc'), OD = C3('#3a3a3c');
+  function applyTheme(k){
+    BABYLON.Color3.LerpToRef(BG_L, BG_D, k, BG);
+    scene.clearColor.set(BG.r, BG.g, BG.b, 1);
+    themed.forEach(m => { m.albedoColor = lerpC(m._l, m._d, k); });
+    orbitMats.forEach(m => { m.emissiveColor = lerpC(OL, OD, k); });
+    hemi.intensity = 0.95 - 0.45 * k; sun.intensity = 0.5 - 0.15 * k; scene.environmentIntensity = 0.9 - 0.4 * k;
+    pipe.bloomWeight = 0.32 * k; ip.vignetteWeight = 1.6 * k;
+    const ink = k > 0.5 ? '#f5f5f7' : '#1d1d1f';
+    if (ink !== lastInk){ lastInk = ink; labelDraws.forEach(d => d(ink)); }
+  }
+
+  /* ── hover connector (thin line, no glow) ── */
+  let hoverLine = BABYLON.MeshBuilder.CreateLines('hl', {
+    points: [BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0.01, 0)], updatable: true
+  }, scene);
+  hoverLine.isPickable = false; hoverLine.setEnabled(false);
+
+  /* ═════ INTERACTION ═════ */
+  setHover = function(it, fromNav){
+    if (hovered && hovered !== it && hovered.navEl) hovered.navEl.classList.remove('hl');
+    hovered = it || null;
+    showInfo(hovered);
+    canvas.style.cursor = hovered ? 'pointer' : 'grab';
+    if (hovered){
+      if (hovered.navEl) hovered.navEl.classList.add('hl');
+      if (!fromNav && hovered.navEl) hovered.navEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      speak(hovered.name);
+    }
+  };
+
+  const pickable = m => !!(m.metadata && m.metadata.item);
+  scene.onPointerObservable.add(pi => {
+    if (pi.type === BABYLON.PointerEventTypes.POINTERMOVE){
+      const p = scene.pick(scene.pointerX, scene.pointerY, pickable);
+      const it = p.hit ? p.pickedMesh.metadata.item : null;
+      if (it !== hovered) setHover(it);
+    }
+    if (pi.type === BABYLON.PointerEventTypes.POINTERTAP){
+      const p = scene.pick(scene.pointerX, scene.pointerY, pickable);
+      if (p.hit) launch(p.pickedMesh.metadata.item);
+    }
+  });
+  canvas.style.cursor = 'grab';
+
+  let launching = false;
+  function launch(it){
+    if (launching) return;
+    launching = true;
+    setBubble(`Opening ${it.name}`);
+    speak('Opening ' + it.name);
+    it.rec.target = 2.2;
+    enableAuto(false);
+    it.rec.pivot.computeWorldMatrix(true);
+    const dest = it.rec.pivot.getAbsolutePosition().clone();
+    const ease = new BABYLON.CubicEase();
+    ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
+    const hold = BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, frames = RM ? 1 : 54;
+    const go = () => { loader.classList.remove('done'); setTimeout(() => { window.location.href = encodeURI(it.href); }, 380); };
+    BABYLON.Animation.CreateAndStartAnimation('camT', camera, 'target', 60, frames, camera.target.clone(), dest, hold, ease);
+    BABYLON.Animation.CreateAndStartAnimation('camR', camera, 'radius', 60, frames, camera.radius, 7, hold, ease, go);
+  }
+  window.addEventListener('pageshow', e => { if (e.persisted){ launching = false; loader.classList.add('done'); } });
+
+  /* search */
+  const searchEl = document.getElementById('search');
+  function applyFilter(){
+    const q = searchEl.value.trim().toLowerCase();
+    ALL.forEach(it => {
+      const match = !q || it.name.toLowerCase().includes(q) || it.cat.name.toLowerCase().includes(q) || it.href.toLowerCase().includes(q);
+      it.navEl.classList.toggle('dim', !match);
+      it.rec.match = match;
+    });
+  }
+  searchEl.addEventListener('input', applyFilter);
+  searchEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ const f = ALL.find(it => it.rec.match); if (f) launch(f); }
+    if (e.key === 'Escape'){ searchEl.value = ''; applyFilter(); searchEl.blur(); }
+  });
+  window.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== searchEl){ e.preventDefault(); searchEl.focus(); }
+  });
+  applyFilter();
+
+  /* ═════ RENDER LOOP — every animation lives here, in 3D ═════ */
+  let t = 0, frames = 0, lowF = 0, themeCur = themeTarget, themeApplied = -1, lastInk = '#1d1d1f';
+  const easeOutBack = p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+
+  scene.onBeforeRenderObservable.add(() => {
+    const dt = engine.getDeltaTime() / 16.67;
+    t += 0.016 * dt;
+
+    if (!RM){
+      gimbal[0].rotation.x += 0.0035 * dt;
+      gimbal[1].rotation.y += 0.0050 * dt;
+      gimbal[2].rotation.z += 0.0065 * dt;
+      centre.rotation.y += 0.004 * dt;
+      centre.rotation.x += 0.0025 * dt;
+    }
+
+    rings.forEach(r => {
+      const hold = hovered && hovered.rec.ring === r;
+      r.speed += ((hold ? 0 : r.baseSpeed) - r.speed) * 0.08;
+      r.node.rotation.y += r.speed * dt;
+    });
+
+    nodes.forEach(n => {
+      const isH = hovered === n.item;
+      const dim = !n.match;
+
+      let intro = 1;
+      if (!RM){ const p = Math.min(1, Math.max(0, (t - 0.3 - n.delay) / 0.8)); intro = p <= 0 ? 0 : easeOutBack(p); }
+
+      const tgt = n.target === 2.2 ? 2.2 : (isH ? 1.16 : (dim ? 0.9 : 1));
+      n.scale += (tgt - n.scale) * 0.14;
+      n.tile.scaling.setAll(Math.max(0.0001, n.scale * intro));
+
+      n.lift += ((isH ? 0.45 : 0) - n.lift) * 0.14;
+      n.tile.position.y = n.lift;
+
+      if (!RM){
+        n.tile.rotation.y = Math.sin(t * 0.7 + n.phase) * 0.3 * (isH ? 0.4 : 1);
+        n.tile.rotation.x = Math.cos(t * 0.5 + n.phase) * 0.12 * (isH ? 0.4 : 1);
+      }
+
+      const a = dim ? 0.28 : 1;
+      n.mat.alpha += (a - n.mat.alpha) * 0.15;
+      const em = isH ? 0.34 : 0.2;
+      n.mat.emissiveColor = n.item.cat.hex.scale(em);
+      n.icons.forEach(m => { m.visibility = n.mat.alpha; });
+      n.label.visibility += ((isH ? 1 : (dim ? 0.2 : 0.72)) - n.label.visibility) * 0.15;
+    });
+
+    if (hovered){
+      const piv = hovered.rec.pivot;
+      piv.computeWorldMatrix(true);
+      hoverLine = BABYLON.MeshBuilder.CreateLines(null, {
+        points: [BABYLON.Vector3.Zero(), piv.getAbsolutePosition().clone()], updatable: true, instance: hoverLine
+      });
+      hoverLine.color = hovered.cat.hex;
+      hoverLine.setEnabled(true);
+    } else {
+      hoverLine.setEnabled(false);
+    }
+
+    themeCur += (themeTarget - themeCur) * Math.min(1, 0.09 * dt);
+    if (Math.abs(themeTarget - themeCur) < 0.002) themeCur = themeTarget;
+    if (themeCur !== themeApplied){ applyTheme(themeCur); themeApplied = themeCur; }
+
+    /* adaptive resolution: if fps stays under 42, step render scale down (cap 1.5x) */
+    if (++frames % 30 === 0){
+      lowF = engine.getFps() < 42 ? lowF + 1 : 0;
+      if (lowF >= 3 && scale < 1.5){ scale *= 1.15; engine.setHardwareScalingLevel(scale); lowF = 0; }
+    }
+  });
+
+  window.addEventListener('resize', () => engine.resize());
+  engine.runRenderLoop(() => scene.render());
+
+  scene.executeWhenReady(() => {
+    loader.classList.add('done');
+    setBubble(`${ALL.length} modules ready.\nHover a tile to preview.`);
+    if (!RM){
+      camera.radius = 48;
+      let k = 0;
+      const ob = scene.onBeforeRenderObservable.add(() => {
+        k += 0.011;
+        const e = 1 - Math.pow(1 - Math.min(k, 1), 3);
+        camera.radius = 48 + (32 - 48) * e;
+        if (k >= 1) scene.onBeforeRenderObservable.remove(ob);
+      });
+    }
+  });
+}
+
+Promise.race([
+  (document.fonts && document.fonts.ready) || Promise.resolve(),
+  new Promise(r => setTimeout(r, 1200))
+]).then(boot);
+</script>
+</body>
+</html>
