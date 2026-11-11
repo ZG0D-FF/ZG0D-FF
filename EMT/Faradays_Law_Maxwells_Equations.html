@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Faraday's Law &amp; Maxwell's Equations</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+<style>
+:root{
+  --bg:#f5f5f7; --card:rgba(255,255,255,.78); --text:#1d1d1f; --muted:#6e6e73;
+  --accent:#0071e3; --warm:#ff9f0a; --line:rgba(0,0,0,.08); --soft:rgba(0,0,0,.04);
+  --shadow:0 8px 30px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0b0d; --card:rgba(28,28,30,.72); --text:#f5f5f7; --muted:#a1a1a6;
+    --accent:#2997ff; --warm:#ffb340; --line:rgba(255,255,255,.1); --soft:rgba(255,255,255,.05);
+    --shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Arial,sans-serif;
+  line-height:1.65; -webkit-font-smoothing:antialiased; padding:0 20px 60px;
+}
+.wrap{max-width:880px;margin:0 auto}
+section{scroll-margin-top:70px}
+
+/* nav */
+nav{
+  position:sticky;top:0;z-index:50;margin:0 -20px;padding:12px 20px;
+  display:flex;gap:6px;justify-content:center;overflow-x:auto;white-space:nowrap;
+  background:var(--card);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line);
+}
+nav a{color:var(--muted);text-decoration:none;font-size:.85rem;padding:6px 12px;border-radius:99px;transition:background .2s,color .2s}
+nav a:hover{background:var(--soft);color:var(--text)}
+
+/* hero */
+.hero{padding:48px 0 24px;text-align:center}
+.eyebrow{color:var(--accent);font-size:.85rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:700;letter-spacing:-.025em;line-height:1.1;margin:10px 0 12px}
+.sub{color:var(--muted);font-size:1.1rem;max-width:560px;margin:0 auto}
+
+/* 3D stage */
+.stage{
+  position:relative;border-radius:28px;overflow:hidden;margin-top:28px;
+  border:1px solid var(--line);box-shadow:var(--shadow);background:var(--card);
+}
+#stage{display:block;width:100%;height:min(62vh,520px);outline:none;touch-action:pan-y}
+.hint{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);white-space:nowrap;
+  font-size:.78rem;color:var(--muted);background:var(--card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:5px 12px;border-radius:99px;border:1px solid var(--line);pointer-events:none;
+}
+.key{
+  position:absolute;left:16px;top:16px;font-size:.78rem;color:var(--muted);background:var(--card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:8px 12px;border-radius:14px;border:1px solid var(--line);text-align:left;line-height:1.5;pointer-events:none;
+}
+.key i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+
+/* controls */
+.panel{
+  background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--line);border-radius:24px;padding:22px;margin-top:16px;box-shadow:var(--shadow);text-align:left;
+}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.ctl label{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:8px}
+.ctl label b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:var(--soft);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+.row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px;background:var(--soft);border-radius:16px;padding:14px 16px}
+.stat small{display:block;color:var(--muted);font-size:.78rem}
+.stat span{font-size:1.2rem;font-weight:600;font-variant-numeric:tabular-nums}
+.fine{color:var(--muted);font-size:.8rem;margin-top:14px}
+
+/* content */
+h2{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;margin:56px 0 14px}
+h3{font-size:1.02rem;margin:22px 0 4px}
+h3:first-child{margin-top:0}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:26px;margin:14px 0;box-shadow:var(--shadow);
+}
+.card p+p{margin-top:12px}
+.eq{text-align:center;margin:12px 0;font-size:1.1rem;overflow-x:auto}
+.note{color:var(--muted)}
+.callout{border-left:3px solid var(--accent);padding-left:16px;margin:18px 0 4px;color:var(--muted)}
+.callout b{color:var(--text)}
+.list{list-style:none;display:grid;gap:6px;color:var(--muted);margin-top:8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:10px}
+.tile{background:var(--soft);border-radius:18px;padding:18px;text-align:center}
+.tile h3{font-size:.9rem;color:var(--muted);font-weight:500;margin:0 0 2px}
+.tile .eq{margin:6px 0 0}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+th{color:var(--muted);font-weight:500;font-size:.85rem}
+tr:last-child td{border-bottom:0}
+.qa{padding:14px 0;border-bottom:1px solid var(--line)}
+.qa:first-child{padding-top:0}.qa:last-child{border-bottom:0;padding-bottom:0}
+.qa b{display:block}
+.qa span{color:var(--muted)}
+.footer{margin-top:56px;text-align:center;color:var(--muted);font-size:.85rem}
+
+/* reveal */
+.js .reveal{opacity:0;transform:translateY(16px);transition:opacity .8s ease,transform .8s ease}
+.js .reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.js .reveal{transition:none;opacity:1;transform:none}html{scroll-behavior:auto}}
+@media (max-width:560px){body{padding:0 14px 50px}nav{margin:0 -14px;justify-content:flex-start}.card{padding:20px}.sliders{grid-template-columns:1fr}.key{display:none}}
+@media print{nav,.stage,.panel{display:none}}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <a class="hub" href="index.html">← EMT Hub</a>
+  <a href="#faraday">Faraday</a>
+  <a href="#transformer">EMF</a>
+  <a href="#displacement">Displacement current</a>
+  <a href="#maxwell">Maxwell</a>
+  <a href="#formulas">Formulas</a>
+  <a href="#viva">Viva</a>
+</nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Chapter 9 · Sections 9.2–9.5</div>
+  <h1>Faraday's Law &amp; Maxwell's Equations</h1>
+  <p class="sub">A changing magnetic field induces an electric field. Watch a magnet drive a coil.</p>
+
+  <div class="stage">
+    <canvas id="stage" aria-label="3D scene: a bar magnet moving through a coil, inducing current"></canvas>
+    <div class="key"><i style="background:var(--warm)"></i>N pole<br><i style="background:var(--accent)"></i>S pole<br><i style="background:#fff;box-shadow:0 0 0 1px var(--line)"></i>Induced current</div>
+    <div class="hint">Drag to orbit</div>
+  </div>
+
+  <div class="panel">
+    <div class="sliders">
+      <div class="ctl"><label for="spd">Magnet speed <b id="sv">1.5×</b></label>
+        <input id="spd" type="range" min="0.5" max="3" step="0.1" value="1.5"></div>
+      <div class="ctl"><label for="turns">Coil turns N <b id="nv">3</b></label>
+        <input id="turns" type="range" min="1" max="6" step="1" value="3"></div>
+    </div>
+    <div class="row">
+      <div class="stat"><small>Flux ψ (relative)</small><span id="psi">1.00</span></div>
+      <div class="stat"><small>EMF = −N dψ/dt (relative)</small><span id="emf">0.00</span></div>
+      <div class="stat"><small>Flux state</small><span id="state">Steady</span></div>
+    </div>
+    <p class="fine">Lenz's law: the induced current always opposes the change in flux, so its direction reverses as the magnet approaches and leaves. More turns means a larger EMF.</p>
+  </div>
+</header>
+
+<section class="reveal">
+  <h2>Quick Overview</h2>
+  <div class="card">
+    <p>This chapter explains how a changing magnetic field produces an electric field, introduces transformer and motional EMF, explains Maxwell's displacement current, and presents Maxwell's four equations.</p>
+  </div>
+</section>
+
+<section id="faraday" class="reveal">
+  <h2>9.2 Faraday's Law</h2>
+  <div class="card">
+    <h3>Historical background</h3>
+    <p>After Oersted showed that electric current produces a magnetic field, Michael Faraday and Joseph Henry discovered that a time-varying magnetic field can produce electricity.</p>
+
+    <h3>Main idea</h3>
+    <ul class="list">
+      <li>A static magnetic field does not produce current.</li>
+      <li>A changing magnetic field induces an electromotive force (EMF).</li>
+      <li>The induced EMF causes current to flow in a closed circuit.</li>
+    </ul>
+
+    <h3>Faraday's law</h3>
+    <div class="eq">$$V_{emf}=-\frac{d\lambda}{dt}=-N\frac{d\psi}{dt}$$</div>
+    <table>
+      <tr><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td>$V_{emf}$</td><td>Induced EMF (volts)</td></tr>
+      <tr><td>$\lambda$</td><td>Flux linkage</td></tr>
+      <tr><td>$N$</td><td>Number of turns</td></tr>
+      <tr><td>$\psi$</td><td>Magnetic flux</td></tr>
+    </table>
+    <p class="callout"><b>Lenz's law:</b> the induced current always flows in a direction that opposes the change in magnetic flux that produces it.</p>
+
+    <h3>Magnetic flux</h3>
+    <div class="eq">$$\psi=\int\mathbf{B}\cdot d\mathbf{S}$$</div>
+    <p class="note">Flux depends upon magnetic field, surface area and angle.</p>
+
+    <h3>Electric field produced by a changing magnetic field</h3>
+    <div class="eq">$$\oint\mathbf{E}\cdot d\mathbf{l}=-\frac{d}{dt}\int\mathbf{B}\cdot d\mathbf{S}$$</div>
+    <p class="note">A changing magnetic field creates a circulating electric field even without a conducting wire.</p>
+  </div>
+</section>
+
+<section id="transformer" class="reveal">
+  <h2>9.3 Transformer and Motional EMF</h2>
+  <div class="card">
+    <h3>Transformer EMF</h3>
+    <p class="note">Produced when the conductor remains stationary while the magnetic field changes.</p>
+    <div class="eq">$$\oint\mathbf{E}\cdot d\mathbf{l}=-\frac{d}{dt}\int\mathbf{B}\cdot d\mathbf{S}$$</div>
+    <p class="note">Using Stokes' theorem:</p>
+    <div class="eq">$$\nabla\times\mathbf{E}=-\frac{\partial\mathbf{B}}{\partial t}$$</div>
+
+    <h3>Motional EMF</h3>
+    <p class="note">Produced when the conductor moves through a magnetic field.</p>
+    <p class="note">Magnetic force:</p>
+    <div class="eq">$$\mathbf{F}=q(\mathbf{u}\times\mathbf{B})$$</div>
+    <p class="note">General EMF:</p>
+    <div class="eq">$$V_{emf}=\int(\mathbf{u}\times\mathbf{B})\cdot d\mathbf{l}$$</div>
+    <p class="note">For a straight conductor, with $\mathbf{u}$, $\mathbf{B}$ and the conductor mutually perpendicular:</p>
+    <div class="eq">$$V_{emf}=uBL$$</div>
+
+    <table>
+      <tr><th>Transformer EMF</th><th>Motional EMF</th></tr>
+      <tr><td>Stationary conductor</td><td>Moving conductor</td></tr>
+      <tr><td>Changing magnetic field</td><td>Motion through magnetic field</td></tr>
+      <tr><td>Used in transformers</td><td>Used in generators</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="displacement" class="reveal">
+  <h2>9.4 Displacement Current</h2>
+  <div class="card">
+    <p>Ampère's original law could not explain current continuity inside a capacitor. Maxwell introduced displacement current to solve this problem.</p>
+    <p class="note">Original law:</p>
+    <div class="eq">$$\nabla\times\mathbf{H}=\mathbf{J}$$</div>
+    <p class="note">Displacement current density:</p>
+    <div class="eq">$$\mathbf{J}_d=\frac{\partial\mathbf{D}}{\partial t}$$</div>
+    <p class="note">Modified Ampère's law:</p>
+    <div class="eq">$$\nabla\times\mathbf{H}=\mathbf{J}+\frac{\partial\mathbf{D}}{\partial t}$$</div>
+    <p class="callout">Inside a capacitor, conduction current does not cross the dielectric, but displacement current exists and maintains current continuity.</p>
+  </div>
+</section>
+
+<section id="maxwell" class="reveal">
+  <h2>9.5 Maxwell's Equations</h2>
+  <div class="card">
+    <p>James Clerk Maxwell unified electricity and magnetism into one theory. These four equations form the foundation of electromagnetics.</p>
+    <div class="tiles">
+      <div class="tile"><h3>1. Gauss's law</h3><div class="eq">$$\nabla\cdot\mathbf{D}=\rho_v$$</div></div>
+      <div class="tile"><h3>2. Gauss's law for magnetism</h3><div class="eq">$$\nabla\cdot\mathbf{B}=0$$</div></div>
+      <div class="tile"><h3>3. Faraday's law</h3><div class="eq">$$\nabla\times\mathbf{E}=-\frac{\partial\mathbf{B}}{\partial t}$$</div></div>
+      <div class="tile"><h3>4. Ampère–Maxwell law</h3><div class="eq">$$\nabla\times\mathbf{H}=\mathbf{J}+\frac{\partial\mathbf{D}}{\partial t}$$</div></div>
+    </div>
+    <h3 style="margin-top:26px">Integral forms</h3>
+    <table>
+      <tr><th>Equation</th><th>Integral form</th></tr>
+      <tr><td>Gauss (electric)</td><td>$\oint\mathbf{D}\cdot d\mathbf{S}=Q$</td></tr>
+      <tr><td>Gauss (magnetic)</td><td>$\oint\mathbf{B}\cdot d\mathbf{S}=0$</td></tr>
+      <tr><td>Faraday</td><td>$\oint\mathbf{E}\cdot d\mathbf{l}=-\dfrac{d}{dt}\int\mathbf{B}\cdot d\mathbf{S}$</td></tr>
+      <tr><td>Ampère–Maxwell</td><td>$\oint\mathbf{H}\cdot d\mathbf{l}=\int\mathbf{J}\cdot d\mathbf{S}+\dfrac{d}{dt}\int\mathbf{D}\cdot d\mathbf{S}$</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="formulas" class="reveal">
+  <h2>Quick Formula Sheet</h2>
+  <div class="card">
+    <table>
+      <tr><th>Formula</th><th>Expression</th></tr>
+      <tr><td>Flux linkage</td><td>$\lambda=N\psi$</td></tr>
+      <tr><td>Faraday's law</td><td>$V=-N\dfrac{d\psi}{dt}$</td></tr>
+      <tr><td>Magnetic flux</td><td>$\psi=\int\mathbf{B}\cdot d\mathbf{S}$</td></tr>
+      <tr><td>Transformer EMF</td><td>$\oint\mathbf{E}\cdot d\mathbf{l}=-\dfrac{d}{dt}\int\mathbf{B}\cdot d\mathbf{S}$</td></tr>
+      <tr><td>Faraday curl</td><td>$\nabla\times\mathbf{E}=-\dfrac{\partial\mathbf{B}}{\partial t}$</td></tr>
+      <tr><td>Motional EMF</td><td>$V=uBL$</td></tr>
+      <tr><td>Displacement current</td><td>$\mathbf{J}_d=\dfrac{\partial\mathbf{D}}{\partial t}$</td></tr>
+      <tr><td>Ampère–Maxwell</td><td>$\nabla\times\mathbf{H}=\mathbf{J}+\dfrac{\partial\mathbf{D}}{\partial t}$</td></tr>
+      <tr><td>Gauss electric</td><td>$\nabla\cdot\mathbf{D}=\rho_v$</td></tr>
+      <tr><td>Gauss magnetic</td><td>$\nabla\cdot\mathbf{B}=0$</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="viva" class="reveal">
+  <h2>Viva &amp; Exam One-Liners</h2>
+  <div class="card">
+    <div class="qa"><b>Who discovered electromagnetic induction?</b><span>Michael Faraday.</span></div>
+    <div class="qa"><b>State Faraday's law.</b><span>The induced EMF equals the negative rate of change of magnetic flux linkage.</span></div>
+    <div class="qa"><b>What does the negative sign indicate?</b><span>Lenz's law.</span></div>
+    <div class="qa"><b>Difference between transformer and motional EMF?</b><span>Transformer EMF is caused by changing magnetic fields; motional EMF is caused by conductor motion.</span></div>
+    <div class="qa"><b>Why did Maxwell introduce displacement current?</b><span>To make Ampère's law valid for time-varying fields and explain electromagnetic wave propagation.</span></div>
+    <div class="qa"><b>Which Maxwell equation represents Faraday's law?</b><span>$\nabla\times\mathbf{E}=-\dfrac{\partial\mathbf{B}}{\partial t}$</span></div>
+    <div class="qa"><b>How many Maxwell equations are there?</b><span>Four.</span></div>
+  </div>
+</section>
+
+<div class="footer">Faraday's Law &amp; Maxwell's Equations · ECE Study Notes</div>
+</div>
+
+<script>
+const S={f:1.5,N:3,ph:0,psi:1,emf:0,en:0,dpsi:0};
+const A=2.6, R=1;
+const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let visible=true;
+
+const canvas=document.getElementById('stage');
+const engine=new BABYLON.Engine(canvas,true,{antialias:true,adaptToDeviceRatio:true});
+const scene=new BABYLON.Scene(engine);
+const C3=BABYLON.Color3, V3=BABYLON.Vector3;
+
+const cam=new BABYLON.ArcRotateCamera('cam',-Math.PI/3,1.2,11.5,V3.Zero(),scene);
+cam.lowerRadiusLimit=7;cam.upperRadiusLimit=16;
+cam.lowerBetaLimit=.4;cam.upperBetaLimit=1.65;
+cam.panningSensibility=0;
+cam.attachControl(canvas,true);
+cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+if(!calm){cam.useAutoRotationBehavior=true;cam.autoRotationBehavior.idleRotationSpeed=.12;}
+
+new BABYLON.HemisphericLight('h',new V3(0,1,.3),scene).intensity=.9;
+const glow=new BABYLON.GlowLayer('g',scene);glow.intensity=.4;
+
+function mat(name,emis,alpha){
+  const m=new BABYLON.StandardMaterial(name,scene);
+  m.diffuseColor=C3.Black();m.specularColor=C3.Black();
+  m.emissiveColor=emis;m.alpha=alpha===undefined?1:alpha;
+  return m;
+}
+
+/* bar magnet: S pole on top, N pole facing the coil below */
+const mag=new BABYLON.TransformNode('mag',scene);
+const sM=mat('sM',new C3(0,.44,.89)), nM=mat('nM',new C3(1,.62,.04));
+const sBox=BABYLON.MeshBuilder.CreateBox('s',{width:.5,height:.7,depth:.5},scene);
+const nBox=BABYLON.MeshBuilder.CreateBox('n',{width:.5,height:.7,depth:.5},scene);
+sBox.parent=mag;nBox.parent=mag;sBox.position.y=.35;nBox.position.y=-.35;
+sBox.material=sM;nBox.material=nM;
+
+/* coil of N rings with circulating induced-current dots */
+const ringM=mat('ringM',new C3(.5,.52,.57)), dotM=mat('dotM',C3.White(),.2);
+const base=BABYLON.MeshBuilder.CreateSphere('dot',{diameter:.13,segments:8},scene);
+base.isVisible=false;
+let coil=[], cd=[];
+function buildCoil(n){
+  coil.forEach(m=>m.dispose());cd.forEach(o=>o.m.dispose());coil=[];cd=[];
+  for(let k=0;k<n;k++){
+    const y=(k-(n-1)/2)*.14;
+    const t=BABYLON.MeshBuilder.CreateTorus('ring',{diameter:2*R,thickness:.05,tessellation:96},scene);
+    t.position.y=y;t.material=ringM;coil.push(t);
+    for(let j=0;j<8;j++){
+      const s=base.clone('d');s.isVisible=true;s.material=dotM;
+      cd.push({m:s,phi:j*Math.PI/4,y:y});
+    }
+  }
+}
+buildCoil(S.N);
+
+/* theme-aware colours */
+let neutral=new C3(.4,.42,.47), warm=new C3(1,.62,.04), cool=new C3(0,.44,.89);
+function theme(){
+  const d=dark();
+  scene.clearColor=d?new BABYLON.Color4(.043,.043,.051,1):new BABYLON.Color4(.961,.961,.969,1);
+  neutral=d?new C3(.55,.57,.62):new C3(.4,.42,.47);
+  warm=d?new C3(1,.7,.25):new C3(1,.62,.04);
+  cool=d?new C3(.16,.59,1):new C3(0,.44,.89);
+  nM.emissiveColor=warm;sM.emissiveColor=cool;
+  dotM.emissiveColor=d?C3.White():new C3(.1,.1,.15);
+  glow.intensity=d?.45:.15;
+}
+theme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',theme);
+
+/* physics: on-axis dipole flux g(y)=(1+y²/R²)^-1.5, EMF = -N dψ/dt */
+scene.onBeforeRenderObservable.add(()=>{
+  const dt=Math.min(engine.getDeltaTime(),50)/1000*(calm?.5:1);
+  S.ph+=S.f*dt;
+  const y=A*Math.sin(S.ph), yd=A*S.f*Math.cos(S.ph);
+  mag.position.y=y;
+  const q=1+y*y/(R*R);
+  const g=Math.pow(q,-1.5), gp=-3*y/(R*R)*Math.pow(q,-2.5);
+  S.psi=g;S.dpsi=gp*yd;S.emf=-S.N*S.dpsi;
+  S.en=-S.dpsi/(.859*A*S.f);               /* normalised -1..1 */
+  const a=Math.min(1,Math.abs(S.en));
+  ringM.emissiveColor=C3.Lerp(neutral,S.en>0?warm:cool,a);
+  dotM.alpha=.15+.85*a;
+  cd.forEach(o=>{
+    o.phi+=-S.en*3*dt;                       /* emf<0 (flux rising): counter-clockwise from above, opposing the rise */
+    o.m.position.set(R*Math.cos(o.phi),o.y,R*Math.sin(o.phi));
+  });
+  if(typeof readout==='function')readout();
+});
+
+engine.runRenderLoop(()=>{if(visible)scene.render();});
+addEventListener('resize',()=>engine.resize());
+new ResizeObserver(()=>engine.resize()).observe(canvas);
+document.documentElement.classList.add('js');
+const $=id=>document.getElementById(id);
+
+function readout(){
+  $('psi').textContent=S.psi.toFixed(2);
+  $('emf').textContent=(S.emf>=0?'+':'')+S.emf.toFixed(2);
+  $('state').textContent=Math.abs(S.en)<.05?'Steady':(S.dpsi>0?'Increasing':'Decreasing');
+}
+$('spd').addEventListener('input',e=>{
+  S.f=+e.target.value;
+  $('sv').textContent=S.f.toFixed(1)+'×';
+});
+$('turns').addEventListener('input',e=>{
+  S.N=+e.target.value;
+  $('nv').textContent=S.N;
+  buildCoil(S.N);
+});
+
+/* pause rendering when the scene is off-screen */
+new IntersectionObserver(e=>{visible=e[0].isIntersecting;}).observe(canvas);
+
+/* gentle reveal on scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

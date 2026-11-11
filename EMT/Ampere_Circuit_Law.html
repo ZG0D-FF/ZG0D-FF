@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Ampère's Circuit Law</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+<style>
+:root{
+  --bg:#f5f5f7; --card:rgba(255,255,255,.78); --text:#1d1d1f; --muted:#6e6e73;
+  --accent:#0071e3; --warm:#ff9f0a; --line:rgba(0,0,0,.08); --soft:rgba(0,0,0,.04);
+  --shadow:0 8px 30px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0b0d; --card:rgba(28,28,30,.72); --text:#f5f5f7; --muted:#a1a1a6;
+    --accent:#2997ff; --warm:#ffb340; --line:rgba(255,255,255,.1); --soft:rgba(255,255,255,.05);
+    --shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Arial,sans-serif;
+  line-height:1.65; -webkit-font-smoothing:antialiased; padding:0 20px 60px;
+}
+.wrap{max-width:880px;margin:0 auto}
+
+/* hero */
+.hero{padding:56px 0 24px;text-align:center}
+.eyebrow{color:var(--accent);font-size:.85rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:700;letter-spacing:-.025em;line-height:1.1;margin:10px 0 12px}
+.sub{color:var(--muted);font-size:1.1rem;max-width:560px;margin:0 auto}
+
+/* 3D stage */
+.stage{
+  position:relative;border-radius:28px;overflow:hidden;margin-top:28px;
+  border:1px solid var(--line);box-shadow:var(--shadow);background:var(--card);
+}
+#stage{display:block;width:100%;height:min(62vh,520px);outline:none;touch-action:pan-y}
+.hint{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  font-size:.78rem;color:var(--muted);background:var(--card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:5px 12px;border-radius:99px;border:1px solid var(--line);pointer-events:none;
+}
+
+/* controls */
+.panel{
+  background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--line);border-radius:24px;padding:22px;margin-top:16px;box-shadow:var(--shadow);
+}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.ctl label{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:8px}
+.ctl label b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:var(--soft);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+.row{display:flex;gap:12px;align-items:stretch;margin-top:22px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px;background:var(--soft);border-radius:16px;padding:14px 16px}
+.stat small{display:block;color:var(--muted);font-size:.78rem}
+.stat span{font-size:1.2rem;font-weight:600;font-variant-numeric:tabular-nums}
+button{
+  font:inherit;font-weight:600;color:#fff;background:var(--accent);border:0;border-radius:16px;
+  padding:0 22px;min-height:48px;cursor:pointer;transition:transform .2s,opacity .2s
+}
+button:hover{opacity:.9} button:active{transform:scale(.97)}
+
+/* content */
+h2{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;margin:56px 0 14px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:26px;margin:14px 0;box-shadow:var(--shadow);
+}
+.card p+p{margin-top:12px}
+.def{border-left:3px solid var(--accent);padding-left:16px;color:var(--muted);margin-bottom:6px}
+.def b{color:var(--text)}
+.eq{text-align:center;margin:16px 0;font-size:1.1rem;overflow-x:auto}
+.legend{list-style:none;display:grid;gap:6px;color:var(--muted);margin-top:8px}
+.legend b{color:var(--text)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{background:var(--soft);border-radius:18px;padding:18px}
+.tile h3{font-size:1rem;margin-bottom:4px}
+.tile p{color:var(--muted);font-size:.92rem}
+.note{color:var(--muted)}
+.note+.note{margin-top:10px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:14px 10px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500;font-size:.85rem}
+tr:last-child td{border-bottom:0}
+.footer{margin-top:56px;text-align:center;color:var(--muted);font-size:.85rem}
+
+/* reveal */
+.js .reveal{opacity:0;transform:translateY(16px);transition:opacity .8s ease,transform .8s ease}
+.js .reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.js .reveal{transition:none;opacity:1;transform:none}html{scroll-behavior:auto}}
+@media (max-width:560px){.sliders{grid-template-columns:1fr}body{padding:0 14px 50px}.card{padding:20px}}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <a href="index.html" style="display:inline-flex; align-items:center; gap:6px; color:#0071e3; text-decoration:none; font-size:13px; font-weight:600; margin-bottom:16px;">← Back to EMT 3D Lab Hub</a>
+  <div class="eyebrow">Maxwell's Equation · Magnetostatics</div>
+  <h1>Ampère's Circuit Law</h1>
+  <p class="sub">The circulation of H around any closed path equals the current it encloses.</p>
+
+  <div class="stage">
+    <canvas id="stage" aria-label="3D scene: straight wire with circular magnetic field lines and an Amperian loop"></canvas>
+    <div class="hint">Drag to orbit</div>
+  </div>
+
+  <div class="panel">
+    <div class="sliders">
+      <div class="ctl"><label for="i">Current I <b id="iv">5.0 A</b></label>
+        <input id="i" type="range" min="0.5" max="10" step="0.5" value="5"></div>
+      <div class="ctl"><label for="r">Loop radius r <b id="rv">2.0 m</b></label>
+        <input id="r" type="range" min="0.5" max="4" step="0.1" value="2"></div>
+    </div>
+    <div class="row">
+      <div class="stat"><small>H at loop</small><span id="hv">0.398 A/m</span></div>
+      <div class="stat"><small>∮ H · dl</small><span id="cv">5.0 A</span></div>
+      <div class="stat"><small>I enclosed</small><span id="ev">5.0 A</span></div>
+      <button id="dir" type="button">Reverse current</button>
+    </div>
+  </div>
+</header>
+
+<section class="reveal">
+  <h2>Definition</h2>
+  <div class="card">
+    <p class="def"><b>Ampère's circuit law</b> states that the line integral of H around a closed path equals the net current enclosed by the path.</p>
+    <div class="eq">$$\oint_L\mathbf{H}\cdot d\mathbf{l}=I_{enc}$$</div>
+    <ul class="legend">
+      <li><b>H</b> – magnetic field intensity</li>
+      <li><b>dl</b> – differential length element</li>
+      <li><b>$I_{enc}$</b> – enclosed current</li>
+    </ul>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>Important Notes</h2>
+  <div class="card">
+    <p class="note">Like Gauss's law, Ampère's law is easiest to apply when the current distribution is symmetrical.</p>
+    <p class="note">The equation is always valid, but it is mainly used to find H when symmetry exists.</p>
+    <p class="note">It can be derived from the Biot–Savart law.</p>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>Maxwell's Third Equation</h2>
+  <div class="card">
+    <p>Applying Stokes' theorem:</p>
+    <div class="eq">$$I_{enc}=\oint_L\mathbf{H}\cdot d\mathbf{l}=\int_S(\nabla\times\mathbf{H})\cdot d\mathbf{S}$$</div>
+    <p>Also,</p>
+    <div class="eq">$$I_{enc}=\int_S\mathbf{J}\cdot d\mathbf{S}$$</div>
+    <p>Comparing both gives</p>
+    <div class="eq">$$\nabla\times\mathbf{H}=\mathbf{J}$$</div>
+    <p class="note">This is the third Maxwell's equation in differential form. Since $\nabla\times\mathbf{H}\neq0$, the magnetostatic field is not conservative.</p>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>Applications</h2>
+  <div class="card">
+    <p class="note" style="margin-bottom:14px">Used for symmetrical current distributions.</p>
+    <div class="tiles">
+      <div class="tile"><h3>Infinite line current</h3><p>H circles the wire, with $H=\dfrac{I}{2\pi r}$.</p></div>
+      <div class="tile"><h3>Infinite sheet current</h3><p>H is uniform and parallel to the sheet on each side.</p></div>
+      <div class="tile"><h3>Coaxial line</h3><p>Field exists only between the conductors.</p></div>
+    </div>
+    <p class="note" style="margin-top:16px">For symmetrical distributions, H is either parallel or perpendicular to dl. Where H is parallel to dl, its magnitude is constant.</p>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>Quick Revision</h2>
+  <div class="card">
+    <table>
+      <tr><th>Formula</th><th>Meaning</th></tr>
+      <tr><td>$\oint \mathbf{H}\cdot d\mathbf{l}=I_{enc}$</td><td>Ampère's circuit law</td></tr>
+      <tr><td>$I_{enc}=\int \mathbf{J}\cdot d\mathbf{S}$</td><td>Enclosed current</td></tr>
+      <tr><td>$\nabla\times\mathbf{H}=\mathbf{J}$</td><td>Maxwell's third equation</td></tr>
+    </table>
+  </div>
+</section>
+
+<div class="footer">ECE Semester Notes</div>
+</div>
+
+<script>
+const S={I:5,r:2,dir:1};
+const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let visible=true;
+
+const canvas=document.getElementById('stage');
+const engine=new BABYLON.Engine(canvas,true,{antialias:true,adaptToDeviceRatio:true});
+const scene=new BABYLON.Scene(engine);
+const C3=BABYLON.Color3, V3=BABYLON.Vector3;
+
+const cam=new BABYLON.ArcRotateCamera('cam',-Math.PI/2.4,1.15,11.5,V3.Zero(),scene);
+cam.lowerRadiusLimit=6;cam.upperRadiusLimit=16;
+cam.lowerBetaLimit=.3;cam.upperBetaLimit=1.65;
+cam.panningSensibility=0;
+cam.attachControl(canvas,true);
+cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+if(!calm){cam.useAutoRotationBehavior=true;cam.autoRotationBehavior.idleRotationSpeed=.12;}
+
+new BABYLON.HemisphericLight('h',new V3(0,1,.3),scene).intensity=.9;
+const glow=new BABYLON.GlowLayer('g',scene);glow.intensity=.4;
+
+function mat(name,emis,alpha){
+  const m=new BABYLON.StandardMaterial(name,scene);
+  m.diffuseColor=C3.Black();m.specularColor=C3.Black();
+  m.emissiveColor=emis;m.alpha=alpha===undefined?1:alpha;
+  return m;
+}
+
+/* wire */
+const wire=BABYLON.MeshBuilder.CreateCylinder('wire',{diameter:.14,height:9,tessellation:48},scene);
+const wireM=new BABYLON.StandardMaterial('wireM',scene);
+wireM.diffuseColor=new C3(.8,.82,.86);wireM.specularPower=64;wireM.emissiveColor=new C3(.22,.24,.28);
+wire.material=wireM;
+
+/* current arrow on top of wire */
+const arrow=BABYLON.MeshBuilder.CreateCylinder('arrow',{diameterTop:0,diameterBottom:.4,height:.6,tessellation:32},scene);
+arrow.position.y=4.8;
+function setDir(d){S.dir=d;arrow.rotation.z=d>0?0:Math.PI;arrow.position.y=d>0?4.8:-4.8;}
+
+/* H field rings + flowing dots */
+const radii=[1,1.8,2.6,3.4], rings=[], dots=[], N=6;
+const ringMs=[], dotM=mat('dotM',C3.White());
+radii.forEach(r=>{
+  const t=BABYLON.MeshBuilder.CreateTorus('ring',{diameter:2*r,thickness:.03,tessellation:128},scene);
+  const m=mat('rm',C3.White(),Math.min(.7,.6/r));
+  t.material=m;ringMs.push(m);rings.push(t);
+  for(let k=0;k<N;k++){
+    const s=BABYLON.MeshBuilder.CreateSphere('d',{diameter:.11,segments:8},scene);
+    s.material=dotM;dots.push({m:s,r:r,phi:k*2*Math.PI/N});
+  }
+});
+
+/* charge flow along wire */
+const flow=[], FM=12, flowM=mat('flowM',new C3(.55,.8,1));
+for(let k=0;k<FM;k++){
+  const s=BABYLON.MeshBuilder.CreateSphere('f',{diameter:.2,segments:8},scene);
+  s.material=flowM;flow.push({m:s,y:-4.5+9*k/FM});
+}
+
+/* Amperian loop */
+const loopM=mat('loopM',new C3(1,.62,.04),.95);
+let loop=null;
+function setLoop(r){
+  if(loop)loop.dispose();
+  loop=BABYLON.MeshBuilder.CreateTorus('loop',{diameter:2*r,thickness:.06,tessellation:128},scene);
+  loop.material=loopM;
+}
+setLoop(S.r);
+
+/* theme-aware colours */
+function theme(){
+  const d=dark();
+  scene.clearColor=d?new BABYLON.Color4(.043,.043,.051,1):new BABYLON.Color4(.961,.961,.969,1);
+  const a=d?new C3(.16,.59,1):new C3(0,.44,.89);
+  ringMs.forEach(m=>m.emissiveColor=a);
+  dotM.emissiveColor=d?C3.White():new C3(0,.3,.7);
+  flowM.emissiveColor=d?new C3(.55,.8,1):new C3(.1,.5,.95);
+  arrow.material=arrow.material||mat('am',a);arrow.material.emissiveColor=a;
+  wireM.emissiveColor=d?new C3(.22,.24,.28):new C3(.45,.47,.52);
+  glow.intensity=d?.45:.15;
+}
+theme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',theme);
+
+/* animation: dot angular speed ~ H = I/(2πr); flow speed ~ I */
+scene.onBeforeRenderObservable.add(()=>{
+  const dt=Math.min(engine.getDeltaTime(),50)/1000, k=calm?.25:1;
+  dots.forEach(d=>{
+    d.phi+=S.dir*(S.I/d.r)*.1*dt*k;
+    d.m.position.set(d.r*Math.cos(d.phi),0,d.r*Math.sin(d.phi));
+  });
+  flow.forEach(f=>{
+    f.y+=S.dir*S.I*.25*dt*k;
+    if(f.y>4.5)f.y-=9;if(f.y<-4.5)f.y+=9;
+    f.m.position.y=f.y;
+  });
+});
+
+engine.runRenderLoop(()=>{if(visible)scene.render();});
+addEventListener('resize',()=>engine.resize());
+new ResizeObserver(()=>engine.resize()).observe(canvas);
+document.documentElement.classList.add('js');
+const $=id=>document.getElementById(id);
+function update(){
+  S.I=+$('i').value;S.r=+$('r').value;
+  const H=S.I/(2*Math.PI*S.r);
+  $('iv').textContent=S.I.toFixed(1)+' A';
+  $('rv').textContent=S.r.toFixed(1)+' m';
+  $('hv').textContent=H.toFixed(3)+' A/m';
+  $('cv').textContent=(H*2*Math.PI*S.r).toFixed(1)+' A';
+  $('ev').textContent=S.I.toFixed(1)+' A';
+  setLoop(S.r);
+}
+$('i').addEventListener('input',update);
+$('r').addEventListener('input',update);
+$('dir').addEventListener('click',()=>setDir(-S.dir));
+
+/* pause rendering when the scene is off-screen */
+new IntersectionObserver(e=>{visible=e[0].isIntersecting;}).observe(canvas);
+
+/* gentle reveal on scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

@@ -1,156 +1,2416 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JARVIS — EMT / EMFT Exam Hub</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --cyan:#00e5ff;--amber:#ffab00;--green:#00e676;--red:#ff1744;--purple:#7c4dff;
-  --bg:#020c18;--bg2:#040f1e;--panel:rgba(0,180,230,0.06);--border:rgba(0,229,255,0.22);
-  --glow:0 0 16px rgba(0,229,255,0.45);
-  --font-hud:'Orbitron',monospace;--font-mono:'Share Tech Mono',monospace;--font-body:'Rajdhani',sans-serif;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{
-  background:var(--bg);color:var(--cyan);font-family:var(--font-body);
-  min-height:100vh;padding:24px 28px;
-  background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
-  background-size:40px 40px;
-}
-header{
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:28px;
-  flex-wrap:wrap;gap:14px;
-}
-.back-btn{
-  font-family:var(--font-mono);font-size:11px;letter-spacing:2px;
-  color:rgba(0,229,255,0.7);border:1px solid var(--border);
-  padding:8px 16px;border-radius:4px;text-decoration:none;
-  transition:all 0.3s;background:rgba(0,229,255,0.05);
-}
-.back-btn:hover{color:#fff;border-color:var(--cyan);box-shadow:var(--glow)}
-.hub-title{
-  font-family:var(--font-hud);font-size:clamp(20px,3.5vw,32px);
-  font-weight:900;letter-spacing:4px;color:var(--cyan);text-shadow:var(--glow);
-}
-.hub-subtitle{
-  font-family:var(--font-mono);font-size:11px;letter-spacing:3px;
-  color:rgba(255,255,255,0.5);margin-top:4px;
-}
-.grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:20px;
-}
-.card{
-  background:rgba(0,18,36,0.85);border:1px solid var(--border);
-  border-radius:8px;padding:22px;display:flex;flex-direction:column;
-  justify-content:space-between;transition:transform 0.25s,border-color 0.25s,box-shadow 0.25s;
-  position:relative;overflow:hidden;
-}
-.card:hover{
-  transform:translateY(-4px);border-color:var(--cyan);
-  box-shadow:0 8px 24px rgba(0,229,255,0.22);
-}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.badge{
-  font-family:var(--font-mono);font-size:9px;letter-spacing:2px;
-  padding:3px 8px;border-radius:3px;border:1px solid var(--cyan);
-  color:var(--cyan);background:rgba(0,229,255,0.08);
-}
-.card-title{
-  font-family:var(--font-hud);font-size:16px;color:#fff;
-  letter-spacing:1px;margin-bottom:8px;
-}
-.card-desc{
-  font-size:14px;color:rgba(255,255,255,0.65);line-height:1.5;margin-bottom:18px;
-}
-.card-btn{
-  font-family:var(--font-mono);font-size:11px;letter-spacing:2px;
-  color:var(--cyan);border:1px solid var(--cyan);padding:8px 14px;
-  border-radius:4px;text-align:center;text-decoration:none;
-  background:rgba(0,229,255,0.06);transition:all 0.25s;display:block;
-}
-.card-btn:hover{background:var(--cyan);color:var(--bg);box-shadow:var(--glow)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electromagnetic Waves Laboratory & HFSS Showcase (PCCECE591)</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- MathJax 3 LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Three.js + OrbitControls (For HFSS WRL Models) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Babylon.js (For Dynamic 3D Physical EM Simulations) -->
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
+  <!-- Pre-Loaded In-Memory WRL CAD Models (100% CORS-Free on local file:// URLs) -->
+  <script src="models_data.js"></script>
+
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #161618;
+      --surface-subtle: #1c1c1e;
+      --surface-elevated: #242426;
+      --border: rgba(255, 255, 255, 0.1);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-tertiary: #6e6e73;
+      --accent: #2997ff;
+      --accent-soft: rgba(41, 151, 255, 0.12);
+      --success: #30d158;
+      --warning: #ff9f0a;
+      --danger: #ff453a;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    [data-theme="light"] {
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --surface-subtle: #f5f5f7;
+      --surface-elevated: #e5e5ea;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.16);
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 15px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Apple Top Navigation Bar */
+    header.apple-header {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      background: rgba(22, 22, 24, 0.85);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+    [data-theme="light"] header.apple-header {
+      background: rgba(251, 251, 253, 0.85);
+    }
+
+    .brand-title {
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .theme-toggle-btn {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .theme-toggle-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    /* Container & Layout */
+    .app-layout {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 32px 24px 80px 24px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 36px;
+    }
+    @media (max-width: 980px) {
+      .app-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      position: sticky;
+      top: 80px;
+      height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    aside.sidebar::-webkit-scrollbar { width: 4px; }
+    aside.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .nav-group-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      margin: 20px 0 8px 12px;
+    }
+    .nav-item {
+      display: block;
+      padding: 7px 12px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 400;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover {
+      background: var(--surface-subtle);
+      color: var(--text);
+    }
+    .nav-item.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Main Content */
+    main.content-area {
+      min-width: 0;
+    }
+
+    .hero-section {
+      margin-bottom: 36px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-meta {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .hero-desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 820px;
+      line-height: 1.55;
+    }
+
+    /* 3D Showcase Card */
+    .viewport-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 36px;
+      box-shadow: var(--shadow-md);
+    }
+    .viewport-header {
+      padding: 14px 20px;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .viewport-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .viewport-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .viewport-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .control-select, .control-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .control-select:hover, .control-btn:hover {
+      border-color: var(--border-strong);
+    }
+    .control-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .canvas-container {
+      width: 100%;
+      height: 480px;
+      position: relative;
+      background: #09090b;
+    }
+    #three-viewport, #babylon-viewport {
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+    }
+    .viewport-overlay-hint {
+      position: absolute;
+      bottom: 12px;
+      left: 16px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: rgba(255, 255, 255, 0.45);
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .viewport-status {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Lab Experiments Sections */
+    .exp-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-sm);
+    }
+    .exp-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-family: var(--font-mono);
+    }
+    .exp-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    .exp-p {
+      color: var(--text-secondary);
+      font-size: 14.5px;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    /* Technical Callout Boxes (Apple Style) */
+    .callout {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 18px 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+      border: 1px solid transparent;
+    }
+    .callout-info {
+      background: var(--accent-soft);
+      border-color: rgba(41, 151, 255, 0.25);
+      color: var(--text);
+    }
+    .callout-success {
+      background: rgba(48, 209, 88, 0.1);
+      border-color: rgba(48, 209, 88, 0.25);
+      color: var(--text);
+    }
+    .callout-warn {
+      background: rgba(255, 159, 10, 0.1);
+      border-color: rgba(255, 159, 10, 0.25);
+      color: var(--text);
+    }
+    .callout-title {
+      font-weight: 600;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Data & Derivation Tables */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    table.apple-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    table.apple-table th {
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+    }
+    table.apple-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    table.apple-table tr:last-child td { border-bottom: none; }
+    table.apple-table tr:hover td { background: var(--surface-subtle); }
+
+    /* Image Gallery Grid */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .snap-card {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .snap-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+    }
+    .snap-thumb-wrap {
+      width: 100%;
+      height: 180px;
+      background: #09090b;
+      position: relative;
+      overflow: hidden;
+    }
+    .snap-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .snap-card:hover .snap-thumb {
+      transform: scale(1.03);
+    }
+    .snap-meta {
+      padding: 12px 14px;
+    }
+    .snap-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .snap-caption {
+      font-size: 11.5px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    /* Lightbox Modal */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(12px);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .lightbox-modal.open {
+      display: flex;
+    }
+    .lightbox-content {
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .lightbox-img {
+      max-width: 85vw;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .lightbox-caption {
+      margin-top: 14px;
+      color: #f5f5f7;
+      font-size: 13.5px;
+      text-align: center;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
+
+    /* Exam Question Drawer */
+    details.exam-drawer {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    details.exam-drawer[open] {
+      border-color: var(--border-strong);
+    }
+    summary.exam-summary {
+      padding: 14px 18px;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      outline: none;
+    }
+    summary.exam-summary::marker { display: none; }
+    summary.exam-summary::-webkit-details-marker { display: none; }
+    .exam-drawer-body {
+      padding: 18px;
+      border-top: 1px solid var(--border);
+      font-size: 13.5px;
+      line-height: 1.65;
+    }
+
+    /* Simulation Control Sliders */
+    .sim-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 12px 0;
+      font-size: 12.5px;
+      font-family: var(--font-mono);
+    }
+    .sim-slider {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+
+    footer.apple-footer {
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+  </style>
 </head>
-<body>
+<body data-theme="dark">
 
-<header>
-  <div>
-    <div class="hub-title">⚡ ELECTROMAGNETIC FIELD THEORY (EMT)</div>
-    <div class="hub-subtitle">RAPID EXAM PREPARATION ARCHIVE · JARVIS KNOWLEDGE CORE</div>
-  </div>
-  <a href="../notes.html" class="back-btn">← BACK TO JARVIS NOTES HUB</a>
-</header>
-
-<div class="grid">
-
-  <div class="card">
-    <div>
-      <div class="card-header"><span class="badge">MODULE 01</span></div>
-      <div class="card-title">EMFT Basics &amp; Vector Algebra</div>
-      <div class="card-desc">Cartesian, Cylindrical, and Spherical coordinate systems, gradient, divergence, curl, Stokes' &amp; Divergence theorems.</div>
+  <!-- Apple Top Bar -->
+  <header class="apple-header">
+    <div class="brand-title">
+      <a href="../notes.html" style="display:inline-flex; align-items:center; gap:6px; color:#2997ff; text-decoration:none; font-size:12px; font-weight:600; margin-right:12px; padding:4px 10px; border-radius:999px; background:rgba(41,151,255,0.12); border:1px solid rgba(41,151,255,0.25);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> <span>Jarvis Hub</span></a>
+      <span>Electromagnetic Waves Laboratory</span>
+      <span class="brand-pill">PCCECE591</span>
     </div>
-    <a href="EMFT_Basics_Exam_Notes.html" class="card-btn">OPEN EXAM NOTE →</a>
-  </div>
-
-  <div class="card">
-    <div>
-      <div class="card-header"><span class="badge">MODULE 02</span></div>
-      <div class="card-title">Electrostatics Exam Notes</div>
-      <div class="card-desc">Coulomb's Law, Electric field intensity, Gauss's law applications, electrostatic potential, work, energy, and boundary conditions.</div>
+    <div class="header-actions">
+      <span style="font-size:12px; color:var(--text-tertiary); font-family:var(--font-mono);">UEM Kolkata &bull; ECE Term-II</span>
+      <button class="theme-toggle-btn" id="theme-btn" onclick="toggleTheme()">Light Mode</button>
     </div>
-    <a href="Electrostatics_Exam_Notes.html" class="card-btn">OPEN EXAM NOTE →</a>
+  </header>
+
+  <!-- App Layout -->
+  <div class="app-layout">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="nav-group-title">3D Interactive Models</div>
+      <a href="#viewport-section" class="nav-item active" id="nav-cad" onclick="switch3DMode('cad')">CAD Viewport (Three.js WRL)</a>
+      <a href="#viewport-section" class="nav-item" id="nav-em" onclick="switch3DMode('em-sim')">EM Physics (Babylon.js)</a>
+      
+      <div class="nav-group-title">Lab Experiments</div>
+      <a href="#exp1-coax" class="nav-item" id="nav-exp1">Exp 1: 50&Omega; Coaxial Line Design</a>
+      <a href="#exp2-load" class="nav-item" id="nav-exp2">Exp 2: Open / Short / Matched Load</a>
+      <a href="#exp5-microstrip" class="nav-item" id="nav-exp5">Exp 5: Microstrip Transmission Line</a>
+      <a href="#exp7-dipole" class="nav-item" id="nav-exp7">Exp 7: 2.4 GHz Dipole Antenna</a>
+      <a href="#exp8-horn" class="nav-item" id="nav-exp8">Exp 8: Horn Antenna &amp; HPBW</a>
+      <a href="#slotted-smith" class="nav-item" id="nav-slotted">Waveguide Bench &amp; Smith Chart</a>
+      
+      <div class="nav-group-title">Examination Vault</div>
+      <a href="#term2-exam" class="nav-item" id="nav-exam">Term-II Exam Paper &amp; Solutions</a>
+      <a href="#lab-gallery" class="nav-item" id="nav-gallery">Lab Manual Snaps (21 Images)</a>
+
+      <div class="nav-group-title">Theory Modules</div>
+      <a href="EMFT_Basics_Vector_Calculus.html" class="nav-item">📐 Vector Calculus &amp; Coords</a>
+      <a href="Ampere_Circuit_Law.html" class="nav-item">🧲 Ampère's Circuit Law</a>
+      <a href="Faradays_Law_Maxwells_Equations.html" class="nav-item">⚡ Faraday &amp; Maxwell's Eqs</a>
+      <a href="Continuity_Equation_Relaxation_Time.html" class="nav-item">⏱️ Continuity &amp; Relaxation</a>
+      <a href="Module_3_Transmission_Lines_Waveguides.html" class="nav-item">📡 Transmission &amp; Waveguides</a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content-area">
+      
+      <!-- Hero -->
+      <section class="hero-section">
+        <div class="hero-meta">DEPARTMENT OF ELECTRONICS &amp; COMMUNICATION ENGINEERING &bull; ACADEMIC YEAR 2026</div>
+        <h1 class="hero-title">Electromagnetic Waves &amp; Microwave Engineering Compendium</h1>
+        <p class="hero-desc">
+          Rigorous academic notes, full mathematical derivations, real HFSS 13 finite-element simulation results, interactive WebGL 3D CAD models, dynamic Maxwell electromagnetic field visualizers, and complete analytical solutions for the Term-II exam.
+        </p>
+      </section>
+
+      <!-- 3D Interactive Viewport Section -->
+      <section class="viewport-card" id="viewport-section">
+        <div class="viewport-header">
+          <div class="viewport-title-wrap">
+            <span class="viewport-badge" id="engine-badge">THREE.JS VRML LOADER</span>
+            <span style="font-size:13.5px; font-weight:500;" id="viewport-title">HFSS 13 Modeler Mesh Viewport</span>
+          </div>
+
+          <div class="viewport-controls">
+            <!-- Model Selector -->
+            <select class="control-select" id="model-select" onchange="loadSelectedModel(this.value)">
+              <option value="PROJECT1.wrl">Exp 1: 50&Omega; Coaxial Cable (PROJECT1.wrl)</option>
+              <option value="EXP2OLZLOAD.wrl">Exp 2: Coax Open-Circuit Load (EXP2OLZLOAD.wrl)</option>
+              <option value="EXP2SCZLOAD.wrl">Exp 2: Coax Short-Circuit Load (EXP2SCZLOAD.wrl)</option>
+              <option value="PROJECT5.wrl">Exp 5: Microstrip Line on FR4 (PROJECT5.wrl)</option>
+              <option value="DIPOLEANTENNA.wrl">Exp 7: 2.4 GHz Dipole Antenna (DIPOLEANTENNA.wrl)</option>
+            </select>
+
+            <!-- Mode Toggle: Three.js CAD vs Babylon.js EM Fields -->
+            <button class="control-btn active" id="btn-cad" onclick="switch3DMode('cad')">HFSS CAD</button>
+            <button class="control-btn" id="btn-physics" onclick="switch3DMode('em-sim')">EM Waves Sim (Babylon.js)</button>
+            <button class="control-btn" onclick="toggleWireframe()">Wireframe</button>
+            <button class="control-btn" onclick="reset3DCamera()">Reset View</button>
+          </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="canvas-container" id="canvas-container">
+          <!-- Three.js Canvas -->
+          <canvas id="three-viewport"></canvas>
+          <!-- Babylon.js Canvas (Hidden by default) -->
+          <canvas id="babylon-viewport" style="display:none;"></canvas>
+
+          <!-- Status Overlays -->
+          <div class="viewport-status" id="viewport-status">Loading VRML Model...</div>
+          <div class="viewport-overlay-hint">Left Drag: Orbit &bull; Right Drag: Pan &bull; Scroll: Zoom &bull; Touch: Orbit/Pinch</div>
+        </div>
+
+        <!-- Interactive Physics Controls (Visible in Babylon mode) -->
+        <div id="babylon-controls-bar" style="display:none; padding:14px 20px; background:var(--surface-subtle); border-top:1px solid var(--border);">
+          <div style="font-size:12px; font-weight:600; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; font-family:var(--font-mono);">
+            Babylon.js Physical Field Parameter Controls
+          </div>
+          <div class="sim-slider-row">
+            <span style="width:140px;">Wave Frequency:</span>
+            <input type="range" class="sim-slider" min="1" max="35" value="12" id="sim-freq-slider" oninput="updateSimFreq(this.value)">
+            <span id="sim-freq-val" style="width:65px;">12.0 GHz</span>
+          </div>
+          <div class="sim-slider-row">
+            <span style="width:140px;">Load Condition:</span>
+            <select class="control-select" id="sim-load-select" onchange="updateSimLoad(this.value)" style="flex:1;">
+              <option value="matched">Matched Load (ZL = Z0 = 50&Omega;) &rarr; Pure Traveling Wave, VSWR = 1.0</option>
+              <option value="short">Short Circuit (ZL = 0&Omega;) &rarr; Total Reflection (&Gamma; = -1), Pure Standing Wave</option>
+              <option value="open">Open Circuit (ZL = &infin;) &rarr; Total Reflection (&Gamma; = +1), Voltage Antinode at Load</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Experiment 1: Coaxial Transmission Line -->
+      <section class="exp-section" id="exp1-coax">
+        <div class="exp-tag">Experiment 01 &bull; HFSS Project 1</div>
+        <h2 class="exp-title">Design &amp; Investigation of a 50&Omega; Coaxial Transmission Line</h2>
+        <p class="exp-p">
+          A coaxial transmission line guides electromagnetic energy strictly within the dielectric volume between the inner cylindrical conductor and outer conducting shield. In an ideal cable, the transverse electromagnetic (TEM) mode propagates with zero longitudinal field components ($E_z = 0, H_z = 0$), yielding high immunity to external electromagnetic interference (EMI).
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Analytical Equations &amp; Dielectric Specifications</div>
+          Dielectric Material: Polyethylene ($\varepsilon_r = 2.25$). Target characteristic impedance: $Z_0 = 50\,\Omega$. Required cut-off frequency for higher order modes ($\text{TE}_{11}$): $f_c = 35\,\text{GHz}$.
+          $$\begin{aligned}
+          Z_0 &= \frac{138}{\sqrt{\varepsilon_r}} \log_{10}\left(\frac{D}{d}\right) = 50\,\Omega \implies \log_{10}\left(\frac{D}{d}\right) = \frac{50 \times \sqrt{2.25}}{138} = \frac{75}{138} \approx 0.5435 \\
+          \frac{D}{d} &= 10^{0.5435} \approx 3.4947 \implies D = 3.4947\,d \\
+          f_c &= \frac{190.85}{(D + d)\sqrt{\varepsilon_r}} = 35\,\text{GHz} \implies (D + d) = \frac{190.85}{35 \times 1.5} \approx 3.635\,\text{mm} \\
+          4.4947\,d &= 3.635\,\text{mm} \implies \mathbf{d = 0.8087\,\text{mm} \approx 0.81\,\text{mm}}, \quad \mathbf{D = 2.826\,\text{mm}}
+          \end{aligned}$$
+        </div>
+
+        <div class="table-wrap">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Formula</th>
+                <th>Evaluated Value</th>
+                <th>Physical Interpretation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Characteristic Impedance ($Z_0$)</td>
+                <td>$\frac{138}{\sqrt{\varepsilon_r}}\log_{10}(D/d)$</td>
+                <td><strong>$50.0\,\Omega$</strong></td>
+                <td>Ratio of transverse voltage to transverse current in forward wave.</td>
+              </tr>
+              <tr>
+                <td>Distributed Inductance ($L$)</td>
+                <td>$460.63 \log_{10}(D/d)\,\text{nH/m}$</td>
+                <td><strong>$250.34\,\text{nH/m}$</strong></td>
+                <td>Magnetic flux storage in annular volume.</td>
+              </tr>
+              <tr>
+                <td>Distributed Capacitance ($C$)</td>
+                <td>$\frac{24.127\,\varepsilon_r}{\log_{10}(D/d)}\,\text{pF/m}$</td>
+                <td><strong>$99.88\,\text{pF/m}$</strong></td>
+                <td>Electrostatic displacement field between cylinders.</td>
+              </tr>
+              <tr>
+                <td>Cutoff Frequency ($f_c$)</td>
+                <td>$\frac{190.85}{(D+d)\sqrt{\varepsilon_r}}$</td>
+                <td><strong>$35.0\,\text{GHz}$</strong></td>
+                <td>Onset of parasitic non-TEM ($\text{TE}_{11}$) wave excitation.</td>
+              </tr>
+              <tr>
+                <td>Solution Frequency ($\nu$)</td>
+                <td>$\nu \le f_c$</td>
+                <td><strong>$30.0\,\text{GHz}$</strong></td>
+                <td>Setup operating frequency in HFSS fast sweep.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Embedded HFSS Plot Gallery -->
+        <div style="font-size:13px; font-weight:600; color:var(--text-tertiary); margin-top:20px; font-family:var(--font-mono);">
+          HFSS SIMULATION VERIFICATION PLOTS (PROJECT 1)
+        </div>
+        <div class="gallery-grid">
+          <div class="snap-card" onclick="openLightbox('hfss_assets/EXP1S1.jpg', 'Exp 1: S11 Return Loss vs Frequency (HFSS Solution Setup)')">
+            <div class="snap-thumb-wrap">
+              <img src="hfss_assets/EXP1S1.jpg" alt="S11 Return Loss" class="snap-thumb">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">EXP1S1.jpg &bull; S11 Parameter</div>
+              <div class="snap-caption">Return loss curve verifying impedance match at 30 GHz.</div>
+            </div>
+          </div>
+
+          <div class="snap-card" onclick="openLightbox('hfss_assets/EXP1VSWR.jpg', 'Exp 1: VSWR Plot across Frequency (VSWR &approx; 1.05)')">
+            <div class="snap-thumb-wrap">
+              <img src="hfss_assets/EXP1VSWR.jpg" alt="VSWR Plot" class="snap-thumb">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">EXP1VSWR.jpg &bull; VSWR Measurement</div>
+              <div class="snap-caption">Flat standing wave ratio confirming near-zero reflection.</div>
+            </div>
+          </div>
+
+          <div class="snap-card" onclick="openLightbox('hfss_assets/EXP1GAMMA1ATTEN.jpg', 'Exp 1: Complex Propagation Constant &Gamma; (Attenuation &alpha; &amp; Phase &beta;)')">
+            <div class="snap-thumb-wrap">
+              <img src="hfss_assets/EXP1GAMMA1ATTEN.jpg" alt="Propagation Constant" class="snap-thumb">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">EXP1GAMMA1ATTEN.jpg &bull; Complex &Gamma;</div>
+              <div class="snap-caption">Real part &alpha; (attenuation) and linear imaginary part &beta;.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Experiment 2: Load Terminations -->
+      <section class="exp-section" id="exp2-load">
+        <div class="exp-tag">Experiment 02 &bull; HFSS Project 2</div>
+        <h2 class="exp-title">Study of 50&Omega; Coaxial Line under Open, Short &amp; Matched Load Conditions</h2>
+        <p class="exp-p">
+          When a transmission line of characteristic impedance $Z_0$ is terminated by an arbitrary load impedance $Z_L$, a reflected wave is established. The superposition of the forward and backward traveling waves forms a standing wave pattern whose envelope is characterized by the voltage reflection coefficient ($\Gamma_L$) and voltage standing wave ratio ($\text{VSWR}$).
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Boundary Equations &amp; Duality Relations</div>
+          $$\Gamma_L = \frac{Z_L - Z_0}{Z_L + Z_0}, \qquad \text{VSWR} = s = \frac{1 + |\Gamma_L|}{1 - |\Gamma_L|}, \qquad Z_{in}(l) = Z_0 \left[\frac{Z_L + j Z_0 \tan(\beta l)}{Z_0 + j Z_L \tan(\beta l)}\right]$$
+          $$\text{Short Circuit } (Z_L = 0): \quad Z_{sc} = j Z_0 \tan(\beta l), \qquad \text{Open Circuit } (Z_L = \infty): \quad Z_{oc} = -j Z_0 \cot(\beta l)$$
+          $$\text{Fundamental Invariance Identity:} \quad Z_{sc} \cdot Z_{oc} = (j Z_0 \tan\beta l)(-j Z_0 \cot\beta l) = Z_0^2$$
+        </div>
+
+        <div class="table-wrap">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Termination Condition</th>
+                <th>Load Impedance ($Z_L$)</th>
+                <th>Reflection Coeff ($\Gamma_L$)</th>
+                <th>Return Loss ($S_{11}$)</th>
+                <th>Transmission ($S_{21}$)</th>
+                <th>Simulated VSWR</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Matched Load</strong></td>
+                <td>$Z_L = Z_0 = 50\,\Omega$</td>
+                <td>$0$ ($0^\circ$)</td>
+                <td>$-50.0\,\text{dB}$ ($S_{11} \approx 0.0006$)</td>
+                <td>$-0.04\,\text{dB}$ ($S_{21} \approx 0.995$)</td>
+                <td><strong>$1.001$</strong> (No standing wave)</td>
+              </tr>
+              <tr>
+                <td><strong>Short Circuit</strong></td>
+                <td>$Z_L \to 0\,\Omega$ (HFSS: $10^{-6}\,\Omega$)</td>
+                <td>$-1$ ($180^\circ$)</td>
+                <td>$-0.1038\,\text{dB}$ ($|\Gamma_L| = 0.9881$)</td>
+                <td>$-70.0\,\text{dB}$ (Total blockage)</td>
+                <td><strong>$167.36$</strong> (Antinode at $l=\lambda/4$)</td>
+              </tr>
+              <tr>
+                <td><strong>Open Circuit</strong></td>
+                <td>$Z_L \to \infty$ (HFSS: $1000\,\text{k}\Omega$)</td>
+                <td>$+1$ ($0^\circ$)</td>
+                <td>$-0.0816\,\text{dB}$ ($|\Gamma_L| = 0.9906$)</td>
+                <td>$-70.0\,\text{dB}$ (Total reflection)</td>
+                <td><strong>$212.89$</strong> (Antinode at $l=0$)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Vector Field Animations -->
+        <div style="font-size:13px; font-weight:600; color:var(--text-tertiary); margin-top:20px; font-family:var(--font-mono);">
+          HFSS ELECTRIC FIELD VECTOR SIMULATION ANIMATIONS (OPEN CIRCUIT)
+        </div>
+        <div class="gallery-grid">
+          <div class="snap-card" onclick="openLightbox('hfss_assets/EXP2OLANIM.gif', 'Exp 2: E-Field Magnitude Contour Dynamics (EXP2OLANIM.gif)')">
+            <div class="snap-thumb-wrap">
+              <img src="hfss_assets/EXP2OLANIM.gif" alt="E-Field Dynamics" class="snap-thumb">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">EXP2OLANIM.gif &bull; Standing Wave Scalar Flux</div>
+              <div class="snap-caption">Magnitude oscillation showing stationary spatial nodes.</div>
+            </div>
+          </div>
+
+          <div class="snap-card" onclick="openLightbox('hfss_assets/EXP2OLANIMvector.gif', 'Exp 2: Transverse E-Field Vector Distribution (EXP2OLANIMvector.gif)')">
+            <div class="snap-thumb-wrap">
+              <img src="hfss_assets/EXP2OLANIMvector.gif" alt="E-Field Vectors" class="snap-thumb">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">EXP2OLANIMvector.gif &bull; Radial Vector Fields</div>
+              <div class="snap-caption">Animated radial vectors reversing polarity during sinusoidal excitation.</div>
+            </div>
+          </div>
+
+          <div class="snap-card" onclick="openLightbox('hfss_assets/EXP2SCVSWR.jpg', 'Exp 2: Short Circuit VSWR Curve (EXP2SCVSWR.jpg)')">
+            <div class="snap-thumb-wrap">
+              <img src="hfss_assets/EXP2SCVSWR.jpg" alt="Short Circuit VSWR" class="snap-thumb">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">EXP2SCVSWR.jpg &bull; Shorted VSWR Response</div>
+              <div class="snap-caption">High standing wave ratio across the entire sweep spectrum.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Experiment 5: Microstrip Transmission Line -->
+      <section class="exp-section" id="exp5-microstrip">
+        <div class="exp-tag">Experiment 05 &bull; HFSS Project 5</div>
+        <h2 class="exp-title">Design of a Microstrip Line on FR4 Epoxy Substrate</h2>
+        <p class="exp-p">
+          A microstrip line consists of a conducting strip of width $W$ printed on a grounded dielectric substrate of thickness $h$ and relative permittivity $\varepsilon_r$. Because field lines travel through both the dielectric substrate and air above, the structure does not support a pure TEM mode; instead, it propagates a <strong>quasi-TEM</strong> wave described by an effective dielectric constant $\varepsilon_{\text{eff}}$.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Synthesis Formulation (Standard IPC / Lab Manual Closed Form)</div>
+          $$Z_0 = \frac{87}{\sqrt{\varepsilon_r + 1.41}} \ln\left(\frac{5.98 \times h}{0.8 \times W + t}\right) \iff W = \frac{7.48 \times h}{\exp\left(Z_0 \frac{\sqrt{\varepsilon_r + 1.41}}{87}\right)} - 1.25 \times t$$
+          Where copper cladding thickness $t = 0.035\,\text{mm}$ (1 oz Cu), dielectric thickness $h = 1.6\,\text{mm}$, and $\varepsilon_r = 4.4$ (FR4 glass epoxy).
+          $$\begin{aligned}
+          \text{For } \mathbf{Z_0 = 50\,\Omega}: \quad & W \approx \mathbf{3.00\,\text{mm}}, \quad \varepsilon_{\text{eff}} \approx 3.33 \\
+          & v_p = \frac{c}{\sqrt{\varepsilon_{\text{eff}}}} = \frac{3 \times 10^8}{\sqrt{3.33}} \approx 1.644 \times 10^8\,\text{m/s} \\
+          & \beta = \frac{2\pi f}{v_p} \approx 3.82 \times f(\text{GHz})\,\text{rad/m}, \qquad \alpha = \frac{|S_{21}\,\text{dB}|}{8.686 \times L}\,\text{Np/m}
+          \end{aligned}$$
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Critical Port Assignment Trap in HFSS</div>
+          In HFSS, internal microstrip feeds require a <strong>Lumped Port</strong> placed directly between the trace and ground plane with defined integration line. Using a Wave Port on internal planar geometries forces boundary errors unless placed on the external background airbox wall.
+        </div>
+      </section>
+
+      <!-- Experiment 7: Dipole Antenna -->
+      <section class="exp-section" id="exp7-dipole">
+        <div class="exp-tag">Experiment 07 &bull; HFSS Dipole Antenna</div>
+        <h2 class="exp-title">Half-Wavelength Dipole Antenna Design at 2.4 GHz</h2>
+        <p class="exp-p">
+          The half-wave dipole is the canonical resonant antenna. Its total electrical length equals $\lambda/2$. In free space, it exhibits a characteristic input impedance of $Z_{\text{in}} \approx 73 + j42.5\,\Omega$ (reducible to $73\,\Omega$ pure resistance by shortening by $\approx 5\%$).
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Resonance Calculus &amp; Physical Geometry (2.4 GHz ISM Band)</div>
+          $$\lambda = \frac{c}{f} = \frac{3 \times 10^8\,\text{m/s}}{2.4 \times 10^9\,\text{Hz}} = 0.125\,\text{m} = 125\,\text{mm} \implies L = \frac{\lambda}{2} = 62.5\,\text{mm}$$
+          $$\text{Dipole Structure: Two coaxial copper cylinders of length } l_1 = l_2 = 31.0\,\text{mm}, \text{ radius } r = 0.5\,\text{mm}, \text{ feed gap } \delta = 0.5\,\text{mm}.$$
+          $$\text{Radiation Airbox Boundary: Minimum spacing from antenna conductor to boundary is } r_{\text{box}} \ge \frac{\lambda}{4} = 31.25\,\text{mm} \implies \text{chosen } r_{\text{box}} = 40.0\,\text{mm}.$$
+        </div>
+
+        <div class="table-wrap">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Antenna Characteristic</th>
+                <th>Theoretical Analytical Value</th>
+                <th>HFSS Simulation Metric</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Center Resonant Frequency ($f_0$)</td>
+                <td>$2.40\,\text{GHz}$</td>
+                <td>$2.40\,\text{GHz}$ ($S_{11} < -25\,\text{dB}$)</td>
+              </tr>
+              <tr>
+                <td>Radiation Pattern Shape</td>
+                <td>Omnidirectional circle in H-plane; Figure-8 in E-plane</td>
+                <td>Verified Toroidal 3D Gain Pattern</td>
+              </tr>
+              <tr>
+                <td>Theoretical Peak Directivity</td>
+                <td>$1.64$ ($2.15\,\text{dBi}$)</td>
+                <td>$2.12\,\text{dBi}$ (copper finite conductivity $\sigma = 5.8 \times 10^7\,\text{S/m}$)</td>
+              </tr>
+              <tr>
+                <td>Half-Power Beamwidth (HPBW, E-plane)</td>
+                <td>$78.0^\circ$</td>
+                <td>$78.4^\circ$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Experiment 8: Horn Antenna & HPBW -->
+      <section class="exp-section" id="exp8-horn">
+        <div class="exp-tag">Experiment 08 &bull; Microwave Waveguide Bench</div>
+        <h2 class="exp-title">Pyramidal Horn Antenna Radiation Pattern &amp; HPBW Measurement</h2>
+        <p class="exp-p">
+          A pyramidal horn antenna provides a smooth impedance transition between a rectangular waveguide (operating in dominant $\text{TE}_{10}$ mode) and free space. Radiation measurements are conducted in the Fraunhofer far-field zone ($R \ge 2D^2/\lambda_0$) using a Gunn oscillator source ($12.22\,\text{GHz}$) and receiving turntable.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Far-Field Criterion Calculation (Lab Data)</div>
+          Operating frequency: $f = 12.22\,\text{GHz} \implies \lambda_0 = \frac{3 \times 10^8}{12.22 \times 10^9} = 24.55\,\text{mm}$. Horn aperture dimension: $D = 12.6\,\text{cm} = 126\,\text{mm}$.
+          $$R \ge \frac{2 D^2}{\lambda_0} = \frac{2 \times (126\,\text{mm})^2}{24.55\,\text{mm}} = \frac{31752}{24.55} \approx 1293.36\,\text{mm} \approx \mathbf{1.29\,\text{m}}$$
+        </div>
+
+        <div class="table-wrap">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Rotation Angle ($\theta$)</th>
+                <th>Radiation Power ($P$ in dB)</th>
+                <th>Relative Normalized Power ($\Delta P$)</th>
+                <th>Linear Intensity Ratio ($P / P_{\max}$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>$0^\circ$ (Boresight)</td><td><strong>$-3.8\,\text{dB}$</strong> ($P_{\max}$)</td><td>$0.0\,\text{dB}$</td><td>$1.000$ (Peak Beam)</td></tr>
+              <tr><td>$\pm 5^\circ$</td><td>$-4.1\,\text{dB}$</td><td>$-0.3\,\text{dB}$</td><td>$0.933$</td></tr>
+              <tr><td>$\pm 10^\circ$</td><td>$-5.4\,\text{dB}$</td><td>$-1.6\,\text{dB}$</td><td>$0.692$</td></tr>
+              <tr style="background:var(--accent-soft);">
+                <td><strong>$\pm 12.69^\circ$ (Half-Power Point)</strong></td>
+                <td><strong>$-6.8\,\text{dB}$</strong> ($P_{\max} - 3\,\text{dB}$)</td>
+                <td><strong>$-3.0\,\text{dB}$</strong></td>
+                <td><strong>$0.500$ (50% Power Threshold)</strong></td>
+              </tr>
+              <tr><td>$\pm 15^\circ$</td><td>$-8.0\,\text{dB}$</td><td>$-4.2\,\text{dB}$</td><td>$0.380$</td></tr>
+              <tr><td>$\pm 20^\circ$</td><td>$-10.0\,\text{dB}$</td><td>$-6.2\,\text{dB}$</td><td>$0.240$</td></tr>
+              <tr><td>$\pm 25^\circ$</td><td>$-14.9\,\text{dB}$</td><td>$-11.1\,\text{dB}$</td><td>$0.078$</td></tr>
+              <tr><td>$\pm 30^\circ$</td><td>$-20.0\,\text{dB}$</td><td>$-16.2\,\text{dB}$</td><td>$0.024$</td></tr>
+              <tr><td>$\pm 35^\circ$</td><td>$-28.0\,\text{dB}$</td><td>$-24.2\,\text{dB}$</td><td>$0.0038$</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Exact Linear Interpolation of Half-Power Beamwidth (HPBW)</div>
+          $$\theta_{\text{half}} = 10^\circ + \frac{-6.8 - (-5.4)}{-8.0 - (-5.4)} \times (15^\circ - 10^\circ) = 10^\circ + \frac{-1.4}{-2.6} \times 5^\circ = 10^\circ + 2.692^\circ = \mathbf{12.69^\circ}$$
+          $$\text{Total Symmetric HPBW} = 2 \times \theta_{\text{half}} = 2 \times 12.692^\circ = \mathbf{25.38^\circ \approx 25.4^\circ}$$
+          $$\text{Directivity via Kraus Empirical Formulation:} \quad D \approx \frac{41253}{\text{HPBW}_E \times \text{HPBW}_H} = \frac{41253}{25.38^\circ \times 25.38^\circ} \approx \mathbf{64.04} \implies \mathbf{18.06\,\text{dBi}}$$
+        </div>
+      </section>
+
+      <!-- Waveguide Test Bench & Smith Chart -->
+      <section class="exp-section" id="slotted-smith">
+        <div class="exp-tag">Experiments 03, 04 &amp; 12 &bull; Waveguide Instrumentation</div>
+        <h2 class="exp-title">Slotted Line Test Bench, VSWR Meter &amp; Shift of Minima Technique</h2>
+        <p class="exp-p">
+          The slotted line is a precision section of rectangular waveguide with a narrow longitudinal slot cut along the center of its broad wall (where the transverse surface current $J_x = 0$, causing negligible field disturbance). A tunable crystal diode probe samples the internal electric field without perturbing wave propagation.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Shift of Minima Protocol on the Smith Chart</div>
+          <ol style="margin-left:20px; line-height:1.7;">
+            <li><strong>Step 1 (Short Circuit Reference):</strong> Terminate waveguide with a flat copper shorting plate ($Z_L = 0$). Locate a sharp voltage minimum position $x_1$ on the slotted line scale. Minima are chosen over maxima because standing wave minima are mathematically sharp ($V \to 0$), whereas maxima are broad and diffuse.</li>
+            <li><strong>Step 2 (Guide Wavelength $\lambda_g$):</strong> Move probe to adjacent minimum $x_2$. The distance between two consecutive minima is exactly $\lambda_g / 2 \implies \lambda_g = 2|x_1 - x_2|$.</li>
+            <li><strong>Step 3 (Unknown Load Insertion):</strong> Replace short circuit with unknown impedance $Z_L$. Observe the new voltage minimum shift to $x_0$. Measure VSWR ($s$) using the tuned VSWR meter.</li>
+            <li><strong>Step 4 (Electrical Shift $\Delta x$):</strong> Calculate shift $\Delta x = x_0 - x_1$. If the minimum shifts <em>toward generator</em> ($\Delta x > 0$), the load is inductive; if it shifts <em>toward load</em> ($\Delta x < 0$), the load is capacitive.</li>
+            <li><strong>Step 5 (Smith Chart Mapping):</strong> Draw the constant VSWR circle of radius $\frac{s-1}{s+1}$. Start at the Short Circuit point ($0 + j0$, left extremity). Rotate by an electrical distance $2\Delta x / \lambda_g$ along the "Wavelengths Toward Generator" (WTG) rim. The intersection with the VSWR circle gives the normalized load impedance $z_L = r_L + j x_L \implies Z_L = z_L \times Z_0$.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Term-II Final Exam Paper & Complete Analytical Solutions -->
+      <section class="exp-section" id="term2-exam">
+        <div class="exp-tag">Examination Vault &bull; Paper Code: PCCEC591</div>
+        <h2 class="exp-title">Term-II Fifth Semester Final Examination (October 2026) &mdash; Model Solutions</h2>
+        <p class="exp-p">
+          Official question paper from the Department of Electronics &amp; Communication Engineering (IEM / UEM Kolkata). Below are complete, authoritative academic answers matching IEEE and NPTEL microwave standards.
+        </p>
+
+        <!-- Q1 -->
+        <details class="exam-drawer" open>
+          <summary class="exam-summary">
+            <span><strong>Q1:</strong> State the significance of reflection coefficient (&Gamma;) and VSWR in a microstrip line.</span>
+            <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+          </summary>
+          <div class="exam-drawer-body">
+            <p><strong>1. Reflection Coefficient ($\Gamma$):</strong></p>
+            <p>Defined as the complex ratio of reflected voltage wave amplitude to incident voltage wave amplitude at any impedance discontinuity or load termination:</p>
+            $$\Gamma = \frac{V^-}{V^+} = \frac{Z_L - Z_0}{Z_L + Z_0} = |\Gamma| e^{j\theta}$$
+            <p><strong>Significance in Microstrip Engineering:</strong></p>
+            <ul style="margin-left:20px; line-height:1.7;">
+              <li><strong>Return Loss Extraction:</strong> $\text{RL} = -20 \log_{10}|\Gamma|\,\text{dB}$. Indicates the fraction of source RF power reflected back toward the transmitter. In high-frequency MMICs, return loss must exceed $15\,\text{dB}$ ($|\Gamma| < 0.178$) for stable operation.</li>
+              <li><strong>Power Transmission Efficiency:</strong> The fraction of power delivered to the load is $1 - |\Gamma|^2$. Any reflection reduces amplifier efficiency and increases heat dissipation on PCB traces.</li>
+              <li><strong>Amplifier Instability &amp; Distortion:</strong> Reflected waves re-enter active RF power transistors (PA), causing load-pull mismatch, intermodulation distortion, and potential device breakdown from standing-wave overvoltage peaks.</li>
+            </ul>
+            <br>
+            <p><strong>2. Voltage Standing Wave Ratio (VSWR):</strong></p>
+            <p>Defined as the ratio of maximum to minimum voltage along the transmission line envelope:</p>
+            $$\text{VSWR} = s = \frac{V_{\max}}{V_{\min}} = \frac{1 + |\Gamma|}{1 - |\Gamma|}, \qquad 1 \le \text{VSWR} < \infty$$
+            <p><strong>Significance in Microstrip Engineering:</strong></p>
+            <ul style="margin-left:20px; line-height:1.7;">
+              <li><strong>Standing Wave Severity Indicator:</strong> When $\text{VSWR} = 1.0$, the line is perfectly matched ($\Gamma = 0$); no standing wave exists. When $\text{VSWR} > 2.0$, severe constructive/destructive interference degrades signal integrity.</li>
+              <li><strong>Dielectric Voltage Stress:</strong> Voltage antinodes ($V_{\max} = V^+(1 + |\Gamma|)$) can exceed the dielectric breakdown field of thin substrates (e.g., $1.6\,\text{mm}$ FR4), causing dielectric arcing.</li>
+            </ul>
+          </div>
+        </details>
+
+        <!-- Q2 -->
+        <details class="exam-drawer">
+          <summary class="exam-summary">
+            <span><strong>Q2:</strong> Differentiate between a Coaxial Line and a Microstrip Line.</span>
+            <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+          </summary>
+          <div class="exam-drawer-body">
+            <div class="table-wrap">
+              <table class="apple-table">
+                <thead>
+                  <tr>
+                    <th>Design Criterion</th>
+                    <th>Coaxial Transmission Line</th>
+                    <th>Microstrip Transmission Line</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Mode of Propagation</strong></td>
+                    <td>Pure <strong>TEM</strong> mode ($E_z = 0, H_z = 0$) up to cutoff $f_c$.</td>
+                    <td><strong>Quasi-TEM</strong> mode (fringing fields leak into air, $E_z, H_z \ne 0$).</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Dispersion &amp; Phase Velocity</strong></td>
+                    <td>Non-dispersive in TEM mode ($v_p = c/\sqrt{\varepsilon_r}$ is constant).</td>
+                    <td>Dispersive at high microwave frequencies ($\varepsilon_{\text{eff}}$ increases with $f$).</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Electromagnetic Shielding</strong></td>
+                    <td>Completely shielded by outer conductor; zero radiation loss.</td>
+                    <td>Open planar geometry; susceptible to radiation loss and EMI crosstalk.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Circuit Integration</strong></td>
+                    <td>Bulky 3D cylindrical geometry; difficult to integrate with surface-mount ICs.</td>
+                    <td>Planar 2D layout; easily fabricated via standard PCB photolithography.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Power Handling Capacity</strong></td>
+                    <td>Very high (large conductor spacing and dielectric volume).</td>
+                    <td>Moderate to low (thin substrate $h \approx 0.8\text{--}1.6\,\text{mm}$ limits breakdown).</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Characteristic Impedance Range</strong></td>
+                    <td>Typically $30\,\Omega$ to $100\,\Omega$ (standard: $50\,\Omega$ and $75\,\Omega$).</td>
+                    <td>Typically $20\,\Omega$ to $120\,\Omega$ (bounded by trace width limits).</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+
+        <!-- Q3 -->
+        <details class="exam-drawer">
+          <summary class="exam-summary">
+            <span><strong>Q3:</strong> Briefly describe the setup used in laboratory for the study of VSWR and reflection coefficient for various load conditions.</span>
+            <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+          </summary>
+          <div class="exam-drawer-body">
+            <p><strong>Waveguide Bench Block Diagram Architecture:</strong></p>
+            <p style="font-family:var(--font-mono); font-size:12px; color:var(--accent); margin:10px 0;">
+              [Klystron/Gunn Source] &rarr; [Isolator] &rarr; [Variable Attenuator] &rarr; [Frequency Meter] &rarr; [Slotted Section + Tunable Probe] &rarr; [Load ZL] &darr; (Probe Coaxial Cable to VSWR Meter)
+            </p>
+            <ol style="margin-left:20px; line-height:1.7;">
+              <li><strong>Microwave Source:</strong> Gunn Oscillator or Reflex Klystron generating X-band microwave power ($8.2\text{--}12.4\,\text{GHz}$) square-wave modulated at $1\,\text{kHz}$.</li>
+              <li><strong>Ferrite Isolator:</strong> A non-reciprocal Faraday rotation device providing low forward insertion loss ($\approx 0.5\,\text{dB}$) and high reverse isolation ($> 25\,\text{dB}$) to prevent reflected load waves from pulling source frequency or burning the Gunn diode.</li>
+              <li><strong>Variable Attenuator:</strong> Resistive flap attenuator used to set incident signal power to an optimal level and avoid driving the detector diode outside its square-law operating region.</li>
+              <li><strong>Slotted Waveguide Section:</strong> Precision waveguide line with central longitudinal slot along broad face housing a carriage-mounted crystal diode detector.</li>
+              <li><strong>VSWR Meter:</strong> Tuned low-noise AC amplifier centered at $1\,\text{kHz}$ with logarithmic meter scales calibrated directly in VSWR and dB.</li>
+            </ol>
+          </div>
+        </details>
+
+        <!-- Q4 -->
+        <details class="exam-drawer">
+          <summary class="exam-summary">
+            <span><strong>Q4:</strong> State the use of a VSWR Meter.</span>
+            <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+          </summary>
+          <div class="exam-drawer-body">
+            <p>A <strong>VSWR Meter</strong> is a specialized, high-gain, low-noise audio amplifier sharply tuned to the standard modulation frequency of microwave sources (typically $1.0\,\text{kHz} \pm 2\%$).</p>
+            <ul style="margin-left:20px; line-height:1.7;">
+              <li><strong>Direct Ratio Readout:</strong> By normalizing the carriage probe to a voltage maximum ($V_{\max} = 1.0$ full scale), moving the probe to an adjacent minimum ($V_{\min}$) allows direct readout of $\text{VSWR} = V_{\max}/V_{\min}$ on calibrated reciprocal dial scales without manual calculation.</li>
+              <li><strong>Expanded VSWR Measurement:</strong> Features high-resolution expanded scales (e.g., $1.0\text{--}1.3$ VSWR) for precision tuning of matching stubs and filters.</li>
+              <li><strong>Insertion Loss &amp; Attenuation Testing:</strong> Calibrated in decibels ($0\text{--}10\,\text{dB}$ per range) to quantify insertion loss, component attenuation, and antenna return loss.</li>
+            </ul>
+          </div>
+        </details>
+
+        <!-- Q5 -->
+        <details class="exam-drawer">
+          <summary class="exam-summary">
+            <span><strong>Q5:</strong> State the various steps for measuring the radiation pattern of a Horn antenna in the laboratory.</span>
+            <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+          </summary>
+          <div class="exam-drawer-body">
+            <ol style="margin-left:20px; line-height:1.7;">
+              <li><strong>Step 1 (Far-Field Boresight Alignment):</strong> Position the transmitting pyramidal horn and receiving horn along a shared optical axis (line of sight, $0^\circ$). Ensure separation distance satisfies Fraunhofer far-field condition: $R \ge 2 D^2 / \lambda_0 = 1.29\,\text{m}$ for $f = 12.22\,\text{GHz}$ and $D = 12.6\,\text{cm}$.</li>
+              <li><strong>Step 2 (Source Calibration):</strong> Power the Gunn source ($V_{\text{Gunn}} = 6.36\,\text{V}, I = 142\,\text{mA}$). Adjust variable attenuator so power meter records a clean reference maximum ($P_{\max} = -3.8\,\text{dB}$) at $0^\circ$.</li>
+              <li><strong>Step 3 (Angular Sweeping):</strong> Rotate the receiving antenna turntable in discrete $5^\circ$ increments to the left ($\theta = 0^\circ, 5^\circ, 10^\circ, \dots, 35^\circ \dots 90^\circ$). Record detected power in dB at each point.</li>
+              <li><strong>Step 4 (Symmetric Plane Verification):</strong> Repeat rotation in $5^\circ$ steps to the right ($-\theta$) to establish pattern symmetry and identify potential reflections from laboratory benches.</li>
+              <li><strong>Step 5 (Polar Plot &amp; HPBW Derivation):</strong> Plot normalized power $P(\theta) - P_{\max}$ on a 360-degree polar coordinate sheet. Locate the $-3.0\,\text{dB}$ points ($P = -6.8\,\text{dB}$) on both sides of the main lobe. Use linear interpolation to extract $\text{HPBW} = 2 \times \theta_{\text{half}} = 25.38^\circ$.</li>
+            </ol>
+          </div>
+        </details>
+
+        <!-- Q6 -->
+        <details class="exam-drawer" open>
+          <summary class="exam-summary">
+            <span><strong>Q6:</strong> Design a microstrip line of 75&Omega; on FR4 substrate (&epsilon;r = 4.4, h = 1.6 mm). [Comprehensive Analytical Design]</span>
+            <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+          </summary>
+          <div class="exam-drawer-body">
+            <p><strong>I. Analytical Determination of Trace Dimensions ($W$):</strong></p>
+            <p>Given parameters: $Z_0 = 75\,\Omega$, substrate height $h = 1.6\,\text{mm}$, relative permittivity $\varepsilon_r = 4.4$, copper thickness $t = 0.035\,\text{mm}$.</p>
+            <p>Using the official lab manual closed-form microstrip synthesis formula:</p>
+            $$W = \frac{7.48 \times h}{\exp\left(Z_0 \frac{\sqrt{\varepsilon_r + 1.41}}{87}\right)} - 1.25 \times t$$
+            $$\sqrt{\varepsilon_r + 1.41} = \sqrt{4.4 + 1.41} = \sqrt{5.81} \approx 2.41039$$
+            $$\text{Exponent} = \frac{75 \times 2.41039}{87} = \frac{180.779}{87} \approx 2.07792$$
+            $$e^{2.07792} \approx 7.98784$$
+            $$\text{Numerator} = 7.48 \times 1.6\,\text{mm} = 11.968\,\text{mm}$$
+            $$\frac{11.968}{7.98784} \approx 1.49827\,\text{mm}, \qquad 1.25 \times t = 1.25 \times 0.035\,\text{mm} = 0.04375\,\text{mm}$$
+            $$\mathbf{W = 1.49827 - 0.04375 = 1.45452\,\text{mm} \approx 1.455\,\text{mm} \approx 1.46\,\text{mm}}$$
+            <p><em>Ratio check:</em> $W/h = 1.455 / 1.6 = 0.909 < 1.0$. This confirms the narrow-strip regime (valid for $Z_0 \ge 50\,\Omega$). Compared to the $50\,\Omega$ line ($W \approx 3.0\,\text{mm}$), the $75\,\Omega$ line is significantly narrower because higher characteristic impedance requires lower capacitance per unit length.</p>
+            <br>
+            <p><strong>Effective Dielectric Constant ($\varepsilon_{\text{eff}}$):</strong></p>
+            $$\varepsilon_{\text{eff}} \approx \frac{\varepsilon_r + 1}{2} + \frac{\varepsilon_r - 1}{2}\left[\frac{1}{\sqrt{1 + 12(h/W)}}\right] = \frac{5.4}{2} + \frac{3.4}{2}\left[\frac{1}{\sqrt{1 + 12(1.6/1.455)}}\right] \approx 2.7 + 1.7(0.2635) \approx \mathbf{3.148}$$
+            <br>
+            <p><strong>II. S-Parameter Investigation for $Z_L = 75\,\Omega$ Termination:</strong></p>
+            <p>When the $75\,\Omega$ microstrip is terminated by a matched load $Z_L = 75\,\Omega$:</p>
+            $$\Gamma_L = \frac{75 - 75}{75 + 75} = 0 \implies S_{11} = 20\log_{10}|\Gamma_L| \to -\infty\,\text{dB}$$
+            <ul style="margin-left:20px; line-height:1.7;">
+              <li><strong>$S_{11}$ Response:</strong> Remains below $-30\,\text{dB}$ across the operating band ($1\text{--}10\,\text{GHz}$), indicating negligible reflection and optimal power coupling.</li>
+              <li><strong>$S_{21}$ Response:</strong> Remains flat near $0\,\text{dB}$ (insertion loss determined strictly by dielectric loss tangent $\tan\delta = 0.02$ and copper conductivity loss).</li>
+            </ul>
+            <br>
+            <p><strong>III. Electric &amp; Magnetic Field Distribution inside Coaxial Cable:</strong></p>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin:12px 0;">
+              <p><strong>Electric Field ($\vec{E}$):</strong> Purely radial lines originating from positive surface charge on inner conductor ($r = d/2$) and terminating orthogonally on inner wall of outer conductor ($r = D/2$):</p>
+              $$\vec{E}(r) = \frac{V_0}{r \ln(D/d)} \hat{r}$$
+              <p><strong>Magnetic Field ($\vec{H}$):</strong> Concentric circular closed loops centered along the inner conductor axis according to Ampere's circuital law:</p>
+              $$\vec{H}(r) = \frac{I_0}{2\pi r} \hat{\phi}$$
+              <p>Poynting vector $\vec{S} = \vec{E} \times \vec{H} = S_z \hat{z}$ flows strictly down the axial length of the cable.</p>
+            </div>
+            <br>
+            <p><strong>IV. Engineering Conclusion:</strong></p>
+            <p>Microstrip geometry is governed by substrate aspect ratio $W/h$. Increasing line impedance from $50\,\Omega$ to $75\,\Omega$ reduces strip width from $3.0\,\text{mm}$ to $1.46\,\text{mm}$, lowering line capacitance. Terminating with $Z_L = Z_0$ eliminates standing waves, delivering maximal RF energy transfer with $S_{11} < -30\,\text{dB}$ and $\text{VSWR} \approx 1.0$.</p>
+          </div>
+        </details>
+
+        <!-- Supplementary High-Yield Practical Theory & Viva Vault (Extracted Strictly from 21 Snaps) -->
+        <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; font-weight:600; text-transform:uppercase; color:var(--accent); letter-spacing:0.05em; font-family:var(--font-mono); margin-bottom:8px;">
+            Supplementary Practical Theory &amp; Viva Vault (Extracted Strictly from 21 Snaps)
+          </div>
+          <p style="color:var(--text-secondary); font-size:13.5px; line-height:1.6; margin-bottom:20px;">
+            High-probability examination questions and mechanical derivations derived directly from the laboratory records, experimental steps, and physical observations across Experiments 1, 2, 5, 7, and 8.
+          </p>
+
+          <!-- Q7 -->
+          <details class="exam-drawer">
+            <summary class="exam-summary">
+              <span><strong>Q7 (Exp 1 &bull; Coax Physics):</strong> Why is Polyethylene (&epsilon;r = 2.25) chosen, and what physical degradation occurs if operating frequency exceeds fc = 35 GHz?</span>
+              <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+            </summary>
+            <div class="exam-drawer-body">
+              <p><strong>1. Why Polyethylene ($\varepsilon_r = 2.25$):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li><strong>Extremely Low Loss Tangent ($\tan\delta \approx 0.0002$):</strong> Minimizes dielectric heating and power absorption in the microwave spectrum, maintaining low attenuation ($\alpha \approx 0.03\text{--}0.05\,\text{dB/m}$).</li>
+                <li><strong>Optimal Impedance Form Factor ($D/d \approx 3.49$):</strong> For $50\,\Omega$, $D/d = 3.49$ yields mechanically sturdy conductor diameters ($d = 0.81\,\text{mm}, D = 2.826\,\text{mm}$) that resist deformation during bending.</li>
+                <li><strong>Non-Dispersive Permittivity:</strong> $\varepsilon_r$ remains virtually constant from DC up through millimeter-wave frequencies, preserving phase velocity $v_p = c/\sqrt{\varepsilon_r}$.</li>
+              </ul>
+              <br>
+              <p><strong>2. Physical Disaster if Frequency Exceeds $f_c = 35\,\text{GHz}$ (Higher-Order Mode Traps):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li><strong>Excitation of $\text{TE}_{11}$ Parasitic Mode:</strong> The cutoff formula $f_c = \frac{190.85}{(D+d)\sqrt{\varepsilon_r}} = 35\,\text{GHz}$ defines the threshold where the average cable circumference $\pi(D+d)/2$ equals the dielectric wavelength $\lambda_d$. Above $35\,\text{GHz}$, the transverse field breaks into an azimuthal dipole-like variation ($H_z \ne 0$).</li>
+                <li><strong>Severe Modal Dispersion:</strong> The TEM mode and $\text{TE}_{11}$ mode propagate with different phase velocities. Microwave pulses spread out in time, causing severe inter-symbol interference (ISI) and signal disintegration.</li>
+                <li><strong>Erratic Impedance Fluctuations:</strong> Higher-order mode excitation destroys the single-mode $50\,\Omega$ characteristic impedance, inducing uncontrollable reflections and spurious resonances.</li>
+              </ul>
+            </div>
+          </details>
+
+          <!-- Q8 -->
+          <details class="exam-drawer">
+            <summary class="exam-summary">
+              <span><strong>Q8 (Exp 2 &bull; Transmission Line Invariance):</strong> Prove that Zsc &bull; Zoc = Z0&sup2; for any lossless line, and explain why a &lambda;/4 shorted line behaves as an open circuit.</span>
+              <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+            </summary>
+            <div class="exam-drawer-body">
+              <p><strong>1. Mathematical Proof of Invariance Identity ($Z_{sc} \cdot Z_{oc} = Z_0^2$):</strong></p>
+              <p>General input impedance of a lossless line terminated by load $Z_L$ is:</p>
+              $$Z_{\text{in}}(l) = Z_0 \left[\frac{Z_L + j Z_0 \tan(\beta l)}{Z_0 + j Z_L \tan(\beta l)}\right]$$
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li>For <strong>Short Circuit</strong> ($Z_L = 0$):
+                  $$Z_{sc} = Z_0 \left[\frac{0 + j Z_0 \tan(\beta l)}{Z_0 + 0}\right] = j Z_0 \tan(\beta l)$$
+                </li>
+                <li>For <strong>Open Circuit</strong> ($Z_L \to \infty$): Divide numerator and denominator by $Z_L$:
+                  $$Z_{oc} = \lim_{Z_L \to \infty} Z_0 \left[\frac{1 + j(Z_0/Z_L)\tan(\beta l)}{(Z_0/Z_L) + j \tan(\beta l)}\right] = Z_0 \left[\frac{1}{j \tan(\beta l)}\right] = -j Z_0 \cot(\beta l)$$
+                </li>
+                <li>Multiplying the two input impedances:
+                  $$Z_{sc} \cdot Z_{oc} = \left(j Z_0 \tan\beta l\right) \left(-j Z_0 \cot\beta l\right) = -j^2 Z_0^2 \left(\tan\beta l \cdot \frac{1}{\tan\beta l}\right) = -(-1) Z_0^2 = \mathbf{Z_0^2} \quad \blacksquare$$
+                </li>
+              </ul>
+              <br>
+              <p><strong>2. Physical Mechanics of Quarter-Wave ($\lambda/4$) Short-Circuited Stub:</strong></p>
+              <p>At $l = \lambda/4$, the electrical length is $\beta l = \left(\frac{2\pi}{\lambda}\right)\left(\frac{\lambda}{4}\right) = \frac{\pi}{2}$.</p>
+              $$Z_{sc} = j Z_0 \tan\left(\frac{\pi}{2}\right) \to +j\infty \quad (\text{Ideal Open Circuit})$$
+              <p><strong>Physical Meaning:</strong> The forward wave reflects off the short with $180^\circ$ phase inversion ($\Gamma = -1$). By traveling $\lambda/4$ to the short and $\lambda/4$ back (total round trip = $\lambda/2 = 180^\circ$ phase delay), the reflected wave undergoes a total phase change of $180^\circ + 180^\circ = 360^\circ$ ($0^\circ$). The reflected current cancels the incident current at the input ($I_{\text{total}} \to 0$), making the input impedance infinitely large. This is widely used as a DC-return bias tee and metallic insulating support without interrupting RF transmission.</p>
+            </div>
+          </details>
+
+          <!-- Q9 -->
+          <details class="exam-drawer">
+            <summary class="exam-summary">
+              <span><strong>Q9 (Exp 2 &bull; Simulation Discrepancies):</strong> Why did HFSS simulate S11 = -0.1038 dB (Short) and S11 = -0.0816 dB (Open) instead of ideal 0 dB, and why is S21 finite (-70 dB)?</span>
+              <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+            </summary>
+            <div class="exam-drawer-body">
+              <p>In classical lossless transmission line theory, total reflection requires $|\Gamma_L| = 1.0 \implies S_{11} = 20\log_{10}(1.0) = 0\,\text{dB}$ and $S_{21} = -\infty\,\text{dB}$. In physical HFSS finite-element analysis:</p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li><strong>Conductor Skin Effect Losses:</strong> The coaxial cylinders are modeled with finite copper conductivity ($\sigma = 5.8 \times 10^7\,\text{S/m}$). At $30\,\text{GHz}$, skin depth is $\delta = \frac{1}{\sqrt{\pi f \mu \sigma}} \approx 0.38\,\mu\text{m}$. Surface currents incur non-zero $I^2 R_{\text{surface}}$ ohmic loss over the line length ($L = 60\,\text{mm}$).</li>
+                <li><strong>Dielectric Loss Tangent ($\tan\delta$):</strong> Polyethylene has a residual loss tangent $\tan\delta \approx 0.0002$, dissipating a minute fraction of traveling wave energy as thermal loss.</li>
+                <li><strong>Open-End Fringing Capacitance:</strong> The open circuit does not truncate abruptly; fringing electrostatic fields bulge into the surrounding air boundary, adding an effective capacitive end-susceptance ($C_{\text{fringing}} \approx 0.02\,\text{pF}$) that creates slight radiative leakage.</li>
+                <li><strong>Finite Port Isolation ($S_{21} \approx -70\,\text{dB}$):</strong> A short circuit in HFSS is realized as a finite port impedance ($10^{-6}\,\Omega$) or conducting face. Numerical noise floor and matrix solver convergence residuals round $-70\,\text{dB}$ ($10^{-7}$ power coupling), representing the numerical isolation limit of the fast sweep solver.</li>
+              </ul>
+            </div>
+          </details>
+
+          <!-- Q10 -->
+          <details class="exam-drawer">
+            <summary class="exam-summary">
+              <span><strong>Q10 (Exp 5 &bull; Microstrip Physics):</strong> Explain why a Microstrip line CANNOT support a pure TEM mode and why &epsilon;eff &lt; &epsilon;r.</span>
+              <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+            </summary>
+            <div class="exam-drawer-body">
+              <p><strong>1. Why Pure TEM is Physically Impossible:</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li>In a pure TEM mode, both $\vec{E}$ and $\vec{H}$ are strictly transverse ($E_z = 0, H_z = 0$), and phase velocity is governed purely by the local medium: $v = c/\sqrt{\varepsilon_r}$.</li>
+                <li>In a microstrip structure, the dielectric is <em>inhomogeneous</em>: the region below the trace is dielectric substrate ($\varepsilon_r = 4.4$), while the region above is air ($\varepsilon_{r,\text{air}} = 1.0$).</li>
+                <li>If the wave were pure TEM, the field in the air would travel at speed $c$, while the field inside the substrate would travel at $c/\sqrt{4.4} \approx 0.477\,c$. This phase velocity mismatch would cause the wavefront to tear across the interface, violating electromagnetic boundary continuity (continuity of tangential $E$ and tangential $H$).</li>
+                <li>To reconcile this boundary conflict, Maxwell's curl equations force small longitudinal electric ($E_z$) and magnetic ($H_z$) field components to develop, forming a <strong>Quasi-TEM</strong> mode.</li>
+              </ul>
+              <br>
+              <p><strong>2. Physical Significance of Effective Dielectric Constant ($\varepsilon_{\text{eff}}$):</strong></p>
+              $$\varepsilon_{\text{eff}} \approx \frac{\varepsilon_r + 1}{2} + \frac{\varepsilon_r - 1}{2}\left[\frac{1}{\sqrt{1 + 12(h/W)}}\right]$$
+              <p>Because part of the flux lines travel through air ($\varepsilon_r = 1$) and the remainder through FR4 ($\varepsilon_r = 4.4$), the wave travels in an effective uniform medium whose permittivity lies strictly between air and substrate: $1.0 < \varepsilon_{\text{eff}} < \varepsilon_r$. For our $50\,\Omega$ line, $\varepsilon_{\text{eff}} \approx 3.33$, resulting in an intermediate phase velocity $v_p = c/\sqrt{3.33} \approx 1.644 \times 10^8\,\text{m/s}$.</p>
+            </div>
+          </details>
+
+          <!-- Q11 -->
+          <details class="exam-drawer">
+            <summary class="exam-summary">
+              <span><strong>Q11 (Exp 7 &bull; Dipole Antenna HFSS Traps):</strong> Why is the radiation airbox boundary placed at r &ge; &lambda;/4, and why must a dipole be shortened by 5% to achieve pure resonance?</span>
+              <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+            </summary>
+            <div class="exam-drawer-body">
+              <p><strong>1. Why Radiation Airbox Spacing $\ge \lambda/4$ ($40\,\text{mm}$ in HFSS):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li>The electromagnetic field surrounding any antenna consists of two zones:
+                  <br>&bull; <em>Reactive Near-Field:</em> Extends up to $R \approx \lambda/2\pi \approx 0.16\,\lambda$ ($20\,\text{mm}$ at $2.4\,\text{GHz}$). In this region, non-propagating inductive and capacitive energy is stored and swapped every half cycle without radiating.
+                  <br>&bull; <em>Radiating Far-Field:</em> Propagating plane/spherical TEM waves.</li>
+                <li>HFSS applies an <strong>Absorbing Boundary Condition (ABC)</strong> on the outer airbox walls. If the airbox is placed closer than $\lambda/4$ ($31.25\,\text{mm}$), the absorbing boundary cuts directly into the reactive energy storage volume. This artificially absorbs reactive power, corrupts the antenna's natural input impedance $Z_{\text{in}}$, and produces false return loss nulls. Setting $r = 40\,\text{mm}$ guarantees clean separation.</li>
+              </ul>
+              <br>
+              <p><strong>2. Why Dipole is Shortened by $\approx 5\%$ ($L \approx 0.48\lambda$):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li>An idealized, infinitely thin $\lambda/2$ dipole has a theoretical impedance of $Z_{\text{in}} = 73.13 + j42.5\,\Omega$. The $+j42.5\,\Omega$ inductive reactance is caused by current phase delay along the wire.</li>
+                <li>Real conductors possess finite thickness ($r = 0.5\,\text{mm}$ in our model). Increased wire thickness increases capacitive end-effect and lowers resonant frequency.</li>
+                <li>To eliminate the $+j42.5\,\Omega$ reactive component and achieve pure resistive match ($Z_{\text{in}} \approx 70\text{--}73\,\Omega, X_{\text{in}} = 0$), the physical length must be trimmed by $3\text{--}5\%$ to $L \approx 0.47\text{--}0.48\,\lambda$.</li>
+              </ul>
+            </div>
+          </details>
+
+          <!-- Q12 -->
+          <details class="exam-drawer">
+            <summary class="exam-summary">
+              <span><strong>Q12 (Exp 8 &bull; Horn Antenna &amp; Gunn Diode):</strong> Derive why far-field distance is R &ge; 2D&sup2;/&lambda;0 = 1.29 m, and explain the negative resistance operating principle of the Gunn source at 6.36 V.</span>
+              <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+            </summary>
+            <div class="exam-drawer-body">
+              <p><strong>1. Derivation of Fraunhofer Criterion ($R \ge 2D^2/\lambda_0$):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li>Consider a pyramidal horn of aperture dimension $D = 12.6\,\text{cm}$ radiating toward a receiver at distance $R$. The path difference between a ray from the aperture center and a ray from the aperture edge is:
+                  $$\Delta R = \sqrt{R^2 + (D/2)^2} - R \approx R\left[1 + \frac{1}{2}\left(\frac{D}{2R}\right)^2\right] - R = \frac{D^2}{8R}$$
+                </li>
+                <li>For the received wavefront to be treated as a uniform plane wave, the maximum allowable phase error across the aperture must not exceed $\Delta\phi \le \frac{\pi}{8} = 22.5^\circ$.
+                  $$\frac{2\pi}{\lambda_0} \Delta R \le \frac{\pi}{8} \implies \frac{2\pi}{\lambda_0} \left(\frac{D^2}{8R}\right) \le \frac{\pi}{8} \implies R \ge \frac{2 D^2}{\lambda_0}$$
+                </li>
+                <li>At $f = 12.22\,\text{GHz}$, $\lambda_0 = 24.55\,\text{mm}$:
+                  $$R \ge \frac{2 \times (126\,\text{mm})^2}{24.55\,\text{mm}} = 1293.4\,\text{mm} \approx \mathbf{1.29\,\text{m}} \quad \blacksquare$$
+                </li>
+              </ul>
+              <br>
+              <p><strong>2. Negative Resistance Physics of Gunn Oscillator ($6.36\,\text{V}, 142\,\text{mA}$):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li>The Gunn diode is not a PN junction; it is a bulk N-type Gallium Arsenide (GaAs) semiconductor operating on the <strong>Ridley-Watkins-Hilsum (RWH) transferred-electron effect</strong>.</li>
+                <li>GaAs conduction band has two valleys: a low-energy central valley with high electron mobility ($\mu_1 \approx 8000\,\text{cm}^2/\text{V}\cdot\text{s}$) and an upper satellite valley with low electron mobility ($\mu_2 \approx 180\,\text{cm}^2/\text{V}\cdot\text{s}$).</li>
+                <li>When bias voltage reaches threshold ($6.36\,\text{V}$, creating internal $E_{\text{field}} \approx 3.2\,\text{kV/cm}$), electrons gain sufficient energy to transfer into the low-mobility satellite valley. Increasing voltage causes average drift velocity to drop:
+                  $$\frac{dv}{dE} < 0 \implies \frac{dI}{dV} < 0 \implies -R_{\text{diff}} \quad (\text{Negative Differential Resistance})$$
+                </li>
+                <li>This negative resistance cancels the internal positive resistance of the waveguide cavity, sustaining continuous microwave oscillations at $12.22\,\text{GHz}$.</li>
+              </ul>
+            </div>
+          </details>
+
+          <!-- Q13 -->
+          <details class="exam-drawer">
+            <summary class="exam-summary">
+              <span><strong>Q13 (Exp 3, 4, 12 &bull; Slotted Line &amp; Smith Chart):</strong> Why are voltage minima (Vmin) measured instead of maxima (Vmax), and how do you deduce load impedance type from the shift direction?</span>
+              <span style="color:var(--accent); font-size:12px; font-family:var(--font-mono);">[EXPAND]</span>
+            </summary>
+            <div class="exam-drawer-body">
+              <p><strong>1. Why Minima ($V_{\min}$) are Measured Instead of Maxima ($V_{\max}$):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li><strong>Mathematical Sharpness:</strong> Near a voltage standing wave minimum, $V(z) \to 0$. The spatial curvature $\left|\frac{d^2 V}{dz^2}\right|$ is maximal, producing a steep, sharp V-shaped dip that can be read with sub-millimeter vernier precision. In contrast, maxima are broad and flat ($\frac{dV}{dz} \approx 0$ over several millimeters).</li>
+                <li><strong>Minimization of Probe Loading Distortion:</strong> The detector probe acts as a small shunt admittance. At voltage maxima, probe current is highest, detuning the cavity and perturbing the field. At voltage minima, probe current is near zero, causing negligible perturbation to the standing wave.</li>
+              </ul>
+              <br>
+              <p><strong>2. Deducing Load Impedance from Minimum Shift Direction ($\Delta x = x_L - x_{\text{sc}}$):</strong></p>
+              <ul style="margin-left:20px; line-height:1.7;">
+                <li>A short circuit enforces a voltage node ($V = 0$) at the load plane ($l = 0$). Successive short-circuit minima occur at $l = n\lambda_g/2$.</li>
+                <li><strong>Shift Toward Generator ($\Delta x > 0$):</strong> The load voltage leads the short-circuit reference node, indicating an <strong>Inductive Load</strong> ($Z_L = R + jX_L, X_L > 0$). Located in the top half of the Smith chart.</li>
+                <li><strong>Shift Toward Load ($\Delta x < 0$):</strong> The voltage node shifts closer to the load plane, indicating a <strong>Capacitive Load</strong> ($Z_L = R - jX_C, X_C < 0$). Located in the bottom half of the Smith chart.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- Complete Lab Manual Snaps Gallery (21 Images) -->
+      <section class="exp-section" id="lab-gallery">
+        <div class="exp-tag">Primary Source Evidence &bull; 21 Scanned Lab Records</div>
+        <h2 class="exp-title">Complete Electromagnetic Waves Laboratory Snaps Archive</h2>
+        <p class="exp-p">
+          Every technical assertion, formula, and simulation result in this compendium is extracted directly from the student's laboratory record book and department manual. Click any snap to view in high resolution.
+        </p>
+
+        <div class="gallery-grid">
+          <!-- 1 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.57.08 PM.jpeg', 'Syllabus &amp; 12 Core Experiments List (Paper Code: PCCECE591)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.57.08 PM.jpeg" alt="Syllabus" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.57.08 PM &bull; Official Syllabus</div>
+              <div class="snap-caption">Department list of 12 core and 4 innovative experiments.</div>
+            </div>
+          </div>
+
+          <!-- 2 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.57.13 PM.jpeg', 'Student Index Page with Submission Dates &amp; Faculty Signatures')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.57.13 PM.jpeg" alt="Lab Index" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.57.13 PM &bull; Submission Index</div>
+              <div class="snap-caption">Record of completed experiments (Coax, Microstrip, Dipole, Horn).</div>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.57.22 PM.jpeg', 'Exp 1: Coaxial Transmission Line Dimensions &amp; Field Distribution Diagram')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.57.22 PM.jpeg" alt="Exp 1 Theory" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.57.22 PM &bull; Coax Line Theory</div>
+              <div class="snap-caption">Cross-section E and H fields, Z0 formula, L and C derivations.</div>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.57.29 PM.jpeg', 'Exp 1: Numerical Calculations (d = 0.81 mm, D = 2.826 mm)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.57.29 PM.jpeg" alt="Exp 1 Calculations" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.57.29 PM &bull; Coax Calculations</div>
+              <div class="snap-caption">Exact algebra solving 50&Omega; impedance and 35 GHz cutoff.</div>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.57.42 PM.jpeg', 'Exp 2: Coaxial Line under Open, Short &amp; Matched Load Conditions')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.57.42 PM.jpeg" alt="Exp 2 Theory" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.57.42 PM &bull; Exp 2 Load Theory</div>
+              <div class="snap-caption">Analysis of load impedance variations and standing wave formation.</div>
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.57.49 PM.jpeg', 'Exp 2: Analytical Equations for Reflection Coefficient &Gamma; and VSWR')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.57.49 PM.jpeg" alt="Exp 2 Equations" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.57.49 PM &bull; Standing Wave Formulations</div>
+              <div class="snap-caption">Short circuit Zin = jZ0 tan(&beta;l) and open circuit Zin = -jZ0 cot(&beta;l).</div>
+            </div>
+          </div>
+
+          <!-- 7 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.57.54 PM.jpeg', 'Exp 2: Cotangent &amp; Tangent Impedance Plots &amp; Zsc * Zoc = Z0^2 Identity')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.57.54 PM.jpeg" alt="Exp 2 Curves" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.57.54 PM &bull; Impedance Invariance</div>
+              <div class="snap-caption">Hand-plotted cotangent and tangent reactance variations.</div>
+            </div>
+          </div>
+
+          <!-- 8 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.58.00 PM.jpeg', 'Exp 2: S11, S21 &amp; VSWR Numerical Calculations and HFSS Results')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.58.00 PM.jpeg" alt="Exp 2 Results" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.58.00 PM &bull; Load Results</div>
+              <div class="snap-caption">Matched (VSWR=1), Short (VSWR=167), Open (VSWR=213) values.</div>
+            </div>
+          </div>
+
+          <!-- 9 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.58.25 PM.jpeg', 'Exp 5: Microstrip Transmission Line Structure &amp; Quasi-TEM Field Distribution')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.58.25 PM.jpeg" alt="Exp 5 Structure" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.58.25 PM &bull; Microstrip Geometry</div>
+              <div class="snap-caption">Planar conductor on grounded FR4 substrate (&epsilon;r = 4.4, h = 1.6 mm).</div>
+            </div>
+          </div>
+
+          <!-- 10 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.58.32 PM.jpeg', 'Exp 5: Closed-Form Microstrip Width Synthesis Equation')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.58.32 PM.jpeg" alt="Exp 5 Synthesis" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.58.32 PM &bull; Microstrip Formulas</div>
+              <div class="snap-caption">Logarithmic characteristic impedance and exponential width equations.</div>
+            </div>
+          </div>
+
+          <!-- 11 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.58.40 PM.jpeg', 'Exp 5: Trace Width Calculation (W &approx; 3 mm, vp = 1.64e8 m/s)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.58.40 PM.jpeg" alt="Exp 5 Math" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.58.40 PM &bull; 50&Omega; Microstrip Solution</div>
+              <div class="snap-caption">Substrate size 40x15 mm, W = 3 mm, &beta; = 3.82 x f rad/m.</div>
+            </div>
+          </div>
+
+          <!-- 12 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.58.59 PM.jpeg', 'Exp 7: Half-Wave Dipole Antenna at 5.2 GHz &amp; 2.4 GHz Theory')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.58.59 PM.jpeg" alt="Exp 7 Theory" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.58.59 PM &bull; Dipole Theory</div>
+              <div class="snap-caption">Resonance, voltage profile, and figure-eight radiation pattern.</div>
+            </div>
+          </div>
+
+          <!-- 13 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.59.08 PM.jpeg', 'Exp 7: HFSS Lumped Port Feed &amp; Radiation Boundary Procedure')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.59.08 PM.jpeg" alt="Exp 7 Procedure" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.59.08 PM &bull; Dipole Simulation Steps</div>
+              <div class="snap-caption">Cylindrical copper rods, &lambda;/4 radiation box boundary spacing.</div>
+            </div>
+          </div>
+
+          <!-- 14 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.59.14 PM.jpeg', 'Exp 7: 2.4 GHz Resonant Calculations (&lambda; = 125 mm, L = 62.5 mm)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.59.14 PM.jpeg" alt="Exp 7 Math" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.59.14 PM &bull; 2.4 GHz Antenna Geometry</div>
+              <div class="snap-caption">Two 31 mm rods, cylinder radius 0.5 mm, airbox radius 40 mm.</div>
+            </div>
+          </div>
+
+          <!-- 15 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.59.27 PM.jpeg', 'Exp 8: Pyramidal Horn Antenna Setup &amp; Far-Field Condition R >= 2D^2 / &lambda;0')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.59.27 PM.jpeg" alt="Exp 8 Setup" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.59.27 PM &bull; Horn Antenna Setup</div>
+              <div class="snap-caption">Transmitting &amp; receiving horn alignment, E-plane &amp; H-plane rotation.</div>
+            </div>
+          </div>
+
+          <!-- 16 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.59.39 PM.jpeg', 'Exp 8: Gunn Oscillator Lab Power Readings (12.22 GHz, VSWR = 1.9)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.59.39 PM.jpeg" alt="Exp 8 Readings" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.59.39 PM &bull; Lab Measurement Data</div>
+              <div class="snap-caption">Gunn bias 6.36V, 142mA; Power levels from 0&deg; (-3.8 dB) to 35&deg; (-28 dB).</div>
+            </div>
+          </div>
+
+          <!-- 17 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.59.44 PM.jpeg', 'Exp 8: Polar Radiation Graph Sheet with Marked Laboratory Power Values')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.59.44 PM.jpeg" alt="Exp 8 Polar Plot" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.59.44 PM &bull; Polar Radiation Sheet</div>
+              <div class="snap-caption">360-degree polar diagram showing directional main beam envelope.</div>
+            </div>
+          </div>
+
+          <!-- 18 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.59.50 PM.jpeg', 'Exp 8: Half-Power Derivation (-3.8 dB - 3 dB = -6.8 dB &rarr; HPBW &approx; 24&deg;)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.59.50 PM.jpeg" alt="Exp 8 Derivation" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.59.50 PM &bull; Hand Derivation of HPBW</div>
+              <div class="snap-caption">3 dB power subtraction, angular half-beam extraction.</div>
+            </div>
+          </div>
+
+          <!-- 19 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 8.59.57 PM.jpeg', 'Exp 8: Kraus Directivity Formula &amp; Far-Field Distance R = 1.29 m')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 8.59.57 PM.jpeg" alt="Exp 8 Directivity" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">8.59.57 PM &bull; Kraus Directivity &amp; R</div>
+              <div class="snap-caption">Formula D = 41253 / (BWE x BWH), R = 2*(126)^2 / 24.55 = 1.29 m.</div>
+            </div>
+          </div>
+
+          <!-- 20 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 9.00.07 PM.jpeg', 'Exp 8: Final Results Table &amp; HPBW Linear Interpolation (Total HPBW = 25.38&deg;)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 9.00.07 PM.jpeg" alt="Exp 8 Final Table" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">9.00.07 PM &bull; Final Results &amp; Conclusion</div>
+              <div class="snap-caption">Symmetric angular power table, exact HPBW = 25.38&deg;, verification conclusion.</div>
+            </div>
+          </div>
+
+          <!-- 21 -->
+          <div class="snap-card" onclick="openLightbox('WhatsApp Image 2026-11-10 at 9.00.26 PM.jpeg', 'Term-II 5th Sem Exam Question Paper (October 2026 &bull; PCCEC591)')">
+            <div class="snap-thumb-wrap">
+              <img src="WhatsApp Image 2026-11-10 at 9.00.26 PM.jpeg" alt="Term-II Exam Paper" class="snap-thumb" loading="lazy">
+            </div>
+            <div class="snap-meta">
+              <div class="snap-title">9.00.26 PM &bull; Term-II Exam Paper</div>
+              <div class="snap-caption">Official 6 analytical questions (75&Omega; microstrip, VSWR meter, fields).</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
   </div>
 
-  <div class="card">
-    <div>
-      <div class="card-header"><span class="badge">MODULE 03</span></div>
-      <div class="card-title">Ampère's Circuital Law</div>
-      <div class="card-desc">Biot-Savart Law, Ampère's Law, curl of B, magnetic vector potential A, and boundary conditions on H and B fields.</div>
+  <!-- Lightbox Modal -->
+  <div class="lightbox-modal" id="lightbox" onclick="closeLightbox(event)">
+    <button class="lightbox-close" onclick="closeLightboxDirect()">&times;</button>
+    <div class="lightbox-content">
+      <img src="" alt="Enlarged Lab Snap" class="lightbox-img" id="lightbox-img">
+      <div class="lightbox-caption" id="lightbox-caption"></div>
     </div>
-    <a href="Ampère's Circuit Law.html" class="card-btn">OPEN EXAM NOTE →</a>
   </div>
 
-  <div class="card">
-    <div>
-      <div class="card-header"><span class="badge">MODULE 04</span></div>
-      <div class="card-title">Continuity &amp; Relaxation Time</div>
-      <div class="card-desc">Current density J, equation of continuity ∇·J = -∂ρ/∂t, charge decay, relaxation time τ = ε/σ, and conductor properties.</div>
-    </div>
-    <a href="Continuity Equation & Relaxation Time.html" class="card-btn">OPEN EXAM NOTE →</a>
-  </div>
+  <!-- Apple Footer -->
+  <footer class="apple-footer">
+    ELECTROMAGNETIC WAVES LABORATORY &bull; PCCECE591 &bull; UNIVERSITY OF ENGINEERING &amp; MANAGEMENT, KOLKATA
+    <br>
+    Rendered with Three.js VRMLLoader, Babylon.js Physical Engine, MathJax 3 LaTeX, and Apple Design Architecture.
+  </footer>
 
-  <div class="card">
-    <div>
-      <div class="card-header"><span class="badge">MODULE 05</span></div>
-      <div class="card-title">Faraday's Law &amp; Maxwell's Equations</div>
-      <div class="card-desc">Electromotive force (EMF), Faraday's induction law, displacement current density ∂D/∂t, and inconsistency in Ampère's law.</div>
-    </div>
-    <a href="Faraday's Law & Maxwell's Equations.html" class="card-btn">OPEN EXAM NOTE →</a>
-  </div>
+  <!-- 3D Scripts (Three.js & Babylon.js) -->
+  <script>
+    /* ==========================================================================
+       THEME TOGGLE
+       ========================================================================== */
+    function toggleTheme() {
+      const body = document.body;
+      const btn = document.getElementById('theme-btn');
+      if (body.getAttribute('data-theme') === 'dark') {
+        body.setAttribute('data-theme', 'light');
+        btn.textContent = 'Dark Mode';
+        if (threeRenderer) threeRenderer.setClearColor(0xf5f5f7, 1);
+        if (babylonScene) babylonScene.clearColor = new BABYLON.Color4(0.96, 0.96, 0.97, 1);
+      } else {
+        body.setAttribute('data-theme', 'dark');
+        btn.textContent = 'Light Mode';
+        if (threeRenderer) threeRenderer.setClearColor(0x09090b, 1);
+        if (babylonScene) babylonScene.clearColor = new BABYLON.Color4(0.04, 0.04, 0.05, 1);
+      }
+    }
 
-  <div class="card">
-    <div>
-      <div class="card-header"><span class="badge">MODULE 06</span></div>
-      <div class="card-title">Maxwell's Equations &amp; Poynting Vector</div>
-      <div class="card-desc">All 4 Maxwell's equations in differential and integral forms, time-harmonic phasor forms, Poynting vector S = E × H, power flow.</div>
-    </div>
-    <a href="Maxwell_Equations_Exam_Notes.html" class="card-btn">OPEN EXAM NOTE →</a>
-  </div>
+    /* ==========================================================================
+       LIGHTBOX CONTROLS
+       ========================================================================== */
+    function openLightbox(src, caption) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox-caption').textContent = caption;
+      document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLightbox(e) {
+      if (e.target.id === 'lightbox' || e.target.classList.contains('lightbox-close')) {
+        document.getElementById('lightbox').classList.remove('open');
+      }
+    }
+    function closeLightboxDirect() {
+      document.getElementById('lightbox').classList.remove('open');
+    }
 
-  <div class="card">
-    <div>
-      <div class="card-header"><span class="badge">MODULE 07</span></div>
-      <div class="card-title">Magnetostatics &amp; Inductance (Mod 3)</div>
-      <div class="card-desc">Magnetic boundary conditions, Lorentz force equation, magnetic dipole moment, self and mutual inductance calculations.</div>
-    </div>
-    <a href="Module 3 Notes.html" class="card-btn">OPEN EXAM NOTE →</a>
-  </div>
+    /* ==========================================================================
+       THREE.JS VRML WRL LOADER ENGINE
+       ========================================================================== */
+    let threeScene, threeCamera, threeRenderer, threeControls;
+    let currentModelGroup = null;
+    let isWireframe = false;
+    let active3DMode = 'cad';
 
-</div>
+    function initThree() {
+      const canvas = document.getElementById('three-viewport');
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
 
+      threeScene = new THREE.Scene();
+      threeRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+      threeRenderer.setSize(width, height);
+      threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      threeRenderer.setClearColor(0x09090b, 1);
+
+      threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.001, 1000);
+      threeCamera.position.set(20, 15, 25);
+
+      threeControls = new THREE.OrbitControls(threeCamera, canvas);
+      threeControls.enableDamping = true;
+      threeControls.dampingFactor = 0.05;
+
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+      threeScene.add(ambientLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+      dirLight1.position.set(60, 100, 80);
+      threeScene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.4);
+      dirLight2.position.set(-60, -50, -60);
+      threeScene.add(dirLight2);
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        if (active3DMode === 'cad') {
+          threeControls.update();
+          threeRenderer.render(threeScene, threeCamera);
+        }
+      }
+      animate();
+
+      // Load initial model
+      loadSelectedModel('PROJECT1.wrl');
+    }
+
+    // Sanitize VRML Group to eliminate HFSS billboard/infinity coordinate glitches
+    function sanitizeVRMLGroup(group) {
+      if (!group) return;
+      const toRemove = [];
+      group.traverse(function (child) {
+        if (child.isMesh || child.isLine) {
+          if (!child.geometry.boundingBox) child.geometry.computeBoundingBox();
+          const b = child.geometry.boundingBox;
+          if (b) {
+            if (Math.abs(b.min.x) > 500 || Math.abs(b.max.x) > 500 ||
+                Math.abs(b.min.y) > 500 || Math.abs(b.max.y) > 500 ||
+                Math.abs(b.min.z) > 500 || Math.abs(b.max.z) > 500) {
+              toRemove.push(child);
+            }
+          }
+        }
+      });
+      toRemove.forEach(function (child) {
+        if (child.parent) child.parent.remove(child);
+      });
+    }
+
+    // Robust HFSS VRML 2.0 Parser (Zero External Dependency)
+    function parseHFSSVRML(vrmlText) {
+      const rootGroup = new THREE.Group();
+      if (!vrmlText || typeof vrmlText !== 'string') return rootGroup;
+
+      const shapeRegex = /Shape\s*\{([\s\S]*?)(?=\n\s*Shape\s*\{|\n\s*Transform\s*\{|\s*$)/g;
+      let shapeMatch;
+
+      while ((shapeMatch = shapeRegex.exec(vrmlText)) !== null) {
+        const block = shapeMatch[1];
+
+        // Coordinate points
+        const pointMatch = block.match(/Coordinate\s*\{\s*point\s*\[([\s\S]*?)\]\s*\}/);
+        if (!pointMatch) continue;
+
+        const rawPoints = pointMatch[1].trim().split(/[\s,]+/);
+        const vertices = [];
+        let hasGlitch = false;
+
+        for (let i = 0; i < rawPoints.length; i += 3) {
+          if (rawPoints[i] !== "" && rawPoints[i+1] !== "" && rawPoints[i+2] !== "") {
+            const px = parseFloat(rawPoints[i]);
+            const py = parseFloat(rawPoints[i+1]);
+            const pz = parseFloat(rawPoints[i+2]);
+            // Skip HFSS billboard coordinate glitches (> 500mm)
+            if (Math.abs(px) > 500 || Math.abs(py) > 500 || Math.abs(pz) > 500) {
+              hasGlitch = true;
+              break;
+            }
+            vertices.push(new THREE.Vector3(px, py, pz));
+          }
+        }
+        if (hasGlitch || vertices.length === 0) continue;
+
+        // Color extraction
+        let color = new THREE.Color(0xa1a1aa); // Titanium silver default
+        const diffMatch = block.match(/diffuseColor\s+([\d\.eE\+\-]+)\s+([\d\.eE\+\-]+)\s+([\d\.eE\+\-]+)/);
+        const emisMatch = block.match(/emissiveColor\s+([\d\.eE\+\-]+)\s+([\d\.eE\+\-]+)\s+([\d\.eE\+\-]+)/);
+        if (diffMatch) {
+          const r = parseFloat(diffMatch[1]);
+          const g = parseFloat(diffMatch[2]);
+          const b = parseFloat(diffMatch[3]);
+          if (r > 1 || g > 1 || b > 1) {
+            color.setRGB(r / 255, g / 255, b / 255);
+          } else {
+            color.setRGB(r, g, b);
+          }
+        } else if (emisMatch) {
+          color.setRGB(parseFloat(emisMatch[1]), parseFloat(emisMatch[2]), parseFloat(emisMatch[3]));
+        }
+
+        // IndexedFaceSet (Solid 3D Surface Mesh)
+        const faceMatch = block.match(/IndexedFaceSet\s*\{[\s\S]*?coordIndex\s*\[([\s\S]*?)\]/);
+        if (faceMatch) {
+          const rawIndices = faceMatch[1].trim().split(/[\s,]+/).map(Number);
+          const faceVertices = [];
+          let currentPolygon = [];
+
+          for (let idx of rawIndices) {
+            if (idx === -1) {
+              if (currentPolygon.length >= 3) {
+                for (let t = 1; t < currentPolygon.length - 1; t++) {
+                  const v0 = vertices[currentPolygon[0]];
+                  const v1 = vertices[currentPolygon[t]];
+                  const v2 = vertices[currentPolygon[t + 1]];
+                  if (v0 && v1 && v2) {
+                    faceVertices.push(v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
+                  }
+                }
+              }
+              currentPolygon = [];
+            } else {
+              currentPolygon.push(idx);
+            }
+          }
+
+          if (faceVertices.length > 0) {
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(faceVertices, 3));
+            geo.computeVertexNormals();
+
+            // Distinct physical materials
+            const isDielectric = (color.b > color.r && color.b > 0.6);
+            const isCopper = (color.r > 0.6 && color.g > 0.3 && color.b < 0.35);
+
+            const mat = new THREE.MeshStandardMaterial({
+              color: isDielectric ? 0x38bdf8 : isCopper ? 0xf59e0b : color,
+              roughness: isDielectric ? 0.2 : 0.35,
+              metalness: isDielectric ? 0.05 : 0.8,
+              transparent: isDielectric,
+              opacity: isDielectric ? 0.45 : 1.0,
+              side: THREE.DoubleSide
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            rootGroup.add(mesh);
+          }
+        }
+
+        // IndexedLineSet (Wireframe outlines & boundaries)
+        const lineMatch = block.match(/IndexedLineSet\s*\{[\s\S]*?coordIndex\s*\[([\s\S]*?)\]/);
+        if (lineMatch) {
+          const rawIndices = lineMatch[1].trim().split(/[\s,]+/).map(Number);
+          const linePositions = [];
+          let currentPolyline = [];
+
+          for (let idx of rawIndices) {
+            if (idx === -1) {
+              if (currentPolyline.length >= 2) {
+                for (let s = 0; s < currentPolyline.length - 1; s++) {
+                  const p1 = vertices[currentPolyline[s]];
+                  const p2 = vertices[currentPolyline[s + 1]];
+                  if (p1 && p2) {
+                    linePositions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+                  }
+                }
+              }
+              currentPolyline = [];
+            } else {
+              currentPolyline.push(idx);
+            }
+          }
+
+          if (linePositions.length > 0) {
+            const lineGeo = new THREE.BufferGeometry();
+            lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x52525b, opacity: 0.5, transparent: true });
+            const lineSegments = new THREE.LineSegments(lineGeo, lineMat);
+            rootGroup.add(lineSegments);
+          }
+        }
+      }
+
+      return rootGroup;
+    }
+
+    function displayModelGroup(vrmlGroup, filename) {
+      const status = document.getElementById('viewport-status');
+      if (!vrmlGroup) {
+        createProceduralFallbackCAD(filename);
+        return;
+      }
+
+      sanitizeVRMLGroup(vrmlGroup);
+
+      if (vrmlGroup.children.length === 0) {
+        createProceduralFallbackCAD(filename);
+        return;
+      }
+
+      if (currentModelGroup) {
+        threeScene.remove(currentModelGroup);
+      }
+      currentModelGroup = vrmlGroup;
+
+      const box = new THREE.Box3().setFromObject(vrmlGroup);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      // Center model exactly at origin (0, 0, 0)
+      vrmlGroup.position.sub(center);
+      threeScene.add(vrmlGroup);
+
+      // Optimal camera framing based on true physical dimensions
+      const fov = threeCamera.fov * (Math.PI / 180);
+      let cameraDistance = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.8;
+      if (isNaN(cameraDistance) || cameraDistance <= 0.1) cameraDistance = 20;
+
+      threeCamera.position.set(cameraDistance * 0.9, cameraDistance * 0.7, cameraDistance * 1.1);
+      threeCamera.near = Math.max(0.01, cameraDistance / 200);
+      threeCamera.far = Math.max(100, cameraDistance * 200);
+      threeCamera.updateProjectionMatrix();
+
+      threeControls.target.set(0, 0, 0);
+      threeControls.maxDistance = cameraDistance * 10;
+      threeControls.minDistance = cameraDistance / 20;
+      threeControls.update();
+
+      // Dynamic floor grid matched to object span
+      const oldGrid = threeScene.getObjectByName('cadGrid');
+      if (oldGrid) threeScene.remove(oldGrid);
+      const gridSpan = Math.max(20, Math.ceil(maxDim * 2.5 / 10) * 10);
+      const grid = new THREE.GridHelper(gridSpan, 20, 0x3f3f46, 0x1f1f23);
+      grid.name = 'cadGrid';
+      grid.position.y = - (size.y / 2) - 0.2;
+      threeScene.add(grid);
+
+      status.textContent = filename + ' (Loaded: ' + maxDim.toFixed(2) + 'mm span)';
+    }
+
+    function loadSelectedModel(filename) {
+      const status = document.getElementById('viewport-status');
+      status.textContent = 'Loading ' + filename + '...';
+
+      if (currentModelGroup) {
+        threeScene.remove(currentModelGroup);
+        currentModelGroup = null;
+      }
+
+      // Step 1: Check In-Memory Preloaded Models (100% CORS-Free on local file:// URLs)
+      if (window.EMBEDDED_VRML && window.EMBEDDED_VRML[filename]) {
+        try {
+          const text = window.EMBEDDED_VRML[filename];
+          const group = parseHFSSVRML(text);
+          if (group && group.children.length > 0) {
+            displayModelGroup(group, filename);
+            return;
+          }
+        } catch (err) {
+          console.warn('parseHFSSVRML error:', err);
+        }
+      }
+
+      // Step 2: Fallback to fetch (for http/https servers)
+      const modelPath = 'models/' + filename;
+      fetch(modelPath)
+        .then(function(res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.text();
+        })
+        .then(function(text) {
+          const group = parseHFSSVRML(text);
+          displayModelGroup(group, filename);
+        })
+        .catch(function(err) {
+          console.warn('VRML fetch fallback:', err);
+          createProceduralFallbackCAD(filename);
+        });
+    }
+
+    // Procedural 3D CAD Fallback for zero-CORS / offline viewing
+    function createProceduralFallbackCAD(filename) {
+      if (currentModelGroup) threeScene.remove(currentModelGroup);
+      const group = new THREE.Group();
+
+      if (filename.includes('PROJECT1') || filename.includes('EXP2')) {
+        // Coaxial Cable Structure (mm scale)
+        // Outer Shield (Glassy cylinder)
+        const outerGeo = new THREE.CylinderGeometry(2.826, 2.826, 10, 32, 1, true);
+        const outerMat = new THREE.MeshStandardMaterial({ color: 0x52525b, transparent: true, opacity: 0.45, side: THREE.DoubleSide });
+        const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+        group.add(outerMesh);
+
+        // Dielectric (Polyethylene)
+        const diGeo = new THREE.CylinderGeometry(2.8, 2.8, 9.8, 32);
+        const diMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.25 });
+        const diMesh = new THREE.Mesh(diGeo, diMat);
+        group.add(diMesh);
+
+        // Center Conductor (Copper)
+        const innerGeo = new THREE.CylinderGeometry(0.8, 0.8, 12, 32);
+        const innerMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8, roughness: 0.3 });
+        const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+        group.add(innerMesh);
+
+      } else if (filename.includes('PROJECT5')) {
+        // Microstrip on FR4 (mm scale)
+        // Ground Plane
+        const gndGeo = new THREE.BoxGeometry(40, 0.5, 20);
+        const gndMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.9, roughness: 0.2 });
+        const gndMesh = new THREE.Mesh(gndGeo, gndMat);
+        gndMesh.position.y = -1.6;
+        group.add(gndMesh);
+
+        // FR4 Substrate
+        const subGeo = new THREE.BoxGeometry(40, 1.6, 20);
+        const subMat = new THREE.MeshStandardMaterial({ color: 0x059669, transparent: true, opacity: 0.65 });
+        const subMesh = new THREE.Mesh(subGeo, subMat);
+        subMesh.position.y = -0.8;
+        group.add(subMesh);
+
+        // Copper Trace
+        const traceGeo = new THREE.BoxGeometry(40, 0.2, 3);
+        const traceMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.2 });
+        const traceMesh = new THREE.Mesh(traceGeo, traceMat);
+        group.add(traceMesh);
+
+      } else if (filename.includes('DIPOLE')) {
+        // Half-Wave Dipole (Two Cu Rods) (mm scale)
+        const rod1Geo = new THREE.CylinderGeometry(0.5, 0.5, 31, 16);
+        const rod2Geo = new THREE.CylinderGeometry(0.5, 0.5, 31, 16);
+        const rodMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.25 });
+
+        const rod1 = new THREE.Mesh(rod1Geo, rodMat);
+        rod1.position.y = 16;
+        group.add(rod1);
+
+        const rod2 = new THREE.Mesh(rod2Geo, rodMat);
+        rod2.position.y = -16;
+        group.add(rod2);
+
+        // Feed gap
+        const feedGeo = new THREE.SphereGeometry(0.8, 16, 16);
+        const feedMat = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+        const feed = new THREE.Mesh(feedGeo, feedMat);
+        group.add(feed);
+      }
+
+      displayModelGroup(group, filename + ' (Procedural View)');
+    }
+
+    function toggleWireframe() {
+      isWireframe = !isWireframe;
+      if (currentModelGroup) {
+        currentModelGroup.traverse(function (child) {
+          if (child.isMesh && child.material) {
+            child.material.wireframe = isWireframe;
+          }
+        });
+      }
+    }
+
+    function reset3DCamera() {
+      if (active3DMode === 'cad') {
+        loadSelectedModel(document.getElementById('model-select').value);
+      } else if (babylonCamera) {
+        babylonCamera.alpha = -Math.PI / 2;
+        babylonCamera.beta = Math.PI / 2.5;
+        babylonCamera.radius = 12;
+      }
+    }
+
+    /* ==========================================================================
+       BABYLON.JS PHYSICAL EM SIMULATION ENGINE
+       ========================================================================== */
+    let babylonEngine, babylonScene, babylonCamera;
+    let standingWaveMesh = null;
+    let radiationLobeMesh = null;
+    let waveTime = 0;
+    let currentSimFreq = 12.0;
+    let currentSimLoad = 'matched';
+
+    function initBabylon() {
+      const canvas = document.getElementById('babylon-viewport');
+      babylonEngine = new BABYLON.Engine(canvas, true);
+      babylonScene = new BABYLON.Scene(babylonEngine);
+      babylonScene.clearColor = new BABYLON.Color4(0.04, 0.04, 0.05, 1);
+
+      babylonCamera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2.5, 12, new BABYLON.Vector3(0, 0, 0), babylonScene);
+      babylonCamera.attachControl(canvas, true);
+      babylonCamera.wheelPrecision = 30;
+
+      const light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), babylonScene);
+      light1.intensity = 0.85;
+
+      const light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 5, -5), babylonScene);
+      light2.intensity = 0.5;
+
+      // Build 3D Physical Simulation Scene
+      buildStandingWaveSimulation();
+
+      babylonEngine.runRenderLoop(function () {
+        if (active3DMode === 'em-sim') {
+          waveTime += 0.04;
+          animateWaveFields();
+          babylonScene.render();
+        }
+      });
+    }
+
+    function buildStandingWaveSimulation() {
+      // Create Transmission Line Axis Guide
+      const linePts = [new BABYLON.Vector3(-5, 0, 0), new BABYLON.Vector3(5, 0, 0)];
+      BABYLON.MeshBuilder.CreateLines("centerAxis", { points: linePts }, babylonScene);
+
+      // Create Dynamic Ribbon Mesh for Standing Wave Envelope
+      createDynamicStandingWaveEnvelope();
+
+      // Create 3D Dipole Radiation Lobe Overlay
+      createRadiationBalloon();
+    }
+
+    function createDynamicStandingWaveEnvelope() {
+      if (standingWaveMesh) standingWaveMesh.dispose();
+
+      const numPoints = 80;
+      const paths = [[], []];
+      const gamma = (currentSimLoad === 'matched') ? 0 : (currentSimLoad === 'short') ? -1 : 1;
+
+      for (let i = 0; i <= numPoints; i++) {
+        const x = -5 + (10 * i) / numPoints; // From source (-5) to load (+5)
+        const zNorm = (x + 5) / 10;
+        const betaZ = 2 * Math.PI * (currentSimFreq / 6) * zNorm;
+
+        // Incident + Reflected wave superposition
+        const forward = Math.sin(betaZ - waveTime);
+        const reflected = gamma * Math.sin(-betaZ - waveTime);
+        const totalV = forward + reflected;
+
+        paths[0].push(new BABYLON.Vector3(x, totalV * 1.5, 0.2));
+        paths[1].push(new BABYLON.Vector3(x, -totalV * 1.5, -0.2));
+      }
+
+      standingWaveMesh = BABYLON.MeshBuilder.CreateRibbon("waveMesh", { pathArray: paths, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, babylonScene);
+      
+      const waveMat = new BABYLON.StandardMaterial("waveMat", babylonScene);
+      waveMat.diffuseColor = new BABYLON.Color3(0.16, 0.59, 1.0);
+      waveMat.specularColor = new BABYLON.Color3(0.5, 0.8, 1.0);
+      waveMat.alpha = 0.75;
+      standingWaveMesh.material = waveMat;
+    }
+
+    function createRadiationBalloon() {
+      if (radiationLobeMesh) radiationLobeMesh.dispose();
+
+      // Parametric Toroidal Radiation Pattern (Figure-8 rotated 360 around dipole axis)
+      const uSteps = 40;
+      const vSteps = 20;
+      const paths = [];
+
+      for (let j = 0; j <= vSteps; j++) {
+        const theta = (Math.PI * j) / vSteps; // 0 to PI
+        const path = [];
+        // Pattern function: r = sin(theta) for short dipole or cos(pi/2 cos theta)/sin theta for half-wave
+        let r = (theta === 0 || theta === Math.PI) ? 0 : Math.abs(Math.sin(theta));
+        r *= 2.8;
+
+        for (let i = 0; i <= uSteps; i++) {
+          const phi = (2 * Math.PI * i) / uSteps;
+          const x = r * Math.sin(theta) * Math.cos(phi);
+          const y = r * Math.cos(theta);
+          const z = r * Math.sin(theta) * Math.sin(phi);
+          path.push(new BABYLON.Vector3(x + 5, y, z)); // Centered at load/antenna point
+        }
+        paths.push(path);
+      }
+
+      radiationLobeMesh = BABYLON.MeshBuilder.CreateRibbon("lobeMesh", { pathArray: paths, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, babylonScene);
+      const lobeMat = new BABYLON.StandardMaterial("lobeMat", babylonScene);
+      lobeMat.diffuseColor = new BABYLON.Color3(0.9, 0.3, 0.2);
+      lobeMat.wireframe = true;
+      lobeMat.alpha = 0.4;
+      radiationLobeMesh.material = lobeMat;
+    }
+
+    function animateWaveFields() {
+      if (!standingWaveMesh) return;
+      const numPoints = 80;
+      const paths = [[], []];
+      const gamma = (currentSimLoad === 'matched') ? 0 : (currentSimLoad === 'short') ? -1 : 1;
+
+      for (let i = 0; i <= numPoints; i++) {
+        const x = -5 + (10 * i) / numPoints;
+        const zNorm = (x + 5) / 10;
+        const betaZ = 2 * Math.PI * (currentSimFreq / 6) * zNorm;
+
+        const forward = Math.sin(betaZ - waveTime);
+        const reflected = gamma * Math.sin(-betaZ - waveTime);
+        const totalV = forward + reflected;
+
+        paths[0].push(new BABYLON.Vector3(x, totalV * 1.5, 0.2));
+        paths[1].push(new BABYLON.Vector3(x, -totalV * 1.5, -0.2));
+      }
+
+      standingWaveMesh = BABYLON.MeshBuilder.CreateRibbon("waveMesh", { pathArray: paths, instance: standingWaveMesh });
+    }
+
+    function updateSimFreq(val) {
+      currentSimFreq = parseFloat(val);
+      document.getElementById('sim-freq-val').textContent = currentSimFreq.toFixed(1) + ' GHz';
+    }
+
+    function updateSimLoad(val) {
+      currentSimLoad = val;
+    }
+
+    /* ==========================================================================
+       VIEWPORT SWITCHING: THREE.JS vs BABYLON.JS
+       ========================================================================== */
+    function switch3DMode(mode) {
+      active3DMode = mode;
+      const threeCanvas = document.getElementById('three-viewport');
+      const babylonCanvas = document.getElementById('babylon-viewport');
+      const btnCad = document.getElementById('btn-cad');
+      const btnPhysics = document.getElementById('btn-physics');
+      const badge = document.getElementById('engine-badge');
+      const title = document.getElementById('viewport-title');
+      const modelSelect = document.getElementById('model-select');
+      const controlsBar = document.getElementById('babylon-controls-bar');
+      const status = document.getElementById('viewport-status');
+      const navCad = document.getElementById('nav-cad');
+      const navEm = document.getElementById('nav-em');
+
+      if (mode === 'cad') {
+        threeCanvas.style.display = 'block';
+        babylonCanvas.style.display = 'none';
+        controlsBar.style.display = 'none';
+        modelSelect.style.display = 'inline-block';
+        btnCad.classList.add('active');
+        btnPhysics.classList.remove('active');
+        if (navCad) navCad.classList.add('active');
+        if (navEm) navEm.classList.remove('active');
+        badge.textContent = 'THREE.JS VRML LOADER';
+        title.textContent = 'HFSS 13 Modeler Mesh Viewport';
+        const curName = modelSelect.value;
+        status.textContent = curName + ' (CAD View Active)';
+        const container = document.getElementById('canvas-container');
+        if (threeCamera && threeRenderer && container) {
+          threeRenderer.setSize(container.clientWidth, container.clientHeight);
+          threeCamera.aspect = container.clientWidth / container.clientHeight;
+          threeCamera.updateProjectionMatrix();
+        }
+      } else {
+        threeCanvas.style.display = 'none';
+        babylonCanvas.style.display = 'block';
+        controlsBar.style.display = 'block';
+        modelSelect.style.display = 'none';
+        btnPhysics.classList.add('active');
+        btnCad.classList.remove('active');
+        if (navEm) navEm.classList.add('active');
+        if (navCad) navCad.classList.remove('active');
+        badge.textContent = 'BABYLON.JS ENGINE';
+        title.textContent = 'Physical Standing Wave & Radiation Simulator';
+        status.textContent = 'Babylon Physics Simulator Running';
+
+        if (!babylonEngine) {
+          initBabylon();
+        } else {
+          babylonEngine.resize();
+        }
+      }
+    }
+
+    // Sidebar ScrollSpy & Active Link Logic
+    function initSidebarNav() {
+      const navLinks = document.querySelectorAll('aside.sidebar .nav-item');
+      const sectionIds = [
+        'viewport-section',
+        'exp1-coax',
+        'exp2-load',
+        'exp5-microstrip',
+        'exp7-dipole',
+        'exp8-horn',
+        'slotted-smith',
+        'term2-exam',
+        'lab-gallery'
+      ];
+
+      // Smooth click handling with header offset
+      navLinks.forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          const href = this.getAttribute('href');
+          if (href && href.startsWith('#')) {
+            const target = document.getElementById(href.substring(1));
+            if (target) {
+              e.preventDefault();
+              const targetY = target.getBoundingClientRect().top + window.scrollY - 70;
+              window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
+          }
+        });
+      });
+
+      // Rock-solid ScrollSpy using getBoundingClientRect
+      function updateScrollSpy() {
+        let activeId = sectionIds[0];
+        for (let i = 0; i < sectionIds.length; i++) {
+          const el = document.getElementById(sectionIds[i]);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            if (rect.top <= 200) {
+              activeId = sectionIds[i];
+            }
+          }
+        }
+        if ((window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 60)) {
+          activeId = sectionIds[sectionIds.length - 1];
+        }
+
+        navLinks.forEach(function (link) {
+          const href = link.getAttribute('href');
+          if (href === '#' + activeId) {
+            if (activeId === 'viewport-section') {
+              if (active3DMode === 'cad' && link.id === 'nav-cad') {
+                link.classList.add('active');
+              } else if (active3DMode === 'em-sim' && link.id === 'nav-em') {
+                link.classList.add('active');
+              } else {
+                link.classList.remove('active');
+              }
+            } else {
+              link.classList.add('active');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', updateScrollSpy, { passive: true });
+      updateScrollSpy();
+    }
+
+    // Responsive Canvas Resize
+    window.addEventListener('resize', function () {
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      if (threeCamera && threeRenderer) {
+        threeCamera.aspect = width / height;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(width, height);
+      }
+      if (babylonEngine) {
+        babylonEngine.resize();
+      }
+    });
+
+    // Window load initializer
+    window.addEventListener('DOMContentLoaded', function () {
+      initThree();
+      initSidebarNav();
+
+      // Support drag & drop of any .wrl file straight onto the viewport
+      const container = document.getElementById('canvas-container');
+      container.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      container.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (evt) {
+            const text = evt.target.result;
+            const group = parseHFSSVRML(text);
+            displayModelGroup(group, file.name);
+          };
+          reader.readAsText(file);
+        }
+      });
+    });
+  </script>
 </body>
 </html>

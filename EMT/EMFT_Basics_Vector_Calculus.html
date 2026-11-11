@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>EMFT Basics | Vector Algebra &amp; Calculus</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+<style>
+:root{
+  --bg:#f5f5f7; --card:rgba(255,255,255,.78); --text:#1d1d1f; --muted:#6e6e73;
+  --accent:#0071e3; --warm:#ff9f0a; --good:#34c759; --line:rgba(0,0,0,.08); --soft:rgba(0,0,0,.04);
+  --shadow:0 8px 30px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0b0d; --card:rgba(28,28,30,.72); --text:#f5f5f7; --muted:#a1a1a6;
+    --accent:#2997ff; --warm:#ffb340; --good:#30d158; --line:rgba(255,255,255,.1); --soft:rgba(255,255,255,.05);
+    --shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Arial,sans-serif;
+  line-height:1.65; -webkit-font-smoothing:antialiased; padding:0 20px 60px;
+}
+.wrap{max-width:960px;margin:0 auto}
+section{scroll-margin-top:70px}
+
+/* nav */
+nav{
+  position:sticky;top:0;z-index:50;margin:0 -20px;padding:12px 20px;
+  display:flex;gap:4px;justify-content:center;overflow-x:auto;white-space:nowrap;
+  background:var(--card);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line);
+}
+nav a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:6px 11px;border-radius:99px;transition:background .2s,color .2s}
+nav a:hover{background:var(--soft);color:var(--text)}
+nav a.hub{color:var(--accent);font-weight:600}
+
+/* hero */
+.hero{padding:48px 0 24px;text-align:center}
+.eyebrow{color:var(--accent);font-size:.85rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:700;letter-spacing:-.025em;line-height:1.1;margin:10px 0 12px}
+.sub{color:var(--muted);font-size:1.1rem;max-width:600px;margin:0 auto}
+
+/* 3D stage */
+.stage{
+  position:relative;border-radius:28px;overflow:hidden;margin-top:28px;
+  border:1px solid var(--line);box-shadow:var(--shadow);background:var(--card);
+}
+#stage{display:block;width:100%;height:min(62vh,520px);outline:none;touch-action:pan-y}
+.hint{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);white-space:nowrap;
+  font-size:.78rem;color:var(--muted);background:var(--card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:5px 12px;border-radius:99px;border:1px solid var(--line);pointer-events:none;
+}
+
+/* controls */
+.panel{
+  background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--line);border-radius:24px;padding:22px;margin-top:16px;box-shadow:var(--shadow);text-align:left;
+}
+.seg{display:flex;gap:4px;background:var(--soft);border-radius:16px;padding:4px}
+.seg button{
+  flex:1;font:inherit;font-size:.9rem;font-weight:600;color:var(--muted);background:transparent;border:0;
+  border-radius:12px;padding:10px 8px;min-height:44px;cursor:pointer;transition:background .25s,color .25s,box-shadow .25s
+}
+.seg button.on{background:var(--bg);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.row{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.stat{flex:1;min-width:150px;background:var(--soft);border-radius:16px;padding:14px 16px}
+.stat small{display:block;color:var(--muted);font-size:.78rem}
+.stat span{font-size:1.15rem;font-weight:600;font-variant-numeric:tabular-nums}
+.fine{color:var(--muted);font-size:.8rem;margin-top:14px}
+
+/* content */
+h2{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;margin:56px 0 14px}
+h3{font-size:1.02rem;margin:0 0 6px}
+.lead{color:var(--muted);margin-bottom:14px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:24px;margin:14px 0;box-shadow:var(--shadow);
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin:14px 0}
+.grid .card{margin:0}
+.card p{color:var(--muted)}
+.card p+p{margin-top:10px}
+.eq{text-align:center;margin:10px 0;font-size:1.05rem;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.callout{border-left:3px solid var(--accent);padding:4px 0 4px 16px;margin:18px 0}
+.callout h3{margin-bottom:6px}
+.tip{border-left-color:var(--good)}
+.list{list-style:none;display:grid;gap:10px;color:var(--muted);margin-top:6px}
+.list b{color:var(--text)}
+details{background:var(--card);border:1px solid var(--line);border-radius:20px;margin:14px 0;box-shadow:var(--shadow)}
+summary{cursor:pointer;padding:18px 22px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--accent);font-size:1.3rem;line-height:1;transition:transform .25s}
+details[open] summary::after{transform:rotate(45deg)}
+details>div{padding:0 22px 22px;color:var(--muted)}
+details b{color:var(--text)}
+details ol{padding-left:20px;display:grid;gap:14px}
+details ul{padding-left:20px;display:grid;gap:8px;margin:8px 0}
+.footer{margin-top:56px;text-align:center;color:var(--muted);font-size:.85rem}
+
+/* reveal */
+.js .reveal{opacity:0;transform:translateY(16px);transition:opacity .8s ease,transform .8s ease}
+.js .reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.js .reveal{transition:none;opacity:1;transform:none}html{scroll-behavior:auto}}
+@media (max-width:560px){body{padding:0 14px 50px}nav{margin:0 -14px;justify-content:flex-start}.card{padding:18px}.grid{grid-template-columns:1fr}}
+@media print{nav,.stage,.panel{display:none}}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <a class="hub" href="index.html">← EMT Hub</a>
+  <a href="#coordinates">Coordinates</a>
+  <a href="#transformations">Transformations</a>
+  <a href="#integrals">Integrals</a>
+  <a href="#del">Del</a>
+  <a href="#gradient">Gradient</a>
+  <a href="#divergence">Divergence</a>
+  <a href="#curl">Curl</a>
+  <a href="#laplacian">Laplacian</a>
+  <a href="#examples">Examples</a>
+</nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Vector Algebra &amp; Calculus</div>
+  <h1>EMFT Basics</h1>
+  <p class="sub">Coordinate systems, del operators and theorems, with a live look at divergence and curl.</p>
+
+  <div class="stage">
+    <canvas id="stage" aria-label="3D scene: particles flowing along a vector field"></canvas>
+    <div class="hint">Drag to orbit</div>
+  </div>
+
+  <div class="panel">
+    <div class="seg" role="group" aria-label="Choose a vector field">
+      <button type="button" class="on" data-m="0">Source</button>
+      <button type="button" data-m="1">Vortex</button>
+      <button type="button" data-m="2">Saddle ∇V</button>
+    </div>
+    <div class="row">
+      <div class="stat"><small>Field A</small><span id="fa">(x, y, z)</span></div>
+      <div class="stat"><small>Divergence ∇ · A</small><span id="fd">3</span></div>
+      <div class="stat"><small>Curl ∇ × A</small><span id="fc">0</span></div>
+    </div>
+    <p class="fine" id="fn">Divergence is net outflow per unit volume. This field spreads out from every point, and it is the gradient of r²/2, so its curl is zero.</p>
+  </div>
+</header>
+
+<section id="coordinates" class="reveal">
+  <h2>1. The Three Orthogonal Coordinate Systems</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Cartesian $(x, y, z)$</h3>
+      <p>Ranges: $-\infty \lt x \lt \infty,\ -\infty \lt y \lt \infty,\ -\infty \lt z \lt \infty$</p>
+      <div class="eq">$$d\mathbf{l}=dx\,\hat{\mathbf{a}}_x+dy\,\hat{\mathbf{a}}_y+dz\,\hat{\mathbf{a}}_z$$</div>
+      <div class="eq">$$dv=dx\,dy\,dz$$</div>
+      <div class="eq">$$d\mathbf{S}_x=dy\,dz\,\hat{\mathbf{a}}_x$$</div>
+      <div class="eq">$$d\mathbf{S}_y=dx\,dz\,\hat{\mathbf{a}}_y$$</div>
+      <div class="eq">$$d\mathbf{S}_z=dx\,dy\,\hat{\mathbf{a}}_z$$</div>
+    </div>
+    <div class="card">
+      <h3>Cylindrical $(\rho, \phi, z)$</h3>
+      <p>Ranges: $0 \le \rho \lt \infty,\ 0 \le \phi \lt 2\pi,\ -\infty \lt z \lt \infty$</p>
+      <div class="eq">$$d\mathbf{l}=d\rho\,\hat{\mathbf{a}}_\rho+\rho\,d\phi\,\hat{\mathbf{a}}_\phi+dz\,\hat{\mathbf{a}}_z$$</div>
+      <div class="eq">$$dv=\rho\,d\rho\,d\phi\,dz$$</div>
+      <div class="eq">$$d\mathbf{S}_\rho=\rho\,d\phi\,dz\,\hat{\mathbf{a}}_\rho$$</div>
+      <div class="eq">$$d\mathbf{S}_\phi=d\rho\,dz\,\hat{\mathbf{a}}_\phi$$</div>
+      <div class="eq">$$d\mathbf{S}_z=\rho\,d\rho\,d\phi\,\hat{\mathbf{a}}_z$$</div>
+    </div>
+    <div class="card">
+      <h3>Spherical $(r, \theta, \phi)$</h3>
+      <p>Ranges: $0 \le r \lt \infty,\ 0 \le \theta \le \pi,\ 0 \le \phi \lt 2\pi$</p>
+      <div class="eq">$$d\mathbf{l}=dr\,\hat{\mathbf{a}}_r+r\,d\theta\,\hat{\mathbf{a}}_\theta+r\sin\theta\,d\phi\,\hat{\mathbf{a}}_\phi$$</div>
+      <div class="eq">$$dv=r^2\sin\theta\,dr\,d\theta\,d\phi$$</div>
+      <div class="eq">$$d\mathbf{S}_r=r^2\sin\theta\,d\theta\,d\phi\,\hat{\mathbf{a}}_r$$</div>
+      <div class="eq">$$d\mathbf{S}_\theta=r\sin\theta\,dr\,d\phi\,\hat{\mathbf{a}}_\theta$$</div>
+      <div class="eq">$$d\mathbf{S}_\phi=r\,dr\,d\theta\,\hat{\mathbf{a}}_\phi$$</div>
+    </div>
+  </div>
+</section>
+
+<section id="transformations" class="reveal">
+  <h2>2. Coordinate &amp; Vector Transformations</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Cartesian ↔ Cylindrical</h3>
+      <div class="eq">$$x=\rho\cos\phi,\quad y=\rho\sin\phi,\quad z=z$$</div>
+      <div class="eq">$$\rho=\sqrt{x^2+y^2},\quad \phi=\tan^{-1}(y/x)$$</div>
+      <p>Matrix transformation for vector components:</p>
+      <div class="eq">$$\begin{bmatrix}A_\rho\\A_\phi\\A_z\end{bmatrix}=\begin{bmatrix}\cos\phi&\sin\phi&0\\-\sin\phi&\cos\phi&0\\0&0&1\end{bmatrix}\begin{bmatrix}A_x\\A_y\\A_z\end{bmatrix}$$</div>
+    </div>
+    <div class="card">
+      <h3>Cartesian ↔ Spherical</h3>
+      <div class="eq">$$x=r\sin\theta\cos\phi,\quad y=r\sin\theta\sin\phi,\quad z=r\cos\theta$$</div>
+      <div class="eq">$$r=\sqrt{x^2+y^2+z^2},\quad \theta=\cos^{-1}(z/r),\quad \phi=\tan^{-1}(y/x)$$</div>
+      <p>Matrix transformation for vector components:</p>
+      <div class="eq">$$\begin{bmatrix}A_r\\A_\theta\\A_\phi\end{bmatrix}=\begin{bmatrix}\sin\theta\cos\phi&\sin\theta\sin\phi&\cos\theta\\\cos\theta\cos\phi&\cos\theta\sin\phi&-\sin\theta\\-\sin\phi&\cos\phi&0\end{bmatrix}\begin{bmatrix}A_x\\A_y\\A_z\end{bmatrix}$$</div>
+    </div>
+  </div>
+</section>
+
+<section id="integrals" class="reveal">
+  <h2>3. Vector Line, Surface and Volume Integrals</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Line integral</h3>
+      <p>Circulation or work done along path $L$:</p>
+      <div class="eq">$$\int_L\mathbf{A}\cdot d\mathbf{l}$$</div>
+      <p>Closed line circulation: $\oint_L\mathbf{A}\cdot d\mathbf{l}$</p>
+    </div>
+    <div class="card">
+      <h3>Surface integral (flux)</h3>
+      <p>Total outward flux $\Psi$ through surface $S$:</p>
+      <div class="eq">$$\Psi=\int_S\mathbf{A}\cdot d\mathbf{S}$$</div>
+      <p>Net outward flux from a closed surface: $\oint_S\mathbf{A}\cdot d\mathbf{S}$</p>
+    </div>
+    <div class="card">
+      <h3>Volume integral</h3>
+      <p>Total charge $Q$ enclosed within volume $v$:</p>
+      <div class="eq">$$Q=\int_v\rho_v\,dv$$</div>
+    </div>
+  </div>
+</section>
+
+<section id="del" class="reveal">
+  <h2>4. The Vector Differential Del Operator ($\nabla$)</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Cartesian</h3>
+      <div class="eq">$$\nabla=\frac{\partial}{\partial x}\hat{\mathbf{a}}_x+\frac{\partial}{\partial y}\hat{\mathbf{a}}_y+\frac{\partial}{\partial z}\hat{\mathbf{a}}_z$$</div>
+    </div>
+    <div class="card">
+      <h3>Cylindrical</h3>
+      <div class="eq">$$\nabla=\hat{\mathbf{a}}_\rho\frac{\partial}{\partial\rho}+\hat{\mathbf{a}}_\phi\frac{1}{\rho}\frac{\partial}{\partial\phi}+\hat{\mathbf{a}}_z\frac{\partial}{\partial z}$$</div>
+    </div>
+    <div class="card">
+      <h3>Spherical</h3>
+      <div class="eq">$$\nabla=\hat{\mathbf{a}}_r\frac{\partial}{\partial r}+\hat{\mathbf{a}}_\theta\frac{1}{r}\frac{\partial}{\partial\theta}+\hat{\mathbf{a}}_\phi\frac{1}{r\sin\theta}\frac{\partial}{\partial\phi}$$</div>
+    </div>
+  </div>
+</section>
+
+<section id="gradient" class="reveal">
+  <h2>5. Gradient of a Scalar Field ($\nabla V$)</h2>
+  <p class="lead">The gradient of a scalar field $V$ is a vector that points in the direction of the maximum rate of increase of $V$, with magnitude equal to that maximum rate.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Cartesian</h3>
+      <div class="eq">$$\nabla V=\frac{\partial V}{\partial x}\hat{\mathbf{a}}_x+\frac{\partial V}{\partial y}\hat{\mathbf{a}}_y+\frac{\partial V}{\partial z}\hat{\mathbf{a}}_z$$</div>
+    </div>
+    <div class="card">
+      <h3>Cylindrical</h3>
+      <div class="eq">$$\nabla V=\frac{\partial V}{\partial\rho}\hat{\mathbf{a}}_\rho+\frac{1}{\rho}\frac{\partial V}{\partial\phi}\hat{\mathbf{a}}_\phi+\frac{\partial V}{\partial z}\hat{\mathbf{a}}_z$$</div>
+    </div>
+    <div class="card">
+      <h3>Spherical</h3>
+      <div class="eq">$$\nabla V=\frac{\partial V}{\partial r}\hat{\mathbf{a}}_r+\frac{1}{r}\frac{\partial V}{\partial\theta}\hat{\mathbf{a}}_\theta+\frac{1}{r\sin\theta}\frac{\partial V}{\partial\phi}\hat{\mathbf{a}}_\phi$$</div>
+    </div>
+  </div>
+</section>
+
+<section id="divergence" class="reveal">
+  <h2>6. Divergence ($\nabla\cdot\mathbf{A}$) &amp; the Divergence Theorem</h2>
+  <p class="lead">Divergence is the net outward flux of $\mathbf{A}$ per unit volume as the volume shrinks to zero:</p>
+  <div class="card"><div class="eq">$$\text{div }\mathbf{A}=\nabla\cdot\mathbf{A}=\lim_{\Delta v\to0}\frac{\oint_S\mathbf{A}\cdot d\mathbf{S}}{\Delta v}$$</div></div>
+  <div class="grid">
+    <div class="card">
+      <h3>Cartesian</h3>
+      <div class="eq">$$\nabla\cdot\mathbf{A}=\frac{\partial A_x}{\partial x}+\frac{\partial A_y}{\partial y}+\frac{\partial A_z}{\partial z}$$</div>
+    </div>
+    <div class="card">
+      <h3>Cylindrical</h3>
+      <div class="eq">$$\nabla\cdot\mathbf{A}=\frac{1}{\rho}\frac{\partial}{\partial\rho}(\rho A_\rho)+\frac{1}{\rho}\frac{\partial A_\phi}{\partial\phi}+\frac{\partial A_z}{\partial z}$$</div>
+    </div>
+    <div class="card">
+      <h3>Spherical</h3>
+      <div class="eq">$$\nabla\cdot\mathbf{A}=\frac{1}{r^2}\frac{\partial}{\partial r}(r^2A_r)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(A_\theta\sin\theta)+\frac{1}{r\sin\theta}\frac{\partial A_\phi}{\partial\phi}$$</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="callout" style="margin:0">
+      <h3>Divergence theorem (Gauss–Ostrogradsky)</h3>
+      <p>The total outward flux of $\mathbf{A}$ through a closed surface $S$ equals the volume integral of the divergence of $\mathbf{A}$ inside volume $v$:</p>
+      <div class="eq">$$\oint_S\mathbf{A}\cdot d\mathbf{S}=\int_v(\nabla\cdot\mathbf{A})\,dv$$</div>
+    </div>
+  </div>
+</section>
+
+<section id="curl" class="reveal">
+  <h2>7. Curl ($\nabla\times\mathbf{A}$) &amp; Stokes' Theorem</h2>
+  <p class="lead">The curl of $\mathbf{A}$ is an axial (rotational) vector representing the circulation of $\mathbf{A}$ per unit area:</p>
+  <div class="card"><div class="eq">$$\text{curl }\mathbf{A}=\nabla\times\mathbf{A}=\left(\lim_{\Delta S\to0}\frac{\oint_L\mathbf{A}\cdot d\mathbf{l}}{\Delta S}\right)_{\max}\hat{\mathbf{a}}_n$$</div></div>
+  <div class="grid">
+    <div class="card">
+      <h3>Cartesian</h3>
+      <div class="eq">$$\nabla\times\mathbf{A}=\begin{vmatrix}\hat{\mathbf{a}}_x&\hat{\mathbf{a}}_y&\hat{\mathbf{a}}_z\\\frac{\partial}{\partial x}&\frac{\partial}{\partial y}&\frac{\partial}{\partial z}\\A_x&A_y&A_z\end{vmatrix}$$</div>
+      <div class="eq">$$=\left(\frac{\partial A_z}{\partial y}-\frac{\partial A_y}{\partial z}\right)\hat{\mathbf{a}}_x+\left(\frac{\partial A_x}{\partial z}-\frac{\partial A_z}{\partial x}\right)\hat{\mathbf{a}}_y+\left(\frac{\partial A_y}{\partial x}-\frac{\partial A_x}{\partial y}\right)\hat{\mathbf{a}}_z$$</div>
+    </div>
+    <div class="card">
+      <h3>Cylindrical</h3>
+      <div class="eq">$$\nabla\times\mathbf{A}=\frac{1}{\rho}\begin{vmatrix}\hat{\mathbf{a}}_\rho&\rho\hat{\mathbf{a}}_\phi&\hat{\mathbf{a}}_z\\\frac{\partial}{\partial\rho}&\frac{\partial}{\partial\phi}&\frac{\partial}{\partial z}\\A_\rho&\rho A_\phi&A_z\end{vmatrix}$$</div>
+      <div class="eq">$$=\left(\frac{1}{\rho}\frac{\partial A_z}{\partial\phi}-\frac{\partial A_\phi}{\partial z}\right)\hat{\mathbf{a}}_\rho+\left(\frac{\partial A_\rho}{\partial z}-\frac{\partial A_z}{\partial\rho}\right)\hat{\mathbf{a}}_\phi+\frac{1}{\rho}\left(\frac{\partial(\rho A_\phi)}{\partial\rho}-\frac{\partial A_\rho}{\partial\phi}\right)\hat{\mathbf{a}}_z$$</div>
+    </div>
+    <div class="card">
+      <h3>Spherical</h3>
+      <div class="eq">$$\nabla\times\mathbf{A}=\frac{1}{r^2\sin\theta}\begin{vmatrix}\hat{\mathbf{a}}_r&r\hat{\mathbf{a}}_\theta&r\sin\theta\,\hat{\mathbf{a}}_\phi\\\frac{\partial}{\partial r}&\frac{\partial}{\partial\theta}&\frac{\partial}{\partial\phi}\\A_r&rA_\theta&r\sin\theta\,A_\phi\end{vmatrix}$$</div>
+      <p>Expanded:</p>
+      <div class="eq">$$=\frac{1}{r\sin\theta}\left(\frac{\partial(A_\phi\sin\theta)}{\partial\theta}-\frac{\partial A_\theta}{\partial\phi}\right)\hat{\mathbf{a}}_r+\frac{1}{r}\left(\frac{1}{\sin\theta}\frac{\partial A_r}{\partial\phi}-\frac{\partial(rA_\phi)}{\partial r}\right)\hat{\mathbf{a}}_\theta+\frac{1}{r}\left(\frac{\partial(rA_\theta)}{\partial r}-\frac{\partial A_r}{\partial\theta}\right)\hat{\mathbf{a}}_\phi$$</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="callout" style="margin:0">
+      <h3>Stokes' theorem</h3>
+      <p>The circulation of $\mathbf{A}$ around a closed contour $L$ equals the surface integral of the curl of $\mathbf{A}$ over any open surface $S$ bounded by $L$:</p>
+      <div class="eq">$$\oint_L\mathbf{A}\cdot d\mathbf{l}=\int_S(\nabla\times\mathbf{A})\cdot d\mathbf{S}$$</div>
+    </div>
+  </div>
+</section>
+
+<section id="laplacian" class="reveal">
+  <h2>8. Laplacian ($\nabla^2$) &amp; Essential Identities</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Cartesian Laplacian of scalar $V$</h3>
+      <div class="eq">$$\nabla^2V=\frac{\partial^2V}{\partial x^2}+\frac{\partial^2V}{\partial y^2}+\frac{\partial^2V}{\partial z^2}$$</div>
+    </div>
+    <div class="card">
+      <h3>Cylindrical Laplacian of scalar $V$</h3>
+      <div class="eq">$$\nabla^2V=\frac{1}{\rho}\frac{\partial}{\partial\rho}\left(\rho\frac{\partial V}{\partial\rho}\right)+\frac{1}{\rho^2}\frac{\partial^2V}{\partial\phi^2}+\frac{\partial^2V}{\partial z^2}$$</div>
+    </div>
+    <div class="card">
+      <h3>Spherical Laplacian of scalar $V$</h3>
+      <div class="eq">$$\nabla^2V=\frac{1}{r^2}\frac{\partial}{\partial r}\left(r^2\frac{\partial V}{\partial r}\right)+\frac{1}{r^2\sin\theta}\frac{\partial}{\partial\theta}\left(\sin\theta\frac{\partial V}{\partial\theta}\right)+\frac{1}{r^2\sin^2\theta}\frac{\partial^2V}{\partial\phi^2}$$</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="callout tip" style="margin:0">
+      <h3>Key identities (exam must-knows)</h3>
+      <ul class="list">
+        <li><b>Curl of gradient is always zero:</b> $\nabla\times(\nabla V)\equiv0$. Every conservative (irrotational) field is the gradient of a scalar.</li>
+        <li><b>Divergence of curl is always zero:</b> $\nabla\cdot(\nabla\times\mathbf{A})\equiv0$. Every solenoidal field is the curl of a vector potential.</li>
+        <li><b>Vector Laplacian:</b> $\nabla^2\mathbf{A}=\nabla(\nabla\cdot\mathbf{A})-\nabla\times(\nabla\times\mathbf{A})$.</li>
+        <li><b>Helmholtz's theorem:</b> any vector field is uniquely specified by both its divergence and its curl everywhere, plus boundary conditions.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="examples" class="reveal">
+  <h2>9. Worked Exam Problems</h2>
+
+  <details open>
+    <summary>Example 1: Gradient of scalar fields in all 3 systems</summary>
+    <div>
+      <p>Find $\nabla V$ for:</p>
+      <ol>
+        <li><b>Cartesian:</b> $V=e^{-z}\sin2x\cosh y$
+          <div class="eq">$$\nabla V=\left(2e^{-z}\cos2x\cosh y\right)\hat{\mathbf{a}}_x+\left(e^{-z}\sin2x\sinh y\right)\hat{\mathbf{a}}_y-\left(e^{-z}\sin2x\cosh y\right)\hat{\mathbf{a}}_z$$</div>
+        </li>
+        <li><b>Cylindrical:</b> $U=\rho^2z\cos2\phi$
+          <div class="eq">$$\nabla U=\left(2\rho z\cos2\phi\right)\hat{\mathbf{a}}_\rho-\left(2\rho z\sin2\phi\right)\hat{\mathbf{a}}_\phi+\left(\rho^2\cos2\phi\right)\hat{\mathbf{a}}_z$$</div>
+        </li>
+        <li><b>Spherical:</b> $W=10r\sin^2\theta\cos\phi$
+          <div class="eq">$$\nabla W=\left(10\sin^2\theta\cos\phi\right)\hat{\mathbf{a}}_r+\left(10\sin2\theta\cos\phi\right)\hat{\mathbf{a}}_\theta-\left(10\sin\theta\sin\phi\right)\hat{\mathbf{a}}_\phi$$</div>
+        </li>
+      </ol>
+    </div>
+  </details>
+
+  <details>
+    <summary>Example 2: Verification of the divergence theorem on a cylinder</summary>
+    <div>
+      <p>Verify $\oint_S\mathbf{G}\cdot d\mathbf{S}=\int_v(\nabla\cdot\mathbf{G})\,dv$ for $\mathbf{G}=10e^{-2z}(\rho\hat{\mathbf{a}}_\rho+\hat{\mathbf{a}}_z)$ over the cylinder $\rho=1,\ 0\le z\le1$.</p>
+      <p style="margin-top:12px"><b>Surface integral approach:</b></p>
+      <ul>
+        <li>Top face ($z=1$): $\Psi_{\text{top}}=\int_{\phi=0}^{2\pi}\int_{\rho=0}^{1}(10e^{-2})\rho\,d\rho\,d\phi=10\pi e^{-2}$</li>
+        <li>Bottom face ($z=0$, $d\mathbf{S}=-\hat{\mathbf{a}}_z$): $\Psi_{\text{bottom}}=\int_{\phi=0}^{2\pi}\int_{\rho=0}^{1}(-10)\rho\,d\rho\,d\phi=-10\pi$</li>
+        <li>Curved side ($\rho=1$, $d\mathbf{S}=\hat{\mathbf{a}}_\rho$): $\Psi_{\text{side}}=\int_{\phi=0}^{2\pi}\int_{z=0}^{1}10e^{-2z}\,dz\,d\phi=2\pi(10)\left[\dfrac{e^{-2z}}{-2}\right]_0^1=10\pi(1-e^{-2})$</li>
+      </ul>
+      <div class="eq">$$\Psi_{\text{total}}=10\pi e^{-2}-10\pi+10\pi-10\pi e^{-2}=0$$</div>
+      <p><b>Volume integral via divergence:</b></p>
+      <div class="eq">$$\nabla\cdot\mathbf{G}=\frac{1}{\rho}\frac{\partial}{\partial\rho}\left(\rho^2\,10e^{-2z}\right)+\frac{\partial}{\partial z}\left(10e^{-2z}\right)=20e^{-2z}-20e^{-2z}=0$$</div>
+      <div class="eq">$$\int_v(\nabla\cdot\mathbf{G})\,dv=\int_v0\,dv=0\quad\checkmark\ \text{Q.E.D.}$$</div>
+    </div>
+  </details>
+</section>
+
+</div>
+
+<div class="footer">JARVIS Knowledge Core · EMFT Basics &amp; Vector Calculus · Full Exam Coverage</div>
+
+<script>
+const MODES=[
+  {a:'(x, y, z)',d:'3',c:'0',f:(x,y,z)=>[x,y,z],
+   n:'Divergence is net outflow per unit volume. This field spreads out from every point, and it is the gradient of r²/2, so its curl is zero.'},
+  {a:'(−y, x, 0)',d:'0',c:'2 a_z',f:(x,y,z)=>[-y,x,0],
+   n:'Curl is circulation per unit area. This field rotates about the z-axis with ∇ × A = 2 a_z, while its divergence is zero because nothing flows in or out.'},
+  {a:'(x, −y, 0)',d:'0',c:'0',f:(x,y,z)=>[x,-y,0],
+   n:'This is ∇V for V = (x² − y²)/2. Its curl is zero (curl of a gradient) and its divergence is zero (∇²V = 0), so both null identities show at once.'}
+];
+const S={mode:0};
+const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let visible=true;
+
+const canvas=document.getElementById('stage');
+const engine=new BABYLON.Engine(canvas,true,{antialias:true,adaptToDeviceRatio:true});
+const scene=new BABYLON.Scene(engine);
+const C3=BABYLON.Color3, V3=BABYLON.Vector3;
+
+const cam=new BABYLON.ArcRotateCamera('cam',-Math.PI/3,1.1,9,V3.Zero(),scene);
+cam.lowerRadiusLimit=5;cam.upperRadiusLimit=14;
+cam.lowerBetaLimit=.3;cam.upperBetaLimit=1.7;
+cam.panningSensibility=0;
+cam.attachControl(canvas,true);
+cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+if(!calm){cam.useAutoRotationBehavior=true;cam.autoRotationBehavior.idleRotationSpeed=.12;}
+
+new BABYLON.HemisphericLight('h',new V3(0,1,.3),scene).intensity=.9;
+const glow=new BABYLON.GlowLayer('g',scene);glow.intensity=.3;
+
+function mat(name,emis,alpha){
+  const m=new BABYLON.StandardMaterial(name,scene);
+  m.diffuseColor=C3.Black();m.specularColor=C3.Black();
+  m.emissiveColor=emis;m.alpha=alpha===undefined?1:alpha;
+  return m;
+}
+
+/* axes */
+const axes=[[2.5,0,0],[0,2.5,0],[0,0,2.5]].map(p=>{
+  const l=BABYLON.MeshBuilder.CreateLines('ax',{points:[new V3(-p[0],-p[1],-p[2]),new V3(p[0],p[1],p[2])]},scene);
+  l.alpha=.5;return l;
+});
+
+/* field arrows on a 5×5×5 grid */
+const arrowM=mat('arrowM',new C3(0,.44,.89),.85);
+const coneBase=BABYLON.MeshBuilder.CreateCylinder('cone',{diameterTop:0,diameterBottom:.16,height:1,tessellation:16},scene);
+coneBase.isVisible=false;
+const G=[-1.6,-.8,0,.8,1.6], arrows=[];
+G.forEach(x=>G.forEach(y=>G.forEach(z=>{
+  const m=coneBase.clone('a');m.isVisible=true;m.material=arrowM;
+  m.position.set(x,y,z);m.rotationQuaternion=BABYLON.Quaternion.Identity();
+  arrows.push({m:m,x:x,y:y,z:z});
+})));
+function orient(){
+  const f=MODES[S.mode].f, up=V3.Up();
+  arrows.forEach(o=>{
+    const v=f(o.x,o.y,o.z), L=Math.hypot(v[0],v[1],v[2]);
+    if(L<1e-6){o.m.isVisible=false;return;}
+    o.m.isVisible=true;
+    const d=new V3(v[0]/L,v[1]/L,v[2]/L), dot=V3.Dot(up,d);
+    if(dot>.99999)o.m.rotationQuaternion=BABYLON.Quaternion.Identity();
+    else if(dot<-.99999)o.m.rotationQuaternion=BABYLON.Quaternion.RotationAxis(new V3(1,0,0),Math.PI);
+    else o.m.rotationQuaternion=BABYLON.Quaternion.RotationAxis(V3.Cross(up,d).normalize(),Math.acos(dot));
+    o.m.scaling.y=Math.min(.9,.15+.22*L);
+  });
+}
+
+/* particles streaming along the field */
+const pM=mat('pM',new C3(1,.62,.04));
+const pBase=BABYLON.MeshBuilder.CreateSphere('p',{diameter:.12,segments:8},scene);
+pBase.isVisible=false;
+const parts=[], rnd=()=>Math.random()*2-1;
+function respawn(o){
+  o.p.set(rnd()*1.8,rnd()*1.8,rnd()*1.8);
+  o.life=0;o.max=3+Math.random()*3;
+}
+for(let k=0;k<110;k++){
+  const m=pBase.clone('p'+k);m.isVisible=true;m.material=pM;
+  const o={m:m,p:new V3(),life:0,max:4};respawn(o);o.life=Math.random()*o.max;parts.push(o);
+}
+function setMode(i){
+  S.mode=i;orient();parts.forEach(respawn);
+}
+orient();
+
+/* theme-aware colours */
+function theme(){
+  const d=dark();
+  scene.clearColor=d?new BABYLON.Color4(.043,.043,.051,1):new BABYLON.Color4(.961,.961,.969,1);
+  arrowM.emissiveColor=d?new C3(.16,.59,1):new C3(0,.44,.89);
+  pM.emissiveColor=d?new C3(1,.7,.25):new C3(1,.62,.04);
+  axes.forEach(l=>l.color=d?new C3(.6,.62,.68):new C3(.45,.47,.52));
+  glow.intensity=d?.35:.1;
+}
+theme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',theme);
+
+/* animation */
+scene.onBeforeRenderObservable.add(()=>{
+  const dt=Math.min(engine.getDeltaTime(),50)/1000*(calm?.4:1);
+  const f=MODES[S.mode].f;
+  parts.forEach(o=>{
+    const v=f(o.p.x,o.p.y,o.p.z);
+    o.p.x+=v[0]*dt*.6;o.p.y+=v[1]*dt*.6;o.p.z+=v[2]*dt*.6;
+    o.life+=dt;
+    if(o.life>o.max||o.p.length()>2.7)respawn(o);
+    o.m.position.copyFrom(o.p);
+    o.m.visibility=Math.max(0,Math.min(1,o.life*2,(o.max-o.life)*2));
+  });
+});
+
+engine.runRenderLoop(()=>{if(visible)scene.render();});
+addEventListener('resize',()=>engine.resize());
+new ResizeObserver(()=>engine.resize()).observe(canvas);
+document.documentElement.classList.add('js');
+const $=id=>document.getElementById(id);
+const btns=[...document.querySelectorAll('.seg button')];
+
+function showMode(i){
+  const m=MODES[i];
+  $('fa').textContent=m.a;
+  $('fd').textContent=m.d;
+  $('fc').textContent=m.c;
+  $('fn').textContent=m.n;
+  btns.forEach((b,k)=>b.classList.toggle('on',k===i));
+  setMode(i);
+}
+btns.forEach(b=>b.addEventListener('click',()=>showMode(+b.dataset.m)));
+showMode(0);
+
+/* pause rendering when the scene is off-screen */
+new IntersectionObserver(e=>{visible=e[0].isIntersecting;}).observe(canvas);
+
+/* gentle reveal on scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

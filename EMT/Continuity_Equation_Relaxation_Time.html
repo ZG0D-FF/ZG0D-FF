@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Continuity Equation &amp; Relaxation Time</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+<style>
+:root{
+  --bg:#f5f5f7; --card:rgba(255,255,255,.78); --text:#1d1d1f; --muted:#6e6e73;
+  --accent:#0071e3; --warm:#ff9f0a; --line:rgba(0,0,0,.08); --soft:rgba(0,0,0,.04);
+  --shadow:0 8px 30px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0b0d; --card:rgba(28,28,30,.72); --text:#f5f5f7; --muted:#a1a1a6;
+    --accent:#2997ff; --warm:#ffb340; --line:rgba(255,255,255,.1); --soft:rgba(255,255,255,.05);
+    --shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Arial,sans-serif;
+  line-height:1.65; -webkit-font-smoothing:antialiased; padding:0 20px 60px;
+}
+.wrap{max-width:880px;margin:0 auto}
+
+/* hero */
+.hero{padding:56px 0 24px;text-align:center}
+.eyebrow{color:var(--accent);font-size:.85rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:700;letter-spacing:-.025em;line-height:1.1;margin:10px 0 12px}
+.sub{color:var(--muted);font-size:1.1rem;max-width:560px;margin:0 auto}
+
+/* 3D stage */
+.stage{
+  position:relative;border-radius:28px;overflow:hidden;margin-top:28px;
+  border:1px solid var(--line);box-shadow:var(--shadow);background:var(--card);
+}
+#stage{display:block;width:100%;height:min(62vh,520px);outline:none;touch-action:pan-y}
+.hint{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);white-space:nowrap;
+  font-size:.78rem;color:var(--muted);background:var(--card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:5px 12px;border-radius:99px;border:1px solid var(--line);pointer-events:none;
+}
+.key{
+  position:absolute;left:16px;top:16px;font-size:.78rem;color:var(--muted);background:var(--card);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:8px 12px;border-radius:14px;border:1px solid var(--line);text-align:left;line-height:1.5;pointer-events:none;
+}
+.key i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+
+/* controls */
+.panel{
+  background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--line);border-radius:24px;padding:22px;margin-top:16px;box-shadow:var(--shadow);text-align:left;
+}
+.ctl label{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:8px}
+.ctl label b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:var(--soft);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+.ends{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:6px}
+.row{display:flex;gap:12px;align-items:stretch;margin-top:20px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px;background:var(--soft);border-radius:16px;padding:14px 16px}
+.stat small{display:block;color:var(--muted);font-size:.78rem}
+.stat span{font-size:1.2rem;font-weight:600;font-variant-numeric:tabular-nums}
+button{
+  font:inherit;font-weight:600;color:#fff;background:var(--accent);border:0;border-radius:16px;
+  padding:0 22px;min-height:48px;cursor:pointer;transition:transform .2s,opacity .2s
+}
+button:hover{opacity:.9} button:active{transform:scale(.97)}
+.fine{color:var(--muted);font-size:.8rem;margin-top:14px}
+
+/* content */
+h2{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;margin:56px 0 14px}
+h3{font-size:1.02rem;margin:4px 0 2px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:26px;margin:14px 0;box-shadow:var(--shadow);
+}
+.card p+p{margin-top:12px}
+.eq{text-align:center;margin:14px 0;font-size:1.1rem;overflow-x:auto}
+.note{color:var(--muted)}
+.callout{border-left:3px solid var(--accent);padding-left:16px;margin:16px 0 4px;font-weight:600}
+.legend{list-style:none;display:grid;gap:6px;color:var(--muted);margin-top:10px}
+.legend b{color:var(--text)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:6px}
+.tile{background:var(--soft);border-radius:18px;padding:18px}
+.tile p{color:var(--muted);font-size:.92rem}
+table{width:100%;border-collapse:collapse}
+th,td{padding:14px 10px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500;font-size:.85rem}
+tr:last-child td{border-bottom:0}
+.qa+.qa{border-top:1px solid var(--line);margin-top:20px;padding-top:20px}
+.footer{margin-top:56px;text-align:center;color:var(--muted);font-size:.85rem}
+
+/* reveal */
+.js .reveal{opacity:0;transform:translateY(16px);transition:opacity .8s ease,transform .8s ease}
+.js .reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.js .reveal{transition:none;opacity:1;transform:none}html{scroll-behavior:auto}}
+@media (max-width:560px){body{padding:0 14px 50px}.card{padding:20px}.key{display:none}}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <a href="index.html" style="display:inline-flex; align-items:center; gap:6px; color:#0071e3; text-decoration:none; font-size:13px; font-weight:600; margin-bottom:16px;">← Back to EMT 3D Lab Hub</a>
+  <div class="eyebrow">Electric Fields in Material Space</div>
+  <h1>Continuity Equation &amp; Relaxation Time</h1>
+  <p class="sub">Charge is conserved, and excess charge inside a conductor decays exponentially.</p>
+
+  <div class="stage">
+    <canvas id="stage" aria-label="3D scene: excess charges inside a block migrating to its surface over time"></canvas>
+    <div class="key"><i style="background:var(--accent)"></i>Excess charge inside<br><i style="background:var(--warm)"></i>Charge on surface</div>
+    <div class="hint">Drag to orbit</div>
+  </div>
+
+  <div class="panel">
+    <div class="ctl">
+      <label for="tau">Relaxation time τ <b id="tv">2.0 s</b></label>
+      <input id="tau" type="range" min="0.5" max="5" step="0.1" value="2">
+      <div class="ends"><span>Conductor (short τ)</span><span>Dielectric (long τ)</span></div>
+    </div>
+    <div class="row">
+      <div class="stat"><small>t / τ</small><span id="tt">0.00</span></div>
+      <div class="stat"><small>ρ<sub>v</sub> / ρ<sub>0</sub> = e<sup>−t/τ</sup></small><span id="rho">100.0 %</span></div>
+      <div class="stat"><small>Charges inside</small><span id="cnt">140 / 140</span></div>
+      <button id="replay" type="button">Replay</button>
+    </div>
+    <p class="fine">Time is slowed so you can watch it. Copper's real τ is about 10⁻¹⁹ s.</p>
+  </div>
+</header>
+
+<section class="reveal">
+  <h2>1. Principle of Charge Conservation</h2>
+  <div class="card">
+    <p>Due to the principle of charge conservation, the time rate of decrease of charge within a given volume must equal the net outward current flow through the closed surface of the volume.</p>
+    <p class="note">Current coming out of a closed surface is:</p>
+    <div class="eq">$$\oint \mathbf{J}\cdot d\mathbf{S}=-\frac{dQ_{in}}{dt}$$</div>
+    <ul class="legend">
+      <li><b>J</b> – current density</li>
+      <li><b>$Q_{in}$</b> – total charge enclosed within the closed surface</li>
+    </ul>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>2. Derivation of the Continuity Equation</h2>
+  <div class="card">
+    <p>The enclosed charge is expressed as:</p>
+    <div class="eq">$$Q=\int_V\rho_v\,dV$$</div>
+    <p>Substituting into the charge conservation equation:</p>
+    <div class="eq">$$\oint \mathbf{J}\cdot d\mathbf{S}=-\frac{d}{dt}\int_V\rho_v\,dV$$</div>
+    <p>Using the divergence theorem:</p>
+    <div class="eq">$$\int_V(\nabla\cdot\mathbf{J})\,dV=-\int_V\frac{\partial\rho_v}{\partial t}\,dV$$</div>
+    <p>Since both integrals are over the same arbitrary volume:</p>
+    <div class="eq">$$\nabla\cdot\mathbf{J}=-\frac{\partial\rho_v}{\partial t}$$</div>
+    <p class="callout">This is the continuity equation.</p>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>3. Physical Meaning</h2>
+  <div class="card">
+    <p class="note" style="margin-bottom:12px">The continuity equation states that:</p>
+    <div class="tiles">
+      <div class="tile"><h3>Current leaves</h3><p>The charge stored inside decreases.</p></div>
+      <div class="tile"><h3>Current enters</h3><p>The stored charge increases.</p></div>
+      <div class="tile"><h3>Conservation</h3><p>Charge can neither be created nor destroyed.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>4. Relaxation Time</h2>
+  <div class="card">
+    <p>Inside a conducting material, use:</p>
+    <h3 style="margin-top:14px">Ohm's law</h3>
+    <div class="eq">$$\mathbf{J}=\sigma\mathbf{E}$$</div>
+    <h3>Gauss's law</h3>
+    <div class="eq">$$\nabla\cdot\mathbf{E}=\frac{\rho_v}{\varepsilon}$$</div>
+    <p>Substitute both into the continuity equation:</p>
+    <div class="eq">$$\frac{\partial\rho_v}{\partial t}+\frac{\sigma}{\varepsilon}\rho_v=0$$</div>
+    <p class="note">This is a homogeneous linear ordinary differential equation.</p>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>5. Solution of the Differential Equation</h2>
+  <div class="card">
+    <p>Separate variables:</p>
+    <div class="eq">$$\frac{d\rho_v}{\rho_v}=-\frac{\sigma}{\varepsilon}\,dt$$</div>
+    <p>Integrating both sides:</p>
+    <div class="eq">$$\ln\rho_v=-\frac{\sigma}{\varepsilon}t+C$$</div>
+    <p>Therefore, the charge density becomes:</p>
+    <div class="eq">$$\rho_v(t)=\rho_0\,e^{-\sigma t/\varepsilon}$$</div>
+    <ul class="legend">
+      <li><b>$\rho_0$</b> – initial charge density</li>
+      <li><b>σ</b> – conductivity</li>
+      <li><b>ε</b> – permittivity</li>
+    </ul>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>6. Relaxation Time Constant</h2>
+  <div class="card">
+    <p>The relaxation time is:</p>
+    <div class="eq">$$\tau=\frac{\varepsilon}{\sigma}$$</div>
+    <p>Hence, the charge density can also be written as:</p>
+    <div class="eq">$$\rho_v(t)=\rho_0\,e^{-t/\tau}$$</div>
+    <p class="callout">Relaxation time represents how quickly excess charge disappears inside a material.</p>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>7. Example: Copper</h2>
+  <div class="card">
+    <p class="note">Given:</p>
+    <ul class="legend">
+      <li>Conductivity: <b>$\sigma=5.8\times10^{7}\ \text{S/m}$</b></li>
+      <li>Relative permittivity: <b>$\varepsilon_r=1$</b>, so $\varepsilon=\varepsilon_0\approx8.854\times10^{-12}\ \text{F/m}$</li>
+    </ul>
+    <div class="eq">$$\tau=\frac{\varepsilon}{\sigma}\approx1.53\times10^{-19}\ \text{s}$$</div>
+    <p>This extremely small relaxation time means:</p>
+    <div class="tiles">
+      <div class="tile"><p>Charge disappears almost instantly from the interior.</p></div>
+      <div class="tile"><p>It quickly moves to the surface.</p></div>
+      <div class="tile"><p>Good conductors cannot retain excess charge inside.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>8. Conductors vs Dielectrics</h2>
+  <div class="card">
+    <table>
+      <tr><th>Material</th><th>Relaxation time</th><th>Behaviour</th></tr>
+      <tr><td>Good conductors</td><td>Very short</td><td>Charge quickly moves to the surface.</td></tr>
+      <tr><td>Good dielectrics</td><td>Very long</td><td>Charge remains inside for a long time.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>9. Quick Revision Formula Sheet</h2>
+  <div class="card">
+    <table>
+      <tr><th>Formula</th><th>Meaning</th></tr>
+      <tr><td>$\oint \mathbf{J}\cdot d\mathbf{S}=-\dfrac{dQ}{dt}$</td><td>Charge conservation</td></tr>
+      <tr><td>$Q=\int\rho_v\,dV$</td><td>Enclosed charge</td></tr>
+      <tr><td>$\nabla\cdot\mathbf{J}=-\dfrac{\partial\rho_v}{\partial t}$</td><td>Continuity equation</td></tr>
+      <tr><td>$\mathbf{J}=\sigma\mathbf{E}$</td><td>Ohm's law</td></tr>
+      <tr><td>$\nabla\cdot\mathbf{E}=\dfrac{\rho_v}{\varepsilon}$</td><td>Gauss's law</td></tr>
+      <tr><td>$\dfrac{\partial\rho_v}{\partial t}+\dfrac{\sigma}{\varepsilon}\rho_v=0$</td><td>Charge decay equation</td></tr>
+      <tr><td>$\rho_v(t)=\rho_0e^{-\sigma t/\varepsilon}$</td><td>Solution</td></tr>
+      <tr><td>$\tau=\dfrac{\varepsilon}{\sigma}$</td><td>Relaxation time</td></tr>
+      <tr><td>$\rho_v(t)=\rho_0e^{-t/\tau}$</td><td>Decay with τ</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>10. Two-Mark Exam Points</h2>
+  <div class="card">
+    <div class="qa">
+      <h3>State the continuity equation</h3>
+      <p class="note">The continuity equation is</p>
+      <div class="eq">$$\nabla\cdot\mathbf{J}=-\frac{\partial\rho_v}{\partial t}$$</div>
+      <p class="note">It expresses the conservation of electric charge.</p>
+    </div>
+    <div class="qa">
+      <h3>Define relaxation time</h3>
+      <p class="note">Relaxation time is the time required for excess charge inside a material to decay exponentially.</p>
+      <div class="eq">$$\tau=\frac{\varepsilon}{\sigma}$$</div>
+    </div>
+    <div class="qa">
+      <h3>Why is relaxation time very small for conductors?</h3>
+      <p class="note">Conductors have very high conductivity, so</p>
+      <div class="eq">$$\tau=\frac{\varepsilon}{\sigma}$$</div>
+      <p class="note">becomes extremely small, causing charge to move rapidly to the surface.</p>
+    </div>
+  </div>
+</section>
+
+<div class="footer">ECE Semester Notes</div>
+</div>
+
+<script>
+const S={tau:2,t:0,N:140,inside:140};
+const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let visible=true;
+
+const canvas=document.getElementById('stage');
+const engine=new BABYLON.Engine(canvas,true,{antialias:true,adaptToDeviceRatio:true});
+const scene=new BABYLON.Scene(engine);
+const C3=BABYLON.Color3, V3=BABYLON.Vector3;
+
+const cam=new BABYLON.ArcRotateCamera('cam',-Math.PI/3,1.1,9,V3.Zero(),scene);
+cam.lowerRadiusLimit=6;cam.upperRadiusLimit=14;
+cam.lowerBetaLimit=.4;cam.upperBetaLimit=1.65;
+cam.panningSensibility=0;
+cam.attachControl(canvas,true);
+cam.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+if(!calm){cam.useAutoRotationBehavior=true;cam.autoRotationBehavior.idleRotationSpeed=.15;}
+
+new BABYLON.HemisphericLight('h',new V3(0,1,.3),scene).intensity=.9;
+const glow=new BABYLON.GlowLayer('g',scene);glow.intensity=.4;
+
+function mat(name,emis,alpha){
+  const m=new BABYLON.StandardMaterial(name,scene);
+  m.diffuseColor=C3.Black();m.specularColor=C3.Black();
+  m.emissiveColor=emis;m.alpha=alpha===undefined?1:alpha;
+  return m;
+}
+
+/* glass block */
+const H=1.6;
+const box=BABYLON.MeshBuilder.CreateBox('box',{size:2*H},scene);
+const boxM=mat('boxM',C3.White(),.06);boxM.backFaceCulling=false;
+box.material=boxM;box.enableEdgesRendering();box.edgesWidth=3;
+
+/* charges */
+const inM=mat('inM',new C3(0,.44,.89)), surfM=mat('surfM',new C3(1,.62,.04));
+const base=BABYLON.MeshBuilder.CreateSphere('p',{diameter:.14,segments:8},scene);
+base.isVisible=false;
+const parts=[], rnd=Math.random;
+for(let k=0;k<S.N;k++){
+  const p=new V3((rnd()*2-1)*(H-.2),(rnd()*2-1)*(H-.2),(rnd()*2-1)*(H-.2));
+  const c=[p.x,p.y,p.z], a=c.map(Math.abs), i=a.indexOf(Math.max(...a));
+  const q=p.clone(), s=c[i]>=0?H:-H;
+  if(i===0)q.x=s;else if(i===1)q.y=s;else q.z=s;
+  const m=base.clone('p'+k);m.isVisible=true;m.material=inM;
+  parts.push({m:m,p:p,q:q,u:rnd()||.001,ph:[rnd()*6.28,rnd()*6.28,rnd()*6.28],Te:0,on:false});
+}
+/* escape time Te = -τ ln(u): the fraction still inside follows e^(-t/τ) */
+function restart(){
+  S.t=0;
+  parts.forEach(o=>{o.Te=-S.tau*Math.log(o.u);o.on=false;o.m.material=inM;});
+}
+restart();
+
+/* theme-aware colours */
+function theme(){
+  const d=dark();
+  scene.clearColor=d?new BABYLON.Color4(.043,.043,.051,1):new BABYLON.Color4(.961,.961,.969,1);
+  boxM.emissiveColor=d?C3.White():new C3(.3,.3,.35);
+  box.edgesColor=d?new BABYLON.Color4(1,1,1,.35):new BABYLON.Color4(0,0,0,.3);
+  inM.emissiveColor=d?new C3(.16,.59,1):new C3(0,.44,.89);
+  surfM.emissiveColor=d?new C3(1,.7,.25):new C3(1,.62,.04);
+  glow.intensity=d?.45:.15;
+}
+theme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',theme);
+
+/* animation */
+scene.onBeforeRenderObservable.add(()=>{
+  const dt=Math.min(engine.getDeltaTime(),50)/1000*(calm?.5:1);
+  S.t+=dt;
+  if(S.t>5*S.tau+1.5)restart();
+  let inside=0;const w=.05;
+  parts.forEach(o=>{
+    if(S.t<o.Te){
+      inside++;
+      o.m.position.set(o.p.x+w*Math.sin(S.t*1.7+o.ph[0]),o.p.y+w*Math.sin(S.t*2.1+o.ph[1]),o.p.z+w*Math.sin(S.t*1.3+o.ph[2]));
+    }else{
+      const k=Math.min(1,(S.t-o.Te)/.9), e=1-Math.pow(1-k,3);
+      V3.LerpToRef(o.p,o.q,e,o.m.position);
+      if(!o.on&&k>=.5){o.on=true;o.m.material=surfM;}
+    }
+  });
+  S.inside=inside;
+  if(typeof readout==='function')readout();
+});
+
+engine.runRenderLoop(()=>{if(visible)scene.render();});
+addEventListener('resize',()=>engine.resize());
+new ResizeObserver(()=>engine.resize()).observe(canvas);
+document.documentElement.classList.add('js');
+const $=id=>document.getElementById(id);
+
+function readout(){
+  const x=S.t/S.tau;
+  $('tt').textContent=x.toFixed(2);
+  $('rho').textContent=(Math.exp(-x)*100).toFixed(1)+' %';
+  $('cnt').textContent=S.inside+' / '+S.N;
+}
+$('tau').addEventListener('input',e=>{
+  S.tau=+e.target.value;
+  $('tv').textContent=S.tau.toFixed(1)+' s';
+  restart();
+});
+$('replay').addEventListener('click',restart);
+
+/* pause rendering when the scene is off-screen */
+new IntersectionObserver(e=>{visible=e[0].isIntersecting;}).observe(canvas);
+
+/* gentle reveal on scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
