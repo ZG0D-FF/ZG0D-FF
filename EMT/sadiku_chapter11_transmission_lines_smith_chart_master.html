@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sadiku Chapter 11: Transmission Lines, Smith Chart &amp; Transients — Academic Master Guide</title>
+  
+  <!-- Apple Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- MathJax 3 LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Babylon.js 7.x 3D WebGL Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs@7.30.0/babylon.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs-materials@7.30.0/babylonjs.materials.min.js"></script>
+
+  <!-- Apple-Calmness Global EMT Glossary & Tooltips -->
+  <link rel="stylesheet" href="emt_glossary_tooltip.css">
+
+  <style>
+    :root {
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --surface-subtle: #f5f5f7;
+      --surface-elevated: #ffffff;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.16);
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --accent-hover: #0077ed;
+      --success: #34c759;
+      --warning: #ff9500;
+      --danger: #ff3b30;
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+      color-scheme: light dark;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-subtle: #1f2937;
+      --surface-elevated: #1e293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --text: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-tertiary: #6b7280;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --accent-hover: #0ea5e9;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Top Bar */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(251, 251, 253, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    [data-theme="dark"] .top-nav {
+      background: rgba(11, 15, 25, 0.85);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .nav-pill {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .btn-toggle {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-toggle:hover {
+      border-color: var(--border-strong);
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 40px;
+    }
+    @media (max-width: 1024px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding-right: 14px;
+    }
+    @media (max-width: 1024px) {
+      .sidebar { display: none; }
+    }
+    .sidebar-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      margin: 18px 0 8px 10px;
+    }
+    .sidebar-link {
+      display: block;
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+    .sidebar-link:hover, .sidebar-link.active {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    /* Main Content */
+    .content-area { min-width: 0; }
+
+    /* Hero Section */
+    .hero {
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+    .hero-pre {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .hero-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+    .hero-desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 860px;
+      line-height: 1.6;
+    }
+
+    /* 3D WebGL Card */
+    .webgl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 40px;
+      box-shadow: var(--card-shadow);
+      transition: box-shadow 0.3s;
+    }
+    .webgl-card:hover {
+      box-shadow: var(--card-shadow-hover);
+    }
+    .webgl-header {
+      padding: 16px 20px;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .webgl-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .engine-badge {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .mode-btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      background: #0d1117;
+    }
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      outline: none;
+      display: block;
+    }
+
+    /* Live Telemetry HUD */
+    .hud-overlay {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px 18px;
+      color: #f8fafc;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.5;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .hud-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px 16px;
+    }
+    .hud-val {
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .webgl-controls-bar {
+      padding: 14px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+    .slider-wrap input[type="range"] {
+      cursor: pointer;
+      width: 130px;
+      accent-color: var(--accent);
+    }
+
+    /* Section Cards */
+    .card-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+      box-shadow: var(--card-shadow);
+    }
+    .section-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+      line-height: 1.3;
+    }
+    .section-lead {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* Math Formula Block */
+    .math-block {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      overflow-x: auto;
+      font-size: 14.5px;
+    }
+
+    /* Lucid Drawer */
+    details.lucid-drawer {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 18px 0;
+      padding: 14px 18px;
+      transition: background-color 0.2s;
+    }
+    details.lucid-drawer[open] {
+      background: var(--surface);
+      border-color: var(--border-strong);
+    }
+    details.lucid-drawer summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      outline: none;
+      user-select: none;
+      color: var(--text);
+    }
+    .drawer-content {
+      padding-top: 14px;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+      margin-top: 12px;
+    }
+
+    /* Academic Data Tables */
+    .table-container {
+      overflow-x: auto;
+      margin: 20px 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    table.academic-table th {
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    table.academic-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    table.academic-table tr:last-child td { border-bottom: none; }
+    table.academic-table tr:hover td { background: var(--surface-subtle); }
+
+    /* Drill & Solved Problems */
+    .drill-box {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      background: var(--surface);
+    }
+    .drill-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .drill-tag {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+    }
+    .drill-question {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .drill-solution {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Verification Badge */
+    .check-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      color: var(--success);
+      background: rgba(52, 199, 89, 0.1);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    /* Traps & Warnings */
+    .trap-box {
+      background: rgba(255, 59, 48, 0.05);
+      border: 1px solid rgba(255, 59, 48, 0.2);
+      border-left: 3px solid var(--danger);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 13.5px;
+      color: var(--text);
+    }
+    .trap-title {
+      font-weight: 600;
+      color: var(--danger);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- Top Bar -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <a href="../notes1.html" style="display:inline-flex; align-items:center; gap:5px; color:#2997ff; text-decoration:none; font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; background:rgba(41,151,255,0.12); border:1px solid rgba(41,151,255,0.25);">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Jarvis Hub</span>
+      </a>
+      <a href="index.html" style="color:var(--accent); text-decoration:none; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>EMT Lab Hub</span>
+      </a>
+      <a href="emt_journey_electromagnetic_waves.html" style="color:#38bdf8; text-decoration:none; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:3px 8px; border-radius:999px; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.25);">
+        <span>⚡ Journey Master</span>
+      </a>
+      <span style="color:var(--border-strong);">/</span>
+      <span style="font-weight:600;">Sadiku Ch. 11</span>
+      <span class="nav-pill">Batch 3A</span>
+    </div>
+    <div class="nav-actions">
+      <span style="font-size:12px; color:var(--text-tertiary); font-family:var(--font-mono);">PCCECE501 &bull; 2026</span>
+      <button class="btn-toggle" onclick="toggleTheme()" id="themeBtn">Light Mode</button>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <div class="container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-group-title">Interactive 3D Engine</div>
+      <a href="#section-3d" class="sidebar-link active">⚡ 3D Electrodynamics Lab</a>
+      
+      <div class="sidebar-group-title">Theoretical Foundations</div>
+      <a href="#section-line-params" class="sidebar-link">1. Line Parameters &amp; Table 11.1</a>
+      <a href="#section-telegrapher" class="sidebar-link">2. Telegrapher's Equations &amp; PDEs</a>
+      <a href="#section-lossless-distort" class="sidebar-link">3. Lossless &amp; Distortionless Lines</a>
+      <a href="#section-input-impedance" class="sidebar-link">4. Input Impedance &amp; VSWR ($s$)</a>
+      <a href="#section-power-flow" class="sidebar-link">5. Power Flow &amp; Terminations</a>
+      
+      <div class="sidebar-group-title">The Smith Chart Suite</div>
+      <a href="#section-smith-theory" class="sidebar-link">6. Mathematical Construction ($r$ &amp; $x$ circles)</a>
+      <a href="#section-smith-usage" class="sidebar-link">7. Navigation, $s$-circles &amp; Admittance</a>
+      <a href="#section-stub-matching" class="sidebar-link">8. Single-Stub Shunt Impedance Tuner</a>
+      <a href="#section-slotted-line" class="sidebar-link">9. Slotted Line Metrology &amp; $Z_L$</a>
+
+      <div class="sidebar-group-title">Transient Dynamics</div>
+      <a href="#section-transients" class="sidebar-link">10. Transients &amp; Lattice Bounce Diagrams</a>
+
+      <div class="sidebar-group-title">Solved Vault &amp; Review</div>
+      <a href="#section-solved-vault" class="sidebar-link">11. Master Solved Examples 11.3–11.9</a>
+      <a href="#section-exam-traps" class="sidebar-link">12. Critical Exam Traps &amp; Formulas</a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+
+      <!-- Hero Header -->
+      <header class="hero">
+        <div class="hero-pre">Department of Electronics &amp; Communication Engineering &bull; Term-II</div>
+        <h1 class="hero-title">Sadiku Chapter 11: Transmission Lines, Smith Chart &amp; Transients</h1>
+        <p class="hero-desc">
+          Rigorous academic compendium covering distributed-parameter electrodynamics, the complete Telegrapher wave PDE derivations, conformal bilinear mapping of the Smith chart, single-stub tuner matching, slotted line microwave measurements, and step-response transient bounce diagrams.
+        </p>
+      </header>
+
+      <!-- 3D Electrodynamics Laboratory -->
+      <section class="webgl-card" id="section-3d">
+        <div class="webgl-header">
+          <div class="webgl-title-group">
+            <span class="engine-badge">BABYLON.JS 7.30 WEBGL</span>
+            <span style="font-weight:600; font-size:14px;" id="simTitle">Interactive 3D Smith Chart Conformal Engine</span>
+          </div>
+          <div class="mode-btn-group">
+            <button class="mode-btn active" id="btnModeSmith" onclick="setSimMode('smith')">3D Smith Chart</button>
+            <button class="mode-btn" id="btnModeStanding" onclick="setSimMode('standing')">Standing Wave Envelope</button>
+            <button class="mode-btn" id="btnModeTransient" onclick="setSimMode('transient')">Transient Pulse Bounce</button>
+            <button class="mode-btn" onclick="resetSimCamera()">Reset Camera</button>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="renderCanvas"></canvas>
+          <div class="hud-overlay" id="hudBox">
+            <div class="hud-title">Real-Time Telemetry HUD</div>
+            <div class="hud-grid">
+              <div>Load $Z_L$: <span class="hud-val" id="hudZL">60 + j40 &Omega;</span></div>
+              <div>Char $Z_0$: <span class="hud-val" id="hudZ0">50 &Omega;</span></div>
+              <div>Reflection $\Gamma_L$: <span class="hud-val" id="hudGamma">0.352 &ang; 56.0&deg;</span></div>
+              <div>VSWR ($s$): <span class="hud-val" id="hudVSWR">2.088</span></div>
+              <div>Transmitted $P_t/P_i$: <span class="hud-val" id="hudPower">87.59%</span></div>
+              <div>Input $Z_{in}(\ell)$: <span class="hud-val" id="hudZin">23.97 + j1.35 &Omega;</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="webgl-controls-bar">
+          <div class="slider-wrap">
+            <label for="sliderRL">Load $R_L$:</label>
+            <input type="range" id="sliderRL" min="5" max="250" value="60" oninput="updateSimParameters()">
+            <span id="valRL">60 &Omega;</span>
+          </div>
+          <div class="slider-wrap">
+            <label for="sliderXL">Load $X_L$:</label>
+            <input type="range" id="sliderXL" min="-150" max="150" value="40" oninput="updateSimParameters()">
+            <span id="valXL">+40 &Omega;</span>
+          </div>
+          <div class="slider-wrap">
+            <label for="sliderLen">Length $\ell/\lambda$:</label>
+            <input type="range" id="sliderLen" min="0" max="1" step="0.01" value="0.333" oninput="updateSimParameters()">
+            <span id="valLen">0.333 &lambda;</span>
+          </div>
+          <div class="slider-wrap">
+            <label for="sliderSpeed">Wave Speed:</label>
+            <input type="range" id="sliderSpeed" min="0.1" max="2" step="0.1" value="1.0" oninput="updateSimSpeed(this.value)">
+            <span id="valSpeed">1.0&times;</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 1: Line Parameters & Table 11.1 -->
+      <section class="card-section" id="section-line-params">
+        <span class="section-badge">Section 11.2</span>
+        <h2 class="section-title">Transmission Line Distributed Parameters &amp; Table 11.1</h2>
+        <p class="section-lead">
+          A transmission line operates in the distributed regime when physical line length $\ell \ge \lambda / 20$. Under this condition, lumped Kirchoff laws break down because wave propagation transit time cannot be neglected. The electrical behavior is governed by 4 distributed parameters per unit length: Resistance $R$ ($\Omega/\text{m}$), Inductance $L$ ($\text{H/m}$), Conductance $G$ ($\text{S/m}$), and Capacitance $C$ ($\text{F/m}$).
+        </p>
+
+        <div class="table-container">
+          <table class="academic-table">
+            <thead>
+              <tr>
+                <th>Line Geometry</th>
+                <th>Resistance $R$ ($\Omega/\text{m}$)</th>
+                <th>Inductance $L$ ($\text{H/m}$)</th>
+                <th>Conductance $G$ ($\text{S/m}$)</th>
+                <th>Capacitance $C$ ($\text{F/m}$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Coaxial Line</strong><br><small>Inner $a$, Outer $b$, $\delta \ll a, b$</small></td>
+                <td>$$\frac{1}{2\pi \delta \sigma_c}\left[\frac{1}{a} + \frac{1}{b}\right]$$</td>
+                <td>$$\frac{\mu}{2\pi}\ln\left(\frac{b}{a}\right)$$</td>
+                <td>$$\frac{2\pi \sigma}{\ln(b/a)}$$</td>
+                <td>$$\frac{2\pi \varepsilon}{\ln(b/a)}$$</td>
+              </tr>
+              <tr>
+                <td><strong>Two-Wire Line</strong><br><small>Radius $a$, Spacing $d \gg a$</small></td>
+                <td>$$\frac{1}{\pi a \delta \sigma_c}$$</td>
+                <td>$$\frac{\mu}{\pi}\cosh^{-1}\left(\frac{d}{2a}\right) \approx \frac{\mu}{\pi}\ln\left(\frac{d}{a}\right)$$</td>
+                <td>$$\frac{\pi \sigma}{\cosh^{-1}(d/2a)}$$</td>
+                <td>$$\frac{\pi \varepsilon}{\cosh^{-1}(d/2a)}$$</td>
+              </tr>
+              <tr>
+                <td><strong>Planar Line</strong><br><small>Width $w \gg d$, Thickness $t \gg \delta$</small></td>
+                <td>$$\frac{2}{w \delta \sigma_c}$$</td>
+                <td>$$\frac{\mu d}{w}$$</td>
+                <td>$$\frac{\sigma w}{d}$$</td>
+                <td>$$\frac{\varepsilon w}{d}$$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="math-block">
+          <strong>Fundamental Universal Constitutive Identities (Holding for Any Uniform Two-Conductor Line):</strong>
+          $$LC = \mu \varepsilon, \qquad \frac{G}{C} = \frac{\sigma}{\varepsilon}$$
+          $$\delta = \frac{1}{\sqrt{\pi f \mu_c \sigma_c}} \quad (\text{Skin Depth of Conductor in meters})$$
+        </div>
+
+        <details class="lucid-drawer">
+          <summary>💡 Lucid Understanding: Physical Meaning of $G \ne 1/R$ and Skin Depth</summary>
+          <div class="drawer-content">
+            <p><strong>1. The Conductance $G$ is NOT the inverse of Resistance $R$:</strong> $R$ is the AC series ohmic resistance of the metallic conductors carrying longitudinal current $I_z$. In contrast, $G$ is the transverse leakage conductance through the imperfect dielectric medium separating the two conductors. A perfect dielectric has $\sigma = 0 \implies G = 0$, regardless of conductor resistance $R$.</p>
+            <p><strong>2. External Inductance Dominance:</strong> The inductance $L$ in Table 11.1 represents external inductance $L_{\text{ext}}$. The internal inductance $L_{\text{in}} = R / \omega$ is confined within the skin depth and drops inversely with frequency, becoming negligible above UHF frequencies ($> 100\text{ MHz}$).</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Section 2: Telegrapher's Equations & PDEs -->
+      <section class="card-section" id="section-telegrapher">
+        <span class="section-badge">Section 11.3</span>
+        <h2 class="section-title">Complete Derivation of Telegrapher's Equations &amp; Helmholtz Uncoupling</h2>
+        <p class="section-lead">
+          Applying Kirchhoff's Voltage Law (KVL) around the differential outer loop of length $\Delta z$ and Kirchhoff's Current Law (KCL) at the central shunt node:
+        </p>
+
+        <div class="math-block">
+          <strong>Step 1: KVL Outer Mesh Equation:</strong>
+          $$V(z, t) - R\,\Delta z\,I(z, t) - L\,\Delta z\,\frac{\partial I(z, t)}{\partial t} - V(z + \Delta z, t) = 0$$
+          $$\lim_{\Delta z \to 0} -\frac{V(z+\Delta z, t) - V(z, t)}{\Delta z} = R\,I(z, t) + L\,\frac{\partial I(z, t)}{\partial t} \implies -\frac{\partial V(z, t)}{\partial z} = R\,I(z, t) + L\,\frac{\partial I(z, t)}{\partial t}$$
+        </div>
+
+        <div class="math-block">
+          <strong>Step 2: KCL Shunt Node Equation:</strong>
+          $$I(z, t) - I(z + \Delta z, t) = \Delta I = G\,\Delta z\,V(z + \Delta z, t) + C\,\Delta z\,\frac{\partial V(z + \Delta z, t)}{\partial t}$$
+          $$\lim_{\Delta z \to 0} -\frac{I(z+\Delta z, t) - I(z, t)}{\Delta z} = G\,V(z, t) + C\,\frac{\partial V(z, t)}{\partial t} \implies -\frac{\partial I(z, t)}{\partial z} = G\,V(z, t) + C\,\frac{\partial V(z, t)}{\partial t}$$
+        </div>
+
+        <div class="math-block">
+          <strong>Step 3: Time-Harmonic Phasor Representation ($V(z,t) = \text{Re}[V_s(z)e^{j\omega t}]$):</strong>
+          $$-\frac{dV_s}{dz} = (R + j\omega L) I_s, \qquad -\frac{dI_s}{dz} = (G + j\omega C) V_s$$
+        </div>
+
+        <div class="math-block">
+          <strong>Step 4: Uncoupling to One-Dimensional Wave (Helmholtz) Equations:</strong>
+          $$\frac{d^2 V_s}{dz^2} = -(R + j\omega L)\frac{dI_s}{dz} = (R + j\omega L)(G + j\omega C) V_s \implies \frac{d^2 V_s}{dz^2} - \gamma^2 V_s = 0$$
+          $$\frac{d^2 I_s}{dz^2} = -(G + j\omega C)\frac{dV_s}{dz} = (R + j\omega L)(G + j\omega C) I_s \implies \frac{d^2 I_s}{dz^2} - \gamma^2 I_s = 0$$
+          $$\gamma = \alpha + j\beta = \sqrt{(R + j\omega L)(G + j\omega C)}$$
+        </div>
+
+        <p>The general forward ($+z$) and backward ($-z$) traveling wave solutions are:</p>
+        <div class="math-block">
+          $$V_s(z) = V_0^+ e^{-\gamma z} + V_0^- e^{\gamma z}, \qquad I_s(z) = I_0^+ e^{-\gamma z} + I_0^- e^{\gamma z} = \frac{V_0^+}{Z_0}e^{-\gamma z} - \frac{V_0^-}{Z_0}e^{\gamma z}$$
+          $$Z_0 = \sqrt{\frac{R + j\omega L}{G + j\omega C}} = R_0 + jX_0 \quad (\text{Characteristic Impedance in }\Omega)$$
+        </div>
+      </section>
+
+      <!-- Section 3: Lossless & Distortionless Lines -->
+      <section class="card-section" id="section-lossless-distort">
+        <span class="section-badge">Section 11.3 Special Cases</span>
+        <h2 class="section-title">Lossless vs. Heaviside Distortionless Transmission Lines</h2>
+        <p class="section-lead">
+          Signals propagate as a superposition of many Fourier frequency components. Unless the attenuation constant $\alpha$ and the phase velocity $u$ are independent of frequency, signal pulses suffer geometric spreading and phase dispersion.
+        </p>
+
+        <div class="table-container">
+          <table class="academic-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>General Lossy Line</th>
+                <th>Lossless Line ($R = 0 = G$)</th>
+                <th>Distortionless Line ($RC = GL$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Physical Condition</strong></td>
+                <td>$\sigma_c < \infty, \sigma > 0$</td>
+                <td>Perfect conductors ($\sigma_c \to \infty$), perfect dielectric ($\sigma = 0$)</td>
+                <td>Balanced loss ratio: $R/L = G/C$ (Oliver Heaviside, 1887)</td>
+              </tr>
+              <tr>
+                <td><strong>Attenuation $\alpha$</strong></td>
+                <td>$\text{Re}\sqrt{(R+j\omega L)(G+j\omega C)}$</td>
+                <td>$$\alpha = 0$$</td>
+                <td>$$\alpha = \sqrt{RG} \quad (\text{Frequency Independent!})$$</td>
+              </tr>
+              <tr>
+                <td><strong>Phase Constant $\beta$</strong></td>
+                <td>$\text{Im}\sqrt{(R+j\omega L)(G+j\omega C)}$</td>
+                <td>$$\beta = \omega\sqrt{LC}$$</td>
+                <td>$$\beta = \omega\sqrt{LC} \quad (\text{Purely Linear in }\omega)$$</td>
+              </tr>
+              <tr>
+                <td><strong>Phase Velocity $u$</strong></td>
+                <td>$\omega / \beta$ (dispersive)</td>
+                <td>$$u = \frac{1}{\sqrt{LC}} = \frac{c}{\sqrt{\mu_r \varepsilon_r}}$$</td>
+                <td>$$u = \frac{1}{\sqrt{LC}} \quad (\text{Zero Dispersion!})$$</td>
+              </tr>
+              <tr>
+                <td><strong>Characteristic $Z_0$</strong></td>
+                <td>$\sqrt{\frac{R+j\omega L}{G+j\omega C}} = R_0 + jX_0$</td>
+                <td>$$Z_0 = R_0 = \sqrt{\frac{L}{C}}, \quad X_0 = 0$$</td>
+                <td>$$Z_0 = R_0 = \sqrt{\frac{R}{G}} = \sqrt{\frac{L}{C}}, \quad X_0 = 0$$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="math-block">
+          <strong>Mathematical Proof of the Heaviside Distortionless Identity ($RC = GL$):</strong>
+          $$\gamma = \sqrt{(R+j\omega L)(G+j\omega C)} = \sqrt{RG\left(1 + \frac{j\omega L}{R}\right)\left(1 + \frac{j\omega C}{G}\right)}$$
+          $$\text{Since } \frac{R}{L} = \frac{G}{C} \implies \frac{L}{R} = \frac{C}{G}, \quad \gamma = \sqrt{RG}\left(1 + \frac{j\omega C}{G}\right) = \sqrt{RG} + j\omega \frac{C\sqrt{RG}}{G} = \sqrt{RG} + j\omega \sqrt{LC}$$
+          $$\therefore \alpha = \sqrt{RG}, \qquad \beta = \omega\sqrt{LC} \quad \blacksquare$$
+        </div>
+      </section>
+
+      <!-- Section 4: Input Impedance & Standing Wave Ratio -->
+      <section class="card-section" id="section-input-impedance">
+        <span class="section-badge">Section 11.4</span>
+        <h2 class="section-title">Input Impedance $Z_{in}(\ell)$, Reflection Coefficient $\Gamma_L$ &amp; VSWR ($s$)</h2>
+        <p class="section-lead">
+          Let a line of length $\ell$ with characteristic impedance $Z_0$ and propagation constant $\gamma$ be terminated by load impedance $Z_L$ at $z = \ell$. Taking the load as spatial origin $z' = \ell - z$:
+        </p>
+
+        <div class="math-block">
+          <strong>General Lossy Line Input Impedance:</strong>
+          $$Z_{in}(\ell) = \frac{V_s(z'=\ell)}{I_s(z'=\ell)} = Z_0 \left[\frac{Z_L + Z_0 \tanh \gamma \ell}{Z_0 + Z_L \tanh \gamma \ell}\right]$$
+          $$\text{For a Lossless Line } (\alpha = 0 \implies \gamma = j\beta, \tanh j\beta \ell = j\tan \beta \ell):$$
+          $$Z_{in}(\ell) = Z_0 \left[\frac{Z_L + j Z_0 \tan \beta \ell}{Z_0 + j Z_L \tan \beta \ell}\right]$$
+        </div>
+
+        <div class="math-block">
+          <strong>Voltage Reflection Coefficient at the Load ($\Gamma_L$) and Along the Line ($\Gamma(z')$):</strong>
+          $$\Gamma_L = \frac{V_0^- e^{\gamma \ell}}{V_0^+ e^{-\gamma \ell}} = \frac{Z_L - Z_0}{Z_L + Z_0} = |\Gamma_L| e^{j\theta_\Gamma}$$
+          $$\Gamma(z') = \Gamma_L e^{-2\gamma z'} \xrightarrow{\text{lossless}} \Gamma_L e^{-j 2\beta z'}$$
+          $$\text{Standing Wave Ratio (SWR or } s \text{)}: \quad s = \frac{V_{\max}}{V_{\min}} = \frac{1 + |\Gamma_L|}{1 - |\Gamma_L|}, \qquad |\Gamma_L| = \frac{s - 1}{s + 1}$$
+          $$\text{Extremal Input Impedances: } \quad |Z_{in}|_{\max} = s Z_0, \qquad |Z_{in}|_{\min} = \frac{Z_0}{s}$$
+        </div>
+      </section>
+
+      <!-- Section 5: Power Flow & Terminations -->
+      <section class="card-section" id="section-power-flow">
+        <span class="section-badge">Section 11.4 Power &amp; Terminations</span>
+        <h2 class="section-title">Power Transmission &amp; Critical Boundary Terminations</h2>
+
+        <div class="math-block">
+          <strong>Average Power Flow on a Lossless Line:</strong>
+          $$P_{\text{ave}} = \frac{1}{2}\text{Re}[V_s(z') I_s^*(z')] = \frac{|V_0^+|^2}{2Z_0}(1 - |\Gamma_L|^2) = P_{\text{incident}} - P_{\text{reflected}}$$
+          $$\text{Fraction of Power Delivered to Load: } \frac{P_{\text{load}}}{P_{\text{incident}}} = 1 - |\Gamma_L|^2$$
+        </div>
+
+        <div class="table-container">
+          <table class="academic-table">
+            <thead>
+              <tr>
+                <th>Termination Case</th>
+                <th>Load $Z_L$</th>
+                <th>$\Gamma_L$</th>
+                <th>VSWR $s$</th>
+                <th>Input Impedance $Z_{in}(\ell)$</th>
+                <th>Physical Behavior</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Short Circuit (SC)</strong></td>
+                <td>$0\ \Omega$</td>
+                <td>$-1 = 1\angle 180^\circ$</td>
+                <td>$\infty$</td>
+                <td>$$Z_{sc} = j Z_0 \tan \beta \ell$$</td>
+                <td>Pure reactance. Inductive for $0 < \ell < \lambda/4$, Capacitive for $\lambda/4 < \ell < \lambda/2$.</td>
+              </tr>
+              <tr>
+                <td><strong>Open Circuit (OC)</strong></td>
+                <td>$\infty\ \Omega$</td>
+                <td>$+1 = 1\angle 0^\circ$</td>
+                <td>$\infty$</td>
+                <td>$$Z_{oc} = -j Z_0 \cot \beta \ell$$</td>
+                <td>Pure reactance. Dual of shorted line: $Z_{sc} Z_{oc} = Z_0^2$.</td>
+              </tr>
+              <tr>
+                <td><strong>Matched Line</strong></td>
+                <td>$Z_0$</td>
+                <td>$0$</td>
+                <td>$1.0$</td>
+                <td>$$Z_{in} = Z_0$$</td>
+                <td>Zero reflection! 100% power absorption. No standing waves. Flat line.</td>
+              </tr>
+              <tr>
+                <td><strong>Quarter-Wave ($\lambda/4$)</strong></td>
+                <td>Arbitrary $Z_L$</td>
+                <td>$\Gamma_L$</td>
+                <td>$s$</td>
+                <td>$$Z_{in} = \frac{Z_0^2}{Z_L}$$</td>
+                <td>Impedance Inverter! Transforms short into open, open into short.</td>
+              </tr>
+              <tr>
+                <td><strong>Half-Wave ($\lambda/2$)</strong></td>
+                <td>Arbitrary $Z_L$</td>
+                <td>$\Gamma_L$</td>
+                <td>$s$</td>
+                <td>$$Z_{in} = Z_L$$</td>
+                <td>Impedance Repeater! Impedance repeats identically every half-wavelength.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 6: Smith Chart Mathematical Theory -->
+      <section class="card-section" id="section-smith-theory">
+        <span class="section-badge">Section 11.5 Conformal Mapping</span>
+        <h2 class="section-title">The Smith Chart: Conformal Bilinear Transformation &amp; Analytical Circle Proofs</h2>
+        <p class="section-lead">
+          Invented by Phillip H. Smith in 1939, the Smith chart is a graphical polar nomogram representing the conformal bilinear mapping between the complex normalized impedance plane $z_L = r + jx$ and the complex reflection coefficient plane $\Gamma = \Gamma_r + j\Gamma_i$.
+        </p>
+
+        <div class="math-block">
+          <strong>Mapping Equation:</strong>
+          $$\Gamma = \Gamma_r + j\Gamma_i = \frac{z_L - 1}{z_L + 1} = \frac{(r - 1) + jx}{(r + 1) + jx}$$
+          $$\text{Inverting for Normalized Impedance: } \quad z_L = r + jx = \frac{1 + \Gamma}{1 - \Gamma} = \frac{(1 + \Gamma_r) + j\Gamma_i}{(1 - \Gamma_r) - j\Gamma_i}$$
+        </div>
+
+        <div class="math-block">
+          <strong>Step 1: Multiplying by Complex Conjugate $(1 - \Gamma_r) + j\Gamma_i$:</strong>
+          $$z_L = \frac{[(1 + \Gamma_r) + j\Gamma_i][(1 - \Gamma_r) + j\Gamma_i]}{(1 - \Gamma_r)^2 + \Gamma_i^2} = \frac{(1 - \Gamma_r^2 - \Gamma_i^2) + j(2\Gamma_i)}{(1 - \Gamma_r)^2 + \Gamma_i^2}$$
+          $$\text{Equating Real Parts: } \quad r = \frac{1 - \Gamma_r^2 - \Gamma_i^2}{(1 - \Gamma_r)^2 + \Gamma_i^2}$$
+          $$\text{Equating Imaginary Parts: } \quad x = \frac{2\Gamma_i}{(1 - \Gamma_r)^2 + \Gamma_i^2}$$
+        </div>
+
+        <div class="math-block">
+          <strong>Step 2: Rigorous Derivation of Constant Resistance ($r$) Circles:</strong>
+          $$r\left[(1 - \Gamma_r)^2 + \Gamma_i^2\right] = 1 - \Gamma_r^2 - \Gamma_i^2 \implies r(1 - 2\Gamma_r + \Gamma_r^2 + \Gamma_i^2) = 1 - \Gamma_r^2 - \Gamma_i^2$$
+          $$\Gamma_r^2(1 + r) - 2r\Gamma_r + \Gamma_i^2(1 + r) = 1 - r \implies \Gamma_r^2 - \frac{2r}{1+r}\Gamma_r + \Gamma_i^2 = \frac{1 - r}{1 + r}$$
+          $$\text{Completing the square in }\Gamma_r: \quad \left(\Gamma_r - \frac{r}{1+r}\right)^2 + \Gamma_i^2 = \frac{1 - r}{1 + r} + \left(\frac{r}{1+r}\right)^2 = \frac{(1-r)(1+r) + r^2}{(1+r)^2} = \left(\frac{1}{1+r}\right)^2$$
+          $$\bbox[5px, border:2px solid #0071e3]{\left[\Gamma_r - \frac{r}{1+r}\right]^2 + \Gamma_i^2 = \left[\frac{1}{1+r}\right]^2}$$
+          $$\text{Circle Center: } \left(\frac{r}{1+r}, 0\right), \qquad \text{Radius: } \frac{1}{1+r}$$
+        </div>
+
+        <div class="math-block">
+          <strong>Step 3: Rigorous Derivation of Constant Reactance ($x$) Circles:</strong>
+          $$(1 - \Gamma_r)^2 + \Gamma_i^2 = \frac{2\Gamma_i}{x} \implies (\Gamma_r - 1)^2 + \Gamma_i^2 - \frac{2}{x}\Gamma_i = 0$$
+          $$\text{Completing the square in }\Gamma_i: \quad (\Gamma_r - 1)^2 + \left(\Gamma_i - \frac{1}{x}\right)^2 = \left(\frac{1}{x}\right)^2$$
+          $$\bbox[5px, border:2px solid #0071e3]{(\Gamma_r - 1)^2 + \left[\Gamma_i - \frac{1}{x}\right]^2 = \left[\frac{1}{x}\right]^2}$$
+          $$\text{Circle Center: } \left(1, \frac{1}{x}\right), \qquad \text{Radius: } \frac{1}{|x|}$$
+        </div>
+
+        <div class="table-container">
+          <table class="academic-table">
+            <thead>
+              <tr>
+                <th>Normalized Resistance $r$</th>
+                <th>$r$-Circle Center $(\Gamma_r, \Gamma_i)$</th>
+                <th>$r$-Circle Radius</th>
+                <th>Normalized Reactance $x$</th>
+                <th>$x$-Circle Center $(\Gamma_r, \Gamma_i)$</th>
+                <th>$x$-Circle Radius</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>$r = 0$ (Boundary)</td>
+                <td>$(0, 0)$</td>
+                <td>$1.0$ (Unit Circle)</td>
+                <td>$x = 0$ (Real Axis)</td>
+                <td>$(1, \infty)$</td>
+                <td>$\infty$ (Straight Line)</td>
+              </tr>
+              <tr>
+                <td>$r = 0.5$</td>
+                <td>$(1/3, 0) \approx (0.333, 0)$</td>
+                <td>$2/3 \approx 0.667$</td>
+                <td>$x = \pm 0.5$</td>
+                <td>$(1, \pm 2)$</td>
+                <td>$2.0$</td>
+              </tr>
+              <tr>
+                <td>$r = 1.0$ (Matched)</td>
+                <td>$(1/2, 0) = (0.5, 0)$</td>
+                <td>$1/2 = 0.500$</td>
+                <td>$x = \pm 1.0$</td>
+                <td>$(1, \pm 1)$</td>
+                <td>$1.0$</td>
+              </tr>
+              <tr>
+                <td>$r = 2.0$</td>
+                <td>$(2/3, 0) \approx (0.667, 0)$</td>
+                <td>$1/3 \approx 0.333$</td>
+                <td>$x = \pm 2.0$</td>
+                <td>$(1, \pm 0.5)$</td>
+                <td>$0.5$</td>
+              </tr>
+              <tr>
+                <td>$r \to \infty$ (Open)</td>
+                <td>$(1, 0)$</td>
+                <td>$0$ (Point on rim)</td>
+                <td>$x \to \pm \infty$</td>
+                <td>$(1, 0)$</td>
+                <td>$0$ (Point on rim)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trap-box">
+          <div class="trap-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Critical Geometric Invariance: Singular Concurrence Point $(1,0)$</div>
+          Every single $r$-circle and every single $x$-circle without exception passes through the point $(1, 0)$ in the complex $\Gamma$ plane. This point represents $Z_L = \infty$ (Open Circuit).
+        </div>
+      </section>
+
+      <!-- Section 7: Smith Chart Navigation & Admittance -->
+      <section class="card-section" id="section-smith-usage">
+        <span class="section-badge">Section 11.5 Navigation</span>
+        <h2 class="section-title">Smith Chart Rules of Navigation &amp; The Admittance Dual</h2>
+        
+        <div class="math-block">
+          <strong>Key Navigational Laws:</strong>
+          <ul style="margin-left: 20px; line-height: 1.8;">
+            <li><strong>Angular Equivalence:</strong> One complete $360^\circ$ mechanical rotation on the Smith chart corresponds to an electrical distance of $\lambda / 2$ along the physical transmission line:
+              $$\lambda \longleftrightarrow 720^\circ, \qquad \frac{\lambda}{2} \longleftrightarrow 360^\circ, \qquad \frac{\lambda}{4} \longleftrightarrow 180^\circ$$
+            </li>
+            <li><strong>Direction of Rotation:</strong>
+              <ul>
+                <li><strong>Clockwise (CW):</strong> Moving <em>Toward the Generator</em> (WTG) / Away from load.</li>
+                <li><strong>Counter-Clockwise (CCW):</strong> Moving <em>Toward the Load</em> (WTL) / Away from generator.</li>
+              </ul>
+            </li>
+            <li><strong>Constant $s$ Circle:</strong> Concentric circle centered at the origin $(0, 0)$ with radius $|\Gamma_L|$. Where it crosses the right-hand horizontal axis ($\Gamma_r > 0$) gives the numerical value of VSWR $s = r_{\max}$. Where it crosses the left-hand axis gives $1/s = r_{\min}$.</li>
+            <li><strong>$V_{\max}$ and $V_{\min}$ Locations:</strong> $V_{\max}$ (voltage antinode) is located at the right horizontal axis ($\theta_\Gamma = 0^\circ$). $V_{\min}$ (voltage node) is located at the left horizontal axis ($\theta_\Gamma = 180^\circ$). They are spaced exactly $\lambda / 4$ ($180^\circ$) apart.</li>
+            <li><strong>Admittance Transformation:</strong> Normalized admittance $y = Y / Y_0 = g + jb$ is found diametrically opposite $z$ across the origin on the constant $s$-circle ($180^\circ$ rotation, corresponding to $\lambda/4$ shift). On the admittance chart, $r$-circles become conductance ($g$) circles and $x$-circles become susceptance ($b$) circles.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 8: Single-Stub Shunt Tuner -->
+      <section class="card-section" id="section-stub-matching">
+        <span class="section-badge">Section 11.6 Matching</span>
+        <h2 class="section-title">Impedance Matching: Quarter-Wave Transformers &amp; Single-Stub Shunt Tuners</h2>
+        <p class="section-lead">
+          Reflected waves cause standing waves, reducing power transmission and inducing high dielectric breakdown voltages. Two industry-standard matching mechanisms resolve this:
+        </p>
+
+        <div class="math-block">
+          <strong>1. Quarter-Wave ($\lambda/4$) Transformer Matching:</strong>
+          $$Z_0' = \sqrt{Z_0 Z_L} \quad (\text{Valid when } Z_L \text{ is purely real})$$
+          $$\text{Standing wave is completely eliminated to the left of the transformer: } s = 1.0, \quad \Gamma = 0$$
+          <em>Disadvantage:</em> Narrowband frequency sensitivity.
+        </div>
+
+        <div class="math-block">
+          <strong>2. Single-Stub Shunt Tuner Matching (Short-Circuited):</strong>
+          $$\text{Design Goal: Find distance } \ell \text{ from load where } y_{in}(\ell) = 1 + jb, \text{ then add shunt stub of length } d \text{ with } y_s = -jb$$
+          $$y_{\text{total}} = y_{in} + y_s = (1 + jb) + (-jb) = 1 + j0 \implies Z_{in} = Z_0$$
+          $$\text{Shorted Stub Input Admittance: } \quad y_s = \frac{Y_{sc}}{Y_0} = -j\cot \beta d$$
+          $$\text{Two matching locations exist per half-wavelength: } \ell_A \text{ and } \ell_B; \quad \text{Stub lengths: } d_A + d_B = \frac{\lambda}{2} = 0.5\lambda$$
+        </div>
+
+        <details class="lucid-drawer">
+          <summary>💡 Lucid Understanding: Why Shorted Stubs are Preferred over Open Stubs</summary>
+          <div class="drawer-content">
+            <p>At microwave frequencies, an open-circuited transmission line stub acts as an efficient antenna, radiating significant RF power from its open unshielded tip into free space. This radiation loss creates stray coupling, degrades system $Q$, and detunes the matching network. In contrast, short-circuited stubs radiate virtually zero power and can be mechanically tuned with a sliding metallic shorting plunger.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Section 9: Slotted Line Metrology -->
+      <section class="card-section" id="section-slotted-line">
+        <span class="section-badge">Section 11.6 Measurements</span>
+        <h2 class="section-title">Slotted Line Metrology &amp; Unknown Load Determination</h2>
+        <p class="section-lead">
+          At gigahertz frequencies, measuring discrete voltages and currents directly is physically impossible. A slotted line (precision coaxial or waveguide section with a longitudinal slot and capacitive probe) measures standing wave profiles directly:
+        </p>
+
+        <div class="math-block">
+          <strong>4-Step Algorithm for Extracting Unknown $Z_L$:</strong>
+          <ol style="margin-left: 20px; line-height: 1.8;">
+            <li><strong>Measure VSWR:</strong> Connect unknown load $Z_L$. Probe voltage maximum $V_{\max}$ and minimum $V_{\min}$. Calculate $s = V_{\max} / V_{\min}$. Draw the constant $s$-circle on the Smith chart.</li>
+            <li><strong>Find Wavelength $\lambda$:</strong> Distance between two adjacent minima on the line is $\Delta z_{\min} = \lambda / 2 \implies \lambda = 2(z_{\min, 2} - z_{\min, 1})$. Calculate frequency $f = u / \lambda$.</li>
+            <li><strong>Establish Short-Circuit Reference:</strong> Replace load with a short circuit ($Z_L = 0$). Note location of voltage minimum $z_{\text{ref}}$. (Minima are used because sharp dip provides $> 10\times$ higher spatial resolution than broad maxima).</li>
+            <li><strong>Rotate Toward Load:</strong> Calculate shift distance $\ell = (z_{\text{load min}} - z_{\text{ref}})$. Convert to wavelengths: $\ell / \lambda$. Start at $V_{\min}$ on the Smith chart (leftmost point $r = 1/s$) and rotate <em>Toward Load</em> (counter-clockwise) by angle $\theta = (\ell / \lambda) \times 720^\circ$. Read normalized $z_L = r + jx \implies Z_L = Z_0 z_L$.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Section 10: Transients on Transmission Lines -->
+      <section class="card-section" id="section-transients">
+        <span class="section-badge">Section 11.7 Time-Domain</span>
+        <h2 class="section-title">Transients on Transmission Lines &amp; Lattice (Bounce) Diagrams</h2>
+        <p class="section-lead">
+          When a high-speed digital pulse or DC step is launched onto a line, the finite transit time delay $t_1 = \ell / u$ causes the voltage and current to evolve through a discrete sequence of forward and backward wave reflections before settling to steady state.
+        </p>
+
+        <div class="math-block">
+          <strong>Key Transient Parameters:</strong>
+          $$t_1 = \frac{\ell}{u} = \ell\sqrt{LC} \quad (\text{One-Way Propagation Transit Time})$$
+          $$V_0 = \frac{Z_0}{Z_g + Z_0}V_g, \qquad I_0 = \frac{V_g}{Z_g + Z_0} = \frac{V_0}{Z_0} \quad (\text{Initial Voltage \& Current at } t = 0^+)$$
+          $$\Gamma_L = \frac{Z_L - Z_0}{Z_L + Z_0} \quad (\text{Load Voltage Reflection Coefficient}), \qquad \Gamma_G = \frac{Z_g - Z_0}{Z_g + Z_0} \quad (\text{Generator Voltage Reflection Coefficient})$$
+          $$\text{Current Reflection Coefficients: } -\Gamma_L \text{ at load, } -\Gamma_G \text{ at generator}$$
+        </div>
+
+        <div class="table-container">
+          <table class="academic-table">
+            <thead>
+              <tr>
+                <th>Time Interval</th>
+                <th>Generator Voltage $V(0, t)$</th>
+                <th>Load Voltage $V(\ell, t)$</th>
+                <th>Physical Wavefront Event</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>$0 \le t < t_1$</td>
+                <td>$V_0$</td>
+                <td>$0$</td>
+                <td>Incident wave traveling towards load. Load is completely unaware of source.</td>
+              </tr>
+              <tr>
+                <td>$t_1 \le t < 2t_1$</td>
+                <td>$V_0$</td>
+                <td>$V_0(1 + \Gamma_L)$</td>
+                <td>Wave hits load at $t=t_1$, generates reflected wave $\Gamma_L V_0$ returning to source.</td>
+              </tr>
+              <tr>
+                <td>$2t_1 \le t < 3t_1$</td>
+                <td>$V_0(1 + \Gamma_L + \Gamma_G \Gamma_L)$</td>
+                <td>$V_0(1 + \Gamma_L)$</td>
+                <td>Reflected wave reaches generator at $t=2t_1$, bounces as $\Gamma_G \Gamma_L V_0$.</td>
+              </tr>
+              <tr>
+                <td>$3t_1 \le t < 4t_1$</td>
+                <td>$V_0(1 + \Gamma_L + \Gamma_G \Gamma_L)$</td>
+                <td>$V_0(1 + \Gamma_L + \Gamma_G \Gamma_L + \Gamma_G \Gamma_L^2)$</td>
+                <td>Second reflection arrives at load at $t=3t_1$.</td>
+              </tr>
+              <tr>
+                <td>$t \to \infty$ (Steady State)</td>
+                <td>$$\frac{Z_L}{Z_L + Z_g}V_g$$</td>
+                <td>$$\frac{Z_L}{Z_L + Z_g}V_g$$</td>
+                <td>Infinite geometric series sum: $V_\infty = V_0(1 + \Gamma_L) \sum_{k=0}^\infty (\Gamma_G \Gamma_L)^k$.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 11: Solved Problem Vault -->
+      <section class="card-section" id="section-solved-vault">
+        <span class="section-badge">Master Problem Vault</span>
+        <h2 class="section-title">Sadiku Solved Examples &amp; Practice Drills (Full Step-by-Step)</h2>
+
+        <!-- Example 11.3 -->
+        <div class="drill-box">
+          <div class="drill-header">
+            <span class="drill-tag">Sadiku Example 11.3</span>
+            <span class="check-badge">✓ Verified</span>
+          </div>
+          <div class="drill-question">
+            A lossy transmission line 2 m long operating at $\omega = 10^6\text{ rad/s}$ has $\alpha = 8\text{ dB/m}, \beta = 1\text{ rad/m}, Z_0 = 60 + j40\ \Omega$. Driven by $V_g = 10\angle 0^\circ\text{ V}, Z_g = 40\ \Omega$, terminated in $Z_L = 20 + j50\ \Omega$. Determine: (a) Input impedance $Z_{in}$, (b) Sending-end current $I(0)$, (c) Current at line midpoint $z = \ell/2$.
+          </div>
+          <div class="drill-solution">
+            <p><strong>(a) Convert Attenuation &amp; Compute $Z_{in}$:</strong></p>
+            $$\alpha = \frac{8\text{ dB/m}}{8.686} = 0.921\text{ Np/m} \implies \gamma = \alpha + j\beta = 0.921 + j1\text{ m}^{-1}$$
+            $$\gamma \ell = 2(0.921 + j1) = 1.84 + j2 \implies \tanh \gamma \ell = \frac{\sinh(1.84+j2)}{\cosh(1.84+j2)} = 1.033 - j0.03929$$
+            $$Z_{in} = Z_0 \left[\frac{Z_L + Z_0 \tanh \gamma \ell}{Z_0 + Z_L \tanh \gamma \ell}\right] = (60 + j40)\left[\frac{(20+j50) + (60+j40)(1.033-j0.03929)}{(60+j40) + (20+j50)(1.033-j0.03929)}\right] = \mathbf{60.25 + j38.79\ \Omega}$$
+            
+            <p><strong>(b) Sending-End Current:</strong></p>
+            $$I_0 = \frac{V_g}{Z_g + Z_{in}} = \frac{10}{40 + (60.25 + j38.79)} = \frac{10}{100.25 + j38.79} = \mathbf{93.03\angle -21.15^\circ\text{ mA}}$$
+
+            <p><strong>(c) Midpoint Current $z = \ell/2 = 1\text{ m}$:</strong></p>
+            $$V_0 = Z_{in} I_0 = (71.66\angle 32.77^\circ)(0.09303\angle -21.15^\circ) = 6.667\angle 11.62^\circ\text{ V}$$
+            $$V_0^+ = \frac{1}{2}(V_0 + Z_0 I_0) = 6.687\angle 12.08^\circ\text{ V}, \qquad V_0^- = \frac{1}{2}(V_0 - Z_0 I_0) = 0.0518\angle 260^\circ\text{ V}$$
+            $$\text{At } z = 1\text{ m}, \gamma z = 0.921 + j1\text{ rad} = 0.921 + j57.3^\circ:$$
+            $$I_s(1) = \frac{V_0^+}{Z_0}e^{-\gamma z} - \frac{V_0^-}{Z_0}e^{\gamma z} = \mathbf{35.10\angle 281^\circ\text{ mA} = 6.673 - j34.456\text{ mA}}$$
+          </div>
+        </div>
+
+        <!-- Example 11.4 -->
+        <div class="drill-box">
+          <div class="drill-header">
+            <span class="drill-tag">Sadiku Example 11.4</span>
+            <span class="check-badge">✓ Verified</span>
+          </div>
+          <div class="drill-question">
+            A lossless $50\ \Omega$ line of length $30\text{ m}$ operates at $2\text{ MHz}$ with $u = 0.6c$, terminated by $Z_L = 60 + j40\ \Omega$. Find: (a) $\Gamma$, (b) $s$, (c) $Z_{in}$. Solve analytically and verify via Smith chart.
+          </div>
+          <div class="drill-solution">
+            <p><strong>Analytical Solution:</strong></p>
+            $$\Gamma = \frac{Z_L - Z_0}{Z_L + Z_0} = \frac{60+j40-50}{60+j40+50} = \frac{10+j40}{110+j40} = \mathbf{0.3523\angle 56.0^\circ}$$
+            $$s = \frac{1 + |\Gamma|}{1 - |\Gamma|} = \frac{1 + 0.3523}{1 - 0.3523} = \mathbf{2.088}$$
+            $$\beta = \frac{\omega}{u} = \frac{2\pi \times 2\times 10^6}{0.6(3\times 10^8)} = \frac{4\pi}{180} = \frac{\pi}{45}\text{ rad/m} \implies \beta \ell = \frac{\pi}{45}(30) = \frac{2\pi}{3} = 120^\circ$$
+            $$Z_{in} = 50 \left[\frac{(60+j40) + j50\tan 120^\circ}{50 + j(60+j40)\tan 120^\circ}\right] = 50\left[\frac{60 + j40 - j86.60}{50 - j86.60(0.6+j0.4)}\right] = \mathbf{23.97 + j1.35\ \Omega = 24.01\angle 3.22^\circ\ \Omega}$$
+            
+            <p><strong>Smith Chart Verification:</strong></p>
+            $$z_L = \frac{60+j40}{50} = 1.2 + j0.8 \implies \text{Plot point } P(1.2, 0.8)$$
+            $$\text{Measure } |\Gamma| = \frac{OP}{OQ} = \frac{3.2\text{ cm}}{9.1\text{ cm}} = \mathbf{0.3516}, \quad \theta_\Gamma = \mathbf{56^\circ}$$
+            $$\text{Rotate } \beta \ell = 120^\circ \implies \text{Smith Chart angular shift } 2\times 120^\circ = 240^\circ \text{ CW toward generator: } z_{in} \approx 0.47 + j0.03$$
+            $$Z_{in} = 50(0.47 + j0.03) = \mathbf{23.5 + j1.5\ \Omega} \quad (\text{Close alignment with analytical!})$$
+          </div>
+        </div>
+
+        <!-- Example 11.6 -->
+        <div class="drill-box">
+          <div class="drill-header">
+            <span class="drill-tag">Sadiku Example 11.6</span>
+            <span class="check-badge">✓ Verified</span>
+          </div>
+          <div class="drill-question">
+            With an unknown load connected to a $50\ \Omega$ air slotted line, $s = 2$ is recorded. Minima are at $11\text{ cm}, 19\text{ cm}, \dots$. When replaced by short circuit, minima shift to $16\text{ cm}, 24\text{ cm}, \dots$. Calculate $\lambda, f$, and $Z_L$.
+          </div>
+          <div class="drill-solution">
+            $$\frac{\lambda}{2} = 19 - 11 = 8\text{ cm} \implies \mathbf{\lambda = 16\text{ cm} = 0.16\text{ m}}$$
+            $$f = \frac{c}{\lambda} = \frac{3\times 10^8}{0.16} = \mathbf{1.875\text{ GHz}}$$
+            $$\text{Taking load reference at } 24\text{ cm}: \quad \ell = 24 - 19 = 5\text{ cm} = \frac{5}{16}\lambda = \mathbf{0.3125\lambda}$$
+            $$\text{Angular movement on } s=2 \text{ circle toward load (CCW): } \theta = 0.3125 \times 720^\circ = \mathbf{225^\circ}$$
+            $$\text{Starting at } V_{\min} (r = 1/s = 0.5) \text{ and rotating } 225^\circ \text{ CCW yields: } z_L = 1.4 + j0.75$$
+            $$Z_L = 50(1.4 + j0.75) = \mathbf{70 + j37.5\ \Omega}$$
+          </div>
+        </div>
+
+        <!-- Example 11.7 -->
+        <div class="drill-box">
+          <div class="drill-header">
+            <span class="drill-tag">Sadiku Example 11.7</span>
+            <span class="check-badge">✓ Verified</span>
+          </div>
+          <div class="drill-question">
+            An antenna with $Z_L = 40 + j30\ \Omega$ is to be matched to a $100\ \Omega$ lossless line using a shorted shunt stub. Determine: (a) Required stub admittance $Y_s$, (b) Distance between stub and antenna $\ell$, (c) Stub length $d$, (d) VSWR on each segment.
+          </div>
+          <div class="drill-solution">
+            <p><strong>(a) Normalized Load Admittance:</strong></p>
+            $$z_L = \frac{40+j30}{100} = 0.4 + j0.3 \implies y_L = \frac{1}{z_L} = \frac{1}{0.4+j0.3} = \mathbf{1.6 - j1.2}$$
+            $$\text{Circle } s = 2.7 \text{ intersects } g = 1 \text{ circle at points } A \text{ and } B: \quad y_A = 1 - j1.04, \quad y_B = 1 + j1.04$$
+            $$\text{Required stub admittances: } \quad Y_{sA} = -(-j1.04)Y_0 = \mathbf{+j10.4\text{ mS}}, \qquad Y_{sB} = -(+j1.04)Y_0 = \mathbf{-j10.4\text{ mS}}$$
+
+            <p><strong>(b) Stub Location Distances $\ell$:</strong></p>
+            $$\ell_A = \frac{\lambda}{2} - \frac{(62^\circ - (-39^\circ))\lambda}{720^\circ} = \mathbf{0.36\lambda}, \qquad \ell_B = \frac{(62^\circ - 39^\circ)\lambda}{720^\circ} = \mathbf{0.032\lambda}$$
+
+            <p><strong>(c) Stub Lengths $d$:</strong></p>
+            $$d_A = \frac{88^\circ}{720^\circ}\lambda = \mathbf{0.1222\lambda}, \qquad d_B = \frac{272^\circ}{720^\circ}\lambda = \mathbf{0.3778\lambda} \quad (\text{Note: } d_A + d_B = 0.5\lambda!)$$
+
+            <p><strong>(d) Standing Wave Ratios:</strong></p>
+            $$\text{Between load and stub: } s = \mathbf{2.7}; \quad \text{Between stub and generator: } s = \mathbf{1.0} \text{ (matched!)}; \quad \text{Inside stub: } s = \mathbf{\infty}$$
+          </div>
+        </div>
+
+        <!-- Example 11.8 -->
+        <div class="drill-box">
+          <div class="drill-header">
+            <span class="drill-tag">Sadiku Example 11.8</span>
+            <span class="check-badge">✓ Verified</span>
+          </div>
+          <div class="drill-question">
+            A transmission line with $Z_0 = 50\ \Omega, \ell = 100\text{ m}, u = 10^8\text{ m/s}$ is driven by $V_g = 12\text{ V DC}$ with $Z_g = 100\ \Omega$ and terminated in $Z_L = 200\ \Omega$. Switch closes at $t = 0$. Sketch $V(0, t), V(\ell, t), I(0, t), I(\ell, t)$ for $0 < t < 6\ \mu\text{s}$.
+          </div>
+          <div class="drill-solution">
+            <p><strong>Step-by-Step Transient Calculation:</strong></p>
+            $$t_1 = \frac{\ell}{u} = \frac{100}{10^8} = 1\ \mu\text{s}$$
+            $$\Gamma_G = \frac{Z_g - Z_0}{Z_g + Z_0} = \frac{100 - 50}{100 + 50} = \frac{50}{150} = \mathbf{+\frac{1}{3}}, \qquad \Gamma_L = \frac{Z_L - Z_0}{Z_L + Z_0} = \frac{200 - 50}{200 + 50} = \frac{150}{250} = \mathbf{+\frac{3}{5}}$$
+            $$V_0 = \frac{Z_0}{Z_g + Z_0}V_g = \frac{50}{150}(12) = \mathbf{4\text{ V}}, \qquad I_0 = \frac{V_0}{Z_0} = \frac{4}{50} = \mathbf{80\text{ mA}}$$
+            
+            <p><strong>Voltage Bounce Sequence:</strong></p>
+            $$\text{Forward } V_1^+ = 4\text{ V} \xrightarrow{t=1\mu\text{s}} \text{Reflected } V_1^- = \frac{3}{5}(4) = 2.4\text{ V} \implies V(\ell, 1\mu\text{s}) = 4 + 2.4 = \mathbf{6.4\text{ V}}$$
+            $$\text{Reflected hits source at } t=2\mu\text{s} \implies V_2^+ = \frac{1}{3}(2.4) = 0.8\text{ V} \implies V(0, 2\mu\text{s}) = 4 + 2.4 + 0.8 = \mathbf{7.2\text{ V}}$$
+            $$\text{Second bounce hits load at } t=3\mu\text{s} \implies V_2^- = \frac{3}{5}(0.8) = 0.48\text{ V} \implies V(\ell, 3\mu\text{s}) = 6.4 + 0.8 + 0.48 = \mathbf{7.68\text{ V}}$$
+            $$\text{Third bounce hits source at } t=4\mu\text{s} \implies V_3^+ = \frac{1}{3}(0.48) = 0.16\text{ V} \implies V(0, 4\mu\text{s}) = 7.2 + 0.48 + 0.16 = \mathbf{7.84\text{ V}}$$
+            $$V_\infty = \frac{Z_L}{Z_L + Z_g}V_g = \frac{200}{300}(12) = \mathbf{8.00\text{ V}}, \qquad I_\infty = \frac{V_g}{Z_g + Z_L} = \frac{12}{300} = \mathbf{40\text{ mA}}$$
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 12: Critical Exam Traps & Formulas -->
+      <section class="card-section" id="section-exam-traps">
+        <span class="section-badge">Exam Mastery</span>
+        <h2 class="section-title">Critical Academic Traps &amp; Examination Checklist</h2>
+
+        <div class="trap-box">
+          <div class="trap-title">⚠️ Trap 1: Confusing Line Resistance $R$ ($\Omega/\text{m}$) with $R_0 = \text{Re}(Z_0)$ ($\Omega$)</div>
+          $R$ is the per-unit-length series resistance of the wire in $\Omega/\text{m}$, which dissipates ohmic heat. $R_0$ is the real part of the characteristic impedance $Z_0$ in ohms ($\Omega$), representing the ratio of traveling voltage to traveling current. For a lossless line, $R = 0$, but $R_0 = \sqrt{L/C} \ne 0$!
+        </div>
+
+        <div class="trap-box">
+          <div class="trap-title">⚠️ Trap 2: Angular Multiplication on the Smith Chart ($2\times$)</div>
+          Moving a physical distance $\Delta z$ on a transmission line changes the phase of the reflection coefficient by $2\beta \Delta z$. Therefore, an electrical line length of $30^\circ$ corresponds to a $60^\circ$ mechanical rotation on the Smith chart! Always multiply electrical distance in degrees by 2 when plotting.
+        </div>
+
+        <div class="trap-box">
+          <div class="trap-title">⚠️ Trap 3: Transient Current Signs vs Voltage Signs</div>
+          Voltage reflection coefficients at load and generator are $\Gamma_L$ and $\Gamma_G$. The corresponding current reflection coefficients are $-\Gamma_L$ and $-\Gamma_G$. Forgetting the negative sign flips the current staircase and fails the steady-state boundary check $I_\infty = V_\infty / Z_L$.
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Babylon.js 3D WebGL Simulation Script -->
+  <script>
+    // Theme toggle
+    function toggleTheme() {
+      const body = document.body;
+      const btn = document.getElementById('themeBtn');
+      const current = body.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      body.setAttribute('data-theme', next);
+      btn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+      if (window.simEngine) {
+        window.simEngine.updateTheme(next);
+      }
+    }
+
+    // Babylon 3D Electrodynamics Simulation Controller
+    class ElectrodynamicsSimulation {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.engine = new BABYLON.Engine(this.canvas, true, { antialias: true });
+        this.scene = null;
+        this.camera = null;
+        this.mode = 'smith'; // 'smith', 'standing', 'transient'
+        this.simSpeed = 1.0;
+        
+        // Electrodynamics Parameters
+        this.Z0 = 50.0;
+        this.RL = 60.0;
+        this.XL = 40.0;
+        this.lenLambda = 0.333; // ell / lambda
+        
+        // Visual Mesh Groups
+        this.smithGroup = null;
+        this.standingGroup = null;
+        this.transientGroup = null;
+        this.phasorArrow = null;
+        this.sCircleMesh = null;
+        this.standingCurve = null;
+        this.transientPulseMesh = null;
+        
+        this.time = 0;
+        this.initScene();
+        this.setupEventListeners();
+      }
+
+      initScene() {
+        this.scene = new BABYLON.Scene(this.engine);
+        this.scene.clearColor = new BABYLON.Color4(0.05, 0.07, 0.11, 1.0);
+
+        // ArcRotateCamera with smooth limits
+        this.camera = new BABYLON.ArcRotateCamera("cam", -Math.PI / 2, Math.PI / 3, 14, new BABYLON.Vector3(0, 0, 0), this.scene);
+        this.camera.attachControl(this.canvas, true);
+        this.camera.wheelPrecision = 40;
+        this.camera.minZ = 0.1;
+        this.camera.maxZ = 100;
+
+        // Balanced Lighting
+        const lightHem = new BABYLON.HemisphericLight("lightHem", new BABYLON.Vector3(0, 1, 0), this.scene);
+        lightHem.intensity = 0.85;
+        lightHem.diffuse = new BABYLON.Color3(0.95, 0.95, 1.0);
+        lightHem.groundColor = new BABYLON.Color3(0.1, 0.15, 0.2);
+
+        const lightDir = new BABYLON.DirectionalLight("lightDir", new BABYLON.Vector3(-1, -2, -1), this.scene);
+        lightDir.position = new BABYLON.Vector3(10, 20, 10);
+        lightDir.intensity = 0.7;
+
+        // Build Visual Subsystems
+        this.buildSmithChartScene();
+        this.buildStandingWaveScene();
+        this.buildTransientScene();
+
+        this.setMode('smith');
+
+        // Render Loop
+        this.engine.runRenderLoop(() => {
+          this.time += 0.02 * this.simSpeed;
+          this.updateSimDynamicFrames();
+          this.scene.render();
+        });
+
+        window.addEventListener('resize', () => {
+          this.engine.resize();
+        });
+      }
+
+      buildSmithChartScene() {
+        this.smithGroup = new BABYLON.TransformNode("smithGroup", this.scene);
+        const radiusScale = 4.0;
+
+        // Ground Plane / Conformal Disc
+        const disc = BABYLON.MeshBuilder.CreateDisc("smithDisc", { radius: radiusScale, tessellation: 96 }, this.scene);
+        disc.rotation.x = Math.PI / 2;
+        disc.parent = this.smithGroup;
+        const matDisc = new BABYLON.PBRMaterial("matDisc", this.scene);
+        matDisc.albedoColor = new BABYLON.Color3(0.08, 0.11, 0.16);
+        matDisc.roughness = 0.4;
+        matDisc.metallic = 0.1;
+        disc.material = matDisc;
+
+        // Outer Unit Rim
+        const rim = BABYLON.MeshBuilder.CreateTorus("smithRim", { diameter: radiusScale * 2, thickness: 0.05, tessellation: 96 }, this.scene);
+        rim.parent = this.smithGroup;
+        const matRim = new BABYLON.StandardMaterial("matRim", this.scene);
+        matRim.diffuseColor = new BABYLON.Color3(0.22, 0.74, 0.97);
+        matRim.emissiveColor = new BABYLON.Color3(0.1, 0.4, 0.6);
+        rim.material = matRim;
+
+        // Draw Standard r-circles: r = 0.2, 0.5, 1.0, 2.0, 5.0
+        const rValues = [0.2, 0.5, 1.0, 2.0, 5.0];
+        rValues.forEach((r) => {
+          const c_r = (r / (1 + r)) * radiusScale;
+          const rad_r = (1 / (1 + r)) * radiusScale;
+          const rCircle = BABYLON.MeshBuilder.CreateTorus("rcirc_" + r, { diameter: rad_r * 2, thickness: 0.02, tessellation: 64 }, this.scene);
+          rCircle.position.x = c_r;
+          rCircle.parent = this.smithGroup;
+          const matRCirc = new BABYLON.StandardMaterial("matRCirc_" + r, this.scene);
+          matRCirc.diffuseColor = (r === 1.0) ? new BABYLON.Color3(0.2, 0.8, 0.4) : new BABYLON.Color3(0.3, 0.4, 0.5);
+          matRCirc.alpha = (r === 1.0) ? 0.9 : 0.45;
+          rCircle.material = matRCirc;
+        });
+
+        // Center Real Axis
+        const realAxis = BABYLON.MeshBuilder.CreateCylinder("realAxis", { height: radiusScale * 2, diameter: 0.025 }, this.scene);
+        realAxis.rotation.z = Math.PI / 2;
+        realAxis.parent = this.smithGroup;
+        const matAxis = new BABYLON.StandardMaterial("matAxis", this.scene);
+        matAxis.diffuseColor = new BABYLON.Color3(0.5, 0.6, 0.7);
+        realAxis.material = matAxis;
+
+        // Dynamic Constant s-circle
+        this.sCircleMesh = BABYLON.MeshBuilder.CreateTorus("sCircleDynamic", { diameter: 2, thickness: 0.04, tessellation: 64 }, this.scene);
+        this.sCircleMesh.parent = this.smithGroup;
+        const matSCirc = new BABYLON.StandardMaterial("matSCirc", this.scene);
+        matSCirc.diffuseColor = new BABYLON.Color3(0.95, 0.6, 0.1);
+        matSCirc.emissiveColor = new BABYLON.Color3(0.4, 0.2, 0.0);
+        this.sCircleMesh.material = matSCirc;
+
+        // Rotating Complex Phasor Vector
+        this.phasorArrow = BABYLON.MeshBuilder.CreateCylinder("phasorArrow", { height: 2, diameter: 0.06 }, this.scene);
+        this.phasorArrow.parent = this.smithGroup;
+        const matArrow = new BABYLON.StandardMaterial("matArrow", this.scene);
+        matArrow.diffuseColor = new BABYLON.Color3(0.9, 0.2, 0.2);
+        matArrow.emissiveColor = new BABYLON.Color3(0.5, 0.1, 0.1);
+        this.phasorArrow.material = matArrow;
+
+        // Load Indicator Bead
+        this.loadBead = BABYLON.MeshBuilder.CreateSphere("loadBead", { diameter: 0.22 }, this.scene);
+        this.loadBead.parent = this.smithGroup;
+        const matBead = new BABYLON.StandardMaterial("matBead", this.scene);
+        matBead.diffuseColor = new BABYLON.Color3(1.0, 0.8, 0.2);
+        matBead.emissiveColor = new BABYLON.Color3(0.6, 0.4, 0.1);
+        this.loadBead.material = matBead;
+      }
+
+      buildStandingWaveScene() {
+        this.standingGroup = new BABYLON.TransformNode("standingGroup", this.scene);
+        const lineLen = 10.0;
+
+        // Coaxial Outer Shield (Transparent Glassmorphic Cylinder)
+        const outerShield = BABYLON.MeshBuilder.CreateCylinder("outerShield", { height: lineLen, diameter: 2.2, tessellation: 48 }, this.scene);
+        outerShield.rotation.z = Math.PI / 2;
+        outerShield.parent = this.standingGroup;
+        const matShield = new BABYLON.PBRMaterial("matShield", this.scene);
+        matShield.alpha = 0.15;
+        matShield.metallic = 0.2;
+        matShield.roughness = 0.1;
+        outerShield.material = matShield;
+
+        // Inner Conductor
+        const innerWire = BABYLON.MeshBuilder.CreateCylinder("innerWire", { height: lineLen, diameter: 0.15 }, this.scene);
+        innerWire.rotation.z = Math.PI / 2;
+        innerWire.parent = this.standingGroup;
+        const matWire = new BABYLON.StandardMaterial("matWire", this.scene);
+        matWire.diffuseColor = new BABYLON.Color3(0.8, 0.5, 0.2);
+        innerWire.material = matWire;
+
+        // Voltage Wave Points
+        const numPts = 120;
+        this.standingWavePoints = [];
+        for (let i = 0; i < numPts; i++) {
+          const x = -5.0 + (i / (numPts - 1)) * lineLen;
+          this.standingWavePoints.push(new BABYLON.Vector3(x, 0, 0));
+        }
+
+        this.standingCurve = BABYLON.MeshBuilder.CreateLines("standingLines", { points: this.standingWavePoints, updatable: true }, this.scene);
+        this.standingCurve.parent = this.standingGroup;
+        this.standingCurve.color = new BABYLON.Color3(0.2, 0.8, 1.0);
+      }
+
+      buildTransientScene() {
+        this.transientGroup = new BABYLON.TransformNode("transientGroup", this.scene);
+        const lineLen = 10.0;
+
+        // Two-Wire Line representation
+        const wire1 = BABYLON.MeshBuilder.CreateCylinder("tWire1", { height: lineLen, diameter: 0.12 }, this.scene);
+        wire1.rotation.z = Math.PI / 2;
+        wire1.position.y = 1.0;
+        wire1.parent = this.transientGroup;
+
+        const wire2 = BABYLON.MeshBuilder.CreateCylinder("tWire2", { height: lineLen, diameter: 0.12 }, this.scene);
+        wire2.rotation.z = Math.PI / 2;
+        wire2.position.y = -1.0;
+        wire2.parent = this.transientGroup;
+
+        const matTWire = new BABYLON.StandardMaterial("matTWire", this.scene);
+        matTWire.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.8);
+        wire1.material = matTWire;
+        wire2.material = matTWire;
+
+        // Traveling Pulse Packet
+        this.transientPulseMesh = BABYLON.MeshBuilder.CreateBox("pulseMesh", { width: 1.2, height: 1.8, depth: 0.4 }, this.scene);
+        this.transientPulseMesh.parent = this.transientGroup;
+        const matPulse = new BABYLON.StandardMaterial("matPulse", this.scene);
+        matPulse.diffuseColor = new BABYLON.Color3(0.2, 0.9, 0.4);
+        matPulse.emissiveColor = new BABYLON.Color3(0.1, 0.4, 0.2);
+        matPulse.alpha = 0.85;
+        this.transientPulseMesh.material = matPulse;
+      }
+
+      setMode(mode) {
+        this.mode = mode;
+        this.smithGroup.setEnabled(mode === 'smith');
+        this.standingGroup.setEnabled(mode === 'standing');
+        this.transientGroup.setEnabled(mode === 'transient');
+
+        const titleEl = document.getElementById('simTitle');
+        if (mode === 'smith') {
+          titleEl.textContent = "Interactive 3D Smith Chart Conformal Engine";
+          this.camera.setPosition(new BABYLON.Vector3(0, 11, 0.1));
+          this.camera.setTarget(BABYLON.Vector3.Zero());
+        } else if (mode === 'standing') {
+          titleEl.textContent = "3D Standing Wave Voltage Interference Envelope";
+          this.camera.setPosition(new BABYLON.Vector3(0, 3, -11));
+          this.camera.setTarget(BABYLON.Vector3.Zero());
+        } else if (mode === 'transient') {
+          titleEl.textContent = "3D Time-Domain Pulse Lattice Bounce Simulator";
+          this.camera.setPosition(new BABYLON.Vector3(0, 4, -12));
+          this.camera.setTarget(BABYLON.Vector3.Zero());
+        }
+      }
+
+      updateElectrodynamics() {
+        const zL_r = this.RL / this.Z0;
+        const zL_x = this.XL / this.Z0;
+
+        // Bilinear Conformal Reflection Coefficient
+        const denom = (zL_r + 1) * (zL_r + 1) + zL_x * zL_x;
+        const gamma_r = (zL_r * zL_r + zL_x * zL_x - 1) / denom;
+        const gamma_i = (2 * zL_x) / denom;
+        const gamma_mag = Math.sqrt(gamma_r * gamma_r + gamma_i * gamma_i);
+        const gamma_ang_rad = Math.atan2(gamma_i, gamma_r);
+        const gamma_ang_deg = gamma_ang_rad * (180 / Math.PI);
+
+        // VSWR
+        let vswr = (1 + gamma_mag) / Math.max(0.001, 1 - gamma_mag);
+        if (vswr > 99) vswr = 99;
+
+        // Input Impedance Zin(ell)
+        const beta_ell = 2 * Math.PI * this.lenLambda;
+        const tan_bl = Math.tan(beta_ell);
+        
+        // Z0 * (ZL + j Z0 tan) / (Z0 + j ZL tan)
+        const num_r = this.RL;
+        const num_i = this.XL + this.Z0 * tan_bl;
+        const den_r = this.Z0 - this.XL * tan_bl;
+        const den_i = this.RL * tan_bl;
+        const den_mag2 = den_r * den_r + den_i * den_i;
+        const zin_r = (this.Z0 * (num_r * den_r + num_i * den_i)) / Math.max(0.0001, den_mag2);
+        const zin_i = (this.Z0 * (num_i * den_r - num_r * den_i)) / Math.max(0.0001, den_mag2);
+
+        // Transmitted Power Percentage
+        const p_ratio = (1 - gamma_mag * gamma_mag) * 100;
+
+        // Update HUD
+        document.getElementById('hudZL').textContent = `${this.RL.toFixed(1)} + j${this.XL.toFixed(1)} \u03a9`;
+        document.getElementById('hudZ0').textContent = `${this.Z0.toFixed(1)} \u03a9`;
+        document.getElementById('hudGamma').textContent = `${gamma_mag.toFixed(3)} \u2220 ${gamma_ang_deg.toFixed(1)}\u00b0`;
+        document.getElementById('hudVSWR').textContent = vswr.toFixed(3);
+        document.getElementById('hudPower').textContent = `${p_ratio.toFixed(2)}%`;
+        document.getElementById('hudZin').textContent = `${zin_r.toFixed(2)} + j${zin_i.toFixed(2)} \u03a9`;
+
+        // Update 3D Smith Elements
+        if (this.sCircleMesh) {
+          const radScale = 4.0;
+          this.sCircleMesh.scaling.x = gamma_mag * radScale;
+          this.sCircleMesh.scaling.z = gamma_mag * radScale;
+          
+          // Position load bead
+          const px = gamma_r * radScale;
+          const pz = gamma_i * radScale;
+          this.loadBead.position.set(px, 0.05, pz);
+
+          // Position & stretch phasor arrow
+          const arrowLen = Math.max(0.05, gamma_mag * radScale);
+          this.phasorArrow.scaling.y = arrowLen;
+          this.phasorArrow.position.set(px / 2, 0.05, pz / 2);
+          this.phasorArrow.rotation.x = Math.PI / 2;
+          this.phasorArrow.rotation.y = -gamma_ang_rad + Math.PI / 2;
+        }
+
+        this.cachedGamma = gamma_mag;
+        this.cachedPhase = gamma_ang_rad;
+      }
+
+      updateSimDynamicFrames() {
+        if (this.mode === 'standing' && this.standingCurve) {
+          const numPts = this.standingWavePoints.length;
+          const gamma = this.cachedGamma || 0.35;
+          const phase = this.cachedPhase || 0.5;
+
+          for (let i = 0; i < numPts; i++) {
+            const zNorm = i / (numPts - 1); // 0 to 1
+            const betaZ = 2 * Math.PI * 2 * (1 - zNorm); // 2 full cycles
+            // V(z,t) = V0+ cos(wt - beta z) + |Gamma| V0+ cos(wt + beta z + theta)
+            const vInc = Math.cos(this.time * 2.0 - betaZ);
+            const vRef = gamma * Math.cos(this.time * 2.0 + betaZ + phase);
+            const vNet = (vInc + vRef) * 0.75;
+            this.standingWavePoints[i].y = vNet;
+          }
+          this.standingCurve = BABYLON.MeshBuilder.CreateLines("standingLines", { points: this.standingWavePoints, instance: this.standingCurve });
+        } else if (this.mode === 'transient' && this.transientPulseMesh) {
+          // Bounce pulse back and forth
+          const lineHalfLen = 4.5;
+          const tCycle = (this.time * 0.8) % 4.0; // 0 to 4
+          let px = 0;
+          let alphaColor = 1.0;
+
+          if (tCycle < 2.0) {
+            // Forward from generator (-4.5) to load (+4.5)
+            px = -lineHalfLen + (tCycle / 2.0) * (2 * lineHalfLen);
+            this.transientPulseMesh.material.diffuseColor = new BABYLON.Color3(0.2, 0.9, 0.4);
+          } else {
+            // Reflected from load (+4.5) back to generator (-4.5)
+            px = lineHalfLen - ((tCycle - 2.0) / 2.0) * (2 * lineHalfLen);
+            this.transientPulseMesh.material.diffuseColor = new BABYLON.Color3(0.9, 0.5, 0.2);
+          }
+          this.transientPulseMesh.position.x = px;
+        }
+      }
+
+      setupEventListeners() {
+        this.updateElectrodynamics();
+      }
+
+      updateTheme(theme) {
+        if (theme === 'dark') {
+          this.scene.clearColor = new BABYLON.Color4(0.05, 0.07, 0.11, 1.0);
+        } else {
+          this.scene.clearColor = new BABYLON.Color4(0.95, 0.96, 0.98, 1.0);
+        }
+      }
+    }
+
+    // Global Interactive Bridge Functions
+    let simApp = null;
+    window.addEventListener('DOMContentLoaded', () => {
+      simApp = new ElectrodynamicsSimulation('renderCanvas');
+      window.simEngine = simApp;
+    });
+
+    function setSimMode(mode) {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      if (mode === 'smith') document.getElementById('btnModeSmith').classList.add('active');
+      if (mode === 'standing') document.getElementById('btnModeStanding').classList.add('active');
+      if (mode === 'transient') document.getElementById('btnModeTransient').classList.add('active');
+      if (simApp) simApp.setMode(mode);
+    }
+
+    function resetSimCamera() {
+      if (simApp) simApp.setMode(simApp.mode);
+    }
+
+    function updateSimParameters() {
+      const rl = parseFloat(document.getElementById('sliderRL').value);
+      const xl = parseFloat(document.getElementById('sliderXL').value);
+      const len = parseFloat(document.getElementById('sliderLen').value);
+
+      document.getElementById('valRL').textContent = rl + ' \u03a9';
+      document.getElementById('valXL').textContent = (xl >= 0 ? '+' : '') + xl + ' \u03a9';
+      document.getElementById('valLen').textContent = len.toFixed(3) + ' \u03bb';
+
+      if (simApp) {
+        simApp.RL = rl;
+        simApp.XL = xl;
+        simApp.lenLambda = len;
+        simApp.updateElectrodynamics();
+      }
+    }
+
+    function updateSimSpeed(val) {
+      document.getElementById('valSpeed').textContent = parseFloat(val).toFixed(1) + '\u00d7';
+      if (simApp) {
+        simApp.simSpeed = parseFloat(val);
+      }
+    }
+  </script>
+
+  <!-- Global Tooltip Integration -->
+  <script src="emt_glossary_tooltip.js"></script>
+</body>
+</html>

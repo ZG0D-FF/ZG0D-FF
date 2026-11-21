@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transmission Lines &amp; Waveguide Handbook — Academic Master Guide (Batch 4)</title>
+  
+  <!-- Apple Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- MathJax 3 LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Babylon.js 7.x 3D WebGL Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs@7.30.0/babylon.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs-materials@7.30.0/babylonjs.materials.min.js"></script>
+
+  <!-- Apple-Calmness Global EMT Glossary & Tooltips -->
+  <link rel="stylesheet" href="emt_glossary_tooltip.css">
+
+  <style>
+    :root {
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --surface-subtle: #f5f5f7;
+      --surface-elevated: #ffffff;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.16);
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --accent-hover: #0077ed;
+      --success: #34c759;
+      --warning: #ff9500;
+      --danger: #ff3b30;
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+      color-scheme: light dark;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-subtle: #1f2937;
+      --surface-elevated: #1e293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --text: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-tertiary: #6b7280;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --accent-hover: #0ea5e9;
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+
+    [data-theme="dark"] .top-nav {
+      background: rgba(17, 24, 39, 0.85);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-brand-badge {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      gap: 6px;
+    }
+
+    .search-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+      color: var(--text);
+      width: 140px;
+      transition: width 0.2s ease;
+    }
+
+    .search-box input:focus {
+      width: 200px;
+    }
+
+    .theme-toggle-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 6px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      background: var(--surface-subtle);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app-layout {
+      display: flex;
+      max-width: 1560px;
+      margin: 0 auto;
+      min-height: calc(100vh - 52px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 290px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    .sidebar-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 16px 8px 6px 8px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      line-height: 1.35;
+    }
+
+    .sidebar-link:hover {
+      color: var(--text);
+      background: var(--surface-subtle);
+    }
+
+    .sidebar-link.active {
+      color: var(--accent);
+      background: var(--accent-soft);
+      font-weight: 600;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 40px 48px;
+      max-width: 1180px;
+      min-width: 0;
+    }
+
+    /* Hero Section */
+    .hero {
+      margin-bottom: 40px;
+    }
+
+    .hero-pretitle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 4px 12px;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.6px;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .hero-lead {
+      font-size: 16.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 860px;
+    }
+
+    /* Interactive 3D Simulator Box */
+    .simulator-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .sim-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sim-title {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sim-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sim-btn {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .sim-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .sim-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0f172a;
+    }
+
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      outline: none;
+    }
+
+    .sim-overlay-info {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      line-height: 1.5;
+      pointer-events: none;
+    }
+
+    /* Content Cards */
+    .module-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 36px;
+      box-shadow: var(--card-shadow);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .module-card:hover {
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .module-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 3px 10px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 12px;
+    }
+
+    .module-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .section-lead {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* Formula & Physics Cards */
+    .formula-card {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .formula-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-tertiary);
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .physics-box {
+      background: var(--surface-subtle);
+      border-left: 3px solid var(--accent);
+      padding: 16px 20px;
+      border-radius: 0 10px 10px 0;
+      margin: 20px 0;
+    }
+
+    .highlight-box {
+      background: rgba(52, 199, 89, 0.08);
+      border-left: 3px solid var(--success);
+      padding: 16px 20px;
+      border-radius: 0 10px 10px 0;
+      margin: 20px 0;
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+
+    .warning-box {
+      background: rgba(255, 149, 0, 0.08);
+      border-left: 3px solid var(--warning);
+      padding: 16px 20px;
+      border-radius: 0 10px 10px 0;
+      margin: 20px 0;
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+
+    /* Embedded Images */
+    .image-container-modern {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 24px 0;
+      text-align: center;
+    }
+
+    .modern-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      cursor: zoom-in;
+      transition: transform 0.2s ease;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .modern-img:hover {
+      transform: scale(1.01);
+    }
+
+    .img-caption {
+      font-size: 12.5px;
+      color: var(--text-tertiary);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    /* Worked Numerical Example Card */
+    .example-card {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+
+    .example-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--accent);
+      padding: 3px 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .example-problem {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    .example-solution {
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .example-step {
+      margin-bottom: 10px;
+    }
+
+    /* Interactive Checkpoint Widget */
+    .checkpoint-widget {
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      padding: 24px;
+      margin: 32px 0;
+      box-shadow: var(--card-shadow);
+    }
+
+    .checkpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .checkpoint-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .checkpoint-question {
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .option-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text);
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .option-item:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .btn-submit-check {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-submit-check:hover {
+      background: var(--accent-hover);
+    }
+
+    .feedback-box {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .feedback-box.correct {
+      background: rgba(52, 199, 89, 0.12);
+      border: 1px solid var(--success);
+      color: var(--text);
+    }
+
+    .feedback-box.incorrect {
+      background: rgba(255, 59, 48, 0.12);
+      border: 1px solid var(--danger);
+      color: var(--text);
+    }
+
+    /* Lightbox Modal */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .lightbox-content {
+      max-width: 90vw;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .lightbox-caption {
+      position: absolute;
+      bottom: 24px;
+      color: #f1f5f9;
+      font-size: 14px;
+      text-align: center;
+      max-width: 800px;
+      background: rgba(0,0,0,0.6);
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Table styles */
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    .custom-table th, .custom-table td {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .custom-table th {
+      background: var(--surface-subtle);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Collapsible Lucid Drawers */
+    details.lucid-drawer {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 16px 0;
+      transition: background 0.2s;
+    }
+
+    details.lucid-drawer summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+
+    details.lucid-drawer[open] {
+      background: var(--surface);
+    }
+
+    details.lucid-drawer .drawer-content {
+      padding-top: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      margin-top: 10px;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main-content { padding: 24px 20px; }
+      .hero-title { font-size: 28px; }
+      .canvas-wrapper { height: 380px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <a href="../notes1.html" style="display:inline-flex; align-items:center; gap:5px; color:#2997ff; text-decoration:none; font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; background:rgba(41,151,255,0.12); border:1px solid rgba(41,151,255,0.25);">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Jarvis Hub</span>
+      </a>
+      <a href="index.html" style="color:var(--accent); text-decoration:none; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>EMT Lab Hub</span>
+      </a>
+      <a href="emt_journey_electromagnetic_waves.html" style="color:#38bdf8; text-decoration:none; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:3px 8px; border-radius:999px; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.25);">
+        <span>⚡ Journey Master</span>
+      </a>
+      <span style="color:var(--border-strong);">/</span>
+      <span style="font-weight:600;">Handbook</span>
+      <span class="nav-brand-badge">Batch 4</span>
+    </div>
+    <div class="nav-actions">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search equations &amp; notes..." onkeyup="filterSidebar()">
+      </div>
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+        <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <a href="index.html" class="sim-btn" style="text-decoration:none;">Hub &larr;</a>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-group-title">WebGL 3D Simulator</div>
+      <a href="#simulator-section" class="sidebar-link active">⚡ 3D T-Line &amp; Waveguide Engine</a>
+
+      <div class="sidebar-group-title">Module 1: T-Line Foundations</div>
+      <a href="#mod1-transit-time" class="sidebar-link">1.1 Transit Time &amp; Space-Time</a>
+      <a href="#mod1-configurations" class="sidebar-link">1.2 Practical Line Configurations</a>
+      <a href="#mod1-distributed-parameters" class="sidebar-link">1.3 Distributed R, L, G, C Elements</a>
+      <a href="#mod1-telegrapher-derivations" class="sidebar-link">1.4 Telegrapher Equation Derivation</a>
+      <a href="#mod1-example21" class="sidebar-link">📝 Example 2.1 (Transit Time Analysis)</a>
+
+      <div class="sidebar-group-title">Module 2: Wave Solutions &amp; Params</div>
+      <a href="#mod2-wave-equations" class="sidebar-link">2.1 Helmholtz Wave Equations</a>
+      <a href="#mod2-secondary-params" class="sidebar-link">2.2 &gamma;, &alpha;, &beta; &amp; Characteristic Z0</a>
+      <a href="#mod2-forward-backward" class="sidebar-link">2.3 Forward &amp; Backward Waves</a>
+      <a href="#mod2-example22" class="sidebar-link">📝 Example 2.2 (&gamma; Calculation)</a>
+      <a href="#mod2-example26" class="sidebar-link">📝 Example 2.6 (Z0 at 2 GHz)</a>
+
+      <div class="sidebar-group-title">Module 3: Finite Lines &amp; Impedance</div>
+      <a href="#mod3-standing-waves" class="sidebar-link">3.1 Standing Waves &amp; Reflection &Gamma;</a>
+      <a href="#mod3-input-impedance" class="sidebar-link">3.2 Generalized Input Impedance Z(l)</a>
+      <a href="#mod3-quarter-half-wave" class="sidebar-link">3.3 Quarter-Wave &amp; Half-Wave Lines</a>
+      <a href="#mod3-power-transfer" class="sidebar-link">3.4 Power Transfer &amp; Return Loss</a>
+      <a href="#mod3-example28" class="sidebar-link">📝 Example 2.8 (Reflection &amp; Distance)</a>
+      <a href="#mod3-example29" class="sidebar-link">📝 Example 2.9 (Lossy Line Impedance)</a>
+
+      <div class="sidebar-group-title">Module 4: Lossless vs Low-Loss</div>
+      <a href="#mod4-lossless" class="sidebar-link">4.1 Lossless Formulation (R=0, G=0)</a>
+      <a href="#mod4-low-loss" class="sidebar-link">4.2 Low-Loss Binomial Approximation</a>
+
+      <div class="sidebar-group-title">Module 5: Waveguide Physics</div>
+      <a href="#mod5-modal-physics" class="sidebar-link">5.1 Why Waveguides? Modal Bouncing</a>
+      <a href="#mod5-tem-proof" class="sidebar-link">5.2 Rigorous Proof: Does TEM Exist?</a>
+      <a href="#mod5-rectangular-guide" class="sidebar-link">5.3 Rectangular Boundary Value Analysis</a>
+      <a href="#mod5-cutoff-dominant" class="sidebar-link">5.4 Cutoff Frequency &amp; Dominant TE10</a>
+      <a href="#mod5-example67" class="sidebar-link">📝 Example 6.7 (4x3cm Guide at 6 GHz)</a>
+
+      <div class="sidebar-group-title">Knowledge Verification</div>
+      <a href="#checkpoints-section" class="sidebar-link">🧠 Interactive Exam Checks (01–04)</a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-pretitle">Curriculum Standard &bull; EMT Batch 4</div>
+        <h1 class="hero-title">Transmission Lines &amp; Waveguide Comprehensive Handbook</h1>
+        <p class="hero-lead">
+          A mathematically rigorous, unified reference manual covering distributed transmission-line parameters ($R, L, G, C$), Telegrapher wave dynamics, generalized impedance transformations, lossless/low-loss approximations, modal plane-wave bouncing, the non-existence of TEM in hollow conductors, and complete boundary value solutions for rectangular waveguides.
+        </p>
+      </section>
+
+      <!-- Interactive 3D Simulator -->
+      <section class="simulator-container" id="simulator-section">
+        <div class="sim-header">
+          <div class="sim-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span>Babylon.js 3D WebGL Multi-Physics Visualizer</span>
+          </div>
+          <div class="sim-controls">
+            <button class="sim-btn active" id="btnModeTLine" onclick="setSimMode('tline')">⚡ T-Line Standing Wave</button>
+            <button class="sim-btn" id="btnModeWaveguide" onclick="setSimMode('waveguide')">📐 Rectangular TE10 Mode</button>
+            <button class="sim-btn" id="btnPlayPause" onclick="togglePlayPause()">⏸ Pause</button>
+            <button class="sim-btn" onclick="resetSimCamera()">⟲ Reset Camera</button>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="renderCanvas"></canvas>
+          <div class="sim-overlay-info" id="simOverlayInfo">
+            Mode: Transmission Line Standing Wave | SWR: 2.50 | &Gamma;L: 0.43 &ang; 0&deg;<br>
+            Showing: Incident (Blue), Reflected (Red), and Total Envelope (White).
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 1 -->
+      <section class="module-card" id="mod1-transit-time">
+        <span class="module-tag">Module 1 &bull; Physical Foundations</span>
+        <h2 class="module-title">1. The Transition from Lumped Circuit Theory to Distributed Waves</h2>
+        
+        <p class="section-lead">
+          In low-frequency electrical circuits, the spatial dimensions of components and connecting wires are minuscule compared to the electromagnetic wavelength ($\ell \ll \lambda$). Under this condition, electrical disturbances appear to travel instantaneously across the network. Kirchhoff's Voltage Law (KVL) and Kirchhoff's Current Law (KCL) hold at single discrete nodes.
+        </p>
+
+        <div class="physics-box">
+          <strong>The Transit Time Principle:</strong> No electromagnetic signal can propagate faster than the speed of light in the insulating medium ($v \le c = 3 \times 10^8\text{ m/s}$). For a transmission line of physical length $\ell$, the signal requires a finite transit time:
+          $$t_r = \frac{\ell}{v}$$
+          When the signal frequency $f$ increases such that the time period $T = 1/f$ becomes comparable to or shorter than the transit time ($t_r \ge 0.1 T$), points along the same conductor exhibit distinct instantaneous voltages and currents. Space cannot be ignored!
+        </div>
+
+        <!-- Embedded Reference Snap: Configurations -->
+        <div class="image-container-modern" id="mod1-configurations">
+          <img src="assets/pdf_fig2_1_configurations.png" alt="Transmission Line Configurations Fig 2.1" class="modern-img" onclick="openLightbox(this.src, 'Fig 2.1: Practical Transmission Line Configurations: (a) Coaxial Cable, (b) Parallel-Wire Line, (c) Microstrip Line on Dielectric Slab, (d) Unbalanced Wire over Ground Plane.')">
+          <div class="img-caption">
+            <strong>Figure 1.1:</strong> Common transmission line geometries from textbook Section 2.2: (a) Coaxial cable, (b) Parallel wire pair, (c) Planar microstrip line, (d) Unbalanced wire over ground plane.
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; margin: 24px 0 12px 0; color:var(--text);" id="mod1-distributed-parameters">1.2 Distributed Primary Constants</h3>
+        <p class="section-lead">
+          Because physical properties are distributed uniformly along the length of the line rather than lumped inside discrete ceramic packages, we define four <strong>primary constants per unit length</strong>:
+        </p>
+
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Parameter Description</th>
+              <th>SI Unit</th>
+              <th>Electromagnetic Origin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>$R$</strong></td>
+              <td>Series resistance per unit length</td>
+              <td>$\Omega/\text{m}$</td>
+              <td>Finite bulk conductivity of the metallic conductors; ohmic heat dissipation.</td>
+            </tr>
+            <tr>
+              <td><strong>$L$</strong></td>
+              <td>Series inductance per unit length</td>
+              <td>$\text{H/m}$</td>
+              <td>Magnetic flux linkage looping the current-carrying conductors ($W_m = \frac{1}{2} L I^2$).</td>
+            </tr>
+            <tr>
+              <td><strong>$G$</strong></td>
+              <td>Shunt conductance per unit length</td>
+              <td>$\text{S/m}$</td>
+              <td>Finite conductivity $\sigma$ of the dielectric medium; transverse leakage conduction current.</td>
+            </tr>
+            <tr>
+              <td><strong>$C$</strong></td>
+              <td>Shunt capacitance per unit length</td>
+              <td>$\text{F/m}$</td>
+              <td>Electric field lines bridging the potential difference between conductors ($W_e = \frac{1}{2} C V^2$).</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Embedded Snap: Lumped Sections -->
+        <div class="image-container-modern">
+          <img src="assets/pdf_fig2_3_lumped_sections.png" alt="Lumped Circuit Equivalents Fig 2.3" class="modern-img" onclick="openLightbox(this.src, 'Fig 2.3: Lumped Circuit Equivalents for Infinitesimal Sections: (a) L-Section, (b) Symmetric Pi-Section, (c) Symmetric T-Section, (d) Inverted L-Section.')">
+          <div class="img-caption">
+            <strong>Figure 1.2:</strong> Four topological models for an infinitesimal section $\Delta x$ of a two-conductor transmission line. In the differential limit as $\Delta x \to 0$, all four configurations yield identical Telegrapher equations.
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; margin: 24px 0 12px 0; color:var(--text);" id="mod1-telegrapher-derivations">1.3 Derivation of the Telegrapher Equations</h3>
+        <p class="section-lead">
+          Applying Kirchhoff's circuit laws to a differential slice of length $\Delta x$:
+        </p>
+        <div class="formula-card">
+          <div class="formula-title">KVL Voltage Loop Balance</div>
+          $$V(x,t) - V(x+\Delta x, t) = R\Delta x\,I(x,t) + L\Delta x\,\frac{\partial I(x,t)}{\partial t}$$
+          Dividing by $\Delta x$ and taking the limit $\Delta x \to 0$:
+          $$\boxed{ -\frac{\partial V}{\partial x} = R\,I + L\,\frac{\partial I}{\partial t} }$$
+        </div>
+
+        <div class="formula-card">
+          <div class="formula-title">KCL Current Node Balance</div>
+          $$I(x,t) - I(x+\Delta x, t) = G\Delta x\,V(x+\Delta x, t) + C\Delta x\,\frac{\partial V(x+\Delta x, t)}{\partial t}$$
+          Dividing by $\Delta x$ and taking the limit $\Delta x \to 0$:
+          $$\boxed{ -\frac{\partial I}{\partial x} = G\,V + C\,\frac{\partial V}{\partial t} }$$
+        </div>
+
+        <!-- Worked Example 2.1 -->
+        <div class="example-card" id="mod1-example21">
+          <span class="example-badge">Textbook Example 2.1 &bull; Direct Reference</span>
+          <div class="example-problem">
+            A two-conductor transmission line is $10\text{ cm}$ long ($\ell = 0.1\text{ m}$). A sinusoidal signal of $1\text{ V}$ peak amplitude travels along the line at $v = 2 \times 10^8\text{ m/s}$. Calculate:
+            <br>(a) The transit time $t_r$ on the line.
+            <br>(b) The operating frequency at which the transit time corresponds to $10\%$ of the signal period $T$.
+            <br>(c) The instantaneous signal voltage on the far end of the line at the moment the input signal passes through its positive maximum ($t = 0, v(0) = 1\text{ V}$) for $f = 500\text{ MHz}$.
+          </div>
+          <div class="example-solution">
+            <div class="example-step">
+              <strong>Part (a):</strong> The transit time is directly given by:
+              $$t_r = \frac{\ell}{v} = \frac{0.1\text{ m}}{2 \times 10^8\text{ m/s}} = 0.5 \times 10^{-9}\text{ s} = \mathbf{0.5\text{ nsec}}$$
+            </div>
+            <div class="example-step">
+              <strong>Part (b):</strong> Transit time is set to $10\%$ of signal period: $t_r = 0.1 T \implies T = 10 t_r = 5\text{ nsec}$.
+              $$f = \frac{1}{T} = \frac{1}{5 \times 10^{-9}\text{ s}} = \mathbf{200\text{ MHz}}$$
+              <em>Physical takeaway:</em> Above $200\text{ MHz}$, this $10\text{ cm}$ cable can no longer be treated as a lumped wire!
+            </div>
+            <div class="example-step">
+              <strong>Part (c):</strong> For sinusoidal excitation, $v(t) = A\cos(2\pi f t)$. At $t=0$, input is at $+1\text{ V}$. Because the signal requires transit time $t_r = 0.5\text{ ns}$ to reach the far end, the far-end voltage at $t=0$ corresponds to what entered at $t = -t_r$:
+              $$v_{\text{load}}(0) = \cos(2\pi \times 500 \times 10^6 \times (-0.5 \times 10^{-9})) = \cos\left(-\frac{\pi}{2}\right) = \mathbf{0\text{ V}}$$
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 2 -->
+      <section class="module-card" id="mod2-wave-equations">
+        <span class="module-tag">Module 2 &bull; Mathematical Solutions</span>
+        <h2 class="module-title">2. Helmholtz Wave Equations and Secondary Line Parameters</h2>
+
+        <p class="section-lead">
+          Under sinusoidal steady-state excitation, we replace time differentiation with multiplication by $j\omega$ ($\partial/\partial t \to j\omega$). The coupled Telegrapher equations become:
+          $$-\frac{dV}{dx} = (R + j\omega L) I \qquad -\frac{dI}{dx} = (G + j\omega C) V$$
+        </p>
+
+        <p class="section-lead">
+          Differentiating the voltage equation with respect to $x$ and substituting $dI/dx$:
+          $$\frac{d^2 V}{dx^2} = (R + j\omega L)(G + j\omega C) V \implies \boxed{ \frac{d^2 V}{dx^2} - \gamma^2 V = 0 }$$
+          Where the <strong>complex propagation constant</strong> $\gamma$ is defined as:
+        </p>
+
+        <div class="formula-card">
+          <div class="formula-title">Complex Propagation Constant</div>
+          $$\boxed{ \gamma = \sqrt{(R + j\omega L)(G + j\omega C)} = \alpha + j\beta }$$
+          <div style="font-size:13.5px; color:var(--text-secondary); margin-top:8px;">
+            $\alpha$ = Attenuation constant ($\text{Np/m}$), $\beta$ = Phase constant ($\text{rad/m}$).
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; margin: 24px 0 12px 0; color:var(--text);" id="mod2-secondary-params">2.2 Characteristic Impedance ($Z_0$)</h3>
+        <p class="section-lead">
+          The general solution to the second-order linear differential equation is a sum of forward and backward travelling waves:
+          $$V(x) = V^+ e^{-\gamma x} + V^- e^{+\gamma x}$$
+          Substituting this solution back into $-\frac{dV}{dx} = (R + j\omega L) I$, the current solution becomes:
+          $$I(x) = \frac{V^+}{Z_0} e^{-\gamma x} - \frac{V^-}{Z_0} e^{+\gamma x}$$
+          Where the <strong>characteristic impedance</strong> $Z_0$ is defined as:
+        </p>
+
+        <div class="formula-card">
+          <div class="formula-title">Characteristic Impedance ($Z_0$)</div>
+          $$\boxed{ Z_0 = \sqrt{\frac{R + j\omega L}{G + j\omega C}} }$$
+          <div style="font-size:13px; color:var(--text-secondary); margin-top:8px;">
+            $Z_0$ represents the ratio of voltage to current for a single forward-travelling wave at any point on the line. It depends solely on the line construction and frequency, completely independent of line length or load!
+          </div>
+        </div>
+
+        <!-- Worked Example 2.2 -->
+        <div class="example-card" id="mod2-example22">
+          <span class="example-badge">Textbook Example 2.2 &bull; Direct Reference</span>
+          <div class="example-problem">
+            A transmission line has primary parameters per unit length:
+            $R = 0.1\,\Omega/\text{m}$, $L = 0.2\,\mu\text{H/m} = 0.2 \times 10^{-6}\text{ H/m}$, $C = 10\,\text{pF/m} = 10 \times 10^{-12}\text{ F/m}$, and $G = 0.02\,\mho/\text{m}$.
+            Find the complex propagation constant $\gamma$ at:
+            <br>(a) $1\text{ MHz}$
+            <br>(b) $1\text{ GHz}$
+          </div>
+          <div class="example-solution">
+            <div class="example-step">
+              <strong>Part (a) at $f = 1\text{ MHz}$ ($\omega = 2\pi \times 10^6\text{ rad/s}$):</strong>
+              $$R + j\omega L = 0.1 + j(2\pi \times 10^6 \times 0.2 \times 10^{-6}) = 0.1 + j 1.2566\,\Omega/\text{m}$$
+              $$G + j\omega C = 0.02 + j(2\pi \times 10^6 \times 10 \times 10^{-12}) = 0.02 + j 6.283 \times 10^{-5}\,\text{S/m}$$
+              $$\gamma = \sqrt{(0.1 + j1.2566)(0.02 + j0.00006283)} = \mathbf{0.117 + j 0.108\text{ m}^{-1}}$$
+              Thus $\alpha = 0.117\text{ Np/m}$, $\beta = 0.108\text{ rad/m}$.
+            </div>
+            <div class="example-step">
+              <strong>Part (b) at $f = 1\text{ GHz}$ ($\omega = 2\pi \times 10^9\text{ rad/s}$):</strong>
+              $$R + j\omega L \approx j\omega L = j 1256.6\,\Omega/\text{m}$$
+              $$G + j\omega C = 0.02 + j 0.06283\,\text{S/m}$$
+              Multiplying and extracting square root:
+              $$\gamma = \mathbf{1.4 + j 9.0\text{ m}^{-1}}$$
+              Thus $\alpha = 1.4\text{ Np/m}$, $\beta = 9.0\text{ rad/m}$.
+            </div>
+          </div>
+        </div>
+
+        <!-- Worked Example 2.6 -->
+        <div class="example-card" id="mod2-example26">
+          <span class="example-badge">Textbook Example 2.6 &bull; Direct Reference</span>
+          <div class="example-problem">
+            A transmission line has primary constants $R = 0.1\,\Omega/\text{m}$, $G = 0.01\,\mho/\text{m}$, $L = 0.01\,\mu\text{H/m} = 10^{-8}\text{ H/m}$, and $C = 100\,\text{pF/m} = 10^{-10}\text{ F/m}$. Calculate the characteristic impedance $Z_0$ of the line at $2\text{ GHz}$.
+          </div>
+          <div class="example-solution">
+            <div class="example-step">
+              At $f = 2\text{ GHz}$, $\omega = 2\pi \times 2 \times 10^9 = 4\pi \times 10^9\text{ rad/s}$.
+              $$\omega L = 4\pi \times 10^9 \times 10^{-8} = 40\pi \approx 125.66\,\Omega/\text{m}$$
+              $$\omega C = 4\pi \times 10^9 \times 10^{-10} = 0.4\pi \approx 1.2566\,\text{S/m}$$
+              $$Z_0 = \sqrt{\frac{R + j\omega L}{G + j\omega C}} = \sqrt{\frac{0.1 + j 125.66}{0.01 + j 1.2566}} \approx \sqrt{\frac{125.66 \angle 89.95^\circ}{1.2566 \angle 89.54^\circ}} = \sqrt{100 \angle 0.41^\circ} = \mathbf{10 + j 0.0358\,\Omega}$$
+              <em>Observation:</em> At gigahertz frequencies, $R \ll \omega L$ and $G \ll \omega C$, so $Z_0 \approx \sqrt{L/C} = \sqrt{10^{-8}/10^{-10}} = 10\,\Omega$ is almost purely resistive!
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 3 -->
+      <section class="module-card" id="mod3-standing-waves">
+        <span class="module-tag">Module 3 &bull; Boundary Conditions &amp; Reflections</span>
+        <h2 class="module-title">3. Standing Waves, Reflection Coefficient and Impedance Transformation</h2>
+
+        <p class="section-lead">
+          When a transmission line is terminated in an arbitrary load impedance $Z_L \ne Z_0$, the forward travelling wave is partially or fully reflected. The superposition of forward and backward waves forms a standing wave pattern.
+        </p>
+
+        <!-- Embedded Snap: Standing Waves Fig 2.7 -->
+        <div class="image-container-modern">
+          <img src="assets/pdf_fig2_7_standing_waves.png" alt="Standing Wave on a Transmission Line Fig 2.7" class="modern-img" onclick="openLightbox(this.src, 'Fig 2.7: Standing Wave Distribution along a Terminated Transmission Line. Voltage peaks (antinodes) and troughs (nodes) alternate as distance l increases from the load.')">
+          <div class="img-caption">
+            <strong>Figure 3.1:</strong> Voltage standing wave profile $|V(l)|$ as a function of distance $l$ measured from the load back toward the generator.
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; margin: 24px 0 12px 0; color:var(--text);" id="mod3-input-impedance">3.2 The Generalized Reflection Coefficient $\Gamma(l)$</h3>
+        <p class="section-lead">
+          Measuring distance $l$ backwards from the load ($l = 0$ at the load, $l = d$ towards generator, so $x = -l$):
+          $$V(l) = V^+ e^{\gamma l} \left[ 1 + \Gamma(l) \right] \qquad I(l) = \frac{V^+}{Z_0} e^{\gamma l} \left[ 1 - \Gamma(l) \right]$$
+          Where the <strong>generalized reflection coefficient</strong> $\Gamma(l)$ is:
+        </p>
+
+        <div class="formula-card">
+          <div class="formula-title">Reflection Coefficient Transformation</div>
+          $$\boxed{ \Gamma(l) = \frac{V^- e^{-\gamma l}}{V^+ e^{\gamma l}} = \Gamma_L e^{-2\gamma l} }$$
+          Where at the load terminal ($l = 0$):
+          $$\boxed{ \Gamma_L = \frac{Z_L - Z_0}{Z_L + Z_0} = |\Gamma_L| e^{j\theta_L} }$$
+        </div>
+
+        <div class="formula-card">
+          <div class="formula-title">Generalized Input Impedance Equation</div>
+          $$Z(l) = \frac{V(l)}{I(l)} = Z_0 \frac{1 + \Gamma(l)}{1 - \Gamma(l)} = \boxed{ Z_0 \left[ \frac{Z_L \cosh(\gamma l) + Z_0 \sinh(\gamma l)}{Z_L \sinh(\gamma l) + Z_0 \cosh(\gamma l)} \right] }$$
+          For a lossless line ($\gamma = j\beta$, $\cosh(j\beta l) = \cos(\beta l)$, $\sinh(j\beta l) = j\sin(\beta l)$):
+          $$\boxed{ Z_{\text{in}}(l) = Z_0 \left[ \frac{Z_L + j Z_0 \tan(\beta l)}{Z_0 + j Z_L \tan(\beta l)} \right] }$$
+        </div>
+
+        <h3 style="font-size:18px; margin: 24px 0 12px 0; color:var(--text);" id="mod3-quarter-half-wave">3.3 Quarter-Wave and Half-Wave Invariance Properties</h3>
+        
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0;">
+          <div class="physics-box">
+            <h4 style="font-size:16px; margin-bottom:8px;">Half-Wave Repeat ($\ell = \lambda/2$)</h4>
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.6;">
+              Since $\beta \ell = \left(\frac{2\pi}{\lambda}\right)\left(\frac{\lambda}{2}\right) = \pi$, $\tan(\pi) = 0$.
+              $$\boxed{ Z_{\text{in}}\left(\ell + \frac{\lambda}{2}\right) = Z_{\text{in}}(\ell) }$$
+              The impedance repeats every half-wavelength.
+            </p>
+          </div>
+
+          <div class="physics-box">
+            <h4 style="font-size:16px; margin-bottom:8px;">Quarter-Wave Inverter ($\ell = \lambda/4$)</h4>
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.6;">
+              Since $\beta \ell = \pi/2$, dividing numerator and denominator by $\tan(\pi/2) \to \infty$:
+              $$\boxed{ Z_{\text{in}} = \frac{Z_0^2}{Z_L} \iff \bar{Z}_{\text{in}} = \frac{1}{\bar{Z}_L} }$$
+              Normalized impedance inverts every quarter-wavelength!
+            </p>
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; margin: 24px 0 12px 0; color:var(--text);" id="mod3-power-transfer">3.4 Power Transfer on a Lossless Line</h3>
+        <p class="section-lead">
+          The time-average power delivered to the load is given by Poynting theorem:
+        </p>
+        <div class="formula-card">
+          $$P_L = \frac{1}{2} \operatorname{Re}\left[ V(0) I^*(0) \right] = \boxed{ \frac{|V^+|^2}{2 Z_0} \left( 1 - |\Gamma_L|^2 \right) = P_{\text{inc}} - P_{\text{refl}} }$$
+          <div style="font-size:13px; color:var(--text-secondary); margin-top:8px;">
+            If the line is matched ($Z_L = Z_0 \implies \Gamma_L = 0$), $100\%$ of incident power is transferred to the load ($P_L = P_{\text{inc}}$).
+          </div>
+        </div>
+
+        <!-- Worked Example 2.8 -->
+        <div class="example-card" id="mod3-example28">
+          <span class="example-badge">Textbook Example 2.8 &bull; Direct Reference</span>
+          <div class="example-problem">
+            The transmission line from Example 2.6 ($Z_0 \approx 10\,\Omega$, $f = 2\text{ GHz}$, $\beta \approx 40\pi\sqrt{10^{-8} \times 10^{-10}} = 12.57\text{ rad/m}$) is terminated in a complex load impedance $Z_L = 10 + j20\,\Omega$. Calculate:
+            <br>(a) The reflection coefficient $\Gamma_L$ at the load.
+            <br>(b) The reflection coefficient $\Gamma(l)$ at a distance $l = 20\text{ cm}$ from the load.
+          </div>
+          <div class="example-solution">
+            <div class="example-step">
+              <strong>Part (a):</strong> At the load terminal:
+              $$\Gamma_L = \frac{Z_L - Z_0}{Z_L + Z_0} = \frac{(10 + j20) - 10}{(10 + j20) + 10} = \frac{j20}{20 + j20} = \frac{j}{1 + j} = \frac{1}{2} + j \frac{1}{2} = \mathbf{0.707 \angle 45^\circ}$$
+            </div>
+            <div class="example-step">
+              <strong>Part (b):</strong> At distance $l = 0.2\text{ m}$:
+              $$2\beta l = 2 \times 12.57 \times 0.2 = 5.028\text{ rad} \approx 288.1^\circ$$
+              $$\Gamma(l) = \Gamma_L e^{-j 2\beta l} = 0.707 \angle (45^\circ - 288.1^\circ) = \mathbf{0.707 \angle -243.1^\circ} = \mathbf{0.707 \angle +116.9^\circ}$$
+              <em>Observation:</em> On a lossless line, the magnitude $|\Gamma(l)| = |\Gamma_L| = 0.707$ remains strictly constant, rotating in a circle of constant radius on the complex plane.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 4 -->
+      <section class="module-card" id="mod4-lossless">
+        <span class="module-tag">Module 4 &bull; Lossless &amp; Low-Loss Analysis</span>
+        <h2 class="module-title">4. Lossless and Low-Loss Transmission Lines</h2>
+
+        <p class="section-lead">
+          Practical RF transmission lines are intentionally engineered to minimize ohmic heat and dielectric leakage losses. We analyze two standard approximations:
+        </p>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0;">
+          <div class="physics-box">
+            <h4 style="font-size:16px; margin-bottom:8px;">Lossless Line ($R = 0, G = 0$)</h4>
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.6;">
+              $$\alpha = 0$$
+              $$\beta = \omega\sqrt{LC}$$
+              $$Z_0 = \sqrt{\frac{L}{C}} \quad (\text{Purely real})$$
+              $$v_p = \frac{\omega}{\beta} = \frac{1}{\sqrt{LC}} = \frac{c}{\sqrt{\mu_r \epsilon_r}}$$
+            </p>
+          </div>
+
+          <div class="physics-box" id="mod4-low-loss">
+            <h4 style="font-size:16px; margin-bottom:8px;">Low-Loss Line ($R \ll \omega L, G \ll \omega C$)</h4>
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.6;">
+              Factoring out $j\omega\sqrt{LC}$ and expanding binomially:
+              $$\gamma \approx j\omega\sqrt{LC}\left(1 - j\frac{R}{2\omega L}\right)\left(1 - j\frac{G}{2\omega C}\right)$$
+              $$\boxed{ \alpha \approx \frac{R}{2 Z_0} + \frac{G Z_0}{2} }$$
+              $$\boxed{ \beta \approx \omega\sqrt{LC} }$$
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 5 -->
+      <section class="module-card" id="mod5-modal-physics">
+        <span class="module-tag">Module 5 &bull; Waveguide Physics</span>
+        <h2 class="module-title">5. Waveguides, Modal Plane Waves &amp; Rectangular Enclosures</h2>
+
+        <p class="section-lead">
+          At microwave frequencies above $3\text{ GHz}$, coaxial cables suffer severe dielectric dissipation and copper skin losses. In this regime, hollow metallic waveguides transport electromagnetic energy with dramatically lower attenuation through <strong>modal propagation</strong>.
+        </p>
+
+        <!-- Embedded Snap: Waveguide Reflection Fig 6.1 -->
+        <div class="image-container-modern">
+          <img src="assets/pdf_fig6_1_waveguide_reflection.png" alt="Reflection of Plane Waves in Waveguide Fig 6.1" class="modern-img" onclick="openLightbox(this.src, 'Fig 6.1: Reflection of a Uniform Plane Wave between Parallel Conducting Boundaries. Interference of bouncing plane waves generates transverse electric (TE) waveguide modes.')">
+          <div class="img-caption">
+            <strong>Figure 5.1:</strong> Modal mechanism: A guided wave inside a metallic waveguide is physically the constructive interference of uniform plane waves bouncing between the conducting walls at a discrete angle of incidence $\theta$.
+          </div>
+        </div>
+
+        <div class="physics-box" id="mod5-tem-proof">
+          <h3 style="font-size:18px; color:var(--text); margin-bottom:10px;">Electromagnetic Proof: Does TEM Mode Exist Inside a Hollow Waveguide?</h3>
+          <p style="font-size:14.5px; line-height:1.7; color:var(--text-secondary);">
+            Suppose a Transverse Electromagnetic (TEM) mode could exist inside a hollow, single-conductor rectangular waveguide.
+            <br>1. For a TEM mode, both longitudinal field components are identically zero: $E_z = 0$ and $H_z = 0$.
+            <br>2. Because $H_z = 0$, the magnetic field lines $\mathbf{H}$ lie strictly in the transverse $xy$-plane and must form closed loops since $\nabla \cdot \mathbf{B} = 0$.
+            <br>3. According to Ampere-Maxwell's Law, the line integral of $\mathbf{H}$ around any closed contour $C$ in the transverse plane equals the enclosed axial current:
+            $$\oint_C \mathbf{H} \cdot d\mathbf{l} = I_{\text{enclosed}} = \iint_S \left( \mathbf{J}_{\text{cond}} + \epsilon \frac{\partial \mathbf{E}}{\partial t} \right) \cdot d\mathbf{S}_z$$
+            <br>4. Because the interior of the waveguide is hollow, there is no inner center conductor $\implies \mathbf{J}_{\text{cond}} = 0$.
+            <br>5. The displacement current term requires an axial electric field component: $\frac{\partial E_z}{\partial t}$. But for a TEM mode, $E_z = 0 \implies I_{\text{disp}} = 0$.
+            <br>6. Therefore, $\oint_C \mathbf{H} \cdot d\mathbf{l} = 0$ for every arbitrary closed path in the transverse plane!
+            <br>7. Non-trivial magnetic field loops cannot exist if their circulation vanishes everywhere.
+          </p>
+          <div class="highlight-box" style="margin-top:12px;">
+            <strong>Fundamental Conclusion:</strong> <em>TEM waves CANNOT propagate inside a hollow, single-conductor waveguide!</em> Energy can only propagate as <strong>Transverse Electric (TE)</strong> modes ($E_z = 0, H_z \ne 0$) or <strong>Transverse Magnetic (TM)</strong> modes ($H_z = 0, E_z \ne 0$).
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; margin: 24px 0 12px 0; color:var(--text);" id="mod5-rectangular-guide">5.3 Rectangular Waveguide Boundary Value Analysis</h3>
+        <p class="section-lead">
+          For a rectangular hollow guide with inner width $a$ along the $x$-axis and height $b$ along the $y$-axis ($a > b$), the fields satisfy the Helmholtz equation with conducting boundary conditions:
+          $$\text{Tangential } E = 0 \text{ at } x=0, x=a \text{ and } y=0, y=b$$
+        </p>
+
+        <div class="formula-card" id="mod5-cutoff-dominant">
+          <div class="formula-title">Cutoff Frequency of $TE_{mn}$ and $TM_{mn}$ Modes</div>
+          $$\boxed{ f_{c,mn} = \frac{v}{2} \sqrt{\left(\frac{m}{a}\right)^2 + \left(\frac{n}{b}\right)^2} = \frac{1}{2\sqrt{\mu\epsilon}} \sqrt{\left(\frac{m}{a}\right)^2 + \left(\frac{n}{b}\right)^2} }$$
+          Where $v = 1/\sqrt{\mu\epsilon}$ is the intrinsic speed in the filling dielectric.
+        </div>
+
+        <div class="physics-box">
+          <h4 style="font-size:16px; margin-bottom:8px;">The Dominant Mode: $TE_{10}$</h4>
+          <p style="font-size:14px; line-height:1.6; color:var(--text-secondary);">
+            For TM modes, both $m \ge 1$ and $n \ge 1$ are required to produce non-vanishing fields (lowest TM mode is $TM_{11}$). For TE modes, either $m$ or $n$ can be zero!
+            Because $a > b$ by universal convention:
+            $$f_{c,10} = \frac{v}{2a} < f_{c,01} = \frac{v}{2b} < f_{c,11}$$
+            Therefore, <strong>$TE_{10}$ always has the lowest cutoff frequency of any mode</strong> and is called the <strong>dominant mode</strong> of the rectangular waveguide.
+            $$\boxed{ \lambda_{c,10} = 2a }$$
+            <em>Physical Law:</em> The longest wavelength capable of propagating through a rectangular waveguide is exactly <strong>twice its broad dimension $a$</strong>!
+          </p>
+        </div>
+
+        <!-- Worked Example 6.7 -->
+        <div class="example-card" id="mod5-example67">
+          <span class="example-badge">Textbook Example 6.7 &bull; Direct Reference</span>
+          <div class="example-problem">
+            A rectangular waveguide has cross-section dimensions $a = 4\text{ cm} = 0.04\text{ m}$ and $b = 3\text{ cm} = 0.03\text{ m}$. It is air-filled and excited in the dominant $TE_{10}$ mode at $f = 6\text{ GHz}$. The maximum peak electric field measured inside the waveguide is $E_0 = 50\text{ V/m}$.
+            <br>(a) Find the cutoff frequency $f_{c,10}$ and phase constant $\beta$.
+            <br>(b) Write the expressions for all electric and magnetic field components.
+            <br>(c) Calculate the time-average power carried through the waveguide.
+          </div>
+          <div class="example-solution">
+            <div class="example-step">
+              <strong>Part (a):</strong> The cutoff frequency for the dominant $TE_{10}$ mode:
+              $$f_{c,10} = \frac{c}{2a} = \frac{3 \times 10^8\text{ m/s}}{2 \times 0.04\text{ m}} = \mathbf{3.75\text{ GHz}}$$
+              Since $f = 6\text{ GHz} > 3.75\text{ GHz}$, wave propagation is permitted ($\beta$ is real):
+              $$\beta = \omega\sqrt{\mu_0\epsilon_0} \sqrt{1 - \left(\frac{f_c}{f}\right)^2} = \frac{2\pi \times 6 \times 10^9}{3 \times 10^8} \sqrt{1 - \left(\frac{3.75}{6}\right)^2} = 40\pi \sqrt{1 - 0.3906} = \mathbf{98.09\text{ rad/m}}$$
+            </div>
+            <div class="example-step">
+              <strong>Part (b):</strong> For $TE_{10}$ ($m=1, n=0$), $E_x = 0, E_z = 0, H_y = 0$.
+              $$E_y = -j 50 \sin\left(\frac{\pi x}{0.04}\right) e^{-j 98.09 z}\text{ V/m}$$
+              $$H_x = j \frac{\beta}{\omega\mu_0} (50) \sin\left(\frac{\pi x}{0.04}\right) e^{-j 98.09 z} = j 0.1035 \sin\left(\frac{\pi x}{0.04}\right) e^{-j 98.09 z}\text{ A/m}$$
+              $$H_z = 1.055 \times 10^{-3} \cos\left(\frac{\pi x}{0.04}\right) e^{-j 98.09 z}\text{ A/m}$$
+            </div>
+            <div class="example-step">
+              <strong>Part (c):</strong> Time-average Poynting power density:
+              $$\mathcal{P}_z = \frac{1}{2} \operatorname{Re}\left( -E_y H_x^* \right) = \frac{1}{2} (50)(0.1035) \sin^2\left(\frac{\pi x}{a}\right) = 2.5875 \sin^2\left(\frac{\pi x}{a}\right)\text{ W/m}^2$$
+              Integrating over the cross section ($0 \le x \le a, 0 \le y \le b$):
+              $$P_{\text{total}} = \int_0^b dy \int_0^a 2.5875 \sin^2\left(\frac{\pi x}{a}\right) dx = 2.5875 \times b \times \frac{a}{2} = 2.5875 \times 0.03 \times 0.02 = \mathbf{1.55\text{ mW}}$$
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INTERACTIVE EXAM CHECKPOINTS -->
+      <section class="checkpoint-widget" id="checkpoints-section">
+        <div class="checkpoint-header">
+          <span style="font-size:24px;">🧠</span>
+          <div class="checkpoint-title">Comprehensive Concept Check 01: Transit Time &amp; Line Regimes</div>
+        </div>
+        <p class="checkpoint-question">
+          A transmission line of length $\ell = 15\text{ cm}$ has propagation velocity $v = 3 \times 10^8\text{ m/s}$. At which frequency does this line officially enter the distributed regime ($t_r \ge 0.1 T$)?
+        </p>
+        <div class="option-list">
+          <label class="option-item"><input type="radio" name="chk1" value="A"> <span>$20\text{ MHz}$</span></label>
+          <label class="option-item"><input type="radio" name="chk1" value="B"> <span>$200\text{ MHz}$</span></label>
+          <label class="option-item"><input type="radio" name="chk1" value="C"> <span>$2\text{ GHz}$</span></label>
+          <label class="option-item"><input type="radio" name="chk1" value="D"> <span>$10\text{ kHz}$</span></label>
+        </div>
+        <button class="btn-submit-check" onclick="evalQuiz(1, 'B', 'Correct! Transit time $t_r = 0.15/(3\\times 10^8) = 0.5\\text{ ns}$. Requiring $t_r = 0.1 T \\implies T = 5\\text{ ns} \\implies f = 1/T = 200\\text{ MHz}$.')">Submit Answer</button>
+        <div class="feedback-box" id="fb1"></div>
+      </section>
+
+      <section class="checkpoint-widget">
+        <div class="checkpoint-header">
+          <span style="font-size:24px;">🧠</span>
+          <div class="checkpoint-title">Comprehensive Concept Check 02: Quarter-Wave Transformation</div>
+        </div>
+        <p class="checkpoint-question">
+          A lossless line with characteristic impedance $Z_0 = 50\,\Omega$ and length $\ell = \lambda/4$ is terminated in a load $Z_L = 100\,\Omega$. What is the input impedance $Z_{\text{in}}$ seen at the generator?
+        </p>
+        <div class="option-list">
+          <label class="option-item"><input type="radio" name="chk2" value="A"> <span>$25\,\Omega$</span></label>
+          <label class="option-item"><input type="radio" name="chk2" value="B"> <span>$100\,\Omega$</span></label>
+          <label class="option-item"><input type="radio" name="chk2" value="C"> <span>$50\,\Omega$</span></label>
+          <label class="option-item"><input type="radio" name="chk2" value="D"> <span>$200\,\Omega$</span></label>
+        </div>
+        <button class="btn-submit-check" onclick="evalQuiz(2, 'A', 'Correct! Quarter-wave inverter formula: $Z_{\\text{in}} = Z_0^2 / Z_L = 50^2 / 100 = 2500 / 100 = 25\\,\\Omega$.')">Submit Answer</button>
+        <div class="feedback-box" id="fb2"></div>
+      </section>
+
+      <section class="checkpoint-widget">
+        <div class="checkpoint-header">
+          <span style="font-size:24px;">🧠</span>
+          <div class="checkpoint-title">Comprehensive Concept Check 03: Non-existence of TEM in Hollow Guides</div>
+        </div>
+        <p class="checkpoint-question">
+          Why is a TEM mode physically impossible inside a single hollow metallic waveguide tube?
+        </p>
+        <div class="option-list">
+          <label class="option-item"><input type="radio" name="chk3" value="A"> <span>Because the metallic walls have infinite conductivity.</span></label>
+          <label class="option-item"><input type="radio" name="chk3" value="B"> <span>Because transverse magnetic loops cannot enclose conduction current (hollow) or displacement current ($E_z=0$), violating Ampere\'s Law.</span></label>
+          <label class="option-item"><input type="radio" name="chk3" value="C"> <span>Because the frequency of microwave signals is too high for light to travel.</span></label>
+          <label class="option-item"><input type="radio" name="chk3" value="D"> <span>Because electrons cannot enter the waveguide from air.</span></label>
+        </div>
+        <button class="btn-submit-check" onclick="evalQuiz(3, 'B', 'Correct! By Ampere\'s law, closed transverse magnetic loops require enclosed longitudinal conduction current (absent in hollow tube) or longitudinal displacement current (requires non-zero $E_z$, violating TEM).')">Submit Answer</button>
+        <div class="feedback-box" id="fb3"></div>
+      </section>
+
+      <section class="checkpoint-widget">
+        <div class="checkpoint-header">
+          <span style="font-size:24px;">🧠</span>
+          <div class="checkpoint-title">Comprehensive Concept Check 04: Dominant Waveguide Cutoff</div>
+        </div>
+        <p class="checkpoint-question">
+          For an air-filled rectangular waveguide with dimensions $a = 5\text{ cm}$ and $b = 2.5\text{ cm}$, what is the absolute lowest frequency that can propagate?
+        </p>
+        <div class="option-list">
+          <label class="option-item"><input type="radio" name="chk4" value="A"> <span>$6\text{ GHz}$</span></label>
+          <label class="option-item"><input type="radio" name="chk4" value="B"> <span>$3\text{ GHz}$</span></label>
+          <label class="option-item"><input type="radio" name="chk4" value="C"> <span>$1.5\text{ GHz}$</span></label>
+          <label class="option-item"><input type="radio" name="chk4" value="D"> <span>$12\text{ GHz}$</span></label>
+        </div>
+        <button class="btn-submit-check" onclick="evalQuiz(4, 'B', 'Correct! The dominant mode is $TE_{10}$ with cutoff $f_{c,10} = c / (2a) = (3 \\times 10^8) / (2 \\times 0.05) = 3\\text{ GHz}$. No wave below $3\\text{ GHz}$ can propagate.')">Submit Answer</button>
+        <div class="feedback-box" id="fb4"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img class="lightbox-content" id="lightboxImg">
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+
+  <!-- Interactive JavaScript & Babylon.js 3D Engine -->
+  <script>
+    // Theme Switcher
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const target = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', target);
+      localStorage.setItem('theme', target);
+      updateThemeIcon(target);
+    }
+
+    function updateThemeIcon(theme) {
+      const icon = document.getElementById('themeIcon');
+      if (theme === 'dark') {
+        icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+      } else {
+        icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+      }
+    }
+
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+
+    // Live Instant Search Filter
+    function filterSidebar() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const links = document.querySelectorAll('.sidebar-link');
+      links.forEach(link => {
+        const text = link.innerText.toLowerCase();
+        link.style.display = text.includes(query) ? 'flex' : 'none';
+      });
+    }
+
+    // Lightbox Modal
+    function openLightbox(src, caption) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightboxCaption').innerHTML = caption;
+      document.getElementById('lightboxModal').style.display = 'flex';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').style.display = 'none';
+    }
+
+    // Quiz Evaluator
+    function evalQuiz(id, correctVal, explanation) {
+      const selected = document.querySelector('input[name="chk' + id + '"]:checked');
+      const fb = document.getElementById('fb' + id);
+      if (!selected) {
+        fb.className = 'feedback-box incorrect';
+        fb.style.display = 'block';
+        fb.innerHTML = '<strong>Please select an option</strong> before submitting.';
+        return;
+      }
+      if (selected.value === correctVal) {
+        fb.className = 'feedback-box correct';
+        fb.style.display = 'block';
+        fb.innerHTML = '<strong>' + explanation + '</strong>';
+      } else {
+        fb.className = 'feedback-box incorrect';
+        fb.style.display = 'block';
+        fb.innerHTML = '<strong>Incorrect.</strong> Hint: Re-read the corresponding section above and check the formula!';
+      }
+    }
+
+    // ==========================================
+    // BABYLON.JS 3D WEBGL MULTI-PHYSICS SIMULATOR
+    // ==========================================
+    let simEngine, simScene, simCamera;
+    let simMode = 'tline'; // 'tline' or 'waveguide'
+    let isPlaying = true;
+    let animTime = 0;
+    let tlineMeshes = [];
+    let waveguideMeshes = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initBabylonSim();
+    });
+
+    function initBabylonSim() {
+      const canvas = document.getElementById('renderCanvas');
+      simEngine = new BABYLON.Engine(canvas, true, { antialias: true });
+      simScene = new BABYLON.Scene(simEngine);
+      simScene.clearColor = new BABYLON.Color4(0.06, 0.09, 0.16, 1.0);
+
+      // Camera
+      simCamera = new BABYLON.ArcRotateCamera("simCam", -Math.PI / 2.5, Math.PI / 3, 22, new BABYLON.Vector3(0, 0, 0), simScene);
+      simCamera.attachControl(canvas, true);
+      simCamera.lowerRadiusLimit = 5;
+      simCamera.upperRadiusLimit = 40;
+
+      // Lights
+      const hemiLight = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 0), simScene);
+      hemiLight.intensity = 0.85;
+      const dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(-1, -2, -1), simScene);
+      dirLight.intensity = 0.6;
+
+      // Build initial scenes
+      buildTLineScene();
+      buildWaveguideScene();
+
+      // Set initial mode
+      setSimMode('tline');
+
+      // Animation Loop
+      simEngine.runRenderLoop(() => {
+        if (isPlaying) {
+          animTime += 0.035;
+          updateSimulation(animTime);
+        }
+        simScene.render();
+      });
+
+      window.addEventListener('resize', () => {
+        simEngine.resize();
+      });
+    }
+
+    function buildTLineScene() {
+      // Two transmission line metallic rails
+      const railMat = new BABYLON.StandardMaterial("railMat", simScene);
+      railMat.diffuseColor = new BABYLON.Color3(0.7, 0.75, 0.85);
+      railMat.specularColor = new BABYLON.Color3(0.9, 0.9, 1.0);
+
+      const rail1 = BABYLON.MeshBuilder.CreateCylinder("rail1", { diameter: 0.18, height: 16 }, simScene);
+      rail1.rotation.z = Math.PI / 2;
+      rail1.position.y = 2.2;
+      rail1.material = railMat;
+      tlineMeshes.push(rail1);
+
+      const rail2 = BABYLON.MeshBuilder.CreateCylinder("rail2", { diameter: 0.18, height: 16 }, simScene);
+      rail2.rotation.z = Math.PI / 2;
+      rail2.position.y = -2.2;
+      rail2.material = railMat;
+      tlineMeshes.push(rail2);
+
+      // Generator Box at x = -8
+      const genBox = BABYLON.MeshBuilder.CreateBox("genBox", { width: 0.8, height: 4.8, depth: 1.5 }, simScene);
+      genBox.position.x = -8;
+      const genMat = new BABYLON.StandardMaterial("genMat", simScene);
+      genMat.diffuseColor = new BABYLON.Color3(0.15, 0.5, 0.9);
+      genBox.material = genMat;
+      tlineMeshes.push(genBox);
+
+      // Load Box at x = 8
+      const loadBox = BABYLON.MeshBuilder.CreateBox("loadBox", { width: 0.8, height: 4.8, depth: 1.5 }, simScene);
+      loadBox.position.x = 8;
+      const loadMat = new BABYLON.StandardMaterial("loadMat", simScene);
+      loadMat.diffuseColor = new BABYLON.Color3(0.9, 0.4, 0.15);
+      loadBox.material = loadMat;
+      tlineMeshes.push(loadBox);
+
+      // Dynamic Standing Wave Curve Ribbons (Forward, Reflected, Total)
+      const numPts = 120;
+      const totalCurvePts = [];
+      const envelopeUpperPts = [];
+      const envelopeLowerPts = [];
+
+      for (let i = 0; i <= numPts; i++) {
+        const x = -7.5 + (15.0 * i) / numPts;
+        totalCurvePts.push(new BABYLON.Vector3(x, 0, 0));
+        envelopeUpperPts.push(new BABYLON.Vector3(x, 0, 0));
+        envelopeLowerPts.push(new BABYLON.Vector3(x, 0, 0));
+      }
+
+      const totalLine = BABYLON.MeshBuilder.CreateLines("totalWaveLine", { points: totalCurvePts, updatable: true }, simScene);
+      totalLine.color = new BABYLON.Color3(0.2, 0.8, 1.0);
+      tlineMeshes.push(totalLine);
+
+      const envUpperLine = BABYLON.MeshBuilder.CreateLines("envUpper", { points: envelopeUpperPts, updatable: true }, simScene);
+      envUpperLine.color = new BABYLON.Color3(1.0, 1.0, 1.0);
+      tlineMeshes.push(envUpperLine);
+
+      const envLowerLine = BABYLON.MeshBuilder.CreateLines("envLower", { points: envelopeLowerPts, updatable: true }, simScene);
+      envLowerLine.color = new BABYLON.Color3(1.0, 1.0, 1.0);
+      tlineMeshes.push(envLowerLine);
+    }
+
+    function buildWaveguideScene() {
+      // Waveguide hollow rectangular metallic enclosure
+      const wgMat = new BABYLON.StandardMaterial("wgMat", simScene);
+      wgMat.diffuseColor = new BABYLON.Color3(0.25, 0.35, 0.48);
+      wgMat.alpha = 0.35;
+      wgMat.backFaceCulling = false;
+
+      // Guide walls: a = 6, b = 3, length along z = 14
+      const guideBox = BABYLON.MeshBuilder.CreateBox("guideEnclosure", { width: 6, height: 3, depth: 14 }, simScene);
+      guideBox.material = wgMat;
+      waveguideMeshes.push(guideBox);
+
+      // Edges wireframe
+      guideBox.enableEdgesRendering();
+      guideBox.edgesWidth = 3.0;
+      guideBox.edgesColor = new BABYLON.Color4(0.4, 0.7, 1.0, 1.0);
+
+      // Electric field arrows for TE10 mode: E_y = E0 sin(pi*x/a)
+      const numArrowsX = 7;
+      const numArrowsZ = 9;
+      for (let ix = 0; ix < numArrowsX; ix++) {
+        for (let iz = 0; iz < numArrowsZ; iz++) {
+          const arrow = BABYLON.MeshBuilder.CreateCylinder("efield_" + ix + "_" + iz, { diameterTop: 0, diameterBottom: 0.12, height: 1.0 }, simScene);
+          const arrowMat = new BABYLON.StandardMaterial("arrowMat_" + ix + "_" + iz, simScene);
+          arrowMat.diffuseColor = new BABYLON.Color3(1.0, 0.3, 0.3);
+          arrow.material = arrowMat;
+          arrow.metadata = { ix: ix, iz: iz };
+          waveguideMeshes.push(arrow);
+        }
+      }
+    }
+
+    function updateSimulation(t) {
+      if (simMode === 'tline') {
+        const totalLine = simScene.getMeshByName("totalWaveLine");
+        const envUpper = simScene.getMeshByName("envUpper");
+        const envLower = simScene.getMeshByName("envLower");
+        if (!totalLine) return;
+
+        const numPts = 120;
+        const pts = [];
+        const envUp = [];
+        const envDown = [];
+        const beta = 1.25;
+        const gammaL = 0.55; // reflection coefficient magnitude
+
+        for (let i = 0; i <= numPts; i++) {
+          const x = -7.5 + (15.0 * i) / numPts;
+          const distFromLoad = 7.5 - x; // l = 0 at load x = 7.5
+
+          // Forward wave travelling right: V+ cos(wt - beta*x)
+          const vFwd = 1.0 * Math.cos(t * 2.0 - beta * x);
+          // Reflected wave travelling left: V- cos(wt + beta*x)
+          const vRefl = gammaL * Math.cos(t * 2.0 + beta * x);
+          const vTotal = vFwd + vRefl;
+
+          // Envelope: |V(l)| = V+ sqrt(1 + gamma^2 + 2*gamma*cos(2*beta*l))
+          const envelope = 1.0 * Math.sqrt(1.0 + gammaL * gammaL + 2.0 * gammaL * Math.cos(2.0 * beta * distFromLoad));
+
+          pts.push(new BABYLON.Vector3(x, vTotal, 0));
+          envUp.push(new BABYLON.Vector3(x, envelope, 0));
+          envDown.push(new BABYLON.Vector3(x, -envelope, 0));
+        }
+
+        BABYLON.MeshBuilder.CreateLines("totalWaveLine", { points: pts, instance: totalLine });
+        BABYLON.MeshBuilder.CreateLines("envUpper", { points: envUp, instance: envUpper });
+        BABYLON.MeshBuilder.CreateLines("envLower", { points: envDown, instance: envLower });
+
+      } else if (simMode === 'waveguide') {
+        // Update TE10 electric field arrows
+        const a = 6.0;
+        const beta = 0.8;
+        waveguideMeshes.forEach(mesh => {
+          if (mesh.metadata && mesh.metadata.ix !== undefined) {
+            const ix = mesh.metadata.ix;
+            const iz = mesh.metadata.iz;
+            // x from -2.4 to +2.4
+            const x = -2.5 + (5.0 * ix) / 6.0;
+            const z = -6.0 + (12.0 * iz) / 8.0;
+
+            // Normalized broad dimension coordinate u from 0 to 1
+            const u = (x + 3.0) / a;
+            const spatialSin = Math.sin(Math.PI * u); // sin(pi*x/a)
+            const timeOsc = Math.cos(t * 2.5 - beta * z);
+            const ey = spatialSin * timeOsc * 1.35;
+
+            mesh.position.x = x;
+            mesh.position.z = z;
+            mesh.position.y = ey * 0.5;
+            mesh.scaling.y = Math.abs(ey) + 0.05;
+            mesh.rotation.z = ey >= 0 ? 0 : Math.PI;
+
+            // Color gradient by intensity
+            if (mesh.material) {
+              const intensity = Math.abs(ey);
+              mesh.material.diffuseColor = new BABYLON.Color3(0.2 + 0.8 * intensity, 0.4 + 0.2 * intensity, 1.0 - 0.7 * intensity);
+            }
+          }
+        });
+      }
+    }
+
+    function setSimMode(mode) {
+      simMode = mode;
+      document.getElementById('btnModeTLine').classList.toggle('active', mode === 'tline');
+      document.getElementById('btnModeWaveguide').classList.toggle('active', mode === 'waveguide');
+
+      tlineMeshes.forEach(m => m.setEnabled(mode === 'tline'));
+      waveguideMeshes.forEach(m => m.setEnabled(mode === 'waveguide'));
+
+      const info = document.getElementById('simOverlayInfo');
+      if (mode === 'tline') {
+        info.innerHTML = 'Mode: Transmission Line Standing Wave | SWR: 3.44 | |&Gamma;L| = 0.55<br>Cyan: Instantaneous Wave v(x,t) | White: Stationary Standing Wave Envelope |V(x)|';
+      } else {
+        info.innerHTML = 'Mode: Rectangular Waveguide Dominant TE10 Mode (a=6, b=3)<br>Red/Cyan Arrows: Vertical Transverse E_y Vectors Oscillating as sin(&pi;x/a) cos(&omega;t - &beta;z)';
+      }
+    }
+
+    function togglePlayPause() {
+      isPlaying = !isPlaying;
+      document.getElementById('btnPlayPause').innerText = isPlaying ? '⏸ Pause' : '▶ Play';
+    }
+
+    function resetSimCamera() {
+      if (simCamera) {
+        simCamera.alpha = -Math.PI / 2.5;
+        simCamera.beta = Math.PI / 3;
+        simCamera.radius = 22;
+        simCamera.target = new BABYLON.Vector3(0, 0, 0);
+      }
+    }
+  </script>
+
+  <!-- Global Tooltip Integration -->
+  <script src="emt_glossary_tooltip.js"></script>
+</body>
+</html>

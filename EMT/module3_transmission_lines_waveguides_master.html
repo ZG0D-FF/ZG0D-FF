@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transmission Lines &amp; Waveguides (Module 3) — Academic Master Notes</title>
+  
+  <!-- Apple Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- MathJax 3 LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Babylon.js 7.x 3D WebGL Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs@7.30.0/babylon.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs-materials@7.30.0/babylonjs.materials.min.js"></script>
+
+  <!-- Apple-Calmness Global EMT Glossary & Tooltips -->
+  <link rel="stylesheet" href="emt_glossary_tooltip.css">
+
+  <style>
+    :root {
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --surface-subtle: #f5f5f7;
+      --surface-elevated: #ffffff;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.16);
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --success: #34c759;
+      --warning: #ff9500;
+      --danger: #ff3b30;
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+      color-scheme: light dark;
+    }
+
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #141416;
+      --surface-subtle: #1c1c1e;
+      --surface-elevated: #242426;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-tertiary: #6e6e73;
+      --accent: #2997ff;
+      --accent-soft: rgba(41, 151, 255, 0.12);
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 15px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Apple Top Bar */
+    header.apple-header {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      background: rgba(251, 251, 253, 0.82);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+    [data-theme="dark"] header.apple-header {
+      background: rgba(20, 20, 22, 0.85);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+    .back-link:hover { background: var(--accent-soft); }
+    .brand-title {
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+    .brand-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pill-btn {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+      background: var(--surface);
+    }
+
+    /* Layout */
+    .app-layout {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 24px 80px 24px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 36px;
+    }
+    @media (max-width: 1024px) {
+      .app-layout { grid-template-columns: 1fr; }
+      aside.sidebar { display: none; }
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      position: sticky;
+      top: 76px;
+      height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    aside.sidebar::-webkit-scrollbar { width: 4px; }
+    aside.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .nav-search-box {
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .nav-search-box input {
+      width: 100%;
+      height: 36px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0 12px 0 32px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .nav-search-box input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    .nav-search-box svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-tertiary);
+    }
+
+    .nav-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      margin: 18px 0 6px 8px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+    .nav-link:hover {
+      background: var(--surface-subtle);
+      color: var(--text);
+    }
+    .nav-link.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .nav-link-tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      opacity: 0.7;
+    }
+
+    /* Main Content */
+    main.content-area {
+      min-width: 0;
+    }
+
+    .hero-banner {
+      padding: 24px 0 32px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 860px;
+      line-height: 1.6;
+    }
+
+    /* 3D Simulation Stage (Babylon.js) */
+    .stage-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 40px;
+      box-shadow: var(--card-shadow);
+      position: relative;
+    }
+    .stage-header {
+      padding: 16px 22px;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .stage-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stage-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .stage-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      background: #09090b;
+    }
+    #babylon-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+      touch-action: none;
+    }
+
+    /* 3D Telemetry HUD */
+    .telemetry-hud {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      background: rgba(18, 18, 20, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #e4e4e7;
+      line-height: 1.5;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .telemetry-hud .hud-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .telemetry-hud .hud-val {
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    .canvas-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 18px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: rgba(255, 255, 255, 0.5);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    /* Live Sliders Panel below 3D */
+    .stage-sliders {
+      padding: 18px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+    }
+    .slider-header b {
+      color: var(--text);
+      font-family: var(--font-mono);
+    }
+    input[type=range] {
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    /* Topic Cards */
+    .topic-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 30px;
+      margin-bottom: 32px;
+      box-shadow: var(--card-shadow);
+      scroll-margin-top: 72px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .topic-card:hover {
+      box-shadow: var(--card-shadow-hover);
+      border-color: var(--border-strong);
+    }
+
+    .topic-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .topic-pill {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .topic-badge {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    .topic-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin-bottom: 12px;
+      line-height: 1.35;
+    }
+
+    /* Technical Callouts */
+    .callout {
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 18px 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+      border: 1px solid transparent;
+    }
+    .callout-info {
+      background: var(--accent-soft);
+      border-color: rgba(41, 151, 255, 0.25);
+      color: var(--text);
+    }
+    .callout-tip {
+      background: rgba(52, 199, 89, 0.08);
+      border-color: rgba(52, 199, 89, 0.25);
+      color: var(--text);
+    }
+    .callout-warn {
+      background: rgba(255, 149, 0, 0.08);
+      border-color: rgba(255, 149, 0, 0.25);
+      color: var(--text);
+    }
+    .callout-title {
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Formula Blocks */
+    .eq-box {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin: 16px 0;
+      overflow-x: auto;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    /* Comparison & Data Tables */
+    .table-container {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    table.data-table th {
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    table.data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tr:hover td { background: var(--surface-subtle); }
+
+    /* Collapsible Drawers */
+    details.lucid-drawer {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 18px 0;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    details.lucid-drawer summary {
+      padding: 14px 18px;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    details.lucid-drawer summary:hover {
+      background: var(--surface);
+    }
+    details.lucid-drawer[open] summary {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .drawer-content {
+      padding: 18px 20px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* Derivation Card */
+    .derivation-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      background: var(--surface-subtle);
+    }
+    .derivation-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .derivation-num {
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .derivation-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    /* Footer */
+    footer.page-footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-tertiary);
+      font-size: 12.5px;
+    }
+
+    .i {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Apple Header -->
+  <header class="apple-header">
+    <div class="brand-wrap">
+      <a href="../notes1.html" style="display:inline-flex; align-items:center; gap:5px; color:#2997ff; text-decoration:none; font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; background:rgba(41,151,255,0.12); border:1px solid rgba(41,151,255,0.25);">
+        <svg class="i" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Jarvis Hub</span>
+      </a>
+      <a href="index.html" class="back-link">
+        <svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>EMT Lab Hub</span>
+      </a>
+      <a href="emt_journey_electromagnetic_waves.html" style="color:#38bdf8; text-decoration:none; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:3px 8px; border-radius:999px; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.25);">
+        <span>⚡ Journey Master</span>
+      </a>
+      <span style="opacity: 0.3;">/</span>
+      <span class="brand-title">Module 3</span>
+      <span class="brand-badge">BATCH 1B</span>
+    </div>
+    <div class="header-actions">
+      <button class="pill-btn" id="theme-toggle">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span id="theme-label">Theme</span>
+      </button>
+      <a href="#sim-stage" class="pill-btn" style="text-decoration:none;">
+        <svg class="i" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>3D Simulator</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="nav-search-box">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="nav-search" placeholder="Search Module 3..." autocomplete="off">
+      </div>
+
+      <div class="nav-section-label">3D WebGL Engine</div>
+      <a href="#sim-stage" class="nav-link active">
+        <span>Standing Wave &amp; TE10 Lab</span>
+        <span class="nav-link-tag">3D</span>
+      </a>
+
+      <div class="nav-section-label">Transmission Lines</div>
+      <a href="#topic-telegrapher" class="nav-link" data-title="telegrapher distributed model r l g c impedance">
+        <span>Telegrapher Equations &amp; Z0</span>
+        <span class="nav-link-tag">p. 1</span>
+      </a>
+      <a href="#topic-modes" class="nav-link" data-title="lossless distortionless heaviside condition">
+        <span>Lossless &amp; Distortionless</span>
+        <span class="nav-link-tag">p. 2</span>
+      </a>
+      <a href="#topic-vswr" class="nav-link" data-title="reflection coefficient gamma vswr standing wave ratio matched load transit time">
+        <span>VSWR, &Gamma;L &amp; Transit Time</span>
+        <span class="nav-link-tag">p. 3</span>
+      </a>
+
+      <div class="nav-section-label">Waveguides</div>
+      <a href="#topic-waveguides" class="nav-link" data-title="rectangular waveguide cutoff dominant te10 evanescent degenerate">
+        <span>Rectangular Waveguide &amp; Modes</span>
+        <span class="nav-link-tag">p. 4</span>
+      </a>
+      <a href="#topic-dispersion" class="nav-link" data-title="guide wavelength lambda g group velocity vp vg relativistic">
+        <span>Guide &lambda;g &amp; Velocities (vp, vg)</span>
+        <span class="nav-link-tag">p. 5</span>
+      </a>
+
+      <div class="nav-section-label">Academic Derivations</div>
+      <a href="#derivations-vault" class="nav-link" data-title="derivations telegrapher wave vswr transmittance phase velocity guide wavelength">
+        <span>6 Master Derivations</span>
+        <span class="nav-link-tag">Proofs</span>
+      </a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      <!-- Hero Banner -->
+      <section class="hero-banner">
+        <div class="hero-eyebrow">Department of Electronics &amp; Communication Engineering · Module 3 Notes</div>
+        <h1 class="hero-title">Transmission Lines &amp; Waveguide Theory — Complete Master Guide</h1>
+        <p class="hero-desc">
+          Extracted directly from source notes (5 pages), featuring Telegrapher's distributed parameter models, Heaviside distortionless conditions, VSWR and impedance transformation, rectangular waveguide boundary value problems, relativistic velocity relations, and 6 step-by-step mathematical proofs.
+        </p>
+      </section>
+
+      <!-- 3D WebGL Simulation Stage -->
+      <section id="sim-stage" class="stage-card">
+        <div class="stage-header">
+          <div class="stage-title-wrap">
+            <span class="stage-badge">BABYLON.JS 7.30</span>
+            <strong style="font-size: 14px;">Transmission Line &amp; Waveguide Physical Laboratory</strong>
+          </div>
+          <div class="stage-controls">
+            <button class="mode-btn active" id="btn-mode-standing">Standing Wave (VSWR)</button>
+            <button class="mode-btn" id="btn-mode-te10">Waveguide TE10 Mode</button>
+            <button class="mode-btn" id="btn-sim-orbit">Auto-Orbit</button>
+            <button class="mode-btn" id="btn-sim-pause">Pause</button>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="babylon-canvas"></canvas>
+          
+          <!-- Telemetry HUD -->
+          <div class="telemetry-hud" id="hud-panel">
+            <div style="font-weight:700; color:#ffffff; margin-bottom:4px; font-size:12px;">LINE &amp; GUIDE TELEMETRY</div>
+            <div class="hud-row"><span>Mode:</span><span class="hud-val" id="hud-mode">Standing Wave (VSWR)</span></div>
+            <div class="hud-row"><span>Load (|&Gamma;L|):</span><span class="hud-val" id="hud-gamma">0.500 (VSWR = 3.00)</span></div>
+            <div class="hud-row"><span>Freq (f):</span><span class="hud-val" id="hud-freq">3.00 GHz</span></div>
+            <div class="hud-row"><span>Cutoff (fc):</span><span class="hud-val" id="hud-fc">2.29 GHz (a = 6.5 cm)</span></div>
+            <div class="hud-row"><span>Guide &lambda;g:</span><span class="hud-val" id="hud-lg">15.54 cm (&gt; &lambda;0 = 10 cm)</span></div>
+            <div class="hud-row"><span>Phase Vel (vp):</span><span class="hud-val" id="hud-vp">1.55 c (&gt; c!)</span></div>
+            <div class="hud-row"><span>Group Vel (vg):</span><span class="hud-val" id="hud-vg">0.64 c (vp &times; vg = c&sup2;)</span></div>
+          </div>
+
+          <div class="canvas-hint">Drag: Orbit | Pinch/Wheel: Zoom | Right-drag: Pan</div>
+        </div>
+
+        <!-- Live Sliders -->
+        <div class="stage-sliders">
+          <div class="slider-group">
+            <div class="slider-header"><span>Reflection Coefficient ($|\Gamma_L|$)</span><b id="val-gamma">0.50</b></div>
+            <input type="range" id="slider-gamma" min="0" max="1" step="0.05" value="0.5">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header"><span>Operating Frequency ($f$)</span><b id="val-freq">3.0 GHz</b></div>
+            <input type="range" id="slider-freq" min="2.0" max="8.0" step="0.1" value="3.0">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header"><span>Broad Wall Dimension ($a$)</span><b id="val-dim">6.5 cm</b></div>
+            <input type="range" id="slider-dim" min="3.0" max="10.0" step="0.5" value="6.5">
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TOPIC 1: TELEGRAPHER'S EQUATIONS & Z0 -->
+      <!-- ========================================== -->
+      <article id="topic-telegrapher" class="topic-card">
+        <div class="topic-meta">
+          <span class="topic-pill">Page 1 Extract</span>
+          <span class="topic-badge">Distributed Parameters</span>
+        </div>
+        <h2 class="topic-title">Transmission Line Foundations &amp; Telegrapher's Equations</h2>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          Transmission lines guide electromagnetic energy from a source (generator, transmitter, oscillator) to a load (antenna, oscilloscope, network terminal) with minimal loss. Classic geometries include <strong>coaxial cable</strong>, <strong>twisted pair</strong>, <strong>parallel-plate (planar) line</strong>, <strong>wire above ground</strong>, and <strong>planar microstrip line</strong>.
+        </p>
+
+        <div class="eq-box">
+          $$-\frac{\partial V(z,t)}{\partial z} = R\,I(z,t) + L\,\frac{\partial I(z,t)}{\partial t}$$
+          $$-\frac{\partial I(z,t)}{\partial z} = G\,V(z,t) + C\,\frac{\partial V(z,t)}{\partial t}$$
+        </div>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          Where distributed parameters per unit length are:
+          $R$ (series resistance, $\Omega/\text{m}$), $L$ (series loop inductance, $\text{H/m}$), $G$ (shunt dielectric conductance, $\text{S/m}$), and $C$ (shunt capacitance, $\text{F/m}$).
+        </p>
+
+        <h3 style="font-size: 16px; font-weight: 700; margin: 20px 0 10px 0;">Characteristic Impedance ($Z_0$)</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 12px;">
+          The characteristic impedance $Z_0$ is defined as the ratio of positively traveling voltage wave to current wave at any point on an infinite or reflectionless line:
+        </p>
+        <div class="eq-box">
+          $$Z_0 = \frac{V_0^+}{I_0^+} = -\frac{V_0^-}{I_0^-} = \frac{R + j\omega L}{\gamma} = \frac{\gamma}{G + j\omega C} = \sqrt{\frac{R + j\omega L}{G + j\omega C}} = R_0 + jX_0$$
+        </div>
+
+        <details class="lucid-drawer">
+          <summary>
+            <span>💡 Lucid Understanding: Lossless Transmission Line ($R = 0 = G$)</span>
+            <span style="font-size: 11px; color: var(--accent);">Expand</span>
+          </summary>
+          <div class="drawer-content">
+            <p>A line is <strong>lossless</strong> when conductor conductivity is infinite ($\sigma_c \to \infty \implies R = 0$) and the dielectric medium is perfect insulator ($\sigma \to 0 \implies G = 0$). Under this condition:</p>
+            <div class="eq-box">
+              $$\alpha = 0, \quad \gamma = j\beta = j\omega\sqrt{LC}$$
+              $$u_p = \frac{\omega}{\beta} = \frac{1}{\sqrt{LC}} = f\lambda$$
+              $$X_0 = 0, \quad Z_0 = R_0 = \sqrt{\frac{L}{C}}\ \Omega \quad (\text{Purely Resistive!})$$
+            </div>
+            <p style="color: var(--text-secondary); font-size: 13px;">
+              Because $Z_0$ has zero imaginary part and phase velocity $u_p$ is independent of frequency, pulses propagate without attenuation or dispersion.
+            </p>
+          </div>
+        </details>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- TOPIC 2: DISTORTIONLESS LINE -->
+      <!-- ========================================== -->
+      <article id="topic-modes" class="topic-card">
+        <div class="topic-meta">
+          <span class="topic-pill">Page 2 Extract</span>
+          <span class="topic-badge">Heaviside Condition</span>
+        </div>
+        <h2 class="topic-title">The Distortionless Line &amp; Summary Matrix</h2>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          A signal consists of a spectrum of frequencies. In a lossy line, different harmonics attenuate unequally if attenuation $\alpha(\omega)$ depends on frequency (amplitude distortion), and travel at different phase velocities if $\beta(\omega)$ is non-linear with $\omega$ (phase / dispersion distortion).
+        </p>
+
+        <div class="callout callout-tip">
+          <div class="callout-title">Oliver Heaviside's Distortionless Condition (1887)</div>
+          A lossy line produces <strong>zero waveform distortion</strong> if the distributed parameters satisfy:
+          $$\frac{R}{L} = \frac{G}{C} \iff RC = GL$$
+        </div>
+
+        <p style="color: var(--text-secondary); margin-bottom: 12px;">Under the Heaviside condition:</p>
+        <div class="eq-box">
+          $$\gamma = \sqrt{(R + j\omega L)(G + j\omega C)} = \sqrt{RG\left(1 + \frac{j\omega L}{R}\right)\left(1 + \frac{j\omega C}{G}\right)} = \sqrt{RG}\left(1 + \frac{j\omega C}{G}\right) = \sqrt{RG} + j\omega\sqrt{LC}$$
+          $$\alpha = \sqrt{RG}\text{ (Constant, Independent of Frequency!)}$$
+          $$\beta = \omega\sqrt{LC}\text{ (Strictly Linear in Frequency!)}$$
+          $$u_p = \frac{\omega}{\beta} = \frac{1}{\sqrt{LC}}\text{ (Constant Phase Velocity)}, \quad Z_0 = \sqrt{\frac{R}{G}} = \sqrt{\frac{L}{C}}\ \Omega$$
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Propagation Constant $\gamma = \alpha + j\beta$</th>
+                <th>Characteristic Impedance $Z_0 = R_0 + jX_0$</th>
+                <th>Phase Velocity $u_p$</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>General Lossy Line</strong></td>
+                <td>$\sqrt{(R + j\omega L)(G + j\omega C)}$</td>
+                <td>$\sqrt{\frac{R + j\omega L}{G + j\omega C}}$</td>
+                <td>$\frac{\omega}{\beta}$ (Frequency-dependent)</td>
+              </tr>
+              <tr>
+                <td><strong>Lossless Line</strong> ($R = G = 0$)</td>
+                <td>$0 + j\omega\sqrt{LC}$</td>
+                <td>$\sqrt{\frac{L}{C}} + j0$</td>
+                <td>$\frac{1}{\sqrt{LC}}$ (Constant)</td>
+              </tr>
+              <tr>
+                <td><strong>Distortionless Line</strong> ($RC = GL$)</td>
+                <td>$\sqrt{RG} + j\omega\sqrt{LC}$</td>
+                <td>$\sqrt{\frac{L}{C}} + j0$</td>
+                <td>$\frac{1}{\sqrt{LC}}$ (Constant)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Engineering Insight: Telephone Lines vs. Power Lines</div>
+          A lossless line is always distortionless, but a distortionless line is <strong>not necessarily lossless</strong> (it has finite attenuation $\alpha = \sqrt{RG} > 0$). In power transmission, losslessness is paramount ($R \approx 0$). In long-distance telephony, distortionlessness is paramount to preserve speech intelligibility—achieved historically by inserting lumped series loading coils (Pupin coils) to increase $L$ so that $R/L = G/C$.
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- TOPIC 3: VSWR, REFLECTION & TRANSIT TIME -->
+      <!-- ========================================== -->
+      <article id="topic-vswr" class="topic-card">
+        <div class="topic-meta">
+          <span class="topic-pill">Page 3 Extract</span>
+          <span class="topic-badge">Impedance Matching</span>
+        </div>
+        <h2 class="topic-title">Voltage Standing Wave Ratio (VSWR), Reflection Coefficient &amp; Transit Time</h2>
+
+        <div class="calc-card">
+          <div class="calc-step">
+            <div class="calc-step-num">1 · Load Reflection Coefficient ($\Gamma_L$)</div>
+            <p>The voltage reflection coefficient at the load termination ($z = l$) is defined as:</p>
+            <div class="eq-box">
+              $$\Gamma_L = \frac{V_0^- e^{\gamma l}}{V_0^+ e^{-\gamma l}} = \frac{Z_L - Z_0}{Z_L + Z_0} = |\Gamma_L|\,e^{j\theta_\Gamma}$$
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary);">
+              Normalized load impedance: $z_n = \frac{Z_L}{Z_0} \implies \Gamma_L = \frac{z_n - 1}{z_n + 1}$.
+            </p>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">2 · Voltage Standing Wave Ratio ($s$)</div>
+            <p>Superposition of forward and reverse traveling waves sets up a standing wave with interference maxima and minima:</p>
+            <div class="eq-box">
+              $$s = \frac{V_{max}}{V_{min}} = \frac{I_{max}}{I_{min}} = \frac{1 + |\Gamma_L|}{1 - |\Gamma_L|}, \quad |\Gamma_L| = \frac{s - 1}{s + 1}$$
+            </div>
+            <p>Boundary bounds: $1 \le s \le \infty$.</p>
+            <ul style="padding-left: 20px; font-size: 13.5px; color: var(--text-secondary); margin-top: 6px;">
+              <li><strong>Matched Load ($Z_L = Z_0$):</strong> $\Gamma_L = 0 \implies s = 1$ (Flat line, zero reflection, 100% power absorption).</li>
+              <li><strong>Short Circuit ($Z_L = 0$):</strong> $\Gamma_L = -1 \implies s = \infty$ (Total reflection, standing wave nodes on load).</li>
+              <li><strong>Open Circuit ($Z_L = \infty$):</strong> $\Gamma_L = +1 \implies s = \infty$ (Total reflection, standing wave antinodes on load).</li>
+            </ul>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">3 · Extremal Input Impedances Along the Line</div>
+            <div class="eq-box">
+              $$Z_{in,max} = \frac{V_{max}}{I_{min}} = s\,Z_0, \quad Z_{in,min} = \frac{V_{min}}{I_{max}} = \frac{Z_0}{s}$$
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary);">
+              Quarter-wave geometric mean property: $\sqrt{Z_{in,max} \cdot Z_{in,min}} = Z_0$.
+            </p>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">4 · Transit Time Effect in Transmission Lines</div>
+            <p>Signals propagate with finite phase velocity $v_p$, requiring finite transit delay:</p>
+            <div class="eq-box">
+              $$t_{transit} = \frac{l}{v_p}$$
+            </div>
+            <div class="callout callout-warn">
+              <div class="callout-title">The $\lambda/20$ Distributed Boundary Criterion</div>
+              Transit time delay becomes critical and lumped Kirchhoff circuit analysis (KVL/KCL) fails whenever line length $l \ge \frac{\lambda}{20}$ (or delay $t_{transit} \ge \frac{T}{20}$). Distributed parameter wave analysis (Telegrapher's equations) must be employed.
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- TOPIC 4: RECTANGULAR WAVEGUIDES -->
+      <!-- ========================================== -->
+      <article id="topic-waveguides" class="topic-card">
+        <div class="topic-meta">
+          <span class="topic-pill">Page 4 Extract</span>
+          <span class="topic-badge">Hollow Metallic Pipes</span>
+        </div>
+        <h2 class="topic-title">Rectangular Waveguides, Cutoff Frequencies &amp; Boundary Conditions</h2>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          A waveguide is a hollow metallic conduit (usually rectangular or circular in cross-section) that confines and routes microwave signals through internal total reflections off conducting walls.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Why Hollow Waveguides Do NOT Support TEM Mode</div>
+          In TEM mode, $\mathbf{E}$ and $\mathbf{H}$ are purely transverse ($E_z = 0, H_z = 0$). In the transverse plane, $\nabla_t^2 \Phi = 0$ (Laplace's equation). By the maximum principle, a single closed equipotential conducting boundary enforces a constant potential throughout its interior ($\Phi = \text{const} \implies \mathbf{E} = -\nabla \Phi = 0$). Hence, <strong>at least two isolated conductors are required for TEM</strong> (e.g. coaxial cable or two-wire line). A hollow single-conductor pipe supports only <strong>TE ($E_z = 0, H_z \ne 0$)</strong> and <strong>TM ($H_z = 0, E_z \ne 0$)</strong> modes.
+        </div>
+
+        <h3 style="font-size: 16px; font-weight: 700; margin: 20px 0 10px 0;">Cutoff Frequency Formulation ($f_c$)</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 12px;">
+          For a rectangular waveguide of inner cross-section dimensions $a \times b$ (with broad wall $a > b$):
+        </p>
+        <div class="eq-box">
+          $$f_c = \frac{\omega_c}{2\pi} = \frac{1}{2\pi\sqrt{\mu\varepsilon}}\sqrt{\left(\frac{m\pi}{a}\right)^2 + \left(\frac{n\pi}{b}\right)^2} = \frac{c}{2\sqrt{\mu_r\varepsilon_r}}\sqrt{\left(\frac{m}{a}\right)^2 + \left(\frac{n}{b}\right)^2}$$
+          $$\lambda_c = \frac{c}{f_c\sqrt{\mu_r\varepsilon_r}} = \frac{2}{\sqrt{\left(\frac{m}{a}\right)^2 + \left(\frac{n}{b}\right)^2}}$$
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Operational Regime</th>
+                <th>Frequency Condition</th>
+                <th>Wave Behavior</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Propagation Band</strong></td>
+                <td>$f > f_c \iff \lambda_0 < \lambda_c$</td>
+                <td>Propagation constant $\beta = \omega\sqrt{\mu\varepsilon}\sqrt{1 - (f_c/f)^2}$ is real; wave propagates freely with low loss.</td>
+              </tr>
+              <tr>
+                <td><strong>Cutoff Boundary</strong></td>
+                <td>$f = f_c \iff \lambda_0 = \lambda_c$</td>
+                <td>$\beta = 0, \lambda_g \to \infty$; wave oscillates in place without forward transport.</td>
+              </tr>
+              <tr>
+                <td><strong>Evanescent Stopband</strong></td>
+                <td>$f < f_c \iff \lambda_0 > \lambda_c$</td>
+                <td>$\gamma = \alpha = \omega\sqrt{\mu\varepsilon}\sqrt{(f_c/f)^2 - 1}$ is purely real; field decays exponentially along guide ($e^{-\alpha z}$), zero real power transmitted (High-pass filter behavior).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="lucid-drawer">
+          <summary>
+            <span>💡 Lucid Understanding: Dominant Mode &amp; Degenerate Modes</span>
+            <span style="font-size: 11px; color: var(--accent);">Expand</span>
+          </summary>
+          <div class="drawer-content">
+            <p><strong>Dominant Mode ($\text{TE}_{10}$):</strong> Defined as the mode with the lowest cutoff frequency. For $a > b$, setting $m=1, n=0$ yields:</p>
+            <div class="eq-box">
+              $$f_{c,\text{TE}_{10}} = \frac{c}{2a\sqrt{\mu_r\varepsilon_r}} \implies \lambda_c = 2a$$
+              $$\text{Condition for propagation: } a > \frac{\lambda_0}{2}$$
+            </div>
+            <p><strong>Degenerate Modes:</strong> Distinct field distributions that share identical cutoff frequencies. For example, in a rectangular guide, $\text{TE}_{mn}$ and $\text{TM}_{mn}$ (for $m \ge 1, n \ge 1$) are degenerate modes. If $a = b$ (square guide), $\text{TE}_{10}$ and $\text{TE}_{01}$ are degenerate.</p>
+            <p style="margin-top: 8px;"><strong>Conducting Wall Boundary Conditions:</strong>
+              Tangential $\mathbf{E}$ must vanish ($E_t = 0$), and normal $\mathbf{B}$ must vanish ($B_n = 0$).
+            </p>
+          </div>
+        </details>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- TOPIC 5: GUIDE WAVELENGTH & VELOCITIES -->
+      <!-- ========================================== -->
+      <article id="topic-dispersion" class="topic-card">
+        <div class="topic-meta">
+          <span class="topic-pill">Page 5 Extract</span>
+          <span class="topic-badge">Relativistic Wave Dynamics</span>
+        </div>
+        <h2 class="topic-title">Guide Wavelength ($\lambda_g$) &amp; Relativistic Velocities ($v_p, v_g$)</h2>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          Inside a waveguide, electromagnetic energy does not travel straight down the pipe; it zigzags between opposite walls at an angle $\theta$. This geometric bouncing produces distinct phase and group velocities.
+        </p>
+
+        <div class="calc-card">
+          <div class="calc-step">
+            <div class="calc-step-num">1 · Guide Wavelength ($\lambda_g$)</div>
+            <p>The guide wavelength $\lambda_g$ is the distance between two equal-phase wavefronts along the longitudinal guide axis:</p>
+            <div class="eq-box">
+              $$\lambda_g = \frac{\lambda_0}{\sqrt{1 - \left(\frac{\lambda_0}{\lambda_c}\right)^2}} = \frac{\lambda_0}{\sqrt{1 - \left(\frac{f_c}{f}\right)^2}}$$
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary);">
+              Because $\sqrt{1 - (f_c/f)^2} < 1$, <strong>$\lambda_g > \lambda_0$ always!</strong><br>
+              Case 1: As $f \to f_c$ ($\lambda_0 \to \lambda_c$), $\lambda_g \to \infty$.<br>
+              Case 2: As $f \gg f_c$ ($\lambda_0 \ll \lambda_c$), $\lambda_g \to \lambda_0$.
+            </p>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">2 · Phase Velocity ($v_p$) vs Group Velocity ($v_g$)</div>
+            <p>Phase velocity $v_p$ measures the speed of apparent crest movement along the wall, whereas group velocity $v_g$ measures the physical speed of energy and information transport:</p>
+            <div class="eq-box">
+              $$v_p = \frac{\omega}{\beta} = \frac{c}{\sqrt{1 - \left(\frac{f_c}{f}\right)^2}} > c \quad (\text{Exceeds Speed of Light!})$$
+              $$v_g = \frac{d\omega}{d\beta} = c\sqrt{1 - \left(\frac{f_c}{f}\right)^2} < c \quad (\text{Subluminal Energy Transport})$$
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">3 · Fundamental Relativistic Identity</div>
+            <div class="eq-box">
+              $$v_p \cdot v_g = c^2$$
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary);">
+              Notice $v_p > c$ does NOT violate Einstein's special relativity because phase velocity carries zero information. Modulation, pulses, and electromagnetic Poynting energy flow at group velocity $v_g$, which is strictly bounded below $c$.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION: 6 MASTER ACADEMIC DERIVATIONS -->
+      <!-- ========================================== -->
+      <section id="derivations-vault" class="topic-card">
+        <div class="topic-meta">
+          <span class="topic-pill">Page 5 Prompts</span>
+          <span class="topic-badge">Formal Mathematical Proofs</span>
+        </div>
+        <h2 class="topic-title">Complete Analytical Solutions for the 6 Mandatory Derivations</h2>
+
+        <!-- DERIVATION 1 -->
+        <div class="derivation-card">
+          <div class="derivation-header">
+            <span class="derivation-num">Derivation 1</span>
+            <span class="derivation-title">Transmission Line Wave Equations from Distributed Parameters ($R, L, G, C$)</span>
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-secondary);">
+            <strong>Proof:</strong> Consider an incremental slice of line $\Delta z$. Applying KVL to the outer loop:
+            $$V(z,t) - R\Delta z\,I(z,t) - L\Delta z\,\frac{\partial I(z,t)}{\partial t} - V(z+\Delta z, t) = 0$$
+            Dividing by $\Delta z$ and taking the limit $\Delta z \to 0$:
+            $$-\frac{\partial V}{\partial z} = R\,I + L\,\frac{\partial I}{\partial t} \quad \xrightarrow{\text{Phasor}} \quad -\frac{dV_s}{dz} = (R + j\omega L)I_s \quad \text{--- (1)}$$
+            Applying KCL to the shunt node:
+            $$I(z,t) - G\Delta z\,V(z+\Delta z,t) - C\Delta z\,\frac{\partial V(z+\Delta z,t)}{\partial t} - I(z+\Delta z, t) = 0$$
+            Dividing by $\Delta z$ and letting $\Delta z \to 0$:
+            $$-\frac{\partial I}{\partial z} = G\,V + C\,\frac{\partial V}{\partial t} \quad \xrightarrow{\text{Phasor}} \quad -\frac{dI_s}{dz} = (G + j\omega C)V_s \quad \text{--- (2)}$$
+            Differentiating (1) with respect to $z$ and substituting (2):
+            $$-\frac{d^2V_s}{dz^2} = (R + j\omega L)\frac{dI_s}{dz} = -(R + j\omega L)(G + j\omega C)V_s$$
+            $$\frac{d^2V_s}{dz^2} - \gamma^2 V_s = 0, \quad \frac{d^2I_s}{dz^2} - \gamma^2 I_s = 0, \quad \text{where } \gamma = \sqrt{(R+j\omega L)(G+j\omega C)} \quad \blacksquare$$
+          </p>
+        </div>
+
+        <!-- DERIVATION 2 -->
+        <div class="derivation-card">
+          <div class="derivation-header">
+            <span class="derivation-num">Derivation 2</span>
+            <span class="derivation-title">Relationship Between Wavelength ($\lambda$), Velocity ($v$), and Frequency ($f$)</span>
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-secondary);">
+            <strong>Proof:</strong> The instantaneous traveling wave is $V(z,t) = V_0 \cos(\omega t - \beta z)$.
+            A spatial cycle of length $\lambda$ corresponds to a phase shift of $2\pi$ radians:
+            $$\beta\lambda = 2\pi \implies \lambda = \frac{2\pi}{\beta}$$
+            By d'Alembert phase invariance $d(\omega t - \beta z) = 0 \implies v = \frac{dz}{dt} = \frac{\omega}{\beta}$.
+            Substituting $\omega = 2\pi f$ and $\beta = \frac{2\pi}{\lambda}$:
+            $$v = \frac{2\pi f}{2\pi / \lambda} = f\lambda \implies \mathbf{v = f\lambda} \quad \blacksquare$$
+          </p>
+        </div>
+
+        <!-- DERIVATION 3 -->
+        <div class="derivation-card">
+          <div class="derivation-header">
+            <span class="derivation-num">Derivation 3</span>
+            <span class="derivation-title">Voltage Standing Wave Ratio (VSWR) in Terms of Reflection Coefficient ($\Gamma_L$)</span>
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-secondary);">
+            <strong>Proof:</strong> At any distance $d = l - z$ from the load, total voltage is:
+            $$V_s(d) = V_0^+ e^{j\beta d}\left[1 + \Gamma_L e^{-j2\beta d}\right] = V_0^+ e^{j\beta d}\left[1 + |\Gamma_L|e^{j(\theta_\Gamma - 2\beta d)}\right]$$
+            Maximum voltage occurs when incident and reflected phasors are in-phase ($e^{j(\theta_\Gamma - 2\beta d)} = +1$):
+            $$V_{max} = |V_0^+|\left(1 + |\Gamma_L|\right)$$
+            Minimum voltage occurs when they are in phase opposition ($e^{j(\theta_\Gamma - 2\beta d)} = -1$):
+            $$V_{min} = |V_0^+|\left(1 - |\Gamma_L|\right)$$
+            Taking the ratio:
+            $$s \equiv \frac{V_{max}}{V_{min}} = \frac{|V_0^+|(1 + |\Gamma_L|)}{|V_0^+|(1 - |\Gamma_L|)} = \mathbf{\frac{1 + |\Gamma_L|}{1 - |\Gamma_L|}} \quad \blacksquare$$
+          </p>
+        </div>
+
+        <!-- DERIVATION 4 -->
+        <div class="derivation-card">
+          <div class="derivation-header">
+            <span class="derivation-num">Derivation 4</span>
+            <span class="derivation-title">Voltage Transmission / Transmittance Coefficient ($T$) in Terms of $Z_L$ and $Z_0$</span>
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-secondary);">
+            <strong>Proof:</strong> Transmittance $T$ is the ratio of total voltage at the load to incident voltage:
+            $$T = \frac{V_L}{V_{inc}} = \frac{V_0^+ + V_0^-}{V_0^+} = 1 + \frac{V_0^-}{V_0^+} = 1 + \Gamma_L$$
+            Substituting $\Gamma_L = \frac{Z_L - Z_0}{Z_L + Z_0}$:
+            $$T = 1 + \frac{Z_L - Z_0}{Z_L + Z_0} = \frac{(Z_L + Z_0) + (Z_L - Z_0)}{Z_L + Z_0} = \mathbf{\frac{2Z_L}{Z_L + Z_0}} \quad \blacksquare$$
+          </p>
+        </div>
+
+        <!-- DERIVATION 5 -->
+        <div class="derivation-card">
+          <div class="derivation-header">
+            <span class="derivation-num">Derivation 5</span>
+            <span class="derivation-title">Proof that Phase Velocity ($v_p$) in a Waveguide Always Exceeds the Velocity of Light ($c$)</span>
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-secondary);">
+            <strong>Proof:</strong> The longitudinal dispersion relation in a lossless waveguide is:
+            $$k^2 = k_c^2 + \beta^2 \implies \beta = \sqrt{k^2 - k_c^2} = \omega\sqrt{\mu\varepsilon}\sqrt{1 - \left(\frac{\omega_c}{\omega}\right)^2} = \frac{\omega}{c}\sqrt{1 - \left(\frac{f_c}{f}\right)^2}$$
+            By definition, phase velocity is $v_p = \frac{\omega}{\beta}$:
+            $$v_p = \frac{\omega}{\frac{\omega}{c}\sqrt{1 - (f_c/f)^2}} = \frac{c}{\sqrt{1 - (f_c/f)^2}}$$
+            For propagating waves, $f > f_c \implies 0 < \left(\frac{f_c}{f}\right)^2 < 1$.
+            Consequently, the radical denominator is strictly less than unity:
+            $$\sqrt{1 - \left(\frac{f_c}{f}\right)^2} < 1 \implies \mathbf{v_p = \frac{c}{\sqrt{1 - (f_c/f)^2}} > c} \quad \blacksquare$$
+          </p>
+        </div>
+
+        <!-- DERIVATION 6 -->
+        <div class="derivation-card">
+          <div class="derivation-header">
+            <span class="derivation-num">Derivation 6</span>
+            <span class="derivation-title">Expression for Guide Wavelength ($\lambda_g$) and Relation with Free-Space Wavelength ($\lambda_0$)</span>
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-secondary);">
+            <strong>Proof:</strong> Guide wavelength is defined by $\beta = \frac{2\pi}{\lambda_g}$, free-space wavelength by $k = \frac{2\pi}{\lambda_0}$, and cutoff wavelength by $k_c = \frac{2\pi}{\lambda_c}$.
+            Substituting into the separation equation $k^2 = k_c^2 + \beta^2$:
+            $$\left(\frac{2\pi}{\lambda_0}\right)^2 = \left(\frac{2\pi}{\lambda_c}\right)^2 + \left(\frac{2\pi}{\lambda_g}\right)^2$$
+            Dividing through by $4\pi^2$:
+            $$\mathbf{\frac{1}{\lambda_0^2} = \frac{1}{\lambda_c^2} + \frac{1}{\lambda_g^2}} \iff \frac{1}{\lambda_g^2} = \frac{1}{\lambda_0^2} - \frac{1}{\lambda_c^2} = \frac{\lambda_c^2 - \lambda_0^2}{\lambda_0^2\lambda_c^2}$$
+            Inverting and taking the square root:
+            $$\mathbf{\lambda_g = \frac{\lambda_0}{\sqrt{1 - \left(\frac{\lambda_0}{\lambda_c}\right)^2}}} \quad \blacksquare$$
+          </p>
+        </div>
+      </section>
+
+      <footer class="page-footer">
+        <div>Department of Electronics and Communication Engineering · University of Engineering &amp; Management (UEM), Kolkata</div>
+        <div style="margin-top: 4px; font-family: var(--font-mono); font-size: 11px;">Module 3: Transmission Lines &amp; Waveguides · Academic Master Guide · Built with Babylon.js 7.x &amp; MathJax 3</div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Babylon.js 3D WebGL Simulation Engine Script -->
+  <script>
+    (function() {
+      // Theme Management
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeLabel = document.getElementById('theme-label');
+      function initTheme() {
+        const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+        themeLabel.textContent = isDark ? 'Dark Mode' : 'Light Mode';
+      }
+      initTheme();
+      themeToggle.addEventListener('click', () => {
+        const current = document.documentElement.dataset.theme;
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        themeLabel.textContent = next === 'dark' ? 'Dark Mode' : 'Light Mode';
+        updateBabylonTheme();
+      });
+
+      // Quick Search Filter in Sidebar
+      const searchInput = document.getElementById('nav-search');
+      const navLinks = document.querySelectorAll('.nav-link');
+      searchInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        navLinks.forEach(link => {
+          const title = link.getAttribute('data-title') || link.textContent.toLowerCase();
+          if (!val || title.includes(val)) {
+            link.style.display = 'flex';
+          } else {
+            link.style.display = 'none';
+          }
+        });
+      });
+
+      // Babylon.js Engine Setup
+      const canvas = document.getElementById('babylon-canvas');
+      const engine = new BABYLON.Engine(canvas, true, { antialias: true, adaptToDeviceRatio: true });
+      const scene = new BABYLON.Scene(engine);
+      const C3 = BABYLON.Color3, V3 = BABYLON.Vector3;
+
+      // Camera
+      const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 3, 1.25, 18, new V3(0, 0, 0), scene);
+      camera.attachControl(canvas, true);
+      camera.lowerRadiusLimit = 8;
+      camera.upperRadiusLimit = 28;
+      camera.wheelPrecision = 40;
+
+      // Lights
+      const hemiLight = new BABYLON.HemisphericLight("hemiLight", new V3(0, 1, 0), scene);
+      hemiLight.intensity = 0.9;
+      const dirLight = new BABYLON.DirectionalLight("dirLight", new V3(-1, -2, -1), scene);
+      dirLight.position = new V3(10, 20, 10);
+      dirLight.intensity = 0.6;
+
+      // Simulation State
+      let simMode = 'standing'; // 'standing' or 'te10'
+      let isPaused = false;
+      let autoOrbit = false;
+      let time = 0;
+      let gammaL = 0.5;
+      let freqGHz = 3.0;
+      let dimA_cm = 6.5;
+
+      // Telemetry HUD Elements
+      const hudMode = document.getElementById('hud-mode');
+      const hudGamma = document.getElementById('hud-gamma');
+      const hudFreq = document.getElementById('hud-freq');
+      const hudFc = document.getElementById('hud-fc');
+      const hudLg = document.getElementById('hud-lg');
+      const hudVp = document.getElementById('hud-vp');
+      const hudVg = document.getElementById('hud-vg');
+
+      // Sliders & Controls
+      const sGamma = document.getElementById('slider-gamma');
+      const sFreq = document.getElementById('slider-freq');
+      const sDim = document.getElementById('slider-dim');
+      const vGamma = document.getElementById('val-gamma');
+      const vFreq = document.getElementById('val-freq');
+      const vDim = document.getElementById('val-dim');
+
+      const btnStanding = document.getElementById('btn-mode-standing');
+      const btnTE10 = document.getElementById('btn-mode-te10');
+      const btnOrbit = document.getElementById('btn-sim-orbit');
+      const btnPause = document.getElementById('btn-sim-pause');
+
+      function updateBabylonTheme() {
+        const isDark = document.documentElement.dataset.theme === 'dark';
+        scene.clearColor = isDark 
+          ? new BABYLON.Color4(0.04, 0.04, 0.05, 1) 
+          : new BABYLON.Color4(0.96, 0.96, 0.98, 1);
+      }
+      updateBabylonTheme();
+
+      // Materials
+      const matAxis = new BABYLON.StandardMaterial("matAxis", scene);
+      matAxis.emissiveColor = new C3(0.4, 0.4, 0.45);
+
+      const matStanding = new BABYLON.StandardMaterial("matStanding", scene);
+      matStanding.emissiveColor = new C3(0.16, 0.59, 1.0); // Blue
+      matStanding.diffuseColor = new C3(0.16, 0.59, 1.0);
+
+      const matEnvelope = new BABYLON.StandardMaterial("matEnv", scene);
+      matEnvelope.emissiveColor = new C3(1.0, 0.45, 0.1); // Amber
+      matEnvelope.alpha = 0.35;
+
+      const matGuideWall = new BABYLON.StandardMaterial("matGuide", scene);
+      matGuideWall.diffuseColor = new C3(0.7, 0.72, 0.76);
+      matGuideWall.specularColor = new C3(0.8, 0.8, 0.8);
+      matGuideWall.alpha = 0.22;
+
+      const matFieldArrow = new BABYLON.StandardMaterial("matArrow", scene);
+      matFieldArrow.emissiveColor = new C3(0.2, 0.8, 0.4); // Emerald Green
+      matFieldArrow.diffuseColor = new C3(0.2, 0.8, 0.4);
+
+      // Root Nodes
+      const tlineRoot = new BABYLON.TransformNode("tlineRoot", scene);
+      const guideRoot = new BABYLON.TransformNode("guideRoot", scene);
+      guideRoot.setEnabled(false);
+
+      // Geometry 1: Transmission Line Two Conductor Rails
+      const rail1 = BABYLON.MeshBuilder.CreateCylinder("rail1", { diameter: 0.1, height: 16 }, scene);
+      rail1.rotation.x = Math.PI / 2;
+      rail1.position.y = 1.6;
+      rail1.material = matAxis;
+      rail1.parent = tlineRoot;
+
+      const rail2 = BABYLON.MeshBuilder.CreateCylinder("rail2", { diameter: 0.1, height: 16 }, scene);
+      rail2.rotation.x = Math.PI / 2;
+      rail2.position.y = -1.6;
+      rail2.material = matAxis;
+      rail2.parent = tlineRoot;
+
+      // Standing Wave Ribs
+      const NUM_RIBS = 50;
+      const LENGTH_Z = 14;
+      const waveRibs = [];
+
+      for (let i = 0; i < NUM_RIBS; i++) {
+        const rib = BABYLON.MeshBuilder.CreateCylinder(`rib_${i}`, { diameter: 0.06, height: 1 }, scene);
+        rib.material = matStanding;
+        rib.parent = tlineRoot;
+        waveRibs.push(rib);
+      }
+
+      // Geometry 2: Rectangular Waveguide Shell
+      const guideBox = BABYLON.MeshBuilder.CreateBox("guideBox", { width: 5.5, height: 2.8, depth: 14 }, scene);
+      guideBox.material = matGuideWall;
+      guideBox.parent = guideRoot;
+
+      // TE10 Mode Electric Field Arrows across grid
+      const te10Arrows = [];
+      const GRID_X = 7;
+      const GRID_Z = 16;
+      for (let ix = 0; ix < GRID_X; ix++) {
+        for (let iz = 0; iz < GRID_Z; iz++) {
+          const arrow = BABYLON.MeshBuilder.CreateCylinder(`te10_${ix}_${iz}`, { diameter: 0.05, height: 1 }, scene);
+          arrow.material = matFieldArrow;
+          arrow.parent = guideRoot;
+          te10Arrows.push({ mesh: arrow, ix: ix, iz: iz });
+        }
+      }
+
+      // Physics Telemetry Calculations
+      function calcPhysics() {
+        const c = 3e10; // cm/s
+        const f = freqGHz * 1e9;
+        const lambda0_cm = (c / f); // cm
+        const a_cm = dimA_cm;
+        const fc_GHz = (c / (2 * a_cm)) / 1e9;
+        const vswr = gammaL >= 0.99 ? 999.0 : (1 + gammaL) / (1 - gammaL);
+
+        let lambdaG_cm = 0, vp_c = 0, vg_c = 0;
+
+        if (freqGHz > fc_GHz) {
+          const ratio = fc_GHz / freqGHz;
+          const radical = Math.sqrt(1 - ratio * ratio);
+          lambdaG_cm = lambda0_cm / radical;
+          vp_c = 1 / radical;
+          vg_c = radical;
+        } else {
+          lambdaG_cm = Infinity;
+          vp_c = 0;
+          vg_c = 0;
+        }
+
+        // Update HUD
+        hudGamma.textContent = `${gammaL.toFixed(2)} (VSWR = ${vswr > 100 ? '∞' : vswr.toFixed(2)})`;
+        hudFreq.textContent = `${freqGHz.toFixed(2)} GHz`;
+        hudFc.textContent = `${fc_GHz.toFixed(2)} GHz (a = ${a_cm.toFixed(1)} cm)`;
+        hudLg.textContent = lambdaG_cm === Infinity ? 'Cutoff (Evanescent)' : `${lambdaG_cm.toFixed(2)} cm (> λ0=${lambda0_cm.toFixed(1)} cm)`;
+        hudVp.textContent = vp_c === 0 ? '0' : `${vp_c.toFixed(2)} c (> c!)`;
+        hudVg.textContent = vg_c === 0 ? '0' : `${vg_c.toFixed(2)} c`;
+
+        return { lambda0_cm, fc_GHz, vswr, lambdaG_cm, vp_c, vg_c };
+      }
+
+      // Render Loop
+      scene.onBeforeRenderObservable.add(() => {
+        const dt = Math.min(engine.getDeltaTime(), 50) / 1000;
+        if (!isPaused) time += dt * 3.5;
+        if (autoOrbit) camera.alpha += 0.005;
+
+        const phys = calcPhysics();
+
+        if (simMode === 'standing') {
+          // Standing Wave Interference: V(z,t) = V+ [cos(wt - bz) + |Gamma| cos(wt + bz)]
+          const stepZ = LENGTH_Z / NUM_RIBS;
+          const startZ = -LENGTH_Z / 2;
+
+          for (let i = 0; i < NUM_RIBS; i++) {
+            const z = startZ + i * stepZ;
+            const normZ = i / NUM_RIBS;
+            const betaZ = normZ * 4 * Math.PI;
+
+            // Incident + Reflected waves
+            const vInc = Math.cos(time - betaZ);
+            const vRef = gammaL * Math.cos(time + betaZ);
+            const vTotal = vInc + vRef;
+
+            const rib = waveRibs[i];
+            rib.position.set(0, vTotal / 2, z);
+            rib.scaling.y = Math.max(0.02, Math.abs(vTotal));
+            rib.scaling.x = rib.scaling.z = 0.06 + Math.abs(vTotal) * 0.02;
+          }
+        } else {
+          // TE10 Mode in Waveguide: Ey(x,z,t) = E0 sin(pi*x/a) cos(wt - beta*z)
+          const startZ = -LENGTH_Z / 2;
+          const stepZ = LENGTH_Z / GRID_Z;
+          const widthGuide = 5.0;
+
+          te10Arrows.forEach(item => {
+            const xFrac = (item.ix + 0.5) / GRID_X; // 0 to 1 across width a
+            const posX = -widthGuide / 2 + xFrac * widthGuide;
+            const posZ = startZ + item.iz * stepZ;
+            const spatialSine = Math.sin(xFrac * Math.PI); // Half-sine TE10 distribution
+
+            let waveProp = 0;
+            if (freqGHz > phys.fc_GHz) {
+              waveProp = Math.cos(time - item.iz * 0.6);
+            } else {
+              waveProp = Math.exp(-item.iz * 0.3) * Math.cos(time); // Evanescent decay!
+            }
+
+            const eField = 1.3 * spatialSine * waveProp;
+            item.mesh.position.set(posX, eField / 2, posZ);
+            item.mesh.scaling.y = Math.max(0.01, Math.abs(eField));
+            item.mesh.scaling.x = item.mesh.scaling.z = 0.05 + Math.abs(eField) * 0.02;
+          });
+        }
+      });
+
+      engine.runRenderLoop(() => scene.render());
+      window.addEventListener('resize', () => engine.resize());
+
+      // Control Handlers
+      function setMode(mode) {
+        simMode = mode;
+        btnStanding.classList.toggle('active', mode === 'standing');
+        btnTE10.classList.toggle('active', mode === 'te10');
+
+        if (mode === 'standing') {
+          tlineRoot.setEnabled(true);
+          guideRoot.setEnabled(false);
+          hudMode.textContent = 'Standing Wave (VSWR)';
+        } else {
+          tlineRoot.setEnabled(false);
+          guideRoot.setEnabled(true);
+          hudMode.textContent = 'Waveguide TE10 Mode';
+        }
+      }
+
+      btnStanding.addEventListener('click', () => setMode('standing'));
+      btnTE10.addEventListener('click', () => setMode('te10'));
+
+      btnOrbit.addEventListener('click', () => {
+        autoOrbit = !autoOrbit;
+        btnOrbit.classList.toggle('active', autoOrbit);
+      });
+
+      btnPause.addEventListener('click', () => {
+        isPaused = !isPaused;
+        btnPause.textContent = isPaused ? 'Resume' : 'Pause';
+        btnPause.classList.toggle('active', isPaused);
+      });
+
+      // Slider Handlers
+      sGamma.addEventListener('input', (e) => {
+        gammaL = parseFloat(e.target.value);
+        vGamma.textContent = gammaL.toFixed(2);
+      });
+      sFreq.addEventListener('input', (e) => {
+        freqGHz = parseFloat(e.target.value);
+        vFreq.textContent = `${freqGHz.toFixed(1)} GHz`;
+      });
+      sDim.addEventListener('input', (e) => {
+        dimA_cm = parseFloat(e.target.value);
+        vDim.textContent = `${dimA_cm.toFixed(1)} cm`;
+      });
+    })();
+  </script>
+
+  <!-- Global Tooltip Integration -->
+  <script src="emt_glossary_tooltip.js"></script>
+</body>
+</html>

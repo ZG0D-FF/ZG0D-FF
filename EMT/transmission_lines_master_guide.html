@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transmission Lines — Comprehensive Theory, Geometries &amp; Numerical Master Guide</title>
+  
+  <!-- Apple Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- MathJax 3 LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Babylon.js 7.x 3D WebGL Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs@7.30.0/babylon.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs-materials@7.30.0/babylonjs.materials.min.js"></script>
+
+  <!-- Apple-Calmness Global EMT Glossary & Tooltips -->
+  <link rel="stylesheet" href="emt_glossary_tooltip.css">
+
+  <style>
+    :root {
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --surface-subtle: #f5f5f7;
+      --surface-elevated: #ffffff;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.16);
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --success: #34c759;
+      --warning: #ff9500;
+      --danger: #ff3b30;
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+      color-scheme: light dark;
+    }
+
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #141416;
+      --surface-subtle: #1c1c1e;
+      --surface-elevated: #242426;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-tertiary: #6e6e73;
+      --accent: #2997ff;
+      --accent-soft: rgba(41, 151, 255, 0.12);
+      --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 15px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Apple Top Bar */
+    header.apple-header {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      background: rgba(251, 251, 253, 0.82);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+    [data-theme="dark"] header.apple-header {
+      background: rgba(20, 20, 22, 0.85);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+    .back-link:hover { background: var(--accent-soft); }
+    .brand-title {
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+    .brand-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pill-btn {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+      background: var(--surface);
+    }
+
+    /* Layout */
+    .app-layout {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 24px 80px 24px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 36px;
+    }
+    @media (max-width: 1024px) {
+      .app-layout { grid-template-columns: 1fr; }
+      aside.sidebar { display: none; }
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      position: sticky;
+      top: 76px;
+      height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    aside.sidebar::-webkit-scrollbar { width: 4px; }
+    aside.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .nav-search-box {
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .nav-search-box input {
+      width: 100%;
+      height: 36px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0 12px 0 32px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .nav-search-box input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    .nav-search-box svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-tertiary);
+    }
+
+    .nav-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      margin: 18px 0 6px 8px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+    .nav-link:hover {
+      background: var(--surface-subtle);
+      color: var(--text);
+    }
+    .nav-link.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .nav-link-tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      opacity: 0.7;
+    }
+
+    /* Main Content */
+    main.content-area {
+      min-width: 0;
+    }
+
+    .hero-banner {
+      padding: 24px 0 32px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 860px;
+      line-height: 1.6;
+    }
+
+    /* 3D Simulation Stage (Babylon.js) */
+    .stage-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 40px;
+      box-shadow: var(--card-shadow);
+      position: relative;
+    }
+    .stage-header {
+      padding: 16px 22px;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .stage-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stage-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .stage-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      background: #09090b;
+    }
+    #babylon-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+      touch-action: none;
+    }
+
+    /* 3D Telemetry HUD */
+    .telemetry-hud {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      background: rgba(18, 18, 20, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #e4e4e7;
+      line-height: 1.5;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .telemetry-hud .hud-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .telemetry-hud .hud-val {
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    .canvas-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 18px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: rgba(255, 255, 255, 0.5);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    /* Live Sliders Panel below 3D */
+    .stage-sliders {
+      padding: 18px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+    }
+    .slider-header b {
+      color: var(--text);
+      font-family: var(--font-mono);
+    }
+    input[type=range] {
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 30px;
+      margin-bottom: 32px;
+      box-shadow: var(--card-shadow);
+      scroll-margin-top: 72px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .section-card:hover {
+      box-shadow: var(--card-shadow-hover);
+      border-color: var(--border-strong);
+    }
+
+    .section-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-pill {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .section-badge {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin-bottom: 12px;
+      line-height: 1.35;
+    }
+
+    /* Technical Callouts */
+    .callout {
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 18px 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+      border: 1px solid transparent;
+    }
+    .callout-info {
+      background: var(--accent-soft);
+      border-color: rgba(41, 151, 255, 0.25);
+      color: var(--text);
+    }
+    .callout-tip {
+      background: rgba(52, 199, 89, 0.08);
+      border-color: rgba(52, 199, 89, 0.25);
+      color: var(--text);
+    }
+    .callout-warn {
+      background: rgba(255, 149, 0, 0.08);
+      border-color: rgba(255, 149, 0, 0.25);
+      color: var(--text);
+    }
+    .callout-title {
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Formula Blocks */
+    .eq-box {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin: 16px 0;
+      overflow-x: auto;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    /* Comparison & Data Tables */
+    .table-container {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    table.data-table th {
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    table.data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tr:hover td { background: var(--surface-subtle); }
+
+    /* Collapsible Drawers */
+    details.lucid-drawer {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 18px 0;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    details.lucid-drawer summary {
+      padding: 14px 18px;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    details.lucid-drawer summary:hover {
+      background: var(--surface);
+    }
+    details.lucid-drawer[open] summary {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .drawer-content {
+      padding: 18px 20px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* Solved Problem Cards */
+    .problem-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin: 22px 0;
+      background: var(--surface-subtle);
+    }
+    .problem-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .problem-num {
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+    .problem-title {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .problem-statement {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 13.5px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    /* Final Result Badge */
+    .result-badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--success);
+      border-radius: 10px;
+      padding: 12px 18px;
+      margin: 16px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    /* Footer */
+    footer.page-footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-tertiary);
+      font-size: 12.5px;
+    }
+
+    .i {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Apple Header -->
+  <header class="apple-header">
+    <div class="brand-wrap">
+      <a href="../notes1.html" style="display:inline-flex; align-items:center; gap:5px; color:#2997ff; text-decoration:none; font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; background:rgba(41,151,255,0.12); border:1px solid rgba(41,151,255,0.25);">
+        <svg class="i" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Jarvis Hub</span>
+      </a>
+      <a href="index.html" class="back-link">
+        <svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>EMT Lab Hub</span>
+      </a>
+      <a href="emt_journey_electromagnetic_waves.html" style="color:#38bdf8; text-decoration:none; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:3px 8px; border-radius:999px; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.25);">
+        <span>⚡ Journey Master</span>
+      </a>
+      <span style="opacity: 0.3;">/</span>
+      <span class="brand-title">T-Lines Master Guide</span>
+      <span class="brand-badge">BATCH 2A</span>
+    </div>
+    <div class="header-actions">
+      <button class="pill-btn" id="theme-toggle">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span id="theme-label">Theme</span>
+      </button>
+      <a href="#sim-stage" class="pill-btn" style="text-decoration:none;">
+        <svg class="i" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>3D Simulator</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="nav-search-box">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="nav-search" placeholder="Search line parameters..." autocomplete="off">
+      </div>
+
+      <div class="nav-section-label">Interactive 3D Engine</div>
+      <a href="#sim-stage" class="nav-link active">
+        <span>3D Line Geometries &amp; Fields</span>
+        <span class="nav-link-tag">WebGL</span>
+      </a>
+
+      <div class="nav-section-label">Electromagnetic Foundations</div>
+      <a href="#sec-intro" class="nav-link" data-title="intro transmission line rf microwave em theory why needed">
+        <span>Why EM Theory for Lines</span>
+        <span class="nav-link-tag">p. 2–4</span>
+      </a>
+      <a href="#sec-lumped-distributed" class="nav-link" data-title="lumped element distributed parameters comparison table">
+        <span>Lumped vs Distributed Model</span>
+        <span class="nav-link-tag">p. 5</span>
+      </a>
+      <a href="#sec-table11-1" class="nav-link" data-title="table 11.1 parameters coaxial two wire planar microstrip formulas">
+        <span>Table 11.1 Distributed Parameters</span>
+        <span class="nav-link-tag">p. 6</span>
+      </a>
+
+      <div class="nav-section-label">Wave Equations &amp; Solutions</div>
+      <a href="#sec-telegrapher-derivation" class="nav-link" data-title="telegrapher circuit kvl kcl derivation wave equations">
+        <span>Telegrapher Wave Derivation</span>
+        <span class="nav-link-tag">p. 7–10</span>
+      </a>
+      <a href="#sec-wave-solutions" class="nav-link" data-title="traveling waves forward backward instantaneous voltage z0">
+        <span>Traveling Waves &amp; $Z_0$</span>
+        <span class="nav-link-tag">p. 11–12</span>
+      </a>
+      <a href="#sec-lossless-distortionless" class="nav-link" data-title="lossless line distortionless heaviside rc gl table 11.2">
+        <span>Lossless &amp; Distortionless Lines</span>
+        <span class="nav-link-tag">p. 13–16</span>
+      </a>
+
+      <div class="nav-section-label">Numerical Problem Vault</div>
+      <a href="#sec-example-11-1" class="nav-link" data-title="example 11.1 air line z0 70 beta 3 100 mhz inductance capacitance">
+        <span>Example 11.1: Air Line</span>
+        <span class="nav-link-tag">Solved</span>
+      </a>
+      <a href="#sec-example-11-2" class="nav-link" data-title="example 11.2 distortionless line 60 ohm alpha 20 mnp u 0.6c r l g c">
+        <span>Example 11.2: Distortionless</span>
+        <span class="nav-link-tag">Solved</span>
+      </a>
+      <a href="#sec-practice-11-2" class="nav-link" data-title="practice 11.2 telephone line r 30 l 100 g 0 c 20 1 khz z0 gamma vp">
+        <span>Practice 11.2: Telephone Line</span>
+        <span class="nav-link-tag">Solved</span>
+      </a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      <!-- Hero Banner -->
+      <section class="hero-banner">
+        <div class="hero-eyebrow">Department of Electronics &amp; Communication Engineering · Transmission Lines (19 Pages)</div>
+        <h1 class="hero-title">Transmission Lines — High-Frequency Distributed Electrodynamics Master Guide</h1>
+        <p class="hero-desc">
+          Extracted directly from the 19-page slide deck, covering high-frequency field foundations, Table 11.1 analytical geometry formulas (Coaxial, Two-Wire, Planar), Telegrapher's wave derivations, Heaviside distortionless conditions, and 100% verified step-by-step numerical drills with a Babylon.js 3D electromagnetic geometry laboratory.
+        </p>
+      </section>
+
+      <!-- 3D WebGL Simulation Stage -->
+      <section id="sim-stage" class="stage-card">
+        <div class="stage-header">
+          <div class="stage-title-wrap">
+            <span class="stage-badge">BABYLON.JS 7.30</span>
+            <strong style="font-size: 14px;">3D Transmission Line Architecture &amp; Field Visualizer</strong>
+          </div>
+          <div class="stage-controls">
+            <button class="mode-btn active" id="btn-geom-coax">Coaxial Cable</button>
+            <button class="mode-btn" id="btn-geom-twowire">Two-Wire Line</button>
+            <button class="mode-btn" id="btn-geom-planar">Planar Microstrip</button>
+            <button class="mode-btn" id="btn-sim-orbit">Auto-Orbit</button>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="babylon-canvas"></canvas>
+          
+          <!-- Telemetry HUD -->
+          <div class="telemetry-hud" id="hud-panel">
+            <div style="font-weight:700; color:#ffffff; margin-bottom:4px; font-size:12px;">GEOMETRIC &amp; LINE TELEMETRY</div>
+            <div class="hud-row"><span>Geometry:</span><span class="hud-val" id="hud-type">Coaxial Line</span></div>
+            <div class="hud-row"><span>Freq (f):</span><span class="hud-val" id="hud-freq">100.0 MHz</span></div>
+            <div class="hud-row"><span>Skin Depth (&delta;):</span><span class="hud-val" id="hud-delta">6.61 &mu;m (Copper)</span></div>
+            <div class="hud-row"><span>Inductance (L):</span><span class="hud-val" id="hud-ind">277.26 nH/m</span></div>
+            <div class="hud-row"><span>Capacitance (C):</span><span class="hud-val" id="hud-cap">50.04 pF/m</span></div>
+            <div class="hud-row"><span>Impedance (Z0):</span><span class="hud-val" id="hud-z0">74.44 &Omega;</span></div>
+            <div class="hud-row"><span>Phase Vel (up):</span><span class="hud-val" id="hud-up">2.68 &times; 10&sup8; m/s</span></div>
+          </div>
+
+          <div class="canvas-hint">Drag: Orbit | Pinch/Wheel: Zoom | Right-drag: Pan</div>
+        </div>
+
+        <!-- Live Sliders -->
+        <div class="stage-sliders">
+          <div class="slider-group">
+            <div class="slider-header"><span>Frequency ($f$)</span><b id="val-freq">100 MHz</b></div>
+            <input type="range" id="slider-freq" min="10" max="1000" step="10" value="100">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header"><span>Aspect Ratio / Conductor Ratio ($b/a$ or $d/2a$)</span><b id="val-ratio">4.0</b></div>
+            <input type="range" id="slider-ratio" min="1.5" max="10.0" step="0.1" value="4.0">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header"><span>Relative Permittivity ($\varepsilon_r$)</span><b id="val-eps">1.25</b></div>
+            <input type="range" id="slider-eps" min="1.0" max="10.0" step="0.25" value="1.25">
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SECTION 1: WHY EM THEORY FOR LINES -->
+      <!-- ========================================== -->
+      <article id="sec-intro" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Pages 2–4 Extract</span>
+          <span class="section-badge">High-Frequency Electrodynamics</span>
+        </div>
+        <h2 class="section-title">Why Electromagnetic Field Theory is Mandatory for Transmission Lines</h2>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          Transmission lines are guided structures designed to transport electromagnetic energy from one terminal to another with minimal attenuation. Canonical forms include <strong>coaxial cables</strong>, <strong>twisted pair lines</strong>, <strong>parallel-plate lines</strong>, and <strong>planar microstrips</strong>.
+        </p>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Operational Regime</th>
+                <th>Physical Frequency Range</th>
+                <th>Electrodynamic Reality &amp; Circuit Limitations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Low Frequencies (DC to Audio)</strong></td>
+                <td>$f < 100\text{ kHz}$ ($\lambda > 3\text{ km}$)</td>
+                <td>
+                  Wavelength $\lambda$ is immensely larger than physical circuit dimensions ($l \ll \lambda$). Voltage and current are spatially uniform across any conductor cross-section. Propagation delay is negligible ($t_{transit} \approx 0$). <strong>Lumped element circuit model (KVL, KCL) is completely sufficient.</strong>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>High Frequencies (RF, Microwave)</strong></td>
+                <td>$f > 100\text{ MHz}$ ($\lambda < 3\text{ m}$)</td>
+                <td>
+                  Wavelength becomes comparable to or smaller than circuit line length ($l \ge \lambda/20$). Voltage and current <strong>vary drastically in magnitude and phase along the physical wire</strong>. Energy travels as electromagnetic waves guided by field interactions. <strong>Distributed parameter wave analysis is indispensable.</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="font-size: 16px; font-weight: 700; margin: 20px 0 10px 0;">Primary Engineering Applications (Page 4)</h3>
+        <ul style="padding-left: 20px; line-height: 1.8; color: var(--text-secondary); font-size: 13.5px;">
+          <li><strong>RF &amp; Microwave Engineering:</strong> Antenna feeds, impedance matching networks, directional couplers, power dividers, and high-speed digital interconnects (preserving signal integrity against reflection glitches).</li>
+          <li><strong>Telecommunications:</strong> Long-distance broadband coax, twisted-pair Ethernet, and subsea trunks.</li>
+          <li><strong>Power Systems:</strong> High-voltage AC/DC power transmission grids.</li>
+          <li><strong>Medical &amp; Scientific Instrumentation:</strong> MRI RF excitation coils, particle accelerator feeds, ultra-fast sampling oscilloscope probes.</li>
+        </ul>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 2: LUMPED VS DISTRIBUTED MODEL -->
+      <!-- ========================================== -->
+      <article id="sec-lumped-distributed" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Page 5 Extract</span>
+          <span class="section-badge">Table 11.1 Direct Contrast</span>
+        </div>
+        <h2 class="section-title">Lumped Element Circuit Model vs. Distributed Parameter Model</h2>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Feature / Metric</th>
+                <th>Lumped Element Model</th>
+                <th>Distributed Parameter Model</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Component Nature</strong></td>
+                <td>Components ($R, L, C$) are physically distinct and concentrated at discrete points.</td>
+                <td>Parameters ($R, L, C, G$) are uniformly distributed along the entire length of the line.</td>
+              </tr>
+              <tr>
+                <td><strong>Applicability Criterion</strong></td>
+                <td>Valid only when physical dimensions are much smaller than wavelength ($l \ll \lambda$).</td>
+                <td>Essential when line length is comparable to or greater than wavelength ($l \ge \lambda/20$).</td>
+              </tr>
+              <tr>
+                <td><strong>Mathematical Analysis</strong></td>
+                <td>Ordinary algebraic equations &amp; ODEs using Kirchhoff's Laws (KVL, KCL). $V$ and $I$ assumed constant along wires.</td>
+                <td>Partial differential equations (Telegrapher's equations). $V(z,t)$ and $I(z,t)$ vary with both space $z$ and time $t$.</td>
+              </tr>
+              <tr>
+                <td><strong>Propagation Delay</strong></td>
+                <td>Assumed instantaneous ($t_{transit} \approx 0$).</td>
+                <td>Finite and significant ($t_{transit} = l/v_p$). Phase shifts must be accounted for.</td>
+              </tr>
+              <tr>
+                <td><strong>Parameter Units</strong></td>
+                <td>Discrete scalar values: $\Omega$, $\text{H}$, $\text{F}$.</td>
+                <td>Per-unit-length quantities: $\Omega/\text{m}$, $\text{H/m}$, $\text{F/m}$, $\text{S/m}$.</td>
+              </tr>
+              <tr>
+                <td><strong>Canonical Example</strong></td>
+                <td>A simple lumped $RC$ low-pass filter circuit.</td>
+                <td>Coaxial cable, parallel-wire line, or high-speed microstrip.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 3: TABLE 11.1 DISTRIBUTED FORMULAS -->
+      <!-- ========================================== -->
+      <article id="sec-table11-1" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Page 6 Extract</span>
+          <span class="section-badge">Authoritative High-Frequency Suite</span>
+        </div>
+        <h2 class="section-title">Table 11.1: Distributed Line Parameters at High Frequencies</h2>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          At high frequencies, current is restricted to a thin skin depth layer $\delta = \frac{1}{\sqrt{\pi f \mu \sigma_c}}$ near the conductor surfaces ($\delta \ll a$). Table 11.1 provides the exact high-frequency expressions for the three canonical transmission line architectures:
+        </p>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Coaxial Line ($a < b$)</th>
+                <th>Two-Wire Line (Radius $a$, Spacing $d$)</th>
+                <th>Planar Line (Width $w$, Spacing $d$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Resistance $R$ ($\Omega/\text{m}$)</strong></td>
+                <td>$\frac{1}{2\pi\delta\sigma_c}\left[\frac{1}{a} + \frac{1}{b}\right]$<br><span style="font-size:11px; color:var(--text-tertiary);">&delta; &ll; a, c &minus; b</span></td>
+                <td>$\frac{1}{\pi a \delta \sigma_c}$<br><span style="font-size:11px; color:var(--text-tertiary);">&delta; &ll; a</span></td>
+                <td>$\frac{2}{w\delta\sigma_c}$<br><span style="font-size:11px; color:var(--text-tertiary);">&delta; &ll; t</span></td>
+              </tr>
+              <tr>
+                <td><strong>Inductance $L$ ($\text{H/m}$)</strong></td>
+                <td>$\frac{\mu}{2\pi}\ln\left(\frac{b}{a}\right)$</td>
+                <td>$\frac{\mu}{\pi}\cosh^{-1}\left(\frac{d}{2a}\right)$</td>
+                <td>$\frac{\mu d}{w}$</td>
+              </tr>
+              <tr>
+                <td><strong>Conductance $G$ ($\text{S/m}$)</strong></td>
+                <td>$\frac{2\pi\sigma}{\ln(b/a)}$</td>
+                <td>$\frac{\pi\sigma}{\cosh^{-1}(d/2a)}$</td>
+                <td>$\frac{\sigma w}{d}$</td>
+              </tr>
+              <tr>
+                <td><strong>Capacitance $C$ ($\text{F/m}$)</strong></td>
+                <td>$\frac{2\pi\varepsilon}{\ln(b/a)}$</td>
+                <td>$\frac{\pi\varepsilon}{\cosh^{-1}(d/2a)}$</td>
+                <td>$\frac{\varepsilon w}{d}$<br><span style="font-size:11px; color:var(--text-tertiary);">w &gg; d</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Universal Physical Invariants ($LC$ and $G/C$)</div>
+          For all transverse electromagnetic (TEM) lines in a homogeneous medium ($\mu, \varepsilon, \sigma$):
+          $$L \cdot C = \mu\,\varepsilon \iff u_p = \frac{1}{\sqrt{LC}} = \frac{1}{\sqrt{\mu\varepsilon}} = \frac{c}{\sqrt{\mu_r\varepsilon_r}}$$
+          $$\frac{G}{C} = \frac{\sigma}{\varepsilon}$$
+          These identities hold universally across all geometries regardless of cross-sectional shape!
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 4: TELEGRAPHER'S DERIVATION -->
+      <!-- ========================================== -->
+      <article id="sec-telegrapher-derivation" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Pages 7–10 Extract</span>
+          <span class="section-badge">KVL &amp; KCL Limiting Process</span>
+        </div>
+        <h2 class="section-title">Complete Derivation of Telegrapher's Differential Equations</h2>
+
+        <div class="calc-card">
+          <div class="calc-step">
+            <div class="calc-step-num">Step 1 · Equivalent Circuit Formulation (Page 7)</div>
+            <p>An incremental length $\Delta z$ of transmission line is modeled with series resistance $R\Delta z$, series inductance $L\Delta z$, shunt conductance $G\Delta z$, and shunt capacitance $C\Delta z$.</p>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">Step 2 · Loop Analysis via KVL (Page 8)</div>
+            <p>Applying Kirchhoff's voltage law around the outer mesh:</p>
+            <div class="eq-box">
+              $$V(z,t) = R\Delta z\,I(z,t) + L\Delta z\,\frac{\partial I(z,t)}{\partial t} + V(z+\Delta z, t)$$
+              $$-\frac{V(z+\Delta z, t) - V(z,t)}{\Delta z} = R\,I(z,t) + L\,\frac{\partial I(z,t)}{\partial t}$$
+            </div>
+            <p>Taking the limit $\Delta z \to 0$ gives the first Telegrapher equation:</p>
+            <div class="eq-box">
+              $$-\frac{\partial V(z,t)}{\partial z} = R\,I(z,t) + L\,\frac{\partial I(z,t)}{\partial t} \quad \text{(Eq. 11.4)}$$
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">Step 3 · Node Analysis via KCL (Page 8)</div>
+            <p>Applying Kirchhoff's current law to the main shunt node:</p>
+            <div class="eq-box">
+              $$I(z,t) = I(z+\Delta z, t) + G\Delta z\,V(z+\Delta z, t) + C\Delta z\,\frac{\partial V(z+\Delta z, t)}{\partial t}$$
+              $$-\frac{I(z+\Delta z, t) - I(z,t)}{\Delta z} = G\,V(z+\Delta z, t) + C\,\frac{\partial V(z+\Delta z, t)}{\partial t}$$
+            </div>
+            <p>Taking the limit $\Delta z \to 0$ gives the second Telegrapher equation:</p>
+            <div class="eq-box">
+              $$-\frac{\partial I(z,t)}{\partial z} = G\,V(z,t) + C\,\frac{\partial V(z,t)}{\partial t} \quad \text{(Eq. 11.6)}$$
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-num">Step 4 · Phasor Transformation &amp; Uncoupling (Pages 9–10)</div>
+            <p>Assuming harmonic time variation $e^{j\omega t}$, time derivatives transform as $\partial/\partial t \leftrightarrow j\omega$:</p>
+            <div class="eq-box">
+              $$\frac{dV_s}{dz} = -(R + j\omega L)I_s \quad \text{(Eq. 11.8)}, \quad \frac{dI_s}{dz} = -(G + j\omega C)V_s \quad \text{(Eq. 11.9)}$$
+            </div>
+            <p>Differentiating Eq. (11.8) and substituting Eq. (11.9):</p>
+            <div class="eq-box">
+              $$\frac{d^2V_s}{dz^2} = -(R + j\omega L)\frac{dI_s}{dz} = (R + j\omega L)(G + j\omega C)V_s$$
+              $$\mathbf{\frac{d^2V_s}{dz^2} - \gamma^2 V_s = 0} \quad \text{(Eq. 11.10)}, \quad \mathbf{\frac{d^2I_s}{dz^2} - \gamma^2 I_s = 0} \quad \text{(Eq. 11.12)}$$
+              $$\text{where } \mathbf{\gamma = \alpha + j\beta = \sqrt{(R + j\omega L)(G + j\omega C)}} \quad \text{(Eq. 11.11)}$$
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 5: TRAVELING WAVES & Z0 -->
+      <!-- ========================================== -->
+      <article id="sec-wave-solutions" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Pages 11–12 Extract</span>
+          <span class="section-badge">Wave Propagation Solutions</span>
+        </div>
+        <h2 class="section-title">General Solutions, Traveling Waves &amp; Characteristic Impedance ($Z_0$)</h2>
+
+        <p style="margin-bottom: 14px; color: var(--text-secondary);">
+          The general solutions of the linear homogeneous second-order differential equations are linear combinations of forward ($+z$) and backward ($-z$) propagating waves:
+        </p>
+
+        <div class="eq-box">
+          $$V_s(z) = V_0^+\,e^{-\gamma z} + V_0^-\,e^{+\gamma z} \quad \text{(Eq. 11.15)}$$
+          $$I_s(z) = I_0^+\,e^{-\gamma z} + I_0^-\,e^{+\gamma z} \quad \text{(Eq. 11.16)}$$
+        </div>
+
+        <p style="margin-bottom: 12px; color: var(--text-secondary);">
+          Transforming back to the time domain yields the instantaneous wave expression:
+        </p>
+        <div class="eq-box">
+          $$V(z,t) = \operatorname{Re}\left[V_s(z)e^{j\omega t}\right] = V_0^+\,e^{-\alpha z}\cos(\omega t - \beta z) + V_0^-\,e^{+\alpha z}\cos(\omega t + \beta z) \quad \text{(Eq. 11.17)}$$
+        </div>
+
+        <h3 style="font-size: 16px; font-weight: 700; margin: 20px 0 10px 0;">Characteristic Impedance ($Z_0$) Formulation</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 12px;">
+          The characteristic impedance $Z_0$ is defined as the ratio of positively traveling voltage wave to current wave at any point on the line:
+        </p>
+        <div class="eq-box">
+          $$Z_0 = \frac{V_0^+}{I_0^+} = -\frac{V_0^-}{I_0^-} = \frac{R + j\omega L}{\gamma} = \frac{\gamma}{G + j\omega C} = \mathbf{\sqrt{\frac{R + j\omega L}{G + j\omega C}} = R_0 + jX_0} \quad \text{(Eq. 11.18, 11.19)}$$
+          $$\text{Characteristic Admittance: } Y_0 = \frac{1}{Z_0}$$
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 6: LOSSLESS & DISTORTIONLESS LINES -->
+      <!-- ========================================== -->
+      <article id="sec-lossless-distortionless" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Pages 13–16 Extract</span>
+          <span class="section-badge">Table 11.2 Master Matrix</span>
+        </div>
+        <h2 class="section-title">Lossless vs. Distortionless Lines &amp; Summary Matrix</h2>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Physical Condition</th>
+                <th>Propagation Constant $\gamma = \alpha + j\beta$</th>
+                <th>Characteristic Impedance $Z_0$</th>
+                <th>Phase Velocity $u_p$</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>General Lossy Line</strong></td>
+                <td>Arbitrary $R, L, G, C$</td>
+                <td>$\sqrt{(R + j\omega L)(G + j\omega C)}$</td>
+                <td>$\sqrt{\frac{R + j\omega L}{G + j\omega C}} = R_0 + jX_0$</td>
+                <td>$u_p = \frac{\omega}{\beta}$ (Dispersive)</td>
+              </tr>
+              <tr>
+                <td><strong>Lossless Line</strong></td>
+                <td>$\sigma_c = \infty, \sigma = 0 \implies R = G = 0$</td>
+                <td>$\alpha = 0, \quad \beta = \omega\sqrt{LC}$</td>
+                <td>$Z_0 = R_0 = \sqrt{\frac{L}{C}} + j0$</td>
+                <td>$u_p = \frac{1}{\sqrt{LC}} = f\lambda$</td>
+              </tr>
+              <tr>
+                <td><strong>Distortionless Line</strong></td>
+                <td>$\frac{R}{L} = \frac{G}{C} \iff RC = GL$</td>
+                <td>$\alpha = \sqrt{RG}, \quad \beta = \omega\sqrt{LC}$</td>
+                <td>$Z_0 = R_0 = \sqrt{\frac{L}{C}} = \sqrt{\frac{R}{G}} + j0$</td>
+                <td>$u_p = \frac{1}{\sqrt{LC}} = f\lambda$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="lucid-drawer">
+          <summary>
+            <span>💡 Lucid Understanding: The 3 Crucial Invariants (Page 16)</span>
+            <span style="font-size: 11px; color: var(--accent);">Expand</span>
+          </summary>
+          <div class="drawer-content">
+            <ol style="padding-left: 20px; line-height: 1.8;">
+              <li><strong>Zero Signal Dispersion:</strong> In a distortionless line, phase velocity $u_p = \frac{\omega}{\beta} = \frac{1}{\sqrt{LC}}$ is strictly independent of frequency because $\beta = \omega\sqrt{LC}$ is a purely linear function of $\omega$. Signal harmonics arrive simultaneously, avoiding wave shape smearing!</li>
+              <li><strong>Impedance &amp; Velocity Parity:</strong> Both phase velocity $u_p$ and characteristic impedance $Z_0$ have identical mathematical values for lossless and distortionless lines ($u_p = 1/\sqrt{LC}$, $Z_0 = \sqrt{L/C}$).</li>
+              <li><strong>Lossless vs Distortionless Distinction:</strong> Every lossless line is distortionless ($\alpha = 0$), but a distortionless line is <strong>not necessarily lossless</strong> (it suffers finite attenuation $\alpha = \sqrt{RG} > 0$). In power grids, lossless lines minimize waste; in telephone lines, distortionless lines preserve vocal intelligibility.</li>
+            </ol>
+          </div>
+        </details>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 7: EXAMPLE 11.1 (AIR LINE) -->
+      <!-- ========================================== -->
+      <article id="sec-example-11-1" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Page 17 Solved Problem</span>
+          <span class="section-badge">Example 11.1</span>
+        </div>
+        <h2 class="section-title">Example 11.1: Air Line Inductance &amp; Capacitance Evaluation</h2>
+        
+        <div class="problem-card">
+          <div class="problem-header">
+            <span class="problem-num">Example 11.1</span>
+            <span class="problem-title">Air Transmission Line Analysis</span>
+          </div>
+          <div class="problem-statement">
+            An air line has a characteristic impedance of $70\ \Omega$ and a phase constant of $3\text{ rad/m}$ at $100\text{ MHz}$. Calculate the inductance per meter and the capacitance per meter of the line.
+          </div>
+
+          <div class="calc-card">
+            <div class="calc-step">
+              <div class="calc-step-num">Step 1 · Physical Identification &amp; Parameter Extraction</div>
+              <p>An air line uses atmospheric air as dielectric ($\sigma \approx 0, \mu_r \approx 1, \varepsilon_r \approx 1$) with low-loss copper conductors ($\sigma_c \to \infty$). Hence, it acts as a <strong>lossless line</strong> ($R = 0 = G, \alpha = 0$):</p>
+              <div style="font-family: var(--font-mono); margin: 6px 0;">
+                $Z_0 = R_0 = \sqrt{\frac{L}{C}} = 70\ \Omega \quad \text{--- (11.1.1)}$<br>
+                $\beta = \omega\sqrt{LC} = 3\text{ rad/m} \quad \text{--- (11.1.2)}$<br>
+                $f = 100\text{ MHz} = 100 \times 10^6\text{ Hz} \implies \omega = 2\pi f = 2\pi \times 10^8\text{ rad/s}$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 2 · Capacitance per Meter ($C$)</div>
+              <p>Dividing Eq. (11.1.1) by Eq. (11.1.2) yields:</p>
+              <div class="eq-box">
+                $$\frac{R_0}{\beta} = \frac{\sqrt{L/C}}{\omega\sqrt{LC}} = \frac{1}{\omega C}$$
+                $$C = \frac{\beta}{\omega R_0} = \frac{3}{(2\pi \times 100 \times 10^6)(70)} = \frac{3}{1.4\pi \times 10^{10}} = \mathbf{6.8209 \times 10^{-11}\text{ F/m}} = \mathbf{68.2\text{ pF/m}}$$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 3 · Inductance per Meter ($L$)</div>
+              <p>From Eq. (11.1.1), squaring both sides gives $L = R_0^2 C$:</p>
+              <div class="eq-box">
+                $$L = R_0^2 C = (70)^2 \times (68.209 \times 10^{-12}\text{ F/m}) = 4900 \times (68.209 \times 10^{-12}) = \mathbf{3.3422 \times 10^{-7}\text{ H/m}} = \mathbf{334.2\text{ nH/m}}$$
+              </div>
+              <p style="font-size: 13px; color: var(--text-secondary);">
+                Independent Cross-Check: $u_p = \frac{1}{\sqrt{LC}} = \frac{1}{\sqrt{(3.3422 \times 10^{-7})(6.8209 \times 10^{-11})}} = \frac{1}{\sqrt{2.2797 \times 10^{-17}}} = \frac{1}{4.7746 \times 10^{-9}} \approx 2.094 \times 10^8\text{ m/s}$. Check via $\omega/\beta = \frac{2\pi \times 10^8}{3} \approx 2.0944 \times 10^8\text{ m/s}$ (Exact match!).
+              </p>
+            </div>
+          </div>
+
+          <div class="result-badge">
+            <strong>FINAL RESULTS (Example 11.1):</strong><br>
+            Capacitance per meter: $C = 68.2\text{ pF/m}$<br>
+            Inductance per meter: $L = 334.2\text{ nH/m}$
+          </div>
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 8: EXAMPLE 11.2 (DISTORTIONLESS) -->
+      <!-- ========================================== -->
+      <article id="sec-example-11-2" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Pages 18–19 Solved Problem</span>
+          <span class="section-badge">Example 11.2</span>
+        </div>
+        <h2 class="section-title">Example 11.2: Complete Distortionless Line Parameter Extraction</h2>
+        
+        <div class="problem-card">
+          <div class="problem-header">
+            <span class="problem-num">Example 11.2</span>
+            <span class="problem-title">Distortionless Line Parameter Extraction</span>
+          </div>
+          <div class="problem-statement">
+            A distortionless line has $Z_0 = 60\ \Omega$, $\alpha = 20\text{ mNp/m}$, $u = 0.6c$, where $c$ is the speed of light in vacuum ($3 \times 10^8\text{ m/s}$). Find $R, L, G, C$, and $\lambda$ at $100\text{ MHz}$.
+          </div>
+
+          <div class="calc-card">
+            <div class="calc-step">
+              <div class="calc-step-num">Step 1 · Extract Given Constants</div>
+              <div style="font-family: var(--font-mono); margin: 6px 0;">
+                $Z_0 = 60\ \Omega, \quad \alpha = 20\text{ mNp/m} = 0.020\text{ Np/m}$<br>
+                $u_p = 0.6c = 0.6 \times (3 \times 10^8) = 1.8 \times 10^8\text{ m/s}$<br>
+                $f = 100\text{ MHz} = 10^8\text{ Hz}$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 2 · Resistance per Meter ($R$)</div>
+              <p>For a distortionless line, $RC = GL \iff \frac{C}{L} = \frac{G}{R}$. Therefore:</p>
+              <div class="eq-box">
+                $$\alpha = \sqrt{RG} = \sqrt{R \cdot \left(\frac{RC}{L}\right)} = R\sqrt{\frac{C}{L}} = \frac{R}{Z_0}$$
+                $$R = \alpha\,Z_0 = (20 \times 10^{-3}\text{ Np/m}) \times (60\ \Omega) = \mathbf{1.20\ \Omega/\text{m}}$$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 3 · Inductance per Meter ($L$)</div>
+              <p>Since $Z_0 = \sqrt{L/C}$ and $u_p = \frac{1}{\sqrt{LC}}$, dividing the two equations gives:</p>
+              <div class="eq-box">
+                $$\frac{Z_0}{u_p} = \frac{\sqrt{L/C}}{1/\sqrt{LC}} = L$$
+                $$L = \frac{Z_0}{u_p} = \frac{60\ \Omega}{1.8 \times 10^8\text{ m/s}} = \frac{60}{1.8 \times 10^8} = \mathbf{3.3333 \times 10^{-7}\text{ H/m}} = \mathbf{333.3\text{ nH/m}}$$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 4 · Capacitance per Meter ($C$)</div>
+              <p>Multiplying $u_p$ and $Z_0$:</p>
+              <div class="eq-box">
+                $$u_p\,Z_0 = \frac{1}{\sqrt{LC}} \cdot \sqrt{\frac{L}{C}} = \frac{1}{C}$$
+                $$C = \frac{1}{u_p\,Z_0} = \frac{1}{(1.8 \times 10^8\text{ m/s}) \times 60\ \Omega} = \frac{1}{1.08 \times 10^{10}} = \mathbf{9.2593 \times 10^{-11}\text{ F/m}} = \mathbf{92.59\text{ pF/m}}$$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 5 · Conductance per Meter ($G$) &amp; Wavelength ($\lambda$)</div>
+              <p>Using the distortionless condition $G = \frac{RC}{L} = \frac{\alpha}{Z_0}$:</p>
+              <div class="eq-box">
+                $$G = \frac{\alpha}{Z_0} = \frac{20 \times 10^{-3}\text{ Np/m}}{60\ \Omega} = \frac{1}{3000}\text{ S/m} = \mathbf{3.3333 \times 10^{-4}\text{ S/m}} = \mathbf{333.3\ \mu\text{S/m}}$$
+              </div>
+              <p>Wavelength on the line at $f = 100\text{ MHz}$:</p>
+              <div class="eq-box">
+                $$\lambda = \frac{u_p}{f} = \frac{1.8 \times 10^8\text{ m/s}}{100 \times 10^6\text{ Hz}} = \mathbf{1.80\text{ m}}$$
+              </div>
+            </div>
+          </div>
+
+          <div class="result-badge">
+            <strong>FINAL RESULTS (Example 11.2):</strong><br>
+            $R = 1.20\ \Omega/\text{m}, \quad L = 333.3\text{ nH/m}, \quad C = 92.59\text{ pF/m}, \quad G = 333.3\ \mu\text{S/m}, \quad \lambda = 1.80\text{ m}$
+          </div>
+        </div>
+      </article>
+
+      <!-- ========================================== -->
+      <!-- SECTION 9: PRACTICE EXERCISE 11.2 -->
+      <!-- ========================================== -->
+      <article id="sec-practice-11-2" class="section-card">
+        <div class="section-meta">
+          <span class="section-pill">Page 19 Solved Problem</span>
+          <span class="section-badge">Practice Exercise 11.2</span>
+        </div>
+        <h2 class="section-title">Practice Exercise 11.2: Telephone Line Complex Analysis at 1 kHz</h2>
+        
+        <div class="problem-card">
+          <div class="problem-header">
+            <span class="problem-num">Practice Exercise 11.2</span>
+            <span class="problem-title">Telephone Audio Transmission Line</span>
+          </div>
+          <div class="problem-statement">
+            A telephone line has $R = 30\ \Omega/\text{km}$, $L = 100\text{ mH/km}$, $G = 0$, and $C = 20\ \mu\text{F/km}$. At $f = 1\text{ kHz}$, obtain:
+            (a) The characteristic impedance of the line ($Z_0$)
+            (b) The propagation constant ($\gamma$)
+            (c) The phase velocity ($u_p$).
+          </div>
+
+          <div class="calc-card">
+            <div class="calc-step">
+              <div class="calc-step-num">Step 1 · Parameter Normalization to SI Units (/meter)</div>
+              <div style="font-family: var(--font-mono); margin: 6px 0;">
+                $R = 30\ \Omega/\text{km} = 0.030\ \Omega/\text{m}$<br>
+                $L = 100\text{ mH/km} = 100 \times 10^{-3}\text{ H}/1000\text{ m} = 10^{-4}\text{ H/m} = 0.10\text{ mH/m}$<br>
+                $G = 0\text{ S/m}$<br>
+                $C = 20\ \mu\text{F/km} = 20 \times 10^{-6}\text{ F}/1000\text{ m} = 2 \times 10^{-8}\text{ F/m} = 20\text{ nF/m}$<br>
+                $f = 1\text{ kHz} = 1000\text{ Hz} \implies \omega = 2\pi f = 2000\pi \approx 6283.1853\text{ rad/s}$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 2 · Complex Impedance &amp; Admittance per Meter</div>
+              <p>Series impedance per meter:</p>
+              <div class="eq-box">
+                $$Z = R + j\omega L = 0.030 + j(6283.1853 \times 10^{-4}) = 0.030 + j0.6283185\ \Omega/\text{m}$$
+                $$|Z| = \sqrt{(0.030)^2 + (0.6283185)^2} = \sqrt{0.0009 + 0.394784} = \sqrt{0.395684} \approx 0.629034\ \Omega/\text{m}$$
+                $$\theta_Z = \tan^{-1}\left(\frac{0.6283185}{0.030}\right) = \tan^{-1}(20.94395) \approx 87.2657^\circ$$
+              </div>
+              <p>Shunt admittance per meter ($G = 0$):</p>
+              <div class="eq-box">
+                $$Y = G + j\omega C = 0 + j(6283.1853 \times 2 \times 10^{-8}) = j1.256637 \times 10^{-4}\text{ S/m}$$
+                $$|Y| = 1.256637 \times 10^{-4}\text{ S/m}, \quad \theta_Y = 90.0000^\circ$$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 3 · Part (a) Characteristic Impedance ($Z_0$)</div>
+              <div class="eq-box">
+                $$|Z_0| = \sqrt{\frac{|Z|}{|Y|}} = \sqrt{\frac{0.629034}{1.256637 \times 10^{-4}}} = \sqrt{5005.694} = \mathbf{70.7509\ \Omega} \approx \mathbf{70.75\ \Omega}$$
+                $$\theta_{Z0} = \frac{\theta_Z - \theta_Y}{2} = \frac{87.2657^\circ - 90^\circ}{2} = \frac{-2.7343^\circ}{2} = \mathbf{-1.367^\circ}$$
+                $$\mathbf{Z_0 = 70.75\,\angle -1.367^\circ\ \Omega} = (70.730 - j1.688)\ \Omega$$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 4 · Part (b) Propagation Constant ($\gamma = \alpha + j\beta$)</div>
+              <div class="eq-box">
+                $$|\gamma| = \sqrt{|Z| \cdot |Y|} = \sqrt{0.629034 \times (1.256637 \times 10^{-4})} = \sqrt{7.90468 \times 10^{-5}} = 8.89083 \times 10^{-3}\text{ m}^{-1}$$
+                $$\theta_\gamma = \frac{\theta_Z + \theta_Y}{2} = \frac{87.2657^\circ + 90^\circ}{2} = \frac{177.2657^\circ}{2} = 88.63285^\circ$$
+                $$\alpha = |\gamma|\cos(\theta_\gamma) = (8.89083 \times 10^{-3}) \cos(88.63285^\circ) = \mathbf{2.1213 \times 10^{-4}\text{ Np/m}}$$
+                $$\beta = |\gamma|\sin(\theta_\gamma) = (8.89083 \times 10^{-3}) \sin(88.63285^\circ) = \mathbf{8.8883 \times 10^{-3}\text{ rad/m}}$$
+                $$\mathbf{\gamma = (2.121 \times 10^{-4} + j\,8.888 \times 10^{-3})\text{ m}^{-1}}$$
+              </div>
+            </div>
+
+            <div class="calc-step">
+              <div class="calc-step-num">Step 5 · Part (c) Phase Velocity ($u_p$)</div>
+              <div class="eq-box">
+                $$u_p = \frac{\omega}{\beta} = \frac{6283.1853\text{ rad/s}}{8.8883 \times 10^{-3}\text{ rad/m}} = \mathbf{7.06905 \times 10^5\text{ m/s}} \approx \mathbf{7.069 \times 10^5\text{ m/s}}$$
+              </div>
+              <p style="font-size: 13px; color: var(--text-secondary);">
+                Notice: At 1 kHz audio, $u_p \approx 707\text{ km/s}$ is much slower than the speed of light in vacuum due to the large shunt capacitance and series inductance ($u_p \approx 0.24\% c$).
+              </p>
+            </div>
+          </div>
+
+          <div class="result-badge">
+            <strong>FINAL RESULTS (Practice Exercise 11.2):</strong><br>
+            (a) Characteristic Impedance: $Z_0 = 70.75\,\angle -1.367^\circ\ \Omega$<br>
+            (b) Propagation Constant: $\gamma = (2.121 \times 10^{-4} + j\,8.888 \times 10^{-3})\text{ m}^{-1}$<br>
+            (c) Phase Velocity: $u_p = 7.069 \times 10^5\text{ m/s}$
+          </div>
+        </div>
+      </article>
+
+      <footer class="page-footer">
+        <div>Department of Electronics and Communication Engineering · University of Engineering &amp; Management (UEM), Kolkata</div>
+        <div style="margin-top: 4px; font-family: var(--font-mono); font-size: 11px;">Transmission Lines (19 Pages Complete) · Academic Master Guide · Built with Babylon.js 7.x &amp; MathJax 3</div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Babylon.js 3D WebGL Engine Script -->
+  <script>
+    (function() {
+      // Theme Management
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeLabel = document.getElementById('theme-label');
+      function initTheme() {
+        const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+        themeLabel.textContent = isDark ? 'Dark Mode' : 'Light Mode';
+      }
+      initTheme();
+      themeToggle.addEventListener('click', () => {
+        const current = document.documentElement.dataset.theme;
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        themeLabel.textContent = next === 'dark' ? 'Dark Mode' : 'Light Mode';
+        updateBabylonTheme();
+      });
+
+      // Quick Search Filter in Sidebar
+      const searchInput = document.getElementById('nav-search');
+      const navLinks = document.querySelectorAll('.nav-link');
+      searchInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        navLinks.forEach(link => {
+          const title = link.getAttribute('data-title') || link.textContent.toLowerCase();
+          if (!val || title.includes(val)) {
+            link.style.display = 'flex';
+          } else {
+            link.style.display = 'none';
+          }
+        });
+      });
+
+      // Babylon.js Engine Setup
+      const canvas = document.getElementById('babylon-canvas');
+      const engine = new BABYLON.Engine(canvas, true, { antialias: true, adaptToDeviceRatio: true });
+      const scene = new BABYLON.Scene(engine);
+      const C3 = BABYLON.Color3, V3 = BABYLON.Vector3;
+
+      // Camera
+      const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 3, 1.25, 18, new V3(0, 0, 0), scene);
+      camera.attachControl(canvas, true);
+      camera.lowerRadiusLimit = 8;
+      camera.upperRadiusLimit = 28;
+      camera.wheelPrecision = 40;
+
+      // Lights
+      const hemiLight = new BABYLON.HemisphericLight("hemiLight", new V3(0, 1, 0), scene);
+      hemiLight.intensity = 0.9;
+      const dirLight = new BABYLON.DirectionalLight("dirLight", new V3(-1, -2, -1), scene);
+      dirLight.position = new V3(10, 20, 10);
+      dirLight.intensity = 0.6;
+
+      // State
+      let geomType = 'coax'; // 'coax', 'twowire', 'planar'
+      let autoOrbit = false;
+      let time = 0;
+      let freqMHz = 100;
+      let ratioVal = 4.0;
+      let epsR = 1.25;
+
+      // Telemetry HUD Elements
+      const hudType = document.getElementById('hud-type');
+      const hudFreq = document.getElementById('hud-freq');
+      const hudDelta = document.getElementById('hud-delta');
+      const hudInd = document.getElementById('hud-ind');
+      const hudCap = document.getElementById('hud-cap');
+      const hudZ0 = document.getElementById('hud-z0');
+      const hudUp = document.getElementById('hud-up');
+
+      // Sliders & Controls
+      const sFreq = document.getElementById('slider-freq');
+      const sRatio = document.getElementById('slider-ratio');
+      const sEps = document.getElementById('slider-eps');
+      const vFreq = document.getElementById('val-freq');
+      const vRatio = document.getElementById('val-ratio');
+      const vEps = document.getElementById('val-eps');
+
+      const btnCoax = document.getElementById('btn-geom-coax');
+      const btnTwoWire = document.getElementById('btn-geom-twowire');
+      const btnPlanar = document.getElementById('btn-geom-planar');
+      const btnOrbit = document.getElementById('btn-sim-orbit');
+
+      function updateBabylonTheme() {
+        const isDark = document.documentElement.dataset.theme === 'dark';
+        scene.clearColor = isDark 
+          ? new BABYLON.Color4(0.04, 0.04, 0.05, 1) 
+          : new BABYLON.Color4(0.96, 0.96, 0.98, 1);
+      }
+      updateBabylonTheme();
+
+      // Materials
+      const matConductor = new BABYLON.StandardMaterial("matCond", scene);
+      matConductor.diffuseColor = new C3(0.85, 0.55, 0.25); // Copper
+      matConductor.specularColor = new C3(0.9, 0.7, 0.4);
+
+      const matDielectric = new BABYLON.StandardMaterial("matDiel", scene);
+      matDielectric.diffuseColor = new C3(0.3, 0.5, 0.8);
+      matDielectric.alpha = 0.28;
+
+      const matFieldE = new BABYLON.StandardMaterial("matFE", scene);
+      matFieldE.emissiveColor = new C3(0.16, 0.59, 1.0); // Blue
+      matFieldE.diffuseColor = new C3(0.16, 0.59, 1.0);
+
+      const matFieldB = new BABYLON.StandardMaterial("matFB", scene);
+      matFieldB.emissiveColor = new C3(1.0, 0.45, 0.1); // Amber
+      matFieldB.diffuseColor = new C3(1.0, 0.45, 0.1);
+
+      // Root Nodes
+      const coaxRoot = new BABYLON.TransformNode("coaxRoot", scene);
+      const twowireRoot = new BABYLON.TransformNode("twowireRoot", scene);
+      const planarRoot = new BABYLON.TransformNode("planarRoot", scene);
+      twowireRoot.setEnabled(false);
+      planarRoot.setEnabled(false);
+
+      // --- Geometry 1: Coaxial Cable ---
+      const coaxInner = BABYLON.MeshBuilder.CreateCylinder("coaxInner", { diameter: 0.8, height: 12, tessellation: 48 }, scene);
+      coaxInner.rotation.x = Math.PI / 2;
+      coaxInner.material = matConductor;
+      coaxInner.parent = coaxRoot;
+
+      const coaxOuter = BABYLON.MeshBuilder.CreateCylinder("coaxOuter", { diameter: 3.2, height: 12, tessellation: 48 }, scene);
+      coaxOuter.rotation.x = Math.PI / 2;
+      coaxOuter.material = matDielectric;
+      coaxOuter.parent = coaxRoot;
+
+      // Coax Radial E-Field Spokes
+      const coaxSpokes = [];
+      for (let i = 0; i < 16; i++) {
+        const spoke = BABYLON.MeshBuilder.CreateCylinder(`c_spoke_${i}`, { diameter: 0.04, height: 1.2 }, scene);
+        const ang = (i / 16) * Math.PI * 2;
+        spoke.rotation.z = ang + Math.PI / 2;
+        spoke.position.set(Math.cos(ang) * 1.0, Math.sin(ang) * 1.0, 0);
+        spoke.material = matFieldE;
+        spoke.parent = coaxRoot;
+        coaxSpokes.push(spoke);
+      }
+
+      // --- Geometry 2: Two-Wire Line ---
+      const wire1 = BABYLON.MeshBuilder.CreateCylinder("wire1", { diameter: 0.8, height: 12, tessellation: 36 }, scene);
+      wire1.rotation.x = Math.PI / 2;
+      wire1.position.x = -2.2;
+      wire1.material = matConductor;
+      wire1.parent = twowireRoot;
+
+      const wire2 = BABYLON.MeshBuilder.CreateCylinder("wire2", { diameter: 0.8, height: 12, tessellation: 36 }, scene);
+      wire2.rotation.x = Math.PI / 2;
+      wire2.position.x = 2.2;
+      wire2.material = matConductor;
+      wire2.parent = twowireRoot;
+
+      // Two-wire field arcs
+      const twoWireArcs = [];
+      for (let k = 0; k < 6; k++) {
+        const torus = BABYLON.MeshBuilder.CreateTorus(`tw_arc_${k}`, { diameter: 2.4 + k * 0.5, thickness: 0.04, tessellation: 48 }, scene);
+        torus.rotation.x = Math.PI / 2;
+        torus.position.x = -2.2;
+        torus.material = matFieldB;
+        torus.parent = twowireRoot;
+        twoWireArcs.push(torus);
+      }
+
+      // --- Geometry 3: Planar Microstrip Line ---
+      const groundPlane = BABYLON.MeshBuilder.CreateBox("gnd", { width: 6.0, height: 0.1, depth: 12 }, scene);
+      groundPlane.position.y = -1.2;
+      groundPlane.material = matConductor;
+      groundPlane.parent = planarRoot;
+
+      const substrate = BABYLON.MeshBuilder.CreateBox("sub", { width: 6.0, height: 1.2, depth: 12 }, scene);
+      substrate.position.y = -0.6;
+      substrate.material = matDielectric;
+      substrate.parent = planarRoot;
+
+      const strip = BABYLON.MeshBuilder.CreateBox("strip", { width: 2.2, height: 0.08, depth: 12 }, scene);
+      strip.position.y = 0.04;
+      strip.material = matConductor;
+      strip.parent = planarRoot;
+
+      // Physics Telemetry Calculations
+      function calcPhysics() {
+        const c0 = 3e8;
+        const eps0 = 8.8541878e-12;
+        const mu0 = 4 * Math.PI * 1e-7;
+        const sigmaCopper = 5.8e7; // S/m
+        const f = freqMHz * 1e6;
+        const omega = 2 * Math.PI * f;
+        const eps = eps0 * epsR;
+        const mu = mu0;
+
+        // Skin Depth
+        const delta = 1 / Math.sqrt(Math.PI * f * mu0 * sigmaCopper); // meters
+
+        let L = 0, C = 0, Z0 = 0, up = 0;
+
+        if (geomType === 'coax') {
+          const b_over_a = ratioVal;
+          L = (mu / (2 * Math.PI)) * Math.log(b_over_a);
+          C = (2 * Math.PI * eps) / Math.log(b_over_a);
+          Z0 = (60 / Math.sqrt(epsR)) * Math.log(b_over_a);
+          up = c0 / Math.sqrt(epsR);
+        } else if (geomType === 'twowire') {
+          const d_over_2a = ratioVal;
+          L = (mu / Math.PI) * Math.acosh(d_over_2a);
+          C = (Math.PI * eps) / Math.acosh(d_over_2a);
+          Z0 = (120 / Math.sqrt(epsR)) * Math.acosh(d_over_2a);
+          up = c0 / Math.sqrt(epsR);
+        } else if (geomType === 'planar') {
+          const w_over_d = ratioVal;
+          L = (mu / w_over_d);
+          C = eps * w_over_d;
+          Z0 = (376.73 / Math.sqrt(epsR)) / w_over_d;
+          up = c0 / Math.sqrt(epsR);
+        }
+
+        // Update HUD
+        hudFreq.textContent = `${freqMHz.toFixed(1)} MHz`;
+        hudDelta.textContent = `${(delta * 1e6).toFixed(2)} \u03bcm`;
+        hudInd.textContent = `${(L * 1e9).toFixed(2)} nH/m`;
+        hudCap.textContent = `${(C * 1e12).toFixed(2)} pF/m`;
+        hudZ0.textContent = `${Z0.toFixed(2)} \u03a9`;
+        hudUp.textContent = `${(up / 1e8).toFixed(2)} \u00d7 10\u2078 m/s`;
+
+        return { delta, L, C, Z0, up };
+      }
+
+      // Render Loop
+      scene.onBeforeRenderObservable.add(() => {
+        const dt = Math.min(engine.getDeltaTime(), 50) / 1000;
+        time += dt * 3.0;
+        if (autoOrbit) camera.alpha += 0.005;
+
+        calcPhysics();
+
+        // Animate field oscillations
+        const pulse = 1.0 + 0.12 * Math.sin(time);
+        coaxSpokes.forEach(spoke => spoke.scaling.y = pulse);
+        twoWireArcs.forEach((arc, idx) => arc.scaling.set(1 + 0.06 * Math.sin(time + idx), 1, 1 + 0.06 * Math.sin(time + idx)));
+      });
+
+      engine.runRenderLoop(() => scene.render());
+      window.addEventListener('resize', () => engine.resize());
+
+      // Control Handlers
+      function setGeom(g) {
+        geomType = g;
+        btnCoax.classList.toggle('active', g === 'coax');
+        btnTwoWire.classList.toggle('active', g === 'twowire');
+        btnPlanar.classList.toggle('active', g === 'planar');
+
+        coaxRoot.setEnabled(g === 'coax');
+        twowireRoot.setEnabled(g === 'twowire');
+        planarRoot.setEnabled(g === 'planar');
+
+        if (g === 'coax') hudType.textContent = 'Coaxial Line (Table 11.1)';
+        else if (g === 'twowire') hudType.textContent = 'Two-Wire Line (Table 11.1)';
+        else if (g === 'planar') hudType.textContent = 'Planar Line (Table 11.1)';
+      }
+
+      btnCoax.addEventListener('click', () => setGeom('coax'));
+      btnTwoWire.addEventListener('click', () => setGeom('twowire'));
+      btnPlanar.addEventListener('click', () => setGeom('planar'));
+
+      btnOrbit.addEventListener('click', () => {
+        autoOrbit = !autoOrbit;
+        btnOrbit.classList.toggle('active', autoOrbit);
+      });
+
+      // Slider Handlers
+      sFreq.addEventListener('input', (e) => {
+        freqMHz = parseFloat(e.target.value);
+        vFreq.textContent = `${freqMHz.toFixed(0)} MHz`;
+      });
+      sRatio.addEventListener('input', (e) => {
+        ratioVal = parseFloat(e.target.value);
+        vRatio.textContent = ratioVal.toFixed(1);
+      });
+      sEps.addEventListener('input', (e) => {
+        epsR = parseFloat(e.target.value);
+        vEps.textContent = epsR.toFixed(2);
+      });
+    })();
+  </script>
+
+  <!-- Global Tooltip Integration -->
+  <script src="emt_glossary_tooltip.js"></script>
+</body>
+</html>
