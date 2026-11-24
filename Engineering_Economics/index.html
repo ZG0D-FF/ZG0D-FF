@@ -2,14 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Engineering Economic Analysis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Engineering Economic Analysis | Study Snaps</title>
+    
+    <!-- MathJax 3 LaTeX Formula Engine -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady();
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Lenis Smooth Scroll Engine -->
+    <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+
     <style>
         :root {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --sidebar-bg: #1e1e1e;
-            --sidebar-text: #b0b0b0;
+            --bg-color: #121214;
+            --text-color: #e2e8f0;
+            --sidebar-bg: #18191c;
+            --sidebar-text: #94a3b8;
             --sidebar-active: #ffffff;
             
             --color-sec1: #ff6b6b;
@@ -22,16 +47,60 @@
             --color-sec8: #9b59b6;
             --color-sec9: #2ecc71;
             --color-sec10: #e74c3c;
+            --color-sec11: #1abc9c;
+            --color-sec12: #e67e22;
+            --color-sec13: #9c27b0;
+            --color-sec14: #00bcd4;
             
-            --def-bg: rgba(255, 255, 255, 0.05);
+            --def-bg: rgba(255, 255, 255, 0.04);
             --def-border: #4ecdc4;
             
-            --card-bg: #2a2a2a;
+            --card-bg: #1f2024;
+            --card-border: #2d3036;
+        }
+
+        /* Lenis Smooth Scroll Engine Architecture */
+        html.lenis, html.lenis body {
+            height: auto;
+        }
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+        .lenis.lenis-smooth [data-lenis-prevent] {
+            overscroll-behavior: contain;
+        }
+        .lenis.lenis-stopped {
+            overflow: hidden;
+        }
+        .lenis.lenis-scrolling iframe {
+            pointer-events: none;
+        }
+
+        /* Vector SVG Icon Standards */
+        .author-svg-icon {
+            display: inline-block;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        .fc-arrow svg, .fc-row-connect svg {
+            display: block;
+            margin: auto;
+            transition: stroke 0.2s ease;
+        }
+        .fc-arrow:hover svg, .fc-row-connect:hover svg {
+            stroke: #cbd5e1;
+        }
+
+        /* macOS Global Typography & Rendering Smoothing */
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             display: flex;
@@ -40,38 +109,138 @@
             line-height: 1.6;
         }
 
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Merriweather', 'Georgia', serif;
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
+        /* macOS Custom Slim Rounded Scrollbars */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.16);
+            border-radius: 999px;
+            border: 1.5px solid transparent;
+            background-clip: padding-box;
+            transition: background 0.2s ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.32);
         }
 
-        /* Sidebar Navigation */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", 'Merriweather', 'Georgia', serif;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            letter-spacing: -0.2px;
+        }
+
+        /* Sidebar Navigation Container */
         #sidebar {
-            width: 300px;
+            width: 320px;
             background-color: var(--sidebar-bg);
-            padding: 20px 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
-            border-right: 1px solid #333;
+            overflow: hidden;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+            position: relative;
         }
         
+        /* Mac Window Controls & Header Badge (Sticky Pinned - Fixes Snap 2 Top Cutoff) */
+        .sidebar-header {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: rgba(24, 25, 28, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 18px 14px;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
         .sidebar-title {
-            font-family: 'Merriweather', 'Georgia', serif;
-            padding: 0 20px 20px;
-            margin: 0;
-            font-size: 1.5em;
-            border-bottom: 1px solid #333;
-            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", 'Merriweather', serif;
+            padding: 0;
+            margin: 0 0 10px 0;
+            font-size: 1.30em;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+        }
+
+        /* Dual Author Badges: DJ & Arpit Mondol */
+        .sidebar-authors-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sidebar-authors-header {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #94a3b8;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 2px;
+        }
+        .author-row-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .author-entry {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+        .author-icon {
+            font-size: 0.90em;
+            flex-shrink: 0;
+        }
+        .author-details {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        .author-name {
+            font-size: 0.80rem;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+        .author-sub {
+            font-size: 0.68rem;
+            color: #4ecdc4;
+        }
+
+        /* Scrollable Sidebar Nav List */
+        .sidebar-nav {
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px 0 40px;
         }
 
         .nav-item {
-            padding: 15px 20px;
+            padding: 13px 20px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.25s ease;
             color: var(--sidebar-text);
             border-left: 4px solid transparent;
+            font-size: 0.93rem;
+            line-height: 1.35;
         }
 
         .nav-item:hover {
@@ -94,6 +263,10 @@
         .nav-item[data-target="sec-uncertainty"].active { border-left-color: var(--color-sec8); }
         .nav-item[data-target="sec-tvm"].active { border-left-color: var(--color-sec9); }
         .nav-item[data-target="sec-exam-qa"].active { border-left-color: var(--color-sec10); }
+        .nav-item[data-target="sec-mod2-cfd"].active { border-left-color: var(--color-sec11); }
+        .nav-item[data-target="sec-mod5-depr"].active { border-left-color: var(--color-sec12); }
+        .nav-item[data-target="sec-mod6-acct"].active { border-left-color: var(--color-sec13); }
+        .nav-item[data-target="sec-formulas"].active { border-left-color: var(--color-sec14); }
 
         /* Main Content */
         #content-area {
@@ -128,6 +301,10 @@
         #sec-uncertainty h1, #sec-uncertainty h2 { color: var(--color-sec8); }
         #sec-tvm h1, #sec-tvm h2 { color: var(--color-sec9); }
         #sec-exam-qa h1, #sec-exam-qa h2 { color: var(--color-sec10); }
+        #sec-mod2-cfd h1, #sec-mod2-cfd h2 { color: var(--color-sec11); }
+        #sec-mod5-depr h1, #sec-mod5-depr h2 { color: var(--color-sec12); }
+        #sec-mod6-acct h1, #sec-mod6-acct h2 { color: var(--color-sec13); }
+        #sec-formulas h1, #sec-formulas h2 { color: var(--color-sec14); }
 
         /* Definitions & Key Terms */
         .definition {
@@ -182,9 +359,10 @@
         }
         
         .fc-node:hover {
-            transform: translateY(-5px);
-            background: rgba(78, 205, 196, 0.1);
-            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.2);
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
         }
         
         .fc-num {
@@ -571,23 +749,339 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* ==========================================================================
+           HOVER TOOLTIP ARCHITECTURE (EVERY DEFINITION & SYMBOL)
+           ========================================================================== */
+        .sym-tip {
+            position: relative;
+            display: inline;
+            border-bottom: 1.5px dotted #4ecdc4;
+            color: #f1f5f9;
+            cursor: help;
+            font-weight: 600;
+            transition: border-bottom-color 0.2s, color 0.2s;
+            outline: none;
+        }
+        .sym-tip:hover, .sym-tip:focus {
+            color: #4ecdc4;
+            border-bottom-style: solid;
+        }
+        .sym-tip::before {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background: rgba(15, 23, 42, 0.98);
+            color: #f8fafc;
+            border: 1px solid #4ecdc4;
+            padding: 7px 13px;
+            border-radius: 8px;
+            font-size: 0.80rem;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", 'Segoe UI', sans-serif;
+            font-weight: 500;
+            white-space: normal;
+            width: max-content;
+            max-width: 290px;
+            text-align: left;
+            line-height: 1.35;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .sym-tip::after {
+            content: '';
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #4ecdc4 transparent transparent transparent;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 1000;
+        }
+        .sym-tip:hover::before, .sym-tip:hover::after,
+        .sym-tip:focus::before, .sym-tip:focus::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .sym-tip.tip-left::before {
+            left: 0;
+            transform: translateX(0) translateY(4px);
+        }
+        .sym-tip.tip-left:hover::before, .sym-tip.tip-left:focus::before {
+            transform: translateX(0) translateY(0);
+        }
+        .sym-tip.tip-right::before {
+            left: auto;
+            right: 0;
+            transform: translateX(0) translateY(4px);
+        }
+        .sym-tip.tip-right:hover::before, .sym-tip.tip-right:focus::before {
+            transform: translateX(0) translateY(0);
+        }
+
+        /* MathJax Container Formatting */
+        mjx-container {
+            outline: none;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 4px 0;
+        }
+        .formula-box mjx-container {
+            margin: 6px 0 !important;
+        }
+
+        /* ==========================================================================
+           RESPONSIVE MOBILE VIEW DESIGN (HAMBURGER & SLIDE-OUT DRAWER)
+           ========================================================================== */
+        #mobile-topbar {
+            display: none;
+        }
+        #mobile-overlay {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                height: 100dvh;
+            }
+
+            #mobile-topbar {
+                display: flex;
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                height: 56px;
+                z-index: 1500;
+                background: rgba(22, 23, 26, 0.96);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 16px;
+            }
+
+            #mobile-menu-toggle {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+                color: #fff;
+                padding: 8px 10px;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                transition: background 0.2s;
+            }
+            #mobile-menu-toggle:hover {
+                background: rgba(255, 255, 255, 0.08);
+            }
+            #mobile-menu-toggle .bar {
+                width: 20px;
+                height: 2px;
+                background-color: #fff;
+                border-radius: 2px;
+            }
+
+            .mobile-topbar-title {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', serif;
+                font-weight: 700;
+                font-size: 1.05rem;
+                color: #fff;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 170px;
+            }
+
+            .mobile-author-pill {
+                font-size: 0.72rem;
+                background: rgba(78, 205, 196, 0.15);
+                color: #4ecdc4;
+                border: 1px solid rgba(78, 205, 196, 0.4);
+                padding: 4px 8px;
+                border-radius: 20px;
+                font-weight: 600;
+            }
+
+            #mobile-overlay {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                z-index: 1600;
+            }
+            #mobile-overlay.active {
+                display: block;
+            }
+
+            #sidebar {
+                position: fixed;
+                top: 0; left: 0; bottom: 0;
+                width: 300px;
+                max-width: 86vw;
+                z-index: 1700;
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 12px 0 35px rgba(0, 0, 0, 0.7);
+                height: 100dvh;
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+
+            #content-area {
+                padding: 76px 18px 50px !important;
+                height: 100dvh;
+                width: 100%;
+                overflow-x: hidden;
+            }
+
+            .section-container {
+                max-width: 100%;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                width: 100%;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .fc-row {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .fc-row.reverse {
+                flex-direction: row;
+            }
+            .fc-row-connect, .fc-row-connect.left-side {
+                display: none;
+            }
+            .fc-node {
+                width: 100%;
+                max-width: 280px;
+                height: auto;
+                min-height: 90px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 24px 18px;
+            }
+
+            .dt-tree {
+                min-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
+    <!-- Mobile Top Header Bar -->
+    <header id="mobile-topbar">
+        <button id="mobile-menu-toggle" aria-label="Toggle Navigation Menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+        <div class="mobile-topbar-title">Engineering Economics</div>
+        <div class="mobile-author-pill">DJ & Arpit</div>
+    </header>
+    
+    <div id="mobile-overlay"></div>
+
+    <!-- Sidebar Navigation -->
     <div id="sidebar">
-        <h2 class="sidebar-title">Engineering Economics</h2>
-        <div class="nav-item active" data-target="sec-intro">1. Introduction & Scope</div>
-        <div class="nav-item" data-target="sec-decision">2. Rational Decision-Making</div>
-        <div class="nav-item" data-target="sec-prob">3. Decision-Making Problems</div>
-        <div class="nav-item" data-target="sec-costs1">4. Cost Estimating (Part 1)</div>
-        <div class="nav-item" data-target="sec-costs2">5. Cost Estimating (Part 2)</div>
-        <div class="nav-item" data-target="sec-inflation">6. Unit I: Inflation & Price Change</div>
-        <div class="nav-item" data-target="sec-pw">7. Unit II: Present Worth Analysis</div>
-        <div class="nav-item" data-target="sec-uncertainty">8. Unit III: Uncertainty in Future Events</div>
-        <div class="nav-item" data-target="sec-tvm">9. Time Value of Money & Interest Formulas</div>
-        <div class="nav-item" data-target="sec-exam-qa">10. Exam Practice & Review Solutions</div>
+        <!-- Pinned Sidebar Header & Dual Authors Badge -->
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Engineering Economics</h2>
+            <div class="sidebar-authors-box">
+                <div class="sidebar-authors-header">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; flex-shrink:0;">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>AUTHORS & CURATORS</span>
+                </div>
+                <div class="author-row-container">
+                    <div class="author-entry">
+                        <span class="author-icon">
+                            <svg class="author-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 18 22 12 16 6"></polyline>
+                                <polyline points="8 6 2 12 8 18"></polyline>
+                            </svg>
+                        </span>
+                        <div class="author-details">
+                            <span class="author-name">Dibyajyotee Ghosh (DJ)</span>
+                            <span class="author-sub">Autonomous Systems & Software</span>
+                        </div>
+                    </div>
+                    <div class="author-entry">
+                        <span class="author-icon">
+                            <svg class="author-svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                            </svg>
+                        </span>
+                        <div class="author-details">
+                            <span class="author-name">Arpit Mondol</span>
+                            <span class="author-sub">ECE 3B</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cross-Navigation Quick Switcher -->
+        <div style="padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px;">
+            <a href="index_legacy.html" style="display:flex; align-items:center; gap:6px; color:#f59e0b; text-decoration:none; font-size:11px; font-weight:600; padding:5px 8px; border-radius:6px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25);" title="Switch to Legacy Edition">
+                <span>📚 Legacy Edition (166KB)</span>
+            </a>
+            <a href="Handwritten Economics Notes.html" style="display:flex; align-items:center; gap:6px; color:#38bdf8; text-decoration:none; font-size:11px; font-weight:600; padding:5px 8px; border-radius:6px; background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.25);" title="Original Handwritten Notes">
+                <span>📝 Handwritten Notes (26KB)</span>
+            </a>
+            <a href="../notes.html" style="display:flex; align-items:center; gap:6px; color:#2997ff; text-decoration:none; font-size:11px; font-weight:600; padding:5px 8px; border-radius:6px; background:rgba(41,151,255,0.12); border:1px solid rgba(41,151,255,0.25);" title="Jarvis Notes Hub">
+                <span>🪐 Jarvis Hub</span>
+            </a>
+        </div>
+
+        <!-- Scrollable Navigation Items -->
+        <nav class="sidebar-nav">
+            <div class="nav-item active" data-target="sec-intro">1. Introduction & Scope (Module 1)</div>
+            <div class="nav-item" data-target="sec-decision">2. Rational Decision-Making (Module 1)</div>
+            <div class="nav-item" data-target="sec-prob">3. Decision-Making Problems (Module 1)</div>
+            <div class="nav-item" data-target="sec-costs1">4. Cost Estimating Pt 1 (Module 1)</div>
+            <div class="nav-item" data-target="sec-costs2">5. Cost Estimating Pt 2 (Module 1)</div>
+            <div class="nav-item" data-target="sec-inflation">6. Unit I: Inflation & Price Change (Module 4)</div>
+            <div class="nav-item" data-target="sec-pw">7. Unit II: Present Worth Analysis (Module 4)</div>
+            <div class="nav-item" data-target="sec-uncertainty">8. Unit III: Uncertainty in Events (Module 4)</div>
+            <div class="nav-item" data-target="sec-tvm">9. Time Value of Money & Factors (Module 3)</div>
+            <div class="nav-item" data-target="sec-exam-qa">10. Exam Practice & Review Solutions</div>
+            <div class="nav-item" data-target="sec-mod2-cfd">11. Cash Flow & Rates of Return (Module 2)</div>
+            <div class="nav-item" data-target="sec-mod5-depr">12. Depreciation & Replacement (Module 5)</div>
+            <div class="nav-item" data-target="sec-mod6-acct">13. Accounting & Cost Allocation (Module 6)</div>
+            <div class="nav-item" data-target="sec-formulas">14. Master Formula Reference Vault</div>
+        </nav>
     </div>
 
     <!-- Main Content -->
@@ -653,13 +1147,23 @@
                         <div class="fc-title">Recognize problem</div>
                         <div class="fc-click-hint">Click to read</div>
                     </div>
-                    <div class="fc-arrow">➔</div>
+                    <div class="fc-arrow">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
                     <div class="fc-node" onclick="openStep(2)">
                         <div class="fc-num">2</div>
                         <div class="fc-title">Define goal/objective</div>
                         <div class="fc-click-hint">Click to read</div>
                     </div>
-                    <div class="fc-arrow">➔</div>
+                    <div class="fc-arrow">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
                     <div class="fc-node" onclick="openStep(3)">
                         <div class="fc-num">3</div>
                         <div class="fc-title">Assemble data</div>
@@ -667,7 +1171,12 @@
                     </div>
                 </div>
                 
-                <div class="fc-row-connect">⬇</div>
+                <div class="fc-row-connect">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                </div>
                 
                 <!-- Row 2 (Reversed) -->
                 <div class="fc-row reverse">
@@ -676,13 +1185,23 @@
                         <div class="fc-title">Construct model</div>
                         <div class="fc-click-hint">Click to read</div>
                     </div>
-                    <div class="fc-arrow">⬅</div>
+                    <div class="fc-arrow">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </div>
                     <div class="fc-node" onclick="openStep(5)">
                         <div class="fc-num">5</div>
                         <div class="fc-title">Select criteria</div>
                         <div class="fc-click-hint">Click to read</div>
                     </div>
-                    <div class="fc-arrow">⬅</div>
+                    <div class="fc-arrow">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </div>
                     <div class="fc-node" onclick="openStep(4)">
                         <div class="fc-num">4</div>
                         <div class="fc-title">Identify alternatives</div>
@@ -690,7 +1209,12 @@
                     </div>
                 </div>
                 
-                <div class="fc-row-connect left-side">⬇</div>
+                <div class="fc-row-connect left-side">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                </div>
                 
                 <!-- Row 3 -->
                 <div class="fc-row">
@@ -699,13 +1223,23 @@
                         <div class="fc-title">Predict outcomes</div>
                         <div class="fc-click-hint">Click to read</div>
                     </div>
-                    <div class="fc-arrow">➔</div>
+                    <div class="fc-arrow">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
                     <div class="fc-node" onclick="openStep(8)">
                         <div class="fc-num">8</div>
                         <div class="fc-title">Choose best alternative</div>
                         <div class="fc-click-hint">Click to read</div>
                     </div>
-                    <div class="fc-arrow">➔</div>
+                    <div class="fc-arrow">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
                     <div class="fc-node" onclick="openStep(9)">
                         <div class="fc-num">9</div>
                         <div class="fc-title">Audit results</div>
@@ -719,50 +1253,190 @@
                 <button class="nav-btn next-btn">Next Section</button>
             </div>
         </div>
+
         
         <!-- SECTION 3 -->
         <div id="sec-prob" class="section-container">
             <h1>Problems on Decision-making</h1>
             
-            <div class="example-card">
-                <div class="example-header">Problem 1: Concrete aggregate mix</div>
+            <div class="example-card open">
+                <div class="example-header">Problem 1: Concrete Aggregate Mix (Volumetric Blending Optimization)</div>
                 <div class="example-content">
-                    <p>A concrete aggregate mix is required to contain 31% sand by volume for proper batching. One source of material, which has 25% sand and 75% coarse aggregate and sells for Rs. 270/m³. Another source which has 40% sand and 60% course aggregates, sells for Rs. 396/m³. Determine the least cost per cubic meter of blended aggregates.</p>
+                    <p><strong>Problem Statement:</strong> A concrete aggregate mix is required to contain exactly 31% sand by volume for proper batching. One source of material (Source 1), which contains 25% sand and 75% coarse aggregate, sells for Rs. 270/m³. Another source (Source 2), which contains 40% sand and 60% coarse aggregate, sells for Rs. 396/m³. Determine the least cost per cubic meter of the blended aggregate mixture.</p>
+                    
+                    <div class="formula-box">
+                        Volumetric Balance Equation:<br>
+                        Let x = fraction of volume drawn from Source 1 (at 25% sand)<br>
+                        Let (1 − x) = fraction of volume drawn from Source 2 (at 40% sand)<br>
+                        0.25 · x + 0.40 · (1 − x) = 0.31
+                    </div>
+                    
+                    <p><strong>Step-by-Step Mathematical Derivation:</strong></p>
+                    <ol>
+                        <li>Expand the volumetric equation: <code>0.25x + 0.40 − 0.40x = 0.31</code></li>
+                        <li>Combine algebraic terms: <code>−0.15x = 0.31 − 0.40 = −0.09</code></li>
+                        <li>Solve for variable x: <code>x = −0.09 / −0.15 = 0.60</code> (60% by volume from Source 1)</li>
+                        <li>Determine proportion from Source 2: <code>1 − x = 1.00 − 0.60 = 0.40</code> (40% by volume from Source 2)</li>
+                    </ol>
+                    
+                    <p><strong>Unit Cost Evaluation:</strong></p>
+                    <p>Blended Cost per m³ = <code>(0.60 m³ × Rs. 270/m³) + (0.40 m³ × Rs. 396/m³) = Rs. 162.00 + Rs. 158.40 = <strong>Rs. 320.40 / m³</strong></code>.</p>
+                    <div class="definition" style="--def-border: var(--color-sec3);">
+                        <strong>Optimal Blend Conclusion:</strong> To minimize production expenditure while meeting the exact 31% structural sand requirement, blend 0.60 m³ of Source 1 with 0.40 m³ of Source 2 per cubic meter, yielding an optimal minimum cost of <strong>Rs. 320.40 per cubic meter</strong>.
+                    </div>
                 </div>
             </div>
 
-            <div class="example-card">
-                <div class="example-header">Problem 2: Machine part manufacturing</div>
+            <div class="example-card open">
+                <div class="example-header">Problem 2: Machine Part Manufacturing (Incremental vs. Sunk Cost Decision)</div>
                 <div class="example-content">
-                    <p>A machine part is manufactured at a unit cost of Rs. 40 for material and Rs 15 for direct labor. An investment of Rs. 500,000 in tooling is required. The order requires 3 million pieces. Halfway through the order, a new method of manufacture can be put into effect that will reduce the unit cost to Rs. 34 for material and Rs. 10 for direct labor – but it will require Rs. 100,000 for additional tooling. This tooling will not be useful for fortune orders. Once costs are allocated at 2.5 times the direct labor cost. What if anything, should be done?</p>
+                    <p><strong>Problem Statement:</strong> A machine part is manufactured at a unit cost of Rs. 40 for material and Rs. 15 for direct labor. An initial investment of Rs. 500,000 in tooling was required. The total production order requires 3,000,000 pieces (30 lakh pieces). Halfway through the order (1,500,000 pieces remaining), a new method of manufacture can be put into effect that will reduce unit cost to Rs. 34 for material and Rs. 10 for direct labor—but it will require an immediate expenditure of Rs. 100,000 for additional specialized tooling that cannot be reused for future orders. Overhead costs are allocated internally at 2.5 times the direct labor cost. What, if anything, should be done?</p>
+                    
+                    <div class="formula-box">
+                        Economic Decision Principle:<br>
+                        1. Initial Tooling (Rs. 500,000) = SUNK COST (past decision, completely unrecoverable, ignore!).<br>
+                        2. Allocated Overhead (2.5 × Direct Labor) = Internal accounting artifact. Unless general factory overhead cash outflows genuinely change, focus strictly on real incremental cash flows.<br>
+                        Incremental Cash Flow = (Old Direct Unit Cost − New Direct Unit Cost) × Remaining Volume − New Tooling
+                    </div>
+                    
+                    <p><strong>Step-by-Step Incremental Analysis:</strong></p>
+                    <ol>
+                        <li><strong>Remaining Production Volume:</strong> <code>3,000,000 / 2 = 1,500,000 pieces (15 lakh pieces)</code>.</li>
+                        <li><strong>Current Method Direct Cost per Unit:</strong> <code>Material (Rs. 40) + Labor (Rs. 15) = Rs. 55.00 / piece</code>.</li>
+                        <li><strong>Proposed Method Direct Cost per Unit:</strong> <code>Material (Rs. 34) + Labor (Rs. 10) = Rs. 44.00 / piece</code>.</li>
+                        <li><strong>Direct Savings per Piece:</strong> <code>Rs. 55.00 − Rs. 44.00 = Rs. 11.00 / piece</code> (Rs. 6 material savings + Rs. 5 labor savings).</li>
+                        <li><strong>Total Direct Cost Savings over Order:</strong> <code>1,500,000 pieces × Rs. 11.00 = <strong>Rs. 1,65,00,000</strong> (Rs. 1.65 Crore)</code>.</li>
+                        <li><strong>Incremental Tooling Investment:</strong> <code>Rs. 1,00,000 (Rs. 1 Lakh)</code>.</li>
+                        <li><strong>Net Economic Benefit to Firm:</strong> <code>Rs. 1,65,00,000 − Rs. 1,00,000 = <strong>+Rs. 1,64,00,000 (Rs. 1.64 Crore Net Profit)</strong></code>.</li>
+                    </ol>
+                    
+                    <div class="definition" style="--def-border: var(--color-sec3);">
+                        <strong>Managerial Recommendation:</strong> <strong>Switch to the new manufacturing method immediately.</strong> Spending Rs. 1,00,000 in new tooling generates Rs. 1.65 Crore in direct out-of-pocket cash savings on the remaining 15 lakh pieces, securing a net corporate gain of <strong>Rs. 1.64 Crore</strong>. The original Rs. 500,000 tooling is sunk and must not impede this rational switch.
+                    </div>
                 </div>
             </div>
 
-            <div class="example-card">
-                <div class="example-header">Problem 3: Cold-storage warehouse</div>
+            <div class="example-card open">
+                <div class="example-header">Problem 3: Cold-Storage Warehouse Insulation (Heat Transfer Optimization)</div>
                 <div class="example-content">
-                    <p>In the design of a cold-storage warehouse, the specification call for a minimum heat transfer through the warehouse walls of 30,000 joules/m³, when there us a 30 ºC temperature between the inside and the outside surface of the insulation. The two insulation materials considered as follows:</p>
+                    <p><strong>Problem Statement:</strong> In the design of a cold-storage warehouse, specifications call for a maximum allowable heat transfer rate through the warehouse walls of 30,000 Joules/m²·hr, with a temperature difference ΔT = 30 °C maintained between the inside and outside surfaces. Two insulation materials are considered:</p>
                     <table>
                         <tr>
                             <th>Insulation Material</th>
-                            <th>Cost per cubic meter</th>
-                            <th>Conductivity (J-m/m² – C - hr)</th>
+                            <th>Cost per m³ (C_vol)</th>
+                            <th>Thermal Conductivity k (J·m / m²·°C·hr)</th>
                         </tr>
                         <tr>
                             <td>Rock wool</td>
-                            <td>$12.50</td>
-                            <td>140</td>
+                            <td>$12.50 / m³</td>
+                            <td>140 J·m / m²·°C·hr</td>
                         </tr>
                         <tr>
                             <td>Foamed insulation</td>
-                            <td>$14.00</td>
-                            <td>110</td>
+                            <td>$14.00 / m³</td>
+                            <td>110 J·m / m²·°C·hr</td>
                         </tr>
                     </table>
-                    <p>The basic equation for heat conduction through a wall is</p>
-                    <div class="img-container">
-                        <img src="assets/heat_conduction_formula.png" alt="Basic equation for heat conduction through a wall" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBIZWF0IENvbmR1Y3Rpb24gRm9ybXVsYV08L3RleHQ+PC9zdmc+'">
-                        <div class="img-caption">Click to expand</div>
+                    
+                    <div class="formula-box">
+                        Heat Conduction Governing Equation (Fourier's Law):<br>
+                        q = (k · ΔT) / L &nbsp;&implies;&nbsp; L = (k · ΔT) / q<br>
+                        where q = heat flux (30,000 J/m²·hr), k = thermal conductivity, L = insulation thickness (m), ΔT = 30 °C.<br>
+                        Total Insulation Cost per m² of Wall Area = L × Cost per m³
+                    </div>
+                    
+                    <p><strong>Detailed Comparative Calculations:</strong></p>
+                    <ul>
+                        <li><strong>Option A: Rock Wool Insulation</strong><br>
+                            Required Thickness L_rw = <code>(140 × 30) / 30,000 = 4,200 / 30,000 = 0.14 m (14 cm)</code>.<br>
+                            Material Cost per m² of Wall Area = <code>0.14 m × $12.50 / m³ = <strong>$1.75 / m²</strong></code>.
+                        </li>
+                        <li style="margin-top: 10px;"><strong>Option B: Foamed Insulation</strong><br>
+                            Required Thickness L_foam = <code>(110 × 30) / 30,000 = 3,300 / 30,000 = 0.11 m (11 cm)</code>.<br>
+                            Material Cost per m² of Wall Area = <code>0.11 m × $14.00 / m³ = <strong>$1.54 / m²</strong></code>.
+                        </li>
+                    </ul>
+                    
+                    <div class="definition" style="--def-border: var(--color-sec3);">
+                        <strong>Economic Engineering Verdict:</strong> Select <strong>Foamed Insulation</strong>. Although its unit volumetric price ($14.00/m³) is higher than Rock Wool ($12.50/m³), its superior thermal conductivity (lower k = 110 vs. 140) reduces required wall thickness from 14 cm to 11 cm, resulting in a net cost of <strong>$1.54 / m²</strong> compared to <strong>$1.75 / m²</strong> for Rock Wool—saving <strong>$0.21 per square meter of wall area (12% overall cost reduction)</strong>.
+                    </div>
+                    <p><strong>Fundamental Heat Conduction Law (Fourier's Conduction Equation):</strong></p>
+                    
+                    <div class="formula-box mathjax-formula" style="border-left-color: var(--color-sec3); padding: 16px 20px;">
+                        <div style="font-size: 1.15em; text-align: center; margin-bottom: 10px;">
+                            $$Q = \frac{k \cdot A \cdot (T_1 - T_2)}{L} = \frac{k \cdot A \cdot \Delta T}{L}$$
+                        </div>
+                        <div style="font-size: 0.95em; color: #cbd5e1; text-align: center; margin: 8px 0;">
+                            Expressing as <strong>Heat Flux per unit wall surface area</strong> (\(<span class="sym-tip" data-tip="Cross-sectional surface area of wall: A = 1 m²">A</span> = 1\,\text{m}^2\)):
+                        </div>
+                        <div style="font-size: 1.15em; text-align: center; color: #ffe66d;">
+                            $$q = \frac{k \cdot \Delta T}{L} \iff L = \frac{k \cdot \Delta T}{q}$$
+                        </div>
+                        <div style="margin-top: 12px; font-size: 0.85em; color: #94a3b8; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+                            • <span class="sym-tip" data-tip="Heat flux: Rate of heat energy transfer per unit wall area (J/m²·hr)">q</span>: Heat transmission rate (\(30,000\,\text{J/m}^2\cdot\text{hr}\))<br>
+                            • <span class="sym-tip" data-tip="Thermal conductivity: Material property measuring heat flow rate per unit thickness and temperature gradient (J·m / m²·°C·hr)">k</span>: Thermal conductivity coefficient (\(140\) for Rock Wool vs. \(110\) for Foamed Plastic)<br>
+                            • <span class="sym-tip" data-tip="Temperature differential: Driving thermal gradient across the wall (T_ambient − T_storage = 30°C)">\(\Delta T\)</span>: Temperature difference across wall boundaries (\(T_1 - T_2 = 30^\circ\text{C}\))<br>
+                            • <span class="sym-tip" data-tip="Wall insulation thickness required to limit heat loss to allowable flux q (meters)">L</span>: Required thickness of the insulating material (\(\text{m}\))
+                        </div>
+                    </div>
+
+                    <!-- Interactive Thermal Gradient Vector Illustration (Fixes Snap 1) -->
+                    <div style="margin: 25px auto; max-width: 680px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+                        <div style="font-size: 0.82rem; font-weight: 700; color: #ffe66d; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Thermal Conduction Mechanics & Wall Thickness Tradeoff</span>
+                            <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 400;">Vector Schema</span>
+                        </div>
+                        <svg viewBox="0 0 600 240" style="width: 100%; height: auto; display: block; font-family: -apple-system, sans-serif;">
+                            <defs>
+                                <linearGradient id="heatGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#ff6b6b" stop-opacity="0.85"/>
+                                    <stop offset="100%" stop-color="#3498db" stop-opacity="0.85"/>
+                                </linearGradient>
+                                <linearGradient id="wallFoam" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#2c3e50"/>
+                                    <stop offset="100%" stop-color="#1a252f"/>
+                                </linearGradient>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 8 5 L 0 9 z" fill="#ffe66d"/>
+                                </marker>
+                            </defs>
+                            
+                            <!-- Ambient Hot Region -->
+                            <rect x="20" y="30" width="120" height="170" rx="8" fill="rgba(255, 107, 107, 0.12)" stroke="rgba(255, 107, 107, 0.35)" stroke-width="1.5"/>
+                            <text x="80" y="70" fill="#ff6b6b" font-weight="700" font-size="14" text-anchor="middle">Ambient / Outside</text>
+                            <text x="80" y="105" fill="#ffffff" font-weight="800" font-size="22" text-anchor="middle">T₁ = 30°C</text>
+                            <text x="80" y="130" fill="#94a3b8" font-size="11" text-anchor="middle">Warm Boundary</text>
+                            
+                            <!-- Insulating Wall Cross Section -->
+                            <rect x="180" y="30" width="240" height="170" rx="6" fill="url(#wallFoam)" stroke="#ffe66d" stroke-width="2"/>
+                            
+                            <!-- Temperature Gradient Sloping Line -->
+                            <line x1="180" y1="50" x2="420" y2="180" stroke="url(#heatGrad)" stroke-width="3.5" stroke-dasharray="2,2"/>
+                            
+                            <!-- Thermal Conductivity & Flux Inside Wall -->
+                            <text x="300" y="80" fill="#ffe66d" font-weight="700" font-size="14" text-anchor="middle">Insulating Wall (k)</text>
+                            <text x="300" y="105" fill="#e2e8f0" font-size="12" text-anchor="middle">Foamed: L = 11 cm (k = 110)</text>
+                            <text x="300" y="125" fill="#94a3b8" font-size="12" text-anchor="middle">Rock Wool: L = 14 cm (k = 140)</text>
+                            
+                            <!-- Heat Flux Vector Arrow -->
+                            <line x1="70" y1="170" x2="520" y2="170" stroke="#ffe66d" stroke-width="3" marker-end="url(#arrow)"/>
+                            <text x="300" y="162" fill="#ffe66d" font-weight="700" font-size="12" text-anchor="middle">Heat Flux q = 30,000 J/m²·hr (Allowable Max)</text>
+                            
+                            <!-- Thickness Dimension L -->
+                            <line x1="180" y1="218" x2="420" y2="218" stroke="#94a3b8" stroke-width="1.5"/>
+                            <line x1="180" y1="210" x2="180" y2="226" stroke="#94a3b8" stroke-width="1.5"/>
+                            <line x1="420" y1="210" x2="420" y2="226" stroke="#94a3b8" stroke-width="1.5"/>
+                            <text x="300" y="214" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Thickness L = (k · ΔT) / q</text>
+                            
+                            <!-- Cold Storage Region -->
+                            <rect x="460" y="30" width="120" height="170" rx="8" fill="rgba(52, 152, 219, 0.12)" stroke="rgba(52, 152, 219, 0.35)" stroke-width="1.5"/>
+                            <text x="520" y="70" fill="#3498db" font-weight="700" font-size="14" text-anchor="middle">Cold Storage</text>
+                            <text x="520" y="105" fill="#ffffff" font-weight="800" font-size="22" text-anchor="middle">T₂ = 0°C</text>
+                            <text x="520" y="130" fill="#94a3b8" font-size="11" text-anchor="middle">Refrigerated Interior</text>
+                        </svg>
+                        <div style="font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 10px; font-style: italic;">
+                            Figure 1.1: Steady-state 1-D heat conduction through cold-storage wall. Lower thermal conductivity \(k\) steepens temperature gradient, minimizing required insulation thickness \(L\).
+                        </div>
                     </div>
                 </div>
             </div>
@@ -772,6 +1446,7 @@
                 <button class="nav-btn next-btn">Next Section</button>
             </div>
         </div>
+
 
         <!-- SECTION 4 -->
         <div id="sec-costs1" class="section-container">
@@ -792,10 +1467,55 @@
                 <strong>Total cost:</strong> It is the summation of fixed cost and variable cost.
             </div>
             
-            <p>The total cost can be graphically represented as below if the variable cost is nonlinear:</p>
+            <p><strong>Graphical Decomposition of Engineering Total Cost & Nonlinear Dynamics:</strong></p>
+            <div style="margin: 25px auto; max-width: 680px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+                <div style="font-size: 0.82rem; font-weight: 700; color: var(--color-sec4); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>Nonlinear Total Cost Model & Marginal Cost Tangent Slope</span>
+                    <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 400;">Analytical Diagram</span>
+                </div>
+                <svg viewBox="0 0 600 320" style="width: 100%; height: auto; display: block; font-family: -apple-system, sans-serif;">
+                    <defs>
+                        <marker id="arrowAxis" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 8 5 L 0 9 z" fill="#94a3b8"/>
+                        </marker>
+                    </defs>
+                    <!-- Axes -->
+                    <line x1="60" y1="280" x2="560" y2="280" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowAxis)"/>
+                    <line x1="60" y1="280" x2="60" y2="30" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowAxis)"/>
+                    <text x="560" y="305" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="end">Production Output Volume (x)</text>
+                    <text x="50" y="25" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="start">Cost (₹ / $)</text>
+                    
+                    <!-- Fixed Cost Line (FC) -->
+                    <line x1="60" y1="200" x2="530" y2="200" stroke="#f39c12" stroke-width="2.5" stroke-dasharray="6,4"/>
+                    <text x="535" y="204" fill="#f39c12" font-size="12" font-weight="700">Fixed Cost (FC = F)</text>
+                    
+                    <!-- Variable Cost Curve (VC) -->
+                    <path d="M 60 280 C 180 270, 260 230, 360 170 C 420 130, 480 80, 520 40" fill="none" stroke="#3498db" stroke-width="2.5"/>
+                    <text x="525" y="44" fill="#3498db" font-size="12" font-weight="700">Variable Cost VC(x)</text>
+                    
+                    <!-- Total Cost Curve TC = FC + VC -->
+                    <path d="M 60 200 C 180 190, 260 150, 360 90 C 420 50, 470 20, 500 10" fill="none" stroke="#2ecc71" stroke-width="3.5"/>
+                    <text x="490" y="22" fill="#2ecc71" font-size="13" font-weight="800">Total Cost TC(x) = F + VC(x)</text>
+                    
+                    <!-- Tangent Slope Point for Marginal Cost -->
+                    <circle cx="360" cy="90" r="5" fill="#e74c3c"/>
+                    <line x1="260" y1="150" x2="450" y2="35" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4,4"/>
+                    <text x="375" y="105" fill="#e74c3c" font-size="11" font-weight="700">Point (x₁, TC₁)</text>
+                    <text x="375" y="122" fill="#e74c3c" font-size="11">Tangent Slope = Marginal Cost (MC = dTC/dx)</text>
+                    
+                    <!-- Vertical guide at x1 -->
+                    <line x1="360" y1="90" x2="360" y2="280" stroke="rgba(255,255,255,0.2)" stroke-dasharray="3,3"/>
+                    <text x="360" y="298" fill="#e2e8f0" font-size="11" text-anchor="middle">x₁</text>
+                </svg>
+                <div style="font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 10px; font-style: italic;">
+                    Figure 1.2: Composition of Total Cost with nonlinear variable costs. Marginal Cost (\(MC\)) represents instantaneous slope \(\frac{dTC}{dx}\) at output \(x_1\).
+                </div>
+            </div>
+
+            <!-- Textbook Scan Embed: Total Cost Graph -->
             <div class="img-container">
-                <img src="assets/total_cost_graph.png" alt="Total Cost Graph" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBUb3RhbCBDb3N0IEdyYXBoXTwvdGV4dD48L3N2Zz4='">
-                <div class="img-caption">Click to expand</div>
+                <img src="assets/total_cost_graph.png" alt="Textbook Scan: Engineering Total Cost Graph & Marginal Tangent" loading="lazy">
+                <div class="img-caption">Textbook Figure: Nonlinear Total Cost Decomposition & Marginal Cost Dynamics (Click to Expand Fullscreen)</div>
             </div>
 
             <div class="definition" style="--def-border: var(--color-sec4);">
@@ -844,26 +1564,94 @@
                         </tr>
                     </table>
                     
-                    <p>Develop an expression of Sheetal’s total fixed and total variable cost for chartering this trip.</p>
-                    <p>Sheetal developed an overall total cost equation for his business expenses. Now, she wants to evaluate the potential to make money from this chartered bus trip if she sets the price of each ticket at Rs. 2500</p>
-                    <p>From this the above exercise we can derive the total cost and total revenue equations and these will be used to calculate the profit – loss breakeven chart.</p>
+                    <p><strong>Step-by-Step Mathematical Derivation for Sheetal's Chartered Trip:</strong></p>
+                    <div class="formula-box">
+                        1. Total Fixed Costs (F):<br>
+                        F = Bus Rental (Rs. 7,200) + Gas Expense (Rs. 6,750) + Other Fuels (Rs. 1,800) + Driver Fee (Rs. 4,500)<br>
+                        F = 7,200 + 6,750 + 1,800 + 4,500 = <strong>Rs. 20,250</strong> (Invariant with number of attendees).<br><br>
+                        2. Unit Variable Cost (V or v):<br>
+                        V = Event Ticket (Rs. 1,125 / person) + Refreshments (Rs. 675 / person)<br>
+                        V = 1,125 + 675 = <strong>Rs. 1,800 per customer</strong>.<br><br>
+                        3. Governing Total Cost (TC) & Total Revenue (TR) Equations:<br>
+                        Total Cost: TC = F + V · x = 20,250 + 1,800 · x<br>
+                        Total Revenue: TR = P · x = 2,500 · x &nbsp; (where P = Ticket Price = Rs. 2,500)<br><br>
+                        4. Break-Even Equation (TR = TC):<br>
+                        2,500 · x = 20,250 + 1,800 · x &nbsp;&implies;&nbsp; (2,500 − 1,800) · x = 20,250<br>
+                        700 · x = 20,250 &nbsp;&implies;&nbsp; x_BE = 20,250 / 700 = <strong>28.93 passengers</strong>.
+                    </div>
+                    
+                    <p>Because passenger tickets cannot be sold in fractional units, Sheetal must book at least <strong>29 full-paying passengers</strong> to cover all fixed and variable costs and break even.</p>
                     
                     <div class="definition" style="--def-border: var(--color-sec4);">
-                        <strong>Breakeven point:</strong> The level of business activity at which the total cost to provide the product (goods or service) are equal to the revenue generated by providing the service. This is the point at which one just break even.
+                        <strong>Breakeven Point Summary:</strong> At exactly <code>x = 29</code> passengers, Revenue = 29 × Rs. 2,500 = Rs. 72,500, and Total Cost = Rs. 20,250 + (29 × Rs. 1,800) = Rs. 72,450, yielding a net profit of +Rs. 50. Every passenger beyond 28 contributes a net profit of <code>P − V = Rs. 700 / person</code> (the Unit Contribution Margin).
                     </div>
                     
                     <div class="definition" style="--def-border: var(--color-sec4);">
-                        <strong>Profit region:</strong> The output level that is greater than breakeven point, the total revenue is greater than total costs.
+                        <strong>Profit Region:</strong> The output range where volume <code>x > 28.93</code> (i.e. x ≥ 29). Total Revenue exceeds Total Costs (TR > TC).
                     </div>
                     
                     <div class="definition" style="--def-border: var(--color-sec4);">
-                        <strong>Loss region:</strong> The output level is less than the breakeven point, where total costs are greater than total revenue.
+                        <strong>Loss Region:</strong> The output range where volume <code>x < 28.93</code> (i.e. x ≤ 28). Total Costs exceed Total Revenue (TC > TR).
                     </div>
                     
-                    <p>This can be graphically represented as:</p>
-                    <div class="img-container">
-                        <img src="assets/breakeven_chart.png" alt="Breakeven Chart" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBCcmVha2V2ZW4gQ2hhcnRdPC90ZXh0Pjwvc3ZnPg=='">
-                        <div class="img-caption">Click to expand</div>
+                    <p><strong>Graphical Break-Even Architecture & Profit/Loss Horizons:</strong></p>
+                    <div style="margin: 25px auto; max-width: 680px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+                        <div style="font-size: 0.82rem; font-weight: 700; color: var(--color-sec4); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Linear Break-Even Model (Sheetal's Chartered Bus Drill)</span>
+                            <span style="font-size: 0.72rem; color: #4ecdc4; font-weight: 600;">x_BE = 28.93 ≈ 29 Passengers</span>
+                        </div>
+                        <svg viewBox="0 0 600 340" style="width: 100%; height: auto; display: block; font-family: -apple-system, sans-serif;">
+                            <defs>
+                                <marker id="arrowBE" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 8 5 L 0 9 z" fill="#94a3b8"/>
+                                </marker>
+                            </defs>
+                            
+                            <!-- Shaded Loss Region (0 to 28.93) -->
+                            <polygon points="70,230 330,120 70,280" fill="rgba(231, 76, 60, 0.15)"/>
+                            <text x="180" y="225" fill="#e74c3c" font-size="12" font-weight="700">LOSS REGION (TC &gt; TR)</text>
+                            
+                            <!-- Shaded Profit Region (28.93 to 50) -->
+                            <polygon points="330,120 520,30 520,70" fill="rgba(46, 204, 113, 0.18)"/>
+                            <text x="420" y="75" fill="#2ecc71" font-size="12" font-weight="700">PROFIT REGION (TR &gt; TC)</text>
+
+                            <!-- Axes -->
+                            <line x1="70" y1="280" x2="560" y2="280" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowBE)"/>
+                            <line x1="70" y1="280" x2="70" y2="25" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowBE)"/>
+                            <text x="560" y="305" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="end">Passengers (x)</text>
+                            <text x="65" y="20" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="start">Revenue &amp; Cost (₹)</text>
+
+                            <!-- Fixed Cost Horizontal Line (F = 20,250) -->
+                            <line x1="70" y1="230" x2="540" y2="230" stroke="#f39c12" stroke-width="2.5" stroke-dasharray="6,4"/>
+                            <text x="545" y="234" fill="#f39c12" font-size="11" font-weight="700">Fixed Cost F = ₹20,250</text>
+
+                            <!-- Total Cost Line TC = 20,250 + 1,800*x -->
+                            <line x1="70" y1="230" x2="520" y2="70" stroke="#ff7675" stroke-width="3"/>
+                            <text x="525" y="80" fill="#ff7675" font-size="12" font-weight="700">TC = 20,250 + 1,800·x</text>
+
+                            <!-- Total Revenue Line TR = 2,500*x -->
+                            <line x1="70" y1="280" x2="520" y2="30" stroke="#00cec9" stroke-width="3.5"/>
+                            <text x="525" y="35" fill="#00cec9" font-size="12" font-weight="800">TR = 2,500·x</text>
+
+                            <!-- Break-Even Intersection Point (28.93, 120) -->
+                            <circle cx="330" cy="120" r="6" fill="#ffeaa7" stroke="#fdcb6e" stroke-width="3"/>
+                            <line x1="330" y1="120" x2="330" y2="280" stroke="#ffeaa7" stroke-dasharray="4,4" stroke-width="1.5"/>
+                            <line x1="70" y1="120" x2="330" y2="120" stroke="#ffeaa7" stroke-dasharray="4,4" stroke-width="1.5"/>
+
+                            <!-- Callout Labels -->
+                            <text x="330" y="300" fill="#ffeaa7" font-size="12" font-weight="700" text-anchor="middle">x_BE = 28.93 (29 pax)</text>
+                            <text x="60" y="124" fill="#ffeaa7" font-size="11" font-weight="700" text-anchor="end">₹72,325</text>
+                            <text x="345" y="138" fill="#ffffff" font-size="11" font-weight="700">Break-Even Point (TR = TC)</text>
+                        </svg>
+                        <div style="font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 10px; font-style: italic;">
+                            Figure 1.3: Break-Even chart demonstrating unit contribution margin \(CM = P - V = \text{₹}700/\text{passenger}\) and required volume \(x_{BE} = 28.93 \implies 29\) passengers to eliminate economic loss.
+                        </div>
+
+                        <!-- Textbook Scan Embed: Break-Even Chart -->
+                        <div class="img-container" style="margin-top: 18px;">
+                            <img src="assets/breakeven_chart.png" alt="Textbook Scan: Break-Even Volume & Revenue Chart" loading="lazy">
+                            <div class="img-caption">Textbook Figure: Linear Break-Even Chart & Contribution Margin Dynamics (Click to Expand Fullscreen)</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -873,6 +1661,7 @@
                 <button class="nav-btn next-btn">Next Section</button>
             </div>
         </div>
+
 
         <!-- SECTION 5 -->
         <div id="sec-costs2" class="section-container">
@@ -901,6 +1690,14 @@
                     </table>
                     
                     <p>Looking at this, the pricing manager has concluded that the price should be set at Rs. 7,20,000. This is the money that the firm has “tied-up” in the lot of old pumps (6,30,000+90,000), and it was reasoned that the company should at least recover this cost. Furthermore, the pricing manager has argued that an Rs. 720000 price would be Rs. 1,35,000 less than the list price from 3 years ago, and it would be Rs.3,60,000 less than what a lot of new pumps would cost (Rs. 1,080,000 – Rs. 7,20,000). What would be your advice on price?</p>
+                    
+                    <div class="formula-box">
+                        Economic Analysis & Professional Advice:<br>
+                        1. Sunk Cost Fallacy: The initial purchase price of Rs. 6,30,000 and the accumulated storage costs of Rs. 90,000 (totaling Rs. 7,20,000) are past, irreversible historical outlays. They are SUNK COSTS and must be completely ignored in pricing decisions.<br>
+                        2. Market Reality: Potential buyers determine market value solely by functional utility and technological alternatives. Because newer pumps have made these old pumps obsolete, customers will not pay Rs. 7,20,000.<br>
+                        3. Opportunity Cost: Holding the pumps incurs continued storage costs and foregoes immediate liquid capital.<br>
+                        <strong>Clear Advice on Price:</strong> Liquidate immediately at today's market-clearing price of approximately <strong>Rs. 2,70,000</strong>. Selling now stems further storage cash drain and frees up Rs. 2,70,000 of productive working capital.
+                    </div>
                 </div>
             </div>
 
@@ -951,6 +1748,16 @@
                             <td>500</td>
                         </tr>
                     </table>
+                    
+                    <div class="formula-box">
+                        Incremental Cost Comparison (Model B minus Model A):<br>
+                        • Purchase Price Delta: $17,500 − $10,000 = <strong>+$7,500</strong> (higher initial capital outlay)<br>
+                        • Installation Cost Delta: $5,000 − $3,500 = <strong>+$1,500</strong> (higher commissioning cost)<br>
+                        • Annual Maintenance Cost Delta: $750 − $2,500 = <strong>−$1,750 / year</strong> (recurring operating savings!)<br>
+                        • Annual Utility Expense Delta: $2,000 − $1,200 = <strong>+$800 / year</strong> (higher power consumption)<br>
+                        • End-of-Life Disposal Cost Delta: $500 − $700 = <strong>−$200</strong> (salvage/disposal cost savings)<br>
+                        • Net Annual Operational Difference: −$1,750 + $800 = <strong>−$950 / year</strong> net operating savings.
+                    </div>
                 </div>
             </div>
 
@@ -959,13 +1766,162 @@
             </div>
 
             <div class="definition" style="--def-border: var(--color-sec5);">
-                <strong>Life cycle cost:</strong> The products, goods and services designed by engineers all progress through a life cycle.
+                <strong>Life Cycle Cost (LCC):</strong> The comprehensive evaluation of all prospective costs associated with a physical product, system, or facility across its entire lifespan—from initial concept definition through final decommissioning and environmental remediation.
             </div>
             
-            <p>The typical life cycle of the product can be tabulated as:</p>
-            <div class="img-container">
-                <img src="assets/life_cycle_table.png" alt="Life cycle of the product" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+W0ltYWdlIFBsYWNlaG9sZGVyOiBMaWZlIEN5Y2xlIFRhYmxlXTwvdGV4dD48L3N2Zz4='">
-                <div class="img-caption">Click to expand</div>
+            <h2>Six Phases of the Engineering Life Cycle</h2>
+            <ol>
+                <li><strong>Phase 1: Needs Assessment & Feasibility:</strong> Identifying unfulfilled operational requirements, market gaps, and technical feasibility.</li>
+                <li><strong>Phase 2: Conceptual / Preliminary Design:</strong> Developing alternative architectural concepts, evaluating baseline trade-offs, and scoping preliminary configurations.</li>
+                <li><strong>Phase 3: Detailed Design & Development:</strong> Finalizing structural drawings, material specifications, electrical schematics, and prototype testing.</li>
+                <li><strong>Phase 4: Production & Construction:</strong> Procuring tooling, raw materials, manufacturing fixtures, assembly line fabrication, and civil erection.</li>
+                <li><strong>Phase 5: Operational Use & System Support:</strong> Deploying the asset, operating labor, recurring maintenance, energy consumption, spares, and warranty service.</li>
+                <li><strong>Phase 6: Retirement, Decommissioning & Disposal:</strong> Dismantling facilities, recycling materials, hazardous waste mitigation, and site restoration.</li>
+            </ol>
+            
+            <div class="definition" style="--def-border: var(--color-sec5);">
+                <strong>Key Principles in Life-Cycle Costing:</strong><br>
+                1. <em>Later change = Higher cost:</em> Modifying a design downstream during manufacturing or field deployment costs exponentially more than revising drawings during conceptual design.<br>
+                2. <em>Early decisions lock in downstream costs:</em> Upwards of 70% to 80% of total life-cycle operating, maintenance, and disposal costs are predetermined ("locked in") by architectural choices finalized during the first two phases.
+            </div>
+            
+            <p><strong>Comprehensive Engineering Life-Cycle Cost & Commitment Matrix:</strong></p>
+            <div style="margin: 25px 0; background: #1a1b1e; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                <table>
+                    <thead>
+                        <tr style="background: rgba(255, 132, 124, 0.15);">
+                            <th>Life-Cycle Phase</th>
+                            <th>Key Engineering Activities</th>
+                            <th>Cumulative Cost Committed ("Locked In")</th>
+                            <th>Cumulative Cost Incurred (Spent)</th>
+                            <th>Cost to Alter Design</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1. Needs Assessment</strong></td>
+                            <td>Problem definition, market survey, operational criteria</td>
+                            <td><span style="color: #4ecdc4; font-weight: bold;">5%</span></td>
+                            <td><span style="color: #94a3b8;">1%</span></td>
+                            <td><span style="color: #2ecc71;">Extremely Low (1×)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>2. Conceptual Design</strong></td>
+                            <td>Feasibility studies, trade studies, architecture selection</td>
+                            <td><span style="color: #ffe66d; font-weight: bold;">70% - 80%</span> (Decisive Phase)</td>
+                            <td><span style="color: #94a3b8;">5%</span></td>
+                            <td><span style="color: #2ecc71;">Very Low (3×)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>3. Detailed Design</strong></td>
+                            <td>CAD modeling, FEA simulation, prototyping, specs</td>
+                            <td><span style="color: #f39c12; font-weight: bold;">85%</span></td>
+                            <td><span style="color: #94a3b8;">15%</span></td>
+                            <td><span style="color: #f39c12;">Moderate (10×)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>4. Production / Build</strong></td>
+                            <td>Tooling, machining, fabrication, QA, facility erection</td>
+                            <td><span style="color: #e67e22; font-weight: bold;">95%</span></td>
+                            <td><span style="color: #f39c12;">40%</span></td>
+                            <td><span style="color: #e67e22;">High (50× - 100×)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>5. Operation & Support</strong></td>
+                            <td>Field deployment, scheduled maintenance, spares, fuel/power</td>
+                            <td><span style="color: #e74c3c; font-weight: bold;">98%</span></td>
+                            <td><span style="color: #e74c3c;">90% - 95%</span> (Bulk of cash spent)</td>
+                            <td><span style="color: #e74c3c;">Extremely High (500×)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>6. Retirement & Disposal</strong></td>
+                            <td>Decommissioning, recycling, hazardous remediation, salvage</td>
+                            <td><span style="color: #9b59b6; font-weight: bold;">100%</span></td>
+                            <td><span style="color: #9b59b6;">100%</span></td>
+                            <td><span style="color: #e74c3c;">Prohibitive / Unfeasible</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="padding: 12px 18px; font-size: 0.80rem; color: #94a3b8; font-style: italic; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2);">
+                    Takeaway: Conceptual and Detailed Design determine up to 85% of total cumulative life-cycle expenses despite accounting for only ~5% of actual cash expenditures.
+                </div>
+            </div>
+
+            <!-- Textbook Scan Embed: Life-Cycle Table -->
+            <div class="img-container" style="margin: 30px 0;">
+                <img src="assets/life_cycle_table.png" alt="Textbook Scan: Life-Cycle Cost Commitment vs Incurred Expenditures" loading="lazy">
+                <div class="img-caption">Textbook Table: Life-Cycle Cost Commitment vs. Actual Incurred Expenditure Across 6 Phases (Click to Expand Fullscreen)</div>
+            </div>
+
+            <!-- Printing Department Case Study & Executive Memo -->
+            <div class="example-card open" style="margin-top: 35px; border-left: 4px solid var(--color-sec5);">
+                <div class="example-header">Case Study & Executive Memo: In-House Printing vs. Commercial Outsourcing (Make-or-Buy Decision)</div>
+                <div class="example-content">
+                    <p><strong>Context & Conflict:</strong> The shipping department foreman discovered an outside commercial printer willing to produce 1,000 copies of announcements for Rs. 2,066, whereas the internal in-house 3-person printing department charges user departments Rs. 2,381 per 1,000 copies. The shipping department requires 30,000 copies per month and decided to outsource all printing. The in-house printing department objected. The General Manager assigned an engineering economist to conduct a comprehensive financial review.</p>
+                    
+                    <h3 style="color: var(--color-sec5);">1. Financial Cost Analysis (Per 1,000 Copies)</h3>
+                    <table>
+                        <tr>
+                            <th>Cost Category</th>
+                            <th>In-House Internal Charge</th>
+                            <th>Commercial Outside Quote</th>
+                            <th>Net Cash Impact on Entire Enterprise</th>
+                        </tr>
+                        <tr>
+                            <td>Direct Labor</td>
+                            <td>Rs. 684</td>
+                            <td>—</td>
+                            <td>Saved only if staff hours/wages are cut; otherwise fixed corporate cost.</td>
+                        </tr>
+                        <tr>
+                            <td>Materials & Supplies</td>
+                            <td>Rs. 882</td>
+                            <td>—</td>
+                            <td>True variable cost: fully saved if printing is outsourced.</td>
+                        </tr>
+                        <tr>
+                            <td>Allocated Floor Overhead (200 m² @ Rs. 25/m²)</td>
+                            <td>Rs. 815</td>
+                            <td>—</td>
+                            <td><strong>NOT SAVED:</strong> Factory building rent, lighting, heat, and space remain identical.</td>
+                        </tr>
+                        <tr>
+                            <td>Outside Vendor Invoice Fee</td>
+                            <td>—</td>
+                            <td>Rs. 2,066</td>
+                            <td><strong>New cash outflow</strong> leaving corporate bank accounts.</td>
+                        </tr>
+                        <tr style="font-weight: bold; background: rgba(255,255,255,0.08);">
+                            <td>Total Accounted Figures</td>
+                            <td>Rs. 2,381</td>
+                            <td>Rs. 2,066</td>
+                            <td>External rate appears cheaper only due to overhead allocation flaw!</td>
+                        </tr>
+                    </table>
+
+                    <div class="formula-box">
+                        Incremental Cash Flow Evaluation (Enterprise Perspective):<br>
+                        • Best-Case Incremental In-House Outlay: Direct Labor (Rs. 684) + Materials (Rs. 882) = <strong>Rs. 1,566 per 1,000 copies</strong>.<br>
+                        • Real Loss per 1,000 Copies if Outsourced: Paying Rs. 2,066 externally to avoid Rs. 1,566 internally = <strong>Extra Loss of Rs. 500 per 1,000 copies</strong>.<br>
+                        • Monthly Enterprise Deficit at 30,000 copies/month:<br>
+                        30 × Rs. 500 = <strong>Rs. 15,000 Net Cash Loss per Month</strong>.<br><br>
+                        • Note on Fixed Staff Salaries: If the 3 printing staff are salaried and cannot be released for a 30,000-copy reduction, direct labor is also fixed! The firm only saves Rs. 882 in paper/ink while spending Rs. 2,066 outside, suffering a catastrophic net cash loss of <strong>Rs. 1,184 per 1,000 copies</strong>, or <strong>Rs. 35,520 per month</strong>!
+                    </div>
+
+                    <h3 style="color: var(--color-sec5);">2. Root Cause of Managerial Conflict</h3>
+                    <p>The shipping department foreman made a decision that was locally rational under flawed transfer pricing, but detrimental to the corporation as a whole:</p>
+                    <ul>
+                        <li><strong>Unavoidable Overhead Allocation Trap:</strong> The Rs. 815 overhead fee is a cost accounting apportionment of fixed facility floor space (200 m²). If work is outsourced, those building lease and maintenance costs do not vanish; they simply get reallocated to burden other departments.</li>
+                        <li><strong>Distorted Transfer Pricing:</strong> Bundling fixed facility overhead into variable per-unit job rates artificially penalizes internal capacity utilization and leads to destructive sub-optimization.</li>
+                    </ul>
+
+                    <h3 style="color: var(--color-sec5);">3. Recommendations to the General Manager</h3>
+                    <ol>
+                        <li><strong>Overrule the Shipping Department:</strong> Mandate that all 30,000 monthly copies remain in-house, immediately preventing an annual cash drain of Rs. 1,80,000 to Rs. 4,26,240.</li>
+                        <li><strong>Restructure Internal Transfer Pricing:</strong> Bill internal user departments strictly for incremental variable costs (materials and variable labor, ~Rs. 1,566/thousand copies) so internal rates reflect true economic costs. Absorb fixed facility overhead centrally or levy a fixed monthly facility retainer.</li>
+                        <li><strong>Institute Corporate Outsourcing Approval Controls:</strong> Mandate that no department may outsource tasks for which internal company capacity exists without an engineering economy review verifying genuine cash savings.</li>
+                    </ol>
+                </div>
             </div>
 
             <p>Life cycle costing refers to the concept of designing products, goods and services with a full and explicit recognition of the associated costs over the various phrases of their life cycles. Two key concept in life-cycle costing are that ‘the later design changes are made, the higher the cost’, and that decisions made early in the life cycle tend to “lock in” cost that are incurred later. The downstream product (products created using raw materials from earlier production stages) changes are more costly and upstream changes (focus on raw material, design, foundational development) are easier (and less costly) to make.</p>
@@ -977,6 +1933,7 @@
                 <button class="nav-btn next-btn">Next Section</button>
             </div>
         </div>
+
 
         <!-- SECTION 6: UNIT I - INFLATION & PRICE CHANGE -->
         <div id="sec-inflation" class="section-container">
@@ -1109,6 +2066,7 @@
                 <button class="nav-btn next-btn">Next Section</button>
             </div>
         </div>
+
 
         <!-- SECTION 7: UNIT II - PRESENT WORTH ANALYSIS -->
         <div id="sec-pw" class="section-container">
@@ -1274,6 +2232,7 @@
             </div>
         </div>
 
+
         <!-- SECTION 8: UNIT III - UNCERTAINTY IN FUTURE EVENTS -->
         <div id="sec-uncertainty" class="section-container">
             <h1>Unit III: Uncertainty in Future Events</h1>
@@ -1408,6 +2367,7 @@
                 <button class="nav-btn next-btn">Next Section</button>
             </div>
         </div>
+
 
         <!-- SECTION 9: TIME VALUE OF MONEY & INTEREST FORMULAS -->
         <div id="sec-tvm" class="section-container">
@@ -1728,6 +2688,7 @@
             </div>
         </div>
 
+
         <!-- SECTION 10: EXAM PRACTICE & REVIEW SOLUTIONS (MODULES 1 & 2) -->
         <div id="sec-exam-qa" class="section-container">
             <h1>Section 10: Exam Practice & Model Solutions</h1>
@@ -2005,6 +2966,822 @@
 
             <div class="bottom-nav">
                 <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION 11: MODULE 2 - CASH FLOW AND RATE OF RETURN -->
+        <div id="sec-mod2-cfd" class="section-container">
+            <h1>Module 2: Cash Flow and Rate of Return Analysis</h1>
+            <p>Module 2 establishes the quantitative framework for visualizing, evaluating, and comparing engineering capital investments over time. By translating physical engineering designs into standardized cash flow schedules, engineers apply rigorous rate of return and benefit-cost criteria to select optimal, economically justified projects.</p>
+
+            <h2>2.1 Cash Flow Diagrams (CFD)</h2>
+            <div class="definition" style="--def-border: var(--color-sec11);">
+                <strong>Cash Flow Diagram (CFD):</strong> A graphical representation of cash receipts (inflows) and disbursements (outflows) plotted along a discrete chronological timeline.
+            </div>
+            <p><strong>Standard Drawing Conventions:</strong></p>
+            <ul>
+                <li><strong>Time Axis:</strong> A horizontal ray divided into equal interest periods (typically years, quarters, or months), starting at present time zero (<code>t = 0</code>).</li>
+                <li><strong>Cash Inflows (Revenues / Benefits / Savings):</strong> Represented by vertical upward-pointing arrows (↑), designating positive financial additions.</li>
+                <li><strong>Cash Outflows (Costs / Capital Disbursements / Expenses):</strong> Represented by vertical downward-pointing arrows (↓), designating financial expenditures.</li>
+                <li><strong>End-of-Year Convention:</strong> All operational revenues, labor expenses, and utility disbursements occurring continuously throughout year <em>t</em> are consolidated and treated as a single net lump sum transacted on the final business day of year <em>t</em>.</li>
+            </ul>
+
+            <h2>2.2 Categories of Project Cash Flows</h2>
+            <ol>
+                <li><strong>Initial Capital Expenditure (First Cost, P₀):</strong> Total upfront capital required at <code>t = 0</code> to procure land, construct civil facilities, purchase machinery, and commission operational plant systems.</li>
+                <li><strong>Operations and Maintenance (O&M) Costs:</strong> Periodic recurring expenses incurred to keep physical systems operating (direct labor, consumable materials, electrical energy, preventative maintenance, insurance).</li>
+                <li><strong>Terminal Salvage Value (SV or S):</strong> Net liquidating cash flow realized at the conclusion of an asset's useful economic life through equipment resale, asset scrapping, or raw material recovery.</li>
+                <li><strong>Periodic Operating Revenues or Cost Savings (R_t):</strong> Gross inflows generated from product commercialization, utility user fees, or documented annual operating expense reductions.</li>
+                <li><strong>Major Overhauls and Retooling:</strong> Substantial non-recurring capital outlays occurring at multi-year intervals (e.g. turbine refurbishment every 6 years) to extend equipment operational life.</li>
+            </ol>
+
+            <h2>2.3 Five Canonical Cash Flow Patterns</h2>
+            <ul>
+                <li><strong>Single Payment:</strong> An isolated lump sum occurring at one specific point in time (Present sum <em>P</em> at <code>t = 0</code> or Future sum <em>F</em> at <code>t = n</code>).</li>
+                <li><strong>Uniform Annuity Series (A):</strong> Equal, identical cash flows transacted at the end of every compounding period for <em>n</em> consecutive periods.</li>
+                <li><strong>Linear Arithmetic Gradient (G):</strong> Cash flows that increase or decrease by a constant monetary increment <em>G</em> each successive period (e.g. ₹200, ₹250, ₹300, ₹350 where <code>G = ₹50</code>).</li>
+                <li><strong>Geometric Gradient (g):</strong> Cash flows that grow or contract at a constant compound percentage rate <em>g</em> period-over-period (e.g. energy costs inflating at 6% annually).</li>
+                <li><strong>Irregular / Non-Uniform Series:</strong> Unequal, fluctuating cash flows distributed arbitrarily across the study horizon.</li>
+            </ul>
+
+            <h2>2.4 The Principle of Economic Equivalence</h2>
+            <div class="definition" style="--def-border: var(--color-sec11);">
+                <strong>Economic Equivalence:</strong> Two cash sums or series of cash flows occurring at different points in time are economically equivalent if they possess identical purchasing capability when discounted or compounded at a specified interest rate <em>i</em>.
+            </div>
+            <p>Economic equivalence does not mean nominal monetary parity; it signifies that an investor is completely indifferent between receiving sum A today or receiving equivalent sum B in the future at that rate of interest.</p>
+            
+            <div class="example-card open">
+                <div class="example-header">Numerical Demonstration: Equivalence across Discount Rates</div>
+                <div class="example-content">
+                    <p>Consider an initial principal sum <code>P = ₹300</code> held at time zero. Evaluate its economic equivalence 7 years hence under two alternative interest rates:</p>
+                    <ul>
+                        <li><strong>Case A (at i = 15% annual compound interest):</strong><br>
+                            Equivalent Future Value F = <code>P × (1 + i)^n = 300 × (1 + 0.15)⁷ = 300 × (1.15)⁷ = 300 × 2.66002 = <strong>₹798.01</strong></code>.<br>
+                            <em>Economic Meaning:</em> ₹300 today is economically equivalent to ₹798 in 7 years at 15% interest.
+                        </li>
+                        <li style="margin-top: 10px;"><strong>Case B (at i = 10% annual compound interest):</strong><br>
+                            Equivalent Future Value F = <code>P × (1 + i)^n = 300 × (1 + 0.10)⁷ = 300 × (1.10)⁷ = 300 × 1.948717 = <strong>₹584.62</strong></code>.<br>
+                            <em>Economic Meaning:</em> At a lower 10% interest rate, ₹300 today is equivalent to only ₹585 in 7 years.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>2.5 Rates of Return: MARR, IRR, and ERR</h2>
+            <div class="definition" style="--def-border: var(--color-sec11);">
+                <strong>Minimum Attractive Rate of Return (MARR):</strong> The minimum acceptable hurdle rate established by corporate management. An engineering project is economically viable only if its projected return equals or exceeds MARR.
+            </div>
+            <div class="definition" style="--def-border: var(--color-sec11);">
+                <strong>Internal Rate of Return (IRR or i*):</strong> The break-even interest rate that equates the present worth of all prospective cash inflows to the present worth of all cash outflows, driving Net Present Worth (NPW) to exactly zero.
+            </div>
+            <div class="formula-box">
+                Governing Internal Rate of Return (IRR) Equation:<br>
+                NPW(IRR) = Σ [ CF_t / (1 + IRR)^t ] = 0 &nbsp; (from t = 0 to n)<br>
+                Acceptance Rule: If IRR ≥ MARR &implies; ACCEPT project. If IRR < MARR &implies; REJECT project.
+            </div>
+
+            <div class="example-card open">
+                <div class="example-header">Numerical Example: IRR Calculation via Successive Approximations</div>
+                <div class="example-content">
+                    <p><strong>Scenario:</strong> An enterprise invests initial capital <code>P₀ = ₹10,000</code> today (t = 0), and receives positive returns of <code>CF₁ = ₹7,000</code> at the end of Year 1 and <code>CF₂ = ₹8,000</code> at the end of Year 2. Determine the project's Internal Rate of Return (IRR).</p>
+                    <div class="formula-box">
+                        NPW(i) = −10,000 + [ 7,000 / (1 + i) ] + [ 8,000 / (1 + i)² ] = 0
+                    </div>
+                    <p><strong>Trial-and-Error Interpolation Process:</strong></p>
+                    <ul>
+                        <li><strong>Trial 1 at i = 10%:</strong><br>
+                            NPW(10%) = −10,000 + (7,000 / 1.10) + (8,000 / 1.21) = −10,000 + 6,363.64 + 6,611.57 = <strong>+₹2,975.21</strong> (> 0).
+                        </li>
+                        <li><strong>Trial 2 at i = 30%:</strong><br>
+                            NPW(30%) = −10,000 + (7,000 / 1.30) + (8,000 / 1.69) = −10,000 + 5,384.62 + 4,733.73 = <strong>+₹118.35</strong> (> 0).
+                        </li>
+                        <li><strong>Trial 3 at i = 31%:</strong><br>
+                            NPW(31%) = −10,000 + (7,000 / 1.31) + (8,000 / 1.7161) = −10,000 + 5,343.51 + 4,661.73 = <strong>+₹5.24</strong> (Nearly zero!).
+                        </li>
+                        <li><strong>Exact Root:</strong><br>
+                            At <code>i = 31.06%</code>, NPW = 0.00. Therefore, <strong>IRR ≈ 31.06%</strong>. If MARR is 15%, the project is overwhelmingly acceptable.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="definition" style="--def-border: var(--color-sec11);">
+                <strong>External Rate of Return (ERR):</strong> A rate of return formulation that eliminates multiple-rate paradoxes in non-simple cash flows by explicitly assuming intermediate cash inflows are reinvested externally at rate <code>e = MARR</code> until the end of the project life (year n).
+            </div>
+            <div class="formula-box">
+                External Rate of Return (ERR) Formulation:<br>
+                1. Compound all net positive cash receipts forward to year n at external reinvestment rate e (usually MARR):<br>
+                   FV = Σ [ Positive CF_t × (1 + e)^(n − t) ]<br>
+                2. Discount all capital investments back to time zero:<br>
+                   P = Total Initial Outlay<br>
+                3. Solve for ERR equating P to FV:<br>
+                   ERR = (FV / P)^(1/n) − 1
+            </div>
+
+            <div class="example-card open">
+                <div class="example-header">Numerical Example: ERR Calculation with External Reinvestment</div>
+                <div class="example-content">
+                    <p><strong>Scenario:</strong> An initial investment of <code>P = ₹10,000</code> produces cash inflows of <code>₹6,000</code> at year 1 and <code>₹8,000</code> at year 2. Reinvestment rate <code>e = MARR = 10%</code>.</p>
+                    <ol>
+                        <li>Accumulated Future Value at Year 2: <code>FV = [6,000 × (1 + 0.10)¹] + 8,000 = 6,600 + 8,000 = <strong>₹14,600</strong></code>.</li>
+                        <li>Equate Initial Capital P to FV: <code>10,000 × (1 + ERR)² = 14,600</code>.</li>
+                        <li>Solve for ERR: <code>(1 + ERR)² = 14,600 / 10,000 = 1.46 &implies; 1 + ERR = (1.46)^0.5 = 1.2083</code>.</li>
+                        <li>Result: <code>ERR = 1.2083 − 1 = 0.2083 = <strong>20.83% per annum</strong></code>.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <h2>2.6 Annual Cash Flow Analysis (EUAB and EUAC)</h2>
+            <p>Annual Cash Flow converts all capital and operating disbursements into an Equivalent Uniform Annual Series over the project lifecycle:</p>
+            <ul>
+                <li><strong>Equivalent Uniform Annual Benefit (EUAB):</strong> Uniform annual equivalent of all system revenues and cost savings.</li>
+                <li><strong>Equivalent Uniform Annual Cost (EUAC):</strong> Uniform annual equivalent of all capital recovery costs and recurring O&M expenditures.</li>
+            </ul>
+            <table>
+                <tr>
+                    <th>Decision Condition</th>
+                    <th>Governing Economic Criterion</th>
+                </tr>
+                <tr>
+                    <td><strong>Fixed Input:</strong> Capital budget is fixed</td>
+                    <td>Maximize Equivalent Uniform Annual Benefit (Maximize EUAB)</td>
+                </tr>
+                <tr>
+                    <td><strong>Fixed Output:</strong> Mandatory production requirement</td>
+                    <td>Minimize Equivalent Uniform Annual Cost (Minimize EUAC)</td>
+                </tr>
+                <tr>
+                    <td><strong>Neither Input nor Output Fixed</strong></td>
+                    <td>Maximize Net Annual Worth: Maximize (EUAB − EUAC)</td>
+                </tr>
+            </table>
+
+            <h2>2.7 Incremental Rate of Return (ΔIRR) Analysis</h2>
+            <div class="definition" style="--def-border: var(--color-sec11);">
+                <strong>The Scale Trap Warning:</strong> When evaluating mutually exclusive alternatives, selecting the alternative with the highest individual IRR can lead to incorrect decisions because IRR ignores the absolute scale of the investment. A 50% return on ₹1,000 is far inferior to a 30% return on ₹1,000,000. Engineers must use <strong>Incremental Rate of Return (ΔIRR)</strong>.
+            </div>
+            
+            <p><strong>The Mandatory 5-Step Incremental Analysis Algorithm:</strong></p>
+            <ol>
+                <li><strong>Step 1:</strong> List all mutually exclusive alternatives, explicitly including the baseline <em>Do-Nothing</em> alternative.</li>
+                <li><strong>Step 2:</strong> Compute the standalone IRR of each alternative. Discard any candidate whose standalone <code>IRR < MARR</code>.</li>
+                <li><strong>Step 3:</strong> Rank all surviving acceptable alternatives in order of <strong>increasing initial capital investment (P₀)</strong>. The lowest-cost option becomes the initial <em>Defender</em>.</li>
+                <li><strong>Step 4:</strong> Compare the Defender against the next higher-cost candidate (the <em>Challenger</em>). Compute the incremental cash flow series: <code>ΔCF_t = CF_{t, Challenger} − CF_{t, Defender}</code>.</li>
+                <li><strong>Step 5:</strong> Solve for the Incremental Rate of Return (ΔIRR) where <code>NPW(ΔIRR) = 0</code>:
+                    <ul>
+                        <li>If <code>ΔIRR ≥ MARR</code>: The additional capital investment is justified. The Challenger wins and becomes the new Defender!</li>
+                        <li>If <code>ΔIRR < MARR</code>: The additional capital is not justified. The Challenger is eliminated, and the current Defender is retained.</li>
+                    </ul>
+                    Repeat Step 4 and 5 pairwise until all alternatives have been evaluated. The final surviving Defender is the optimal economic choice.
+                </li>
+            </ol>
+
+            <h2>2.8 Future Worth (FW) Analysis</h2>
+            <p>Future Worth evaluates investments at the conclusion of study period <em>n</em>:</p>
+            <div class="formula-box">
+                FW = PW × (1 + i)^n<br>
+                Decision Rules: FW > 0 &implies; Accept project | FW < 0 &implies; Reject project | FW = 0 &implies; Indifferent
+            </div>
+            <p><strong>Example:</strong> Investing ₹10,000 at 10% interest for 3 years yields <code>FW = 10,000 × (1.10)³ = ₹13,310</code> (a total future wealth gain of ₹3,310 over initial capital).</p>
+
+            <h2>2.9 Benefit-Cost Ratio (B/C) Analysis in Public Projects</h2>
+            <div class="definition" style="--def-border: var(--color-sec11);">
+                <strong>Benefit-Cost Ratio (B/C):</strong> The ratio of the discounted present worth of benefits to the general public versus the discounted present worth of capital and operating costs incurred by the government agency.
+            </div>
+            <div class="formula-box">
+                B/C Ratio = PW(Benefits) / PW(Costs) = EUAB / EUAC<br>
+                Acceptance Rule: If B/C ≥ 1.0 &implies; Project is economically justified. If B/C < 1.0 &implies; Project is rejected.
+            </div>
+
+            <div class="example-card open">
+                <div class="example-header">Case Study: Regional Highway Bridge Benefit-Cost Analysis</div>
+                <div class="example-content">
+                    <p><strong>Project Data:</strong> A municipal transportation agency proposes constructing a new bridge spanning a river. Initial construction cost is <code>P₀ = ₹40,00,000</code>. Annual maintenance cost is <code>₹1,50,000 per year</code> over an assumed life of <code>n = 15 years</code>. Public benefits (commuter fuel savings and travel-time reductions) are estimated at <code>₹8,49,000 per year</code>. Discount rate <code>i = 12%</code>.</p>
+                    
+                    <p><strong>1. Present Worth of Agency Costs (PW_C):</strong><br>
+                    Factor: <code>(P/A, 12%, 15) = [(1.12)¹⁵ − 1] / [0.12 × (1.12)¹⁵] = 4.47357 / 0.656828 ≈ 6.81086</code>.<br>
+                    PW_C = 40,00,000 + [1,50,000 × 6.81086] = 40,00,000 + 10,21,629 = <strong>₹50,21,629</strong>.</p>
+                    
+                    <p><strong>2. Present Worth of Public Benefits (PW_B):</strong><br>
+                    PW_B = 8,49,000 × (P/A, 12%, 15) = 8,49,000 × 6.81086 = <strong>₹57,82,420</strong>.</p>
+                    
+                    <p><strong>3. Benefit-Cost Ratio Evaluation:</strong><br>
+                    B/C = PW_B / PW_C = 57,82,420 / 50,21,629 = <strong>1.1515</strong>.</p>
+                    <div class="definition" style="--def-border: var(--color-sec11);">
+                        <strong>Verdict:</strong> Because <code>B/C = 1.15 > 1.0</code>, the public bridge project is economically justified and should be approved.
+                    </div>
+                </div>
+            </div>
+
+            <h2>2.10 Eight Critical Drawbacks of Benefit-Cost Analysis (BCA) for Public Goods</h2>
+            <ol>
+                <li><strong>Difficulty in Monetary Quantification:</strong> Aesthetic value, historical preservation, and public safety are difficult to measure in currency units.</li>
+                <li><strong>Absence of Market Prices:</strong> Non-market public goods (clean water, quiet neighborhoods) lack open market transactions, forcing reliance on artificial pricing models.</li>
+                <li><strong>Subjectivity of Valuation Techniques:</strong> Methods like contingent valuation (surveys of willingness-to-pay) are highly subjective and vulnerable to framing bias.</li>
+                <li><strong>Disregard for Distributional Equity:</strong> BCA tallies aggregate monetary sums, ignoring who captures the benefits versus who bears the tax burden.</li>
+                <li><strong>Uncertain Environmental Externalities:</strong> Secondary ecological side effects, microclimate shifts, and watershed disruptions are difficult to bound.</li>
+                <li><strong>Forecasting Errors over Multi-Decade Horizons:</strong> Forecasting population growth, traffic volumes, and industrial shifts 30 years forward introduces major risk.</li>
+                <li><strong>Hypersensitivity to the Social Discount Rate:</strong> A lower discount rate strongly favors capital-intensive projects with distant benefits, while a higher rate penalizes future generations.</li>
+                <li><strong>Intangibles Resist Rupee Valuation:</strong> Fundamental civic values, human life, and community dignity cannot be ethically reduced to financial ledger entries.</li>
+            </ol>
+
+            <h2>2.11 Sensitivity and Break-Even Analysis</h2>
+            <p><strong>Sensitivity Analysis:</strong> Systematically varying one input parameter at a time (selling price, production volume, operating cost, discount rate, equipment life, salvage value) by ±10% or ±20% while holding other variables constant, to observe the sensitivity of Net Present Worth (NPW) or IRR.</p>
+            <p><strong>Break-Even Analysis:</strong> Solving for the exact level of activity at which net profit equals zero (Total Revenue = Total Cost).</p>
+            <div class="formula-box">
+                Break-Even Volume: Q_BE = F / (P − V)<br>
+                where F = Total Fixed Costs, P = Unit Selling Price, V = Unit Variable Cost.<br>
+                Example: F = ₹2,00,000, P = ₹100, V = ₹60 &implies; Unit Contribution Margin = 100 − 60 = ₹40.<br>
+                Break-Even Quantity: Q_BE = 2,00,000 / 40 = <strong>5,000 units</strong>.
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+
+        <!-- SECTION 12: MODULE 5 - DEPRECIATION AND REPLACEMENT ANALYSIS -->
+        <div id="sec-mod5-depr" class="section-container">
+            <h1>Module 5: Depreciation and Replacement Analysis</h1>
+            <p>Module 5 covers the economic dynamics of capital asset depreciation, taxation shields, and replacement decision-making. Engineers must accurately account for asset wear, technological obsolescence, and income tax allowances to determine the exact optimal timing for replacing existing plant machinery.</p>
+
+            <h2>5.1 Nature, Purpose, and Mechanics of Depreciation</h2>
+            <div class="definition" style="--def-border: var(--color-sec12);">
+                <strong>Depreciation:</strong> The systematic allocation of the initial cost of a physical capital asset over its estimated useful economic life. It represents the reduction in the asset's economic value resulting from physical wear and tear, age, and technological obsolescence.
+            </div>
+            <p><strong>Core Accounting Characteristics:</strong></p>
+            <ul>
+                <li><strong>Non-Cash Operational Expense:</strong> Depreciation does not entail an actual cash outflow leaving the company's accounts. It is an internal accounting deduction.</li>
+                <li><strong>Book Value vs. Market Value:</strong> Book Value (BV) is an internal accounting construct reflecting remaining unallocated cost. It rarely equals Market Value (MV), which is the price buyers will pay in an open market.</li>
+                <li><strong>Matching Principle:</strong> Spreads the substantial capital acquisition expenditure across the years during which the asset produces revenue.</li>
+                <li><strong>Tax Shield Mechanism:</strong> By reducing reported taxable income, depreciation lowers cash corporate tax outflows.</li>
+            </ul>
+
+            <h2>5.2 Depreciable vs. Non-Depreciable Assets</h2>
+            <table>
+                <tr>
+                    <th>Asset Category</th>
+                    <th>Examples</th>
+                    <th>Depreciation Eligibility & Economic Rationale</th>
+                </tr>
+                <tr>
+                    <td><strong>Depreciable Assets</strong></td>
+                    <td>Manufacturing machinery, industrial buildings, corporate vehicles, computer hardware, tooling, patents (amortized).</td>
+                    <td><strong>Fully Depreciable:</strong> Must have a determinable useful life exceeding 1 year, and must wear out, decay, get consumed, or become obsolete over time.</td>
+                </tr>
+                <tr>
+                    <td><strong>Non-Depreciable Assets</strong></td>
+                    <td>Raw land, unimproved real estate parcels, inventory held for retail sale, raw material stocks.</td>
+                    <td><strong>Non-Depreciable:</strong> Land possesses an indefinite economic lifespan and does not physically deteriorate. Inventory is expensed directly through Cost of Goods Sold (COGS).</td>
+                </tr>
+            </table>
+
+            <h2>5.3 Depreciation Tax Shield & After-Tax Cash Flow (ATCF)</h2>
+            <p>Because corporate income taxes are calculated on net taxable income after deducting allowable depreciation, depreciation creates a vital cash-preserving <strong>tax shield</strong>:</p>
+            <div class="formula-box">
+                Taxable Income = Revenues (R) − Operating Expenses (E) − Depreciation (d)<br>
+                Corporate Income Tax = Taxable Income × Tax Rate (t_c) = (R − E − d) × t_c<br>
+                After-Tax Cash Flow (ATCF) = (R − E) − Tax Paid<br>
+                ATCF = (R − E) × (1 − t_c) + (d × t_c)<br>
+                where (d × t_c) is the <strong>Depreciation Tax Shield</strong>.
+            </div>
+            <div class="definition" style="--def-border: var(--color-sec12);">
+                <strong>Tax Shield Numerical Example:</strong> An allowable depreciation charge of <code>d = ₹50,000</code> in a corporate tax bracket of <code>t_c = 30%</code> delivers an immediate cash tax savings of <code>50,000 × 0.30 = <strong>₹15,000</strong></code> that stays inside the company.
+            </div>
+
+            <h2>5.4 Classical Depreciation Methods: Straight-Line vs. Declining Balance</h2>
+            
+            <h3>A. Straight-Line (SL) Depreciation</h3>
+            <p>Allocates an equal, uniform depreciation charge to each year of the asset's economic life:</p>
+            <div class="formula-box">
+                Annual Depreciation Charge: d = (B − SV) / N<br>
+                Book Value at End of Year t: BV_t = B − t × d<br>
+                where B = Initial Cost Basis, SV = Salvage Value, N = Depreciable Useful Life in years.
+            </div>
+            <div class="example-card open">
+                <div class="example-header">Numerical Walkthrough: Straight-Line (SL) Depreciation</div>
+                <div class="example-content">
+                    <p>Machine Cost Basis <code>B = ₹1,00,000</code>, Estimated Salvage Value <code>SV = ₹10,00,0</code>, Depreciable Life <code>N = 5 years</code>.</p>
+                    <p>Annual Depreciation: <code>d = (1,00,000 − 10,000) / 5 = 90,000 / 5 = <strong>₹18,000 per year</strong></code>.</p>
+                    <table>
+                        <tr><th>Year (t)</th><th>Depreciation Charge (d_t)</th><th>Remaining Book Value (BV_t)</th></tr>
+                        <tr><td>0 (Acquisition)</td><td>—</td><td>₹1,00,000</td></tr>
+                        <tr><td>1</td><td>₹18,000</td><td>₹82,000</td></tr>
+                        <tr><td>2</td><td>₹18,000</td><td>₹64,000</td></tr>
+                        <tr><td>3</td><td>₹18,000</td><td>₹46,000</td></tr>
+                        <tr><td>4</td><td>₹18,000</td><td>₹28,000</td></tr>
+                        <tr><td>5 (Terminal)</td><td>₹18,000</td><td><strong>₹10,000 (= Salvage Value SV)</strong></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <h3>B. Declining Balance (DB) & Double Declining Balance (DDB)</h3>
+            <p>An accelerated depreciation method applying a constant percentage rate <em>R</em> to the beginning-of-year remaining book value:</p>
+            <div class="formula-box">
+                Depreciation in Year t: d_t = R × BV_{t−1}<br>
+                Book Value at End of Year t: BV_t = B × (1 − R)^t<br>
+                • Double Declining Balance (DDB) Rate: R = 2 / N<br>
+                • 150% Declining Balance Rate: R = 1.5 / N<br>
+                <strong>The Unbreachable Salvage Value Rule:</strong> Salvage value (SV) is NOT subtracted when determining annual depreciation charges, but acts as a strict floor below which Book Value is NEVER reduced.
+            </div>
+            
+            <div class="example-card open">
+                <div class="example-header">Numerical Walkthrough: Double Declining Balance (DDB) with SV Floor</div>
+                <div class="example-content">
+                    <p>Machine Cost Basis <code>B = ₹1,00,000</code>, Salvage Value Floor <code>SV = ₹10,000</code>, Life <code>N = 5 years</code>. Rate <code>R = 2 / 5 = 0.40 (40%)</code>.</p>
+                    <table>
+                        <tr><th>Year (t)</th><th>Beginning Book Value (BV_{t-1})</th><th>Depreciation Charge (d_t = 40% × BV)</th><th>Ending Book Value (BV_t)</th></tr>
+                        <tr><td>1</td><td>₹1,00,000</td><td>0.40 × 1,00,000 = <strong>₹40,000</strong></td><td>₹60,000</td></tr>
+                        <tr><td>2</td><td>₹60,000</td><td>0.40 × 60,000 = <strong>₹24,000</strong></td><td>₹36,000</td></tr>
+                        <tr><td>3</td><td>₹36,000</td><td>0.40 × 36,000 = <strong>₹14,400</strong></td><td>₹21,600</td></tr>
+                        <tr><td>4</td><td>₹21,600</td><td>0.40 × 21,600 = <strong>₹8,640</strong></td><td>₹12,960</td></tr>
+                        <tr><td>5</td><td>₹12,960</td><td>Standard 40% would give ₹5,184, driving BV to ₹7,776 (violating SV floor ₹10,000!).<br><strong>Adjusted d₅:</strong> 12,960 − 10,000 = <strong>₹2,960</strong></td><td><strong>₹10,000 (= SV Floor)</strong></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <h2>5.5 Tax Regulations & Indian WDV Standard</h2>
+            <ul>
+                <li><strong>Full Capitalized Basis:</strong> Initial cost basis includes purchase invoice price, shipping freight, customs duties, civil foundation, electrical installation, and commissioning testing.</li>
+                <li><strong>Depreciation Recapture:</strong> Selling an asset above its written-down book value creates taxable income (recaptured depreciation taxed as business income).</li>
+                <li><strong>Indian Income Tax Act (Section 32):</strong> Mandates the <strong>Written Down Value (WDV)</strong> method applied to pooled <em>Blocks of Assets</em> rather than individual unit tracking.</li>
+                <li><strong>Half-Year Rule:</strong> Assets acquired and utilized for fewer than 180 days in a financial year are restricted to 50% of the normal allowable depreciation percentage.</li>
+            </ul>
+
+            <h2>5.6 Replacement Analysis: Defender vs. Challenger</h2>
+            <div class="definition" style="--def-border: var(--color-sec12);">
+                <strong>Defender:</strong> The existing, currently owned machine or facility operating in the plant.<br>
+                <strong>Challenger:</strong> The best available candidate modern replacement asset in the market.<br>
+                <strong>The Outsider's Viewpoint:</strong> Historical capital spent on the Defender is a SUNK COST and must be totally ignored! The true economic investment required to retain the Defender today is its net realizable current <strong>Market Value (MV₀)</strong> that is forgone by not selling it.
+            </div>
+
+            <p><strong>Primary Drivers for Asset Replacement:</strong></p>
+            <ol>
+                <li><strong>Physical Deterioration:</strong> Increasing wear, metal fatigue, higher frequency of breakdowns, and rising maintenance labor.</li>
+                <li><strong>Technological Obsolescence:</strong> Modern challengers offer higher speeds, computerized automation, tighter tolerances, and reduced energy consumption.</li>
+                <li><strong>Inadequacy:</strong> Production output demands exceed the existing unit's physical capacity.</li>
+                <li><strong>Direct Labor Savings:</strong> New automated equipment drastically cuts direct labor costs.</li>
+            </ol>
+
+            <h2>5.7 Minimum Cost Life & Marginal Cost Replacement Rule</h2>
+            <div class="formula-box">
+                Challenger Equivalent Uniform Annual Cost over N years:<br>
+                EUAC(N) = (P − SV)(A/P, i, N) + SV × i + [ Σ O&M_t × (P/F, i, t) ] × (A/P, i, N)<br><br>
+                Defender Marginal Cost for Next Year (t):<br>
+                MC_t = (MV_{t−1} − MV_t) + i × MV_{t−1} + O&M_t<br>
+                where (MV_{t-1} − MV_t) is loss in market value, i × MV_{t-1} is capital opportunity cost, and O&M_t is next-year operating and maintenance expense.
+            </div>
+            
+            <p><strong>The U-Shaped EUAC Curve:</strong> As an asset ages, its annualized capital recovery cost declines, but its annual operating, repair, and downtime costs climb. Summing these two opposing curves creates a distinct U-shape. The <strong>Minimum Cost Life (Economic Service Life)</strong> occurs at the lowest point of the EUAC curve, precisely where the next-year Marginal Cost (MC) crosses the EUAC curve.</p>
+
+            <div class="example-card open">
+                <div class="example-header">Master Solved Replacement Analysis Drill</div>
+                <div class="example-content">
+                    <p><strong>Challenger Data (Purchase Price P = ₹20,000, i = 10%):</strong></p>
+                    <table>
+                        <tr><th>Year of Life (N)</th><th>Marginal Cost for Year (MC_t)</th><th>Equivalent Uniform Annual Cost (EUAC)</th></tr>
+                        <tr><td>1</td><td>₹11,000</td><td>₹11,000</td></tr>
+                        <tr><td>2</td><td>₹9,400</td><td>₹10,238</td></tr>
+                        <tr><td>3 (Minimum Cost Life)</td><td>₹9,500</td><td><strong>₹10,015 (Minimum EUAC)</strong></td></tr>
+                        <tr><td>4</td><td>₹10,700</td><td>₹10,163</td></tr>
+                        <tr><td>5</td><td>₹12,450</td><td>₹10,537</td></tr>
+                    </table>
+                    <p>The Challenger's economic service life is <strong>3 years</strong> with a minimum annualized cost <code>EUAC* = ₹10,015 per year</code>.</p>
+                    
+                    <p><strong>Defender Evaluation:</strong><br>
+                    Current realizable market value: <code>MV₀ = ₹8,000</code>.<br>
+                    Projected market value in 1 year: <code>MV₁ = ₹6,000</code>.<br>
+                    Next year's projected operating & maintenance cost: <code>O&M₁ = ₹6,500</code>.<br>
+                    Cost of capital: <code>i = 10%</code>.</p>
+                    
+                    <div class="formula-box">
+                        Defender Next-Year Marginal Cost:<br>
+                        MC = (MV₀ − MV₁) + (i × MV₀) + O&M₁<br>
+                        MC = (8,000 − 6,000) + (0.10 × 8,000) + 6,500 = 2,000 + 800 + 6,500 = <strong>₹9,300</strong>.
+                    </div>
+                    
+                    <div class="definition" style="--def-border: var(--color-sec12);">
+                        <strong>Replacement Decision Rule:</strong><br>
+                        Compare Defender Next-Year MC vs. Challenger Minimum EUAC*:<br>
+                        • If Defender MC > Challenger EUAC* &implies; REPLACE IMMEDIATELY with Challenger.<br>
+                        • If Defender MC ≤ Challenger EUAC* &implies; KEEP DEFENDER FOR ONE MORE YEAR.<br>
+                        <strong>Conclusion:</strong> Because Defender's next-year cost (<strong>₹9,300</strong>) is LESS than the Challenger's annualized minimum cost (<strong>₹10,015</strong>), <strong>DO NOT REPLACE NOW. Keep the Defender for one more year</strong> and re-evaluate at the end of next year.
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION 13: ACCOUNTING & COST ALLOCATION (MODULE 6) -->
+        <div id="sec-mod6-acct" class="section-container">
+            <h1>Module 6: Accounting Foundations and Cost Allocation for Engineers</h1>
+            <p>Engineering decisions do not exist in a vacuum; they must be funded, tracked, and audited through a firm's accounting architecture. This module bridges engineering analysis with financial reporting, examining the Balance Sheet, the Income Statement, financial health metrics, Capital Expenditure (CapEx) vs. Operating Expenditure (OpEx), and modern Activity-Based Costing (ABC) systems designed to eliminate traditional overhead distortion.</p>
+
+            <h2>1. Financial Accounting vs. Cost Accounting</h2>
+            <div class="definition" style="--def-border: var(--color-sec13);">
+                <strong>Engineering Distinction:</strong><br>
+                • <strong>Financial Accounting:</strong> Geared toward external stakeholders (shareholders, banks, regulatory authorities, tax offices). Governed strictly by statutory frameworks (GAAP - Generally Accepted Accounting Principles / IFRS - International Financial Reporting Standards). It focuses on historical, aggregated company-wide performance.<br>
+                • <strong>Cost (Management) Accounting:</strong> Geared toward internal engineering managers and executives. Not constrained by GAAP rules; it is forward-looking, highly granular (cost per unit, cost per process line), and explicitly engineered for operational optimization, budgeting, make-or-buy decisions, and capital equipment allocation.
+            </div>
+
+            <h2>2. The Balance Sheet Architecture & Fundamental Identity</h2>
+            <p>The Balance Sheet represents a financial snapshot of a firm's cumulative health at a single point in time (e.g., March 31 or December 31). It is founded on the timeless dual-aspect accounting equation:</p>
+            
+            <div class="formula-box">
+                The Fundamental Balance Sheet Identity:<br>
+                <strong>Total Assets = Total Liabilities + Owner's Equity (Net Worth)</strong><br><br>
+                Rearranged from an Owner's Perspective:<br>
+                <strong>Owner's Equity = Total Assets − Total Liabilities</strong>
+            </div>
+
+            <table>
+                <tr>
+                    <th style="width: 50%;">Assets (What the Firm Owns & Controls)</th>
+                    <th style="width: 50%;">Liabilities & Equity (How Assets Were Financed)</th>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>1. Current Assets (Liquid within 1 Operating Year):</strong><br>
+                        • Cash & Cash Equivalents<br>
+                        • Marketable Short-Term Securities<br>
+                        • Accounts Receivable (Invoices billed to clients awaiting collection)<br>
+                        • Inventories (Raw materials, Work-in-Progress / WIP, Finished Goods)<br>
+                        • Prepaid Expenses (Advance rent, prepaid insurance)<br><br>
+                        <strong>2. Non-Current (Fixed / Tangible) Assets:</strong><br>
+                        • Land (Historical cost; never depreciated)<br>
+                        • Buildings & Factory Structures (Gross cost minus Accumulated Depreciation)<br>
+                        • Machinery, Industrial Tooling, Robotics, Fleets<br><br>
+                        <strong>3. Intangible Assets:</strong><br>
+                        • Patents, Trademarks, Software Licenses, Proprietary Algorithms, Goodwill
+                    </td>
+                    <td>
+                        <strong>1. Current Liabilities (Due within 1 Operating Year):</strong><br>
+                        • Accounts Payable (Invoices owed to material suppliers)<br>
+                        • Short-Term Commercial Notes & Working Capital Bank Loans<br>
+                        • Accrued Liabilities (Wages payable, accrued interest, statutory taxes)<br><br>
+                        <strong>2. Long-Term Liabilities (Obligations > 1 Year):</strong><br>
+                        • Corporate Debentures & Term Bonds Payable<br>
+                        • Long-Term Equipment Loans & Mortgages<br><br>
+                        <strong>3. Owner's Equity (Shareholders' Funds):</strong><br>
+                        • Contributed Capital (Common Stock & Paid-in Surplus)<br>
+                        • Retained Earnings (Cumulative historical profits reinvested into business operations rather than distributed as dividends)
+                    </td>
+                </tr>
+            </table>
+
+            <h2>3. Working Capital & Liquidity Analysis</h2>
+            <div class="formula-box">
+                Net Working Capital (NWC):<br>
+                <strong>NWC = Current Assets (CA) − Current Liabilities (CL)</strong><br><br>
+                Current Ratio (CR):<br>
+                <strong>Current Ratio = Current Assets / Current Liabilities</strong> &nbsp; (Healthy benchmark: 1.5 to 2.0)<br><br>
+                Quick Ratio / Acid-Test Ratio (QR):<br>
+                <strong>Quick Ratio = (Current Assets − Inventories) / Current Liabilities</strong> &nbsp; (Healthy benchmark: ≥ 1.0)
+            </div>
+            <p><strong>Engineering Takeaway:</strong> A project or factory can be fundamentally profitable on paper but experience catastrophic bankruptcy if its Net Working Capital turns negative, leaving it unable to honor payroll or raw material vendor invoices.</p>
+
+            <h2>4. The Income Statement (Profit & Loss / P&L)</h2>
+            <p>While the Balance Sheet records a static snapshot of assets and liabilities, the Income Statement measures economic performance over a specified duration (quarterly or annually). It tracks the progressive subtraction of expenses from top-line revenue to derive bottom-line profit:</p>
+
+            <div class="formula-box">
+                The Income Statement Cascading Waterfall:<br>
+                1. <strong>Gross Sales Revenue:</strong> Total units sold × Unit selling price<br>
+                &nbsp;&nbsp;&nbsp;Less: Sales returns, rebates, and trade allowances<br>
+                = <strong>Net Sales Revenue</strong><br><br>
+                2. Less: <strong>Cost of Goods Sold (COGS):</strong> Direct Materials + Direct Labor + Applied Factory Overhead<br>
+                = <strong>Gross Profit</strong> &nbsp; [ Gross Margin % = (Gross Profit / Net Sales) × 100 ]<br><br>
+                3. Less: <strong>Operating Expenses (SG&A):</strong> Selling, General, and Administrative overhead (executive salaries, office rent, marketing, corporate R&D)<br>
+                = <strong>Operating Income / EBIT (Earnings Before Interest and Taxes)</strong><br><br>
+                4. Less: <strong>Financing Expenses:</strong> Interest on long-term debt and bank loans<br>
+                = <strong>EBT (Earnings Before Taxes)</strong><br><br>
+                5. Less: <strong>Corporate Income Tax:</strong> EBT × Corporate Tax Rate (t_c)<br>
+                = <strong>Net Income After Tax / PAT (Profit After Tax)</strong> (The bottom line)
+            </div>
+
+            <h2>5. Capital Expenditure (CapEx) vs. Operational Expenditure (OpEx)</h2>
+            <table>
+                <tr>
+                    <th>Dimension</th>
+                    <th>Capital Expenditure (CapEx)</th>
+                    <th>Operational Expenditure (OpEx)</th>
+                </tr>
+                <tr>
+                    <td><strong>Definition</strong></td>
+                    <td>Funds expended to acquire, upgrade, or extend the productive life of physical, long-term capital assets (> 1 year life).</td>
+                    <td>Day-to-day expenditures required to sustain ongoing factory operations and business processes (&le; 1 year benefit).</td>
+                </tr>
+                <tr>
+                    <td><strong>Engineering Examples</strong></td>
+                    <td>Purchase of 5-axis CNC milling centers, building a cleanroom, industrial robotics cell, factory expansion.</td>
+                    <td>Electricity bills, machine lubricants, cutting fluid, technician wages, maintenance repairs, cloud API subscriptions.</td>
+                </tr>
+                <tr>
+                    <td><strong>Cash Flow Timing</strong></td>
+                    <td>Lump-sum upfront cash outflow at Project Year 0.</td>
+                    <td>Continuous, recurring periodic cash disbursements across operating cycles.</td>
+                </tr>
+                <tr>
+                    <td><strong>Accounting Treatment</strong></td>
+                    <td>Capitalized onto the Balance Sheet as a Fixed Asset; not expensed immediately.</td>
+                    <td>Expensed immediately in the current period on the Income Statement against current revenue.</td>
+                </tr>
+                <tr>
+                    <td><strong>Tax Deduction</strong></td>
+                    <td>Depreciated over asset recovery life (N years) via periodic Depreciation Tax Shields (d_t × t_c).</td>
+                    <td>100% tax-deductible against taxable income in the exact year incurred.</td>
+                </tr>
+            </table>
+
+            <h2>6. Overhead Allocation & Activity-Based Costing (ABC)</h2>
+            <p>Every industrial production line incurs direct costs (easily traced to an individual workpiece) and indirect overhead costs (rent, factory heating, plant supervision, tooling maintenance, material handlers). Cost allocation is the method by which overhead is distributed to end products.</p>
+
+            <div class="definition" style="--def-border: var(--color-sec13);">
+                <strong>The Traditional Volume-Based Distortion Trap:</strong><br>
+                Historically, factories allocate all indirect overhead using a single company-wide metric called the <strong>Predetermined Overhead Rate (POHR)</strong>, typically based on Direct Labor Hours (DLH) or Machine Hours (MH):<br>
+                <code>POHR = Total Estimated Factory Overhead (₹) / Total Estimated Allocation Base (DLH or MH)</code><br><br>
+                <strong>The Critical Flaw:</strong> Low-complexity, high-volume products consume huge machine hours but demand almost zero design modifications, special setups, or quality testing. Conversely, highly customized, low-volume prototypes consume few machine hours but demand disproportionate tooling setups, engineer inspections, and procurement expediting. Traditional volume allocation heavily overcosts simple high-volume products (making them uncompetitive) and dangerously undercosts complex low-volume products (leading to hidden losses).
+            </div>
+
+            <div class="formula-box">
+                The Activity-Based Costing (ABC) Solution:<br>
+                1. <strong>Identify Distinct Production Activities:</strong> (e.g., Machine Setup, Quality Inspection, Material Handling).<br>
+                2. <strong>Assign Overhead Costs to Activity Cost Pools:</strong> Accumulate all indirect expenses per activity category.<br>
+                3. <strong>Identify Activity Cost Drivers:</strong> Select the measurable causal factor (e.g., Number of Setups, Inspection Hours, Number of Material Moves).<br>
+                4. <strong>Calculate Pool Activity Rates:</strong><br>
+                   &nbsp;&nbsp;&nbsp;<code>Activity Rate = Total Cost in Activity Pool / Total Quantity of Cost Driver</code><br>
+                5. <strong>Assign Overhead to Specific Products:</strong><br>
+                   &nbsp;&nbsp;&nbsp;<code>Applied Overhead = Σ [ Activity Rate_j × Driver Units Consumed by Product_j ]</code>
+            </div>
+
+            <div class="example-card open">
+                <div class="example-header">Master Solved Drill: Traditional Allocation vs. Activity-Based Costing (ABC)</div>
+                <div class="example-content">
+                    <p><strong>Factory Scenario:</strong> Precision Dynamics Ltd. produces two components: Product S (Standard Gear, high volume) and Product C (Custom Drone Gearbox, low volume). Total annual factory overhead is <strong>₹12,00,000</strong>.</p>
+                    
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Product S (Standard)</th>
+                            <th>Product C (Custom)</th>
+                            <th>Factory Total</th>
+                        </tr>
+                        <tr><td>Annual Production Volume</td><td>10,000 units</td><td>1,000 units</td><td>11,000 units</td></tr>
+                        <tr><td>Direct Material Cost per unit</td><td>₹100</td><td>₹250</td><td>-</td></tr>
+                        <tr><td>Direct Labor Cost per unit</td><td>₹50</td><td>₹150</td><td>-</td></tr>
+                        <tr><td>Machine Hours per unit</td><td>2.0 hours</td><td>4.0 hours</td><td>24,000 hours (20,000 + 4,000)</td></tr>
+                        <tr><td>Production Batch Runs / Setups</td><td>10 setups</td><td>40 setups</td><td>50 setups total</td></tr>
+                        <tr><td>Quality Assurance (QA) Inspection Hours</td><td>100 hours</td><td>400 hours</td><td>500 hours total</td></tr>
+                    </table>
+
+                    <p><strong>Activity Overhead Breakdown:</strong><br>
+                    • Activity Pool 1: Machine Maintenance & Power = ₹6,00,000 (Cost driver: 24,000 Machine Hours)<br>
+                    • Activity Pool 2: Tooling Setup & Calibration = ₹3,50,000 (Cost driver: 50 Setups)<br>
+                    • Activity Pool 3: Quality Control & Metrology = ₹2,50,000 (Cost driver: 500 Inspection Hours)<br>
+                    Total Overhead = ₹6,00,000 + ₹3,50,000 + ₹2,50,000 = <strong>₹12,00,000</strong>.</p>
+
+                    <hr style="border: 0; border-top: 1px solid #444; margin: 15px 0;">
+
+                    <p><strong>Method A: Traditional Overhead Allocation (Based on Machine Hours):</strong><br>
+                    <code>POHR = Total Overhead / Total Machine Hours = ₹12,00,000 / 24,000 MH = ₹50.00 per machine hour</code>.</p>
+                    <ul>
+                        <li><strong>Product S Overhead per Unit:</strong> 2.0 MH × ₹50 = <strong>₹100 per unit</strong>.<br>
+                        Total Cost per Unit S = Direct Material (₹100) + Direct Labor (₹50) + Overhead (₹100) = <strong>₹250 per unit</strong>.</li>
+                        <li><strong>Product C Overhead per Unit:</strong> 4.0 MH × ₹50 = <strong>₹200 per unit</strong>.<br>
+                        Total Cost per Unit C = Direct Material (₹250) + Direct Labor (₹150) + Overhead (₹200) = <strong>₹600 per unit</strong>.</li>
+                    </ul>
+
+                    <hr style="border: 0; border-top: 1px solid #444; margin: 15px 0;">
+
+                    <p><strong>Method B: Activity-Based Costing (ABC) Allocation:</strong></p>
+                    <ol>
+                        <li>Machine Rate = ₹6,00,000 / 24,000 MH = <strong>₹25.00 / MH</strong>.</li>
+                        <li>Setup Rate = ₹3,50,000 / 50 setups = <strong>₹7,000.00 / setup</strong>.</li>
+                        <li>Inspection Rate = ₹2,50,000 / 500 hours = <strong>₹500.00 / QA hour</strong>.</li>
+                    </ol>
+
+                    <p><strong>Overhead Assigned to Product S (10,000 units):</strong><br>
+                    • Machine: 20,000 MH × ₹25 = ₹5,00,000<br>
+                    • Setups: 10 setups × ₹7,000 = ₹70,000<br>
+                    • Inspection: 100 hrs × ₹500 = ₹50,000<br>
+                    Total Overhead S = ₹6,20,000 &implies; Overhead per Unit S = ₹6,20,000 / 10,000 = <strong>₹62.00 per unit</strong>.<br>
+                    <strong>ABC Total Unit Cost S = ₹100 + ₹50 + ₹62.00 = ₹212.00 per unit</strong>.</p>
+
+                    <p><strong>Overhead Assigned to Product C (1,000 units):</strong><br>
+                    • Machine: 4,000 MH × ₹25 = ₹1,00,000<br>
+                    • Setups: 40 setups × ₹7,000 = ₹2,80,000<br>
+                    • Inspection: 400 hrs × ₹500 = ₹2,00,000<br>
+                    Total Overhead C = ₹5,80,000 &implies; Overhead per Unit C = ₹5,80,000 / 1,000 = <strong>₹580.00 per unit</strong>.<br>
+                    <strong>ABC Total Unit Cost C = ₹250 + ₹150 + ₹580.00 = ₹980.00 per unit</strong>.</p>
+
+                    <div class="definition" style="--def-border: var(--color-sec13);">
+                        <strong>Critical Managerial Comparison:</strong><br>
+                        • <strong>Product S (Standard):</strong> Traditional cost was ₹250.00 vs. True ABC cost of ₹212.00. Traditional method <strong>overcosted Product S by ₹38.00 per unit (+17.9%)</strong>, forcing the sales team to price high and lose market share.<br>
+                        • <strong>Product C (Custom Drone Gearbox):</strong> Traditional cost was ₹600.00 vs. True ABC cost of ₹980.00. Traditional method <strong>undercosted Product C by ₹380.00 per unit (−38.8%)</strong>. If priced with a 20% markup on traditional cost (Selling price ₹720), the firm was secretly <strong>losing ₹260 on every custom gearbox shipped</strong>! ABC rescued the firm from catastrophic cross-subsidization.
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
+                <button class="nav-btn next-btn">Next Section</button>
+            </div>
+        </div>
+
+        <!-- SECTION 14: MASTER FORMULA REFERENCE VAULT -->
+        <div id="sec-formulas" class="section-container">
+            <h1>Master Formula Reference Vault (Modules 1 to 6)</h1>
+            <p>An exhaustive, mathematically rigorous formula cheat sheet covering all engineering economic principles, compound interest factors, inflation adjustments, depreciation schedules, replacement models, and accounting equations. All symbols, units, and criteria are fully defined.</p>
+
+            <h2>1. Production Economics & Break-Even Analysis (Module 1)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Total Cost: } \quad TC = F + V \cdot x$$
+                $$\text{Total Revenue: } \quad TR = P \cdot x$$
+                $$\text{Break-Even Quantity: } \quad x_{\text{BE}} = \frac{F}{P - V} = \frac{F}{CM}$$
+                $$\text{Break-Even Sales Revenue: } \quad TR_{\text{BE}} = x_{\text{BE}} \cdot P = \left[\frac{F}{P - V}\right] \cdot P$$
+                <div style="font-size: 0.85em; color: #94a3b8; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
+                    • <span class="sym-tip" data-tip="Total Fixed Costs independent of production volume (Rupees)">F</span>: Total Fixed Costs &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Unit Variable Cost: Incremental material and direct labor cost per unit (Rs./unit)">V</span>: Unit Variable Cost &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Unit Selling Price: Market price charged per unit (Rs./unit)">P</span>: Unit Selling Price &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Unit Contribution Margin: Operating margin per unit sold = P − V">CM</span>: Contribution Margin &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Production / sales volume (units)">x</span>: Output Volume
+                </div>
+            </div>
+
+            <h2>2. Time Value of Money: The Six Canonical Compound Factors (Module 3)</h2>
+            <div class="formula-box mathjax-formula">
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li style="margin-bottom: 8px;"><strong>Single-Payment Compound Amount Factor \((F/P,\, i,\, n)\):</strong>
+                        $$F = P \cdot (1 + i)^n = P \cdot (F/P,\, i,\, n)$$
+                    </li>
+                    <li style="margin-bottom: 8px;"><strong>Single-Payment Present Worth Factor \((P/F,\, i,\, n)\):</strong>
+                        $$P = F \cdot (1 + i)^{-n} = \frac{F}{(1 + i)^n} = F \cdot (P/F,\, i,\, n)$$
+                    </li>
+                    <li style="margin-bottom: 8px;"><strong>Equal-Payment Series Compound Amount Factor \((F/A,\, i,\, n)\):</strong>
+                        $$F = A \cdot \left[ \frac{(1 + i)^n - 1}{i} \right] = A \cdot (F/A,\, i,\, n)$$
+                    </li>
+                    <li style="margin-bottom: 8px;"><strong>Equal-Payment Series Sinking Fund Factor \((A/F,\, i,\, n)\):</strong>
+                        $$A = F \cdot \left[ \frac{i}{(1 + i)^n - 1} \right] = F \cdot (A/F,\, i,\, n)$$
+                    </li>
+                    <li style="margin-bottom: 8px;"><strong>Equal-Payment Series Present Worth Factor \((P/A,\, i,\, n)\):</strong>
+                        $$P = A \cdot \left[ \frac{(1 + i)^n - 1}{i \cdot (1 + i)^n} \right] = A \cdot (P/A,\, i,\, n)$$
+                    </li>
+                    <li style="margin-bottom: 8px;"><strong>Equal-Payment Series Capital Recovery Factor \((A/P,\, i,\, n)\):</strong>
+                        $$A = P \cdot \left[ \frac{i \cdot (1 + i)^n}{(1 + i)^n - 1} \right] = P \cdot (A/P,\, i,\, n)$$
+                    </li>
+                </ol>
+                <div style="font-size: 0.85em; color: #94a3b8; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
+                    • <span class="sym-tip" data-tip="Present principal sum or capital outlay at time t = 0 (Rupees)">P</span>: Present Sum &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Future accumulated compound amount at period n (Rupees)">F</span>: Future Amount &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Equal periodic annuity cash flow occurring at the end of each period (Rs./period)">A</span>: Annual Annuity &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Effective discount interest rate per compounding period (decimal or %)">i</span>: Interest Rate &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Total number of interest compounding periods / asset life in years">n</span>: Compounding Periods
+                </div>
+            </div>
+
+            <h2>3. Arithmetic & Geometric Gradient Series (Module 3)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Arithmetic Gradient Present Worth: } \quad P_G = G \cdot \left[ \frac{(1 + i)^n - i \cdot n - 1}{i^2 \cdot (1 + i)^n} \right] = G \cdot (P/G,\, i,\, n)$$
+                $$\text{Arithmetic Gradient Uniform Equivalent: } \quad A_G = G \cdot \left[ \frac{1}{i} - \frac{n}{(1 + i)^n - 1} \right] = G \cdot (A/G,\, i,\, n)$$
+                $$\text{Total Annual Equivalent: } \quad A_{\text{total}} = A_1 \pm G \cdot (A/G,\, i,\, n) \implies P_{\text{total}} = A_{\text{total}} \cdot (P/A,\, i,\, n)$$
+                $$\text{Geometric Gradient Present Worth } (P/A,\, g,\, i,\, n): \quad P_g = \begin{cases} A_1 \cdot \left[ \frac{1 - (1 + g)^n (1 + i)^{-n}}{i - g} \right], & \text{if } i \neq g \\ A_1 \cdot \left[ \frac{n}{1 + i} \right], & \text{if } i = g \end{cases}$$
+                <div style="font-size: 0.85em; color: #94a3b8; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
+                    • <span class="sym-tip" data-tip="Base Year 1 initial cash flow amount">A₁</span>: Base Cash Flow &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Constant linear arithmetic step increase per period (Rs./period)">G</span>: Arithmetic Step &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Compound geometric percentage growth rate per period (%)">g</span>: Geometric Growth Rate
+                </div>
+            </div>
+
+            <h2>4. Nominal vs. Effective Interest Rates (Module 3)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Effective Annual Interest Rate: } \quad i_e = \left( 1 + \frac{r}{m} \right)^m - 1$$
+                $$\text{Continuous Compounding Limit } (m \to \infty): \quad i_e = e^r - 1$$
+                <div style="font-size: 0.85em; color: #94a3b8; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
+                    • <span class="sym-tip" data-tip="Nominal annual interest rate before intra-year compounding (APR)">r</span>: Nominal Rate &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Number of compounding sub-periods per year (e.g. 12 for monthly, 4 for quarterly)">m</span>: Compounding Frequency &nbsp;|&nbsp;
+                    • <span class="sym-tip" data-tip="Effective true annual compound interest rate (APY / EIR)">i_e</span>: Effective Annual Rate
+                </div>
+            </div>
+
+            <h2>5. Annuity Due Cash Flows (Module 3)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Present Worth of Annuity Due: } \quad PW_{\text{due}} = A + A \cdot (P/A,\, i,\, n - 1) = A \cdot \left[ 1 + (P/A,\, i,\, n - 1) \right]$$
+                $$\text{Future Worth of Annuity Due: } \quad FW_{\text{due}} = A \cdot (F/A,\, i,\, n) \cdot (1 + i)$$
+            </div>
+
+            <h2>6. Rates of Return & Equivalence (Module 2)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Internal Rate of Return (IRR): } \quad NPW(IRR) = \sum_{t=0}^n \frac{CF_t}{(1 + IRR)^t} = 0$$
+                $$\text{External Rate of Return (ERR): } \quad ERR = \left( \frac{FV}{P} \right)^{1/n} - 1, \quad \text{where } FV = \sum_{t=1}^n CF_t^+ \cdot (1 + \text{MARR})^{n - t}$$
+                $$\text{Incremental Rate of Return: } \quad \sum_{t=0}^n \frac{CF_{t,\, \text{Challenger}} - CF_{t,\, \text{Defender}}}{(1 + \Delta IRR)^t} = 0 \implies \text{Accept Challenger if } \Delta IRR \ge \text{MARR}$$
+            </div>
+
+            <h2>7. Future Worth & Benefit-Cost Analysis (Module 2)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Future Worth: } \quad FW = PW \cdot (1 + i)^n \quad \left[ \text{Accept if } FW \ge 0 \right]$$
+                $$\text{Benefit-Cost Ratio: } \quad B/C = \frac{PW(\text{Public Benefits})}{PW(\text{Public Costs})} = \frac{EUAB}{EUAC} \quad \left[ \text{Accept if } B/C \ge 1.0 \right]$$
+            </div>
+
+            <h2>8. Inflation & Combined Fisher Relation (Module 4)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Price Index: } I_t = \frac{P_t}{P_0} \cdot 100 \qquad \text{Inflation Rate: } f = \left( \frac{I_t}{I_0} \right)^{1/n} - 1$$
+                $$\text{Combined Fisher Equation: } \quad i = i' + f + (i' \cdot f) \iff 1 + i = (1 + i')(1 + f)$$
+                $$\text{Cash Flow Consistency: Actual Dollars Discounted at Nominal Rate } (i) \iff \text{Constant Dollars Discounted at Real Rate } (i')$$
+            </div>
+
+            <h2>9. Present Worth & Capitalized Cost (Module 4)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Net Present Worth: } \quad NPW = -P_0 + A \cdot (P/A,\, i,\, n) + SV \cdot (1 + i)^{-n}$$
+                $$\text{Capitalized Cost } (n \to \infty): \quad CC = P_0 + \frac{A}{i}$$
+            </div>
+
+            <h2>10. Uncertainty & Decision Trees (Module 4)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Expected Monetary Value: } \quad E[X] = \sum_{j=1}^k p_j \cdot X_j, \quad \text{subject to } \sum_{j=1}^k p_j = 1.0$$
+                $$\text{Rollback: Chance Node } \circ = \sum (p_j \cdot V_j) \qquad \text{Decision Node } \square = \max(V_{\text{branches}})$$
+            </div>
+
+            <h2>11. Depreciation & Tax Shield (Module 5)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Straight-Line: } \quad d = \frac{B - SV}{N}, \qquad BV_t = B - t \cdot d$$
+                $$\text{Declining Balance / DDB: } \quad d_t = R \cdot BV_{t-1}, \qquad BV_t = B \cdot (1 - R)^t \quad \left(R = \frac{2}{N}\right)$$
+                $$\text{Depreciation Tax Shield: } \quad \text{Tax Shield} = d_t \cdot t_c$$
+                $$\text{After-Tax Cash Flow: } \quad ATCF = (R_t - E_t - d_t)(1 - t_c) + d_t = (R_t - E_t)(1 - t_c) + (d_t \cdot t_c)$$
+            </div>
+
+            <h2>12. Asset Replacement Analysis (Module 5)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Challenger Minimum EUAC}^*: \quad EUAC(N) = (P - SV)(A/P,\, i,\, N) + SV \cdot i + \left[\sum_{t=1}^N O\&M_t \cdot (P/F,\, i,\, t)\right](A/P,\, i,\, N)$$
+                $$\text{Defender Next-Year Marginal Cost: } \quad MC_t = (MV_{t-1} - MV_t) + i \cdot MV_{t-1} + O\&M_t$$
+                $$\text{Replacement Rule: Replace immediately if } MC_{\text{Defender}} > EUAC^*_{\text{Challenger}}$$
+            </div>
+
+            <h2>13. Fundamental Accounting Equations (Module 6)</h2>
+            <div class="formula-box mathjax-formula">
+                $$\text{Balance Sheet Identity: } \quad \text{Total Assets} = \text{Total Liabilities} + \text{Owner's Equity}$$
+                $$\text{Net Working Capital: } \quad NWC = \text{Current Assets} - \text{Current Liabilities}$$
+                $$\text{Current Ratio: } \quad CR = \frac{\text{Current Assets}}{\text{Current Liabilities}} \qquad \text{Quick Ratio: } QR = \frac{\text{Current Assets} - \text{Inventories}}{\text{Current Liabilities}}$$
+                $$\text{Gross Profit: } \quad GP = \text{Net Sales} - \text{COGS} \qquad \text{Operating Income: } EBIT = GP - \text{SG\&A}$$
+                $$\text{Net Profit After Tax: } \quad PAT = (EBIT - \text{Interest}) \cdot (1 - t_c)$$
+            </div>
+
+            <h2>14. Master Economic Decision Criteria Summary Matrix</h2>
+            <table>
+                <tr>
+                    <th>Decision Environment</th>
+                    <th>Analytical Method</th>
+                    <th>Optimal Economic Criterion</th>
+                </tr>
+                <tr>
+                    <td>Fixed Capital Input</td>
+                    <td>Present Worth / Annual Worth</td>
+                    <td><strong>Maximize Benefits:</strong> Maximize PW(Benefits) or Maximize EUAB</td>
+                </tr>
+                <tr>
+                    <td>Fixed Required Output</td>
+                    <td>Present Worth / Annual Worth</td>
+                    <td><strong>Minimize Costs:</strong> Minimize PW(Costs) or Minimize EUAC</td>
+                </tr>
+                <tr>
+                    <td>Neither Input nor Output Fixed</td>
+                    <td>Net Present Worth (NPW)</td>
+                    <td><strong>Maximize Net Worth:</strong> Maximize NPW = PW(Benefits) − PW(Costs) ≥ 0</td>
+                </tr>
+                <tr>
+                    <td>Single Independent Project</td>
+                    <td>Internal Rate of Return (IRR)</td>
+                    <td><strong>Accept if IRR ≥ MARR</strong>; Reject if IRR &lt; MARR</td>
+                </tr>
+                <tr>
+                    <td>Mutually Exclusive Projects</td>
+                    <td>Incremental ROR (ΔIRR)</td>
+                    <td><strong>Accept Higher-Cost Challenger if ΔIRR ≥ MARR</strong></td>
+                </tr>
+                <tr>
+                    <td>Public Works Project</td>
+                    <td>Benefit-Cost Ratio (B/C)</td>
+                    <td><strong>Accept if B/C = PW(Benefits) / PW(Costs) ≥ 1.0</strong></td>
+                </tr>
+                <tr>
+                    <td>Perpetual Project (n &implies; ∞)</td>
+                    <td>Capitalized Cost (CC)</td>
+                    <td><strong>Minimize Capitalized Cost:</strong> Minimize CC = P₀ + (A / i)</td>
+                </tr>
+                <tr>
+                    <td>Equipment Replacement</td>
+                    <td>Marginal Cost vs. EUAC</td>
+                    <td><strong>Replace when Defender MC > Challenger Minimum EUAC*</strong></td>
+                </tr>
+            </table>
+
+            <div class="bottom-nav">
+                <button class="nav-btn prev-btn">Previous</button>
                 <button class="nav-btn next-btn" disabled>Finish</button>
             </div>
         </div>
@@ -2121,6 +3898,9 @@
                     <li>A rebuilt drilling machine available from a used-equipment dealer</li>
                 </ol>
                 <p>The preliminary analysis indicated that 3rd is most economical but Liz did not like the idea, so she choose between two and showed that general purpose drilling machine is most economical. The manager assumed that the two alternatives presented were the best of all feasible alternatives, and he approves Liz’s recommendation. Who is the decision – maker?</p>
+                <div class="definition" style="--def-border: var(--color-sec2);">
+                    <strong>Solution & Critical Insight:</strong> <strong>Liz is the true decision-maker.</strong> Although the manager formally rubber-stamped the final recommendation, Liz made the decisive judgment when she eliminated the rebuilt machine (the most economical option) from the considered set based on personal bias. By filtering the alternatives presented to leadership, the analyst pre-determined the outcome.
+                </div>
             </div>
         </div>
     </template>
@@ -2541,21 +4321,67 @@
             const nextBtns = document.querySelectorAll('.next-btn');
             const exampleHeaders = document.querySelectorAll('.example-header');
             
+            // Mobile Drawer Controls
+            const mobileToggle = document.getElementById('mobile-menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+
+            if (mobileToggle && sidebar && overlay) {
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Lenis Smooth Scroll Engine Instance
+            const contentArea = document.getElementById('content-area');
+            let lenis = null;
+            if (typeof Lenis !== 'undefined' && contentArea) {
+                try {
+                    lenis = new Lenis({
+                        wrapper: contentArea,
+                        content: contentArea,
+                        lerp: 0.1,
+                        duration: 1.2,
+                        smoothWheel: true,
+                        smoothTouch: false
+                    });
+
+                    function raf(time) {
+                        lenis.raf(time);
+                        requestAnimationFrame(raf);
+                    }
+                    requestAnimationFrame(raf);
+                } catch (err) {
+                    console.warn("Lenis initialization:", err);
+                }
+            }
+
             // Image viewer logic
-            const imgContainers = document.querySelectorAll('.img-container img');
             const viewer = document.getElementById('image-viewer');
             const viewerImg = document.getElementById('fullscreen-img');
             
-            imgContainers.forEach(img => {
-                img.addEventListener('click', () => {
-                    viewerImg.src = img.src;
-                    viewer.style.display = 'flex';
+            function bindImageViewers() {
+                document.querySelectorAll('.img-container img').forEach(img => {
+                    img.style.cursor = 'zoom-in';
+                    img.onclick = () => {
+                        viewerImg.src = img.src;
+                        viewer.style.display = 'flex';
+                    };
                 });
-            });
+            }
+            bindImageViewers();
             
-            viewer.addEventListener('click', () => {
-                viewer.style.display = 'none';
-            });
+            if (viewer) {
+                viewer.addEventListener('click', () => {
+                    viewer.style.display = 'none';
+                });
+            }
             
             let currentIndex = 0;
 
@@ -2566,9 +4392,27 @@
                 navItems[index].classList.add('active');
                 sections[index].classList.add('active');
                 
-                // Scroll to top
-                document.getElementById('content-area').scrollTop = 0;
+                // Close mobile sidebar if open
+                if (sidebar && overlay) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                }
+                
+                // Scroll content area to top via Lenis
+                if (lenis) {
+                    lenis.scrollTo(0, { immediate: true });
+                } else if (contentArea) {
+                    contentArea.scrollTop = 0;
+                }
                 currentIndex = index;
+
+                // Bind any newly rendered images
+                bindImageViewers();
+
+                // Re-typeset MathJax formulas in the newly shown section
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([sections[index]]).catch(() => {});
+                }
             }
 
             // Sidebar clicks
@@ -2598,6 +4442,66 @@
                     card.classList.toggle('open');
                 });
             });
+
+            // ----------------- TOOLTIP ENGINE & AUTO-DECORATOR -----------------
+            const glossary = {
+                "MARR": "Minimum Attractive Rate of Return: The hurdle interest rate; lowest return an investor accepts.",
+                "IRR": "Internal Rate of Return: The discount rate where Net Present Worth (NPW) strictly equals zero.",
+                "ERR": "External Rate of Return: Return when cash inflows are reinvested at external cost of capital (MARR).",
+                "NPW": "Net Present Worth: Discounted algebraic sum of all cash inflows and outflows at present time t = 0.",
+                "EUAC": "Equivalent Uniform Annual Cost: Annualized cost of purchasing, operating, and maintaining an asset.",
+                "EUAB": "Equivalent Uniform Annual Benefit: Annualized uniform equivalent of all revenues and cost savings.",
+                "POHR": "Predetermined Overhead Rate: Total estimated overhead divided by total machine or labor hours.",
+                "ABC": "Activity-Based Costing: System assigning indirect costs to pools based on actual activity cost drivers.",
+                "EBIT": "Earnings Before Interest and Taxes: Operating profit before deducting finance interest and corporate tax.",
+                "COGS": "Cost of Goods Sold: Direct materials, direct labor, and manufacturing factory overhead costs.",
+                "SG&A": "Selling, General, and Administrative Expenses: Corporate overhead not directly tied to production.",
+                "PAT": "Profit After Tax: Bottom-line net income available to shareholders after interest and taxes.",
+                "NWC": "Net Working Capital: Current Assets minus Current Liabilities (buffer for operational solvency).",
+                "CapEx": "Capital Expenditure: Funds spent to acquire physical assets (> 1 yr) capitalized on balance sheet.",
+                "OpEx": "Operational Expenditure: Recurring operating costs expensed immediately in current income statement.",
+                "DDB": "Double Declining Balance: Accelerated depreciation using twice the straight-line rate (R = 2/N).",
+                "ATCF": "After-Tax Cash Flow: Operational cash flow adjusted for income taxes and depreciation tax shields.",
+                "Sunk Cost": "Past expenditure that cannot be recovered; completely irrelevant to future decisions (IGNORE).",
+                "Opportunity Cost": "The economic benefit forgone by choosing one alternative instead of the next best."
+            };
+
+            // Setup edge-detection and mobile tap toggle for all tooltips
+            function setupTooltips() {
+                document.querySelectorAll('.sym-tip').forEach(el => {
+                    el.setAttribute('tabindex', '0');
+                    el.addEventListener('mouseenter', () => {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.left < 140) {
+                            el.classList.add('tip-left');
+                            el.classList.remove('tip-right');
+                        } else if (window.innerWidth - rect.right < 140) {
+                            el.classList.add('tip-right');
+                            el.classList.remove('tip-left');
+                        } else {
+                            el.classList.remove('tip-left', 'tip-right');
+                        }
+                    });
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        el.focus();
+                    });
+                });
+            }
+
+            setupTooltips();
+            document.addEventListener('click', () => {
+                if (document.activeElement && document.activeElement.classList.contains('sym-tip')) {
+                    document.activeElement.blur();
+                }
+            });
+
+            // Initial MathJax trigger once ready
+            if (window.MathJax && window.MathJax.startup) {
+                window.MathJax.startup.promise.then(() => {
+                    MathJax.typesetPromise();
+                }).catch(() => {});
+            }
         });
     </script>
 </body>
